@@ -1,0 +1,77 @@
+.header {
+  grid-area: header;
+  background-color: #fff;
+  display: flex;
+}
+
+.title {
+  padding: 5px 10px 0px 10px;
+  color: #737373;
+  margin: 6px 0px 0px 10px;
+  width: 220px;
+}
+
+.header_left_bar {
+  padding: 5px 0px 0px 18px;
+}
+
+.header_right_bar {
+  position: absolute;
+  right: 27px;
+  padding: 5px 0px 0px 0px;
+}
+
+body {
+  background-color: rgba(225, 223, 221, 0.2);
+  min-height: 611px;
+  margin: 0;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  grid-template-rows: 54px 1fr 45px;
+  grid-template-areas: "header header" "sidenav main" "footer footer";
+  height: 100vh;
+}
+
+.main {
+  grid-area: main;
+  background-color: #faf9f8;
+  padding-left: 0px;
+  padding-right: 30px;
+  max-width: calc(100% - 40px);
+  max-height: calc(100% - 100px);
+  overflow: auto;
+}
+
+.footer {
+  grid-area: footer;
+  background-color: #f3f2f1;
+  padding: 12px 20px;
+}
+
+.sidenav {
+  grid-area: sidenav;
+  background-color: #fff;
+  padding: 0px 20px 20px 20px;
+  width:240px;
+}
+
+.page-title {
+  padding: 52px 0px;
+}
+
+.card {
+  background: #fff;
+  padding: 20px;
+  margin: 10px 0px 0px 0px;
+  border-radius: 2px;
+  background-clip: padding-box;
+  max-width: calc(100% - 40px);
+}
+
+.dropdown_title {
+  margin: 10px 0px 10px 0px;
+  font-weight: bold;
+}
