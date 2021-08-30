@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_page_sidenav_ui <- function(id, page_style, page){
+mod_page_sidenav_ui <- function(id, language, page_style, page){
   ns <- NS(id)
   
   result <- div()
@@ -15,27 +15,34 @@ mod_page_sidenav_ui <- function(id, page_style, page){
   if (page_style == "fluent"){
     if (page == "home"){
       div(class = "sidenav",
-          div(class = "dropdown_title", "Datamart"),
+          div(class = "dropdown_title", translate(language, "datamart")),
           shiny.fluent::Dropdown.shinyInput("datamart", "Datamart", value = "ufh",
                                             options = list(list(key = "ufh", text = "Cohorte héparine"),
                                                            list(key = "wmv", text = "Sevrage ventilation"))),
-          div(class = "dropdown_title", "Study"),
+          div(class = "dropdown_title", translate(language, "study")),
           shiny.fluent::Dropdown.shinyInput("study", "Study", value = "study1",
                                             options = list(list(key = "study1", text = "Etude 1 - premier anti-Xa"),
                                                            list(key = "study2", text = "Etude 2 - tous les anti-Xa")))
       ) -> result
     }
-    if (page == "settings"){
+    if (grepl("^settings", page)){
       div(class = "sidenav",
         shiny.fluent::Nav(
           groups = list(
             list(links = list(
-              list(name = "General settings", key = "general"),
-              list(name = "Data management", key = "data")
+              list(name = translate(language, "general_settings"), key = "general", url = shiny.router::route_link("settings/general")),
+              list(name = translate(language, "data_management"), key = "data", links = list(
+                list(name = translate(language, "data_sources"), key = "data_source", url = shiny.router::route_link("settings/data_source")),
+                list(name = translate(language, "datamarts"), key = "datamarts", url = shiny.router::route_link("settings/datamarts"))
+                ),
+                initialSelectedKey = "data_source",
+                selectedKey = substr(page, nchar("settings") + 2, 100),
+                isExpanded = TRUE)
               # list(name = 'Analysis', url = '#!/other', key = 'analysis', icon = 'AnalyticsReport'),
             ))
           ),
           initialSelectedKey = "general",
+          selectedKey = substr(page, nchar("settings") + 2, 100),
           styles = list(
             root = list(
               height = "100%",

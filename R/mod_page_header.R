@@ -7,25 +7,25 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_page_header_ui <- function(id, page_style, page){
+mod_page_header_ui <- function(id, language, page_style, page){
   ns <- NS(id)
   div(class = "header",
       div(class = "title", shiny.fluent::Text(variant = "xLarge", "CDW Tools")),
       div(class = "header_left_bar", 
           shiny.fluent::CommandBar(
             items = list(
-              shiny.fluent::CommandBarItem("Home", "Home", href = shiny.router::route_link("/")),
-              shiny.fluent::CommandBarItem("Patient-level data", "Contact", href = shiny.router::route_link("patient_level_data")),
-              shiny.fluent::CommandBarItem("Grouped data", "BIDashboard", href = shiny.router::route_link("aggregated_data"))
+              shiny.fluent::CommandBarItem(translate(language, "home"), "Home", href = shiny.router::route_link("/")),
+              shiny.fluent::CommandBarItem(translate(language, "patient_level_data"), "Contact", href = shiny.router::route_link("patient_level_data")),
+              shiny.fluent::CommandBarItem(translate(language, "aggregated_data"), "BIDashboard", href = shiny.router::route_link("aggregated_data"))
             )
           )
       ),
       div(class = "header_right_bar",
           shiny.fluent::CommandBar(
             items = list(
-              shiny.fluent::CommandBarItem("Parameters", "Settings", iconOnly = TRUE, 
-                                           href = shiny.router::route_link("settings")),
-              shiny.fluent::CommandBarItem("Help", "Info", iconOnly = TRUE, href = shiny.router::route_link("help"))
+              shiny.fluent::CommandBarItem(translate(language, "settings"), "Settings", iconOnly = TRUE, 
+                                           href = shiny.router::route_link("settings/general")),
+              shiny.fluent::CommandBarItem(translate(language, "help"), "Info", iconOnly = TRUE, href = shiny.router::route_link("help"))
             )
           )
       )

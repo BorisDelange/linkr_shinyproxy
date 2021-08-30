@@ -7,14 +7,20 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_page_footer_ui <- function(id, page_style, page){
+mod_page_footer_ui <- function(id, language, page_style, page){
   ns <- NS(id)
   div(class = "footer", 
     shiny.fluent::Stack(
       horizontal = TRUE,
       horizontalAlign = 'space-between',
       tokens = list(childrenGap = 20),
-      shiny.fluent::Text(variant = "medium", "Github", block = TRUE)
+      # shiny.fluent::CommandBar(
+      #   items = list(
+      #     shiny.fluent::CommandBarItem("Git Hub", "GitHubLogo", iconOnly = TRUE)
+      #   )
+      # )
+      shiny.fluent::IconButton("github", href = "https://github.com/BorisDelange/cdwtools",
+                               iconProps = list(iconName = "GitHubLogo"))
     )    
   )
 }

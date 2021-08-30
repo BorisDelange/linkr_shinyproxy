@@ -5,7 +5,7 @@
 #' @import shiny
 #' @noRd
 
-app_ui <- function(request, router, css, page_style) {
+app_ui <- function(request, router = NULL, css = "style.css", page_style = "fluent") {
   tagList(
 
     # Leave this function for adding external resources

@@ -23,7 +23,7 @@
 
 body {
   background-color: rgba(225, 223, 221, 0.2);
-  min-height: 611px;
+  min-height: 600px;
   margin: 0;
 }
 
@@ -41,8 +41,8 @@ body {
   padding-left: 0px;
   padding-right: 30px;
   max-width: calc(100% - 40px);
-  max-height: calc(100% - 100px);
-  overflow: auto;
+  /*max-height: calc(100% - 200px);*/
+  overflow: auto;0
 }
 
 .footer {
@@ -54,7 +54,7 @@ body {
 .sidenav {
   grid-area: sidenav;
   background-color: #fff;
-  padding: 0px 20px 20px 20px;
+  padding: 10px 20px 20px 20px;
   width:240px;
 }
 
@@ -74,4 +74,8 @@ body {
 .dropdown_title {
   margin: 10px 0px 10px 0px;
   font-weight: bold;
+}
+
+.router-hidden {
+  display: none;
 }

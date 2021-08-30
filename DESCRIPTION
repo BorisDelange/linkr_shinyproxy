@@ -17,12 +17,14 @@ Imports:
     magrittr,
     pkgload,
     purrr,
+    readr,
     rlang,
     shiny (>= 1.6.0),
     shiny.fluent (>= 0.2.1),
     shiny.router,
     spelling,
-    vistime
+    vistime,
+    vroom
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1

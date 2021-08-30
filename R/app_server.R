@@ -4,7 +4,7 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
-app_server <- function(router){
+app_server <- function(router = NULL){
   function( input, output, session ) {
   # Your application server logic 
   # root_page <- div(h2("Root page"))
