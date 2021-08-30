@@ -19,8 +19,8 @@ mod_page_footer_ui <- function(id, language, page_style, page){
       #     shiny.fluent::CommandBarItem("Git Hub", "GitHubLogo", iconOnly = TRUE)
       #   )
       # )
-      shiny.fluent::IconButton("github", href = "https://github.com/BorisDelange/cdwtools",
-                               iconProps = list(iconName = "GitHubLogo"))
+      # shiny.fluent::IconButton("github", href = "https://github.com/BorisDelange/cdwtools",
+      #                          iconProps = list(iconName = "Home"))
     )    
   )
 }

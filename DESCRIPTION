@@ -22,6 +22,7 @@ Imports:
     shiny (>= 1.6.0),
     shiny.fluent (>= 0.2.1),
     shiny.router,
+    shinyAce,
     spelling,
     vistime,
     vroom

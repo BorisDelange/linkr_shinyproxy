@@ -41,33 +41,126 @@ mod_page_main_ui <- function(id, language, page_style, page){
             )
           )
         )
-      )
+      ) -> result
     }
+    
+    if (page == "patient_level_data"){
+      div(class = "main",
+        shiny.fluent::Pivot(
+          shiny.fluent::PivotItem(headerText = "Stays",
+            div(
+              make_card(
+                "Stays timeline",
+                "My timeline"
+              )
+            )
+          ),
+          shiny.fluent::PivotItem(headerText = "Notes",
+            div(
+              make_card(
+                "Clinical notes",
+                "Notes"
+              )
+            )
+          )
+        )
+      ) -> result
+    }
+    
+    if (page == "aggregated_data"){
+      div(class = "main",
+        shiny.fluent::Pivot(
+          shiny.fluent::PivotItem(headerText = "Data cleaning",
+            div(
+              make_card(
+                "Data cleaning",
+                "..."
+              )
+            )
+          ),
+          shiny.fluent::PivotItem(headerText = "Data ...",
+            div(
+              make_card(
+                "Data ...",
+                "..."
+              )
+            )
+          )
+        )
+      ) -> result
+    }
+    
     if (grepl("^settings", page)){
       if(page == "settings/general"){
         div(class = "main",
           make_card(
-            translate(language, "language"),
+            translate(language, "general"),
             div(
-              div(class = "dropdown_title", translate(language, "language")),
-              div(shiny.fluent::Dropdown.shinyInput("language", value = "EN", options = list(
-                list(key = "EN", text = "English"),
-                list(key = "FR", text = "Français")
-                )),
-                style = "width:200px"
-              ), br(),
-              shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 30),
+                div(
+                  div(class = "dropdown_title", translate(language, "language")),
+                  div(shiny.fluent::Dropdown.shinyInput("language", value = "EN", options = list(
+                    list(key = "EN", text = "English"),
+                    list(key = "FR", text = "Français"))),
+                    style = "width:200px"
+                  )
+                ),
+                div(
+                  div(class = "dropdown_title", translate(language, "dev_mode")),
+                  div(shiny.fluent::Toggle.shinyInput("dev_mode", value = TRUE))
+                )
+              ),
+              htmltools::br(),
+              htmltools::div(
+                shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save")),
+              )
             )
           ),
+          # div(shinyAce::aceEditor("css_code", mode = "css", height = 300, value = "CSS code"), style = "width: 300px;")
           make_card(
             translate(language, "appearance"),
             div(
-              div(class = "dropdown_title", translate(language, "page_type")),
-              shiny.fluent::ChoiceGroup.shinyInput("page_type", value = "fluent", options = list(
-                list(key = "fluent", text = "Fluent UI"),
-                list(key = "fluid", text = "Fluid UI")
-              )), br(),
-              shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
+              shiny.fluent::Pivot(
+                shiny.fluent::PivotItem(headerText = translate(language, "choices"),
+                  div(
+                    shiny.fluent::Stack(
+                      horizontal = TRUE,
+                      tokens = list(childrenGap = 50),
+                      div(br(),
+                        div(class = "dropdown_title", translate(language, "page_type")),
+                        shiny.fluent::ChoiceGroup.shinyInput("page_type", value = "fluent", options = list(
+                          list(key = "fluent", text = "Fluent UI"),
+                          list(key = "fluid", text = "Fluid UI")
+                        ))
+                      ),
+                      div(br(),
+                        div(class = "dropdown_title", translate(language, "page_theme")),
+                        div(
+                          shiny.fluent::Dropdown.shinyInput("page_theme",  translate(language, "page_theme"),
+                            value = "darker", options = list(
+                            list(key = "darker", text = "Darker"),
+                            list(key = "light", text = "Light"),
+                            list(key = "neutralQuaternary", text = "neutralQuaternary")
+                          )),
+                          style = "min-width: 200px;"
+                        )
+                      )
+                    ), br(),
+                    shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
+                  )
+                ),
+                shiny.fluent::PivotItem(headerText = translate(language, "code"), br(),
+                  shiny.fluent::TextField.shinyInput(
+                    "code_css",
+                    value = ".header {\n  grid-area: header;\n  background-color: #fff;\n  display: flex;\n}",
+                    multiline = TRUE, autoAdjustHeight = TRUE, underlined = FALSE
+                  ), br(),
+                  shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
+                  # div(shinyAce::aceEditor("css_code", mode = "css", height = 300, value = "CSS code"), style = "width: 500px;")
+                )
+              )
             )
           )
         ) -> result

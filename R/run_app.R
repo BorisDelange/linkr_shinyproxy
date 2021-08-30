@@ -16,7 +16,7 @@ run_app <- function(
 ) {
   
   translations <- get_translations()
-  language <- "FR"
+  language <- "EN"
   css <- "style.css"
   page_style <- "fluent"
   pages <- c("home", "patient_level_data", "aggregated_data", "settings", "help")
@@ -25,12 +25,12 @@ run_app <- function(
   #   purrr::map(pages, ~ shiny.router::route(.x, make_layout(page_style = "fluent", page = .x))))
   
   router <- shiny.router::make_router(
-    shiny.router::route("/", make_layout(language = language, page_style = "fluent", page = "home")),
-    shiny.router::route("patient_level_data", make_layout(language = language, page_style = "fluent", page = "patient_level_data")),
-    shiny.router::route("aggregated_data", make_layout(language = language, page_style = "fluent", page = "aggregated_data")),
-    shiny.router::route("settings/general", make_layout(language = language, page_style = "fluent", page = "settings/general")),
-    shiny.router::route("settings/data", make_layout(language = language, page_style = "fluent", page = "settings/data")),
-    shiny.router::route("help", make_layout(language = language, page_style = "fluent", page = "help"))
+    shiny.router::route("/", make_layout(language = language, page_style = page_style, page = "home")),
+    shiny.router::route("patient_level_data", make_layout(language = language, page_style = page_style, page = "patient_level_data")),
+    shiny.router::route("aggregated_data", make_layout(language = language, page_style = page_style, page = "aggregated_data")),
+    shiny.router::route("settings/general", make_layout(language = language, page_style = page_style, page = "settings/general")),
+    shiny.router::route("settings/data", make_layout(language = language, page_style = page_style, page = "settings/data")),
+    shiny.router::route("help", make_layout(language = language, page_style = page_style, page = "help"))
   )
   
   with_golem_options(

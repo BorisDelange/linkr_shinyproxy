@@ -20,6 +20,9 @@ mod_page_header_ui <- function(id, language, page_style, page){
             )
           )
       ),
+      div(class = "header_center_bar",
+        shiny.fluent::SearchBox.shinyInput(translate(language, "search"), placeholder = translate(language, "search"))
+      ),
       div(class = "header_right_bar",
           shiny.fluent::CommandBar(
             items = list(

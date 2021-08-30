@@ -29,7 +29,7 @@ translate <- function(language, reference_word){
 
 get_translations <- function(){
   needed_file <- "./data/translations.csv"
-  if (!file.exists(needed_file)){
+  # if (!file.exists(needed_file)){
     dplyr::tribble(~language, ~reference_word, ~translated_word,
             "EN", "home", "Home",
             "FR", "home", "Accueil",
@@ -47,6 +47,12 @@ get_translations <- function(){
             "FR", "datamarts", "Datamarts",
             "EN", "study", "Study",
             "FR", "study", "Etude",
+            "EN", "subset", "Subset",
+            "FR", "subset", "Subset",
+            "EN", "patient", "Patient",
+            "FR", "patient", "Patient",
+            "EN", "general", "General",
+            "FR", "general", "Général",
             "EN", "general_settings", "General settings",
             "FR", "general_settings", "Paramètres généraux",
             "EN", "data_management", "Data management",
@@ -60,10 +66,26 @@ get_translations <- function(){
             "EN", "appearance", "Appearance",
             "FR", "appearance", "Apparence",
             "EN", "page_type", "Page type",
-            "FR", "page_type", "Type de page"
+            "FR", "page_type", "Type de page",
+            "EN", "modules", "Modules",
+            "FR", "modules", "Modules",
+            "EN", "modules_patient_lvl", "Patient-level data",
+            "FR", "modules_patient_lvl", "Données individuelles",
+            "EN", "modules_aggregated", "Aggregated data",
+            "FR", "modules_aggregated", "Données agrégées",
+            "EN", "dev_mode", "Developper mode",
+            "FR", "dev_mode", "Mode développeur",
+            "EN", "search", "Search",
+            "FR", "search", "Rechercher",
+            "EN", "choices", "Choices",
+            "FR", "choices", "Choix",
+            "EN", "code", "Code",
+            "FR", "code", "Code",
+            "EN", "page_theme", "Theme",
+            "FR", "page_theme", "Thème"
             ) -> data
-    readr::write_csv(data, needed_file)
-  }
-  if (file.exists(needed_file)) vroom::vroom(file = needed_file, col_types = c("")) -> data
+    # readr::write_csv(data, needed_file)
+  # }
+  # if (file.exists(needed_file)) vroom::vroom(file = needed_file, col_types = c("")) -> data
   data
 }
