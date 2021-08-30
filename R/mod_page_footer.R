@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_page_footer_ui <- function(id){
+mod_page_footer_ui <- function(id, page_style, page){
   ns <- NS(id)
   div(class = "footer", 
     shiny.fluent::Stack(

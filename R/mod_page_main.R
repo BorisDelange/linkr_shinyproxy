@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_main_ui <- function(id){
+mod_page_main_ui <- function(id, page_style, page){
   ns <- NS(id)
   div(class = "main",
       div(

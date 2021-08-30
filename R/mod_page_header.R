@@ -7,58 +7,25 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-# mod_page_header_ui <- function(id){
-#   ns <- NS(id)
-#   div(class = "header",
-#     div(class = "title", shiny.fluent::Text(variant = "xLarge", "CDW Tools")),
-#     div(class = "header_left_bar", 
-#       shiny.fluent::CommandBar(
-#         items = list(
-#           shiny.fluent::CommandBarItem("Home", "Home"),
-#           shiny.fluent::CommandBarItem("Patient-level data", "Contact"),
-#           shiny.fluent::CommandBarItem("Grouped data", "BIDashboard")
-#         )
-#       )
-#     ),
-#     div(class = "header_right_bar",
-#       shiny.fluent::CommandBar(
-#         items = list(
-#           shiny.fluent::CommandBarItem("Parameters", "Settings", iconOnly = TRUE, subitems = list(
-#             shiny.fluent::CommandBarItem("Data", key = "data"),
-#             shiny.fluent::CommandBarItem("Settings", key = "settings")
-#           )),
-#           shiny.fluent::CommandBarItem("Help", "Info", iconOnly = TRUE)
-#         )
-#       )
-#     )
-#   )
-# }
-    
-mod_page_header_ui <- function(id){
+mod_page_header_ui <- function(id, page_style, page){
   ns <- NS(id)
   div(class = "header",
       div(class = "title", shiny.fluent::Text(variant = "xLarge", "CDW Tools")),
       div(class = "header_left_bar", 
           shiny.fluent::CommandBar(
             items = list(
-              shiny.fluent::CommandBarItem("Home", "Home"),
-              shiny.fluent::CommandBarItem("Patient-level data", "Contact"),
-              shiny.fluent::CommandBarItem("Grouped data", "BIDashboard")
-              #   shiny.fluent::CommandBarItem("New", "Add", subitems = list(
-              #     shiny.fluent::CommandBarItem("Email message", "Mail", key = "emailMessage", href = "mailto:me@example.com"),
-              #     shiny.fluent::CommandBarItem("Calendar event", "Calendar", key = "calendarEvent")
-              #   )),
-              #   shiny.fluent::CommandBarItem("Upload sales plan", "Upload"),
-              #   shiny.fluent::CommandBarItem("Share analysis", "Share"),
-              #   shiny.fluent::CommandBarItem("Download report", "Download")
+              shiny.fluent::CommandBarItem("Home", "Home", href = shiny.router::route_link("/")),
+              shiny.fluent::CommandBarItem("Patient-level data", "Contact", href = shiny.router::route_link("patient_level_data")),
+              shiny.fluent::CommandBarItem("Grouped data", "BIDashboard", href = shiny.router::route_link("aggregated_data"))
             )
           )
       ),
       div(class = "header_right_bar",
           shiny.fluent::CommandBar(
             items = list(
-              shiny.fluent::CommandBarItem("Parameters", "Settings", iconOnly = TRUE),
-              shiny.fluent::CommandBarItem("Help", "Info", iconOnly = TRUE)
+              shiny.fluent::CommandBarItem("Parameters", "Settings", iconOnly = TRUE, 
+                                           href = shiny.router::route_link("settings")),
+              shiny.fluent::CommandBarItem("Help", "Info", iconOnly = TRUE, href = shiny.router::route_link("help"))
             )
           )
       )

@@ -7,37 +7,52 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_page_sidenav_ui <- function(id){
+mod_page_sidenav_ui <- function(id, page_style, page){
   ns <- NS(id)
-  div(class = "sidenav",
-    div(class = "dropdown_title", "Datamart"),
-    shiny.fluent::Dropdown.shinyInput("datamart", "Datamart", value = "ufh",
-                                      options = list(list(key = "ufh", text = "Cohorte héparine"),
-                                                      list(key = "wmv", text = "Sevrage ventilation"))),
-    div(class = "dropdown_title", "Study"),
-    shiny.fluent::Dropdown.shinyInput("study", "Study", value = "study1",
-                                      options = list(list(key = "study1", text = "Etude 1 - premier anti-Xa"),
-                                                     list(key = "study2", text = "Etude 2 - tous les anti-Xa")))
-    # shiny.fluent::Nav(
-    #   groups = list(
-    #     list(links = list(
-    #       list(name = 'Home', url = '#!/', key = 'home', icon = 'Home'),
-    #       list(name = 'Analysis', url = '#!/other', key = 'analysis', icon = 'AnalyticsReport'),
-    #       list(name = 'shiny.fluent', url = 'http://github.com/Appsilon/shiny.fluent', key = 'repo', icon = 'GitGraph'),
-    #       list(name = 'shiny.react', url = 'http://github.com/Appsilon/shiny.react', key = 'shinyreact', icon = 'GitGraph'),
-    #       list(name = 'Appsilon', url = 'http://appsilon.com', key = 'appsilon', icon = 'WebAppBuilderFragment')
-    #     ))
-    #   ),
-    #   initialSelectedKey = 'home',
-    #   styles = list(
-    #     root = list(
-    #       height = '100%',
-    #       boxSizing = 'border-box',
-    #       overflowY = 'auto'
-    #     )
-    #   )
-    # )
-  )
+  
+  result <- div()
+  
+  if (page_style == "fluent"){
+    if (page == "home"){
+      div(class = "sidenav",
+          div(class = "dropdown_title", "Datamart"),
+          shiny.fluent::Dropdown.shinyInput("datamart", "Datamart", value = "ufh",
+                                            options = list(list(key = "ufh", text = "Cohorte héparine"),
+                                                           list(key = "wmv", text = "Sevrage ventilation"))),
+          div(class = "dropdown_title", "Study"),
+          shiny.fluent::Dropdown.shinyInput("study", "Study", value = "study1",
+                                            options = list(list(key = "study1", text = "Etude 1 - premier anti-Xa"),
+                                                           list(key = "study2", text = "Etude 2 - tous les anti-Xa")))
+      ) -> result
+    }
+    if (page == "settings"){
+      div(class = "sidenav",
+        shiny.fluent::Nav(
+          groups = list(
+            list(links = list(
+              list(name = "General settings", key = "general"),
+              list(name = "Data management", key = "data")
+              # list(name = 'Analysis', url = '#!/other', key = 'analysis', icon = 'AnalyticsReport'),
+            ))
+          ),
+          initialSelectedKey = "general",
+          styles = list(
+            root = list(
+              height = "100%",
+              boxSizing = "border-box",
+              overflowY = "auto"
+            )
+          )
+        )
+      ) -> result
+    }
+  }
+  
+  if (page_style == "fluid"){
+    
+  }
+  
+  result
 }
     
 #' page_sidenav Server Functions

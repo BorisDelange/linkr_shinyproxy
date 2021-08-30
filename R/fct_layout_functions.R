@@ -29,25 +29,11 @@ make_page <- function (title, subtitle, contents) {
   contents)
 }
 
-make_layout <- function(page_style = "fluent", main){
-  content <- div(class = "grid-container",
-               mod_page_header_ui("page_header_ui"),
-               mod_page_sidenav_ui("page_sidenav_ui"),
-               main,
-               mod_page_footer_ui("page_footer_ui"))
-  page <- switch(page_style, "fluent" = shiny.fluent::fluentPage(content),
-                             "fluid" = fluidPage(content))
-
-  # tagList(
-  #   htmltools::tags$head(htmltools::tags$link(href = css, rel = "stylesheet", type = "text/css")),
-  #   shiny.fluent::fluentPage(content)
-  # )
-  content
+make_layout <- function(page_style = "fluent", page = "home"){
+  div(class = "grid-container",
+      mod_page_header_ui(paste0("page_header_ui_", page), page_style, page),
+      mod_page_sidenav_ui(paste0("page_sidenav_ui_", page), page_style, page),
+      mod_page_main_ui(paste0("page_header_ui_", page), page_style, page),
+      mod_page_footer_ui(paste0("page_footer_ui_", page), page_style, page)
+      )
 }
-
-# router <- function(page){
-#   shiny.router::make_router(
-#     shiny.router::route("/", make_layout(page_style = "fluent", page)),
-#     shiny.router::route("other", make_layout(page_style = "fluent", page))
-#   )
-# }
