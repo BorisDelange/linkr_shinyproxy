@@ -10,12 +10,12 @@
 mod_page_footer_ui <- function(id){
   ns <- NS(id)
   div(class = "footer", 
-      shiny.fluent::Stack(
-        horizontal = TRUE,
-        horizontalAlign = 'space-between',
-        tokens = list(childrenGap = 20),
-        shiny.fluent::Text(variant = "medium", "Github", block = TRUE)
-      )    
+    shiny.fluent::Stack(
+      horizontal = TRUE,
+      horizontalAlign = 'space-between',
+      tokens = list(childrenGap = 20),
+      shiny.fluent::Text(variant = "medium", "Github", block = TRUE)
+    )    
   )
 }
     
