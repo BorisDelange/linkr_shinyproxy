@@ -16,30 +16,38 @@ mod_page_main_ui <- function(id, language, page_style, page){
     if (page == "home"){
       div(class = "main",
         div(
-          make_card(
-            "My first card !",
-            div(
-              shiny.fluent::Text("Welcome")
-            )),
-          make_card(
-            "Second one",
-            div(
-              shiny.fluent::Text("OK")
-            )),
-          shiny.fluent::Stack(
-            horizontal = TRUE,
-            tokens = list(childrenGap = 10),
-            make_card(
-              "This is a third card", 
-              div(shiny.fluent::Text("Test of a text"), br(), shiny.fluent::Text("Another text")),
-              size = 4,
-            ),
-            make_card(
-              "This is a 4th card", 
-              div(shiny.fluent::Text("Test of a text"), br(), shiny.fluent::Text("Another text")),
-              size = 8,
+          div(
+            class = glue::glue("card ms-depth-8 ms-sm{8} ms-xl{8}"),
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Text(variant = "large", "Datamarts", block = TRUE),
+              "Test"
             )
           )
+          # make_card(
+          #   "My first card !",
+          #   div(
+          #     shiny.fluent::Text("Welcome")
+          #   )),
+          # make_card(
+          #   "Second one",
+          #   div(
+          #     shiny.fluent::Text("OK")
+          #   )),
+          # shiny.fluent::Stack(
+          #   horizontal = TRUE,
+          #   tokens = list(childrenGap = 10),
+          #   make_card(
+          #     "This is a third card", 
+          #     div(shiny.fluent::Text("Test of a text"), br(), shiny.fluent::Text("Another text")),
+          #     size = 4,
+          #   ),
+          #   make_card(
+          #     "This is a 4th card", 
+          #     div(shiny.fluent::Text("Test of a text"), br(), shiny.fluent::Text("Another text")),
+          #     size = 8,
+          #   )
+          # )
         )
       ) -> result
     }
@@ -69,20 +77,29 @@ mod_page_main_ui <- function(id, language, page_style, page){
     
     if (page == "aggregated_data"){
       div(class = "main",
+        shiny.fluent::Breadcrumb(
+          items = list(
+            list(text = "Data cleaning", key = "data_cleaning", href = ""),
+            list(text = "Outliers", key = "outliers", href = "")
+          ),
+          maxDisplayedItems = 3
+        ),
         shiny.fluent::Pivot(
-          shiny.fluent::PivotItem(headerText = "Data cleaning",
+          shiny.fluent::PivotItem(headerText = "Outliers",
             div(
               make_card(
-                "Data cleaning",
-                "..."
+                "Outliers",
+                div(htmltools::br(),
+                "Choose of the outliers")
               )
             )
           ),
-          shiny.fluent::PivotItem(headerText = "Data ...",
+          shiny.fluent::PivotItem(headerText = "Missing data",
             div(
               make_card(
-                "Data ...",
-                "..."
+                "Missing data",
+                div(htmltools::br(),
+                "Showing missing data")
               )
             )
           )
@@ -164,6 +181,14 @@ mod_page_main_ui <- function(id, language, page_style, page){
             )
           )
         ) -> result
+      }
+      
+      if (page == "settings/app_db"){
+        div(class = "main",
+          make_card("Application database",
+            div()          
+          )
+        )
       }
     }
   }

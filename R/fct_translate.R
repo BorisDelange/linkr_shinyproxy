@@ -45,6 +45,8 @@ get_translations <- function(){
             "FR", "datamart", "Datamart",
             "EN", "datamarts", "Datamarts",
             "FR", "datamarts", "Datamarts",
+            "EN", "datamarts_studies", "Datamarts & studies",
+            "FR", "datamarts_studies", "Datamarts & études",
             "EN", "study", "Study",
             "FR", "study", "Etude",
             "EN", "subset", "Subset",
@@ -82,7 +84,17 @@ get_translations <- function(){
             "EN", "code", "Code",
             "FR", "code", "Code",
             "EN", "page_theme", "Theme",
-            "FR", "page_theme", "Thème"
+            "FR", "page_theme", "Thème",
+            "EN", "messages", "Messages",
+            "FR", "messages", "Messages",
+            "EN", "disconnect", "Disconnect",
+            "FR", "disconnect", "Déconnexion",
+            "EN", "users", "Users",
+            "FR", "users", "Utilisateurs",
+            "EN", "log", "Log",
+            "FR", "log", "Historique",
+            "EN", "app_db", "App database",
+            "FR", "app_db", "BDD de l'application"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

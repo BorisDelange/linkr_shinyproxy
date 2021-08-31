@@ -28,7 +28,10 @@ mod_page_header_ui <- function(id, language, page_style, page){
             items = list(
               shiny.fluent::CommandBarItem(translate(language, "settings"), "Settings", iconOnly = TRUE, 
                                            href = shiny.router::route_link("settings/general")),
-              shiny.fluent::CommandBarItem(translate(language, "help"), "Info", iconOnly = TRUE, href = shiny.router::route_link("help"))
+              shiny.fluent::CommandBarItem(translate(language, "help"), "Info", iconOnly = TRUE, href = shiny.router::route_link("help")),
+              shiny.fluent::CommandBarItem(translate(language, "messages"), "Message", iconOnly = TRUE,
+                                           href = shiny.router::route_link("messages")),
+              shiny.fluent::CommandBarItem(translate(language, "disconnect"), "PowerButton", iconOnly = TRUE)
             )
           )
       )
