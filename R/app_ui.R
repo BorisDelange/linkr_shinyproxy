@@ -5,19 +5,15 @@
 #' @import shiny
 #' @noRd
 
-app_ui <- function(request, router_on = FALSE, css = "style.css", page_style = "fluent", page) {
+app_ui <- function(request, css, page_style, page) {
   
-  if (router_on == TRUE) page <- page$ui
-  
-  switch(page_style, "fluent" = shiny.fluent::fluentPage(page),
-                     "fluid" = fluidPage(page),
-                     "navbar" = navbarPage(page)) -> page
+  switch(page_style, "fluent" = shiny.fluent::fluentPage(page$ui),
+                     "fluid" = fluidPage(page)) -> page
   
   tagList(
     # Leave this function for adding external resources
-    golem_add_external_resources(),
+    golem_add_external_resources(css),
 
-    htmltools::tags$head(htmltools::tags$link(href = css, rel = "stylesheet", type = "text/css")),
     page
   )
 }
@@ -30,7 +26,7 @@ app_ui <- function(request, router_on = FALSE, css = "style.css", page_style = "
 #' @import shiny
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
-golem_add_external_resources <- function(){
+golem_add_external_resources <- function(css){
   
   add_resource_path(
     'www', app_sys('app/www')
@@ -41,9 +37,10 @@ golem_add_external_resources <- function(){
     bundle_resources(
       path = app_sys('app/www'),
       app_title = 'cdwtools'
-    )
+    ),
+    htmltools::tags$link(href = css, rel = "stylesheet", type = "text/css")
     # Add here other external resources
-    # for example, you can add shinyalert::useShinyalert() 
+    # for example, you can add shinyalert::useShinyalert()
   )
   
   # shiny::addResourcePath("shiny.router", system.file("www", package = "shiny.router"))

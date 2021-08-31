@@ -1,0 +1,26 @@
+.navbar {
+  height: 60px;
+}
+
+.tabbable > .nav > li[class = active] > a{
+  background-color: #E7E7E7;
+}
+
+.shiny-notification {
+  position: fixed;
+  top: 3px;
+  left: calc(30%);
+  width: 600px;
+  text-align: center;
+}
+
+.fluid_sidenav {
+  padding: 10px 20px 20px 20px;
+  max-width:240px;
+  margin-left: -13px;
+}
+
+.fluid_main {
+  margin-left: 260px;
+  background-color: #FFFFFF;
+}

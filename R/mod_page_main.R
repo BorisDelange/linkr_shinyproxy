@@ -117,7 +117,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
                 horizontal = TRUE,
                 tokens = list(childrenGap = 30),
                 div(
-                  div(class = "dropdown_title", translate(language, "language")),
+                  div(class = "input_title", translate(language, "language")),
                   div(shiny.fluent::Dropdown.shinyInput("language", value = "EN", options = list(
                     list(key = "EN", text = "English"),
                     list(key = "FR", text = "Français"))),
@@ -125,7 +125,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
                   )
                 ),
                 div(
-                  div(class = "dropdown_title", translate(language, "dev_mode")),
+                  div(class = "input_title", translate(language, "dev_mode")),
                   div(shiny.fluent::Toggle.shinyInput("dev_mode", value = TRUE))
                 )
               ),
@@ -146,14 +146,14 @@ mod_page_main_ui <- function(id, language, page_style, page){
                       horizontal = TRUE,
                       tokens = list(childrenGap = 50),
                       div(br(),
-                        div(class = "dropdown_title", translate(language, "page_type")),
+                        div(class = "input_title", translate(language, "page_type")),
                         shiny.fluent::ChoiceGroup.shinyInput("page_type", value = "fluent", options = list(
                           list(key = "fluent", text = "Fluent UI"),
                           list(key = "fluid", text = "Fluid UI")
                         ))
                       ),
                       div(br(),
-                        div(class = "dropdown_title", translate(language, "page_theme")),
+                        div(class = "input_title", translate(language, "page_theme")),
                         div(
                           shiny.fluent::Dropdown.shinyInput("page_theme",  translate(language, "page_theme"),
                             value = "darker", options = list(
@@ -187,15 +187,20 @@ mod_page_main_ui <- function(id, language, page_style, page){
         div(class = "main",
           make_card(translate(language, "app_db"),
             div(
+              div(div(class = "input_title", translate(language, "db_connexion_type")),
+                  shiny.fluent::ChoiceGroup.shinyInput("db_connexion_type", value = "local", options = list(
+                    list(key = "local", text = translate(language, "local")),
+                    list(key = "distant", text = translate(language, "distant"))
+                  ))
+              ),
               shiny.fluent::Stack(
                 horizontal = TRUE,
                 tokens = list(childrenGap = 50),
-                div(div(class = "dropdown_title", translate(language, "db_connexion_type")),
-                    shiny.fluent::ChoiceGroup.shinyInput("db_connexion_type", value = "local", options = list(
-                      list(key = "local", text = translate(language, "local")),
-                      list(key = "distant", text = translate(language, "distant"))
-                    ))
-                )
+                make_textfield(language, "dbname"),
+                make_textfield(language, "host"),
+                make_textfield(language, "port"),
+                make_textfield(language, "user"),
+                make_textfield(language, "password")
               ), br(),
               shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
             )
@@ -217,6 +222,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
     
     if (page == "patient_level_data"){
       shiny::mainPanel(
+        # class = "fluid_main",
         shiny::tabsetPanel(
           shiny::tabPanel("Stays", htmltools::br(), "Patient stays"),
           shiny::tabPanel("Notes", htmltools::br(), "Patient clinical notes")

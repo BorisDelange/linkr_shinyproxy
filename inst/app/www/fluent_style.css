@@ -75,12 +75,12 @@ body {
   max-width: calc(100% - 40px);
 }
 
-.dropdown_title_first {
+.input_title_first {
   margin: 0px 0px 10px 0px;
   font-weight: bold;
 }
 
-.dropdown_title {
+.input_title {
   margin: 10px 0px 10px 0px;
   font-weight: bold;
 }

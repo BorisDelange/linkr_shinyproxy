@@ -32,19 +32,19 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
     }
     if (page == "patient_level_data"){
       div(class = "sidenav",
-        div(class = "dropdown_title_first", translate(language, "datamart")),
+        div(class = "input_title_first", translate(language, "datamart")),
         shiny.fluent::Dropdown.shinyInput("datamart", value = "ufh",
                                           options = list(list(key = "ufh", text = "Cohorte héparine"),
                                                          list(key = "wmv", text = "Sevrage ventilation"))),
-        div(class = "dropdown_title", translate(language, "study")),
+        div(class = "input_title", translate(language, "study")),
         shiny.fluent::Dropdown.shinyInput("study", value = "study1",
                                           options = list(list(key = "study1", text = "Etude 1 - premier anti-Xa"),
                                                          list(key = "study2", text = "Etude 2 - tous les anti-Xa"))),
-        div(class = "dropdown_title", translate(language, "subset")),
+        div(class = "input_title", translate(language, "subset")),
         shiny.fluent::Dropdown.shinyInput("subset", value = "all_patients",
                                           options = list(list(key = "all_patients", text = "Tous les patients"),
                                                          list(key = "included_patients", text = "Patients inclus"))),
-        div(class = "dropdown_title", translate(language, "patient")),
+        div(class = "input_title", translate(language, "patient")),
         shiny.fluent::Dropdown.shinyInput("patient", value = "1442",
                                           options = list(list(key = "1442", text = "1442 - M - 82 ans"),
                                                          list(key = "4653", text = "4653 - F - 45 ans")))
@@ -52,11 +52,11 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
     }
     if (page == "aggregated_data"){
       div(class = "sidenav",
-          div(class = "dropdown_title_first", translate(language, "datamart")),
+          div(class = "input_title_first", translate(language, "datamart")),
           shiny.fluent::Dropdown.shinyInput("datamart", "Datamart", value = "ufh",
                                             options = list(list(key = "ufh", text = "Cohorte héparine"),
                                                            list(key = "wmv", text = "Sevrage ventilation"))),
-          div(class = "dropdown_title", translate(language, "study")),
+          div(class = "input_title", translate(language, "study")),
           shiny.fluent::Dropdown.shinyInput("study", "Study", value = "study1",
                                             options = list(list(key = "study1", text = "Etude 1 - premier anti-Xa"),
                                                            list(key = "study2", text = "Etude 2 - tous les anti-Xa")))
@@ -105,16 +105,30 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
   if (page_style == "fluid"){
     result <- ""
     
-    if (page == "patient_level_data")
-    shiny::sidebarPanel(
-      width = 2,
-      shiny::selectInput(ns("datamart"), htmltools::strong(translate(language, "datamart")),
-                         choices = c("Données héparine" = "ufh", "Ventilation" = "wmv")),
-      shiny::selectInput(ns("study"), htmltools::strong(translate(language, "study")),
-                         choices = c("Etude 1 - premier anti-Xa")),
-      shiny::selectInput(ns("subset"), htmltools::strong(translate(language, "subset")),
-                         choices = c("Patients inclus"))
-    ) -> result
+    if (page == "patient_level_data"){
+      shiny::sidebarPanel(
+        # class = "sidenav",
+        width = 2,
+        shiny::selectInput(ns("datamart"), htmltools::strong(translate(language, "datamart")),
+                           choices = c("Données héparine" = "ufh", "Ventilation" = "wmv")),
+        shiny::selectInput(ns("study"), htmltools::strong(translate(language, "study")),
+                           choices = c("Etude 1 - premier anti-Xa")),
+        shiny::selectInput(ns("subset"), htmltools::strong(translate(language, "subset")),
+                           choices = c("Patients inclus"))
+      ) -> result
+    }
+    
+    if (page == "aggregated_data"){
+      shiny::sidebarPanel(
+        width = 2,
+        shiny::selectInput(ns("datamart"), htmltools::strong(translate(language, "datamart")),
+                           choices = c("Données héparine" = "ufh", "Ventilation" = "wmv")),
+        shiny::selectInput(ns("study"), htmltools::strong(translate(language, "study")),
+                           choices = c("Etude 1 - premier anti-Xa")),
+        shiny::selectInput(ns("subset"), htmltools::strong(translate(language, "subset")),
+                           choices = c("Patients inclus"))
+      ) -> result
+    }
   }
   
   result

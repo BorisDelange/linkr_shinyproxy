@@ -16,8 +16,8 @@ run_app <- function(
   language = "EN",
   css = "fluent_style.css",
   page_style = "fluent",
-  page_theme = "",
-  router_on = TRUE,
+  # page_theme = "",
+  # router_on = TRUE,
   ...
 ) {
   
@@ -36,8 +36,9 @@ run_app <- function(
   # router <- shiny.router::make_router(
   #   purrr::map(pages, ~ shiny.router::route(.x, make_layout(page_style = "fluent", page = .x))))
   
-  if (router_on == TRUE){
-    page <- shiny.router::make_router(
+  if (page_style == "fluent"){
+    css <- "fluent_style.css"
+    shiny.router::make_router(
       shiny.router::route("/", make_layout(language = language, page_style = page_style, page = "home")),
       shiny.router::route("patient_level_data", make_layout(language = language, page_style = page_style, page = "patient_level_data")),
       shiny.router::route("aggregated_data", make_layout(language = language, page_style = page_style, page = "aggregated_data")),
@@ -46,26 +47,29 @@ run_app <- function(
       shiny.router::route("settings/users", make_layout(language = language, page_style = page_style, page = "settings/users")),
       shiny.router::route("settings/data", make_layout(language = language, page_style = page_style, page = "settings/data")),
       shiny.router::route("help", make_layout(language = language, page_style = page_style, page = "help"))
-    )
+    ) -> page
   }
   
-  if (router_on == FALSE){
-    if (page_style == "fluid"){
-      shiny::fluidPage(
-        theme = shinythemes::shinytheme(page_theme),
-        shiny::navbarPage(
-          title = "CDW Tools",
-          make_layout(language = language, page_style = page_style, page = "home"),
-          make_layout(language = language, page_style = page_style, page = "patient_level_data")
-        )
-      ) -> page
-    }
+  if (page_style == "fluid"){
+    css <- "fluent_style.css"
+    page_theme <- "lumen"
+    shiny::fluidPage(
+      theme = shinythemes::shinytheme(page_theme),
+      shiny::navbarPage(
+        title = "CDW Tools",
+        make_layout(language = language, page_style = page_style, page = "home"),
+        make_layout(language = language, page_style = page_style, page = "aggregated_data"),
+        make_layout(language = language, page_style = page_style, page = "patient_level_data"),
+        make_layout(language = language, page_style = page_style, page = "settings"),
+        make_layout(language = language, page_style = page_style, page = "messages")
+      )
+    ) -> page
   }
   
   with_golem_options(
     app = shinyApp(
-      ui = app_ui(router_on = router_on, css = css, page_style = page_style, page = page),
-      server = app_server(router_on = router_on, router = page),
+      ui = app_ui(css = css, page_style = page_style, page = page),
+      server = app_server(page_style = page_style, router = page),
       onStart = onStart,
       options = options, 
       enableBookmarking = enableBookmarking, 

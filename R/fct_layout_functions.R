@@ -50,3 +50,8 @@ make_layout <- function(language, page_style, page){
   
   result
 }
+
+make_textfield <- function(language, label){
+  div(div(class = "input_title", translate(language, label)),
+      shiny.fluent::TextField.shinyInput(label))
+}

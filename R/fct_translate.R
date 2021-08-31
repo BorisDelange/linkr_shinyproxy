@@ -100,7 +100,17 @@ get_translations <- function(){
             "EN", "local", "Local",
             "FR", "local", "Locale",
             "EN", "distant", "Distant",
-            "FR", "distant", "Distante"
+            "FR", "distant", "Distante",
+            "EN", "dbname", "Database name",
+            "FR", "dbname", "Nom de la BDD",
+            "EN", "host", "Host",
+            "FR", "host", "Hôte",
+            "EN", "port", "Port",
+            "FR", "port", "Port",
+            "EN", "user", "User",
+            "FR", "user", "Utilisateur",
+            "EN", "password", "Password",
+            "FR", "password", "Password"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
