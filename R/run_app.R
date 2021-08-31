@@ -12,14 +12,23 @@ run_app <- function(
   options = list(), 
   enableBookmarking = NULL,
   uiPattern = "/",
+  language = "EN",
+  css = "fluent_style.css",
+  page_style = "fluent",
+  page_theme = "",
+  router_on = TRUE,
   ...
 ) {
   
+  # devtools::load_all(".")
+  # run_app(css = "", page_style = "fluid", page_theme = "lumen", router_on = FALSE)
+  
   translations <- get_translations()
-  language <- "EN"
-  css <- "style.css"
-  page_style <- "fluent" # fluent, fluid or navbar
-  router_on <- TRUE
+  # language <- "EN"
+  # css <- "style.css"
+  # page_style <- "fluid"
+  # page_theme <- "lumen"
+  # router_on <- FALSE
   pages <- c("home", "patient_level_data", "aggregated_data", "settings", "help")
   page <- ""
   
@@ -27,7 +36,7 @@ run_app <- function(
   #   purrr::map(pages, ~ shiny.router::route(.x, make_layout(page_style = "fluent", page = .x))))
   
   if (router_on == TRUE){
-    router <- shiny.router::make_router(
+    page <- shiny.router::make_router(
       shiny.router::route("/", make_layout(language = language, page_style = page_style, page = "home")),
       shiny.router::route("patient_level_data", make_layout(language = language, page_style = page_style, page = "patient_level_data")),
       shiny.router::route("aggregated_data", make_layout(language = language, page_style = page_style, page = "aggregated_data")),
@@ -39,10 +48,23 @@ run_app <- function(
     )
   }
   
+  if (router_on == FALSE){
+    if (page_style == "fluid"){
+      shiny::fluidPage(
+        theme = shinythemes::shinytheme(page_theme),
+        shiny::navbarPage(
+          title = "CDW Tools",
+          make_layout(language = language, page_style = page_style, page = "home"),
+          make_layout(language = language, page_style = page_style, page = "patient_level_data")
+        )
+      ) -> page
+    }
+  }
+  
   with_golem_options(
     app = shinyApp(
-      ui = app_ui(router_on = router_on, router = router, css = css, page_style = page_style, page = page),
-      server = app_server(router_on = router_on, router = router),
+      ui = app_ui(router_on = router_on, css = css, page_style = page_style, page = page),
+      server = app_server(router_on = router_on, router = page),
       onStart = onStart,
       options = options, 
       enableBookmarking = enableBookmarking, 

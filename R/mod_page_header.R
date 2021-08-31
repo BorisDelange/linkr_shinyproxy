@@ -41,6 +41,11 @@ mod_page_header_ui <- function(id, language, page_style, page){
     ) -> result
   }
   
+  if (page_style == "fluid"){
+    
+    # -> result
+  }
+  
   result
 }
 

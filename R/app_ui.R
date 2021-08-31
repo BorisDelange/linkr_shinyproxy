@@ -5,15 +5,13 @@
 #' @import shiny
 #' @noRd
 
-app_ui <- function(request, router_on = FALSE, router = NULL, css = "style.css", page_style = "fluent", page) {
+app_ui <- function(request, router_on = FALSE, css = "style.css", page_style = "fluent", page) {
   
-  if (router_on == TRUE) switch(page_style, "fluent" = shiny.fluent::fluentPage(router$ui),
-                                "fluid" = fluidPage(router$ui),
-                                "navbar" = navbarPage(router$ui)) -> page
+  if (router_on == TRUE) page <- page$ui
   
-  if (router_on == FALSE) switch(page_style, "fluent" = shiny.fluent::fluentPage(page),
-                                 "fluid" = fluidPage(page),
-                                 "navbar" = navbarPage(page)) -> page
+  switch(page_style, "fluent" = shiny.fluent::fluentPage(page),
+                     "fluid" = fluidPage(page),
+                     "navbar" = navbarPage(page)) -> page
   
   tagList(
     # Leave this function for adding external resources

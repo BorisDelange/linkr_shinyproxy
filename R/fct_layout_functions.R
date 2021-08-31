@@ -40,7 +40,12 @@ make_layout <- function(language, page_style, page){
   }
   
   if (page_style == "fluid"){
-    
+    shiny::tabPanel(title = translate(language, page), 
+      shiny::sidebarLayout(
+        mod_page_sidenav_ui(paste0("page_sidenav_ui_", page), language, page_style, page),
+        mod_page_main_ui(paste0("page_header_ui_", page), language, page_style, page)
+      )                
+    ) -> result
   }
   
   result

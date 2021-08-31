@@ -205,6 +205,26 @@ mod_page_main_ui <- function(id, language, page_style, page){
     }
   }
   
+  if (page_style == "fluid"){
+    if (page == "home"){
+      shiny::mainPanel(
+        shiny::tabsetPanel(
+          shiny::tabPanel("Datamarts", htmltools::br(), "Datamarts"),
+          shiny::tabPanel("Messages", htmltools::br(), "Messages")
+        )
+      ) -> result
+    }
+    
+    if (page == "patient_level_data"){
+      shiny::mainPanel(
+        shiny::tabsetPanel(
+          shiny::tabPanel("Stays", htmltools::br(), "Patient stays"),
+          shiny::tabPanel("Notes", htmltools::br(), "Patient clinical notes")
+        )
+      ) -> result 
+    }
+  }
+  
   result
 }
 # mod_page_main_ui <- function(id){

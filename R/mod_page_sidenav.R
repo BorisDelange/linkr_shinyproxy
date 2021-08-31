@@ -103,7 +103,18 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
   }
   
   if (page_style == "fluid"){
+    result <- ""
     
+    if (page == "patient_level_data")
+    shiny::sidebarPanel(
+      width = 2,
+      shiny::selectInput(ns("datamart"), htmltools::strong(translate(language, "datamart")),
+                         choices = c("Données héparine" = "ufh", "Ventilation" = "wmv")),
+      shiny::selectInput(ns("study"), htmltools::strong(translate(language, "study")),
+                         choices = c("Etude 1 - premier anti-Xa")),
+      shiny::selectInput(ns("subset"), htmltools::strong(translate(language, "subset")),
+                         choices = c("Patients inclus"))
+    ) -> result
   }
   
   result
