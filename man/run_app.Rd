@@ -9,6 +9,11 @@ run_app(
   options = list(),
   enableBookmarking = NULL,
   uiPattern = "/",
+  language = "EN",
+  css = "fluent_style.css",
+  page_style = "fluent",
+  page_theme = "",
+  router_on = TRUE,
   ...
 )
 }
