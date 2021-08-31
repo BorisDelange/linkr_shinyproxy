@@ -4,18 +4,9 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
-app_server <- function(router = NULL){
+app_server <- function(router_on = FALSE, router = NULL){
   function( input, output, session ) {
-  # Your application server logic 
-  # root_page <- div(h2("Root page"))
-  # other_page <- div(h3("Other page"))
-  # 
-  # router <- shiny.router::make_router(
-  #   shiny.router::route("/", root_page),
-  #   shiny.router::route("other", other_page)
-  # )
-  router$server(input, output, session)
-  # my_router <- router(mod_page_main_ui("page_main_ui_1"))
-  # my_router$server(input, output, session)
+    if (router_on) router$server(input, output, session)
+    # if (!router_on)
   }
 }

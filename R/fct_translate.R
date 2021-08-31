@@ -94,7 +94,13 @@ get_translations <- function(){
             "EN", "log", "Log",
             "FR", "log", "Historique",
             "EN", "app_db", "App database",
-            "FR", "app_db", "BDD de l'application"
+            "FR", "app_db", "BDD de l'application",
+            "EN", "db_connexion_type", "Connexion type",
+            "FR", "db_connexion_type", "Type de connexion",
+            "EN", "local", "Local",
+            "FR", "local", "Locale",
+            "EN", "distant", "Distant",
+            "FR", "distant", "Distante"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

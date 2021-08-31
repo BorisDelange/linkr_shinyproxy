@@ -18,27 +18,31 @@ run_app <- function(
   translations <- get_translations()
   language <- "EN"
   css <- "style.css"
-  page_style <- "fluent"
+  page_style <- "fluent" # fluent, fluid or navbar
+  router_on <- TRUE
   pages <- c("home", "patient_level_data", "aggregated_data", "settings", "help")
+  page <- ""
   
   # router <- shiny.router::make_router(
   #   purrr::map(pages, ~ shiny.router::route(.x, make_layout(page_style = "fluent", page = .x))))
   
-  router <- shiny.router::make_router(
-    shiny.router::route("/", make_layout(language = language, page_style = page_style, page = "home")),
-    shiny.router::route("patient_level_data", make_layout(language = language, page_style = page_style, page = "patient_level_data")),
-    shiny.router::route("aggregated_data", make_layout(language = language, page_style = page_style, page = "aggregated_data")),
-    shiny.router::route("settings/general", make_layout(language = language, page_style = page_style, page = "settings/general")),
-    shiny.router::route("settings/app_db", make_layout(language = language, page_style = page_style, page = "settings/app_db")),
-    shiny.router::route("settings/users", make_layout(language = language, page_style = page_style, page = "settings/users")),
-    shiny.router::route("settings/data", make_layout(language = language, page_style = page_style, page = "settings/data")),
-    shiny.router::route("help", make_layout(language = language, page_style = page_style, page = "help"))
-  )
+  if (router_on == TRUE){
+    router <- shiny.router::make_router(
+      shiny.router::route("/", make_layout(language = language, page_style = page_style, page = "home")),
+      shiny.router::route("patient_level_data", make_layout(language = language, page_style = page_style, page = "patient_level_data")),
+      shiny.router::route("aggregated_data", make_layout(language = language, page_style = page_style, page = "aggregated_data")),
+      shiny.router::route("settings/general", make_layout(language = language, page_style = page_style, page = "settings/general")),
+      shiny.router::route("settings/app_db", make_layout(language = language, page_style = page_style, page = "settings/app_db")),
+      shiny.router::route("settings/users", make_layout(language = language, page_style = page_style, page = "settings/users")),
+      shiny.router::route("settings/data", make_layout(language = language, page_style = page_style, page = "settings/data")),
+      shiny.router::route("help", make_layout(language = language, page_style = page_style, page = "help"))
+    )
+  }
   
   with_golem_options(
     app = shinyApp(
-      ui = app_ui(router = router, css = css, page_style = page_style),
-      server = app_server(router = router),
+      ui = app_ui(router_on = router_on, router = router, css = css, page_style = page_style, page = page),
+      server = app_server(router_on = router_on, router = router),
       onStart = onStart,
       options = options, 
       enableBookmarking = enableBookmarking, 

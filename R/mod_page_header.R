@@ -9,7 +9,10 @@
 #' @importFrom shiny NS tagList 
 mod_page_header_ui <- function(id, language, page_style, page){
   ns <- NS(id)
-  div(class = "header",
+  result <- div()
+  
+  if (page_style == "fluent"){
+    div(class = "header",
       div(class = "title", shiny.fluent::Text(variant = "xLarge", "CDW Tools")),
       div(class = "header_left_bar", 
           shiny.fluent::CommandBar(
@@ -35,7 +38,10 @@ mod_page_header_ui <- function(id, language, page_style, page){
             )
           )
       )
-  )
+    ) -> result
+  }
+  
+  result
 }
 
 #' top_panel Server Functions

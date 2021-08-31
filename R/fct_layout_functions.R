@@ -29,11 +29,19 @@ make_page <- function (title, subtitle, contents) {
   contents)
 }
 
-make_layout <- function(language, page_style = "fluent", page = "home"){
-  div(class = "grid-container",
+make_layout <- function(language, page_style, page){
+  if (page_style == "fluent"){
+    div(class = "grid-container",
       mod_page_header_ui(paste0("page_header_ui_", page), language, page_style, page),
       mod_page_sidenav_ui(paste0("page_sidenav_ui_", page), language, page_style, page),
       mod_page_main_ui(paste0("page_header_ui_", page), language, page_style, page),
       mod_page_footer_ui(paste0("page_footer_ui_", page), language, page_style, page)
-      )
+    ) -> result
+  }
+  
+  if (page_style == "fluid"){
+    
+  }
+  
+  result
 }

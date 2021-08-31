@@ -185,10 +185,22 @@ mod_page_main_ui <- function(id, language, page_style, page){
       
       if (page == "settings/app_db"){
         div(class = "main",
-          make_card("Application database",
-            div()          
+          make_card(translate(language, "app_db"),
+            div(
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 50),
+                div(div(class = "dropdown_title", translate(language, "db_connexion_type")),
+                    shiny.fluent::ChoiceGroup.shinyInput("db_connexion_type", value = "local", options = list(
+                      list(key = "local", text = translate(language, "local")),
+                      list(key = "distant", text = translate(language, "distant"))
+                    ))
+                )
+              ), br(),
+              shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
+            )
           )
-        )
+        ) -> result
       }
     }
   }
