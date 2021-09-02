@@ -110,7 +110,19 @@ get_translations <- function(){
             "EN", "user", "User",
             "FR", "user", "Utilisateur",
             "EN", "password", "Password",
-            "FR", "password", "Password"
+            "FR", "password", "Password",
+            "EN", "username", "Username",
+            "FR", "username", "Pseudo",
+            "EN", "create_user", "Create user",
+            "FR", "create_user", "Créer nouvel utilisateur",
+            "EN", "first_name", "First name",
+            "FR", "first_name", "Prénom",
+            "EN", "last_name", "Last name",
+            "FR", "last_name", "Nom",
+            "EN", "add", "Add",
+            "FR", "add", "Ajouter",
+            "EN", "test_connection", "Test connection",
+            "FR", "test_connection", "Tester la connexion"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

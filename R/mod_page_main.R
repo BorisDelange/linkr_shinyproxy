@@ -12,7 +12,16 @@ mod_page_main_ui <- function(id, language, page_style, page){
   ns <- NS(id)
   result <- div()
   
+  ##########################################
+  # Fluent                                 #
+  ##########################################
+  
   if (page_style == "fluent"){
+    
+    ##########################################
+    # Fluent / Home                          #
+    ##########################################
+    
     if (page == "home"){
       div(class = "main",
         div(
@@ -24,33 +33,13 @@ mod_page_main_ui <- function(id, language, page_style, page){
               "Test"
             )
           )
-          # make_card(
-          #   "My first card !",
-          #   div(
-          #     shiny.fluent::Text("Welcome")
-          #   )),
-          # make_card(
-          #   "Second one",
-          #   div(
-          #     shiny.fluent::Text("OK")
-          #   )),
-          # shiny.fluent::Stack(
-          #   horizontal = TRUE,
-          #   tokens = list(childrenGap = 10),
-          #   make_card(
-          #     "This is a third card", 
-          #     div(shiny.fluent::Text("Test of a text"), br(), shiny.fluent::Text("Another text")),
-          #     size = 4,
-          #   ),
-          #   make_card(
-          #     "This is a 4th card", 
-          #     div(shiny.fluent::Text("Test of a text"), br(), shiny.fluent::Text("Another text")),
-          #     size = 8,
-          #   )
-          # )
         )
       ) -> result
     }
+    
+    ##########################################
+    # Fluent / Patient-level data            #
+    ##########################################
     
     if (page == "patient_level_data"){
       div(class = "main",
@@ -74,6 +63,10 @@ mod_page_main_ui <- function(id, language, page_style, page){
         )
       ) -> result
     }
+    
+    ##########################################
+    # Fluent / Aggregated data               #
+    ##########################################
     
     if (page == "aggregated_data"){
       div(class = "main",
@@ -106,6 +99,10 @@ mod_page_main_ui <- function(id, language, page_style, page){
         )
       ) -> result
     }
+    
+    ##########################################
+    # Fluent / Settings                      #
+    ##########################################
     
     if (grepl("^settings", page)){
       if(page == "settings/general"){
@@ -183,34 +180,79 @@ mod_page_main_ui <- function(id, language, page_style, page){
         ) -> result
       }
       
+      ##########################################
+      # Fluent / Settings / App database       #
+      ##########################################
+      
       if (page == "settings/app_db"){
         div(class = "main",
           make_card(translate(language, "app_db"),
             div(
-              div(div(class = "input_title", translate(language, "db_connexion_type")),
-                  shiny.fluent::ChoiceGroup.shinyInput("db_connexion_type", value = "local", options = list(
+              div(
+                div(class = "input_title", translate(language, "db_connexion_type")),
+                  shiny.fluent::ChoiceGroup.shinyInput(ns("db_connexion_type"), value = "local", options = list(
                     list(key = "local", text = translate(language, "local")),
                     list(key = "distant", text = translate(language, "distant"))
-                  ))
+                  )
+                )
               ),
+              shiny::conditionalPanel(
+                condition = "input.db_connexion_type == 'distant'", ns = ns,
+                shiny.fluent::Stack(
+                  horizontal = TRUE,
+                  tokens = list(childrenGap = 50),
+                  make_textfield(language, ns, "dbname"),
+                  make_textfield(language, ns, "host"),
+                  make_textfield(language, ns, "port"),
+                  make_textfield(language, ns, "user"),
+                  make_textfield(language, ns, "password", "password", TRUE)
+                )
+              ), br(),
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 20),
+                shiny.fluent::PrimaryButton.shinyInput(ns("save"), translate(language, "save")),
+                shiny.fluent::PrimaryButton.shinyInput(ns("test_connection"), translate(language, "test_connection"))
+              )
+            )
+          )
+        ) -> result
+      }
+      
+      ##########################################
+      # Fluent / Settings / Users              #
+      ##########################################
+      
+      if (page == "settings/users"){
+        div(class = "main",
+          make_card(translate(language, "create_user"),
+            div(
               shiny.fluent::Stack(
                 horizontal = TRUE,
                 tokens = list(childrenGap = 50),
-                make_textfield(language, "dbname"),
-                make_textfield(language, "host"),
-                make_textfield(language, "port"),
-                make_textfield(language, "user"),
-                make_textfield(language, "password")
+                make_textfield(language, ns, "username"),
+                make_textfield(language, ns, "first_name"),
+                make_textfield(language, ns, "last_name"),
+                make_textfield(language, ns, "password", type = "password", canRevealPassword = TRUE)
               ), br(),
-              shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
-            )
-          )
+              shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
+            )          
+          )  
         ) -> result
       }
     }
   }
   
+  ##########################################
+  # Fluid                                  #
+  ##########################################
+  
   if (page_style == "fluid"){
+    
+    ##########################################
+    # Fluid / Home                           #
+    ##########################################
+    
     if (page == "home"){
       shiny::mainPanel(
         shiny::tabsetPanel(
@@ -219,6 +261,10 @@ mod_page_main_ui <- function(id, language, page_style, page){
         )
       ) -> result
     }
+    
+    ##########################################
+    # Fluid / Patient-level data             #
+    ##########################################
     
     if (page == "patient_level_data"){
       shiny::mainPanel(
@@ -233,39 +279,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
   
   result
 }
-# mod_page_main_ui <- function(id){
-#   ns <- NS(id)
-#   div(class = "main",
-#     div(
-#       make_card(
-#         "My first card !",
-#         div(
-#           shiny.fluent::Text("Welcome")
-#         )),
-#       make_card(
-#         "Second one",
-#         div(
-#           shiny.fluent::Text("OK")
-#         )),
-#       shiny.fluent::Stack(
-#         horizontal = TRUE,
-#         tokens = list(childrenGap = 10),
-#         make_card(
-#           "This is a third card", 
-#           div(shiny.fluent::Text("Test of a text"), br(), shiny.fluent::Text("Another text")),
-#           size = 4,
-#         ),
-#         make_card(
-#           "This is a 4th card", 
-#           div(shiny.fluent::Text("Test of a text"), br(), shiny.fluent::Text("Another text")),
-#           size = 8,
-#         )
-#       )
-#     )
-#     # )
-#   )
-# }
-    
+
 #' page_main Server Functions
 #'
 #' @noRd 

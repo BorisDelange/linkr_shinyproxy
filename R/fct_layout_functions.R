@@ -51,7 +51,7 @@ make_layout <- function(language, page_style, page){
   result
 }
 
-make_textfield <- function(language, label){
+make_textfield <- function(language, ns, label, type = NULL, canRevealPassword = NULL){
   div(div(class = "input_title", translate(language, label)),
-      shiny.fluent::TextField.shinyInput(label))
+      shiny.fluent::TextField.shinyInput(ns(label), type = type, canRevealPassword = canRevealPassword))
 }
