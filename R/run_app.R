@@ -36,17 +36,30 @@ run_app <- function(
   # router <- shiny.router::make_router(
   #   purrr::map(pages, ~ shiny.router::route(.x, make_layout(page_style = "fluent", page = .x))))
   
+  routes <- vector("character", )
+  
   if (page_style == "fluent"){
     css <- "fluent_style.css"
+    # shiny.router::make_router(sapply(pages, function(page){
+    #   shiny.router::route(page, make_layout(language = language, page_style = page_style, page = page))})) -> page
+      
     shiny.router::make_router(
-      shiny.router::route("/", make_layout(language = language, page_style = page_style, page = "home")),
+      shiny.router::route("home/datamarts_studies", make_layout(language = language, page_style = page_style, page = "home/datamarts_studies")),
+      shiny.router::route("home/messages", make_layout(language = language, page_style = page_style, page = "home/messages")),
       shiny.router::route("patient_level_data", make_layout(language = language, page_style = page_style, page = "patient_level_data")),
       shiny.router::route("aggregated_data", make_layout(language = language, page_style = page_style, page = "aggregated_data")),
       shiny.router::route("settings/general", make_layout(language = language, page_style = page_style, page = "settings/general")),
       shiny.router::route("settings/app_db", make_layout(language = language, page_style = page_style, page = "settings/app_db")),
       shiny.router::route("settings/users", make_layout(language = language, page_style = page_style, page = "settings/users")),
-      shiny.router::route("settings/data", make_layout(language = language, page_style = page_style, page = "settings/data")),
-      shiny.router::route("help", make_layout(language = language, page_style = page_style, page = "help"))
+      shiny.router::route("settings/data_sources", make_layout(language = language, page_style = page_style, page = "settings/data_sources")),
+      shiny.router::route("settings/datamarts", make_layout(language = language, page_style = page_style, page = "settings/datamarts")),
+      shiny.router::route("settings/studies", make_layout(language = language, page_style = page_style, page = "settings/studies")),
+      shiny.router::route("settings/subsets", make_layout(language = language, page_style = page_style, page = "settings/subsets")),
+      shiny.router::route("settings/modules_patient_lvl", make_layout(language = language, page_style = page_style, page = "settings/modules_patient_lvl")),
+      shiny.router::route("settings/modules_aggregated", make_layout(language = language, page_style = page_style, page = "settings/modules_aggregated")),
+      shiny.router::route("settings/log", make_layout(language = language, page_style = page_style, page = "settings/log")),
+      shiny.router::route("help/get_started", make_layout(language = language, page_style = page_style, page = "help/get_started")),
+      shiny.router::route("help/data_management", make_layout(language = language, page_style = page_style, page = "help/data_management"))
     ) -> page
   }
   

@@ -38,5 +38,5 @@ Suggests:
 Config/testthat/edition: 3
 Language: en-US
 Remotes: 
-    Appsilon/shiny.fluent,
-    Appsilon/shiny.react
+    Appsilon/shiny.react,
+    Appsilon/shiny.fluent

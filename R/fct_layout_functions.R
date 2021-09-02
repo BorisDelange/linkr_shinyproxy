@@ -52,6 +52,20 @@ make_layout <- function(language, page_style, page){
 }
 
 make_textfield <- function(language, ns, label, type = NULL, canRevealPassword = NULL){
-  div(div(class = "input_title", translate(language, label)),
-      shiny.fluent::TextField.shinyInput(ns(label), type = type, canRevealPassword = canRevealPassword))
+  div(
+    div(class = "input_title", translate(language, label)),
+    shiny.fluent::TextField.shinyInput(ns(label), type = type, canRevealPassword = canRevealPassword)
+  )
+}
+
+make_dropdown <- function(language, ns, label, options, value = NULL, width = ""){
+  # options <- lapply(split(names(options), options), unname)
+  div(
+    div(class = "input_title", translate(language, label)),
+    div(shiny.fluent::Dropdown.shinyInput(ns(label), value = value, options = options, style = paste0("width:", width)))
+  )
+}
+
+make_ace_editor <- function(id, value, mode, height = "100%"){
+  shinyAce::aceEditor(id, value, mode, height)
 }

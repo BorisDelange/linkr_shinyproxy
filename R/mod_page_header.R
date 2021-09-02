@@ -17,7 +17,7 @@ mod_page_header_ui <- function(id, language, page_style, page){
       div(class = "header_left_bar", 
           shiny.fluent::CommandBar(
             items = list(
-              shiny.fluent::CommandBarItem(translate(language, "home"), "Home", href = shiny.router::route_link("/")),
+              shiny.fluent::CommandBarItem(translate(language, "home"), "Home", href = shiny.router::route_link("home/datamarts_studies")),
               shiny.fluent::CommandBarItem(translate(language, "patient_level_data"), "Contact", href = shiny.router::route_link("patient_level_data")),
               shiny.fluent::CommandBarItem(translate(language, "aggregated_data"), "BIDashboard", href = shiny.router::route_link("aggregated_data"))
             )
@@ -31,9 +31,9 @@ mod_page_header_ui <- function(id, language, page_style, page){
             items = list(
               shiny.fluent::CommandBarItem(translate(language, "settings"), "Settings", iconOnly = TRUE, 
                                            href = shiny.router::route_link("settings/general")),
-              shiny.fluent::CommandBarItem(translate(language, "help"), "Info", iconOnly = TRUE, href = shiny.router::route_link("help")),
+              shiny.fluent::CommandBarItem(translate(language, "help"), "Info", iconOnly = TRUE, href = shiny.router::route_link("help/get_started")),
               shiny.fluent::CommandBarItem(translate(language, "messages"), "Message", iconOnly = TRUE,
-                                           href = shiny.router::route_link("messages")),
+                                           href = shiny.router::route_link("home/messages")),
               shiny.fluent::CommandBarItem(translate(language, "disconnect"), "PowerButton", iconOnly = TRUE)
             )
           )

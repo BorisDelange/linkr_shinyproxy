@@ -105,8 +105,15 @@ mod_page_main_ui <- function(id, language, page_style, page){
     ##########################################
     
     if (grepl("^settings", page)){
+      
+      ##########################################
+      # Fluent / General settings              #
+      ##########################################
+      
       if(page == "settings/general"){
         div(class = "main",
+          # Hidden aceEditor, allows the other to be displayed...
+          div(shinyAce::aceEditor("test"), style = "display: none;"),
           make_card(
             translate(language, "general"),
             div(
@@ -132,50 +139,62 @@ mod_page_main_ui <- function(id, language, page_style, page){
               )
             )
           ),
-          # div(shinyAce::aceEditor("css_code", mode = "css", height = 300, value = "CSS code"), style = "width: 300px;")
           make_card(
             translate(language, "appearance"),
             div(
-              shiny.fluent::Pivot(
-                shiny.fluent::PivotItem(headerText = translate(language, "choices"),
+              # shiny.fluent::Pivot(
+                # shiny.fluent::PivotItem(headerText = translate(language, "choices"),
                   div(
                     shiny.fluent::Stack(
                       horizontal = TRUE,
                       tokens = list(childrenGap = 50),
-                      div(br(),
-                        div(class = "input_title", translate(language, "page_type")),
-                        shiny.fluent::ChoiceGroup.shinyInput("page_type", value = "fluent", options = list(
-                          list(key = "fluent", text = "Fluent UI"),
-                          list(key = "fluid", text = "Fluid UI")
-                        ))
-                      ),
-                      div(br(),
-                        div(class = "input_title", translate(language, "page_theme")),
+                      # shiny.fluent::Stack(
+                      #   horizontal = FALSE,
                         div(
-                          shiny.fluent::Dropdown.shinyInput("page_theme",  translate(language, "page_theme"),
-                            value = "darker", options = list(
-                            list(key = "darker", text = "Darker"),
-                            list(key = "light", text = "Light"),
-                            list(key = "neutralQuaternary", text = "neutralQuaternary")
+                          div(class = "input_title", translate(language, "page_type")),
+                          shiny.fluent::ChoiceGroup.shinyInput("page_type", value = "fluent", options = list(
+                            list(key = "fluent", text = "Fluent UI"),
+                            list(key = "fluid", text = "Fluid UI")
                           )),
-                          style = "min-width: 200px;"
-                        )
-                      )
+                          style = "min-width: 180px;"
+                        ), htmltools::br(),
+                        div(div(class = "input_title", translate(language, "page_theme")),
+                          div(
+                            shiny.fluent::Dropdown.shinyInput("page_theme",  translate(language, "page_theme"),
+                              value = "darker", options = list(
+                              list(key = "darker", text = "Darker"),
+                              list(key = "light", text = "Light"),
+                              list(key = "neutralQuaternary", text = "neutralQuaternary")
+                            )),
+                            style = "min-width: 200px;"
+                          )
+                        ),
+                      # ),
+                      div(shinyAce::aceEditor("css_code", ".title {\n  padding: 5px 10px 0px 10px;\n  color: #737373;\n}", "css", 
+                                              height = "200px"), style = "width: 100%;")
                     ), br(),
                     shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
                   )
-                ),
-                shiny.fluent::PivotItem(headerText = translate(language, "code"), br(),
-                  shiny.fluent::TextField.shinyInput(
-                    "code_css",
-                    value = ".header {\n  grid-area: header;\n  background-color: #fff;\n  display: flex;\n}",
-                    multiline = TRUE, autoAdjustHeight = TRUE, underlined = FALSE
-                  ), br(),
-                  shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
-                  # div(shinyAce::aceEditor("css_code", mode = "css", height = 300, value = "CSS code"), style = "width: 500px;")
-                )
-              )
+                # ),
+                # shiny.fluent::PivotItem(headerText = translate(language, "code"), br(),
+                #   make_ace_editor("css_code", "", "css"),
+                #   htmltools::br(),
+                #   shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
+                # )
+              # )
             )
+          ),
+          make_card(
+            translate(language, "my_account"),
+            div(
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 30),
+                make_textfield(language, ns, "old_password", "password", TRUE),
+                make_textfield(language, ns, "new_password", "password", TRUE)
+              ), htmltools::br(),
+              shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
+            ),
           )
         ) -> result
       }
@@ -225,7 +244,8 @@ mod_page_main_ui <- function(id, language, page_style, page){
       
       if (page == "settings/users"){
         div(class = "main",
-          make_card(translate(language, "create_user"),
+          make_card(
+            translate(language, "create_user"),
             div(
               shiny.fluent::Stack(
                 horizontal = TRUE,
@@ -233,11 +253,114 @@ mod_page_main_ui <- function(id, language, page_style, page){
                 make_textfield(language, ns, "username"),
                 make_textfield(language, ns, "first_name"),
                 make_textfield(language, ns, "last_name"),
-                make_textfield(language, ns, "password", type = "password", canRevealPassword = TRUE)
+                make_textfield(language, ns, "password", type = "password", canRevealPassword = TRUE),
+                make_dropdown(language, ns, "user_access", list(
+                  list(key = "admin", text = "Admin"),
+                  list(key = "user", text = "User")
+                  ), "user", "200px")
               ), br(),
               shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
             )          
-          )  
+          ),
+          make_card(
+            translate(language, "user_management"),
+            div(
+              shiny.fluent::DetailsList(
+                compact = TRUE, checkboxVisibility = "hidden",
+                items = list(
+                  list(key = "1", username = "JDoe", first_name = "Johnnnnnnnnnnnnn", last_name = "Doe", user_access = "User"),
+                  list(key = "2", username = "Jane", first_name = "Jane", last_name = "Doe", user_access = "Admin")
+                ),
+                columns = list(
+                  list(key = "username", fieldName = "username", name = "Username", minWidth = 200, maxWidth = 200, isResizable = TRUE),
+                  list(key = "first_name", fieldName = "first_name", name = "First name", minWidth = 200, maxWidth = 200, isResizable = TRUE),
+                  list(key = "last_name", fieldName = "last_name", name = "Last name", minWidth = 200, maxWidth = 200, isResizable = TRUE),
+                  list(key = "user_access", fieldName = "user_access", name = "User", minWidth = 200, maxWidth = 200, isResizable = TRUE)
+                )
+              )
+            )
+          )
+        ) -> result
+      }
+      
+      ##########################################
+      # Fluent / Settings / Data sources       #
+      ##########################################
+      
+      if (page == "settings/data_sources"){
+        div(class = "main",
+          make_card(translate(language, "data_sources_create"),
+            div(
+              "..."
+            )
+          ),
+          make_card(translate(language, "data_sources_management"),
+            div(
+              "..."
+            )
+          )
+        ) -> result
+      }
+      
+      ##########################################
+      # Fluent / Settings / Datamarts          #
+      ##########################################
+      
+      if (page == "settings/datamarts"){
+        div(class = "main",
+          make_card(translate(language, "datamarts_create"),
+            div(
+              "..."
+            )
+          ),
+          make_card(translate(language, "datamarts_management"),
+            div(
+              "..."
+            )
+          ),
+          make_card(translate(language, "datamarts_access"),
+            div(
+              "..."
+            )
+          )
+        ) -> result
+      }
+      
+      ##########################################
+      # Fluent / Settings / Studies            #
+      ##########################################
+      
+      if (page == "settings/studies"){
+        div(class = "main",
+          make_card(translate(language, "studies_create"),
+            div(
+              "..."
+            )
+          ),
+          make_card(translate(language, "studies_management"),
+            div(
+              "..."
+            )
+          )
+        ) -> result
+      }
+      
+      ##########################################
+      # Fluent / Settings / Subsets            #
+      ##########################################
+      
+      if (page == "settings/subsets"){
+        div(class = "main",
+          make_card(translate(language, "subsets_create"),
+            div(
+              "..."
+            )
+          ),
+          make_card(translate(language, "subsets_management"),
+            div(
+              "..."
+            )
+          )
         ) -> result
       }
     }

@@ -14,14 +14,10 @@ mod_page_footer_ui <- function(id, language, page_style, page){
       horizontal = TRUE,
       horizontalAlign = 'space-between',
       tokens = list(childrenGap = 20),
-      # shiny.fluent::CommandBar(
-      #   items = list(
-      #     shiny.fluent::CommandBarItem("Git Hub", "GitHubLogo", iconOnly = TRUE)
-      #   )
-      # )
-      # shiny.fluent::IconButton("github", href = "https://github.com/BorisDelange/cdwtools",
-      #                          iconProps = list(iconName = "Home"))
-    )    
+      shiny.fluent::Text(variant = "medium", "Github", block=TRUE),
+      shiny.fluent::Text(variant = "medium", nowrap = FALSE, "Please cite with ..."),
+      shiny.fluent::Text(variant = "medium", nowrap = FALSE, "CDW Tools version 0.0.0.900")
+    )
   )
 }
     
