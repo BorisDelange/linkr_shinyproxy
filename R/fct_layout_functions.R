@@ -51,21 +51,43 @@ make_layout <- function(language, page_style, page){
   result
 }
 
-make_textfield <- function(language, ns, label, type = NULL, canRevealPassword = NULL){
+make_textfield <- function(language, ns, label, value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL){
+  style <- ""
+  if (!is.null(width)) style <- paste0("width: ", width)
+  if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0("min-width: ", min_width, "; max-width: ", max_width)
   div(
     div(class = "input_title", translate(language, label)),
-    shiny.fluent::TextField.shinyInput(ns(label), type = type, canRevealPassword = canRevealPassword)
+    div(shiny.fluent::TextField.shinyInput(ns(label), value = value, type = type, canRevealPassword = canRevealPassword), style = style)
   )
 }
 
-make_dropdown <- function(language, ns, label, options, value = NULL, width = ""){
+make_dropdown <- function(language, ns, label, options, value = NULL, width = NULL, min_width = NULL, max_width = NULL){
   # options <- lapply(split(names(options), options), unname)
+  style <- ""
+  if (!is.null(width)) style <- paste0("width: ", width)
+  if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0("min-width: ", min_width, "; max-width: ", max_width)
   div(
     div(class = "input_title", translate(language, label)),
-    div(shiny.fluent::Dropdown.shinyInput(ns(label), value = value, options = options, style = paste0("width:", width)))
+    div(shiny.fluent::Dropdown.shinyInput(ns(label), value = value, options = options), style = style)
   )
 }
 
-make_ace_editor <- function(id, value, mode, height = "100%"){
-  shinyAce::aceEditor(id, value, mode, height)
+make_persona_picker <- function(language, ns, label, options, value = NULL, width = NULL, min_width = NULL, max_width = NULL){
+  style <- ""
+  if (!is.null(width)) style <- paste0("width: ", width)
+  if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0("min-width: ", min_width, "; max-width: ", max_width)
+  div(
+    div(class = "input_title", translate(language, label)),
+    div(shiny.fluent::NormalPeoplePicker.shinyInput(
+     ns(label),
+      options = options,
+      pickerSuggestionsProps = list(
+        suggestionsHeaderText = translate(language, "matching_people"),
+        noResultsFoundText = translate(language, "no_results_found"),
+        showRemoveButtons = TRUE
+      ),
+     defaultSelectedItems = options %>% dplyr::filter(key %in% value)),
+      style = style
+    )
+  )
 }

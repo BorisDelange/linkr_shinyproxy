@@ -13,6 +13,7 @@ mod_page_header_ui <- function(id, language, page_style, page){
   
   if (page_style == "fluent"){
     div(class = "header",
+      div(htmltools::img(src = "www/logo.png", style = "height: 25px;"), class = "logo"),
       div(class = "title", shiny.fluent::Text(variant = "xLarge", "CDW Tools")),
       div(class = "header_left_bar", 
           shiny.fluent::CommandBar(

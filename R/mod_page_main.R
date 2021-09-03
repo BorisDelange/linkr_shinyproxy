@@ -148,8 +148,8 @@ mod_page_main_ui <- function(id, language, page_style, page){
                     shiny.fluent::Stack(
                       horizontal = TRUE,
                       tokens = list(childrenGap = 50),
-                      # shiny.fluent::Stack(
-                      #   horizontal = FALSE,
+                      shiny.fluent::Stack(
+                        horizontal = FALSE,
                         div(
                           div(class = "input_title", translate(language, "page_type")),
                           shiny.fluent::ChoiceGroup.shinyInput("page_type", value = "fluent", options = list(
@@ -157,23 +157,24 @@ mod_page_main_ui <- function(id, language, page_style, page){
                             list(key = "fluid", text = "Fluid UI")
                           )),
                           style = "min-width: 180px;"
-                        ), htmltools::br(),
-                        div(div(class = "input_title", translate(language, "page_theme")),
-                          div(
-                            shiny.fluent::Dropdown.shinyInput("page_theme",  translate(language, "page_theme"),
-                              value = "darker", options = list(
-                              list(key = "darker", text = "Darker"),
-                              list(key = "light", text = "Light"),
-                              list(key = "neutralQuaternary", text = "neutralQuaternary")
-                            )),
-                            style = "min-width: 200px;"
-                          )
-                        ),
-                      # ),
+                        ), htmltools::br(), htmltools::br(), htmltools::br(), htmltools::br(),
+                        div(shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save")), style = "width: 100px")
+                      ),
+                      div(
+                        div(class = "input_title", translate(language, "page_theme")),
+                        div(
+                          shiny.fluent::Dropdown.shinyInput("page_theme",  translate(language, "page_theme"),
+                            value = "darker", options = list(
+                            list(key = "darker", text = "Darker"),
+                            list(key = "light", text = "Light"),
+                            list(key = "neutralQuaternary", text = "neutralQuaternary")
+                          )),
+                          style = "min-width: 200px;"
+                        )
+                      ),
                       div(shinyAce::aceEditor("css_code", ".title {\n  padding: 5px 10px 0px 10px;\n  color: #737373;\n}", "css", 
                                               height = "200px"), style = "width: 100%;")
-                    ), br(),
-                    shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
+                    )
                   )
                 # ),
                 # shiny.fluent::PivotItem(headerText = translate(language, "code"), br(),
@@ -204,8 +205,11 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ##########################################
       
       if (page == "settings/app_db"){
+        # Hidden aceEditor, allows the other to be displayed...
+        div(shinyAce::aceEditor("test"), style = "display: none;")
         div(class = "main",
-          make_card(translate(language, "app_db"),
+          make_card(
+            translate(language, "app_db"),
             div(
               div(
                 div(class = "input_title", translate(language, "db_connexion_type")),
@@ -224,7 +228,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
                   make_textfield(language, ns, "host"),
                   make_textfield(language, ns, "port"),
                   make_textfield(language, ns, "user"),
-                  make_textfield(language, ns, "password", "password", TRUE)
+                  make_textfield(language, ns, "password", type = "password", canRevealPassword = TRUE)
                 )
               ), br(),
               shiny.fluent::Stack(
@@ -233,6 +237,27 @@ mod_page_main_ui <- function(id, language, page_style, page){
                 shiny.fluent::PrimaryButton.shinyInput(ns("save"), translate(language, "save")),
                 shiny.fluent::PrimaryButton.shinyInput(ns("test_connection"), translate(language, "test_connection"))
               )
+            )
+          ),
+          make_card(
+            translate(language, "app_db_tables"),
+            shiny.fluent::DetailsList(
+              compact = TRUE,
+              items = list(
+                list(key = "1", table_name = "Users", nrows = 51),
+                list(key = "2", table_name = "Datamarts", nrows = 13)
+              ),
+              columns = list(
+                list(key = "table_name", fieldName = "table_name", name = "Table name", minWidth = 200, maxWidth = 200, isResizable = TRUE),
+                list(key = "nrows", fieldName = "nrows", name = "Num of rows", minWidth = 200, maxWidth = 200, isResizable = TRUE)
+              )
+            )
+          ),
+          make_card(
+            translate(language, "app_db_request"),
+            div(
+              div(shinyAce::aceEditor("app_db_request", "SELECT * FROM my_table", "sql", height = "200px"), style = "width: 50%;"),
+              shiny.fluent::PrimaryButton.shinyInput(ns("request"), translate(language, "request"))
             )
           )
         ) -> result
@@ -257,7 +282,11 @@ mod_page_main_ui <- function(id, language, page_style, page){
                 make_dropdown(language, ns, "user_access", list(
                   list(key = "admin", text = "Admin"),
                   list(key = "user", text = "User")
-                  ), "user", "200px")
+                  ), "user", "200px"),
+                make_dropdown(language, ns, "user_status", list(
+                  list(key = "intensivist", text = "Clinician"),
+                  list(key = "data_scientist", text = "Data scientist")
+                ), "user", "200px")
               ), br(),
               shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
             )          
@@ -320,7 +349,20 @@ mod_page_main_ui <- function(id, language, page_style, page){
           ),
           make_card(translate(language, "datamarts_access"),
             div(
-              "..."
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 50),
+                make_dropdown(language, ns, "datamart_access_choice", list(
+                  list(key = "ufh", text = "Cohorte héparine"),
+                  list(key = "wmv", text = "Sevrage ventilation")
+                ), "ufh", "300px"),
+                make_persona_picker(language, ns, "datamart_access_people", options = tibble::tribble(
+                  ~key, ~imageInitials, ~text, ~secondaryText,
+                  1, "JD", "John Doe", "Intensivist",
+                  2, "JD", "Jane Doe", "Data scientist"
+                ), value = c(1), min_width = "300px", max_width = "500px")
+              ), htmltools::br(),
+              shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
             )
           )
         ) -> result
@@ -341,6 +383,36 @@ mod_page_main_ui <- function(id, language, page_style, page){
             div(
               "..."
             )
+          ),
+          make_card(translate(language, "studies_access"),
+            div(
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 50),
+                make_dropdown(language, ns, "studies_access_choice", list(
+                  list(key = "study1", text = "Study 1 - first anti-Xa"),
+                  list(key = "study2", text = "Study 2 - all anti-Xa")
+                ), "study2", "300px"),
+                div(
+                  div(class = "input_title", translate(language, "studies_access_people")),
+                  shiny.fluent::NormalPeoplePicker.shinyInput(
+                    "studies_access_people",
+                    options = tibble::tribble(
+                      ~key, ~imageInitials, ~text, ~secondaryText,
+                      1, "JD", "John Doe", "Intensivist",
+                      2, "JD", "Jane Doe", "Data scientist"
+                    ),
+                    pickerSuggestionsProps = list(
+                      suggestionsHeaderText = translate(language, "matching_people"),
+                      noResultsFoundText = translate(language, "no_results_found"),
+                      showRemoveButtons = TRUE
+                    )
+                  ),
+                  style = "width: 500px;"
+                )
+              ), htmltools::br(),
+              shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
+            )
           )
         ) -> result
       }
@@ -357,6 +429,126 @@ mod_page_main_ui <- function(id, language, page_style, page){
             )
           ),
           make_card(translate(language, "subsets_management"),
+            div(
+              "..."
+            )
+          )
+        ) -> result
+      }
+      
+      ###########################################
+      # Fluent / Settings / Plugins             #
+      ###########################################
+      
+      if (page == "settings/plugins"){
+        div(class = "main",
+          make_card(translate(language, "plugins_create"),
+            div(
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 50),
+                make_textfield(language, ns, "plugin_name", value = "", min_width = "300px", max_width = "500px"),
+                make_dropdown(language, ns, "plugin_page", options = list(
+                  list(key = "none", text = "None"),
+                  list(key = "patient_lvl_data", text = "Patient-level data"),
+                  list(key = "aggregated_data", text = "Aggregated data")
+                ), value = "none", min_width = "300px", max_width = "500px")
+              ), htmltools::br(),
+              shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
+            )
+          ),
+          make_card(translate(language, "plugins_management"),
+            div(
+              "..."
+            )
+          )
+        ) -> result
+      }
+      
+      ###########################################
+      # Fluent / Settings / Modules patient-lvl #
+      ###########################################
+      
+      if (page == "settings/modules_patient_lvl"){
+        div(class = "main",
+          make_card(translate(language, "modules_create"),
+            div(
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 50),
+                make_textfield(language, ns, "module_name", value = "", min_width = "300px", max_width = "500px"),
+                make_dropdown(language, ns, "module_parent", options = list(
+                  list(key = "none", text = "None"),
+                  list(key = "stays", text = "Stays"),
+                  list(key = "notes", text = "Long text here for test - clinical notes")
+                ), value = "none", min_width = "300px", max_width = "500px"),
+                make_dropdown(language, ns, "module_family", options = list(
+                  list(key = "metavision_default", text = "Metavision default"),
+                  list(key = "metavision_perso1", text = "Metavision perso 1")
+                ), value = "metavision_default", min_width = "300px", max_width = "500px")
+              ),
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 50),
+                make_dropdown(language, ns, "module_access_type", options = list(
+                  list(key = "everybody", text = "To everybody"),
+                  list(key = "by_user_status", text = "By user status"),
+                  list(key = "by_user_access", text = "By user access"),
+                  list(key = "by_persona_picker", text = "Select users")
+                ), value = "everybody", min_width = "300px", max_width = "500px"),
+                shiny::conditionalPanel(
+                  condition = "input.module_access_type == 'by_persona_picker'", ns = ns,
+                  make_persona_picker(language, ns, "module_access_people", options = tibble::tribble(
+                    ~key, ~imageInitials, ~text, ~secondaryText,
+                    1, "JD", "John Doe", "Intensivist",
+                    2, "JD", "Jane Doe", "Data scientist"
+                  ), value = c(1), min_width = "300px", max_width = "500px")
+                ),
+                shiny::conditionalPanel(
+                  condition = "input.module_access_type == 'by_user_status'", ns = ns,
+                  make_dropdown(language, ns, "user_status", list(
+                    list(key = "intensivist", text = "Clinician"),
+                    list(key = "data_scientist", text = "Data scientist")
+                  ), value = "user", min_width = "300px", max_width = "500px")
+                )
+              ), htmltools::br(),
+              shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
+            )
+          ),
+          make_card(translate(language, "modules_management"),
+            div(br(),
+              "DataTable with : name of module, parent module, module family, creator, who has access", br(),
+              "Or a dropdown of modules", br(),
+              "Or both with pivot", br(),
+              "On selection : modify a module", br(),
+              "For the access : dropdown with selection mode : everybody ? by user status ? by user access ? by persona picker ?"
+            )
+          )
+        ) -> result
+      }
+      
+      ###########################################
+      # Fluent / Settings / Modules aggregated  #
+      ###########################################
+      
+      if (page == "settings/modules_aggregated"){
+        div(class = "main",
+          make_card(translate(language, "modules_create"),
+            div(
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 50),
+                make_textfield(language, ns, "module_name", width = "300px"),
+                make_dropdown(language, ns, "module_parent", options = list(
+                  list(key = "none", text = "None"),
+                  list(key = "inclusions", text = "Inclusions"),
+                  list(key = "analysis", text = "Analysis")
+                ), "none", "300px")
+              ), htmltools::br(),
+              shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
+            )
+          ),
+          make_card(translate(language, "modules_management"),
             div(
               "..."
             )

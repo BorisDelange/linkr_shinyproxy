@@ -113,7 +113,8 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
                 initialSelectedKey = "data_source",
                 selectedKey = substr(page, nchar("settings") + 2, 100),
                 isExpanded = TRUE),
-              list(name = translate(language, "modules"), key = "modules", links = list(
+              list(name = translate(language, "modules_plugins"), key = "modules", links = list(
+                list(name = translate(language, "plugins"), key = "plugins", url = shiny.router::route_link("settings/plugins")),
                 list(name = translate(language, "modules_patient_lvl"), key = "modules_patient_lvl", url = shiny.router::route_link("settings/modules_patient_lvl")),
                 list(name = translate(language, "modules_aggregated"), key = "modules_aggregated", url = shiny.router::route_link("settings/modules_aggregated"))
               ),
