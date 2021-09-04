@@ -10,7 +10,7 @@
 
 mod_page_main_ui <- function(id, language, page_style, page){
   ns <- NS(id)
-  result <- div()
+  result <- ""
   
   ##########################################
   # Fluent                                 #
@@ -372,50 +372,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       # Fluent / Settings / Studies            #
       ##########################################
       
-      if (page == "settings/studies"){
-        div(class = "main",
-          make_card(translate(language, "studies_create"),
-            div(
-              "..."
-            )
-          ),
-          make_card(translate(language, "studies_management"),
-            div(
-              "..."
-            )
-          ),
-          make_card(translate(language, "studies_access"),
-            div(
-              shiny.fluent::Stack(
-                horizontal = TRUE,
-                tokens = list(childrenGap = 50),
-                make_dropdown(language, ns, "studies_access_choice", list(
-                  list(key = "study1", text = "Study 1 - first anti-Xa"),
-                  list(key = "study2", text = "Study 2 - all anti-Xa")
-                ), "study2", "300px"),
-                div(
-                  div(class = "input_title", translate(language, "studies_access_people")),
-                  shiny.fluent::NormalPeoplePicker.shinyInput(
-                    "studies_access_people",
-                    options = tibble::tribble(
-                      ~key, ~imageInitials, ~text, ~secondaryText,
-                      1, "JD", "John Doe", "Intensivist",
-                      2, "JD", "Jane Doe", "Data scientist"
-                    ),
-                    pickerSuggestionsProps = list(
-                      suggestionsHeaderText = translate(language, "matching_people"),
-                      noResultsFoundText = translate(language, "no_results_found"),
-                      showRemoveButtons = TRUE
-                    )
-                  ),
-                  style = "width: 500px;"
-                )
-              ), htmltools::br(),
-              shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
-            )
-          )
-        ) -> result
-      }
+      # mod_settings_data_management_ui("settings_studies", language, page_style, page) -> result
       
       ##########################################
       # Fluent / Settings / Subsets            #
@@ -552,6 +509,49 @@ mod_page_main_ui <- function(id, language, page_style, page){
             div(
               "..."
             )
+          )
+        ) -> result
+      }
+      
+      ###########################################
+      # Fluent / Settings / Log                 #
+      ###########################################
+      
+      if (page == "settings/log"){
+        div(class = "main",
+          make_card(translate(language, "log_filters"),
+            shiny.fluent::Stack(
+              horizontal = TRUE,
+              tokens = list(childrenGap = 50),
+              make_dropdown(language, ns, "log_filter_type", options = list(
+                list(key = "everybody", text = "To everybody"),
+                list(key = "myself", text = "My log only"),
+                list(key = "by_persona_picker", text = "Select users")
+              ), value = "everybody", min_width = "300px", max_width = "500px"),
+              shiny::conditionalPanel(
+                condition = "input.log_filter_type == 'by_persona_picker'", ns = ns,
+                make_persona_picker(language, ns, "log_filter_people", options = tibble::tribble(
+                  ~key, ~imageInitials, ~text, ~secondaryText,
+                  1, "JD", "John Doe", "Intensivist",
+                  2, "JD", "Jane Doe", "Data scientist"
+                ), value = c(1), min_width = "300px", max_width = "500px")
+              )
+            )         
+          ),
+          make_card(translate(language, "log_details"),
+            shiny.fluent::DetailsList(
+              compact = TRUE, checkboxVisibility = "hidden",
+              items = list(
+                list(key = "1", username = "JDoe", datetime = "2020-09-01 15:32:20", activity = "Include patient", value = "Study 1 - Patient 4653"),
+                list(key = "2", username = "Jane", datetime = "2020-08-23 10:00:37", activity = "Modify a report", value = "Study 2 - Introduction")
+              ),
+              columns = list(
+                list(key = "username", fieldName = "username", name = "Username", minWidth = 200, maxWidth = 200, isResizable = TRUE),
+                list(key = "datetime", fieldName = "datetime", name = "Datetime", minWidth = 200, maxWidth = 200, isResizable = TRUE),
+                list(key = "activity", fieldName = "activity", name = "Activity", minWidth = 200, maxWidth = 200, isResizable = TRUE),
+                list(key = "value", fieldName = "value", name = "Value", minWidth = 200, maxWidth = 200, isResizable = TRUE)
+              )
+            )        
           )
         ) -> result
       }

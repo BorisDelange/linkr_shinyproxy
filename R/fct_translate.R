@@ -59,10 +59,16 @@ get_translations <- function(){
             "FR", "datamarts_studies", "Datamarts & études",
             "EN", "studies_access", "Studies access",
             "FR", "studies_access", "Accès aux études",
-            "EN", "studies_access_choice", "Studies",
-            "FR", "studies_access_choice", "Etudes",
+            "EN", "studies_access_choice", "Study",
+            "FR", "studies_access_choice", "Etude",
             "EN", "studies_access_people", "Grant access to",
             "FR", "studies_access_people", "Permettre l'accès à",
+            "EN", "studies_management_choice", "Study",
+            "FR", "studies_management_choice", "Etude",
+            "EN", "study_patient_lvl_data_module_family", "Patient-level data module family",
+            "FR", "study_patient_lvl_data_module_family", "Données individuelles - groupe de modules",
+            "EN", "study_aggregated_data_module_family", "Aggregated data module family",
+            "FR", "study_aggregated_data_module_family", "Données agrégées - groupe de modules",
             "EN", "study", "Study",
             "FR", "study", "Etude",
             "EN", "studies", "Studies",
@@ -206,7 +212,15 @@ get_translations <- function(){
             "EN", "plugin_page", "Page where the plugin will be used",
             "FR", "plugin_page", "Page sur laquelle sera utilisé le plugin",
             "EN", "plugin_name", "Plugin name",
-            "FR", "plugin_name", "Nom du plugin"
+            "FR", "plugin_name", "Nom du plugin",
+            "EN", "log_filters", "Log filters",
+            "FR", "log_filters", "Filtrer l'historique",
+            "EN", "log_details", "Log details",
+            "FR", "log_details", "Détails de l'historique",
+            "EN", "log_filter_type", "Filter log of",
+            "FR", "log_filter_type", "Montrer l'historique de",
+            "EN", "log_filter_people", "Users",
+            "FR", "log_filter_people", "Utilisateurs"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
