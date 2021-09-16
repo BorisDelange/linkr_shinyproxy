@@ -55,6 +55,7 @@ run_app <- function(
       shiny.router::route("settings/datamarts", make_layout(language = language, page_style = page_style, page = "settings/datamarts")),
       shiny.router::route("settings/studies", make_layout(language = language, page_style = page_style, page = "settings/studies")),
       shiny.router::route("settings/subsets", make_layout(language = language, page_style = page_style, page = "settings/subsets")),
+      shiny.router::route("settings/thesaurus", make_layout(language = language, page_style = page_style, page = "settings/thesaurus")),
       shiny.router::route("settings/plugins", make_layout(language = language, page_style = page_style, page = "settings/plugins")),
       shiny.router::route("settings/modules_patient_lvl", make_layout(language = language, page_style = page_style, page = "settings/modules_patient_lvl")),
       shiny.router::route("settings/modules_aggregated", make_layout(language = language, page_style = page_style, page = "settings/modules_aggregated")),

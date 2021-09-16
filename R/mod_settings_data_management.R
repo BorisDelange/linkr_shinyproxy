@@ -12,7 +12,17 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
   result <- ""
   
   if (page_style == "fluent"){
-    if (page == "studies"){
+    if (page == "settings/data_sources"){
+      div(class = "main",
+        data_management_creation_card(language, ns, "create_data_source", name = "data_source_name", description = "data_source_description")
+      ) -> result
+    }
+    
+    if (page == "settings/datamarts"){
+      
+    }
+    
+    if (page == "settings/studies"){
       div(class = "main",
         make_card(translate(language, "studies_create"),
           div(
@@ -21,10 +31,11 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
         ),
         make_card(translate(language, "studies_management"),
           div(
-            make_dropdown(language, ns, "studies_management_choice", list(
-              list(key = "study1", text = "Study 1 - first anti-Xa"),
-              list(key = "study2", text = "Study 2 - all anti-Xa")
-            ), "study2", "300px"),
+            DT::DTOutput(ns("studies_datatable")),
+            # make_dropdown(language, ns, "studies_management_choice", list(
+            #   list(key = "study1", text = "Study 1 - first anti-Xa"),
+            #   list(key = "study2", text = "Study 2 - all anti-Xa")
+            # ), "study2", "300px"),
             shiny.fluent::Stack(
               horizontal = TRUE,
               tokens = list(childrenGap = 50),
@@ -61,17 +72,36 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
         )
       ) -> result
     }
+    
+    if (page == "settings/subsets"){
+      
+    }
+    
+    if (page == "settings/thesaurus"){
+      
+    }
   }
+  
   result
 }
     
 #' settings_studies Server Functions
 #'
 #' @noRd 
+# mod_settings_data_management_server <- function(id, page_style, page){
 mod_settings_data_management_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
- 
+    
+    output$studies_datatable <- DT::renderDT(
+      # iris,
+      tibble::tribble(~study_id, ~study_name,
+                      1, "Study 1",
+                      2, "Study 2"),
+      options = list()
+    )
+    
+    # output$test <- shiny::renderText("Mon texte")
   })
 }
     

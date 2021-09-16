@@ -22,7 +22,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
     # Fluent / Home                          #
     ##########################################
     
-    if (page == "home"){
+    if (grepl("^home", page)){
       div(class = "main",
         div(
           div(
@@ -30,7 +30,8 @@ mod_page_main_ui <- function(id, language, page_style, page){
             shiny.fluent::Stack(
               tokens = list(childrenGap = 5),
               shiny.fluent::Text(variant = "large", "Datamarts", block = TRUE),
-              "Test"
+              # shiny.fluent::Text(paste0("id = ", id)),
+              shiny.fluent::Text(shiny::textOutput(ns("test2")))
             )
           )
         )
@@ -213,7 +214,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
             div(
               div(
                 div(class = "input_title", translate(language, "db_connexion_type")),
-                  shiny.fluent::ChoiceGroup.shinyInput(ns("db_connexion_type"), value = "local", options = list(
+                  shiny.fluent::ChoiceGroup.shinyInput("db_connexion_type", value = "local", options = list(
                     list(key = "local", text = translate(language, "local")),
                     list(key = "distant", text = translate(language, "distant"))
                   )
@@ -234,8 +235,8 @@ mod_page_main_ui <- function(id, language, page_style, page){
               shiny.fluent::Stack(
                 horizontal = TRUE,
                 tokens = list(childrenGap = 20),
-                shiny.fluent::PrimaryButton.shinyInput(ns("save"), translate(language, "save")),
-                shiny.fluent::PrimaryButton.shinyInput(ns("test_connection"), translate(language, "test_connection"))
+                shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save")),
+                shiny.fluent::PrimaryButton.shinyInput("test_connection", translate(language, "test_connection"))
               )
             )
           ),
@@ -257,7 +258,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
             translate(language, "app_db_request"),
             div(
               div(shinyAce::aceEditor("app_db_request", "SELECT * FROM my_table", "sql", height = "200px"), style = "width: 50%;"),
-              shiny.fluent::PrimaryButton.shinyInput(ns("request"), translate(language, "request"))
+              shiny.fluent::PrimaryButton.shinyInput("request", translate(language, "request"))
             )
           )
         ) -> result
@@ -317,18 +318,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ##########################################
       
       if (page == "settings/data_sources"){
-        div(class = "main",
-          make_card(translate(language, "data_sources_create"),
-            div(
-              "..."
-            )
-          ),
-          make_card(translate(language, "data_sources_management"),
-            div(
-              "..."
-            )
-          )
-        ) -> result
+        mod_settings_data_management_ui("settings_data_sources", language, page_style, page) -> result
       }
       
       ##########################################
@@ -372,7 +362,9 @@ mod_page_main_ui <- function(id, language, page_style, page){
       # Fluent / Settings / Studies            #
       ##########################################
       
-      # mod_settings_data_management_ui("settings_studies", language, page_style, page) -> result
+      if (page == "settings/studies"){
+        mod_settings_data_management_ui("settings_studies", language, page_style, page) -> result
+      }
       
       ##########################################
       # Fluent / Settings / Subsets            #
@@ -601,7 +593,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
 mod_page_main_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
- 
+    output$test <- shiny::renderText("Mon texte")
   })
 }
     

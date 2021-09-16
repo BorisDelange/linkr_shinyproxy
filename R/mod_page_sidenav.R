@@ -108,7 +108,8 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
                 list(name = translate(language, "data_sources"), key = "data_sources", url = shiny.router::route_link("settings/data_sources")),
                 list(name = translate(language, "datamarts"), key = "datamarts", url = shiny.router::route_link("settings/datamarts")),
                 list(name = translate(language, "studies"), key = "studies", url = shiny.router::route_link("settings/studies")),
-                list(name = translate(language, "subsets"), key = "subsets", url = shiny.router::route_link("settings/subsets"))
+                list(name = translate(language, "subsets"), key = "subsets", url = shiny.router::route_link("settings/subsets")),
+                list(name = translate(language, "thesaurus"), key = "thesaurus", url = shiny.router::route_link("settings/thesaurus"))
                 ),
                 initialSelectedKey = "data_source",
                 selectedKey = substr(page, nchar("settings") + 2, 100),

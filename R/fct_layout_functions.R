@@ -34,7 +34,7 @@ make_layout <- function(language, page_style, page){
     div(class = "grid-container",
       mod_page_header_ui(paste0("page_header_ui_", page), language, page_style, page),
       mod_page_sidenav_ui(paste0("page_sidenav_ui_", page), language, page_style, page),
-      mod_page_main_ui(paste0("page_header_ui_", page), language, page_style, page),
+      mod_page_main_ui(paste0("page_main_ui_", page), language, page_style, page),
       mod_page_footer_ui(paste0("page_footer_ui_", page), language, page_style, page)
     ) -> result
   }
@@ -44,20 +44,21 @@ make_layout <- function(language, page_style, page){
       shiny::sidebarLayout(
         mod_page_sidenav_ui(paste0("page_sidenav_ui_", page), language, page_style, page),
         mod_page_main_ui(paste0("page_header_ui_", page), language, page_style, page)
-      )                
+      )
     ) -> result
   }
   
   result
 }
 
-make_textfield <- function(language, ns, label, value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL){
+make_textfield <- function(language, ns, label, id = NULL, value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL){
+  if (is.null(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0("width: ", width)
   if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0("min-width: ", min_width, "; max-width: ", max_width)
   div(
     div(class = "input_title", translate(language, label)),
-    div(shiny.fluent::TextField.shinyInput(ns(label), value = value, type = type, canRevealPassword = canRevealPassword), style = style)
+    div(shiny.fluent::TextField.shinyInput(ns(id), value = value, type = type, canRevealPassword = canRevealPassword), style = style)
   )
 }
 
