@@ -283,11 +283,11 @@ mod_page_main_ui <- function(id, language, page_style, page){
                 make_dropdown(language, ns, "user_access", list(
                   list(key = "admin", text = "Admin"),
                   list(key = "user", text = "User")
-                  ), "user", "200px"),
+                  ), value = "user", width = "200px"),
                 make_dropdown(language, ns, "user_status", list(
                   list(key = "intensivist", text = "Clinician"),
                   list(key = "data_scientist", text = "Data scientist")
-                ), "user", "200px")
+                ), value = "user", width = "200px")
               ), br(),
               shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
             )          
@@ -326,36 +326,37 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ##########################################
       
       if (page == "settings/datamarts"){
-        div(class = "main",
-          make_card(translate(language, "datamarts_create"),
-            div(
-              "..."
-            )
-          ),
-          make_card(translate(language, "datamarts_management"),
-            div(
-              "..."
-            )
-          ),
-          make_card(translate(language, "datamarts_access"),
-            div(
-              shiny.fluent::Stack(
-                horizontal = TRUE,
-                tokens = list(childrenGap = 50),
-                make_dropdown(language, ns, "datamart_access_choice", list(
-                  list(key = "ufh", text = "Cohorte héparine"),
-                  list(key = "wmv", text = "Sevrage ventilation")
-                ), "ufh", "300px"),
-                make_persona_picker(language, ns, "datamart_access_people", options = tibble::tribble(
-                  ~key, ~imageInitials, ~text, ~secondaryText,
-                  1, "JD", "John Doe", "Intensivist",
-                  2, "JD", "Jane Doe", "Data scientist"
-                ), value = c(1), min_width = "300px", max_width = "500px")
-              ), htmltools::br(),
-              shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
-            )
-          )
-        ) -> result
+        mod_settings_data_management_ui("settings_datamarts", language, page_style, page) -> result
+        # div(class = "main",
+        #   make_card(translate(language, "datamarts_create"),
+        #     div(
+        #       "..."
+        #     )
+        #   ),
+        #   make_card(translate(language, "datamarts_management"),
+        #     div(
+        #       "..."
+        #     )
+        #   ),
+        #   make_card(translate(language, "datamarts_access"),
+        #     div(
+        #       shiny.fluent::Stack(
+        #         horizontal = TRUE,
+        #         tokens = list(childrenGap = 50),
+        #         make_dropdown(language, ns, "datamart_access_choice", list(
+        #           list(key = "ufh", text = "Cohorte héparine"),
+        #           list(key = "wmv", text = "Sevrage ventilation")
+        #         ), value = "ufh", width = "300px"),
+        #         make_persona_picker(language, ns, "datamart_access_people", options = tibble::tribble(
+        #           ~key, ~imageInitials, ~text, ~secondaryText,
+        #           1, "JD", "John Doe", "Intensivist",
+        #           2, "JD", "Jane Doe", "Data scientist"
+        #         ), value = c(1), min_width = "300px", max_width = "500px")
+        #       ), htmltools::br(),
+        #       shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
+        #     )
+        #   )
+        # ) -> result
       }
       
       ##########################################
@@ -371,18 +372,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ##########################################
       
       if (page == "settings/subsets"){
-        div(class = "main",
-          make_card(translate(language, "subsets_create"),
-            div(
-              "..."
-            )
-          ),
-          make_card(translate(language, "subsets_management"),
-            div(
-              "..."
-            )
-          )
-        ) -> result
+        mod_settings_data_management_ui("settings_subsets", language, page_style, page) -> result
       }
       
       ###########################################
@@ -492,7 +482,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
                   list(key = "none", text = "None"),
                   list(key = "inclusions", text = "Inclusions"),
                   list(key = "analysis", text = "Analysis")
-                ), "none", "300px")
+                ), value = "none", width = "300px")
               ), htmltools::br(),
               shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
             )

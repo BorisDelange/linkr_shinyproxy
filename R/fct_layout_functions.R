@@ -62,8 +62,9 @@ make_textfield <- function(language, ns, label, id = NULL, value = NULL, type = 
   )
 }
 
-make_dropdown <- function(language, ns, label, options, value = NULL, width = NULL, min_width = NULL, max_width = NULL){
+make_dropdown <- function(language, ns, label, options, id = NULL, value = NULL, width = NULL, min_width = NULL, max_width = NULL){
   # options <- lapply(split(names(options), options), unname)
+  # if (is.null(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0("width: ", width)
   if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0("min-width: ", min_width, "; max-width: ", max_width)
