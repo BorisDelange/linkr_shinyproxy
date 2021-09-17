@@ -24,8 +24,10 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     if (page == "settings/data_sources"){
       div(class = "main",
         shiny::uiOutput(ns("warnings")),
+        shiny.fluent::reactOutput(ns("management_delete_confirm")),
         data_management_creation_card(language, ns, "create_data_source",
-                                      textfields = c(name = "name", description = "description"), textfields_width = "300px")
+                                      textfields = c(name = "name", description = "description"), textfields_width = "300px"),
+        data_management_datatable_card(language, ns, "data_sources_management")
       ) -> result
     }
     
@@ -36,12 +38,13 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     if (page == "settings/datamarts"){
       div(class = "main",
           shiny::uiOutput(ns("warnings")),
+          shiny.fluent::reactOutput(ns("management_delete_confirm")),
           data_management_creation_card(language, ns, "create_datamart",
                                         textfields = c(name = "name", description = "description"), textfields_width = "300px",
                                         dropdowns = c(data_source = "data_source"), dropdowns_width = "300px",
                                         data_sources = list(list(key = "", text = ""))
                                         ),
-          data_management_management_card(language, ns, "datamarts_management")
+          data_management_datatable_card(language, ns, "datamarts_management")
       ) -> result
     }
     
@@ -52,7 +55,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     if (page == "settings/studies"){
       div(class = "main",
         shiny::uiOutput(ns("warnings")),
-        # shiny.fluent::reactOutput("management_delete_confirm"),
+        shiny.fluent::reactOutput(ns("management_delete_confirm")),
         data_management_creation_card(language, ns, "create_study",
                                       textfields = c(name = "name", description = "description"), textfields_width = "300px",
                                       dropdowns = c(datamart = "datamart", patient_lvl_module_family = "patient_lvl_module_family",
@@ -65,8 +68,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
                                       aggregated_module_families = list(
                                         list(key = "Default 1", text = "Default 1")
                                       )),
-        data_management_management_card(language, ns, "studies_management"),
-        tableOutput(ns("test")),
+        data_management_datatable_card(language, ns, "studies_management"),
         make_card(translate(language, "studies_access"),
           div(
             shiny.fluent::Stack(
@@ -97,11 +99,13 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     if (page == "settings/subsets"){
       div(class = "main",
         shiny::uiOutput(ns("warnings")),
+        shiny.fluent::reactOutput(ns("management_delete_confirm")),
         data_management_creation_card(language, ns, "create_subset",
                                       textfields = c(name = "name"), textfields_width = "300px",
                                       dropdowns = c(datamart = "datamart", study = "study"), dropdowns_width = "300px",
                                       datamarts = list(list(key = "", text = "")),
-                                      studies = list(list(key = "", text = "")))
+                                      studies = list(list(key = "", text = ""))),
+        data_management_datatable_card(language, ns, "subsets_management")
       ) -> result
     }
     
@@ -131,14 +135,17 @@ mod_settings_data_management_server <- function(id, r, language){
     
     # Update dropdowns with reactive data
     observeEvent(r$data_sources_data, shiny.fluent::updateDropdown.shinyInput(session, "data_source", 
-                 options = tibble_to_list(r$data_sources_data, "Data source ID", "Data source name")))
+                 options = tibble_to_list(r$data_sources_data, "Data source ID", "Data source name", rm_deleted_rows = TRUE)))
     observeEvent(r$datamarts_data, shiny.fluent::updateDropdown.shinyInput(session, "datamart", 
-                 options = tibble_to_list(r$datamarts_data, "Datamart ID", "Datamart name")))
+                 options = tibble_to_list(r$datamarts_data, "Datamart ID", "Datamart name", rm_deleted_rows = TRUE)))
     observeEvent(r$studies_data, shiny.fluent::updateDropdown.shinyInput(session, "study", 
-                 options = tibble_to_list(r$studies_data, "Study ID", "Study name")))
+                 options = tibble_to_list(r$studies_data, "Study ID", "Study name", rm_deleted_rows = TRUE)))
     
     # onClick add button
     observeEvent(input$add, {
+      # SQL request
+      # ...
+      
       message <- switch(id, "settings_data_sources" = "data_source_added",
                             "settings_datamarts" = "datamart_added",
                             "settings_studies" = "study_added",
@@ -150,31 +157,33 @@ mod_settings_data_management_server <- function(id, r, language){
       shinyjs::delay(5000, shinyjs::hide("warnings"))
     })
     
-    # Add in database
-    # ...
-    
     ##########################################
     # Data management / Elements management  #
     ##########################################
+    
+      ##########################################
+      # Generate datatable                     #
+      ##########################################
     
       output$management_datatable <- DT::renderDT(
         data_management_datatable(id = id,
                                   data = data_management_data(id, r),
                                   r,
-                                  # data_sources = r$data_sources_data,
                                   dropdowns = switch(id,
                                                      "settings_data_sources" = "",
                                                      "settings_datamarts" = c("Data source ID" = "data_sources"),
-                                                     "settings_studies" = c("Datamart ID" = "datamarts"),
+                                                     "settings_studies" = c("Datamart ID" = "datamarts",
+                                                                            "Patient-level data module family ID" = "patient_lvl_modules_families",
+                                                                            "Aggregated data module family ID" = "aggregated_modules_families"),
                                                      "settings_subsets" = c("Study ID" = "studies")
                                   )),
         options = list(dom = "t",
                        columnDefs = list(
                          list(className = "dt-center", targets = c(0)),
-                         list(sortable = FALSE, targets = data_management_datatable_options(data_management_data(id, r), "sortable")))
+                         list(sortable = FALSE, targets = data_management_datatable_options(data_management_data(id, r), id, "sortable")))
                       ),
         rownames = FALSE, selection = "none", escape = FALSE, server = TRUE,
-        editable = list(target = "cell", disable = list(columns = c(0, 1, 3, 4, 5))),
+        editable = list(target = "cell", disable = list(columns = data_management_datatable_options(data_management_data(id, r), id, "disable"))),
         callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
             var $this = $(this.node());
             $this.attr('id', this.data()[0]);
@@ -184,95 +193,59 @@ mod_settings_data_management_server <- function(id, r, language){
           Shiny.bindAll(table.table().node());")
       )
     
-    # observeEvent(input$management_edit, {
-    #   for (i in 1:nrow(r$data)) {
-    #     r$data[i, "Datamart"] <-
-    #       as.character(
-    #         div(shiny.fluent::Dropdown.shinyInput(paste0("datamart", i), options = list(
-    #           list(key = "Weaning from mechanical ventilation", text = "Weaning from mechanical ventilation"),
-    #           list(key = "My new study", text = "My new study"),
-    #           list(key = "Heparin datamart Metavision", text = "Heparin datamart Metavision")
-    #           ), value = as.character(r$data[i, "Datamart"]), style = "width:100%")
-    #         )
-    #       )
-    #     r$data[i, "Patient-level data module family"] <-
-    #       as.character(
-    #         div(shiny.fluent::Dropdown.shinyInput(paste0("patient_lvl_module_family", i), options = list(
-    #           list(key = "App default", text = "App default"),
-    #           list(key = "Metavision default", text = "Metavision default"),
-    #           list(key = "eHOP default", text = "eHOP default")
-    #           ), value = as.character(r$data[i, "Patient-level data module family"]), style = "width:100%")
-    #         )
-    #       )
-    #       # as.character(selectInput(paste0("patient_lvl_module_family", i), "", choices = c("App default", "Metavision default", "eHOP default"),
-    #       #                          selected = data[i, "Patient-level data module family"], width = "100%"))
-    #     r$data[i, "Aggregated data module family"] <-
-    #       as.character(
-    #         div(shiny.fluent::Dropdown.shinyInput(paste0("aggregated_module_family", i), options = list(
-    #           list(key = "Default 1", text = "Default 1"),
-    #           list(key = "Default 2", text = "Default 2")
-    #           ), value = as.character(r$data[i, "Aggregated data module family"]), style = "width:100%")
-    #         )
-    #       )
-    #     r$data[i, "Action"] <-
-    #       as.character(shiny::actionButton(paste0("delete", i), "X", style = "color:red",
-    #                           onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
-    #       # as.character(shiny.fluent::IconButton.shinyInput(paste0("delete", i), "X", shiny::icon("glyphicon-trash", lib = "glyphicon"),
-    #       #                           style = "color:red",
-    #       #                           onClick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
-    #   }
-    # })
-
-    # observeEvent(r$data, {
-    #   output$management_datatable <- DT::renderDT(
-    #     r$data,
-    #     options = list(dom = "t",
-    #                    columnDefs = list(
-    #                      list(className = "dt-center", targets = c(0:2)),
-    #                      # list(className = "dt-center", targets =),
-    #                      list(sortable = FALSE, targets = c(0, 3, 4, 5)))),
-    #     rownames = FALSE, selection = "none", escape = FALSE, server = TRUE,
-    #     editable = list(target = "cell", disable = list(columns = c(0, 1, 3, 4, 5))),
-    #     callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
-    #       var $this = $(this.node());
-    #       $this.attr('id', this.data()[0]);
-    #       $this.addClass('shiny-input-container');
-    #     });
-    #     Shiny.unbindAll(table.table().node());
-    #     Shiny.bindAll(table.table().node());")
-    #   )
-    # })
+      ##########################################
+      # Save changes in datatable              #
+      ##########################################
     
-    # observeEvent(input$deleted_pressed, {
-    #   message <- switch(id, "settings_data_sources" = "data_source_deleted",
-    #                     "settings_datamarts" = "datamart_deleted",
-    #                     "settings_studies" = "study_deleted",
-    #                     "settings_subsets" = "subset_deleted")
-    #   
-    #   output$warnings <- renderUI({
-    #     div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
-    #   })
-    #   shinyjs::show("warnings")
-    #   shinyjs::delay(5000, shinyjs::hide("warnings"))
-    #   
-    #   r$data <- r$data[-as.integer(substr(input$deleted_pressed, 7, 15)), ]
-    #   for (i in 1:nrow(r$data)) {
-    #     r$data[i, "Action"] <-
-    #       as.character(shiny::actionButton(paste0("delete", i), "X", style = "color:red",
-    #                                        onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
-    #   }
-    # })
+      observeEvent(input$management_save, {
+        
+        # SQL request to save modifications...
+        # ...
+        
+        # Notification to user
+        output$warnings <- renderUI({
+          div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
+        })
+        shinyjs::show("warnings")
+        shinyjs::delay(5000, shinyjs::hide("warnings"))
+      })
+    
+      ##########################################
+      # Delete a row in datatable              #
+      ##########################################
+      
+      data_management_delete_dialog <- reactiveVal(FALSE)
+        
+      output$management_delete_confirm <- shiny.fluent::renderReact(data_management_delete_react(id, ns, language, data_management_delete_dialog()))
+        
+      observeEvent(input$hideDialog, data_management_delete_dialog(FALSE))
+      observeEvent(input$management_delete_canceled, data_management_delete_dialog(FALSE))
+      observeEvent(input$deleted_pressed, data_management_delete_dialog(TRUE))
+      
+      observeEvent(input$management_delete_confirmed, {
+          
+        data_management_delete_dialog(FALSE)
+        
+        # Modify reactive value r$...
+        data_var <- paste0(substr(id, nchar("settings_") + 1, nchar(id)), "_data")
+        row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete") + 1, nchar(input$deleted_pressed)))
+        r[[data_var]][which(r[[data_var]][1] == row_deleted), "Deleted"] = TRUE
+        
+        # Notification to user
+        message <- switch(id, "settings_data_sources" = "data_source_deleted",
+                          "settings_datamarts" = "datamart_deleted",
+                          "settings_studies" = "study_deleted",
+                          "settings_subsets" = "subset_deleted")
+  
+        output$warnings <- renderUI({
+          div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
+        })
+        shinyjs::show("warnings")
+        shinyjs::delay(5000, shinyjs::hide("warnings"))
+      })
     
     # https://stackoverflow.com/questions/57215607/render-dropdown-for-single-column-in-dt-shiny
     # https://yihui.shinyapps.io/DT-edit/
-    
-    # observeEvent(input$management_save, {
-    #   output$warnings <- renderUI({
-    #     div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
-    #   })
-    #   shinyjs::show("warnings")
-    #   shinyjs::delay(5000, shinyjs::hide("warnings"))
-    # })
   })
 }
     

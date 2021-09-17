@@ -38,7 +38,7 @@ data_management_creation_card <- function(language, ns, title,
   )
 }
 
-data_management_management_card <- function(language, ns, title){
+data_management_datatable_card <- function(language, ns, title){
   make_card(translate(language, title),
     div(
       DT::DTOutput(ns("management_datatable")),
@@ -50,59 +50,106 @@ data_management_management_card <- function(language, ns, title){
 }
 
 data_management_data <- function(id, r){
-  switch(id, 
-         "settings_data_sources" = r$data_sources_data %>% dplyr::select(-`Deleted`),
-         "settings_datamarts" = r$datamarts_data %>% dplyr::select(-`Deleted`),
-         "settings_studies" = r$studies_data %>% dplyr::select(-`Deleted`),
-         "settings_subsets" = r$subsets_data %>% dplyr::select(-`Deleted`))
+  data <- switch(id, 
+         "settings_data_sources" = r$data_sources_data,
+         "settings_datamarts" = r$datamarts_data,
+         "settings_studies" = r$studies_data,
+         "settings_subsets" = r$subsets_data)
+  
+  if (nrow(data) != 0) data <- data %>% dplyr::filter(!Deleted) %>% dplyr::select(-Deleted)
+  data
 }
 
 data_management_datatable <- function(id, data, r, dropdowns = NULL){
+  if (nrow(data) == 0) return(data)
   
-  data_sources <- tibble_to_list(r$data_sources_data, "Data source ID", "Data source name")
-  datamarts <- tibble_to_list(r$datamarts_data, "Datamart ID", "Datamart name")
-  studies <- tibble_to_list(r$studies_data, "Study ID", "Study name")
+  data_sources <- tibble_to_list(r$data_sources_data, "Data source ID", "Data source name", rm_deleted_rows = TRUE)
+  datamarts <- tibble_to_list(r$datamarts_data, "Datamart ID", "Datamart name", rm_deleted_rows = TRUE)
+  studies <- tibble_to_list(r$studies_data, "Study ID", "Study name", rm_deleted_rows = TRUE)
+  subsets <- tibble_to_list(r$subsets_data, "Subset ID", "Subset name", rm_deleted_rows = TRUE)
+  patient_lvl_modules_families <- tibble_to_list(r$patient_lvl_modules_families, "Module family ID", "Module family name", rm_deleted_rows = TRUE)
+  aggregated_modules_families <- tibble_to_list(r$aggregated_modules_families, "Module family ID", "Module family name", rm_deleted_rows = TRUE)
   
-  # Add a column Action in the DataTable (eg : delete a row)
-  data <- data %>% dplyr::bind_rows(tibble::tibble(`Action` = character()))
+  # Add a column Action in the DataTable
+  data["Action"] <- NA_character_
   
   # Transform dropdowns columns in the dataframe to character
   lapply(names(dropdowns), function(name) data %>% dplyr::mutate_at(name, as.character) ->> data)
   
   # For each row of the dataframe, transform dropdowns columns to show dropdowns in Shiny app & add an Action column with delete action button
-  for (i in 1:nrow(data)){
-    
-    lapply(names(dropdowns), function(name){
-      data[i, name] <<- as.character(
-        div(
-          shiny.fluent::Dropdown.shinyInput(paste0(dropdowns[name], i),
-                                            options = eval(parse(text = dropdowns[name])), 
-                                            value = as.integer(data[i, name])),
-          style = "width:100%")
-        )
-    })
-    
-    data[i, "Action"] <- as.character(
-      shiny::actionButton(paste0("delete", i), "X", style = "color:red",
-                          onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
+  if (nrow(data) != 0){
+    for (i in 1:nrow(data)){
+      
+      lapply(names(dropdowns), function(name){
+        data[i, name] <<- as.character(
+          div(
+            shiny.fluent::Dropdown.shinyInput(paste0(dropdowns[name], i),
+                                              options = eval(parse(text = dropdowns[name])), 
+                                              value = as.integer(data[i, name])),
+            style = "width:100%")
+          )
+      })
+      
+      data[i, "Action"] <- as.character(
+        shiny::actionButton(paste0("delete", data[i, 1]), "X", style = "color:red",
+                            onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
+    }
   }
   
   # Change name of ID cols (except the first one)
   data <- data %>% dplyr::rename_at(dplyr::vars(-1), ~stringr::str_replace_all(., "ID", "name"))
   
-  return(data)
+  data
 }
 
-data_management_datatable_options <- function(data, option){
+data_management_datatable_options <- function(data, id, option){
+  if (nrow(data) == 0) return("")
+  
   data <- data %>% 
     dplyr::bind_rows(tibble::tibble(`Action` = character())) %>%
     dplyr::rename_at(dplyr::vars(-1), ~stringr::str_replace_all(., "ID", "name"))
   
-  # Columns sortable : all except Action & ID 
-  if (option == "sortable"){ 
-    # result <- c(1:length(names(data)))
-    # result <- result[-c(1, which(grepl("name|description|Creator|Date", names(data))))] - 1
-    result <- which(grepl("ID|Action", names(data))) - 1
+  # Non-sortabled columns : Action & Name columns (except second one)
+  if (option == "sortable"){
+    result <- c(which(grepl("name|Action", names(data))) - 1)
+    result <- result[!result %in% c(1)]
   }
+  
+  # Disabled columns
+  else if (option == "disable"){
+    result <- c(1:length(names(data)))
+    regex <- switch(id, 
+                    "settings_data_sources" = "Data source",
+                    "settings_datamarts" = "Datamart",
+                    "settings_studies" = "Study",
+                    "settings_subsets" = "Subset")
+    result <- c(0, result[-which(grepl(regex, names(data)))] - 1)
+  }
+  
   result
+}
+
+data_management_delete_react <- function(id, ns, language, data_management_delete_dialog){
+  page <- switch(id, 
+                 "settings_data_sources" = "data_source",
+                 "settings_datamarts" = "datamart",
+                 "settings_studies" = "study",
+                 "settings_subsets" = "subset")
+  
+  dialogContentProps <- list(
+    type = 0,
+    title = translate(language, paste0(page, "_delete")),
+    closeButtonAriaLabel = "Close",
+    subText = translate(language, paste0(page, "_delete_subtext"))
+  )
+  shiny.fluent::Dialog(
+    hidden = !data_management_delete_dialog,
+    onDismiss = htmlwidgets::JS("function() { Shiny.setInputValue('hideDialog', Math.random()); }"),
+    dialogContentProps = dialogContentProps,
+    modalProps = list(),
+    shiny.fluent::DialogFooter(
+      shiny.fluent::PrimaryButton.shinyInput(ns("management_delete_confirmed"), text = "Delete"),
+      shiny.fluent::DefaultButton.shinyInput(ns("management_delete_canceled"), text = "Don't delete")
+    )
+  )
 }

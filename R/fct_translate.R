@@ -254,7 +254,23 @@ get_translations <- function(){
             "EN", "study_added", "Study created",
             "FR", "study_added", "Etude créée",
             "EN", "subset_added", "Subset created",
-            "FR", "subset_added", "Subset crée"
+            "FR", "subset_added", "Subset crée",
+            "EN", "data_source_delete", "Delete a data source",
+            "FR", "data_source_delete", "Supprimer une source de donnée",
+            "EN", "data_source_delete_subtext", "Do you want yo delete this data source ?",
+            "FR", "data_source_delete_subtext", "Confirmez-vous la suppression de cette source de données ?",
+            "EN", "datamart_delete", "Delete a datamart",
+            "FR", "datamart_delete", "Supprimer un datamart",
+            "EN", "datamart_delete_subtext", "Do you want yo delete this datamart ?",
+            "FR", "datamart_delete_subtext", "Confirmez-vous la suppression de ce datamart ?",
+            "EN", "study_delete", "Delete a study",
+            "FR", "study_delete", "Supprimer une étude",
+            "EN", "study_delete_subtext", "Do you want yo delete this study ?",
+            "FR", "study_delete_subtext", "Confirmez-vous la suppression de cette étude ?",
+            "EN", "subset_delete", "Delete subset",
+            "FR", "subset_delete", "Supprimer un subset",
+            "EN", "subset_delete_subtext", "Do you want yo delete this subset ?",
+            "FR", "subset_delete_subtext", "Confirmez-vous la suppression de ce subset ?",
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
