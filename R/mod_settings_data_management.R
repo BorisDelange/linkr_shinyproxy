@@ -157,31 +157,22 @@ mod_settings_data_management_server <- function(id, r, language){
     # Data management / Elements management  #
     ##########################################
     
-    # data_management_elements_management(data = r[[paste0(substr(id, 10, 50), "_data")]])
-    # 
-    # r$data <- tibble::tribble(~Action, ~`Study ID`, ~`Study name`, ~Datamart, ~`Patient-level data module family`, ~`Aggregated data module family`,
-    #                         "", 1, "Study 1", "Weaning from mechanical ventilation", "eHOP default", "Default 1",
-    #                         "", 2, "Study 2", "Heparin datamart Metavision", "Metavision default", "Default 1",
-    #                         "", 3, "Study 3", "My new study", "App default", "Default 2")
-    
-    # observeEvent(input$management_edit, {
-      # output$test <- renderTable(r$studies_data)
-    # })
-    
-    
-    # output$test <- shiny::renderTable(r$data_sources_data)
-    
-    # observeEvent(input$management_edit, {
       output$management_datatable <- DT::renderDT(
-        data_management_elements_management(id = id,
-                                            data = switch(id, "settings_datamarts" = r$datamarts_data %>% dplyr::select(-`Deleted`)),
-                                            data_sources = r$data_sources_data,
-                                            dropdowns = switch(id, "settings_datamarts" = c("Data source ID" = "data_sources")
-                                            )),
+        data_management_datatable(id = id,
+                                  data = data_management_data(id, r),
+                                  r,
+                                  # data_sources = r$data_sources_data,
+                                  dropdowns = switch(id,
+                                                     "settings_data_sources" = "",
+                                                     "settings_datamarts" = c("Data source ID" = "data_sources"),
+                                                     "settings_studies" = c("Datamart ID" = "datamarts"),
+                                                     "settings_subsets" = c("Study ID" = "studies")
+                                  )),
         options = list(dom = "t",
                        columnDefs = list(
-                         list(className = "dt-center", targets = c(0:2)),
-                         list(sortable = FALSE, targets = c(0, 3, 4, 5)))),
+                         list(className = "dt-center", targets = c(0)),
+                         list(sortable = FALSE, targets = data_management_datatable_options(data_management_data(id, r), "sortable")))
+                      ),
         rownames = FALSE, selection = "none", escape = FALSE, server = TRUE,
         editable = list(target = "cell", disable = list(columns = c(0, 1, 3, 4, 5))),
         callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
@@ -192,7 +183,6 @@ mod_settings_data_management_server <- function(id, r, language){
           Shiny.unbindAll(table.table().node());
           Shiny.bindAll(table.table().node());")
       )
-    # })
     
     # observeEvent(input$management_edit, {
     #   for (i in 1:nrow(r$data)) {

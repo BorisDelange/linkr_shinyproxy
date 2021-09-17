@@ -49,11 +49,19 @@ data_management_management_card <- function(language, ns, title){
   )
 }
 
-data_management_elements_management <- function(id, data, editable_cols = NULL, dropdowns = NULL,
-                                                data_sources = NULL, datamarts = NULL, studies = NULL, subsets = NULL,
-                                                patient_lvl_module_families = NULL, aggregated_module_families = NULL){
+data_management_data <- function(id, r){
+  switch(id, 
+         "settings_data_sources" = r$data_sources_data %>% dplyr::select(-`Deleted`),
+         "settings_datamarts" = r$datamarts_data %>% dplyr::select(-`Deleted`),
+         "settings_studies" = r$studies_data %>% dplyr::select(-`Deleted`),
+         "settings_subsets" = r$subsets_data %>% dplyr::select(-`Deleted`))
+}
+
+data_management_datatable <- function(id, data, r, dropdowns = NULL){
   
-  data_sources <- tibble_to_list(data_sources, "Data source ID", "Data source name")
+  data_sources <- tibble_to_list(r$data_sources_data, "Data source ID", "Data source name")
+  datamarts <- tibble_to_list(r$datamarts_data, "Datamart ID", "Datamart name")
+  studies <- tibble_to_list(r$studies_data, "Study ID", "Study name")
   
   # Add a column Action in the DataTable (eg : delete a row)
   data <- data %>% dplyr::bind_rows(tibble::tibble(`Action` = character()))
@@ -66,16 +74,35 @@ data_management_elements_management <- function(id, data, editable_cols = NULL, 
     
     lapply(names(dropdowns), function(name){
       data[i, name] <<- as.character(
-        div(shiny.fluent::Dropdown.shinyInput(paste0(dropdowns[name], i),
-                                              options = eval(parse(text = dropdowns[name])), 
-                                              value = as.integer(data[i, name])
-                                              ),
-            style = "width:100%"))
+        div(
+          shiny.fluent::Dropdown.shinyInput(paste0(dropdowns[name], i),
+                                            options = eval(parse(text = dropdowns[name])), 
+                                            value = as.integer(data[i, name])),
+          style = "width:100%")
+        )
     })
     
-    data[i, "Action"] <-
-      as.character(shiny::actionButton(paste0("delete", i), "X", style = "color:red",
-                                       onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
+    data[i, "Action"] <- as.character(
+      shiny::actionButton(paste0("delete", i), "X", style = "color:red",
+                          onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
   }
+  
+  # Change name of ID cols (except the first one)
+  data <- data %>% dplyr::rename_at(dplyr::vars(-1), ~stringr::str_replace_all(., "ID", "name"))
+  
   return(data)
+}
+
+data_management_datatable_options <- function(data, option){
+  data <- data %>% 
+    dplyr::bind_rows(tibble::tibble(`Action` = character())) %>%
+    dplyr::rename_at(dplyr::vars(-1), ~stringr::str_replace_all(., "ID", "name"))
+  
+  # Columns sortable : all except Action & ID 
+  if (option == "sortable"){ 
+    # result <- c(1:length(names(data)))
+    # result <- result[-c(1, which(grepl("name|description|Creator|Date", names(data))))] - 1
+    result <- which(grepl("ID|Action", names(data))) - 1
+  }
+  result
 }

@@ -4,7 +4,7 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
-app_server <- function(page_style, router){
+app_server <- function(page_style, router, language){
   function( input, output, session ) {
     
     r <- reactiveValues()
