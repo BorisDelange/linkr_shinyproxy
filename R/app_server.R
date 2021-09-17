@@ -26,9 +26,13 @@ app_server <- function(page_style, router){
     r$subsets_data <- tibble::tribble(~`Subset ID`, ~`Subset name`, ~`Subset description`, ~`Study ID`, ~`Creator`, ~`Date & time`, ~`Deleted`,
                                       1, "Included patients", "A subset with only included patients", 1, "Admin", "2021-07-21 19:45:13", FALSE)
     
-    r$patient_lvl_modules_families <- ""
+    r$patient_lvl_modules_families <- tibble::tribble(~`Module family ID`, ~`Module family name`, ~`Module family description`, ~`Creator`, ~`Date & time`, ~`Deleted`)
     
-    r$aggregated_modules_families <- ""
+    r$patient_lvl_modules <- tibble::tribble(~`Module ID`, ~`Module name`, ~`Module description`, ~`Module family ID`, ~`Parent module ID`,
+                                             ~`Creator`, ~`Date & time`, ~`Deleted`)
+    
+    r$aggregated_modules <- tibble::tribble(~`Module ID`, ~`Module name`, ~`Module description`, ~`Parent module ID`, 
+                                            ~`Creator`, ~`Date & time`, ~`Deleted`)
     
     if (page_style == "fluent") router$server(input, output, session)
     

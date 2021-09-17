@@ -41,7 +41,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
                                         dropdowns = c(data_source = "data_source"), dropdowns_width = "300px",
                                         data_sources = list(list(key = "", text = ""))
                                         ),
-          data_management_management_card(language, ns, "datamarts_management"),
+          data_management_management_card(language, ns, "datamarts_management")
       ) -> result
     }
     
@@ -168,26 +168,31 @@ mod_settings_data_management_server <- function(id, r, language){
       # output$test <- renderTable(r$studies_data)
     # })
     
-    output$management_datatable <- DT::renderDT(
-      #r[[paste0(substr(id, 10, 50), "_data")]]
-      data_management_elements_management(tibble::tribble(~Action, ~`Study ID`, ~`Study name`, ~Datamart, ~`Patient-level data module family`, ~`Aggregated data module family`,
-                                                          "", 1, "Study 1", "Weaning from mechanical ventilation", "eHOP default", "Default 1",
-                                                          "", 2, "Study 2", "Heparin datamart Metavision", "Metavision default", "Default 1",
-                                                          "", 3, "Study 3", "My new study", "App default", "Default 2")),
-      options = list(dom = "t",
-                     columnDefs = list(
-                       list(className = "dt-center", targets = c(0:2)),
-                       list(sortable = FALSE, targets = c(0, 3, 4, 5)))),
-      rownames = FALSE, selection = "none", escape = FALSE, server = TRUE,
-      editable = list(target = "cell", disable = list(columns = c(0, 1, 3, 4, 5))),
-      callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
-          var $this = $(this.node());
-          $this.attr('id', this.data()[0]);
-          $this.addClass('shiny-input-container');
-        });
-        Shiny.unbindAll(table.table().node());
-        Shiny.bindAll(table.table().node());")
-    )
+    
+    # output$test <- shiny::renderTable(r$data_sources_data)
+    
+    # observeEvent(input$management_edit, {
+      output$management_datatable <- DT::renderDT(
+        data_management_elements_management(id = id,
+                                            data = switch(id, "settings_datamarts" = r$datamarts_data %>% dplyr::select(-`Deleted`)),
+                                            data_sources = r$data_sources_data,
+                                            dropdowns = switch(id, "settings_datamarts" = c("Data source ID" = "data_sources")
+                                            )),
+        options = list(dom = "t",
+                       columnDefs = list(
+                         list(className = "dt-center", targets = c(0:2)),
+                         list(sortable = FALSE, targets = c(0, 3, 4, 5)))),
+        rownames = FALSE, selection = "none", escape = FALSE, server = TRUE,
+        editable = list(target = "cell", disable = list(columns = c(0, 1, 3, 4, 5))),
+        callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
+            var $this = $(this.node());
+            $this.attr('id', this.data()[0]);
+            $this.addClass('shiny-input-container');
+          });
+          Shiny.unbindAll(table.table().node());
+          Shiny.bindAll(table.table().node());")
+      )
+    # })
     
     # observeEvent(input$management_edit, {
     #   for (i in 1:nrow(r$data)) {
