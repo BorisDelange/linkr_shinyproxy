@@ -6,9 +6,9 @@
 #'
 #' @noRd
 
-data_management_toggle_cards <- function(language, ns, creation_card = "", datatable_card = "", edit_card = "", activated = ""){
+data_management_toggle_cards <- function(language, ns, creation_card = "", datatable_card = "", edit_card = "", options_card = "", activated = ""){
   toggles <- tagList()
-  sapply(c("creation_card", "datatable_card", "edit_card"), function(card){
+  sapply(c("creation_card", "datatable_card", "edit_card", "options_card"), function(card){
     if (eval(parse(text = card)) != "") toggles <<- tagList(toggles, shiny.fluent::Toggle.shinyInput(ns(paste0(card, "_toggle")), value = ifelse(card %in% activated, TRUE, FALSE)), 
                                                            div(class = "toggle_title", translate(language, eval(parse(text = card)))))
   })
@@ -29,19 +29,18 @@ data_management_creation_card <- function(language, ns, title,
       translate(language, title),
       div(
         shiny.fluent::Stack(
-          horizontal = TRUE,
-          tokens = list(childrenGap = 50),
+          horizontal = TRUE, tokens = list(childrenGap = 50),# wrap = TRUE,
           lapply(names(textfields), function(name){
-            make_textfield(language, ns, textfields[name], id = name, width = textfields_width)
+            make_textfield(language, ns, textfields[name], id = name, width = textfields_width)#, margin_right = "50px")
           }),
-        ), 
+        ),
         shiny.fluent::Stack(
           horizontal = TRUE,
           tokens = list(childrenGap = 50),
           lapply(names(dropdowns), function(name){
             dropdown_options <- switch(name, "data_source" = data_sources, "datamart" = datamarts, "study" = studies, "subset" = subsets,
                                        "patient_lvl_module_family" = patient_lvl_module_families, "aggregated_module_family" = aggregated_module_families)
-            make_dropdown(language, ns, dropdowns[name], dropdown_options, id = name, width = dropdowns_width)
+            make_dropdown(language, ns, dropdowns[name], dropdown_options, id = name, width = dropdowns_width)#, margin_right = "50px")
           })
         ),
         htmltools::br(),
@@ -62,9 +61,9 @@ data_management_datatable_card <- function(language, ns, title){
   )
 }
 
-data_management_edit_card <- function(language, ns, type = "code", code, code_id, title){
+data_management_edit_card <- function(language, ns, type = "code", code, link_id, title){
   div(id = ns("edit_card"),
-    make_card(tagList(translate(language, title), span(paste0(" (ID = ", code_id, ")"), style = "font-size: 15px;")),
+    make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
       div(
         div(shinyAce::aceEditor(ns("ace_edit_code"), code, "R", height = "400px"), style = "width: 100%;"),
         shiny.fluent::PrimaryButton.shinyInput(ns("edit_save"), translate(language, "edit_save"))
@@ -114,11 +113,13 @@ data_management_datatable <- function(id, data, r, dropdowns = NULL){
           )
       })
       
-      actions <- tagList(shiny::actionButton(paste0("delete", data[i, 1]), "X", style = "color:red",
+      actions <- tagList(shiny::actionButton(paste0("delete", data[i, 1]), "", icon = icon("trash-alt"),
                                              onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
-      if (id == "settings_datamarts")  actions <- tagList(actions, shiny::actionButton(paste0("edit_code", data[i, 1]), "C", style = "color:blue", icon = icon("glyphicon-edit", lib = "glyphicon"),
-                                                                                       onclick = paste0("Shiny.setInputValue('", id, "-edit_code', this.id, {priority: 'event'})")), "")
+      if (id %in% c("settings_datamarts", "settings_studies")) actions <- tagList(actions, shiny::actionButton(paste0("options", data[i, 1]), "", icon = icon("cog"),
+                                                                                                               onclick = paste0("Shiny.setInputValue('", id, "-options', this.id, {priority: 'event'})")), "")
       
+      if (id == "settings_datamarts") actions <- tagList(actions, shiny::actionButton(paste0("edit_code", data[i, 1]), "", icon = icon("file-code"),
+                                                                                       onclick = paste0("Shiny.setInputValue('", id, "-edit_code', this.id, {priority: 'event'})")), "")
       data[i, "Action"] <- as.character(div(actions))
     }
   }
