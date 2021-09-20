@@ -24,6 +24,7 @@ Imports:
     shiny.react,
     shiny.router,
     shinyAce,
+    shinyFeedback,
     shinyjs,
     shinythemes,
     spelling,

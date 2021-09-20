@@ -39,7 +39,8 @@ golem_add_external_resources <- function(css){
       app_title = 'cdwtools'
     ),
     htmltools::tags$link(href = css, rel = "stylesheet", type = "text/css"),
-    shinyjs::useShinyjs()
+    shinyjs::useShinyjs(),
+    shinyFeedback::useShinyFeedback(),
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
   )

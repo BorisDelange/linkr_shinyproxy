@@ -9,6 +9,8 @@ app_server <- function(page_style, router, language){
     
     r <- reactiveValues()
     
+    r$user <- "Admin"
+    
     r$data_sources_data <- tibble::tribble(~`Data source ID`, ~`Data source name`, ~`Data source description`, ~`Creator`, ~`Date & time`, ~`Deleted`,
                                            13, "MIMIC-IV", "MIMIC database version 4", "Admin", "2021-09-16 17:58:21", FALSE,
                                            15, "eHOP", "eHOP university hospital of Rennes", "Admin", "2021-09-16 17:59:00", FALSE)
@@ -42,7 +44,7 @@ app_server <- function(page_style, router, language){
                                             ~`Creator`, ~`Date & time`, ~`Deleted`)
     
     r$code <- tibble::tribble(~`Code ID`, ~`Category`, ~`Link ID`, ~`Code`, ~`Creator`, ~`Date & time`, ~`Deleted`,
-                              5, "datamart", 2, "datamart <- read_csv('my_csv.csv'", "Admin", "2021-07-04 17:23:54", FALSE)
+                              5, "datamart", 2, "datamart <- read_csv('my_csv.csv')", "Admin", "2021-07-04 17:23:54", FALSE)
     
     if (page_style == "fluent") router$server(input, output, session)
     

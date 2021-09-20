@@ -109,6 +109,10 @@ get_translations <- function(){
             "FR", "language", "Langue",
             "EN", "save", "Save",
             "FR", "save", "Sauvegarder",
+            "EN", "edit_save", "Save",
+            "FR", "edit_save", "Sauvegarder",
+            "EN", "datatable_save", "Save",
+            "FR", "datatable_save", "Sauvegarder",
             "EN", "appearance", "Appearance",
             "FR", "appearance", "Apparence",
             "EN", "my_account", "My account",
@@ -272,7 +276,15 @@ get_translations <- function(){
             "EN", "subset_delete_subtext", "Do you want yo delete this subset ?",
             "FR", "subset_delete_subtext", "Confirmez-vous la suppression de ce subset ?",
             "EN", "edit_datamart_code", "Edit datamart code",
-            "FR", "edit_datamart_code", "Editer le code du datamart"
+            "FR", "edit_datamart_code", "Editer le code du datamart",
+            "EN", "provide_valid_name", "Please provide a valid name",
+            "FR", "provide_valid_name", "Nom valide requis",
+            "EN", "provide_valid_description", "Please provide a valid description",
+            "FR", "provide_valid_description", "Description valide requise",
+            "EN", "provide_data_source", "Please select a data source",
+            "FR", "provide_data_source", "Sélectionner une source de données",
+            "EN", "name_already_used", "This name is already used",
+            "FR", "name_already_used", "Ce nom est déjà utilisé"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
