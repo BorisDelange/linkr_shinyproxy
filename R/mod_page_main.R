@@ -114,7 +114,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       if(page == "settings/general"){
         div(class = "main",
           # Hidden aceEditor, allows the other to be displayed...
-          div(shinyAce::aceEditor("test"), style = "display: none;"),
+          div(shinyAce::aceEditor("hidden"), style = "display: none;"),
           make_card(
             translate(language, "general"),
             div(
@@ -192,8 +192,8 @@ mod_page_main_ui <- function(id, language, page_style, page){
               shiny.fluent::Stack(
                 horizontal = TRUE,
                 tokens = list(childrenGap = 30),
-                make_textfield(language, ns, "old_password", "password", TRUE),
-                make_textfield(language, ns, "new_password", "password", TRUE)
+                make_textfield(language, ns, "old_password", type = "password", canRevealPassword = TRUE),
+                make_textfield(language, ns, "new_password", type = "password", canRevealPassword = TRUE)
               ), htmltools::br(),
               shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
             ),
@@ -207,7 +207,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       
       if (page == "settings/app_db"){
         # Hidden aceEditor, allows the other to be displayed...
-        div(shinyAce::aceEditor("test"), style = "display: none;")
+        div(shinyAce::aceEditor("hidden"), style = "display: none;")
         div(class = "main",
           make_card(
             translate(language, "app_db"),
@@ -318,6 +318,8 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ##########################################
       
       if (page == "settings/data_sources"){
+        # Hidden aceEditor, allows the other to be displayed...
+        div(shinyAce::aceEditor("hidden"), style = "display: none;")
         mod_settings_data_management_ui("settings_data_sources", language, page_style, page) -> result
       }
       

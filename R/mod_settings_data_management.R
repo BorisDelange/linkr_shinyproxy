@@ -23,7 +23,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     
     if (page == "settings/data_sources"){
       div(class = "main",
-        shiny::uiOutput(ns("warnings")),
+        shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
         shiny.fluent::reactOutput(ns("management_delete_confirm")),
         data_management_creation_card(language, ns, "create_data_source",
                                       textfields = c(name = "name", description = "description"), textfields_width = "300px"),
@@ -37,14 +37,17 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     
     if (page == "settings/datamarts"){
       div(class = "main",
-          shiny::uiOutput(ns("warnings")),
+          shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
           shiny.fluent::reactOutput(ns("management_delete_confirm")),
+          data_management_toggle_cards(language, creation_card = "create_datamart", datatable_card = "datamarts_management", edit_card = "edit_datamart_code"),
           data_management_creation_card(language, ns, "create_datamart",
                                         textfields = c(name = "name", description = "description"), textfields_width = "300px",
                                         dropdowns = c(data_source = "data_source"), dropdowns_width = "300px",
                                         data_sources = list(list(key = "", text = ""))
                                         ),
-          data_management_datatable_card(language, ns, "datamarts_management")
+          data_management_datatable_card(language, ns, "datamarts_management"),
+          shiny::uiOutput(ns("edit_card")),
+          shiny::textOutput(ns("test"))
       ) -> result
     }
     
@@ -54,7 +57,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     
     if (page == "settings/studies"){
       div(class = "main",
-        shiny::uiOutput(ns("warnings")),
+        shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
         shiny.fluent::reactOutput(ns("management_delete_confirm")),
         data_management_creation_card(language, ns, "create_study",
                                       textfields = c(name = "name", description = "description"), textfields_width = "300px",
@@ -98,7 +101,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     
     if (page == "settings/subsets"){
       div(class = "main",
-        shiny::uiOutput(ns("warnings")),
+        shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
         shiny.fluent::reactOutput(ns("management_delete_confirm")),
         data_management_creation_card(language, ns, "create_subset",
                                       textfields = c(name = "name"), textfields_width = "300px",
@@ -150,11 +153,11 @@ mod_settings_data_management_server <- function(id, r, language){
                             "settings_datamarts" = "datamart_added",
                             "settings_studies" = "study_added",
                             "settings_subsets" = "subset_added")
-      output$warnings <- renderUI({
+      output$warnings1 <- renderUI({
         div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 4), style = "margin-top:10px;")
       })
-      shinyjs::show("warnings")
-      shinyjs::delay(5000, shinyjs::hide("warnings"))
+      shinyjs::show("warnings1")
+      shinyjs::delay(3000, shinyjs::hide("warnings1"))
     })
     
     ##########################################
@@ -203,11 +206,11 @@ mod_settings_data_management_server <- function(id, r, language){
         # ...
         
         # Notification to user
-        output$warnings <- renderUI({
+        output$warnings2 <- renderUI({
           div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
         })
-        shinyjs::show("warnings")
-        shinyjs::delay(5000, shinyjs::hide("warnings"))
+        shinyjs::show("warnings2")
+        shinyjs::delay(3000, shinyjs::hide("warnings2"))
       })
     
       ##########################################
@@ -237,15 +240,27 @@ mod_settings_data_management_server <- function(id, r, language){
                           "settings_studies" = "study_deleted",
                           "settings_subsets" = "subset_deleted")
   
-        output$warnings <- renderUI({
+        output$warnings3 <- renderUI({
           div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
         })
-        shinyjs::show("warnings")
-        shinyjs::delay(5000, shinyjs::hide("warnings"))
+        shinyjs::show("warnings3")
+        shinyjs::delay(3000, shinyjs::hide("warnings3"))
       })
     
-    # https://stackoverflow.com/questions/57215607/render-dropdown-for-single-column-in-dt-shiny
-    # https://yihui.shinyapps.io/DT-edit/
+      # https://stackoverflow.com/questions/57215607/render-dropdown-for-single-column-in-dt-shiny
+      # https://yihui.shinyapps.io/DT-edit/
+      
+      ##########################################
+      # Edit code by selecting a row           #
+      ##########################################
+      
+      output$edit_card <- renderUI({
+        req(input$edit_code)
+        code_id <- as.integer(substr(input$edit_code, nchar("edit_code") + 1, nchar(input$edit_code)))
+        code <- r$code %>% dplyr::filter(`Category` == "datamart" & `Link ID` == code_id) %>% dplyr::pull(`Code`)
+        data_management_edit_card(language, ns, type = "code", title = switch(id, "settings_datamarts" = "edit_datamart_code"), code)
+      })
+      
   })
 }
     

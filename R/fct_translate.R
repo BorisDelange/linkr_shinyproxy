@@ -271,6 +271,8 @@ get_translations <- function(){
             "FR", "subset_delete", "Supprimer un subset",
             "EN", "subset_delete_subtext", "Do you want yo delete this subset ?",
             "FR", "subset_delete_subtext", "Confirmez-vous la suppression de ce subset ?",
+            "EN", "edit_datamart_code", "Edit datamart code",
+            "FR", "edit_datamart_code", "Editer le code du datamart"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

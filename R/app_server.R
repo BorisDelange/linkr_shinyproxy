@@ -41,6 +41,9 @@ app_server <- function(page_style, router, language){
     r$aggregated_modules <- tibble::tribble(~`Module ID`, ~`Module name`, ~`Module description`, ~`Parent module ID`, 
                                             ~`Creator`, ~`Date & time`, ~`Deleted`)
     
+    r$code <- tibble::tribble(~`Code ID`, ~`Category`, ~`Link ID`, ~`Code`, ~`Creator`, ~`Date & time`, ~`Deleted`,
+                              5, "datamart", 2, "datamart <- read_csv('my_csv.csv'", "Admin", "2021-07-04 17:23:54", FALSE)
+    
     if (page_style == "fluent") router$server(input, output, session)
     
     mod_settings_data_management_server("settings_data_sources", r, language)

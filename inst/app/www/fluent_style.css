@@ -89,6 +89,11 @@ body {
   font-weight: bold;
 }
 
+.toggle_title {
+  font-weight: bold; 
+  margin-right: 30px;
+}
+
 .router-hidden {
   display: none;
 }

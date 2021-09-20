@@ -6,6 +6,19 @@
 #'
 #' @noRd
 
+data_management_toggle_cards <- function(language, creation_card = "", datatable_card = "", edit_card = ""){
+  toggles <- tagList()
+  sapply(c("creation_card", "datatable_card", "edit_card"), function(card){
+    if (eval(parse(text = card)) != "") toggles <<- tagList(toggles, shiny.fluent::Toggle.shinyInput(card, value = ifelse(card == "datatable_card", TRUE, FALSE)), 
+                                                           div(class = "toggle_title", translate(language, eval(parse(text = card)))))
+  })
+  make_card("",
+    shiny.fluent::Stack(
+      horizontal = TRUE, tokens = list(childrenGap = 10), toggles
+    )
+  )
+}
+
 data_management_creation_card <- function(language, ns, title,
                                           textfields = NULL, textfields_width = "200px",
                                           dropdowns = NULL, dropdowns_width = "200px",
@@ -34,7 +47,7 @@ data_management_creation_card <- function(language, ns, title,
       ),
       htmltools::br(),
       shiny.fluent::PrimaryButton.shinyInput(ns("add"), translate(language, "add"))
-    )          
+    )
   )
 }
 
@@ -45,6 +58,15 @@ data_management_datatable_card <- function(language, ns, title){
       htmltools::br(),
       shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save"))#,
       # shiny.fluent::PrimaryButton.shinyInput(ns("management_edit"), "Edit")
+    )
+  )
+}
+
+data_management_edit_card <- function(language, ns, type = "code", title, code){
+  make_card(translate(language, title),
+    div(
+      div(shinyAce::aceEditor(ns("ace_edit_code"), code, "R", height = "400px"), style = "width: 100%;"),
+      shiny.fluent::PrimaryButton.shinyInput(ns("edit_save"), translate(language, "save"))
     )
   )
 }
@@ -91,8 +113,13 @@ data_management_datatable <- function(id, data, r, dropdowns = NULL){
       })
       
       data[i, "Action"] <- as.character(
-        shiny::actionButton(paste0("delete", data[i, 1]), "X", style = "color:red",
-                            onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
+        div(
+          shiny::actionButton(paste0("delete", data[i, 1]), "X", style = "color:red",
+                              onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")),
+          shiny::actionButton(paste0("edit_code", data[i, 1]), "C", style = "color:blue", icon = icon("glyphicon-edit", lib = "glyphicon"),
+                              onclick = paste0("Shiny.setInputValue('", id, "-edit_code', this.id, {priority: 'event'})"))
+        )
+      )
     }
   }
   
