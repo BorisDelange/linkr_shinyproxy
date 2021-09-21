@@ -19,20 +19,25 @@ tibble_to_list <- function(data, key_col, text_col, rm_deleted_rows = FALSE){
   return(my_list)
 }
 
-id_get_other_name <- function(id, type){
-  if (type == "data_var"){
-    switch(id, 
-           "settings_data_sources" = "data_sources_data",
-           "settings_datamarts" = "datamarts_data",
-           "settings_studies" = "studies_data",
-           "settings_subsets" = "subsets_data") -> result
-  }
+id_get_other_name <- function(id, type, language = NULL){
+  if (grepl("settings_", id)) id <- substr(id, nchar("settings_") + 1, nchar(id))
   if (type == "singular_form"){
     switch(id, 
-           "settings_data_sources" = "data_source",
-           "settings_datamarts" = "datamart",
-           "settings_studies" = "study",
-           "settings_subsets" = "subset") -> result
+           "data_sources" = "data_source",
+           "datamarts" = "datamart",
+           "studies" = "study",
+           "subsets" = "subset",
+           "patient_lvl_module_families" = "patient_lvl_module_family",
+           "aggregated_module_families" = "aggregated_module_family") -> result
+  }
+  if (type == "colnames_text_version"){
+    result <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"))
+    c(result, switch(id,
+      "datamarts" = translate(language, "data_source"),
+      "studies" = c(translate(language, "datamart"), translate(language, "patient_lvl_module_family"),
+                             translate(language, "aggregated_data_module_family")),
+      "subsets" = translate(language, "study"))) -> result
+    result <- c(result, translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
   }
   result
 }

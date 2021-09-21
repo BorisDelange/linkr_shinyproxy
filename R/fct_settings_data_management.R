@@ -19,28 +19,22 @@ data_management_toggle_cards <- function(language, ns, creation_card = "", datat
   )
 }
 
-data_management_creation_card <- function(language, ns, title,
-                                          textfields = NULL, textfields_width = "200px",
-                                          dropdowns = NULL, dropdowns_width = "200px",
-                                          data_sources = NULL, datamarts = NULL, studies = NULL, subsets = NULL,
-                                          patient_lvl_module_families = NULL, aggregated_module_families = NULL){
+data_management_creation_card <- function(language, ns, title, textfields = NULL, textfields_width = "200px", dropdowns = NULL, dropdowns_width = "200px"){
   div(id = ns("creation_card"),
     make_card(
       translate(language, title),
       div(
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 50),# wrap = TRUE,
-          lapply(names(textfields), function(name){
-            make_textfield(language, ns, textfields[name], id = name, width = textfields_width)#, margin_right = "50px")
+          lapply(textfields, function(name){
+            make_textfield(language, ns, name, id = name, width = textfields_width)#, margin_right = "50px")
           }),
         ),
         shiny.fluent::Stack(
           horizontal = TRUE,
           tokens = list(childrenGap = 50),
-          lapply(names(dropdowns), function(name){
-            dropdown_options <- switch(name, "data_source" = data_sources, "datamart" = datamarts, "study" = studies, "subset" = subsets,
-                                       "patient_lvl_module_family" = patient_lvl_module_families, "aggregated_module_family" = aggregated_module_families)
-            make_dropdown(language, ns, dropdowns[name], dropdown_options, id = name, width = dropdowns_width)#, margin_right = "50px")
+          lapply(dropdowns, function(name){
+            make_dropdown(language, ns, name, options = "", id = name, width = dropdowns_width)#, margin_right = "50px")
           })
         ),
         htmltools::br(),
@@ -76,27 +70,27 @@ data_management_new_data <- function(id, new_id, name, description, creator, dat
                                      data_source_id = NULL, datamart_id = NULL, study_id = NULL,
                                      patient_lvl_module_family_id = NULL, aggregated_module_family_id = NULL){
   data <- tibble::tribble(~id, ~name, ~description, new_id, name, description)
-  if (id == "settings_datamarts") data <- dplyr::bind_cols(tibble::tribble(~data_source_id, data_source_id))
-  if (id == "settings_studies") data <- dplyr::bind_cols(
+  if (id == "settings_datamarts") data <- data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, data_source_id))
+  if (id == "settings_studies") data <- data %>% dplyr::bind_cols(
     tibble::tribble(~datamart_id,  ~patient_lvl_module_family_id, ~aggregated_module_family_id,
                     datamart_id, patient_lvl_module_family_id, aggregated_module_family_id))
-  if (id == "settings_subsets") data <- dplyr::bind_cols(tibble::tribble(~study_id, study_id))
+  if (id == "settings_subsets") data <- data %>% dplyr::bind_cols(tibble::tribble(~study_id, study_id))
   data <- data %>% dplyr::bind_cols(tibble::tribble(~creator, ~datetime, ~deleted, creator, datetime, FALSE))
   data
 }
 
 data_management_data <- function(id, r){
-  data <- r[[id_get_other_name(id, "data_var")]]
+  data <- r[[substr(id, nchar("settings_") + 1, nchar(id))]]
   if (nrow(data) != 0) data <- data %>% dplyr::filter(!deleted) %>% dplyr::select(-deleted)
   data
 }
 
-data_management_datatable <- function(id, data, r, dropdowns = NULL){
+data_management_datatable <- function(id, data, r, language, data_management_elements, dropdowns = NULL){
   if (nrow(data) == 0) return(data)
   
   # Create vars with existing options (ie : for data_sources, a list of existing data_sources in the database)
-  sapply(c("data_sources", "datamarts", "studies", "patient_lvl_modules_families", "aggregated_modules_families"), function(var_name){
-    assign(var_name, tibble_to_list(r[[id_get_other_name(id, "data_var")]], "id", "name", rm_deleted_rows = TRUE))
+  sapply(data_management_elements, function(var_name){
+    assign(var_name, tibble_to_list(r[[var_name]], "id", "name", rm_deleted_rows = TRUE), envir = .GlobalEnv)
   })
   
   # Add a column action in the DataTable
@@ -108,30 +102,34 @@ data_management_datatable <- function(id, data, r, dropdowns = NULL){
   # For each row of the dataframe, transform dropdowns columns to show dropdowns in Shiny app & add an Action column with delete action button
   if (nrow(data) != 0){
     for (i in 1:nrow(data)){
-      
+
       lapply(names(dropdowns), function(name){
         data[i, name] <<- as.character(
           div(
             shiny.fluent::Dropdown.shinyInput(paste0(dropdowns[name], i),
-                                              options = eval(parse(text = dropdowns[name])), 
+                                              options = eval(parse(text = dropdowns[name])),
                                               value = as.integer(data[i, name])),
             style = "width:100%")
           )
       })
-      
+
+      # Add delete button
       actions <- tagList(shiny::actionButton(paste0("delete", data[i, 1]), "", icon = icon("trash-alt"),
                                              onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
+      
+      # Add options button
       if (id %in% c("settings_datamarts", "settings_studies")) actions <- tagList(actions, shiny::actionButton(paste0("options", data[i, 1]), "", icon = icon("cog"),
                                                                                                                onclick = paste0("Shiny.setInputValue('", id, "-options', this.id, {priority: 'event'})")), "")
-      
+
+      # Add edit code button
       if (id == "settings_datamarts") actions <- tagList(actions, shiny::actionButton(paste0("edit_code", data[i, 1]), "", icon = icon("file-code"),
                                                                                        onclick = paste0("Shiny.setInputValue('", id, "-edit_code', this.id, {priority: 'event'})")), "")
       data[i, "action"] <- as.character(div(actions))
     }
   }
   
-  # Change name of ID cols (except the first one)
-  data <- data %>% dplyr::rename_at(dplyr::vars(-1), ~stringr::str_replace_all(., "ID", "name"))
+  # Change name of cols 
+  colnames(data) <- id_get_other_name(id, "colnames_text_version", language = language)
   
   data
 }
@@ -139,25 +137,18 @@ data_management_datatable <- function(id, data, r, dropdowns = NULL){
 data_management_datatable_options <- function(data, id, option){
   if (nrow(data) == 0) return("")
   
-  data <- data %>% 
-    dplyr::bind_rows(tibble::tibble(`Action` = character())) %>%
-    dplyr::rename_at(dplyr::vars(-1), ~stringr::str_replace_all(., "ID", "name"))
+  data <- data %>% dplyr::bind_rows(tibble::tibble(action = character()))
   
-  # Non-sortabled columns : Action & Name columns (except second one)
-  if (option == "sortable"){
-    result <- c(which(grepl("name|Action", names(data))) - 1)
-    result <- result[!result %in% c(1)]
+  # Non-sortabled columns : action & id columns (except first one)
+  if (option == "non_sortable"){
+    result <- c(which(grepl("id|action", names(data))) - 1)
+    result <- result[!result %in% c(0)]
   }
   
   # Disabled columns
   else if (option == "disable"){
     result <- c(1:length(names(data)))
-    regex <- switch(id, 
-                    "settings_data_sources" = "Data source",
-                    "settings_datamarts" = "Datamart",
-                    "settings_studies" = "Study",
-                    "settings_subsets" = "Subset")
-    result <- c(0, result[-which(grepl(regex, names(data)))] - 1)
+    result <- c(0, result[-which(grepl("name|description", names(data)))] - 1)
   }
   
   result

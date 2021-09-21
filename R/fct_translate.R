@@ -73,6 +73,10 @@ get_translations <- function(){
             "FR", "patient_lvl_module_family", "Données individuelles - groupe de modules",
             "EN", "aggregated_module_family", "Aggregated data module family",
             "FR", "aggregated_module_family", "Données agrégées - groupe de modules",
+            "EN", "patient_lvl_module_family_id", "Patient-lvl data module family ID",
+            "FR", "patient_lvl_module_family_id", "Données indiv. - ID groupe de modules",
+            "EN", "aggregated_module_family_id", "Aggregated data module family ID",
+            "FR", "aggregated_module_family_id", "Données agg. - ID groupe de modules",
             "EN", "study", "Study",
             "FR", "study", "Etude",
             "EN", "studies", "Studies",
@@ -288,7 +292,21 @@ get_translations <- function(){
             "EN", "provide_data_source", "Please select a data source",
             "FR", "provide_data_source", "Sélectionner une source de données",
             "EN", "name_already_used", "This name is already used",
-            "FR", "name_already_used", "Ce nom est déjà utilisé"
+            "FR", "name_already_used", "Ce nom est déjà utilisé",
+            "EN", "id", "ID",
+            "FR", "id", "ID",
+            "EN", "data_source_id", "Data source ID",
+            "FR", "data_source_id", "ID source de données",
+            "EN", "datamart_id", "Datamart ID",
+            "FR", "datamart_id", "ID datamart",
+            "EN", "study_id", "Study ID",
+            "FR", "study_id", "ID étude",
+            "EN", "creator", "Creator",
+            "FR", "creator", "Créateur",
+            "EN", "datetime", "Date & time",
+            "FR", "datetime", "Date & heure",
+            "EN", "action", "Action",
+            "FR", "action", "Action"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
