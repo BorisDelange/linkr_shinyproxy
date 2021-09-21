@@ -75,21 +75,22 @@ make_dropdown <- function(language, ns, label, options, id = NULL, value = NULL,
   )
 }
 
-make_persona_picker <- function(language, ns, label, options, value = NULL, width = NULL, min_width = NULL, max_width = NULL){
+make_people_picker <- function(language, ns, label, options, value = NULL, width = NULL, min_width = NULL, max_width = NULL){
   style <- ""
   if (!is.null(width)) style <- paste0("width: ", width)
   if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0("min-width: ", min_width, "; max-width: ", max_width)
   div(
     div(class = "input_title", translate(language, label)),
     div(shiny.fluent::NormalPeoplePicker.shinyInput(
-     ns(label),
-      options = options,
+      ns(label),
+      options = options,# %>% dplyr::filter(key %not_in% value),
       pickerSuggestionsProps = list(
         suggestionsHeaderText = translate(language, "matching_people"),
         noResultsFoundText = translate(language, "no_results_found"),
         showRemoveButtons = TRUE
       ),
-     defaultSelectedItems = options %>% dplyr::filter(key %in% value)),
+      defaultSelectedItems = options %>% dplyr::filter(key %in% value),
+      value = value),
       style = style
     )
   )

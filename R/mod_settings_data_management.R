@@ -48,7 +48,8 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
           dropdowns = "data_source", dropdowns_width = "300px"),
         data_management_datatable_card(language, ns, "datamarts_management"),
         shiny::uiOutput(ns("edit_card")),
-        shiny::uiOutput(ns("options_card"))
+        shiny::uiOutput(ns("options_card")),
+        "VAR = ", shiny::textOutput(ns("test")), "INPUT = ", shiny::textOutput(ns("test2"))
       ) -> result
     }
     
@@ -305,6 +306,56 @@ mod_settings_data_management_server <- function(id, r, language){
           data_management_options_card(language, ns, r, category_filter = category, link_id_filter = link_id, 
             title = paste0(id_get_other_name(id, "singular_form"), "_options"))
         })
+      })
+      
+      observeEvent(input$options_save, {
+        category_filter <- id_get_other_name(id, "singular_form")
+        link_id_filter <- as.integer(substr(isolate(input$options), nchar("options") + 1, nchar(isolate(input$options))))
+        options <- r$options %>% dplyr::filter(category == category_filter, link_id == link_id_filter)
+        options_by_cat <- id_get_other_name(id, "options_by_cat")
+        
+        if("show_only_aggregated_data" %in% options_by_cat){
+          option_id <- 
+            r$options %>%
+            dplyr::filter(category == category_filter, link_id == link_id_filter, name == "show_only_aggregated_data") %>%
+            dplyr::pull(id)
+          r$options <- r$options %>% dplyr::mutate(value_num = ifelse(id == option_id, input[[paste0(category_filter, "_show_only_aggregated_data")]], value_num))
+        }
+        
+        if ("user_allowed_read" %in% options_by_cat){
+          users_already_allowed <- options %>% dplyr::filter(name == "user_allowed_read") %>% dplyr::pull(value_num)
+          users_allowed <- input[[paste0(category_filter, "_users_allowed_read")]]
+          last_row <- max(r[[substr(id, nchar("settings_") + 1, nchar(id))]]["id"])
+          
+          # Delete users not in the selected list
+          rows_to_del <-
+            options %>%
+            dplyr::filter(name == "user_allowed_read" & value_num %not_in% users_allowed) %>%
+            dplyr::pull(id)
+          if(length(rows_to_del) != 0) r$options <- r$options %>% dplyr::filter(id %not_in% rows_to_del)
+          
+          # Add users in the selected list
+          users_allowed <- users_allowed[!users_allowed %in% users_already_allowed]
+          if (length(users_allowed) != 0){
+            r$options <-
+              r$options %>%
+              dplyr::bind_rows(
+                tibble::tibble(id = ((last_row + 1) + (1:length(users_allowed))), category = category_filter, link_id = link_id_filter,
+                               name = "user_allowed_read", value = "", value_num = users_allowed, creator = as.integer(r$user_id),
+                               datetime = as.character(Sys.time()), deleted = FALSE))
+          }
+        }
+        
+        output$warnings4 <- renderUI({
+          div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
+        })
+        shinyjs::show("warnings4")
+        shinyjs::delay(3000, shinyjs::hide("warnings4"))
+      })
+      
+      output$test <- renderText(users_allowed)
+      observeEvent(input$datamart_users_allowed_read, {
+        output$test2 <- renderText(input$datamart_users_allowed_read)
       })
       
       ##########################################

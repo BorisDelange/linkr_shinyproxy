@@ -91,15 +91,16 @@ data_management_edit_card <- function(language, ns, type = "code", code, link_id
 data_management_options_card <- function(language, ns, r, category_filter, link_id_filter, title){
   options <- r$options %>% dplyr::filter(category == category_filter, link_id == link_id_filter)
   
-  persona_picker <- ""
+  people_picker <- ""
   toggles <- ""
   dropdowns <- ""
+  options_by_cat <- id_get_other_name(id, "options_by_cat")
   
-  if("user_allowed_read" %in% options$name){
+  if("user_allowed_read" %in% options_by_cat){
     # List of users in the database
     form_options <- 
       r$users %>% 
-      dplyr::filter(!deleted) %>% 
+      dplyr::filter(!deleted) %>%
       dplyr::transmute(key = id, imageInitials = paste0(substr(first_name, 0, 1), substr(last_name, 0, 1)),
                        text = paste0(first_name, " ", last_name), secondaryText = user_status)
     
@@ -109,28 +110,29 @@ data_management_options_card <- function(language, ns, r, category_filter, link_
       dplyr::mutate(n = 1:dplyr::n()) %>%
       dplyr::inner_join(
         options %>% 
-          dplyr::filter(name == "user_allowed_read") %>% 
+          dplyr::filter(!deleted, name == "user_allowed_read") %>% 
           dplyr::select(key = value_num),
         by = "key"
       ) %>%
       dplyr::pull(key)
-    persona_picker <- make_persona_picker(language, ns, paste0(id_get_other_name(id, "singular_form"), "_users_allowed_read"), 
+    people_picker <- make_people_picker(language, ns, paste0(id_get_other_name(id, "singular_form"), "_users_allowed_read"), 
         options = form_options, value = value, width = "100%")
   }
   
-  if ("show_only_aggregated_data" %in% options$name){
+  if ("show_only_aggregated_data" %in% options_by_cat){
+    value_show_only_aggregated_data <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(value_num)
     toggles <- tagList(
       toggles,
       make_toggle(language, ns, 
                   label = "show_only_aggregated_data", 
-                  id = paste0(id_get_other_name(id, "singular_form"), "_show_only_aggregated_data"), value = FALSE, inline = TRUE))
+                  id = paste0(id_get_other_name(id, "singular_form"), "_show_only_aggregated_data"), value = value_show_only_aggregated_data, inline = TRUE))
   }
   
   div(id = ns("options_card"),
       make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id_filter, ")"), style = "font-size: 15px;")),
         div(
           htmltools::br(), shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), toggles),
-          persona_picker, htmltools::br(),
+          people_picker, htmltools::br(),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), dropdowns),
           shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save"))
         )

@@ -349,7 +349,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
         #           list(key = "ufh", text = "Cohorte héparine"),
         #           list(key = "wmv", text = "Sevrage ventilation")
         #         ), value = "ufh", width = "300px"),
-        #         make_persona_picker(language, ns, "datamart_access_people", options = tibble::tribble(
+        #         make_people_picker(language, ns, "datamart_access_people", options = tibble::tribble(
         #           ~key, ~imageInitials, ~text, ~secondaryText,
         #           1, "JD", "John Doe", "Intensivist",
         #           2, "JD", "Jane Doe", "Data scientist"
@@ -435,11 +435,11 @@ mod_page_main_ui <- function(id, language, page_style, page){
                   list(key = "everybody", text = "To everybody"),
                   list(key = "by_user_status", text = "By user status"),
                   list(key = "by_user_access", text = "By user access"),
-                  list(key = "by_persona_picker", text = "Select users")
+                  list(key = "by_people_picker", text = "Select users")
                 ), value = "everybody", min_width = "300px", max_width = "500px"),
                 shiny::conditionalPanel(
-                  condition = "input.module_access_type == 'by_persona_picker'", ns = ns,
-                  make_persona_picker(language, ns, "module_access_people", options = tibble::tribble(
+                  condition = "input.module_access_type == 'by_people_picker'", ns = ns,
+                  make_people_picker(language, ns, "module_access_people", options = tibble::tribble(
                     ~key, ~imageInitials, ~text, ~secondaryText,
                     1, "JD", "John Doe", "Intensivist",
                     2, "JD", "Jane Doe", "Data scientist"
@@ -462,7 +462,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
               "Or a dropdown of modules", br(),
               "Or both with pivot", br(),
               "On selection : modify a module", br(),
-              "For the access : dropdown with selection mode : everybody ? by user status ? by user access ? by persona picker ?"
+              "For the access : dropdown with selection mode : everybody ? by user status ? by user access ? by people picker ?"
             )
           )
         ) -> result
@@ -510,15 +510,17 @@ mod_page_main_ui <- function(id, language, page_style, page){
               make_dropdown(language, ns, "log_filter_type", options = list(
                 list(key = "everybody", text = "To everybody"),
                 list(key = "myself", text = "My log only"),
-                list(key = "by_persona_picker", text = "Select users")
+                list(key = "by_people_picker", text = "Select users")
               ), value = "everybody", min_width = "300px", max_width = "500px"),
               shiny::conditionalPanel(
-                condition = "input.log_filter_type == 'by_persona_picker'", ns = ns,
-                make_persona_picker(language, ns, "log_filter_people", options = tibble::tribble(
+                condition = "input.log_filter_type == 'by_people_picker'", ns = ns,
+                make_people_picker(language, ns, "log_filter_people", options = tibble::tribble(
                   ~key, ~imageInitials, ~text, ~secondaryText,
                   1, "JD", "John Doe", "Intensivist",
                   2, "JD", "Jane Doe", "Data scientist"
-                ), value = c(1), min_width = "300px", max_width = "500px")
+                ), value = tibble::tribble(
+                  ~key, ~imageInitials, ~text, ~secondaryText,
+                  1, "JD", "John Doe", "Intensivist") , min_width = "300px", max_width = "500px")
               )
             )         
           ),
