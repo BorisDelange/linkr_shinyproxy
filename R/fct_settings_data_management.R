@@ -72,29 +72,35 @@ data_management_edit_card <- function(language, ns, type = "code", code, link_id
   )
 }
 
+data_management_new_data <- function(id, new_id, name, description, creator, datetime, deleted, 
+                                     data_source_id = NULL, datamart_id = NULL, study_id = NULL,
+                                     patient_lvl_module_family_id = NULL, aggregated_module_family_id = NULL){
+  data <- tibble::tribble(~id, ~name, ~description, new_id, name, description)
+  if (id == "settings_datamarts") data <- dplyr::bind_cols(tibble::tribble(~data_source_id, data_source_id))
+  if (id == "settings_studies") data <- dplyr::bind_cols(
+    tibble::tribble(~datamart_id,  ~patient_lvl_module_family_id, ~aggregated_module_family_id,
+                    datamart_id, patient_lvl_module_family_id, aggregated_module_family_id))
+  if (id == "settings_subsets") data <- dplyr::bind_cols(tibble::tribble(~study_id, study_id))
+  data <- data %>% dplyr::bind_cols(tibble::tribble(~creator, ~datetime, ~deleted, creator, datetime, FALSE))
+  data
+}
+
 data_management_data <- function(id, r){
-  data <- switch(id, 
-         "settings_data_sources" = r$data_sources_data,
-         "settings_datamarts" = r$datamarts_data,
-         "settings_studies" = r$studies_data,
-         "settings_subsets" = r$subsets_data)
-  
-  if (nrow(data) != 0) data <- data %>% dplyr::filter(!Deleted) %>% dplyr::select(-Deleted)
+  data <- r[[id_get_other_name(id, "data_var")]]
+  if (nrow(data) != 0) data <- data %>% dplyr::filter(!deleted) %>% dplyr::select(-deleted)
   data
 }
 
 data_management_datatable <- function(id, data, r, dropdowns = NULL){
   if (nrow(data) == 0) return(data)
   
-  data_sources <- tibble_to_list(r$data_sources_data, "Data source ID", "Data source name", rm_deleted_rows = TRUE)
-  datamarts <- tibble_to_list(r$datamarts_data, "Datamart ID", "Datamart name", rm_deleted_rows = TRUE)
-  studies <- tibble_to_list(r$studies_data, "Study ID", "Study name", rm_deleted_rows = TRUE)
-  subsets <- tibble_to_list(r$subsets_data, "Subset ID", "Subset name", rm_deleted_rows = TRUE)
-  patient_lvl_modules_families <- tibble_to_list(r$patient_lvl_modules_families, "Module family ID", "Module family name", rm_deleted_rows = TRUE)
-  aggregated_modules_families <- tibble_to_list(r$aggregated_modules_families, "Module family ID", "Module family name", rm_deleted_rows = TRUE)
+  # Create vars with existing options (ie : for data_sources, a list of existing data_sources in the database)
+  sapply(c("data_sources", "datamarts", "studies", "patient_lvl_modules_families", "aggregated_modules_families"), function(var_name){
+    assign(var_name, tibble_to_list(r[[id_get_other_name(id, "data_var")]], "id", "name", rm_deleted_rows = TRUE))
+  })
   
-  # Add a column Action in the DataTable
-  data["Action"] <- NA_character_
+  # Add a column action in the DataTable
+  data["action"] <- NA_character_
   
   # Transform dropdowns columns in the dataframe to character
   lapply(names(dropdowns), function(name) data %>% dplyr::mutate_at(name, as.character) ->> data)
@@ -120,7 +126,7 @@ data_management_datatable <- function(id, data, r, dropdowns = NULL){
       
       if (id == "settings_datamarts") actions <- tagList(actions, shiny::actionButton(paste0("edit_code", data[i, 1]), "", icon = icon("file-code"),
                                                                                        onclick = paste0("Shiny.setInputValue('", id, "-edit_code', this.id, {priority: 'event'})")), "")
-      data[i, "Action"] <- as.character(div(actions))
+      data[i, "action"] <- as.character(div(actions))
     }
   }
   

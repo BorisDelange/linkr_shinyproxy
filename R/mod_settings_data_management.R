@@ -27,9 +27,8 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
         shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
         shiny.fluent::reactOutput(ns("management_delete_confirm")),
         data_management_toggle_cards(language, ns, creation_card = "create_data_source", datatable_card = "data_sources_management", activated = c("datatable_card")),
-        div(id = ns("creation_card"), 
-            data_management_creation_card(language, ns, "create_data_source",  textfields = c(name = "name", description = "description"), textfields_width = "300px")),
-        div(id = ns("datatable_card"), data_management_datatable_card(language, ns, "data_sources_management"))
+        data_management_creation_card(language, ns, "create_data_source",  textfields = c(name = "name", description = "description"), textfields_width = "300px"),
+        data_management_datatable_card(language, ns, "data_sources_management")
       ) -> result
     }
     
@@ -39,17 +38,17 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     
     if (page == "settings/datamarts"){
       div(class = "main",
-          shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")), shiny::uiOutput(ns("warnings4")),
-          shiny.fluent::reactOutput(ns("management_delete_confirm")),
-          data_management_toggle_cards(language, ns, creation_card = "create_datamart", datatable_card = "datamarts_management", 
-                                       edit_card = "edit_datamart_code", options_card = "datamart_options", activated = c("datatable_card")),
-            data_management_creation_card(language, ns, "create_datamart",
-              textfields = c(name = "name", description = "description"), textfields_width = "300px",
-              dropdowns = c(data_source = "data_source"), dropdowns_width = "300px",
-              data_sources = list(list(key = "", text = ""))),
-          data_management_datatable_card(language, ns, "datamarts_management"),
-          shiny::uiOutput(ns("edit_card")),
-          shiny::uiOutput(ns("options_card"))
+        shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")), shiny::uiOutput(ns("warnings4")),
+        shiny.fluent::reactOutput(ns("management_delete_confirm")),
+        data_management_toggle_cards(language, ns, creation_card = "create_datamart", datatable_card = "datamarts_management", 
+                                     edit_card = "edit_datamart_code", options_card = "datamart_options", activated = c("datatable_card")),
+        data_management_creation_card(language, ns, "create_datamart",
+          textfields = c(name = "name", description = "description"), textfields_width = "300px",
+          dropdowns = c(data_source = "data_source"), dropdowns_width = "300px",
+          data_sources = list(list(key = "", text = ""))),
+        data_management_datatable_card(language, ns, "datamarts_management"),
+        shiny::uiOutput(ns("edit_card")),
+        shiny::uiOutput(ns("options_card"))
       ) -> result
     }
     
@@ -63,34 +62,21 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
         shiny.fluent::reactOutput(ns("management_delete_confirm")),
         data_management_toggle_cards(language, ns, creation_card = "create_study", datatable_card = "studies_management", options_card = "study_options",
                                      activated = c("datatable_card")),
-          data_management_creation_card(language, ns, "create_study",
-                                        textfields = c(name = "name", description = "description"), textfields_width = "300px",
-                                        dropdowns = c(datamart = "datamart", patient_lvl_module_family = "patient_lvl_module_family",
-                                                      aggregated_module_family = "aggregated_module_family"), 
-                                        dropdowns_width = "300px",
-                                        datamarts = list(list(key = "", text = "")),
-                                        patient_lvl_module_families = list(
-                                        list(key = "eHOP default", text = "eHOP default")
-                                        ),
-                                        aggregated_module_families = list(
-                                          list(key = "Default 1", text = "Default 1")
-                                        )),
+        data_management_creation_card(language, ns, "create_study",
+                                      textfields = c(name = "name", description = "description"), textfields_width = "300px",
+                                      dropdowns = c(datamart = "datamart", patient_lvl_module_family = "patient_lvl_module_family",
+                                                    aggregated_module_family = "aggregated_module_family"), 
+                                      dropdowns_width = "300px",
+                                      datamarts = list(list(key = "", text = "")),
+                                      patient_lvl_module_families = list(
+                                      list(key = "eHOP default", text = "eHOP default")
+                                      ),
+                                      aggregated_module_families = list(
+                                        list(key = "Default 1", text = "Default 1")
+                                      )),
         data_management_datatable_card(language, ns, "studies_management"),
         shiny::uiOutput(ns("edit_card")),
         shiny::uiOutput(ns("options_card"))
-        # div(id = ns("options_card"),
-        #   make_card(translate(language, "study_options"),
-        #     div(
-        #       make_persona_picker(language, ns, "studies_access_people", options = tibble::tribble(
-        #         ~key, ~imageInitials, ~text, ~secondaryText,
-        #         1, "JD", "John Doe", "Intensivist",
-        #         2, "JD", "Jane Doe", "Data scientist"
-        #       ), width = "100%"),
-        #     htmltools::br(),
-        #     shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
-        #     )
-        #   )
-        # )
       ) -> result
     }
     
@@ -132,102 +118,84 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
 #'
 #' @noRd 
 # mod_settings_data_management_server <- function(id, page_style, page){
+
 mod_settings_data_management_server <- function(id, r, language){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    toggles <- c("creation_card", "datatable_card", "edit_card", "options_card")
+    pages <- c("settings_data_sources", "settings_datamarts", "settings_studies", "settings_subsets")
     
     ##########################################
     # Data management / Show or hide cards   #
     ##########################################
     
-    observeEvent(input$creation_card_toggle, if (input$creation_card_toggle) shinyjs::show("creation_card") else shinyjs::hide("creation_card"))
-    observeEvent(input$datatable_card_toggle, if (input$datatable_card_toggle) shinyjs::show("datatable_card") else shinyjs::hide("datatable_card"))
-    observeEvent(input$edit_card_toggle, if (input$edit_card_toggle) shinyjs::show("edit_card") else shinyjs::hide("edit_card"))
-    observeEvent(input$options_card_toggle, if (input$options_card_toggle) shinyjs::show("options_card") else shinyjs::hide("options_card"))
+    sapply(toggles, function(toggle){
+      observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
+    })
     
     ##########################################
     # Data management / Add a new element    #
     ##########################################
     
     # Update dropdowns with reactive data
-    observeEvent(r$data_sources_data, {
-      options <- tibble_to_list(r$data_sources_data, "Data source ID", "Data source name", rm_deleted_rows = TRUE)
-      shiny.fluent::updateDropdown.shinyInput(session, "data_source", options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
-    })
-    observeEvent(r$datamarts_data, {
-      options <- tibble_to_list(r$datamarts_data, "Datamart ID", "Datamart name", rm_deleted_rows = TRUE)
-      shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
-    })
-    observeEvent(r$studies_data, {
-      options <- tibble_to_list(r$studies_data, "Study ID", "Study name", rm_deleted_rows = TRUE)
-      shiny.fluent::updateDropdown.shinyInput(session, "study", options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
-    })
-    observeEvent(r$patient_lvl_modules_families, {
-      options <- tibble_to_list(r$patient_lvl_modules_families, "Module family ID", "Module family name", rm_deleted_rows = TRUE)
-      shiny.fluent::updateDropdown.shinyInput(session, "patient_lvl_module_family", options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
-    })
-    observeEvent(r$aggregated_modules_families, {
-      options <- tibble_to_list(r$aggregated_modules_families, "Module family ID", "Module family name", rm_deleted_rows = TRUE)
-      shiny.fluent::updateDropdown.shinyInput(session, "aggregated_module_family", options = options, value = options[[1]][["key"]])
-    })
+    sapply(pages, function(page){
+                    data_var <- id_get_other_name(page, "data_var")
+                    observeEvent(r[[data_var]], {
+                      options <- tibble_to_list(r[[data_var]], "id", "name", rm_deleted_rows = TRUE)
+                    shiny.fluent::updateDropdown.shinyInput(session, id_get_other_name(page, "singular_form"),
+                                                            options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
+                    })
+                  })
     
-    # onClick add button
+    # When add button is used
     observeEvent(input$add, {
       
-      # Check if required fields are filled
+      # Check if required fields are filled (name is required, description is not)
+      # We can add other requirements (eg characters only)
       name_check <- ifelse(is.null(input$name), FALSE, TRUE)
       if (!name_check) shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = translate(language, "provide_valid_name"))
       if (name_check) shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = NULL)
-      # description_check <- ifelse(is.null(input$description), FALSE, TRUE)
-      # if (!description_check) shiny.fluent::updateTextField.shinyInput(session, "description", errorMessage = translate(language, "provide_valid_description"))
-      # if (description_check) shiny.fluent::updateTextField.shinyInput(session, "description", errorMessage = NULL)
       
-      req(name_check)#, description_check)
+      req(name_check)
       
-      # SQL request
-      # ...
-      # Check if already exists
-      # Add to database
-      
-      data_var <- paste0(substr(id, nchar("settings_") + 1, nchar(id)), "_data")
-      prefix_cols <- switch(id, "settings_data_sources" = "Data source", "settings_datamarts" = "Datamart", "settings_studies" = "Study", "settings_subsets" = "Subset")
-      distinct_names <- r[[data_var]] %>% dplyr::filter(!Deleted) %>% dplyr::pull(paste0(prefix_cols, " name"))
+      data_var <- id_get_other_name(id, "data_var")
+      distinct_names <- r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::pull(name)
       
       if (input$name %in% distinct_names){
         output$warnings2 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "name_already_used"), messageBarType = 3), style = "margin-top:10px;"))
         shinyjs::show("warnings2")
         shinyjs::delay(3000, shinyjs::hide("warnings2"))
       }
-      req(input$name %not_in% (r[[data_var]] %>% dplyr::filter(!Deleted) %>% dplyr::pull(paste0(prefix_cols, " name"))))
+      req(input$name %not_in% (r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::pull(name)))
       
-      last_row <- max(r[[data_var]][paste0(prefix_cols, " ID")])
+      last_row <- max(r[[data_var]]["id"])
+      
+      new_data <- data_management_new_data(
+        id,
+        new_id = last_row + 1,
+        name = as.character(input$name),
+        description = ifelse(is.null(input$description), "", as.character(input$description)),
+        creator = as.character(r$user),
+        datetime = as.character(Sys.time()),
+        deleted = FALSE,
+        data_source_id = as.integer(input$data_source),
+        datamart_id = as.integer(input$datamart),
+        study_id = as.integer(input$study),
+        patient_lvl_module_family_id = as.integer(input$patient_lvl_module_family),
+        aggregated_module_family_id = as.integer(input$aggregated_module_family))
     
-      if (id == "settings_data_sources") tibble::tribble(~`Data source ID`, ~`Data source name`, ~`Data source description`, ~`Creator`, ~`Date & time`, ~`Deleted`,
-            last_row + 1, input$name, ifelse(is.null(input$description), "", input$description), r$user, as.character(Sys.time()), FALSE) -> new_data
-      if (id == "settings_datamarts") tibble::tribble(~`Datamart ID`, ~`Datamart name`, ~`Datamart description`, ~`Data source ID`, ~`Creator`, ~`Date & time`, ~`Deleted`,
-            last_row + 1, input$name, ifelse(is.null(input$description), "", input$description), input$data_source, r$user, as.character(Sys.time()), FALSE) -> new_data
-      if (id == "settings_studies") tibble::tribble(~`Study ID`, ~`Study name`, ~`Study description`, ~`Datamart ID`, ~`Patient-level data module family ID`, 
-            ~`Aggregated data module family ID`, ~`Creator`, ~`Date & time`, ~`Deleted`,
-            last_row + 1, input$name, ifelse(is.null(input$description), "", input$description), input$datamart, input$patient_lvl_module_family,
-            input$aggregated_module_family, r$user, as.character(Sys.time()), FALSE) -> new_data
-      if (id == "settings_subsets") tibble::tribble(~`Subset ID`, ~`Subset name`, ~`Subset description`, ~`Study ID`, ~`Creator`, ~`Date & time`, ~`Deleted`,
-            last_row + 1, input$name, ifelse(is.null(input$description), "", input$description), input$study, r$user, as.character(Sys.time()), FALSE) -> new_data
-      
       r[[data_var]] <- r[[data_var]] %>% dplyr::bind_rows(new_data)
       
       # If the row we add is a datamart, add a row in the code table also
-      last_row_code <- max(r$code["Code ID"])
-      if (id == "settings_datamarts") r$code <- r$code %>% dplyr::bind_rowd(
-        tibble::tribble(~`Code ID`, ~`Category`, ~`Link ID`, ~`Code`, ~`Creator`, ~`Date & time`, ~`Deleted`,
-                        last_row_code + 1, "datamart", last_row + 1, "", r$user, as.character(Sys.time()), FALSE))
+      last_row_code <- max(r$code["id"])
+      if (id == "settings_datamarts") r$code <- r$code %>% dplyr::bind_rows(
+        tibble::tribble(~id, ~category, ~link_id, ~code, ~creator, ~datetime, ~deteleted,
+                        last_row_code + 1, "datamart", last_row + 1, "", as.character(r$user), as.character(Sys.time()), FALSE))
       
-      message <- switch(id, "settings_data_sources" = "data_source_added",
-                            "settings_datamarts" = "datamart_added",
-                            "settings_studies" = "study_added",
-                            "settings_subsets" = "subset_added")
-      output$warnings1 <- renderUI({
-        div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 4), style = "margin-top:10px;")
-      })
+      message <- paste0(id_get_other_name(id, "singular_form"), "_added")
+      
+      output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 4), style = "margin-top:10px;"))
       shinyjs::show("warnings1")
       shinyjs::delay(3000, shinyjs::hide("warnings1"))
     })
@@ -241,16 +209,14 @@ mod_settings_data_management_server <- function(id, r, language){
       ##########################################
     
       output$management_datatable <- DT::renderDT(
-        data_management_datatable(id = id,
-                                  data = data_management_data(id, r),
-                                  r,
+        data_management_datatable(id = id, data = data_management_data(id, r), r,
                                   dropdowns = switch(id,
                                                      "settings_data_sources" = "",
-                                                     "settings_datamarts" = c("Data source ID" = "data_sources"),
-                                                     "settings_studies" = c("Datamart ID" = "datamarts",
-                                                                            "Patient-level data module family ID" = "patient_lvl_modules_families",
-                                                                            "Aggregated data module family ID" = "aggregated_modules_families"),
-                                                     "settings_subsets" = c("Study ID" = "studies")
+                                                     "settings_datamarts" = c("data_source_id" = "data_sources"),
+                                                     "settings_studies" = c("datamart_id" = "datamarts",
+                                                                            "patient_lvl_module_familiy_id" = "patient_lvl_modules_families",
+                                                                            "aggregated_data_module_family_id" = "aggregated_modules_families"),
+                                                     "settings_subsets" = c("study_id" = "studies")
                                   )),
         options = list(dom = "t<'bottom'p>",
                        columnDefs = list(
@@ -305,7 +271,7 @@ mod_settings_data_management_server <- function(id, r, language){
         # Modify reactive value r$...
         data_var <- paste0(substr(id, nchar("settings_") + 1, nchar(id)), "_data")
         row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete") + 1, nchar(input$deleted_pressed)))
-        r[[data_var]][which(r[[data_var]][1] == row_deleted), "Deleted"] = TRUE
+        r[[data_var]][which(r[[data_var]][1] == row_deleted), "deleted"] = TRUE
         
         # Notification to user
         message <- switch(id, "settings_data_sources" = "data_source_deleted",

@@ -51,23 +51,25 @@ make_layout <- function(language, page_style, page){
   result
 }
 
-make_textfield <- function(language, ns, label, id = NULL, value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL){
+make_textfield <- function(language, ns, label, id = NULL, value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, margin_right = NULL){
   if (is.null(id)) id <- label
   style <- ""
-  if (!is.null(width)) style <- paste0("width: ", width)
-  if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0("min-width: ", min_width, "; max-width: ", max_width)
+  if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
+  if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0(style, "min-width: ", min_width, "; max-width: ", max_width, ";")
+  if (!is.null(margin_right)) style <- paste0(style, "margin-right:", margin_right, ";")
   div(
     div(class = "input_title", translate(language, label)),
     div(shiny.fluent::TextField.shinyInput(ns(id), value = value, type = type, canRevealPassword = canRevealPassword), style = style)
   )
 }
 
-make_dropdown <- function(language, ns, label, options, id = NULL, value = NULL, width = NULL, min_width = NULL, max_width = NULL){
+make_dropdown <- function(language, ns, label, options, id = NULL, value = NULL, width = NULL, min_width = NULL, max_width = NULL, margin_right = NULL){
   # options <- lapply(split(names(options), options), unname)
   # if (is.null(id)) id <- label
   style <- ""
-  if (!is.null(width)) style <- paste0("width: ", width)
-  if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0("min-width: ", min_width, "; max-width: ", max_width)
+  if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
+  if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0(style, "min-width: ", min_width, "; max-width: ", max_width, ";")
+  if (!is.null(margin_right)) style <- paste0(style, "margin-right:", margin_right, ";")
   div(
     div(class = "input_title", translate(language, label)),
     div(shiny.fluent::Dropdown.shinyInput(ns(label), value = value, options = options), style = style)
