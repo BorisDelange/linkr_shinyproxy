@@ -26,7 +26,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
       div(class = "main",
         shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
         shiny.fluent::reactOutput(ns("management_delete_confirm")),
-        data_management_toggle_cards(language, ns, creation_card = "create_data_source", datatable_card = "data_sources_management", activated = c("datatable_card")),
+        data_management_toggle_card(language, ns, creation_card = "create_data_source", datatable_card = "data_sources_management", activated = c("datatable_card")),
         data_management_creation_card(language, ns, "create_data_source",  textfields = c("name", "description"), textfields_width = "300px"),
         data_management_datatable_card(language, ns, "data_sources_management")
       ) -> result
@@ -40,7 +40,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
       div(class = "main",
         shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")), shiny::uiOutput(ns("warnings4")),
         shiny.fluent::reactOutput(ns("management_delete_confirm")),
-        data_management_toggle_cards(
+        data_management_toggle_card(
           language, ns, creation_card = "create_datamart", datatable_card = "datamarts_management", 
           edit_card = "edit_datamart_code", options_card = "datamart_options", activated = c("datatable_card")),
         data_management_creation_card(language, ns, "create_datamart",
@@ -60,7 +60,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
       div(class = "main",
         shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
         shiny.fluent::reactOutput(ns("management_delete_confirm")),
-        data_management_toggle_cards(
+        data_management_toggle_card(
           language, ns, creation_card = "create_study", datatable_card = "studies_management", options_card = "study_options",
           activated = c("datatable_card")),
         data_management_creation_card(
@@ -82,7 +82,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
       div(class = "main",
         shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
         shiny.fluent::reactOutput(ns("management_delete_confirm")),
-        data_management_toggle_cards(language, ns, creation_card = "create_subset", datatable_card = "subsets_management", activated = c("datatable_card")),
+        data_management_toggle_card(language, ns, creation_card = "create_subset", datatable_card = "subsets_management", activated = c("datatable_card")),
         data_management_creation_card(
           language, ns, "create_subset",
           textfields = c("name", "description"), textfields_width = "300px",
@@ -168,7 +168,7 @@ mod_settings_data_management_server <- function(id, r, language){
         new_id = last_row + 1,
         name = as.character(input$name),
         description = ifelse(is.null(input$description), "", as.character(input$description)),
-        creator = as.character(r$user),
+        creator = as.numeric(r$user_id),
         datetime = as.character(Sys.time()),
         deleted = FALSE,
         data_source_id = as.integer(input$data_source),
@@ -179,11 +179,23 @@ mod_settings_data_management_server <- function(id, r, language){
     
       r[[data_var]] <- r[[data_var]] %>% dplyr::bind_rows(new_data)
       
-      # If the row we add is a datamart, add a row in the code table also
+      # If the row we add is a datamart :
+      # - add a row in the code table
+      # - add rows in options table
       last_row_code <- max(r$code["id"])
-      if (id == "settings_datamarts") r$code <- r$code %>% dplyr::bind_rows(
-        tibble::tribble(~id, ~category, ~link_id, ~code, ~creator, ~datetime, ~deteleted,
-                        last_row_code + 1, "datamart", last_row + 1, "", as.character(r$user), as.character(Sys.time()), FALSE))
+      last_row_options <- max(r$options["id"])
+      if (id == "settings_datamarts"){ 
+        r$code <- r$code %>% dplyr::bind_rows(
+          tibble::tribble(~id, ~category, ~link_id, ~code, ~creator, ~datetime, ~deteleted,
+            last_row_code + 1, "datamart", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
+        r$options <- r$options %>% dplyr::bind_rows(
+          tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator, ~datetime, ~deleted,
+            last_row_options + 1, "datamart", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
+            last_row_options + 1, "datamart", last_row + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE))
+      }
+      
+      # If the row we add is a datamart or a study, hide options card
+      shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = FALSE)
       
       message <- paste0(id_get_other_name(id, "singular_form"), "_added")
       
@@ -288,25 +300,10 @@ mod_settings_data_management_server <- function(id, r, language){
         req(input$options)
         shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = TRUE)
         output$options_card <- renderUI({
-          category <- switch(id, "settings_data_sources" = "data source", "settings_datamarts" = "datamart", "settings_studies" = "study", "settings_subsets" = "subset")
-          link_id <- as.integer(substr(isolate(input$edit_code), nchar("edit_code") + 1, nchar(isolate(input$edit_code))))
-          
-          div(id = ns("options_card"),
-            make_card(translate(language, "study_options"),
-              div(
-                make_persona_picker(language, ns, "studies_access_people", options = tibble::tribble(
-                  ~key, ~imageInitials, ~text, ~secondaryText,
-                  1, "JD", "John Doe", "Intensivist",
-                  2, "JD", "Jane Doe", "Data scientist"
-                ), width = "100%"),
-                htmltools::br(),
-                shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
-              )
-            )
-          )
-          
-          # options <- r$options %>% dplyr::filter(`Category` == category & `Link ID` == link_id) %>% dplyr::pull(`Code`)
-          # data_management_edit_card(language, ns, type = "code", code = code, link_id = link_id, title = paste0("edit_", category, "_code"))
+          category <- id_get_other_name(id, "singular_form")
+          link_id <- as.integer(substr(isolate(input$options), nchar("options") + 1, nchar(isolate(input$options))))
+          data_management_options_card(language, ns, r, category_filter = category, link_id_filter = link_id, 
+            title = paste0(id_get_other_name(id, "singular_form"), "_options"))
         })
       })
       

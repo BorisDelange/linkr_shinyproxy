@@ -306,7 +306,11 @@ get_translations <- function(){
             "EN", "datetime", "Date & time",
             "FR", "datetime", "Date & heure",
             "EN", "action", "Action",
-            "FR", "action", "Action"
+            "FR", "action", "Action",
+            "EN", "datamart_users_allowed_read", "Grant access to",
+            "FR", "datamart_users_allowed_read", "Donner l'accès à",
+            "EN", "show_only_aggregated_data", "Show only aggregated data",
+            "FR", "show_only_aggregated_data", "N'autoriser l'accès qu'aux données aggrégées"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

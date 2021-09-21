@@ -94,3 +94,20 @@ make_persona_picker <- function(language, ns, label, options, value = NULL, widt
     )
   )
 }
+
+make_toggle <- function(language, ns, label, id = NULL, value = FALSE, inline = FALSE){
+  if (is.null(id)) id <- label
+  if (inline){
+    tagList(
+      shiny.fluent::Toggle.shinyInput(ns(id), value = value),
+      div(class = "toggle_title", translate(language, label))
+    ) -> result
+  }
+  if (!inline){
+    tagList(
+      div(class = "input_title", translate(language, label)),
+      shiny.fluent::Toggle.shinyInput(ns(id), value = value)
+    )  -> result
+  }
+  result
+}

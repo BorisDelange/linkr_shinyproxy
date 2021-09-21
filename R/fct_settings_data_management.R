@@ -6,11 +6,17 @@
 #'
 #' @noRd
 
-data_management_toggle_cards <- function(language, ns, creation_card = "", datatable_card = "", edit_card = "", options_card = "", activated = ""){
+##########################################
+# Toggle card                            #
+##########################################
+
+data_management_toggle_card <- function(language, ns, creation_card = "", datatable_card = "", edit_card = "", options_card = "", activated = ""){
   toggles <- tagList()
   sapply(c("creation_card", "datatable_card", "edit_card", "options_card"), function(card){
-    if (eval(parse(text = card)) != "") toggles <<- tagList(toggles, shiny.fluent::Toggle.shinyInput(ns(paste0(card, "_toggle")), value = ifelse(card %in% activated, TRUE, FALSE)), 
-                                                           div(class = "toggle_title", translate(language, eval(parse(text = card)))))
+    label <- eval(parse(text = card))
+    if (label != "") toggles <<- 
+        tagList(toggles, make_toggle(language, ns, label = label, 
+          id = paste0(card, "_toggle"), value = ifelse(card %in% activated, TRUE, FALSE), inline = TRUE))
   })
   make_card("",
     shiny.fluent::Stack(
@@ -18,6 +24,10 @@ data_management_toggle_cards <- function(language, ns, creation_card = "", datat
     )
   )
 }
+
+##########################################
+# Creation card                          #
+##########################################
 
 data_management_creation_card <- function(language, ns, title, textfields = NULL, textfields_width = "200px", dropdowns = NULL, dropdowns_width = "200px"){
   div(id = ns("creation_card"),
@@ -44,6 +54,10 @@ data_management_creation_card <- function(language, ns, title, textfields = NULL
   )
 }
 
+##########################################
+# Datatable card                         #
+##########################################
+
 data_management_datatable_card <- function(language, ns, title){
   div(id = ns("datatable_card"),
     make_card(translate(language, title),
@@ -55,6 +69,10 @@ data_management_datatable_card <- function(language, ns, title){
   )
 }
 
+##########################################
+# Edit code card                         #
+##########################################
+
 data_management_edit_card <- function(language, ns, type = "code", code, link_id, title){
   div(id = ns("edit_card"),
     make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
@@ -65,6 +83,64 @@ data_management_edit_card <- function(language, ns, type = "code", code, link_id
     )
   )
 }
+
+##########################################
+# Options card                           #
+##########################################
+
+data_management_options_card <- function(language, ns, r, category_filter, link_id_filter, title){
+  options <- r$options %>% dplyr::filter(category == category_filter, link_id == link_id_filter)
+  
+  persona_picker <- ""
+  toggles <- ""
+  dropdowns <- ""
+  
+  if("user_allowed_read" %in% options$name){
+    # List of users in the database
+    form_options <- 
+      r$users %>% 
+      dplyr::filter(!deleted) %>% 
+      dplyr::transmute(key = id, imageInitials = paste0(substr(first_name, 0, 1), substr(last_name, 0, 1)),
+                       text = paste0(first_name, " ", last_name), secondaryText = user_status)
+    
+    # Users already allowed
+    value <- 
+      form_options %>% 
+      dplyr::mutate(n = 1:dplyr::n()) %>%
+      dplyr::inner_join(
+        options %>% 
+          dplyr::filter(name == "user_allowed_read") %>% 
+          dplyr::select(key = value_num),
+        by = "key"
+      ) %>%
+      dplyr::pull(key)
+    persona_picker <- make_persona_picker(language, ns, paste0(id_get_other_name(id, "singular_form"), "_users_allowed_read"), 
+        options = form_options, value = value, width = "100%")
+  }
+  
+  if ("show_only_aggregated_data" %in% options$name){
+    toggles <- tagList(
+      toggles,
+      make_toggle(language, ns, 
+                  label = "show_only_aggregated_data", 
+                  id = paste0(id_get_other_name(id, "singular_form"), "_show_only_aggregated_data"), value = FALSE, inline = TRUE))
+  }
+  
+  div(id = ns("options_card"),
+      make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id_filter, ")"), style = "font-size: 15px;")),
+        div(
+          htmltools::br(), shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), toggles),
+          persona_picker, htmltools::br(),
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), dropdowns),
+          shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save"))
+        )
+      )
+  )
+}
+
+##########################################
+# New data                               #
+##########################################
 
 data_management_new_data <- function(id, new_id, name, description, creator, datetime, deleted, 
                                      data_source_id = NULL, datamart_id = NULL, study_id = NULL,
@@ -79,11 +155,19 @@ data_management_new_data <- function(id, new_id, name, description, creator, dat
   data
 }
 
+##########################################
+# Data                                   #
+##########################################
+
 data_management_data <- function(id, r){
   data <- r[[substr(id, nchar("settings_") + 1, nchar(id))]]
   if (nrow(data) != 0) data <- data %>% dplyr::filter(!deleted) %>% dplyr::select(-deleted)
   data
 }
+
+##########################################
+# Datatable                             #
+##########################################
 
 data_management_datatable <- function(id, data, r, language, data_management_elements, dropdowns = NULL){
   if (nrow(data) == 0) return(data)
@@ -134,6 +218,10 @@ data_management_datatable <- function(id, data, r, language, data_management_ele
   data
 }
 
+##########################################
+# Datatable options                      #
+##########################################
+
 data_management_datatable_options <- function(data, id, option){
   if (nrow(data) == 0) return("")
   
@@ -153,6 +241,10 @@ data_management_datatable_options <- function(data, id, option){
   
   result
 }
+
+##########################################
+# Delete react                           #
+##########################################
 
 data_management_delete_react <- function(id, ns, language, data_management_delete_dialog){
   page <- switch(id, 
