@@ -171,7 +171,7 @@ data_management_data <- function(id, r){
 # Datatable                             #
 ##########################################
 
-data_management_datatable <- function(id, data, r, language, data_management_elements, dropdowns = NULL){
+data_management_datatable <- function(id, data, ns, r, language, data_management_elements, dropdowns = NULL){
   if (nrow(data) == 0) return(data)
   
   # Create vars with existing options (ie : for data_sources, a list of existing data_sources in the database)
@@ -192,7 +192,7 @@ data_management_datatable <- function(id, data, r, language, data_management_ele
       lapply(names(dropdowns), function(name){
         data[i, name] <<- as.character(
           div(
-            shiny.fluent::Dropdown.shinyInput(paste0(dropdowns[name], i),
+            shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
                                               options = eval(parse(text = dropdowns[name])),
                                               value = as.integer(data[i, name])),
             style = "width:100%")

@@ -23,30 +23,38 @@ app_server <- function(page_style, router, language){
       2, "User level 1", "developper_mode", "", 0, "2021-06-01 14:31:32", FALSE
     )
     
-    r$data_sources <- tibble::tribble(
+    data_sources <- tibble::tribble(
       ~id, ~name, ~description, ~creator, ~datetime, ~deleted,
       # ~`Data source ID`, ~`Data source name`, ~`Data source description`, ~`Creator`, ~`Date & time`, ~`Deleted`,
        13, "MIMIC-IV", "MIMIC database version 4", 1, "2021-09-16 17:58:21", FALSE,
        15, "eHOP", "eHOP university hospital of Rennes", 1, "2021-09-16 17:59:00", FALSE)
+    r$data_sources <- data_sources
+    r$data_sources_temp <- data_sources
     
-    r$datamarts <- tibble::tribble(
+    datamarts <- tibble::tribble(
       ~id, ~name, ~description, ~data_source_id, ~creator, ~datetime, ~deleted,
       # ~`Datamart ID`, ~`Datamart name`, ~`Datamart description`, ~`Data source ID`, ~`Creator`, ~`Date & time`, ~`Deleted`,
       2, "Weaning from mechanical ventilation", "A study with MV", 13, 3, "2021-09-15 16:20:21", FALSE,
       4, "Heparin data Metavision", "Prediction of response of UFH therapy in ICU", 15, 1, "2021-09-14 15:20:23", FALSE)
+    r$datamarts <- datamarts
+    r$datamarts_temp <- datamarts
     
-    r$studies <- tibble::tribble(
+    studies <- tibble::tribble(
       ~id, ~name, ~description, ~datamart_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id, ~creator, ~datetime, ~deleted,
       # ~`Study ID`, ~`Study name`, ~`Study description`, ~`Datamart ID`,
       # ~`Patient-level data module family ID`, ~`Aggregated data module family ID`, ~`Creator`, ~`Date & time`, ~`Deleted`,
       1, "Study 1", "Weaning from mechanical ventilation", 2, 1, 3, 3, "2021-08-23 08:53:45", FALSE,
       2, "Study 2", "Heparin datamart Metavision", 4, 3, 3, 3, "2021-07-25 09:45:43", FALSE,
       3, "Study 3", "My new study", 2, 5, 4, 1, "2021-06-23 21:13:47", FALSE)
+    r$studies <- studies
+    r$studies_temp <- studies
     
-    r$subsets <- tibble::tribble(
+    subsets <- tibble::tribble(
       ~id, ~name, ~description, ~study_id, ~creator, ~datetime, ~deleted,
       # ~`Subset ID`, ~`Subset name`, ~`Subset description`, ~`Study ID`, ~`Creator`, ~`Date & time`, ~`Deleted`,
       1, "Included patients", "A subset with only included patients", 1, 1, "2021-07-21 19:45:13", FALSE)
+    r$subsets <- subsets
+    r$subsets_temp <- subsets
     
     r$patient_lvl_module_families <- tibble::tribble(
       ~id, ~name, ~description, ~creator, ~datetime, ~deleted,
@@ -81,6 +89,8 @@ app_server <- function(page_style, router, language){
       ~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator, ~datetime, ~deleted,
       1, "datamart", 2, "user_allowed_read", "", 3, 3, "2021-07-04 17:23:54", FALSE,
       2, "datamart", 2, "show_only_aggregated_data", "", 0, 1, "2021-07-04 17:23:54", FALSE,
+      3, "datamart", 4, "user_allowed_read", "", 3, 3, "2021-07-04 17:23:54", FALSE,
+      4, "datamart", 4, "show_only_aggregated_data", "", 0, 1, "2021-07-04 17:23:54", FALSE,
     )
     
     if (page_style == "fluent") router$server(input, output, session)
