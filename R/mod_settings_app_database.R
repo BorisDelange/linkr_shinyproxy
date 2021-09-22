@@ -37,27 +37,19 @@ mod_settings_app_database_ui <- function(id, language, page_style, page){
         shiny.fluent::Stack(
           horizontal = TRUE,
           tokens = list(childrenGap = 20),
-          shiny.fluent::PrimaryButton.shinyInput(ns("save"), translate(language, "save")),
+          shiny.fluent::PrimaryButton.shinyInput(ns("db_connection_save"), translate(language, "save")),
           shiny::conditionalPanel(condition = "input.db_connection_type == 'distant'", ns = ns,
             shiny.fluent::PrimaryButton.shinyInput(ns("test_connection"), translate(language, "test_connection"))),
-        ), htmltools::br(),
-        div(shiny::verbatimTextOutput(ns("test_connection_result")), 
-            style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+          shiny::conditionalPanel(condition = "input.db_connection_type == 'distant'", ns = ns,
+            div(
+              div(shiny::textOutput(ns("test_connection_success")), style = "padding-top:5px; font-weight:bold; color:#0078D4;"),
+              div(shiny::textOutput(ns("test_connection_failure")), style = "color:red;"))),
+        ), htmltools::br()
       )
     ),
     make_card(
       translate(language, "app_db_tables"),
-      shiny.fluent::DetailsList(
-        compact = TRUE,
-        items = list(
-          list(key = "1", table_name = "Users", nrows = 51),
-          list(key = "2", table_name = "Datamarts", nrows = 13)
-        ),
-        columns = list(
-          list(key = "table_name", fieldName = "table_name", name = "Table name", minWidth = 200, maxWidth = 200, isResizable = TRUE),
-          list(key = "nrows", fieldName = "nrows", name = "Num of rows", minWidth = 200, maxWidth = 200, isResizable = TRUE)
-        )
-      )
+      DT::DTOutput(ns("app_db_tables"))
     ),
     make_card(
       translate(language, "app_db_request"),
@@ -78,6 +70,10 @@ mod_settings_app_database_server <- function(id, r, language, db_info){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    ##########################################
+    # Database connection                    #
+    ##########################################
+    
     if (class(db_info) == "list" & length(db_info) != 0){
       shiny.fluent::updateChoiceGroup.shinyInput(session, "db_connection_type", value = "distant")
       if (!is.null(db_info$dbname)) shiny.fluent::updateTextField.shinyInput(session, "dbname", value = db_info$dbname)
@@ -91,13 +87,52 @@ mod_settings_app_database_server <- function(id, r, language, db_info){
       code <- paste0("DBI::dbConnect(RPostgres::Postgres(),
                      dbname = '", input$dbname, "', host = '", input$host, "', port = ", input$port,
                      ", user = '", input$user, "', password = '", input$password, "')")
-      output$test_connection_result <- renderText({
-        captured_output <- capture.output(eval(parse(text = code)))
-        if (grepl("Error", captured_output)) result <- captured_output
-        else result <- "Succès"
-        result
-      })
+      result_success <- ""
+      result_failure <- ""
+      result <- capture.output(
+        tryCatch(eval(parse(text = isolate(code))), error = function(e) print(e), warning = function(w) print(w))
+      )
+      if (!grepl("exception|error|warning|fatal", tolower(result))) result_success <- paste0(translate(language, "success"), " !")
+      if (grepl("exception|error|warning|fatal", tolower(result))) result_failure <- result
+      output$test_connection_success <- renderText(result_success)
+      output$test_connection_failure <- renderText(result_failure)
     })
+    
+    observeEvent(input$db_connection_save, {
+      # Checks inputs
+      db_checks <- c("dbname" = FALSE, "host" = FALSE, "port" = FALSE, "user" = FALSE, "password" = FALSE)
+      sapply(names(db_checks), function(name){
+        if (!is.null(input[[name]])){
+          if (name != "port" & input[[name]] != "") db_checks[[name]] <<- TRUE
+          if (name == "port" & input[[name]] != "" & grepl("^[0-9]+$", input[[name]])) db_checks[[name]] <<- TRUE
+        }
+      })
+      sapply(names(db_checks), function(name) if (!db_checks[[name]]) shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = translate(language, paste0("provide_valid_", name))))
+      
+      req(db_checks[["dbname"]], db_checks[["host"]], db_checks[["port"]], db_checks[["user"]], db_checks[["password"]])
+      
+      # If checks OK, insert data in database
+      last_row <- DBI::dbGetQuery(db, "SELECT MAX(id) FROM options")
+      query <- paste0("INSERT INTO options(id, category, name, value, creator_id, datetime, deleted)
+                       SELECT ", last_row + 1, ", 'distant_db', 'name', '", input$dbname, "', ", r$user_id, '", as.character(Sys.time()), "', FALSE)
+      DBI::dbSendStatement(db, query)
+      r$options <- DBI::dbGetQuery(db, "SELECT * FROM options")
+      
+    })
+    
+    ##########################################
+    # Database tables datatable              #
+    ##########################################
+    
+    output$app_db_tables <- DT::renderDT(
+      tibble::tibble(name = DBI::dbListTables(db),
+                     row_number = sapply(DBI::dbListTables(db), 
+                       function(table) DBI::dbGetQuery(db, paste0("SELECT COUNT(*) FROM ", table)) %>% dplyr::pull())),
+      options = list(dom = "t<'bottom'p>",
+                     columnDefs = list(
+                       list(className = "dt-left", targets = "_all")
+                     )),
+      rownames = FALSE, selection = "none")
   })
 }
     

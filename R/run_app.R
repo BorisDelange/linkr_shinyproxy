@@ -82,6 +82,8 @@ run_app <- function(
     ) -> page
   }
   
+  db <- local_db()
+  
   with_golem_options(
     app = shinyApp(
       ui = app_ui(css = css, page_style = page_style, page = page),

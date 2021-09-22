@@ -157,7 +157,10 @@ mod_settings_data_management_server <- function(id, r, language){
       
       # Check if required fields are filled (name is required, description is not)
       # We can add other requirements (eg characters only)
-      name_check <- ifelse(is.null(input$name), FALSE, TRUE)
+      name_check <- FALSE
+      if (!is.null(input$name)){
+        if (input$name != "") name_check <- TRUE
+      }
       if (!name_check) shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = translate(language, "provide_valid_name"))
       if (name_check) shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = NULL)
       
@@ -441,7 +444,9 @@ mod_settings_data_management_server <- function(id, r, language){
           # Change this option to display correctly tibble in textbox
           eval(parse(text = "options('cli.num_colors' = 1)"))
           # Capture console output of our code
-          captured_output <- capture.output(eval(parse(text = isolate(input$ace_edit_code))))
+          captured_output <- capture.output(
+            tryCatch(eval(parse(text = isolate(input$ace_edit_code))), error = function(e) print(e), warning = function(w) print(w))
+          )
           # Restore normal value
           eval(parse(text = "options('cli.num_colors' = NULL)"))
           # Display result

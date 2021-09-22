@@ -289,10 +289,20 @@ get_translations <- function(){
             "FR", "edit_datamart_code", "Editer le code du datamart",
             "EN", "provide_valid_name", "Please provide a valid name",
             "FR", "provide_valid_name", "Nom valide requis",
+            "EN", "provide_valid_dbname", "Please provide a valid name",
+            "FR", "provide_valid_dbname", "Nom valide requis",
             "EN", "provide_valid_description", "Please provide a valid description",
             "FR", "provide_valid_description", "Description valide requise",
             "EN", "provide_data_source", "Please select a data source",
             "FR", "provide_data_source", "Sélectionner une source de données",
+            "EN", "provide_valid_user", "Please provide a valid username",
+            "FR", "provide_valid_user", "Nom d'utilisateur valide requis",
+            "EN", "provide_valid_host", "Please provide a valid host",
+            "FR", "provide_valid_host", "Hôte valide requis",
+            "EN", "provide_valid_port", "Please provide a valid port (eg : 5432)",
+            "FR", "provide_valid_port", "Port valide requis (ex : 5432)",
+            "EN", "provide_valid_password", "Please provide a valid password",
+            "FR", "provide_valid_password", "Password valide requis",
             "EN", "name_already_used", "This name is already used",
             "FR", "name_already_used", "Ce nom est déjà utilisé",
             "EN", "id", "ID",
@@ -316,7 +326,9 @@ get_translations <- function(){
             "EN", "show_only_aggregated_data", "Show only aggregated data",
             "FR", "show_only_aggregated_data", "N'autoriser l'accès qu'aux données aggrégées",
             "EN", "modif_names_duplicates", "There are duplicates in the names, please remove these before saving",
-            "FR", "modif_names_duplicates", "Certains noms sont utilisés plusieurs fois, les retirer avant de sauvegarder"
+            "FR", "modif_names_duplicates", "Certains noms sont utilisés plusieurs fois, les retirer avant de sauvegarder",
+            "EN", "success", "Success",
+            "FR", "success", "Succès"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
