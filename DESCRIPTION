@@ -9,6 +9,7 @@ License: MIT + file LICENSE
 Imports: 
     attempt,
     config,
+    DBI,
     dplyr,
     DT,
     dygraphs,
@@ -19,6 +20,7 @@ Imports:
     purrr,
     readr,
     rlang,
+    RPostgres,
     shiny (>= 1.6.0),
     shiny.fluent,
     shiny.react,

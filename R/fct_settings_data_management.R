@@ -77,8 +77,12 @@ data_management_edit_card <- function(language, ns, type = "code", code, link_id
   div(id = ns("edit_card"),
     make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
       div(
-        div(shinyAce::aceEditor(ns("ace_edit_code"), code, "R", height = "400px"), style = "width: 100%;"),
-        shiny.fluent::PrimaryButton.shinyInput(ns("edit_save"), translate(language, "edit_save"))
+        div(shinyAce::aceEditor(ns("ace_edit_code"), code, mode = "r", height = "400px"), style = "width: 100%;"),
+        shiny.fluent::PrimaryButton.shinyInput(ns("edit_save"), translate(language, "edit_save")), " ",
+        shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code")), 
+        htmltools::br(), htmltools::br(),
+        div(shiny::verbatimTextOutput(ns("code_result")), 
+            style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
       )
     )
   )

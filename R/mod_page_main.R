@@ -208,60 +208,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       if (page == "settings/app_db"){
         # Hidden aceEditor, allows the other to be displayed...
         div(shinyAce::aceEditor("hidden"), style = "display: none;")
-        div(class = "main",
-          make_card(
-            translate(language, "app_db"),
-            div(
-              div(
-                div(class = "input_title", translate(language, "db_connexion_type")),
-                  shiny.fluent::ChoiceGroup.shinyInput("db_connexion_type", value = "local", options = list(
-                    list(key = "local", text = translate(language, "local")),
-                    list(key = "distant", text = translate(language, "distant"))
-                  )
-                )
-              ),
-              shiny::conditionalPanel(
-                condition = "input.db_connexion_type == 'distant'", ns = ns,
-                shiny.fluent::Stack(
-                  horizontal = TRUE,
-                  tokens = list(childrenGap = 50),
-                  make_textfield(language, ns, "dbname"),
-                  make_textfield(language, ns, "host"),
-                  make_textfield(language, ns, "port"),
-                  make_textfield(language, ns, "user"),
-                  make_textfield(language, ns, "password", type = "password", canRevealPassword = TRUE)
-                )
-              ), br(),
-              shiny.fluent::Stack(
-                horizontal = TRUE,
-                tokens = list(childrenGap = 20),
-                shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save")),
-                shiny.fluent::PrimaryButton.shinyInput("test_connection", translate(language, "test_connection"))
-              )
-            )
-          ),
-          make_card(
-            translate(language, "app_db_tables"),
-            shiny.fluent::DetailsList(
-              compact = TRUE,
-              items = list(
-                list(key = "1", table_name = "Users", nrows = 51),
-                list(key = "2", table_name = "Datamarts", nrows = 13)
-              ),
-              columns = list(
-                list(key = "table_name", fieldName = "table_name", name = "Table name", minWidth = 200, maxWidth = 200, isResizable = TRUE),
-                list(key = "nrows", fieldName = "nrows", name = "Num of rows", minWidth = 200, maxWidth = 200, isResizable = TRUE)
-              )
-            )
-          ),
-          make_card(
-            translate(language, "app_db_request"),
-            div(
-              div(shinyAce::aceEditor("app_db_request", "SELECT * FROM my_table", "sql", height = "200px"), style = "width: 50%;"),
-              shiny.fluent::PrimaryButton.shinyInput("request", translate(language, "request"))
-            )
-          )
-        ) -> result
+        mod_settings_app_database_ui("settings_app_database", language = language, page_style = page_style, page = page) -> result
       }
       
       ##########################################
@@ -329,36 +276,6 @@ mod_page_main_ui <- function(id, language, page_style, page){
       
       if (page == "settings/datamarts"){
         mod_settings_data_management_ui("settings_datamarts", language, page_style, page) -> result
-        # div(class = "main",
-        #   make_card(translate(language, "datamarts_create"),
-        #     div(
-        #       "..."
-        #     )
-        #   ),
-        #   make_card(translate(language, "datamarts_management"),
-        #     div(
-        #       "..."
-        #     )
-        #   ),
-        #   make_card(translate(language, "datamarts_access"),
-        #     div(
-        #       shiny.fluent::Stack(
-        #         horizontal = TRUE,
-        #         tokens = list(childrenGap = 50),
-        #         make_dropdown(language, ns, "datamart_access_choice", list(
-        #           list(key = "ufh", text = "Cohorte héparine"),
-        #           list(key = "wmv", text = "Sevrage ventilation")
-        #         ), value = "ufh", width = "300px"),
-        #         make_people_picker(language, ns, "datamart_access_people", options = tibble::tribble(
-        #           ~key, ~imageInitials, ~text, ~secondaryText,
-        #           1, "JD", "John Doe", "Intensivist",
-        #           2, "JD", "Jane Doe", "Data scientist"
-        #         ), value = c(1), min_width = "300px", max_width = "500px")
-        #       ), htmltools::br(),
-        #       shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
-        #     )
-        #   )
-        # ) -> result
       }
       
       ##########################################

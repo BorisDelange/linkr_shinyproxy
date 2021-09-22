@@ -420,6 +420,7 @@ mod_settings_data_management_server <- function(id, r, language){
           code <- r$code %>% dplyr::filter(category == category_filter & link_id == link_id_filter) %>% dplyr::pull(code)
           data_management_edit_card(language, ns, type = "code", code = code, link_id = link_id_filter, title = paste0("edit_", category_filter, "_code"))
         })
+        output$code_result <- renderText("")
       })
       
       observeEvent(input$edit_save, {
@@ -433,6 +434,19 @@ mod_settings_data_management_server <- function(id, r, language){
         })
         shinyjs::show("warnings4")
         shinyjs::delay(3000, shinyjs::hide("warnings4"))
+      })
+      
+      observeEvent(input$execute_code, {
+        output$code_result <- renderText({
+          # Change this option to display correctly tibble in textbox
+          eval(parse(text = "options('cli.num_colors' = 1)"))
+          # Capture console output of our code
+          captured_output <- capture.output(eval(parse(text = isolate(input$ace_edit_code))))
+          # Restore normal value
+          eval(parse(text = "options('cli.num_colors' = NULL)"))
+          # Display result
+          paste(captured_output, collapse = "\n")
+        })
       })
   })
 }

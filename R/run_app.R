@@ -16,13 +16,14 @@ run_app <- function(
   language = "EN",
   css = "fluent_style.css",
   page_style = "fluent",
+  db_info = list(),
   # page_theme = "",
   # router_on = TRUE,
   ...
 ) {
   
   # devtools::load_all(".")
-  # run_app(css = "", page_style = "fluid", page_theme = "lumen", router_on = FALSE)
+  # run_app(language = "FR", db_info = list(dbname = "cdwtools", host = "localhost", port = 5432, user = "postgres", password = "postgres"))
   
   translations <- get_translations()
   # language <- "EN"
@@ -84,7 +85,7 @@ run_app <- function(
   with_golem_options(
     app = shinyApp(
       ui = app_ui(css = css, page_style = page_style, page = page),
-      server = app_server(page_style = page_style, router = page, language = language),
+      server = app_server(page_style = page_style, router = page, language = language, db_info = db_info),
       onStart = onStart,
       options = options, 
       enableBookmarking = enableBookmarking, 

@@ -119,6 +119,8 @@ get_translations <- function(){
             "FR", "save", "Sauvegarder",
             "EN", "edit_save", "Save",
             "FR", "edit_save", "Sauvegarder",
+            "EN", "execute_code", "Run code",
+            "FR", "execute_code", "Exécuter",
             "EN", "datatable_save", "Save",
             "FR", "datatable_save", "Sauvegarder",
             "EN", "appearance", "Appearance",
