@@ -88,51 +88,63 @@ data_management_edit_card <- function(language, ns, type = "code", code, link_id
 # Options card                           #
 ##########################################
 
-data_management_options_card <- function(language, ns, r, category_filter, link_id_filter, title){
+data_management_options_card <- function(language, ns, id, r, category_filter, link_id_filter, title){
   options <- r$options %>% dplyr::filter(category == category_filter, link_id == link_id_filter)
-  
+
   people_picker <- ""
   toggles <- ""
   dropdowns <- ""
   options_by_cat <- id_get_other_name(id, "options_by_cat")
-  
+
   if("user_allowed_read" %in% options_by_cat){
     # List of users in the database
-    form_options <- 
-      r$users %>% 
+    form_options <-
+      r$users %>%
       dplyr::filter(!deleted) %>%
       dplyr::transmute(key = id, imageInitials = paste0(substr(first_name, 0, 1), substr(last_name, 0, 1)),
                        text = paste0(first_name, " ", last_name), secondaryText = user_status)
-    
+    # If this is study options, we have to show only users who have access to the parent datamart
+    if(category_filter == "study"){
+      datamart_id <- r$studies %>% dplyr::filter(id == link_id_filter) %>% dplyr::pull(datamart_id)
+      users_allowed_datamart <- 
+        r$options %>% 
+        dplyr::filter(category == "datamart", link_id == datamart_id, name == "user_allowed_read") %>%
+        dplyr::pull(value_num)
+      form_options <- form_options %>% dplyr::filter(key %in% users_allowed_datamart)
+    }
+
     # Users already allowed
-    value <- 
-      form_options %>% 
+    value <-
+      form_options %>%
       dplyr::mutate(n = 1:dplyr::n()) %>%
       dplyr::inner_join(
-        options %>% 
-          dplyr::filter(!deleted, name == "user_allowed_read") %>% 
+        options %>%
+          dplyr::filter(!deleted, name == "user_allowed_read") %>%
           dplyr::select(key = value_num),
         by = "key"
       ) %>%
       dplyr::pull(key)
-    people_picker <- make_people_picker(language, ns, paste0(id_get_other_name(id, "singular_form"), "_users_allowed_read"), 
+    people_picker <- make_people_picker(language, ns, paste0(id_get_other_name(id, "singular_form"), "_users_allowed_read"),
         options = form_options, value = value, width = "100%")
   }
-  
+
   if ("show_only_aggregated_data" %in% options_by_cat){
     value_show_only_aggregated_data <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(value_num)
     toggles <- tagList(
-      toggles,
-      make_toggle(language, ns, 
-                  label = "show_only_aggregated_data", 
-                  id = paste0(id_get_other_name(id, "singular_form"), "_show_only_aggregated_data"), value = value_show_only_aggregated_data, inline = TRUE))
+      htmltools::br(), 
+      shiny.fluent::Stack(
+        horizontal = TRUE, tokens = list(childrenGap = 10),
+        make_toggle(language, ns,
+                    label = "show_only_aggregated_data",
+                    id = paste0(id_get_other_name(id, "singular_form"), "_show_only_aggregated_data"), value = value_show_only_aggregated_data, inline = TRUE)
+      )
+    )
   }
-  
+
   div(id = ns("options_card"),
       make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id_filter, ")"), style = "font-size: 15px;")),
         div(
-          htmltools::br(), shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), toggles),
-          people_picker, htmltools::br(),
+          toggles, people_picker, htmltools::br(),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), dropdowns),
           shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save"))
         )
@@ -185,8 +197,14 @@ data_management_datatable <- function(id, data, ns, r, language, data_management
   # Transform dropdowns columns in the dataframe to character
   lapply(names(dropdowns), function(name) data %>% dplyr::mutate_at(name, as.character) ->> data)
   
-  # For each row of the dataframe, transform dropdowns columns to show dropdowns in Shiny app & add an Action column with delete action button
+  # For each row of the dataframe :
+  # - transform dropdowns columns to show dropdowns in Shiny app
+  # - add an Action column with delete action button
+  # - show creator name, to its ID
   if (nrow(data) != 0){
+    # Transform creator col to character
+    data <- data %>% dplyr::mutate_at("creator", as.character)
+    
     for (i in 1:nrow(data)){
 
       lapply(names(dropdowns), function(name){
@@ -211,6 +229,11 @@ data_management_datatable <- function(id, data, ns, r, language, data_management
       if (id == "settings_datamarts") actions <- tagList(actions, shiny::actionButton(paste0("edit_code", data[i, 1]), "", icon = icon("file-code"),
                                                                                        onclick = paste0("Shiny.setInputValue('", id, "-edit_code', this.id, {priority: 'event'})")), "")
       data[i, "action"] <- as.character(div(actions))
+      
+      # Get creator name
+      
+      data[i, "creator"] <- r$users %>% dplyr::filter(id == data[[i, "creator"]]) %>% 
+        dplyr::mutate(creator = paste0(first_name, " ", last_name)) %>% dplyr::pull(creator)
     }
   }
   

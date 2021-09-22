@@ -52,11 +52,10 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
           edit_card = "edit_datamart_code", options_card = "datamart_options", activated = c("datatable_card")),
         data_management_creation_card(language, ns, "create_datamart",
           textfields = c("name", "description"), textfields_width = "300px",
-          dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns), dropdowns_width = "300px"),
+          dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
         data_management_datatable_card(language, ns, "datamarts_management"),
         shiny::uiOutput(ns("edit_card")),
-        shiny::uiOutput(ns("options_card")),
-        shiny::tableOutput(ns("test")), shiny::tableOutput(ns("test2")), shiny::textOutput(ns("test3"))
+        shiny::uiOutput(ns("options_card"))
       ) -> result
     }
     
@@ -66,7 +65,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     
     if (page == "settings/studies"){
       div(class = "main",
-        shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
+        shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")), shiny::uiOutput(ns("warnings4")),
         shiny.fluent::reactOutput(ns("management_delete_confirm")),
         data_management_toggle_card(
           language, ns, creation_card = "create_study", datatable_card = "studies_management", options_card = "study_options",
@@ -74,7 +73,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
         data_management_creation_card(
           language, ns, "create_study",
           textfields = c("name", "description"), textfields_width = "300px",
-          dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns), 
+          dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(),
           dropdowns_width = "300px"),
         data_management_datatable_card(language, ns, "studies_management"),
         shiny::uiOutput(ns("edit_card")),
@@ -94,7 +93,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
         data_management_creation_card(
           language, ns, "create_subset",
           textfields = c("name", "description"), textfields_width = "300px",
-          dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns), dropdowns_width = "300px"),
+          dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
         data_management_datatable_card(language, ns, "subsets_management")
       ) -> result
     }
@@ -126,6 +125,11 @@ mod_settings_data_management_server <- function(id, r, language){
     
     toggles <- c("creation_card", "datatable_card", "edit_card", "options_card")
     data_management_elements <- c("data_sources", "datamarts", "studies", "subsets", "patient_lvl_module_families", "aggregated_module_families")
+    dropdowns <- tibble::tribble(~page_name, ~dropdowns,
+                                 "data_sources", "",
+                                 "datamarts", "data_source",
+                                 "studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
+                                 "subsets", c("datamart", "study"))
     
     ##########################################
     # Data management / Show or hide cards   #
@@ -203,6 +207,11 @@ mod_settings_data_management_server <- function(id, r, language){
             last_row_options + 1, "datamart", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
             last_row_options + 2, "datamart", last_row + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE))
       }
+      if (id == "settings_studies"){
+        r$options <- r$options %>% dplyr::bind_rows(
+          tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator, ~datetime, ~deleted,
+            last_row_options + 1, "study", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
+      }
       
       # If the row we add is a datamart or a study, hide options card
       shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = FALSE)
@@ -261,27 +270,42 @@ mod_settings_data_management_server <- function(id, r, language){
       observeEvent(input$management_datatable_cell_edit, {
         edit_info <- input$management_datatable_cell_edit
         edit_info$col <- edit_info$col + 1 # Datatable cols starts at 0, we have to add 1
-        r$datamarts_temp <<- DT::editData(r$datamarts_temp, edit_info)
+        data_var <- substr(id, nchar("settings_") + 1, nchar(id)) 
+        r[[paste0(data_var, "_temp")]] <- DT::editData(r[[paste0(data_var, "_temp")]], edit_info)
       })
     
       # Each time a dropdown is updated, modify temp variable
       sapply(data_management_elements[!data_management_elements %in% c("patient_lvl_module_families", "aggregated_module_families")], function(data_var){
         observeEvent(r[[data_var]], {
           sapply(r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::pull(id), function(id){
-            sapply(data_management_elements[!data_management_elements %in% c("patient_lvl_module_families", "aggregated_module_families")], function(dropdown){
-              observeEvent(input[[paste0(dropdown, id)]], {
-                id_name <- paste0(id_get_other_name(dropdown, "singular_form"), "_id")
-                r$datamarts_temp[[which(r$datamarts_temp["id"] == id), id_name]] <- input[[paste0(dropdown, id)]]
+            sapply(dropdowns %>% dplyr::filter(page_name == data_var) %>% dplyr::pull(dropdowns) %>% unlist(), function(dropdown){
+              observeEvent(input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]], {
+                r[[paste0(data_var, "_temp")]][[which(r[[paste0(data_var, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <-
+                  input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]]
               })
             })
           })
         })
-      }) 
+      })
     
       observeEvent(input$management_save, {
         
+        data_var <- substr(id, nchar("settings_") + 1, nchar(id))
+        
+        # Make sure there's no duplicate in names
+        duplicates <- r[[paste0(data_var, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
+          dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+        if (duplicates > 0){
+          output$warnings1 <- renderUI({
+            div(shiny.fluent::MessageBar(translate(language, "modif_names_duplicates"), messageBarType = 3), style = "margin-top:10px;")
+          })
+          shinyjs::show("warnings1")
+          shinyjs::delay(3000, shinyjs::hide("warnings1"))
+        }
+        req(duplicates == 0)
+        
         # Restitute temp values to permanent variable
-        r$datamarts <- r$datamarts_temp
+        r[[data_var]] <- r[[paste0(data_var, "_temp")]]
         
         # Notification to user
         output$warnings2 <- renderUI({
@@ -290,9 +314,6 @@ mod_settings_data_management_server <- function(id, r, language){
         shinyjs::show("warnings2")
         shinyjs::delay(3000, shinyjs::hide("warnings2"))
       })
-    
-      output$test <- renderTable(r$datamarts)
-      output$test2 <- renderTable(r$datamarts_temp)
     
       ##########################################
       # Delete a row in datatable              #
@@ -337,7 +358,7 @@ mod_settings_data_management_server <- function(id, r, language){
         output$options_card <- renderUI({
           category <- id_get_other_name(id, "singular_form")
           link_id <- as.integer(substr(isolate(input$options), nchar("options") + 1, nchar(isolate(input$options))))
-          data_management_options_card(language, ns, r, category_filter = category, link_id_filter = link_id, 
+          data_management_options_card(language, ns, id, r, category_filter = category, link_id_filter = link_id,
             title = paste0(id_get_other_name(id, "singular_form"), "_options"))
         })
       })

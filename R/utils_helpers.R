@@ -32,19 +32,30 @@ id_get_other_name <- function(id, type, language = NULL){
            "aggregated_module_families" = "aggregated_module_family") -> result
   }
   
+  if (type == "plural_form"){
+    switch(id, 
+           "data_source" = "data_sources",
+           "datamart" = "datamarts",
+           "study" = "studies",
+           "subset" = "subsets",
+           "patient_lvl_module_family" = "patient_lvl_module_families",
+           "aggregated_module_family" = "aggregated_module_families") -> result
+  }
+  
   if (type == "colnames_text_version"){
     result <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"))
     c(result, switch(id,
       "datamarts" = translate(language, "data_source"),
       "studies" = c(translate(language, "datamart"), translate(language, "patient_lvl_module_family"),
-                             translate(language, "aggregated_data_module_family")),
+                             translate(language, "aggregated_module_family")),
       "subsets" = translate(language, "study"))) -> result
     result <- c(result, translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
   }
   
   if (type == "options_by_cat"){
     result <- switch(id,
-                     "datamarts" = c("show_only_aggregated_data", "user_allowed_read"))
+                     "datamarts" = c("show_only_aggregated_data", "user_allowed_read"),
+                     "studies" = c("", "user_allowed_read"))
   }
   result
 }

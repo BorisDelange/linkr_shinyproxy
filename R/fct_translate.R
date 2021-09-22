@@ -309,8 +309,12 @@ get_translations <- function(){
             "FR", "action", "Action",
             "EN", "datamart_users_allowed_read", "Grant access to",
             "FR", "datamart_users_allowed_read", "Donner l'accès à",
+            "EN", "study_users_allowed_read", "Grant access to",
+            "FR", "study_users_allowed_read", "Donner l'accès à",
             "EN", "show_only_aggregated_data", "Show only aggregated data",
-            "FR", "show_only_aggregated_data", "N'autoriser l'accès qu'aux données aggrégées"
+            "FR", "show_only_aggregated_data", "N'autoriser l'accès qu'aux données aggrégées",
+            "EN", "modif_names_duplicates", "There are duplicates in the names, please remove these before saving",
+            "FR", "modif_names_duplicates", "Certains noms sont utilisés plusieurs fois, les retirer avant de sauvegarder"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
