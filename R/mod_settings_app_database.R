@@ -128,7 +128,7 @@ mod_settings_app_database_server <- function(id, r, language){
       observeEvent(input$db_connection_save, {
         if (input$connection_type == "local"){
           query <- "UPDATE options SET value = 'local' WHERE category = 'distant_db' AND name = 'connection_type'"
-          DBI::dbSendStatement(r$local_db, query)
+          DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
         }
         
         if (input$connection_type == "distant"){
@@ -150,7 +150,7 @@ mod_settings_app_database_server <- function(id, r, language){
             query <- paste0("UPDATE options
                          SET value = '", input[[name]], "', creator_id = ", r$user_id, ", datetime = '", as.character(Sys.time()), "'
                          WHERE category = 'distant_db' AND name = '", name, "'")
-            DBI::dbSendStatement(r$local_db, query)
+            DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
           })
         }
         
@@ -241,7 +241,11 @@ mod_settings_app_database_server <- function(id, r, language){
             if (input$connection_type_request == "local") db <- r$local_db
             if (input$connection_type_request == "distant") db <- get_distant_db(r$local_db)
             if (grepl("select", tolower(request))) capture.output(DBI::dbGetQuery(db, request) %>% tibble::as_tibble()) -> result
-            if (grepl("update|delete|insert", tolower(request))) capture.output(DBI::dbSendStatement(db, request) %>% tibble::as_tibble()) -> result
+            if (grepl("update|delete|insert", tolower(request))) capture.output({
+              DBI::dbSendStatement(db, request) -> query
+              print(query)
+              DBI::dbClearResult(query)
+            }) -> result
             result
           }, error = function(e) print(e), warning = function(w) print(w))
         
