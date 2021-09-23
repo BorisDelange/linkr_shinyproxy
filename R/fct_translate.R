@@ -159,6 +159,8 @@ get_translations <- function(){
             "FR", "log", "Historique",
             "EN", "app_db", "App database",
             "FR", "app_db", "BDD de l'application",
+            "EN", "connection_infos", "Connection informations",
+            "FR", "connection_infos", "Informations de connexion",
             "EN", "app_db_request", "Request database",
             "FR", "app_db_request", "Requêter la BDD",
             "EN", "request", "Request",
@@ -330,7 +332,17 @@ get_translations <- function(){
             "EN", "success", "Success",
             "FR", "success", "Succès",
             "EN", "sql_lib", "SQL library",
-            "FR", "sql_lib", "Librairie SQL"
+            "FR", "sql_lib", "Librairie SQL",
+            "EN", "table_name", "Table name",
+            "FR", "table_name", "Nom de la table",
+            "EN", "row_number", "Number of rows",
+            "FR", "row_number", "Nombres de lignes",
+            "EN", "db_connection_infos_card", "Connection infos",
+            "FR", "db_connection_infos_card", "Informations de connexion",
+            "EN", "db_datatable_card", "Database tables",
+            "FR", "db_datatable_card", "Liste tables de la BDD",
+            "EN", "db_request_card", "Request database",
+            "FR", "db_request_card", "Requêter la BDD"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

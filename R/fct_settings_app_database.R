@@ -6,6 +6,19 @@
 #'
 #' @noRd
 
+app_database_toggle_card <- function(language, ns, activated = ""){
+  toggles <- tagList()
+  sapply(c("db_connection_infos_card", "db_datatable_card", "db_request_card"), function(label){
+    toggles <<- tagList(toggles, make_toggle(language, ns, label = label,
+                                   id = paste0(label, "_toggle"), value = ifelse(label %in% activated, TRUE, FALSE), inline = TRUE))
+  })
+  make_card("",
+            shiny.fluent::Stack(
+              horizontal = TRUE, tokens = list(childrenGap = 10), toggles
+            )
+  )
+}
+
 db_create_table <- function(db, table_name, dataframe){
   if (table_name %not_in% DBI::dbListTables(db)) DBI::dbWriteTable(db, table_name, dataframe)
 }
@@ -85,6 +98,18 @@ get_local_db <- function(){
   }
   
   db
+}
+
+test_distant_db <- function(local_db){
+  result <- "fail"
+  db_info <- DBI::dbGetQuery(local_db, "SELECT * FROM options WHERE category = 'distant_db'") %>% tibble::as_tibble()
+  db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
+  try({
+    if (db_info$sql_lib == "postgres") DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$dbname, host = db_info$host,
+                                                            port = db_info$port, user = db_info$user, password = db_info$password)
+    result <- "success"
+  })
+  result
 }
 
 get_distant_db <- function(local_db){

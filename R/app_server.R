@@ -4,12 +4,14 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
-app_server <- function(page_style, router, language, local_db, db){
+app_server <- function(page_style, router, language){
   function( input, output, session ) {
     
     r <- reactiveValues()
     
     r$user_id <- 1
+    r$local_db <- get_local_db()
+    r$db <- get_db()
     
     r$users <- tibble::tribble(
       ~id, ~username, ~first_name, ~last_name, ~password, ~access_status, ~user_status, ~datetime, ~deleted,
@@ -95,7 +97,7 @@ app_server <- function(page_style, router, language, local_db, db){
     
     if (page_style == "fluent") router$server(input, output, session)
     
-    mod_settings_app_database_server("settings_app_database", r, language, local_db = local_db, db = db)
+    mod_settings_app_database_server("settings_app_database", r, language)
     mod_settings_data_management_server("settings_data_sources", r, language)
     mod_settings_data_management_server("settings_datamarts", r, language)
     mod_settings_data_management_server("settings_studies", r, language)

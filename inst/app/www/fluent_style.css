@@ -94,6 +94,12 @@ body {
   margin-right: 30px;
 }
 
+.inline_choicegroup .ms-ChoiceField{
+  display: inline-block;
+  padding: 0px 20px 0px 0px;
+  font-weight: bold;
+}
+
 .router-hidden {
   display: none;
 }
