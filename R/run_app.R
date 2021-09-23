@@ -82,12 +82,13 @@ run_app <- function(
     ) -> page
   }
   
-  db <- local_db()
+  local_db <- get_local_db()
+  db <- get_db()
   
   with_golem_options(
     app = shinyApp(
       ui = app_ui(css = css, page_style = page_style, page = page),
-      server = app_server(page_style = page_style, router = page, language = language, db_info = db_info),
+      server = app_server(page_style = page_style, router = page, language = language, local_db = local_db, db = db),
       onStart = onStart,
       options = options, 
       enableBookmarking = enableBookmarking, 

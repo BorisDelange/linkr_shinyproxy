@@ -328,7 +328,9 @@ get_translations <- function(){
             "EN", "modif_names_duplicates", "There are duplicates in the names, please remove these before saving",
             "FR", "modif_names_duplicates", "Certains noms sont utilisés plusieurs fois, les retirer avant de sauvegarder",
             "EN", "success", "Success",
-            "FR", "success", "Succès"
+            "FR", "success", "Succès",
+            "EN", "sql_lib", "SQL library",
+            "FR", "sql_lib", "Librairie SQL"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

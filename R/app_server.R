@@ -4,7 +4,7 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
-app_server <- function(page_style, router, language, db_info){
+app_server <- function(page_style, router, language, local_db, db){
   function( input, output, session ) {
     
     r <- reactiveValues()
@@ -95,7 +95,7 @@ app_server <- function(page_style, router, language, db_info){
     
     if (page_style == "fluent") router$server(input, output, session)
     
-    mod_settings_app_database_server("settings_app_database", r, language, db_info)
+    mod_settings_app_database_server("settings_app_database", r, language, local_db = local_db, db = db)
     mod_settings_data_management_server("settings_data_sources", r, language)
     mod_settings_data_management_server("settings_datamarts", r, language)
     mod_settings_data_management_server("settings_studies", r, language)
