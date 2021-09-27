@@ -105,8 +105,8 @@ data_management_options_card <- function(language, ns, id, r, category_filter, l
     form_options <-
       r$users %>%
       dplyr::filter(!deleted) %>%
-      dplyr::transmute(key = id, imageInitials = paste0(substr(first_name, 0, 1), substr(last_name, 0, 1)),
-                       text = paste0(first_name, " ", last_name), secondaryText = user_status)
+      dplyr::transmute(key = id, imageInitials = paste0(substr(firstname, 0, 1), substr(lastname, 0, 1)),
+                       text = paste0(firstname, " ", lastname), secondaryText = user_status)
     # If this is study options, we have to show only users who have access to the parent datamart
     if(category_filter == "study"){
       datamart_id <- r$studies %>% dplyr::filter(id == link_id_filter) %>% dplyr::pull(datamart_id)
@@ -160,7 +160,7 @@ data_management_options_card <- function(language, ns, id, r, category_filter, l
 # New data                               #
 ##########################################
 
-data_management_new_data <- function(id, new_id, name, description, creator, datetime, deleted, 
+data_management_new_data <- function(id, new_id, name, description, creator_id, datetime, deleted, 
                                      data_source_id = NULL, datamart_id = NULL, study_id = NULL,
                                      patient_lvl_module_family_id = NULL, aggregated_module_family_id = NULL){
   data <- tibble::tribble(~id, ~name, ~description, new_id, name, description)
@@ -169,7 +169,7 @@ data_management_new_data <- function(id, new_id, name, description, creator, dat
     tibble::tribble(~datamart_id,  ~patient_lvl_module_family_id, ~aggregated_module_family_id,
                     datamart_id, patient_lvl_module_family_id, aggregated_module_family_id))
   if (id == "settings_subsets") data <- data %>% dplyr::bind_cols(tibble::tribble(~study_id, study_id))
-  data <- data %>% dplyr::bind_cols(tibble::tribble(~creator, ~datetime, ~deleted, creator, datetime, FALSE))
+  data <- data %>% dplyr::bind_cols(tibble::tribble(~creator_id, ~datetime, ~deleted, creator_id, datetime, FALSE))
   data
 }
 
@@ -178,8 +178,9 @@ data_management_new_data <- function(id, new_id, name, description, creator, dat
 ##########################################
 
 data_management_data <- function(id, r){
-  data <- r[[substr(id, nchar("settings_") + 1, nchar(id))]]
-  if (nrow(data) != 0) data <- data %>% dplyr::filter(!deleted) %>% dplyr::select(-deleted)
+  data_var <- substr(id, nchar("settings_") + 1, nchar(id))
+  data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var, " WHERE deleted IS FALSE"))
+  if (nrow(data) != 0) data <- data %>% dplyr::select(-deleted)
   data
 }
 
@@ -192,7 +193,7 @@ data_management_datatable <- function(id, data, ns, r, language, data_management
   
   # Create vars with existing options (ie : for data_sources, a list of existing data_sources in the database)
   sapply(data_management_elements, function(var_name){
-    assign(var_name, tibble_to_list(r[[var_name]], "id", "name", rm_deleted_rows = TRUE), envir = .GlobalEnv)
+    assign(var_name, tibble_to_list(r[[var_name]], "id", "name", rm_deleted_rows = TRUE), envir = parent.env(environment()))
   })
   
   # Add a column action in the DataTable
@@ -207,7 +208,7 @@ data_management_datatable <- function(id, data, ns, r, language, data_management
   # - show creator name, to its ID
   if (nrow(data) != 0){
     # Transform creator col to character
-    data <- data %>% dplyr::mutate_at("creator", as.character)
+    data <- data %>% dplyr::mutate_at("creator_id", as.character)
     
     for (i in 1:nrow(data)){
 
@@ -236,8 +237,8 @@ data_management_datatable <- function(id, data, ns, r, language, data_management
       
       # Get creator name
       
-      data[i, "creator"] <- r$users %>% dplyr::filter(id == data[[i, "creator"]]) %>% 
-        dplyr::mutate(creator = paste0(first_name, " ", last_name)) %>% dplyr::pull(creator)
+      data[i, "creator_id"] <- r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>% 
+        dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator)
     }
   }
   

@@ -18,9 +18,9 @@ mod_settings_users_ui <- function(id, language, page_style, page){
   if (page_style == "fluent"){
     div(class = "main",
       shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")),
-      users_toggle_card(language, ns, activated = c("add_access_card", "accesses_management_card")),
+      users_toggle_card(language, ns, activated = c("")),
       users_creation_card(language, ns, title = "add_user", card = "add_user", 
-        textfields = c("username", "first_name", "last_name", "password"), textfields_width = "200px", 
+        textfields = c("username", "firstname", "lastname", "password"), textfields_width = "200px", 
         dropdowns = c("user_access", "user_status"), dropdowns_width = "200px"),
       users_datatable_card(language, ns, "users_management", "users_management"),
       users_creation_card(language, ns, title = "add_access", card = "add_access", 
@@ -44,7 +44,7 @@ mod_settings_users_server <- function(id, r, language){
                  "add_status_card", "statuses_management_card")
     
     ##########################################
-    # Show or hide cards   #
+    # Show or hide cards                     #
     ##########################################
     
     sapply(toggles, function(toggle){
@@ -58,13 +58,14 @@ mod_settings_users_server <- function(id, r, language){
     observeEvent(r$users_accesses_statuses, {
       dropdowns_access <- c("add_user_user_access", "accesses_management_access")
       sapply(dropdowns_access, function(id){
-        shiny.fluent::updateDropdown.shinyInput(session, id,
-          options = tibble_to_list(r$users_accesses_statuses %>% dplyr::filter(type == "access"), "id", "name", rm_deleted_rows = FALSE))
+        options <- tibble_to_list(r$users_accesses_statuses %>% dplyr::filter(type == "access"), "id", "name", rm_deleted_rows = TRUE)
+        shiny.fluent::updateDropdown.shinyInput(session, id, options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
       })
       dropdowns_status <- c("add_user_user_status")
       sapply(dropdowns_status, function(id){
+        options <- tibble_to_list(r$users_accesses_statuses %>% dplyr::filter(type == "status"), "id", "name", rm_deleted_rows = TRUE)
         shiny.fluent::updateDropdown.shinyInput(session, id,
-          options = tibble_to_list(r$users_accesses_statuses %>% dplyr::filter(type == "status"), "id", "name", rm_deleted_rows = FALSE))
+          options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
       })
     })
     
@@ -72,87 +73,117 @@ mod_settings_users_server <- function(id, r, language){
     # Add a new user                         #
     ##########################################
     
+    observeEvent(input$add_user_add, {
+      sapply(c("username", "firstname", "lastname", "password", "user_access", "user_status"), 
+             function(name){
+               new_value <- isolate(input[[paste0("add_user_", name)]])
+               assign(paste0("new_", name), new_value, envir = parent.env(environment()))
+               
+               assign(paste0(name, "_check"), FALSE, envir = parent.env(environment()))
+               
+               if (!is.null(new_value)){
+                 if (new_value != "") assign(paste0(name, "_check"), TRUE, envir = parent.env(environment()))
+               }
+               
+               if (name %not_in% c("user_access", "user_status")){
+                 if (!eval(parse(text = paste0(name, "_check")))) shiny.fluent::updateTextField.shinyInput(session, 
+                   paste0("add_user_", name), errorMessage = translate(language, paste0("provide_valid_", name)))
+                 if (eval(parse(text = paste0(name, "_check")))) shiny.fluent::updateTextField.shinyInput(session,
+                   paste0("add_user_", name), errorMessage = NULL)
+               }
+             })
+
+      if (!user_access_check | !user_status_check){
+        output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "need_create_user_access"), messageBarType = 3), style = "margin-top:10px;"))
+        shinyjs::show("warnings1")
+        shinyjs::delay(3000, shinyjs::hide("warnings1"))
+      }
+      
+      req(username_check, firstname_check, lastname_check, password_check, user_access_check, user_status_check)
+      
+      # Check if chosen username is already used
+      distinct_usernames <- DBI::dbGetQuery(r$db, "SELECT DISTINCT(username) FROM users WHERE deleted IS FALSE") %>% dplyr::pull()
+      
+      if (new_username %in% distinct_usernames){
+        output$warnings2 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "username_already_used"), messageBarType = 3), style = "margin-top:10px;"))
+        shinyjs::show("warnings2")
+        shinyjs::delay(3000, shinyjs::hide("warnings2"))
+      }
+      req(new_username %not_in% distinct_usernames)
+      
+      last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM users") %>% dplyr::pull()
+      
+      # Password is hashed
+      new_data <- tibble::tribble(~id, ~username, ~firstname, ~lastname, ~password, ~user_access, ~user_status, ~datetime, ~deleted,
+                                  last_row + 1, as.character(new_username), as.character(new_firstname), as.character(new_lastname),
+                                  as.character(rlang::hash(new_password)), as.character(new_user_access), as.character(new_user_status),
+                                  as.character(Sys.time()), FALSE)
+      
+      DBI::dbAppendTable(r$db, "users", new_data)
+      
+      r$users <- DBI::dbGetQuery(r$db, "SELECT * FROM users")
+      r$users_temp <- DBI::dbGetQuery(r$db, "SELECT * FROM users")
+      
+      output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "new_user_added"), messageBarType = 4), style = "margin-top:10px;"))
+      shinyjs::show("warnings1")
+      shinyjs::delay(3000, shinyjs::hide("warnings1"))
+      
+      # Reset textfields
+      sapply(c("username", "firstname", "lastname", "password"), function(name) shiny.fluent::updateTextField.shinyInput(session, 
+        paste0("add_user_", name), value = ""))
+    })
+    
     ##########################################
-    # Add an access                          #
+    # Add an access or a status              #
     ##########################################
     
-    observeEvent(input$add_access_add, {
+    sapply(c("access", "status"), function(add_type) observeEvent(input[[paste0("add_", add_type, "_add")]], {
+      
+      new_name <- isolate(input[[paste0("add_", add_type, "_name")]])
+      new_description <- isolate(input[[paste0("add_", add_type, "_description")]])
       
       # Check if required fields are filled (name is required, description is not)
       # We can add other requirements (eg characters only)
       name_check <- FALSE
-      if (!is.null(input$add_access_name)){
-        if (input$add_access_name != "") name_check <- TRUE
+      if (!is.null(new_name)){
+        if (new_name != "") name_check <- TRUE
       }
-      if (!name_check) shiny.fluent::updateTextField.shinyInput(session, "add_access_name", errorMessage = translate(language, "provide_valid_name"))
-      if (name_check) shiny.fluent::updateTextField.shinyInput(session, "add_access_name", errorMessage = NULL)
+      if (!name_check) shiny.fluent::updateTextField.shinyInput(session, paste0("add_", add_type, "_name"), errorMessage = translate(language, "provide_valid_name"))
+      if (name_check) shiny.fluent::updateTextField.shinyInput(session, paste0("add_", add_type, "_name"), errorMessage = NULL)
       
       req(name_check)
       
       # Check if chosen name is already used
-      distinct_names <- r$users_accesses_statuses %>% dplyr::filter(!deleted, type == "access") %>% dplyr::pull(name)
-
-      if (input$add_access_name %in% distinct_names){
+      distinct_names <- DBI::dbGetQuery(r$db, paste0("SELECT DISTINCT(name) FROM users_accesses_statuses WHERE type = '", add_type, "'
+                                                     AND deleted IS NOT TRUE")) %>% dplyr::pull()
+      if (new_name %in% distinct_names){
         output$warnings2 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "name_already_used"), messageBarType = 3), style = "margin-top:10px;"))
         shinyjs::show("warnings2")
         shinyjs::delay(3000, shinyjs::hide("warnings2"))
       }
-      req(input$add_access_name %not_in% (r$users_accesses_statuses %>% dplyr::filter(!deleted, type == "access") %>% dplyr::pull(name)))
-      # 
-      # last_row <- max(r[[data_var]]["id"])
-      # 
-      # new_data <- data_management_new_data(
-      #   id,
-      #   new_id = last_row + 1,
-      #   name = as.character(input$name),
-      #   description = ifelse(is.null(input$description), "", as.character(input$description)),
-      #   creator = as.numeric(r$user_id),
-      #   datetime = as.character(Sys.time()),
-      #   deleted = FALSE,
-      #   data_source_id = as.integer(input$data_source),
-      #   datamart_id = as.integer(input$datamart),
-      #   study_id = as.integer(input$study),
-      #   patient_lvl_module_family_id = as.integer(input$patient_lvl_module_family),
-      #   aggregated_module_family_id = as.integer(input$aggregated_module_family))
-      # 
-      # r[[data_var]] <- r[[data_var]] %>% dplyr::bind_rows(new_data)
-      # # Update also temp dataframe
-      # r[[paste0(data_var, "_temp")]] <- r[[data_var]]
-      # 
-      # # If the row we add is a datamart :
-      # # - add a row in the code table
-      # # - add rows in options table
-      # last_row_code <- max(r$code["id"])
-      # last_row_options <- max(r$options["id"])
-      # if (id == "settings_datamarts"){ 
-      #   r$code <- r$code %>% dplyr::bind_rows(
-      #     tibble::tribble(~id, ~category, ~link_id, ~code, ~creator, ~datetime, ~deteleted,
-      #                     last_row_code + 1, "datamart", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
-      #   r$options <- r$options %>% dplyr::bind_rows(
-      #     tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator, ~datetime, ~deleted,
-      #                     last_row_options + 1, "datamart", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      #                     last_row_options + 2, "datamart", last_row + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE))
-      # }
-      # if (id == "settings_studies"){
-      #   r$options <- r$options %>% dplyr::bind_rows(
-      #     tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator, ~datetime, ~deleted,
-      #                     last_row_options + 1, "study", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
-      # }
-      # 
-      # # If the row we add is a datamart or a study, hide options card
-      # shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = FALSE)
-      # # Hide create card
-      # shiny.fluent::updateToggle.shinyInput(session, "creation_card_toggle", value = FALSE)
-      # 
-      # message <- paste0(id_get_other_name(id, "singular_form"), "_added")
+      req(new_name %not_in% (distinct_names))
+
+      last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM users_accesses_statuses") %>% dplyr::pull()
+
+      new_data <- tibble::tribble(~id, ~type, ~name, ~description, ~datetime, ~deleted,
+                                  last_row + 1, add_type, as.character(new_name), as.character(new_description), as.character(Sys.time()), FALSE)
+
+      DBI::dbAppendTable(r$db, "users_accesses_statuses", new_data)
       
-      # output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 4), style = "margin-top:10px;"))
-      # shinyjs::show("warnings1")
-      # shinyjs::delay(3000, shinyjs::hide("warnings1"))
-    })
+      r$users_accesses_statuses <- DBI::dbGetQuery(r$db, "SELECT * FROM users_accesses_statuses")
+      r$users_accesses_statuses_temp <- DBI::dbGetQuery(r$db, "SELECT * FROM users_accesses_statuses")
+      
+      output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, paste0(add_type, "_added")), messageBarType = 4), style = "margin-top:10px;"))
+      shinyjs::show("warnings1")
+      shinyjs::delay(3000, shinyjs::hide("warnings1"))
+      
+      # Reset textfields
+      sapply(c("name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, 
+        paste0("add_", add_type, "_", name), value = ""))
+    }))
     
     ##########################################
-    # Add a status                           #
+    #               #
     ##########################################
     
   })

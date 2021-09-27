@@ -26,19 +26,23 @@ db_create_table <- function(db, table_name, dataframe){
 db_create_tables <- function(db){
   # Create tables if not exist
   db_create_table(db, "users",
-    tibble::tibble(id = integer(), username = character(), first_name = character(), last_name = character(), password = character(),
-      access_status = character(), user_status = character(), datetime = lubridate::ymd_hms(), deleted = logical()))
+    tibble::tibble(id = integer(), username = character(), firstname = character(), lastname = character(), password = character(),
+      user_access = character(), user_status = character(), datetime = lubridate::ymd_hms(), deleted = logical()))
   
-  db_create_table(db, "access_statuses",
-    tibble::tibble(id = integer(), name = character(), action = character(), value = character(), value_num = integer(),
+  db_create_table(db, "users_accesses_statuses",
+    tibble::tibble(id = integer(), type = character(), name = character(), description = character(),
       datetime = lubridate::ymd_hms(), deleted = logical()))
   
   db_create_table(db, "data_sources",
-    tibble::tibble( id = integer(), name = character(), description = character(), creator_id = integer(), datetime = lubridate::ymd_hms(),
+    tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = lubridate::ymd_hms(),
       deleted = logical()))
   
+  db_create_table(db, "users_accesses_details",
+    tibble::tibble(id = integer(), link_id = integer(), action = character(), value = character(), value_num = numeric(),
+      datetime = lubridate::ymd_hms(), deleted = logical()))
+  
   db_create_table(db, "datamarts",
-    tibble::tibble(id = integer(), name = character(), description = character(), date_source_id = integer(), creator_id = integer(),
+    tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
       datetime = lubridate::ymd_hms(), deleted = logical()))
   
   db_create_table(db, "studies",
