@@ -29,6 +29,7 @@ app_server <- function(page_style, router, language){
       sapply(tables, function(table){
         r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table))
         r[[paste0(table, "_temp")]] <- r[[table]]
+        r[[paste0(table, "_temp")]] <- r[[paste0(table, "_temp")]] %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
       })
     })
     

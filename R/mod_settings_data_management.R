@@ -195,7 +195,7 @@ mod_settings_data_management_server <- function(id, r, language){
     
       DBI::dbAppendTable(r$db, data_var, new_data)
       r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
-      r[[paste0(data_var, "_temp")]] <- r[[data_var]]
+      r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::mutate(modified = FALSE)
       
       # If the row we add is a datamart :
       # - add a row in the code table
@@ -281,8 +281,10 @@ mod_settings_data_management_server <- function(id, r, language){
       observeEvent(input$management_datatable_cell_edit, {
         edit_info <- input$management_datatable_cell_edit
         edit_info$col <- edit_info$col + 1 # Datatable cols starts at 0, we have to add 1
-        data_var <- substr(id, nchar("settings_") + 1, nchar(id)) 
+        data_var <- substr(id, nchar("settings_") + 1, nchar(id))
         r[[paste0(data_var, "_temp")]] <- DT::editData(r[[paste0(data_var, "_temp")]], edit_info)
+        # Store that this row has been modified
+        r[[paste0(data_var, "_temp")]][[edit_info$row, "modified"]] <- TRUE
       })
     
       # Each time a dropdown is updated, modify temp variable
@@ -293,6 +295,8 @@ mod_settings_data_management_server <- function(id, r, language){
               observeEvent(input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]], {
                 r[[paste0(data_var, "_temp")]][[which(r[[paste0(data_var, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <-
                   input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]]
+                # Store that this row has been modified
+                r[[paste0(data_var, "_temp")]][[which(r[[paste0(data_var, "_temp")]]["id"] == id), "modified"]] <- TRUE
               })
             })
           })
@@ -315,8 +319,15 @@ mod_settings_data_management_server <- function(id, r, language){
         }
         req(duplicates == 0)
         
-        # Restitute temp values to permanent variable
-        r[[data_var]] <- r[[paste0(data_var, "_temp")]]
+        # Save changes in database
+        ids_to_del <- r[[paste0(data_var, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+        DBI::dbSendStatement(r$db, paste0("DELETE FROM ", data_var, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
+        DBI::dbClearResult(query)
+        DBI::dbAppendTable(r$db, data_var, r[[paste0(data_var, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
+        
+        # Reload r variable
+        r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
+        r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
         
         # Notification to user
         output$warnings2 <- renderUI({
@@ -348,7 +359,7 @@ mod_settings_data_management_server <- function(id, r, language){
         DBI::dbSendStatement(r$db, paste0("UPDATE ", data_var, " SET deleted = TRUE WHERE id = ", row_deleted))
         r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
         # Update also temp dataframe
-        r[[paste0(data_var, "_temp")]] <- r[[data_var]]
+        r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::mutate(modified = FALSE)
         
         # Notification to user
         message <- paste0(id_get_other_name(id, "singular_form"), "_deleted")

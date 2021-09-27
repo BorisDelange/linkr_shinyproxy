@@ -213,7 +213,8 @@ mod_settings_app_database_server <- function(id, r, language){
       if (input$connection_type_datatable == "local"){
         tibble::tibble(name = DBI::dbListTables(r$local_db),
           row_number = sapply(DBI::dbListTables(r$local_db), 
-            function(table) DBI::dbGetQuery(r$local_db, paste0("SELECT COUNT(*) FROM ", table)) %>% dplyr::pull())) -> data
+            function(table) DBI::dbGetQuery(r$local_db, paste0("SELECT COUNT(*) FROM ", table)) %>% 
+              dplyr::pull() %>% as.integer())) -> data
       } 
       if (input$connection_type_datatable == "distant"){
         data <- tibble::tibble(name = character(), row_number = integer())
@@ -221,7 +222,8 @@ mod_settings_app_database_server <- function(id, r, language){
           distant_db <- get_distant_db(r$local_db)
           tibble::tibble(name = DBI::dbListTables(distant_db),
                          row_number = sapply(DBI::dbListTables(distant_db),
-                                             function(table) DBI::dbGetQuery(distant_db, paste0("SELECT COUNT(*) FROM ", table)) %>% dplyr::pull())) -> data
+                                             function(table) DBI::dbGetQuery(distant_db, paste0("SELECT COUNT(*) FROM ", table)) %>% 
+                                               dplyr::pull() %>% as.integer())) -> data
         }
       }
       colnames(data) <- c(translate(language, "table_name"), translate(language, "row_number"))

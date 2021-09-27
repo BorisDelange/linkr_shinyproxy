@@ -122,7 +122,7 @@ mod_settings_users_server <- function(id, r, language){
       DBI::dbAppendTable(r$db, "users", new_data)
       
       r$users <- DBI::dbGetQuery(r$db, "SELECT * FROM users")
-      r$users_temp <- DBI::dbGetQuery(r$db, "SELECT * FROM users")
+      r$users_temp <- r$users %>% dplyr::mutate(modified = FALSE)
       
       output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "new_user_added"), messageBarType = 4), style = "margin-top:10px;"))
       shinyjs::show("warnings1")
@@ -171,7 +171,7 @@ mod_settings_users_server <- function(id, r, language){
       DBI::dbAppendTable(r$db, "users_accesses_statuses", new_data)
       
       r$users_accesses_statuses <- DBI::dbGetQuery(r$db, "SELECT * FROM users_accesses_statuses")
-      r$users_accesses_statuses_temp <- DBI::dbGetQuery(r$db, "SELECT * FROM users_accesses_statuses")
+      r$users_accesses_statuses_temp <- r$users_accesses_statuses %>% dplyr::mutate(modified = FALSE)
       
       output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, paste0(add_type, "_added")), messageBarType = 4), style = "margin-top:10px;"))
       shinyjs::show("warnings1")
@@ -183,8 +183,52 @@ mod_settings_users_server <- function(id, r, language){
     }))
     
     ##########################################
-    #               #
+    # Users & statuses management            #
     ##########################################
+    
+      ##########################################
+      # Generate datatable                     #
+      ##########################################
+      
+      sapply(c("users", "users_accesses_statuses"), function(data_source){
+        observeEvent(r[[data_source]], {
+          # Get data
+          data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_source, " WHERE deleted IS FALSE"))
+          if (nrow(data) != 0){
+            data <- data %>% dplyr::select(-deleted)
+            if (data_source == "users_accesses_statuses") data <- data %>% dplyr::filter(type == "status") %>% dplyr::select(-type)
+          }
+
+          # Render datatable
+          category <- switch(data_source, "users" = "users", "users_accesses_statuses" = "statuses")
+          output[[paste0(category, "_management_datatable")]] <- DT::renderDT(
+            management_datatable(category, data, ns, r, language,
+              dropdowns = switch(data_source,
+                                 "users" = c("user_access" = "users_accesses", "user_status" = "users_statuses"),
+                                 "users_accesses_statuses" = "")),
+            options = list(dom = "t<'bottom'p>",
+                           columnDefs = switch(category,
+                             "users" = list(
+                                list(className = "dt-center", targets = c(0, -1, -2)),
+                                list(sortable = FALSE, targets = c(4, 5, 6, 8))),
+                             "statuses" = list(
+                               list(className = "dt-center", targets = c(0, -1, -2)),
+                               list(sortable = FALSE, targets = c(4))),
+                             )),
+            rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
+            editable = list(target = "cell", disable = switch(category,
+                                                                "users" = list(columns = c(0, 4, 5, 6, 7, 8)),
+                                                                "statuses" = list(columns = c(0, 3, 4)))),
+            callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
+              var $this = $(this.node());
+              $this.attr('id', this.data()[0]);
+              $this.addClass('shiny-input-container');
+            });
+            Shiny.unbindAll(table.table().node());
+            Shiny.bindAll(table.table().node());")
+          )
+        })
+      })
     
   })
 }

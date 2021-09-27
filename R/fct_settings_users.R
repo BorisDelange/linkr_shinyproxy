@@ -67,3 +67,54 @@ users_edit_card <- function(language, ns, title, card){
     )
   )
 }
+
+##########################################
+# Datatable                              #
+##########################################
+
+management_datatable <- function(id, data, ns, r, language, dropdowns = NULL){
+  if (nrow(data) == 0) return(data)
+  
+  # Create vars with existing options
+  users_accesses <- tibble_to_list(r$users_accesses_statuses %>% dplyr::filter(type == "access"), "id", "name", rm_deleted_rows = TRUE)
+  users_statuses <- tibble_to_list(r$users_accesses_statuses %>% dplyr::filter(type == "status"), "id", "name", rm_deleted_rows = TRUE)
+  
+  # Add a column action in the DataTable
+  data["action"] <- NA_character_
+  
+  # Transform dropdowns columns in the dataframe to character
+  lapply(names(dropdowns), function(name) data %>% dplyr::mutate_at(name, as.character) ->> data)
+  
+  # For each row of the dataframe :
+  # - transform dropdowns columns to show dropdowns in Shiny app
+  # - add an Action column with delete action button
+  if (nrow(data) != 0){
+    for (i in 1:nrow(data)){
+      lapply(names(dropdowns), function(name){
+        data[i, name] <<- as.character(
+          div(
+            shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+                                              options = eval(parse(text = dropdowns[name])),
+                                              value = as.integer(data[i, name])),
+            style = "width:100%")
+        )
+      })
+      
+      # Add delete button
+      actions <- tagList(shiny::actionButton(paste0("delete", data[i, 1]), "", icon = icon("trash-alt"),
+                                             onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
+      
+      data[i, "action"] <- as.character(div(actions))
+    }
+  }
+  
+  # Change name of cols 
+  colnames(data) <- switch(id,
+   "users" = c(translate(language, "id"), translate(language, "username"), translate(language, "firstname"),
+               translate(language, "lastname"), translate(language, "password"), translate(language, "user_access"),
+               translate(language, "user_status"), translate(language, "datetime"), translate(language, "action")),
+   "statuses" = c(translate(language, "id"), translate(language, "name"), translate(language, "description"),
+                  translate(language, "datetime"), translate(language, "action")))
+  
+  data
+}
