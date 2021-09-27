@@ -359,7 +359,7 @@ mod_settings_data_management_server <- function(id, r, language){
         DBI::dbSendStatement(r$db, paste0("UPDATE ", data_var, " SET deleted = TRUE WHERE id = ", row_deleted))
         r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
         # Update also temp dataframe
-        r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::mutate(modified = FALSE)
+        r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
         
         # Notification to user
         message <- paste0(id_get_other_name(id, "singular_form"), "_deleted")

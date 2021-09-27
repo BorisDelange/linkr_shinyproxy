@@ -295,8 +295,8 @@ data_management_delete_react <- function(id, ns, language, data_management_delet
     dialogContentProps = dialogContentProps,
     modalProps = list(),
     shiny.fluent::DialogFooter(
-      shiny.fluent::PrimaryButton.shinyInput(ns("management_delete_confirmed"), text = "Delete"),
-      shiny.fluent::DefaultButton.shinyInput(ns("management_delete_canceled"), text = "Don't delete")
+      shiny.fluent::PrimaryButton.shinyInput(ns("management_delete_confirmed"), text = translate(language, "delete")),
+      shiny.fluent::DefaultButton.shinyInput(ns("management_delete_canceled"), text = translate(language, "dont_delete"))
     )
   )
 }

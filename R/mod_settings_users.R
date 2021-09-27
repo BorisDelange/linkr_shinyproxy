@@ -17,7 +17,9 @@ mod_settings_users_ui <- function(id, language, page_style, page){
   
   if (page_style == "fluent"){
     div(class = "main",
-      shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")),
+      shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
+      shiny.fluent::reactOutput(ns("users_delete_confirm")), 
+      shiny.fluent::reactOutput(ns("statuses_delete_confirm")),
       users_toggle_card(language, ns, activated = c("")),
       users_creation_card(language, ns, title = "add_user", card = "add_user", 
         textfields = c("username", "firstname", "lastname", "password"), textfields_width = "200px", 
@@ -75,23 +77,23 @@ mod_settings_users_server <- function(id, r, language){
     
     observeEvent(input$add_user_add, {
       sapply(c("username", "firstname", "lastname", "password", "user_access", "user_status"), 
-             function(name){
-               new_value <- isolate(input[[paste0("add_user_", name)]])
-               assign(paste0("new_", name), new_value, envir = parent.env(environment()))
-               
-               assign(paste0(name, "_check"), FALSE, envir = parent.env(environment()))
-               
-               if (!is.null(new_value)){
-                 if (new_value != "") assign(paste0(name, "_check"), TRUE, envir = parent.env(environment()))
-               }
-               
-               if (name %not_in% c("user_access", "user_status")){
-                 if (!eval(parse(text = paste0(name, "_check")))) shiny.fluent::updateTextField.shinyInput(session, 
-                   paste0("add_user_", name), errorMessage = translate(language, paste0("provide_valid_", name)))
-                 if (eval(parse(text = paste0(name, "_check")))) shiny.fluent::updateTextField.shinyInput(session,
-                   paste0("add_user_", name), errorMessage = NULL)
-               }
-             })
+      function(name){
+        new_value <- isolate(input[[paste0("add_user_", name)]])
+        assign(paste0("new_", name), new_value, envir = parent.env(environment()))
+        
+        assign(paste0(name, "_check"), FALSE, envir = parent.env(environment()))
+        
+        if (!is.null(new_value)){
+          if (new_value != "") assign(paste0(name, "_check"), TRUE, envir = parent.env(environment()))
+        }
+        
+        if (name %not_in% c("user_access", "user_status")){
+          if (!eval(parse(text = paste0(name, "_check")))) shiny.fluent::updateTextField.shinyInput(session, 
+            paste0("add_user_", name), errorMessage = translate(language, paste0("provide_valid_", name)))
+          if (eval(parse(text = paste0(name, "_check")))) shiny.fluent::updateTextField.shinyInput(session,
+            paste0("add_user_", name), errorMessage = NULL)
+        }
+      })
 
       if (!user_access_check | !user_status_check){
         output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "need_create_user_access"), messageBarType = 3), style = "margin-top:10px;"))
@@ -114,7 +116,7 @@ mod_settings_users_server <- function(id, r, language){
       last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM users") %>% dplyr::pull()
       
       # Password is hashed
-      new_data <- tibble::tribble(~id, ~username, ~firstname, ~lastname, ~password, ~user_access, ~user_status, ~datetime, ~deleted,
+      new_data <- tibble::tribble(~id, ~username, ~firstname, ~lastname, ~password, ~user_access_id, ~user_status_id, ~datetime, ~deleted,
                                   last_row + 1, as.character(new_username), as.character(new_firstname), as.character(new_lastname),
                                   as.character(rlang::hash(new_password)), as.character(new_user_access), as.character(new_user_status),
                                   as.character(Sys.time()), FALSE)
@@ -190,21 +192,21 @@ mod_settings_users_server <- function(id, r, language){
       # Generate datatable                     #
       ##########################################
       
-      sapply(c("users", "users_accesses_statuses"), function(data_source){
-        observeEvent(r[[data_source]], {
+      sapply(c("users", "users_accesses_statuses"), function(data_var){
+        observeEvent(r[[data_var]], {
           # Get data
-          data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_source, " WHERE deleted IS FALSE"))
+          data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var, " WHERE deleted IS FALSE"))
           if (nrow(data) != 0){
             data <- data %>% dplyr::select(-deleted)
-            if (data_source == "users_accesses_statuses") data <- data %>% dplyr::filter(type == "status") %>% dplyr::select(-type)
+            if (data_var == "users_accesses_statuses") data <- data %>% dplyr::filter(type == "status") %>% dplyr::select(-type)
           }
 
           # Render datatable
-          category <- switch(data_source, "users" = "users", "users_accesses_statuses" = "statuses")
+          category <- switch(data_var, "users" = "users", "users_accesses_statuses" = "statuses")
           output[[paste0(category, "_management_datatable")]] <- DT::renderDT(
             management_datatable(category, data, ns, r, language,
-              dropdowns = switch(data_source,
-                                 "users" = c("user_access" = "users_accesses", "user_status" = "users_statuses"),
+              dropdowns = switch(data_var,
+                                 "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
                                  "users_accesses_statuses" = "")),
             options = list(dom = "t<'bottom'p>",
                            columnDefs = switch(category,
@@ -227,6 +229,110 @@ mod_settings_users_server <- function(id, r, language){
             Shiny.unbindAll(table.table().node());
             Shiny.bindAll(table.table().node());")
           )
+        })
+      })
+    
+      ##########################################
+      # Save changes in datatable              #
+      ##########################################
+      
+      # Each time a row is updated, modify temp variable
+      sapply(c("users", "users_accesses_statuses"), function(data_var){
+        category <- switch(data_var, "users" = "users", "users_accesses_statuses" = "statuses")
+        observeEvent(input[[paste0(category, "_management_datatable_cell_edit")]], {
+          edit_info <- input[[paste0(category, "_management_datatable_cell_edit")]]
+          edit_info$col <- edit_info$col + 1 # Datatable cols starts at 0, we have to add 1
+          r[[paste0(data_var, "_temp")]] <- DT::editData(r[[paste0(data_var, "_temp")]], edit_info)
+          # Store that this row has been modified
+          r[[paste0(data_var, "_temp")]][[edit_info$row, "modified"]] <- TRUE
+        })
+      })
+      
+      # Each time a dropdown is updated, modify temp variable
+      observeEvent(r$users, {
+        sapply(r$users %>% dplyr::filter(!deleted) %>% dplyr::pull(id), function(id){
+          sapply(c("user_access_id", "user_status_id"), function(dropdown){
+            observeEvent(input[[paste0(dropdown, id)]], {
+              r$users_temp[[which(r$users_temp["id"] == id), dropdown]] <-
+                input[[paste0(dropdown, id)]]
+              # Store that if this row has been modified
+              r$users_temp[[which(r$users_temp["id"] == id), "modified"]] <- TRUE
+            })
+          })
+        })
+      })
+      
+      sapply(c("users", "users_accesses_statuses"), function(data_var){
+        observeEvent(input[[paste0(data_var, "_management_save")]], {
+  
+          # Make sure there's no duplicate in names
+          data <- switch(data_var, 
+                         "users" = r[[paste0(data_var, "_temp")]] %>% dplyr::rename(name = username), 
+                         "users_accesses_statuses" = r[[paste0(data_var, "_temp")]])
+          duplicates <- data %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
+            dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+          if (duplicates > 0){
+            output$warnings1 <- renderUI({
+              div(shiny.fluent::MessageBar(translate(language, "modif_names_duplicates"), messageBarType = 3), style = "margin-top:10px;")
+            })
+            shinyjs::show("warnings1")
+            shinyjs::delay(3000, shinyjs::hide("warnings1"))
+          }
+          req(duplicates == 0)
+  
+          # Save changes in database
+          ids_to_del <- r[[paste0(data_var, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+          DBI::dbSendStatement(r$db, paste0("DELETE FROM ", data_var, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
+          DBI::dbClearResult(query)
+          DBI::dbAppendTable(r$db, data_var, r[[paste0(data_var, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
+  
+          # Reload r variable
+          r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
+          r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
+  
+          # Notification to user
+          output$warnings2 <- renderUI({
+            div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
+          })
+          shinyjs::show("warnings2")
+          shinyjs::delay(3000, shinyjs::hide("warnings2"))
+        })
+      })
+      
+      ##########################################
+      # Delete a row in datatable              #
+      ##########################################
+      
+      sapply(c("users", "statuses"), function(id) {
+        r[[paste0(id, "_delete_dialog")]] <<- FALSE
+      
+        output[[paste0(id, "_delete_confirm")]] <- shiny.fluent::renderReact(management_delete_react(id, ns, language, r[[paste0(id, "_delete_dialog")]]))
+
+        observeEvent(input[[paste0(id, "_hide_dialog")]], r[[paste0(id, "_delete_dialog")]] <<- FALSE)
+        observeEvent(input[[paste0(id, "_delete_canceled")]], r[[paste0(id, "_delete_dialog")]] <<- FALSE)
+        observeEvent(input[[paste0(id, "_deleted_pressed")]], r[[paste0(id, "_delete_dialog")]] <<- TRUE)
+
+        observeEvent(input[[paste0(id, "_delete_confirmed")]], {
+
+          r[[paste0(id, "_delete_dialog")]] <<- FALSE
+
+          data_var <- switch(id, "users" = "users", "statuses" = "users_accesses_statuses")
+          
+          # Modify reactive value r$...
+          row_deleted <- as.integer(substr(input[[paste0(id, "_deleted_pressed")]], nchar(paste0("delete_", id)) + 1, nchar(input[[paste0(id, "_deleted_pressed")]])))
+          DBI::dbSendStatement(r$db, paste0("UPDATE ", data_var, " SET deleted = TRUE WHERE id = ", row_deleted))
+          r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
+          # # Update also temp dataframe
+          r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
+
+          # Notification to user
+          message <- paste0(id, "_deleted")
+
+          output$warnings3 <- renderUI({
+            div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
+          })
+          shinyjs::show("warnings3")
+          shinyjs::delay(3000, shinyjs::hide("warnings3"))
         })
       })
     

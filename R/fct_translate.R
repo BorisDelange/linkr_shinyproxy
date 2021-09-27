@@ -386,7 +386,23 @@ get_translations <- function(){
             "EN", "need_create_user_access", "Need to create user accesses and/or user statuses before",
             "FR", "need_create_user_access", "Il faut créer les accès utilisateurs et/ou les statuts utilisateurs avant",
             "EN", "new_user_added", "New user added",
-            "FR", "new_user_added", "Nouvel utilisateur ajouté"
+            "FR", "new_user_added", "Nouvel utilisateur ajouté",
+            "EN", "delete", "Delete",
+            "FR", "delete", "Confirmer",
+            "EN", "dont_delete", "Don't delete",
+            "FR", "dont_delete", "Annuler",
+            "EN", "users_delete", "Delete a user",
+            "FR", "users_delete", "Supprimer un utilisateur",
+            "EN", "users_delete_subtext", "Do you want yo delete this user ?",
+            "FR", "users_delete_subtext", "Confirmez-vous la suppression de cet utilisateur ?",
+            "EN", "statuses_delete", "Delete a status",
+            "FR", "statuses_delete", "Supprimer un statut",
+            "EN", "statuses_delete_subtext", "Do you want yo delete this status ?",
+            "FR", "statuses_delete_subtext", "Confirmez-vous la suppression de ce statut ?",
+            "EN", "users_deleted", "User deleted",
+            "FR", "users_deleted", "Utilisateur supprimé",
+            "EN", "statuses_deleted", "Status deleted",
+            "FR", "statuses_deleted", "Statut supprimé"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

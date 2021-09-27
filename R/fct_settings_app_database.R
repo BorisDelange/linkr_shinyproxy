@@ -27,7 +27,7 @@ db_create_tables <- function(db){
   # Create tables if not exist
   db_create_table(db, "users",
     tibble::tibble(id = integer(), username = character(), firstname = character(), lastname = character(), password = character(),
-      user_access = character(), user_status = character(), datetime = lubridate::ymd_hms(), deleted = logical()))
+      user_access_id = character(), user_status_id = character(), datetime = lubridate::ymd_hms(), deleted = logical()))
   
   db_create_table(db, "users_accesses_statuses",
     tibble::tibble(id = integer(), type = character(), name = character(), description = character(),
