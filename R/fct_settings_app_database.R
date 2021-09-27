@@ -131,7 +131,12 @@ get_distant_db <- function(local_db){
 }
 
 get_db <- function(){
-  local_db <- get_local_db()
-  db <- get_distant_db(local_db)
+  db <- get_local_db()
+  
+  # If the choice is set to distant db, return distant db
+  # Else, return local db
+  DBI::dbGetQuery(db, "SELECT value FROM options WHERE category = 'distant_db' AND name = 'connection_type'") %>%
+    dplyr::pull() -> choice_distant_db
+  if (choice_distant_db == "distant") db <- get_distant_db(db)
   db
 }

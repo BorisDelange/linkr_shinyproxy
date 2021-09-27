@@ -342,7 +342,31 @@ get_translations <- function(){
             "EN", "db_datatable_card", "Database tables",
             "FR", "db_datatable_card", "Liste tables de la BDD",
             "EN", "db_request_card", "Request database",
-            "FR", "db_request_card", "Requêter la BDD"
+            "FR", "db_request_card", "Requêter la BDD",
+            "EN", "add_user_card", "Add a new user",
+            "FR", "add_user_card", "Ajouter utilisateur",
+            "EN", "add_user", "Add a new user",
+            "FR", "add_user", "Ajouter un utilisateur",
+            "EN", "users_management_card", "Users mngmt",
+            "FR", "users_management_card", "Gestion utilisateurs",
+            "EN", "users_management", "Users management",
+            "FR", "users_management", "Gestion des utilisateurs",
+            "EN", "add_access_card", "Add an access",
+            "FR", "add_access_card", "Ajouter accès",
+            "EN", "add_access", "Add an access",
+            "FR", "add_access", "Ajouter un accès",
+            "EN", "accesses_management_card", "Accesses mngmt",
+            "FR", "accesses_management_card", "Gestion accès",
+            "EN", "accesses_management", "Accesses management",
+            "FR", "accesses management", "Gestion des accès",
+            "EN", "add_status_card", "Add a status",
+            "FR", "add_status_card", "Ajouter statut",
+            "EN", "add_status", "Add a status",
+            "FR", "add_status", "Ajouter un statut",
+            "EN", "statuses_management_card", "Statuses mngmt",
+            "FR", "statuses_management_card", "Gestion statuts",
+            "EN", "statuses_management", "Statuses management",
+            "FR", "statuses_management", "Gestion des statuts"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

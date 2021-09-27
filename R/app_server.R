@@ -19,10 +19,18 @@ app_server <- function(page_style, router, language){
       3, "janed", "Jane", "Doe", "", "User level 1", "Data scientist", "2021-05-13 11:51:17", FALSE
     )
     
-    r$access_statuses <- tibble::tribble(
-      ~id, ~name, ~action, ~value, ~value_num, ~datetime, ~deleted,
-      1, "Admin", "developper_mode", "", 1, "2021-06-01 14:31:32", FALSE,
-      2, "User level 1", "developper_mode", "", 0, "2021-06-01 14:31:32", FALSE
+    r$users_accesses_statuses <- tibble::tribble(
+      ~id, ~type, ~name, ~description, ~datetime, ~deleted,
+      1, "access", "User level 1", "Allowed to manage his own studies & subsets", "2021-06-01 14:31:32", FALSE,
+      2, "access", "Admin", "Administrator", "2021-06-01 14:31:32", FALSE,
+      3, "status", "Data scientist", "", "2021-06-01 14:31:32", FALSE,
+      4, "status", "Clinician", "", "2021-06-01 14:31:32", FALSE
+    )
+    
+    r$users_accesses_details <- tibble::tribble(
+      ~id, ~link_id, ~action, ~value, ~value_num, ~datetime, ~deleted,
+      1, 2, "developper_mode", "", 1, "2021-06-01 14:31:32", FALSE,
+      2, 1, "developper_mode", "", 0, "2021-06-01 14:31:32", FALSE
     )
     
     data_sources <- tibble::tribble(
@@ -98,6 +106,7 @@ app_server <- function(page_style, router, language){
     if (page_style == "fluent") router$server(input, output, session)
     
     mod_settings_app_database_server("settings_app_database", r, language)
+    mod_settings_users_server("settings_users", r, language)
     mod_settings_data_management_server("settings_data_sources", r, language)
     mod_settings_data_management_server("settings_datamarts", r, language)
     mod_settings_data_management_server("settings_studies", r, language)

@@ -208,7 +208,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       if (page == "settings/app_db"){
         # Hidden aceEditor, allows the other to be displayed...
         div(shinyAce::aceEditor("hidden"), style = "display: none;")
-        mod_settings_app_database_ui("settings_app_database", language = language, page_style = page_style, page = page) -> result
+        mod_settings_app_database_ui("settings_app_database", language, page_style, page) -> result
       }
       
       ##########################################
@@ -216,48 +216,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ##########################################
       
       if (page == "settings/users"){
-        div(class = "main",
-          make_card(
-            translate(language, "create_user"),
-            div(
-              shiny.fluent::Stack(
-                horizontal = TRUE,
-                tokens = list(childrenGap = 50),
-                make_textfield(language, ns, "username"),
-                make_textfield(language, ns, "first_name"),
-                make_textfield(language, ns, "last_name"),
-                make_textfield(language, ns, "password", type = "password", canRevealPassword = TRUE),
-                make_dropdown(language, ns, "user_access", list(
-                  list(key = "admin", text = "Admin"),
-                  list(key = "user", text = "User")
-                  ), value = "user", width = "200px"),
-                make_dropdown(language, ns, "user_status", list(
-                  list(key = "intensivist", text = "Clinician"),
-                  list(key = "data_scientist", text = "Data scientist")
-                ), value = "user", width = "200px")
-              ), br(),
-              shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
-            )          
-          ),
-          make_card(
-            translate(language, "user_management"),
-            div(
-              shiny.fluent::DetailsList(
-                compact = TRUE, checkboxVisibility = "hidden",
-                items = list(
-                  list(key = "1", username = "JDoe", first_name = "Johnnnnnnnnnnnnn", last_name = "Doe", user_access = "User"),
-                  list(key = "2", username = "Jane", first_name = "Jane", last_name = "Doe", user_access = "Admin")
-                ),
-                columns = list(
-                  list(key = "username", fieldName = "username", name = "Username", minWidth = 200, maxWidth = 200, isResizable = TRUE),
-                  list(key = "first_name", fieldName = "first_name", name = "First name", minWidth = 200, maxWidth = 200, isResizable = TRUE),
-                  list(key = "last_name", fieldName = "last_name", name = "Last name", minWidth = 200, maxWidth = 200, isResizable = TRUE),
-                  list(key = "user_access", fieldName = "user_access", name = "User", minWidth = 200, maxWidth = 200, isResizable = TRUE)
-                )
-              )
-            )
-          )
-        ) -> result
+        mod_settings_users_ui("settings_users", language, page_style, page) -> result
       }
       
       ##########################################

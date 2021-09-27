@@ -63,7 +63,8 @@ make_textfield <- function(language, ns, label, id = NULL, value = NULL, type = 
   )
 }
 
-make_dropdown <- function(language, ns, label, options, id = NULL, value = NULL, width = NULL, min_width = NULL, max_width = NULL, margin_right = NULL){
+make_dropdown <- function(language, ns, label, options = list(), 
+                          id = NULL, value = NULL, width = NULL, min_width = NULL, max_width = NULL, margin_right = NULL){
   if (is.null(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")

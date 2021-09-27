@@ -11,82 +11,88 @@ mod_settings_app_database_ui <- function(id, language, page_style, page){
   ns <- NS(id)
   result <- ""
   
-  div(class = "main",
-    shiny::uiOutput(ns("warnings1")),
-    app_database_toggle_card(language, ns, activated = "db_connection_infos_card"),
-    div(
-      id = ns("db_connection_infos_card"),
-      make_card(
-        translate(language, "connection_infos"),
-        div(
+  ##########################################
+  # Fluent                                 #
+  ##########################################
+  
+  if (page_style == "fluent"){
+    div(class = "main",
+      shiny::uiOutput(ns("warnings1")),
+      app_database_toggle_card(language, ns, activated = "db_connection_infos_card"),
+      div(
+        id = ns("db_connection_infos_card"),
+        make_card(
+          translate(language, "connection_infos"),
           div(
-            div(class = "input_title", translate(language, "connection_type")),
-            shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type"), value = "local", options = list(
-                list(key = "local", text = translate(language, "local")),
-                list(key = "distant", text = translate(language, "distant"))
-              ), className = "inline_choicegroup")
-          ),
-          shiny::conditionalPanel(
-            condition = "input.connection_type == 'distant'", ns = ns,
-            shiny.fluent::Stack(
-              horizontal = TRUE,
-              tokens = list(childrenGap = 50),
-              make_dropdown(language, ns, "sql_lib", options = list(
-                list(key = "postgres", text = "PostgreSQL"),
-                list(key = "sqlite", text = "SQLite")
-              ), value = "postgres", width = "250px"),
-              make_textfield(language, ns, "dbname", width = "250px"),
-              make_textfield(language, ns, "host", width = "250px")
+            div(
+              div(class = "input_title", translate(language, "connection_type")),
+              shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type"), value = "local", options = list(
+                  list(key = "local", text = translate(language, "local")),
+                  list(key = "distant", text = translate(language, "distant"))
+                ), className = "inline_choicegroup")
             ),
+            shiny::conditionalPanel(
+              condition = "input.connection_type == 'distant'", ns = ns,
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 50),
+                make_dropdown(language, ns, "sql_lib", options = list(
+                  list(key = "postgres", text = "PostgreSQL"),
+                  list(key = "sqlite", text = "SQLite")
+                ), value = "postgres", width = "250px"),
+                make_textfield(language, ns, "dbname", width = "250px"),
+                make_textfield(language, ns, "host", width = "250px")
+              ),
+              shiny.fluent::Stack(
+                horizontal = TRUE,
+                tokens = list(childrenGap = 50),
+                make_textfield(language, ns, "port", width = "250px"),
+                make_textfield(language, ns, "user", width = "250px"),
+                make_textfield(language, ns, "password", type = "password", canRevealPassword = TRUE, width = "250px")
+              )), htmltools::br(),
             shiny.fluent::Stack(
               horizontal = TRUE,
-              tokens = list(childrenGap = 50),
-              make_textfield(language, ns, "port", width = "250px"),
-              make_textfield(language, ns, "user", width = "250px"),
-              make_textfield(language, ns, "password", type = "password", canRevealPassword = TRUE, width = "250px")
-            )), htmltools::br(),
-          shiny.fluent::Stack(
-            horizontal = TRUE,
-            tokens = list(childrenGap = 20),
-            shiny.fluent::PrimaryButton.shinyInput(ns("db_connection_save"), translate(language, "save")), " ",
-            shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, shiny.fluent::PrimaryButton.shinyInput(ns("test_connection"), translate(language, "test_connection"))),
-            shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, div(shiny::textOutput(ns("test_connection_success")), style = "padding-top:5px; font-weight:bold; color:#0078D4;")),
-            shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, div(shiny::textOutput(ns("test_connection_failure")), style = "padding-top:5px; color:red;"))
-          ),
+              tokens = list(childrenGap = 20),
+              shiny.fluent::PrimaryButton.shinyInput(ns("db_connection_save"), translate(language, "save")), " ",
+              shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, shiny.fluent::PrimaryButton.shinyInput(ns("test_connection"), translate(language, "test_connection"))),
+              shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, div(shiny::textOutput(ns("test_connection_success")), style = "padding-top:5px; font-weight:bold; color:#0078D4;")),
+              shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, div(shiny::textOutput(ns("test_connection_failure")), style = "padding-top:5px; color:red;"))
+            ),
+          )
+        )
+      ),
+      div(
+        id = ns("db_datatable_card"),
+        make_card(
+          translate(language, "app_db_tables"),
+          div(
+            shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type_datatable"), value = "local", options = list(
+              list(key = "local", text = translate(language, "local")),
+              list(key = "distant", text = translate(language, "distant"))
+            ), className = "inline_choicegroup"),
+            DT::DTOutput(ns("app_db_tables"))
+          )
+        )
+      ),
+      div(
+        id = ns("db_request_card"),
+        make_card(
+          translate(language, "app_db_request"),
+          div(
+            shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type_request"), value = "local", options = list(
+              list(key = "local", text = translate(language, "local")),
+              list(key = "distant", text = translate(language, "distant"))
+            ), className = "inline_choicegroup"),
+            div(shinyAce::aceEditor(ns("app_db_request"), "", "sql", height = "200px"), style = "width: 100%;"),
+            div(shiny::verbatimTextOutput(ns("request_result")), 
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
+            htmltools::br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("request"), translate(language, "request"))
+          )
         )
       )
-    ),
-    div(
-      id = ns("db_datatable_card"),
-      make_card(
-        translate(language, "app_db_tables"),
-        div(
-          shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type_datatable"), value = "local", options = list(
-            list(key = "local", text = translate(language, "local")),
-            list(key = "distant", text = translate(language, "distant"))
-          ), className = "inline_choicegroup"),
-          DT::DTOutput(ns("app_db_tables"))
-        )
-      )
-    ),
-    div(
-      id = ns("db_request_card"),
-      make_card(
-        translate(language, "app_db_request"),
-        div(
-          shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type_request"), value = "local", options = list(
-            list(key = "local", text = translate(language, "local")),
-            list(key = "distant", text = translate(language, "distant"))
-          ), className = "inline_choicegroup"),
-          div(shinyAce::aceEditor(ns("app_db_request"), "", "sql", height = "200px"), style = "width: 100%;"),
-          div(shiny::verbatimTextOutput(ns("request_result")), 
-            style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
-          htmltools::br(),
-          shiny.fluent::PrimaryButton.shinyInput(ns("request"), translate(language, "request"))
-        )
-      )
-    )
-  ) -> result
+    ) -> result
+  }
   
   result
 }
@@ -153,6 +159,9 @@ mod_settings_app_database_server <- function(id, r, language){
             DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
           })
         }
+        
+        # Reload r$db variable
+        r$db <- get_db()
         
         output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;"))
         shinyjs::show("warnings1")
