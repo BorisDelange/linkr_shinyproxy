@@ -90,6 +90,20 @@ mod_settings_app_database_ui <- function(id, language, page_style, page){
             shiny.fluent::PrimaryButton.shinyInput(ns("request"), translate(language, "request"))
           )
         )
+      ),
+      div(
+        id = ns("db_save_card"),
+        make_card(
+          translate(language, "db_save"),
+          div()
+        )
+      ),
+      div(
+        id = ns("db_restore_card"),
+        make_card(
+          translate(language, "db_restore"),
+          div()
+        )
       )
     ) -> result
   }
@@ -104,7 +118,7 @@ mod_settings_app_database_server <- function(id, r, language){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    toggles <- c("db_connection_infos_card", "db_datatable_card", "db_request_card")
+    toggles <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card")
     
     ##########################################
     # Show or hide cards   #
@@ -266,6 +280,18 @@ mod_settings_app_database_server <- function(id, r, language){
         paste(captured_output, collapse = "\n")
       })
     })
+    
+    ##########################################
+    # Save database                          #
+    ##########################################
+    
+    # TO DO
+    
+    ##########################################
+    # Restore database                       #
+    ##########################################
+    
+    # TO DO
     
   })
 }

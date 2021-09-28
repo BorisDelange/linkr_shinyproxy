@@ -206,8 +206,6 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ##########################################
       
       if (page == "settings/app_db"){
-        # Hidden aceEditor, allows the other to be displayed...
-        div(shinyAce::aceEditor("hidden"), style = "display: none;")
         mod_settings_app_database_ui("settings_app_database", language, page_style, page) -> result
       }
       
@@ -224,8 +222,6 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ##########################################
       
       if (page == "settings/data_sources"){
-        # Hidden aceEditor, allows the other to be displayed...
-        div(shinyAce::aceEditor("hidden"), style = "display: none;")
         mod_settings_data_management_ui("settings_data_sources", language, page_style, page) -> result
       }
       
@@ -258,28 +254,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ###########################################
       
       if (page == "settings/plugins"){
-        div(class = "main",
-          make_card(translate(language, "plugins_create"),
-            div(
-              shiny.fluent::Stack(
-                horizontal = TRUE,
-                tokens = list(childrenGap = 50),
-                make_textfield(language, ns, "plugin_name", value = "", min_width = "300px", max_width = "500px"),
-                make_dropdown(language, ns, "plugin_page", options = list(
-                  list(key = "none", text = "None"),
-                  list(key = "patient_lvl_data", text = "Patient-level data"),
-                  list(key = "aggregated_data", text = "Aggregated data")
-                ), value = "none", min_width = "300px", max_width = "500px")
-              ), htmltools::br(),
-              shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
-            )
-          ),
-          make_card(translate(language, "plugins_management"),
-            div(
-              "..."
-            )
-          )
-        ) -> result
+        mod_settings_plugins_ui("settings_plugins", language, page_style, page) -> result
       }
       
       ###########################################

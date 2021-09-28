@@ -45,28 +45,12 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
     
     if (page == "patient_level_data"){
       div(class = "sidenav",
-        div(class = "input_title_first", translate(language, "datamart")),
-        shiny.fluent::Dropdown.shinyInput("datamart", value = "ufh",
-                                          options = list(list(key = "ufh", text = "Cohorte héparine"),
-                                                         list(key = "wmv", text = "Sevrage ventilation"))),
-        div(class = "input_title", translate(language, "study")),
-        shiny.fluent::Dropdown.shinyInput("study", value = "study1",
-                                          options = list(list(key = "study1", text = "Etude 1 - premier anti-Xa"),
-                                                         list(key = "study2", text = "Etude 2 - tous les anti-Xa"))),
-        div(class = "input_title", translate(language, "subset")),
-        shiny.fluent::Dropdown.shinyInput("subset", value = "all_patients",
-                                          options = list(list(key = "all_patients", text = "Tous les patients"),
-                                                         list(key = "included_patients", text = "Patients inclus"))),
+        make_dropdown(language, ns, "datamart"),
+        make_dropdown(language, ns, "study"),
+        make_dropdown(language, ns, "subset"),
         htmltools::br(), htmltools::hr(),
-        div(class = "input_title", translate(language, "patient")),
-        shiny.fluent::Dropdown.shinyInput("patient", value = "1442",
-                                          options = list(list(key = "1442", text = "1442 - M - 82 ans"),
-                                                         list(key = "4653", text = "4653 - F - 45 ans"))),
-        make_dropdown(language, ns, "stay", list(
-          list(key = "cardio", text = "Cardio 02/09 - 04/09/20"),
-          list(key = "pneumo", text = "Pneumo 04/09 - 09/09/20")),
-          value = "cardio"
-        )
+        make_dropdown(language, ns, "patient"),
+        make_dropdown(language, ns, "stay")
       ) -> result
     }
     
@@ -76,19 +60,9 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
     
     if (page == "aggregated_data"){
       div(class = "sidenav",
-          div(class = "input_title_first", translate(language, "datamart")),
-          shiny.fluent::Dropdown.shinyInput("datamart", "Datamart", value = "ufh",
-                                            options = list(list(key = "ufh", text = "Cohorte héparine"),
-                                                           list(key = "wmv", text = "Sevrage ventilation"))),
-          div(class = "input_title", translate(language, "study")),
-          shiny.fluent::Dropdown.shinyInput("study", "Study", value = "study1",
-                                            options = list(list(key = "study1", text = "Etude 1 - premier anti-Xa"),
-                                                           list(key = "study2", text = "Etude 2 - tous les anti-Xa"))),
-          make_dropdown(language, ns, "subset", list(
-            list(key = "all_patients", text = "Tous les patients"),
-            list(key = "included_patients", text = "Patients inclus")),
-            value = "all_patients"
-          )
+        make_dropdown(language, ns, "datamart"),
+        make_dropdown(language, ns, "study"),
+        make_dropdown(language, ns, "subset"),
       ) -> result
     }
     
@@ -212,9 +186,82 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
 #' page_sidenav Server Functions
 #'
 #' @noRd 
-mod_page_sidenav_server <- function(id){
+mod_page_sidenav_server <- function(id, r, language){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    ##########################################
+    # Fluent / Patient-level data            #
+    ##########################################
+    
+    observeEvent(r$datamarts, {
+      # Datamarts to which the user has access
+      datamarts_allowed <- 
+        r$options %>% 
+        dplyr::filter(category == "datamart" & name == "user_allowed_read" & value_num == r$user_id) %>%
+        dplyr::pull(link_id)
+      datamarts <- r$datamarts %>% dplyr::filter(id %in% datamarts_allowed)
+      # Update dropdown
+      shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(datamarts, "id", "name", rm_deleted_rows = TRUE))
+    })
+    
+    observeEvent(input$datamart, {
+      # Studies depending on the chosen datamart
+      studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
+      # Studies to which the user has access
+      studies_allowed <-
+        r$options %>%
+        dplyr::filter(category == "study" & link_id %in% studies$id & name == "user_allowed_read" & value_num == r$user_id) %>%
+        dplyr::pull(link_id)
+      studies <- studies %>% dplyr::filter(id %in% studies_allowed)
+      # Update dropdown
+      shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE))
+      # Save value in r$chosen_dropdown, to update patient-level data dropdowns AND aggregated data dropdowns
+      r$chosen_datamart <- input$datamart
+      
+      # Load data of the datamart
+      code <- DBI::dbGetQuery(r$db, paste0("SELECT code FROM code WHERE category = 'datamart' AND link_id = ", input$datamart))
+      try(eval(parse(text = code)))
+    })
+    
+    observeEvent(input$study, {
+      # Subsets depending on the chosen study
+      subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
+      # Update dropdown
+      shiny.fluent::updateDropdown.shinyInput(session, "subset", options = tibble_to_list(subsets, "id", "name", rm_deleted_rows = TRUE))
+      r$chosen_study <- input$study
+    })
+    
+    observeEvent(input$subset, r$chosen_subset <- input$subset)
+    
+
+    # Update the two pages dropdowns (patient-level data page & aggregated data page)
+    observeEvent(r$chosen_datamart, {
+      datamarts_allowed <- 
+        r$options %>% 
+        dplyr::filter(category == "datamart" & name == "user_allowed_read" & value_num == r$user_id) %>%
+        dplyr::pull(link_id)
+      datamarts <- r$datamarts %>% dplyr::filter(id %in% datamarts_allowed)
+      shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(datamarts, "id", "name", rm_deleted_rows = TRUE),
+                                              value = r$chosen_datamart)
+    })
+    
+    observeEvent(r$chosen_study, {
+      studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
+      studies_allowed <-
+        r$options %>%
+        dplyr::filter(category == "study" & link_id %in% studies$id & name == "user_allowed_read" & value_num == r$user_id) %>%
+        dplyr::pull(link_id)
+      studies <- studies %>% dplyr::filter(id %in% studies_allowed)
+      shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE),
+                                              value = r$chosen_study)
+    })
+    
+    observeEvent(r$chosen_subset, {
+      subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
+      shiny.fluent::updateDropdown.shinyInput(session, "subset", options = tibble_to_list(subsets, "id", "name", rm_deleted_rows = TRUE),
+        value = r$chosen_subset)
+    })
  
   })
 }

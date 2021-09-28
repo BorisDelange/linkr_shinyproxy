@@ -453,7 +453,8 @@ mod_settings_data_management_server <- function(id, r, language){
         category_filter <- id_get_other_name(id, "singular_form")
         link_id_filter <- as.integer(substr(isolate(input$edit_code), nchar("edit_code") + 1, nchar(isolate(input$edit_code))))
         code_id <- r$code %>% dplyr::filter(category == category_filter, link_id == link_id_filter) %>% dplyr::pull(id)
-        DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", input$ace_edit_code, "' WHERE id = ", code_id)) -> query
+        # Replace ' with '' and store in the database
+        DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code, "'", "''"), "' WHERE id = ", code_id)) -> query
         DBI::dbClearResult(query)
         r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code")
         

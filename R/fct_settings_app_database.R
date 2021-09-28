@@ -8,7 +8,7 @@
 
 app_database_toggle_card <- function(language, ns, activated = ""){
   toggles <- tagList()
-  sapply(c("db_connection_infos_card", "db_datatable_card", "db_request_card"), function(label){
+  sapply(c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card"), function(label){
     toggles <<- tagList(toggles, make_toggle(language, ns, label = label,
                                    id = paste0(label, "_toggle"), value = ifelse(label %in% activated, TRUE, FALSE), inline = TRUE))
   })
@@ -27,7 +27,7 @@ db_create_tables <- function(db){
   # Create tables if not exist
   db_create_table(db, "users",
     tibble::tibble(id = integer(), username = character(), firstname = character(), lastname = character(), password = character(),
-      user_access_id = character(), user_status_id = character(), datetime = lubridate::ymd_hms(), deleted = logical()))
+      user_access_id = integer(), user_status_id = integer(), datetime = lubridate::ymd_hms(), deleted = logical()))
   
   db_create_table(db, "users_accesses_statuses",
     tibble::tibble(id = integer(), type = character(), name = character(), description = character(),

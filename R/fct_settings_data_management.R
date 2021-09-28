@@ -105,6 +105,7 @@ data_management_options_card <- function(language, ns, id, r, category_filter, l
     form_options <-
       r$users %>%
       dplyr::filter(!deleted) %>%
+      dplyr::left_join(r$users_accesses_statuses %>% dplyr::select(user_status_id = id, user_status = name), by = "user_status_id") %>%
       dplyr::transmute(key = id, imageInitials = paste0(substr(firstname, 0, 1), substr(lastname, 0, 1)),
                        text = paste0(firstname, " ", lastname), secondaryText = user_status)
     # If this is study options, we have to show only users who have access to the parent datamart

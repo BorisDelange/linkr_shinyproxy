@@ -13,12 +13,6 @@ app_server <- function(page_style, router, language){
     r$local_db <- get_local_db()
     r$db <- get_db()
     
-    # users <- tibble::tribble(
-    #   ~id, ~username, ~firstname, ~lastname, ~password, ~user_access, ~user_status, ~datetime, ~deleted,
-    #   1, "admin", "John", "Doe", "", "Admin", "Clinician", "2021-04-15 09:45:43", FALSE,
-    #   3, "janed", "Jane", "Doe", "", "User level 1", "Data scientist", "2021-05-13 11:51:17", FALSE
-    # )
-    
     # Load all data from database
     observeEvent(r$db, {
       tables <- c("users", "users_accesses_statuses", "users_accesses_details",
@@ -123,11 +117,15 @@ app_server <- function(page_style, router, language){
     # 
     if (page_style == "fluent") router$server(input, output, session)
     
+    mod_page_sidenav_server(paste0("patient_level_data"), r, language)
+    mod_page_sidenav_server(paste0("aggregated_data"), r, language)
+    
     mod_settings_app_database_server("settings_app_database", r, language)
     mod_settings_users_server("settings_users", r, language)
     mod_settings_data_management_server("settings_data_sources", r, language)
     mod_settings_data_management_server("settings_datamarts", r, language)
     mod_settings_data_management_server("settings_studies", r, language)
     mod_settings_data_management_server("settings_subsets", r, language)
+    mod_settings_plugins_server("settings_plugins", r, language)
   }
 }
