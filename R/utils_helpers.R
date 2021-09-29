@@ -6,8 +6,9 @@
 #'
 #' @noRd
 
-tibble_to_list <- function(data, key_col, text_col, rm_deleted_rows = FALSE){
-  my_list <- list()
+tibble_to_list <- function(data, key_col, text_col, rm_deleted_rows = FALSE, null_value = FALSE, language = "EN"){
+  if (null_value) my_list <- list(list(key = "", text = translate(language, "none")))
+  if (!null_value) my_list <- list()
   if (nrow(data) != 0){
     if (rm_deleted_rows) data <- data %>% dplyr::filter(!deleted)
     if (nrow(data) != 0){

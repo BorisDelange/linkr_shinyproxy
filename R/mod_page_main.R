@@ -114,69 +114,69 @@ mod_page_main_ui <- function(id, language, page_style, page){
       if(page == "settings/general"){
         div(class = "main",
           # Hidden aceEditor, allows the other to be displayed...
-          div(shinyAce::aceEditor("hidden"), style = "display: none;"),
-          make_card(
-            translate(language, "general"),
-            div(
-              shiny.fluent::Stack(
-                horizontal = TRUE,
-                tokens = list(childrenGap = 30),
-                div(
-                  div(class = "input_title", translate(language, "language")),
-                  div(shiny.fluent::Dropdown.shinyInput("language", value = "EN", options = list(
-                    list(key = "EN", text = "English"),
-                    list(key = "FR", text = "Français"))),
-                    style = "width:200px"
-                  )
-                ),
-                div(
-                  div(class = "input_title", translate(language, "dev_mode")),
-                  div(shiny.fluent::Toggle.shinyInput("dev_mode", value = TRUE))
-                )
-              ),
-              htmltools::br(),
-              htmltools::div(
-                shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save")),
-              )
-            )
-          ),
-          make_card(
-            translate(language, "appearance"),
-            div(
-              # shiny.fluent::Pivot(
-                # shiny.fluent::PivotItem(headerText = translate(language, "choices"),
-                  div(
-                    shiny.fluent::Stack(
-                      horizontal = TRUE,
-                      tokens = list(childrenGap = 50),
-                      shiny.fluent::Stack(
-                        horizontal = FALSE,
-                        div(
-                          div(class = "input_title", translate(language, "page_type")),
-                          shiny.fluent::ChoiceGroup.shinyInput("page_type", value = "fluent", options = list(
-                            list(key = "fluent", text = "Fluent UI"),
-                            list(key = "fluid", text = "Fluid UI")
-                          )),
-                          style = "min-width: 180px;"
-                        ), htmltools::br(), htmltools::br(), htmltools::br(), htmltools::br(),
-                        div(shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save")), style = "width: 100px")
-                      ),
-                      div(
-                        div(class = "input_title", translate(language, "page_theme")),
-                        div(
-                          shiny.fluent::Dropdown.shinyInput("page_theme",  translate(language, "page_theme"),
-                            value = "darker", options = list(
-                            list(key = "darker", text = "Darker"),
-                            list(key = "light", text = "Light"),
-                            list(key = "neutralQuaternary", text = "neutralQuaternary")
-                          )),
-                          style = "min-width: 200px;"
-                        )
-                      ),
-                      div(shinyAce::aceEditor("css_code", ".title {\n  padding: 5px 10px 0px 10px;\n  color: #737373;\n}", "css", 
-                                              height = "200px"), style = "width: 100%;")
-                    )
-                  )
+          div(shinyAce::aceEditor("hidden"), style = "display: none;")
+          # make_card(
+          #   translate(language, "general"),
+          #   div(
+          #     shiny.fluent::Stack(
+          #       horizontal = TRUE,
+          #       tokens = list(childrenGap = 30),
+          #       div(
+          #         div(class = "input_title", translate(language, "language")),
+          #         div(shiny.fluent::Dropdown.shinyInput("language", value = "EN", options = list(
+          #           list(key = "EN", text = "English"),
+          #           list(key = "FR", text = "Français"))),
+          #           style = "width:200px"
+          #         )
+          #       ),
+          #       div(
+          #         div(class = "input_title", translate(language, "dev_mode")),
+          #         div(shiny.fluent::Toggle.shinyInput("dev_mode", value = TRUE))
+          #       )
+          #     ),
+          #     htmltools::br(),
+          #     htmltools::div(
+          #       shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save")),
+          #     )
+          #   )
+          # ),
+          # make_card(
+          #   translate(language, "appearance"),
+          #   div(
+          #     # shiny.fluent::Pivot(
+          #       # shiny.fluent::PivotItem(headerText = translate(language, "choices"),
+          #         div(
+          #           shiny.fluent::Stack(
+          #             horizontal = TRUE,
+          #             tokens = list(childrenGap = 50),
+          #             shiny.fluent::Stack(
+          #               horizontal = FALSE,
+          #               div(
+          #                 div(class = "input_title", translate(language, "page_type")),
+          #                 shiny.fluent::ChoiceGroup.shinyInput("page_type", value = "fluent", options = list(
+          #                   list(key = "fluent", text = "Fluent UI"),
+          #                   list(key = "fluid", text = "Fluid UI")
+          #                 )),
+          #                 style = "min-width: 180px;"
+          #               ), htmltools::br(), htmltools::br(), htmltools::br(), htmltools::br(),
+          #               div(shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save")), style = "width: 100px")
+          #             ),
+          #             div(
+          #               div(class = "input_title", translate(language, "page_theme")),
+          #               div(
+          #                 shiny.fluent::Dropdown.shinyInput("page_theme",  translate(language, "page_theme"),
+          #                   value = "darker", options = list(
+          #                   list(key = "darker", text = "Darker"),
+          #                   list(key = "light", text = "Light"),
+          #                   list(key = "neutralQuaternary", text = "neutralQuaternary")
+          #                 )),
+          #                 style = "min-width: 200px;"
+          #               )
+          #             ),
+          #             div(shinyAce::aceEditor("css_code", ".title {\n  padding: 5px 10px 0px 10px;\n  color: #737373;\n}", "css",
+          #                                     height = "200px"), style = "width: 100%;")
+          #           )
+          #         )
                 # ),
                 # shiny.fluent::PivotItem(headerText = translate(language, "code"), br(),
                 #   make_ace_editor("css_code", "", "css"),
@@ -184,20 +184,20 @@ mod_page_main_ui <- function(id, language, page_style, page){
                 #   shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
                 # )
               # )
-            )
-          ),
-          make_card(
-            translate(language, "my_account"),
-            div(
-              shiny.fluent::Stack(
-                horizontal = TRUE,
-                tokens = list(childrenGap = 30),
-                make_textfield(language, ns, "old_password", type = "password", canRevealPassword = TRUE),
-                make_textfield(language, ns, "new_password", type = "password", canRevealPassword = TRUE)
-              ), htmltools::br(),
-              shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
-            ),
-          )
+          #   )
+          # ),
+          # make_card(
+          #   translate(language, "my_account"),
+          #   div(
+          #     shiny.fluent::Stack(
+          #       horizontal = TRUE,
+          #       tokens = list(childrenGap = 30),
+          #       make_textfield(language, ns, "old_password", type = "password", canRevealPassword = TRUE),
+          #       make_textfield(language, ns, "new_password", type = "password", canRevealPassword = TRUE)
+          #     ), htmltools::br(),
+          #     shiny.fluent::PrimaryButton.shinyInput("save", translate(language, "save"))
+          #   ),
+          # )
         ) -> result
       }
       
@@ -262,61 +262,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ###########################################
       
       if (page == "settings/modules_patient_lvl"){
-        div(class = "main",
-          make_card(translate(language, "modules_create"),
-            div(
-              shiny.fluent::Stack(
-                horizontal = TRUE,
-                tokens = list(childrenGap = 50),
-                make_textfield(language, ns, "module_name", value = "", min_width = "300px", max_width = "500px"),
-                make_dropdown(language, ns, "module_parent", options = list(
-                  list(key = "none", text = "None"),
-                  list(key = "stays", text = "Stays"),
-                  list(key = "notes", text = "Long text here for test - clinical notes")
-                ), value = "none", min_width = "300px", max_width = "500px"),
-                make_dropdown(language, ns, "module_family", options = list(
-                  list(key = "metavision_default", text = "Metavision default"),
-                  list(key = "metavision_perso1", text = "Metavision perso 1")
-                ), value = "metavision_default", min_width = "300px", max_width = "500px")
-              ),
-              shiny.fluent::Stack(
-                horizontal = TRUE,
-                tokens = list(childrenGap = 50),
-                make_dropdown(language, ns, "module_access_type", options = list(
-                  list(key = "everybody", text = "To everybody"),
-                  list(key = "by_user_status", text = "By user status"),
-                  list(key = "by_user_access", text = "By user access"),
-                  list(key = "by_people_picker", text = "Select users")
-                ), value = "everybody", min_width = "300px", max_width = "500px"),
-                shiny::conditionalPanel(
-                  condition = "input.module_access_type == 'by_people_picker'", ns = ns,
-                  make_people_picker(language, ns, "module_access_people", options = tibble::tribble(
-                    ~key, ~imageInitials, ~text, ~secondaryText,
-                    1, "JD", "John Doe", "Intensivist",
-                    2, "JD", "Jane Doe", "Data scientist"
-                  ), value = c(1), min_width = "300px", max_width = "500px")
-                ),
-                shiny::conditionalPanel(
-                  condition = "input.module_access_type == 'by_user_status'", ns = ns,
-                  make_dropdown(language, ns, "user_status", list(
-                    list(key = "intensivist", text = "Clinician"),
-                    list(key = "data_scientist", text = "Data scientist")
-                  ), value = "user", min_width = "300px", max_width = "500px")
-                )
-              ), htmltools::br(),
-              shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
-            )
-          ),
-          make_card(translate(language, "modules_management"),
-            div(br(),
-              "DataTable with : name of module, parent module, module family, creator, who has access", br(),
-              "Or a dropdown of modules", br(),
-              "Or both with pivot", br(),
-              "On selection : modify a module", br(),
-              "For the access : dropdown with selection mode : everybody ? by user status ? by user access ? by people picker ?"
-            )
-          )
-        ) -> result
+        mod_settings_modules_ui("settings_patient_lvl_modules", language, page_style, page) -> result
       }
       
       ###########################################
@@ -324,28 +270,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ###########################################
       
       if (page == "settings/modules_aggregated"){
-        div(class = "main",
-          make_card(translate(language, "modules_create"),
-            div(
-              shiny.fluent::Stack(
-                horizontal = TRUE,
-                tokens = list(childrenGap = 50),
-                make_textfield(language, ns, "module_name", width = "300px"),
-                make_dropdown(language, ns, "module_parent", options = list(
-                  list(key = "none", text = "None"),
-                  list(key = "inclusions", text = "Inclusions"),
-                  list(key = "analysis", text = "Analysis")
-                ), value = "none", width = "300px")
-              ), htmltools::br(),
-              shiny.fluent::PrimaryButton.shinyInput("add", translate(language, "add"))
-            )
-          ),
-          make_card(translate(language, "modules_management"),
-            div(
-              "..."
-            )
-          )
-        ) -> result
+        mod_settings_modules_ui("settings_aggregated_modules", language, page_style, page) -> result
       }
       
       ###########################################
@@ -353,44 +278,44 @@ mod_page_main_ui <- function(id, language, page_style, page){
       ###########################################
       
       if (page == "settings/log"){
-        div(class = "main",
-          make_card(translate(language, "log_filters"),
-            shiny.fluent::Stack(
-              horizontal = TRUE,
-              tokens = list(childrenGap = 50),
-              make_dropdown(language, ns, "log_filter_type", options = list(
-                list(key = "everybody", text = "To everybody"),
-                list(key = "myself", text = "My log only"),
-                list(key = "by_people_picker", text = "Select users")
-              ), value = "everybody", min_width = "300px", max_width = "500px"),
-              shiny::conditionalPanel(
-                condition = "input.log_filter_type == 'by_people_picker'", ns = ns,
-                make_people_picker(language, ns, "log_filter_people", options = tibble::tribble(
-                  ~key, ~imageInitials, ~text, ~secondaryText,
-                  1, "JD", "John Doe", "Intensivist",
-                  2, "JD", "Jane Doe", "Data scientist"
-                ), value = tibble::tribble(
-                  ~key, ~imageInitials, ~text, ~secondaryText,
-                  1, "JD", "John Doe", "Intensivist") , min_width = "300px", max_width = "500px")
-              )
-            )         
-          ),
-          make_card(translate(language, "log_details"),
-            shiny.fluent::DetailsList(
-              compact = TRUE, checkboxVisibility = "hidden",
-              items = list(
-                list(key = "1", username = "JDoe", datetime = "2020-09-01 15:32:20", activity = "Include patient", value = "Study 1 - Patient 4653"),
-                list(key = "2", username = "Jane", datetime = "2020-08-23 10:00:37", activity = "Modify a report", value = "Study 2 - Introduction")
-              ),
-              columns = list(
-                list(key = "username", fieldName = "username", name = "Username", minWidth = 200, maxWidth = 200, isResizable = TRUE),
-                list(key = "datetime", fieldName = "datetime", name = "Datetime", minWidth = 200, maxWidth = 200, isResizable = TRUE),
-                list(key = "activity", fieldName = "activity", name = "Activity", minWidth = 200, maxWidth = 200, isResizable = TRUE),
-                list(key = "value", fieldName = "value", name = "Value", minWidth = 200, maxWidth = 200, isResizable = TRUE)
-              )
-            )        
-          )
-        ) -> result
+        # div(class = "main",
+        #   make_card(translate(language, "log_filters"),
+        #     shiny.fluent::Stack(
+        #       horizontal = TRUE,
+        #       tokens = list(childrenGap = 50),
+        #       make_dropdown(language, ns, "log_filter_type", options = list(
+        #         list(key = "everybody", text = "To everybody"),
+        #         list(key = "myself", text = "My log only"),
+        #         list(key = "by_people_picker", text = "Select users")
+        #       ), value = "everybody", min_width = "300px", max_width = "500px"),
+        #       shiny::conditionalPanel(
+        #         condition = "input.log_filter_type == 'by_people_picker'", ns = ns,
+        #         make_people_picker(language, ns, "log_filter_people", options = tibble::tribble(
+        #           ~key, ~imageInitials, ~text, ~secondaryText,
+        #           1, "JD", "John Doe", "Intensivist",
+        #           2, "JD", "Jane Doe", "Data scientist"
+        #         ), value = tibble::tribble(
+        #           ~key, ~imageInitials, ~text, ~secondaryText,
+        #           1, "JD", "John Doe", "Intensivist") , min_width = "300px", max_width = "500px")
+        #       )
+        #     )         
+        #   ),
+        #   make_card(translate(language, "log_details"),
+        #     shiny.fluent::DetailsList(
+        #       compact = TRUE, checkboxVisibility = "hidden",
+        #       items = list(
+        #         list(key = "1", username = "JDoe", datetime = "2020-09-01 15:32:20", activity = "Include patient", value = "Study 1 - Patient 4653"),
+        #         list(key = "2", username = "Jane", datetime = "2020-08-23 10:00:37", activity = "Modify a report", value = "Study 2 - Introduction")
+        #       ),
+        #       columns = list(
+        #         list(key = "username", fieldName = "username", name = "Username", minWidth = 200, maxWidth = 200, isResizable = TRUE),
+        #         list(key = "datetime", fieldName = "datetime", name = "Datetime", minWidth = 200, maxWidth = 200, isResizable = TRUE),
+        #         list(key = "activity", fieldName = "activity", name = "Activity", minWidth = 200, maxWidth = 200, isResizable = TRUE),
+        #         list(key = "value", fieldName = "value", name = "Value", minWidth = 200, maxWidth = 200, isResizable = TRUE)
+        #       )
+        #     )        
+        #   )
+        # ) -> result
       }
     }
   }

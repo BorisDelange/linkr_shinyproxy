@@ -223,10 +223,8 @@ get_translations <- function(){
             "FR", "matching_people", "Personnes correspondant",
             "EN", "no_results_found", "No results found",
             "FR", "no_results_found", "Pas de résultats",
-            "EN", "modules_create", "Create a new module",
-            "FR", "modules_create", "Créer un nouveau module",
-            "EN", "modules_management", "Modules management",
-            "FR", "modules_management", "Gestion des modules",
+            "EN", "module", "Module",
+            "FR", "module", "Module",
             "EN", "module_name", "Name of the module",
             "FR", "module_name", "Nom du module",
             "EN", "module_parent", "Parent module",
@@ -428,7 +426,21 @@ get_translations <- function(){
             "EN", "new_plugin_added", "New plugin added",
             "FR", "new_plugin_added", "Nouveau plugin ajouté",
             "EN", "module_type", "Module type",
-            "FR", "module_type", "Type de module"
+            "FR", "module_type", "Type de module",
+            "EN", "modules_creation_card", "Create a new module",
+            "FR", "modules_creation_card", "Créer un nouveau module",
+            "EN", "modules_creation", "Create a new module",
+            "FR", "modules_creation", "Créer un nouveau module",
+            "EN", "modules_management_card", "Modules management",
+            "FR", "modules_management_card", "Gestion des modules",
+            "EN", "modules_management", "Modules management",
+            "FR", "modules_management", "Gestion des modules",
+            "EN", "modules_options_card", "Module options",
+            "FR", "modules_options_card", "Options du module",
+            "EN", "modules_options", "Module options",
+            "FR", "modules_options", "Options du module",
+            "EN", "none", "None",
+            "FR", "none", "Aucun"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
