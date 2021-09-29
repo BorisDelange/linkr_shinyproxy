@@ -224,8 +224,8 @@ data_management_datatable <- function(id, data, ns, r, language, data_management
       })
 
       # Add delete button
-      actions <- tagList(shiny::actionButton(paste0("delete", data[i, 1]), "", icon = icon("trash-alt"),
-                                             onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))
+      actions <- tagList(shiny::actionButton(paste0(substr(id, nchar("settings_") + 1, nchar(id)), "_delete", data[i, 1]), "", icon = icon("trash-alt"),
+                                             onclick = paste0("Shiny.setInputValue('", id, "-", substr(id, nchar("settings_") + 1, nchar(id)), "_deleted_pressed', this.id, {priority: 'event'})")))
       
       # Add options button
       if (id %in% c("settings_datamarts", "settings_studies")) actions <- tagList(actions, shiny::actionButton(paste0("options", data[i, 1]), "", icon = icon("cog"),
@@ -271,33 +271,4 @@ data_management_datatable_options <- function(data, id, option){
   }
   
   result
-}
-
-##########################################
-# Delete react                           #
-##########################################
-
-data_management_delete_react <- function(id, ns, language, data_management_delete_dialog){
-  page <- switch(id, 
-                 "settings_data_sources" = "data_source",
-                 "settings_datamarts" = "datamart",
-                 "settings_studies" = "study",
-                 "settings_subsets" = "subset")
-  
-  dialogContentProps <- list(
-    type = 0,
-    title = translate(language, paste0(page, "_delete")),
-    closeButtonAriaLabel = "Close",
-    subText = translate(language, paste0(page, "_delete_subtext"))
-  )
-  shiny.fluent::Dialog(
-    hidden = !data_management_delete_dialog,
-    onDismiss = htmlwidgets::JS("function() { Shiny.setInputValue('hideDialog', Math.random()); }"),
-    dialogContentProps = dialogContentProps,
-    modalProps = list(),
-    shiny.fluent::DialogFooter(
-      shiny.fluent::PrimaryButton.shinyInput(ns("management_delete_confirmed"), text = translate(language, "delete")),
-      shiny.fluent::DefaultButton.shinyInput(ns("management_delete_canceled"), text = translate(language, "dont_delete"))
-    )
-  )
 }

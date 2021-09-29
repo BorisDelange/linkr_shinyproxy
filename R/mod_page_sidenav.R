@@ -96,6 +96,7 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
               initialSelectedKey = "data_source",
               selectedKey = substr(page, nchar("settings") + 2, 100),
               isExpanded = TRUE),
+              list(name = translate(language, "help_pages"), key = "help_pages", url = shiny.router::route_link("settings/help_pages")),
               list(name = translate(language, "log"), key = "log", url = shiny.router::route_link("settings/log"))
               # list(name = 'Analysis', url = '#!/other', key = 'analysis', icon = 'AnalyticsReport'),
             ))
@@ -220,7 +221,7 @@ mod_page_sidenav_server <- function(id, r, language){
       r$chosen_datamart <- input$datamart
       
       # Load data of the datamart
-      code <- DBI::dbGetQuery(r$db, paste0("SELECT code FROM code WHERE category = 'datamart' AND link_id = ", input$datamart))
+      code <- DBI::dbGetQuery(r$db, paste0("SELECT code FROM code WHERE category = 'datamart' AND link_id = ", input$datamart)) %>% dplyr::pull()
       try(eval(parse(text = code)))
     })
     
@@ -232,7 +233,13 @@ mod_page_sidenav_server <- function(id, r, language){
       r$chosen_study <- input$study
     })
     
-    observeEvent(input$subset, r$chosen_subset <- input$subset)
+    observeEvent(input$subset, {
+      r$chosen_subset <- input$subset
+      
+      # Load patients of the subset & update dropdown
+      # patients <- r$data_patients %>% dplyr::filter()
+      shiny.fluent::updateDropdown.shinyInput(session, "patient", options = tibble_to_list(r$data_patients, "subject_id", "subject_id"))
+    })
     
 
     # Update the two pages dropdowns (patient-level data page & aggregated data page)

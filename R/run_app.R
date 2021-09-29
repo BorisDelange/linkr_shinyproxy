@@ -60,6 +60,7 @@ run_app <- function(
       shiny.router::route("settings/plugins", make_layout(language = language, page_style = page_style, page = "settings/plugins")),
       shiny.router::route("settings/modules_patient_lvl", make_layout(language = language, page_style = page_style, page = "settings/modules_patient_lvl")),
       shiny.router::route("settings/modules_aggregated", make_layout(language = language, page_style = page_style, page = "settings/modules_aggregated")),
+      shiny.router::route("settings/help_pages", make_layout(language = language, page_style = page_style, page = "settings/help_pages")),
       shiny.router::route("settings/log", make_layout(language = language, page_style = page_style, page = "settings/log")),
       shiny.router::route("help/get_started", make_layout(language = language, page_style = page_style, page = "help/get_started")),
       shiny.router::route("help/data_management", make_layout(language = language, page_style = page_style, page = "help/data_management"))

@@ -18,8 +18,8 @@ mod_settings_users_ui <- function(id, language, page_style, page){
   if (page_style == "fluent"){
     div(class = "main",
       shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
-      shiny.fluent::reactOutput(ns("users_delete_confirm")), 
-      shiny.fluent::reactOutput(ns("statuses_delete_confirm")),
+      shiny.fluent::reactOutput(ns("users_users_delete_confirm")), 
+      shiny.fluent::reactOutput(ns("users_statuses_delete_confirm")),
       users_toggle_card(language, ns, activated = c("")),
       users_creation_card(language, ns, title = "add_user", card = "add_user", 
         textfields = c("username", "firstname", "lastname", "password"), textfields_width = "200px", 
@@ -204,7 +204,7 @@ mod_settings_users_server <- function(id, r, language){
           # Render datatable
           category <- switch(data_var, "users" = "users", "users_accesses_statuses" = "statuses")
           output[[paste0(category, "_management_datatable")]] <- DT::renderDT(
-            management_datatable(category, data, ns, r, language,
+            users_management_datatable(category, data, ns, r, language,
               dropdowns = switch(data_var,
                                  "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
                                  "users_accesses_statuses" = "")),
@@ -303,31 +303,39 @@ mod_settings_users_server <- function(id, r, language){
       # Delete a row in datatable              #
       ##########################################
       
-      sapply(c("users", "statuses"), function(id) {
-        r[[paste0(id, "_delete_dialog")]] <<- FALSE
+      # In this case, two different datatables are in the same module (different as datamarts page or plugins page)
+      # Need to make a loop
+      sapply(c("users", "statuses"), function(name) {
+        # Indicate whether to close or not delete dialog box
+        r[[paste0("users_", name, "_delete_dialog")]] <<- FALSE
       
-        output[[paste0(id, "_delete_confirm")]] <- shiny.fluent::renderReact(management_delete_react(id, ns, language, r[[paste0(id, "_delete_dialog")]]))
+        # Create & show dialog box 
+        output[[paste0("users_", name, "_delete_confirm")]] <- shiny.fluent::renderReact(settings_delete_react(paste0("users_", name), ns, language, r[[paste0("users_", name, "_delete_dialog")]]))
 
-        observeEvent(input[[paste0(id, "_hide_dialog")]], r[[paste0(id, "_delete_dialog")]] <<- FALSE)
-        observeEvent(input[[paste0(id, "_delete_canceled")]], r[[paste0(id, "_delete_dialog")]] <<- FALSE)
-        observeEvent(input[[paste0(id, "_deleted_pressed")]], r[[paste0(id, "_delete_dialog")]] <<- TRUE)
+        # Whether to close or not delete dialog box
+        observeEvent(input[[paste0("users_", name, "_hide_dialog")]], r[[paste0("users_", name, "_delete_dialog")]] <<- FALSE)
+        observeEvent(input[[paste0("users_", name, "_delete_canceled")]], r[[paste0("users_", name, "_delete_dialog")]] <<- FALSE)
+        observeEvent(input[[paste0("users_", name, "_deleted_pressed")]], r[[paste0("users_", name, "_delete_dialog")]] <<- TRUE)
 
-        observeEvent(input[[paste0(id, "_delete_confirmed")]], {
+        # When the delete is confirmed...
+        observeEvent(input[[paste0("users_", name, "_delete_confirmed")]], {
 
-          r[[paste0(id, "_delete_dialog")]] <<- FALSE
+          # Close dialog box
+          r[[paste0("users_", name, "_delete_dialog")]] <<- FALSE
 
-          data_var <- switch(id, "users" = "users", "statuses" = "users_accesses_statuses")
+          data_var <- switch(name, "users" = "users", "statuses" = "users_accesses_statuses")
           
-          # Modify reactive value r$...
-          row_deleted <- as.integer(substr(input[[paste0(id, "_deleted_pressed")]], nchar(paste0("delete_", id)) + 1, nchar(input[[paste0(id, "_deleted_pressed")]])))
+          # Get the ID of row deleted
+          deleted_pressed_value <- isolate(input[[paste0("users_", name, "_deleted_pressed")]])
+          row_deleted <- as.integer(substr(deleted_pressed_value, nchar(paste0(name, "_delete")) + 1, nchar(deleted_pressed_value)))
+          # Delete row in database
           DBI::dbSendStatement(r$db, paste0("UPDATE ", data_var, " SET deleted = TRUE WHERE id = ", row_deleted))
+          # Update r vars (including temp variable, used in management datatables)
           r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
-          # # Update also temp dataframe
           r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
 
           # Notification to user
-          message <- paste0(id, "_deleted")
-
+          message <- switch(name, "users" = "user_deleted", "statuses" = "status_deleted")
           output$warnings3 <- renderUI({
             div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
           })

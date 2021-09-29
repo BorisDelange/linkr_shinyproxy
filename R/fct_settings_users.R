@@ -72,7 +72,7 @@ users_edit_card <- function(language, ns, title, card){
 # Datatable                              #
 ##########################################
 
-management_datatable <- function(id, data, ns, r, language, dropdowns = NULL){
+users_management_datatable <- function(id, data, ns, r, language, dropdowns = NULL){
   if (nrow(data) == 0) return(data)
   
   # Create vars with existing options
@@ -101,8 +101,8 @@ management_datatable <- function(id, data, ns, r, language, dropdowns = NULL){
       })
       
       # Add delete button
-      actions <- tagList(shiny::actionButton(paste0("delete_", id, data[i, "id"]), "", icon = icon("trash-alt"),
-                                             onclick = paste0("Shiny.setInputValue('settings_users-", id, "_deleted_pressed', this.id, {priority: 'event'})")))
+      actions <- tagList(shiny::actionButton(paste0(id, "_delete", data[i, "id"]), "", icon = icon("trash-alt"),
+                                             onclick = paste0("Shiny.setInputValue('settings_users-users_", id, "_deleted_pressed', this.id, {priority: 'event'})")))
       
       data[i, "action"] <- as.character(div(actions))
     }
@@ -117,28 +117,4 @@ management_datatable <- function(id, data, ns, r, language, dropdowns = NULL){
                   translate(language, "datetime"), translate(language, "action")))
   
   data
-}
-
-##########################################
-# Delete react                           #
-##########################################
-
-management_delete_react <- function(id, ns, language, management_delete_dialog){
-  
-  dialogContentProps <- list(
-    type = 0,
-    title = translate(language, paste0(id, "_delete")),
-    closeButtonAriaLabel = "Close",
-    subText = translate(language, paste0(id, "_delete_subtext"))
-  )
-  shiny.fluent::Dialog(
-    hidden = !management_delete_dialog,
-    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "_hide_dialog', Math.random()); }")),
-    dialogContentProps = dialogContentProps,
-    modalProps = list(),
-    shiny.fluent::DialogFooter(
-      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(id, "_delete_confirmed")), text = "Delete"),
-      shiny.fluent::DefaultButton.shinyInput(ns(paste0(id, "_delete_canceled")), text = "Don't delete")
-    )
-  )
 }

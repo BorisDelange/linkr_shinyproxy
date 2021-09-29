@@ -32,7 +32,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     if (page == "settings/data_sources"){
       div(class = "main",
         shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
-        shiny.fluent::reactOutput(ns("management_delete_confirm")),
+        shiny.fluent::reactOutput(ns("data_sources_delete_confirm")),
         data_management_toggle_card(language, ns, creation_card = "create_data_source", datatable_card = "data_sources_management", activated = c("")),
         data_management_creation_card(language, ns, "create_data_source",  textfields = c("name", "description"), textfields_width = "300px"),
         data_management_datatable_card(language, ns, "data_sources_management")
@@ -46,7 +46,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     if (page == "settings/datamarts"){
       div(class = "main",
         shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")), shiny::uiOutput(ns("warnings4")),
-        shiny.fluent::reactOutput(ns("management_delete_confirm")),
+        shiny.fluent::reactOutput(ns("datamarts_delete_confirm")),
         data_management_toggle_card(
           language, ns, creation_card = "create_datamart", datatable_card = "datamarts_management", 
           edit_card = "edit_datamart_code", options_card = "datamart_options", activated = c("")),
@@ -66,7 +66,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     if (page == "settings/studies"){
       div(class = "main",
         shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")), shiny::uiOutput(ns("warnings4")),
-        shiny.fluent::reactOutput(ns("management_delete_confirm")),
+        shiny.fluent::reactOutput(ns("studies_delete_confirm")),
         data_management_toggle_card(
           language, ns, creation_card = "create_study", datatable_card = "studies_management", options_card = "study_options",
           activated = c("")),
@@ -88,7 +88,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     if (page == "settings/subsets"){
       div(class = "main",
         shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
-        shiny.fluent::reactOutput(ns("management_delete_confirm")),
+        shiny.fluent::reactOutput(ns("subsets_delete_confirm")),
         data_management_toggle_card(language, ns, creation_card = "create_subset", datatable_card = "subsets_management", activated = c("")),
         data_management_creation_card(
           language, ns, "create_subset",
@@ -341,29 +341,41 @@ mod_settings_data_management_server <- function(id, r, language){
       # Delete a row in datatable              #
       ##########################################
       
-      data_management_delete_dialog <- reactiveVal(FALSE)
-        
-      output$management_delete_confirm <- shiny.fluent::renderReact(data_management_delete_react(id, ns, language, data_management_delete_dialog()))
-        
-      observeEvent(input$hideDialog, data_management_delete_dialog(FALSE))
-      observeEvent(input$management_delete_canceled, data_management_delete_dialog(FALSE))
-      observeEvent(input$deleted_pressed, data_management_delete_dialog(TRUE))
+      name <- switch(id, "settings_data_sources" = "data_sources",
+                         "settings_datamarts" = "datamarts",
+                         "settings_studies" = "studies",
+                         "settings_subsets" = "subsets")
       
-      observeEvent(input$management_delete_confirmed, {
-          
-        data_management_delete_dialog(FALSE)
+      # Indicate whether to close or not delete dialog box
+      r[[paste0(name, "_delete_dialog")]] <<- FALSE
+      
+      # Create & show dialog box 
+      output[[paste0(name, "_delete_confirm")]] <- shiny.fluent::renderReact(settings_delete_react(name, ns, language, r[[paste0(name, "_delete_dialog")]]))
+      
+      # Whether to close or not delete dialog box
+      observeEvent(input[[paste0(name, "_hide_dialog")]], r[[paste0(name, "_delete_dialog")]] <<- FALSE)
+      observeEvent(input[[paste0(name, "_delete_canceled")]], r[[paste0(name, "_delete_dialog")]] <<- FALSE)
+      observeEvent(input[[paste0(name, "_deleted_pressed")]], r[[paste0(name, "_delete_dialog")]] <<- TRUE)
+      
+      # When the delete is confirmed...
+      observeEvent(input[[paste0(name, "_delete_confirmed")]], {
         
-        # Modify reactive value r$...
-        data_var <- substr(id, nchar("settings_") + 1, nchar(id))
-        row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete") + 1, nchar(input$deleted_pressed)))
-        DBI::dbSendStatement(r$db, paste0("UPDATE ", data_var, " SET deleted = TRUE WHERE id = ", row_deleted))
+        data_var <- name
+        
+        # Close dialog box
+        r[[paste0(name, "_delete_dialog")]] <<- FALSE
+        
+        # Get the ID of row deleted
+        deleted_pressed_value <- isolate(input[[paste0(name, "_deleted_pressed")]])
+        row_deleted <- as.integer(substr(deleted_pressed_value, nchar(paste0(name, "_delete")) + 1, nchar(deleted_pressed_value)))
+        # Delete row in database
+        DBI::dbSendStatement(r$db, paste0("UPDATE ", name, " SET deleted = TRUE WHERE id = ", row_deleted))
+        # Update r vars (including temp variable, used in management datatables)
         r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
-        # Update also temp dataframe
         r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
         
         # Notification to user
-        message <- paste0(id_get_other_name(id, "singular_form"), "_deleted")
-  
+        message <- paste0(id_get_other_name(name, "singular_form"), "_deleted")
         output$warnings3 <- renderUI({
           div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
         })
