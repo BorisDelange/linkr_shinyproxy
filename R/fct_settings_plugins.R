@@ -6,19 +6,6 @@
 #'
 #' @noRd
 
-plugins_toggle_card <- function(language, ns, activated = ""){
-  toggles <- tagList()
-  sapply(c("plugins_creation_card", "plugins_management_card", "plugins_code_card"), function(label){
-    toggles <<- tagList(toggles, make_toggle(language, ns, label = label,
-      id = paste0(label, "_toggle"), value = ifelse(label %in% activated, TRUE, FALSE), inline = TRUE))
-  })
-  make_card("",
-    shiny.fluent::Stack(
-      horizontal = TRUE, tokens = list(childrenGap = 10), toggles
-    )
-  )
-}
-
 ##########################################
 # Datatable                              #
 ##########################################
@@ -55,7 +42,7 @@ plugins_management_datatable <- function(data, ns, r, language, dropdowns = NULL
       actions <- tagList(shiny::actionButton(paste0("delete", data[i, "id"]), "", icon = icon("trash-alt"),
                                              onclick = paste0("Shiny.setInputValue('settings_plugins-plugins_deleted_pressed', this.id, {priority: 'event'})")),
                          shiny::actionButton(paste0("edit_code", data[i, "id"]), "", icon = icon("file-code"),
-                                             onclick = paste0("Shiny.setInputValue('settings_plugins-plugnis_edit_code', this.id, {priority: 'event'})")))
+                                             onclick = paste0("Shiny.setInputValue('settings_plugins-edit_code', this.id, {priority: 'event'})")))
       
       data[i, "action"] <- as.character(div(actions))
     }
@@ -66,23 +53,4 @@ plugins_management_datatable <- function(data, ns, r, language, dropdowns = NULL
                       translate(language, "module_type"), translate(language, "datetime"), translate(language, "action"))
   
   data
-}
-
-##########################################
-# Edit code card                         #
-##########################################
-
-plugins_edit_card <- function(language, ns, type = "code", code, link_id){
-  div(id = ns("plugins_code_card"),
-    make_card(tagList(translate(language, "plugins_code"), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
-      div(
-        div(shinyAce::aceEditor(ns("ace_edit_code"), code, mode = "r", height = "400px"), style = "width: 100%;"),
-        shiny.fluent::PrimaryButton.shinyInput(ns("edit_save"), translate(language, "edit_save")), " ",
-        shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code")), 
-        htmltools::br(), htmltools::br(),
-        div(shiny::verbatimTextOutput(ns("code_result")), 
-            style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
-      )
-    )
-  )
 }

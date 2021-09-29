@@ -10,9 +10,9 @@
 # Toggle card                            #
 ##########################################
 
-data_management_toggle_card <- function(language, ns, creation_card = "", datatable_card = "", edit_card = "", options_card = "", activated = ""){
+data_management_toggle_card <- function(language, ns, creation_card = "", datatable_card = "", edit_code_card = "", options_card = "", activated = ""){
   toggles <- tagList()
-  sapply(c("creation_card", "datatable_card", "edit_card", "options_card"), function(card){
+  sapply(c("creation_card", "datatable_card", "edit_code_card", "options_card"), function(card){
     label <- eval(parse(text = card))
     if (label != "") toggles <<- 
         tagList(toggles, make_toggle(language, ns, label = label, 
@@ -64,25 +64,6 @@ data_management_datatable_card <- function(language, ns, title){
       div(
         DT::DTOutput(ns("management_datatable")),
         shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "datatable_save"), style = "top:-20px;")
-      )
-    )
-  )
-}
-
-##########################################
-# Edit code card                         #
-##########################################
-
-data_management_edit_card <- function(language, ns, type = "code", code, link_id, title){
-  div(id = ns("edit_card"),
-    make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
-      div(
-        div(shinyAce::aceEditor(ns("ace_edit_code"), code, mode = "r", height = "400px"), style = "width: 100%;"),
-        shiny.fluent::PrimaryButton.shinyInput(ns("edit_save"), translate(language, "edit_save")), " ",
-        shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code")), 
-        htmltools::br(), htmltools::br(),
-        div(shiny::verbatimTextOutput(ns("code_result")), 
-            style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
       )
     )
   )

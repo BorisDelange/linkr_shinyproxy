@@ -11,12 +11,12 @@ users_toggle_card <- function(language, ns, activated = ""){
   sapply(c("add_user_card", "users_management_card", "add_access_card", "accesses_management_card",
            "add_status_card", "statuses_management_card"), function(label){
     toggles <<- tagList(toggles, make_toggle(language, ns, label = label,
-                                             id = paste0(label, "_toggle"), value = ifelse(label %in% activated, TRUE, FALSE), inline = TRUE))
+    id = paste0(label, "_toggle"), value = ifelse(label %in% activated, TRUE, FALSE), inline = TRUE))
   })
   make_card("",
-            shiny.fluent::Stack(
-              horizontal = TRUE, tokens = list(childrenGap = 10), toggles
-            )
+    shiny.fluent::Stack(
+      horizontal = TRUE, tokens = list(childrenGap = 10), toggles
+    )
   )
 }
 
