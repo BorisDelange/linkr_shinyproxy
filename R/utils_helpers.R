@@ -60,3 +60,21 @@ id_get_other_name <- function(id, type, language = NULL){
   }
   result
 }
+
+coalesce2 <- function(type, x){
+  if (type == "int"){
+    if (is.null(x)) result <- NA_integer_ 
+    else {
+      if (x == "") result <- NA_integer_
+      else result <- as.integer(x)
+    }
+  }
+  if (type == "char"){
+    if (is.null(x)) result <- NA_character_ 
+    else {
+      if (x == "") result <- NA_character_
+      else result <- as.character(x)
+    }
+  }
+  result
+}

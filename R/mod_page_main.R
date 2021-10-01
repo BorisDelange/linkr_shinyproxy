@@ -43,26 +43,27 @@ mod_page_main_ui <- function(id, language, page_style, page){
     ##########################################
     
     if (page == "patient_level_data"){
-      div(class = "main",
-        shiny.fluent::Pivot(
-          shiny.fluent::PivotItem(headerText = "Stays",
-            div(
-              make_card(
-                "Stays timeline",
-                "My timeline"
-              )
-            )
-          ),
-          shiny.fluent::PivotItem(headerText = "Notes",
-            div(
-              make_card(
-                "Clinical notes",
-                "Notes"
-              )
-            )
-          )
-        )
-      ) -> result
+      mod_patient_and_aggregated_data_ui("patient_lvl_data", language, page_style, page) -> result
+      # div(class = "main",
+      #   shiny.fluent::Pivot(
+      #     shiny.fluent::PivotItem(headerText = "Stays",
+      #       div(
+      #         make_card(
+      #           "Stays timeline",
+      #           "My timeline"
+      #         )
+      #       )
+      #     ),
+      #     shiny.fluent::PivotItem(headerText = "Notes",
+      #       div(
+      #         make_card(
+      #           "Clinical notes",
+      #           "Notes"
+      #         )
+      #       )
+      #     )
+      #   )
+      # ) -> result
     }
     
     ##########################################
@@ -70,35 +71,36 @@ mod_page_main_ui <- function(id, language, page_style, page){
     ##########################################
     
     if (page == "aggregated_data"){
-      div(class = "main",
-        shiny.fluent::Breadcrumb(
-          items = list(
-            list(text = "Data cleaning", key = "data_cleaning", href = ""),
-            list(text = "Outliers", key = "outliers", href = "")
-          ),
-          maxDisplayedItems = 3
-        ),
-        shiny.fluent::Pivot(
-          shiny.fluent::PivotItem(headerText = "Outliers",
-            div(
-              make_card(
-                "Outliers",
-                div(htmltools::br(),
-                "Choose of the outliers")
-              )
-            )
-          ),
-          shiny.fluent::PivotItem(headerText = "Missing data",
-            div(
-              make_card(
-                "Missing data",
-                div(htmltools::br(),
-                "Showing missing data")
-              )
-            )
-          )
-        )
-      ) -> result
+      mod_patient_and_aggregated_data_ui("aggregated_data", language, page_style, page) -> result
+      # div(class = "main",
+      #   shiny.fluent::Breadcrumb(
+      #     items = list(
+      #       list(text = "Data cleaning", key = "data_cleaning", href = ""),
+      #       list(text = "Outliers", key = "outliers", href = "")
+      #     ),
+      #     maxDisplayedItems = 3
+      #   ),
+      #   shiny.fluent::Pivot(
+      #     shiny.fluent::PivotItem(headerText = "Outliers",
+      #       div(
+      #         make_card(
+      #           "Outliers",
+      #           div(htmltools::br(),
+      #           "Choose of the outliers")
+      #         )
+      #       )
+      #     ),
+      #     shiny.fluent::PivotItem(headerText = "Missing data",
+      #       div(
+      #         make_card(
+      #           "Missing data",
+      #           div(htmltools::br(),
+      #           "Showing missing data")
+      #         )
+      #       )
+      #     )
+      #   )
+      # ) -> result
     }
     
     ##########################################
@@ -247,6 +249,14 @@ mod_page_main_ui <- function(id, language, page_style, page){
       
       if (page == "settings/subsets"){
         mod_settings_data_management_ui("settings_subsets", language, page_style, page) -> result
+      }
+      
+      ##########################################
+      # Fluent / Settings / Thesaurus          #
+      ##########################################
+      
+      if (page == "settings/thesaurus"){
+        mod_settings_data_management_ui("settings_thesaurus", language, page_style, page) -> result
       }
       
       ###########################################

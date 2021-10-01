@@ -7,48 +7,29 @@
 #' @noRd
 
 ##########################################
-# Toggle card                            #
-##########################################
-
-data_management_toggle_card <- function(language, ns, creation_card = "", datatable_card = "", edit_code_card = "", options_card = "", activated = ""){
-  toggles <- tagList()
-  sapply(c("creation_card", "datatable_card", "edit_code_card", "options_card"), function(card){
-    label <- eval(parse(text = card))
-    if (label != "") toggles <<- 
-        tagList(toggles, make_toggle(language, ns, label = label, 
-          id = paste0(card, "_toggle"), value = ifelse(card %in% activated, TRUE, FALSE), inline = TRUE))
-  })
-  make_card("",
-    shiny.fluent::Stack(
-      horizontal = TRUE, tokens = list(childrenGap = 10), toggles
-    )
-  )
-}
-
-##########################################
 # Creation card                          #
 ##########################################
 
-data_management_creation_card <- function(language, ns, title, textfields = NULL, textfields_width = "200px", dropdowns = NULL, dropdowns_width = "200px"){
-  div(id = ns("creation_card"),
+data_management_creation_card <- function(language, ns, title, prefix, textfields = NULL, textfields_width = "200px", dropdowns = NULL, dropdowns_width = "200px"){
+  div(id = ns(paste0(prefix, "_creation_card")),
     make_card(
       translate(language, title),
       div(
         shiny.fluent::Stack(
-          horizontal = TRUE, tokens = list(childrenGap = 50),# wrap = TRUE,
+          horizontal = TRUE, tokens = list(childrenGap = 50),
           lapply(textfields, function(name){
-            make_textfield(language, ns, name, id = name, width = textfields_width)#, margin_right = "50px")
-          }),
+            make_textfield(language, ns, name, id = paste0(prefix, "_", name), width = textfields_width)
+          })
         ),
         shiny.fluent::Stack(
           horizontal = TRUE,
           tokens = list(childrenGap = 50),
           lapply(dropdowns, function(name){
-            make_dropdown(language, ns, name, options = "", id = name, width = dropdowns_width)#, margin_right = "50px")
+            make_dropdown(language, ns, name, options = "", id = paste0(prefix, "_", name), width = dropdowns_width)
           })
         ),
         htmltools::br(),
-        shiny.fluent::PrimaryButton.shinyInput(ns("add"), translate(language, "add"))
+        shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_add")), translate(language, "add"))
       )
     )
   )
@@ -58,12 +39,12 @@ data_management_creation_card <- function(language, ns, title, textfields = NULL
 # Datatable card                         #
 ##########################################
 
-data_management_datatable_card <- function(language, ns, title){
-  div(id = ns("datatable_card"),
+data_management_datatable_card <- function(language, ns, title, prefix){
+  div(id = ns(paste0(prefix, "_datatable_card")),
     make_card(translate(language, title),
       div(
-        DT::DTOutput(ns("management_datatable")),
-        shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "datatable_save"), style = "top:-20px;")
+        DT::DTOutput(ns(paste0(prefix, "_management_datatable"))),
+        shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_management_save")), translate(language, "datatable_save"), style = "top:-20px;")
       )
     )
   )
@@ -73,7 +54,7 @@ data_management_datatable_card <- function(language, ns, title){
 # Options card                           #
 ##########################################
 
-data_management_options_card <- function(language, ns, id, r, category_filter, link_id_filter, title){
+data_management_options_card <- function(language, ns, id, r, category_filter, link_id_filter, title, prefix){
   options <- r$options %>% dplyr::filter(category == category_filter, link_id == link_id_filter)
 
   people_picker <- ""
@@ -110,7 +91,7 @@ data_management_options_card <- function(language, ns, id, r, category_filter, l
         by = "key"
       ) %>%
       dplyr::pull(key)
-    people_picker <- make_people_picker(language, ns, paste0(id_get_other_name(id, "singular_form"), "_users_allowed_read"),
+    people_picker <- make_people_picker(language, ns, paste0(prefix, "_", id_get_other_name(id, "singular_form"), "_users_allowed_read"),
         options = form_options, value = value, width = "100%")
   }
 
@@ -121,18 +102,18 @@ data_management_options_card <- function(language, ns, id, r, category_filter, l
       shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 10),
         make_toggle(language, ns,
-                    label = "show_only_aggregated_data",
-                    id = paste0(id_get_other_name(id, "singular_form"), "_show_only_aggregated_data"), value = value_show_only_aggregated_data, inline = TRUE)
+          label = "show_only_aggregated_data",
+          id = paste0(prefix, "_", id_get_other_name(id, "singular_form"), "_show_only_aggregated_data"), value = value_show_only_aggregated_data, inline = TRUE)
       )
     )
   }
 
-  div(id = ns("options_card"),
+  div(id = ns(paste0(prefix, "_options_card")),
       make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id_filter, ")"), style = "font-size: 15px;")),
         div(
           toggles, people_picker, htmltools::br(),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), dropdowns),
-          shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save"))
+          shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_options_save")), translate(language, "save"))
         )
       )
   )
@@ -142,15 +123,17 @@ data_management_options_card <- function(language, ns, id, r, category_filter, l
 # New data                               #
 ##########################################
 
-data_management_new_data <- function(id, new_id, name, description, creator_id, datetime, deleted, 
-                                     data_source_id = NULL, datamart_id = NULL, study_id = NULL,
-                                     patient_lvl_module_family_id = NULL, aggregated_module_family_id = NULL){
+data_management_new_data <- function(prefix, new_id, name, description, creator_id, datetime = as.character(Sys.time()), deleted = FALSE, 
+                                     data_source_id = NA_integer_, datamart_id = NA_integer_, study_id = NA_integer_,
+                                     patient_lvl_module_family_id = NA_integer_, aggregated_module_family_id = NA_integer_){
   data <- tibble::tribble(~id, ~name, ~description, new_id, name, description)
-  if (id == "settings_datamarts") data <- data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, data_source_id))
-  if (id == "settings_studies") data <- data %>% dplyr::bind_cols(
+  if (prefix == "datamarts") data <- data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, data_source_id))
+  if (prefix == "studies") data <- data %>% dplyr::bind_cols(
     tibble::tribble(~datamart_id,  ~patient_lvl_module_family_id, ~aggregated_module_family_id,
                     datamart_id, patient_lvl_module_family_id, aggregated_module_family_id))
-  if (id == "settings_subsets") data <- data %>% dplyr::bind_cols(tibble::tribble(~study_id, study_id))
+  if (prefix == "subsets") data <- data %>% dplyr::bind_cols(tibble::tribble(~study_id, study_id))
+  # if (prefix == "thesaurus")
+  # if (prefix == "thesaurus_items")
   data <- data %>% dplyr::bind_cols(tibble::tribble(~creator_id, ~datetime, ~deleted, creator_id, datetime, FALSE))
   data
 }
@@ -163,70 +146,6 @@ data_management_data <- function(id, r){
   data_var <- substr(id, nchar("settings_") + 1, nchar(id))
   data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var, " WHERE deleted IS FALSE"))
   if (nrow(data) != 0) data <- data %>% dplyr::select(-deleted)
-  data
-}
-
-##########################################
-# Datatable                             #
-##########################################
-
-data_management_datatable <- function(id, data, ns, r, language, data_management_elements, dropdowns = NULL){
-  if (nrow(data) == 0) return(data)
-  
-  # Create vars with existing options (ie : for data_sources, a list of existing data_sources in the database)
-  sapply(data_management_elements, function(var_name){
-    assign(var_name, tibble_to_list(r[[var_name]], "id", "name", rm_deleted_rows = TRUE), envir = parent.env(environment()))
-  })
-  
-  # Add a column action in the DataTable
-  data["action"] <- NA_character_
-  
-  # Transform dropdowns columns in the dataframe to character
-  lapply(names(dropdowns), function(name) data %>% dplyr::mutate_at(name, as.character) ->> data)
-  
-  # For each row of the dataframe :
-  # - transform dropdowns columns to show dropdowns in Shiny app
-  # - add an Action column with delete action button
-  # - show creator name, to its ID
-  if (nrow(data) != 0){
-    # Transform creator col to character
-    data <- data %>% dplyr::mutate_at("creator_id", as.character)
-    
-    for (i in 1:nrow(data)){
-
-      lapply(names(dropdowns), function(name){
-        data[i, name] <<- as.character(
-          div(
-            shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
-                                              options = eval(parse(text = dropdowns[name])),
-                                              value = as.integer(data[i, name])),
-            style = "width:100%")
-          )
-      })
-
-      # Add delete button
-      actions <- tagList(shiny::actionButton(paste0(substr(id, nchar("settings_") + 1, nchar(id)), "_delete", data[i, 1]), "", icon = icon("trash-alt"),
-                                             onclick = paste0("Shiny.setInputValue('", id, "-", substr(id, nchar("settings_") + 1, nchar(id)), "_deleted_pressed', this.id, {priority: 'event'})")))
-      
-      # Add options button
-      if (id %in% c("settings_datamarts", "settings_studies")) actions <- tagList(actions, shiny::actionButton(paste0("options", data[i, 1]), "", icon = icon("cog"),
-                                                                                                               onclick = paste0("Shiny.setInputValue('", id, "-options', this.id, {priority: 'event'})")), "")
-
-      # Add edit code button
-      if (id == "settings_datamarts") actions <- tagList(actions, shiny::actionButton(paste0("edit_code", data[i, 1]), "", icon = icon("file-code"),
-                                                                                       onclick = paste0("Shiny.setInputValue('", id, "-edit_code', this.id, {priority: 'event'})")), "")
-      data[i, "action"] <- as.character(div(actions))
-      
-      # Get creator name
-      
-      data[i, "creator_id"] <- r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>% 
-        dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator)
-    }
-  }
-  
-  # Change name of cols 
-  colnames(data) <- id_get_other_name(id, "colnames_text_version", language = language)
-  
   data
 }
 

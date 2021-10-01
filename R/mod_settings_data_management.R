@@ -23,7 +23,8 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
                                  "settings/data_sources", "",
                                  "settings/datamarts", "data_source",
                                  "settings/studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
-                                 "settings/subsets", "study")
+                                 "settings/subsets", "study",
+                                 "settings/thesaurus", "")
     
     ##########################################
     # Settings / Data sources                #
@@ -55,7 +56,8 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
           dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
         data_management_datatable_card(language, ns, "datamarts_management"),
         shiny::uiOutput(ns("edit_code_card")),
-        shiny::uiOutput(ns("options_card"))
+        shiny::uiOutput(ns("options_card")),
+        textOutput(ns("test"))
       ) -> result
     }
     
@@ -102,7 +104,16 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     ##########################################
     
     if (page == "settings/thesaurus"){
-      
+      div(class = "main",
+        shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
+        shiny.fluent::reactOutput(ns("thesaurus_delete_confirm")),
+        settings_toggle_card(language, ns, creation_card = "create_thesaurus", datatable_card = "thesaurus_management", activated = c("")),
+        # data_management_creation_card(
+        #   language, ns, "create_subset",
+        #   textfields = "", textfields_width = "300px",
+        #   dropdowns = "", dropdowns_width = "300px"),
+        data_management_datatable_card(language, ns, "thesaurus_management")
+      ) -> result
     }
   }
   
@@ -128,7 +139,8 @@ mod_settings_data_management_server <- function(id, r, language){
                                  "data_sources", "",
                                  "datamarts", "data_source",
                                  "studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
-                                 "subsets", c("datamart", "study"))
+                                 "subsets", c("datamart", "study"),
+                                 "thesaurus", "")
     
     ##########################################
     # Data management / Show or hide cards   #
@@ -239,25 +251,35 @@ mod_settings_data_management_server <- function(id, r, language){
       # Generate datatable                     #
       ##########################################
     
+      # Create reactivity for each page in the module
       sapply(c("data_sources", "datamarts", "studies", "subsets"), function(data_source){
+        # If r$... variable changes
         observeEvent(r[[data_source]], {
           output$management_datatable <- DT::renderDT(
-            data_management_datatable(
-              id = id, data = data_management_data(id, r), ns = ns, r = r, language = language, data_management_elements = data_management_elements,
+            # This function generates the data for the datatable
+            settings_datatable(
+              id = id, name = substr(id, nchar("settings_") + 1, nchar(id)),
+              data = data_management_data(id, r), ns = ns, r = r, data_variables = data_management_elements,
               dropdowns = switch(id,
-                                 "settings_data_sources" = "",
-                                 "settings_datamarts" = c("data_source_id" = "data_sources"),
-                                 "settings_studies" = c("datamart_id" = "datamarts",
-                                                        "patient_lvl_module_family_id" = "patient_lvl_module_families",
-                                                        "aggregated_module_family_id" = "aggregated_module_families"),
-                                 "settings_subsets" = c("study_id" = "studies")
-              )),
+              "settings_data_sources" = "",
+              "settings_datamarts" = c("data_source_id" = "data_sources"),
+              "settings_studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
+              "settings_subsets" = c("study_id" = "studies")),
+              action_buttons = switch(id,
+                "settings_data_sources" = "",
+                "settings_datamarts" = c("delete", "edit_code", "options"),
+                "settings_studies" = c("delete", "options"),
+                "settings_subsets" = c("delete")),
+              new_colnames = id_get_other_name(id, "colnames_text_version", language = language),
+              subpages = FALSE),
+            # Options of the datatable
+            # We use a function (data_management_datatable_options) for this module
             options = list(dom = "t<'bottom'p>",
-                           columnDefs = list(
-                             list(className = "dt-center", targets = c(0, -1, -2, -3)),
-                             # -1 : action column / -2 : datetime column
-                             list(width = "80px", targets = -1), list(width = "130px", targets = -2),
-                             list(sortable = FALSE, targets = data_management_datatable_options(data_management_data(id, r), id, "non_sortable")))
+            columnDefs = list(
+              list(className = "dt-center", targets = c(0, -1, -2, -3)),
+              # -1 : action column / -2 : datetime column
+              list(width = "80px", targets = -1), list(width = "130px", targets = -2),
+              list(sortable = FALSE, targets = data_management_datatable_options(data_management_data(id, r), id, "non_sortable")))
             ),
             rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
             editable = list(target = "cell", disable = list(columns = data_management_datatable_options(data_management_data(id, r), id, "disable"))),
@@ -391,7 +413,7 @@ mod_settings_data_management_server <- function(id, r, language){
         shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = TRUE)
         output$options_card <- renderUI({
           category <- id_get_other_name(id, "singular_form")
-          link_id <- as.integer(substr(isolate(input$options), nchar("options") + 1, nchar(isolate(input$options))))
+          link_id <- as.integer(substr(input$options, nchar("options") + 1, nchar(input$options)))
           data_management_options_card(language, ns, id, r, category_filter = category, link_id_filter = link_id,
             title = paste0(id_get_other_name(id, "singular_form"), "_options"))
         })
@@ -399,7 +421,7 @@ mod_settings_data_management_server <- function(id, r, language){
       
       observeEvent(input$options_save, {
         category_filter <- id_get_other_name(id, "singular_form")
-        link_id_filter <- as.integer(substr(isolate(input$options), nchar("options") + 1, nchar(isolate(input$options))))
+        link_id_filter <- as.integer(substr(input$options, nchar("options") + 1, nchar(input$options)))
         
         options <- r$options %>% dplyr::filter(category == category_filter, link_id == link_id_filter)
         options_by_cat <- id_get_other_name(id, "options_by_cat")
@@ -453,16 +475,17 @@ mod_settings_data_management_server <- function(id, r, language){
         shiny.fluent::updateToggle.shinyInput(session, "edit_code_card_toggle", value = TRUE)
         output$edit_code_card <- renderUI({
           category_filter <- id_get_other_name(id, "singular_form")
-          link_id_filter <- as.integer(substr(isolate(input$edit_code), nchar("edit_code") + 1, nchar(isolate(input$edit_code))))
+          link_id_filter <- as.integer(substr(input$edit_code, nchar("edit_code") + 1, nchar(input$edit_code)))
           code <- r$code %>% dplyr::filter(category == category_filter & link_id == link_id_filter) %>% dplyr::pull(code)
           settings_edit_code_card(language, ns, type = "code", code = code, link_id = link_id_filter, title = paste0("edit_", category_filter, "_code"))
         })
         output$code_result <- renderText("")
+        output$test <- renderText(input$edit_code)
       })
       
       observeEvent(input$edit_code_save, {
         category_filter <- id_get_other_name(id, "singular_form")
-        link_id_filter <- as.integer(substr(isolate(input$edit_code), nchar("edit_code") + 1, nchar(isolate(input$edit_code))))
+        link_id_filter <- as.integer(substr(input$edit_code, nchar("edit_code") + 1, nchar(input$edit_code)))
         code_id <- r$code %>% dplyr::filter(category == category_filter, link_id == link_id_filter) %>% dplyr::pull(id)
         # Replace ' with '' and store in the database
         DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code, "'", "''"), "' WHERE id = ", code_id)) -> query
@@ -482,7 +505,7 @@ mod_settings_data_management_server <- function(id, r, language){
           eval(parse(text = "options('cli.num_colors' = 1)"))
           # Capture console output of our code
           captured_output <- capture.output(
-            tryCatch(eval(parse(text = isolate(input$ace_edit_code))), error = function(e) print(e), warning = function(w) print(w))
+            tryCatch(eval(parse(text = input$ace_edit_code)), error = function(e) print(e), warning = function(w) print(w))
           )
           # Restore normal value
           eval(parse(text = "options('cli.num_colors' = NULL)"))

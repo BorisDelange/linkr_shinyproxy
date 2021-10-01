@@ -15,8 +15,14 @@ mod_settings_plugins_ui <- function(id, language, page_style, page){
     div(class = "main",
       shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
       shiny.fluent::reactOutput(ns("plugins_delete_confirm")), 
-      settings_toggle_card(language, ns, creation_card = "plugins_creation_card", datatable_card = "plugins_management_card",
-                           edit_code_card = "plugins_edit_code_card", activated = c("")),
+      settings_toggle_card(language, ns, description_card = "plugins_description_card", creation_card = "plugins_creation_card", 
+                           datatable_card = "plugins_management_card", edit_code_card = "plugins_edit_code_card", activated = c("")),
+      div(
+        id = ns("description_card"),
+        make_card(
+          translate(language, "plugins_description"),
+          "")
+      ),
       div(
         id = ns("creation_card"),
         make_card(
@@ -62,7 +68,7 @@ mod_settings_plugins_server <- function(id, r, language){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
  
-    toggles <- c("creation_card", "datatable_card", "edit_code_card")
+    toggles <- c("description_card", "creation_card", "datatable_card", "edit_code_card")
     
     ##########################################
     # Show or hide cards   #
