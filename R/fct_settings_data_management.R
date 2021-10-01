@@ -30,7 +30,8 @@ data_management_new_data <- function(prefix, new_id, name, description, creator_
 ##########################################
 
 data_management_data <- function(prefix, r){
-  data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, " WHERE deleted IS FALSE"))
+  if (prefix != "thesaurus_items") data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, " WHERE deleted IS FALSE"))
+  if (prefix == "thesaurus_items") data <- r$thesaurus_items
   if (nrow(data) != 0) data <- data %>% dplyr::select(-deleted)
   data
 }
@@ -39,21 +40,22 @@ data_management_data <- function(prefix, r){
 # Datatable options                      #
 ##########################################
 
-data_management_datatable_options <- function(data, id, option){
+data_management_datatable_options <- function(data, prefix, option){
   if (nrow(data) == 0) return("")
   
   data <- data %>% dplyr::bind_rows(tibble::tibble(action = character()))
   
   # Non-sortabled columns : action & id columns (except first one)
   if (option == "non_sortable"){
-    result <- c(which(grepl("id|action", names(data))) - 1)
+    if (prefix == "thesaurus_items") result <- c(which(grepl("action", names(data))) - 1)
+    if (prefix != "thesaurus_items") result <- c(which(grepl("id|action", names(data))) - 1)
     result <- result[!result %in% c(0)]
   }
   
   # Disabled columns
   else if (option == "disable"){
     result <- c(1:length(names(data)))
-    result <- c(0, result[-which(grepl("name|description", names(data)))] - 1)
+    result <- c(0, result[-which(grepl("name|description|category", names(data)))] - 1)
   }
   
   result

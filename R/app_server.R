@@ -21,7 +21,9 @@ app_server <- function(page_style, router, language){
                   "code", "options"
                   )
       sapply(tables, function(table){
-        r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table))
+        # Don't load all table if this is thesaurus_items table
+        if (table == "thesaurus_items") r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " LIMIT 0"))
+        if (table != "thesaurus_items") r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table))
         r[[paste0(table, "_temp")]] <- r[[table]]
         r[[paste0(table, "_temp")]] <- r[[paste0(table, "_temp")]] %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
       })

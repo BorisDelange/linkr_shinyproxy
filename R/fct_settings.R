@@ -77,7 +77,8 @@
           shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_management_save")), translate(language, "datatable_save"), style = "top:-20px;")
         )
       )
-    )
+    ) -> result
+    result
   }
 
   
@@ -289,12 +290,20 @@
           actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_edit_code_", data[i, 1]), "", icon = icon("file-code"),
           onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_edit_code", "', this.id, {priority: 'event'})")), "")}
         
+        # Add sub datatable button
+        if ("sub_datatable" %in% action_buttons){
+          actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_sub_datatable_", data[i, 1]), "", icon = icon("table"),
+            onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_sub_datatable", "', this.id, {priority: 'event'})")), "")}
+        
         # Update action column in dataframe
         data[i, "action"] <- as.character(div(actions))
+        # if (prefix == "thesaurus_items") data <- data %>% dplyr::select(-action)
         
         # Get creator name
-        data[i, "creator_id"] <- r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>% 
-          dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator)
+        if (prefix != "thesaurus_items"){
+          data[i, "creator_id"] <- r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>% 
+            dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator)
+        }
       }
     }
     

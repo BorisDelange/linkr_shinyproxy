@@ -159,7 +159,7 @@ mod_settings_data_management_server <- function(id, r, language){
     ns <- session$ns
     
     # Toggles ids
-    toggles <- c("creation_card", "datatable_card", "datatable_bis_card", "edit_code_card", "options_card")
+    toggles <- c("creation_card", "datatable_card", "edit_code_card", "options_card")
     
     data_management_elements <- c("data_sources", "datamarts", "studies", "subsets", "patient_lvl_module_families", "aggregated_module_families")
     
@@ -306,8 +306,8 @@ mod_settings_data_management_server <- function(id, r, language){
                 "datamarts" = c("delete", "edit_code", "options"),
                 "studies" = c("delete", "options"),
                 "subsets" = "delete",
-                "thesaurus" = c("delete", "edit_code"),
-                "thesaurus_items" = "delete"
+                "thesaurus" = c("delete", "edit_code", "sub_datatable"),
+                "thesaurus_items" = ""
                 ),
               new_colnames = id_get_other_name(prefix, "colnames_text_version", language = language)),
             # Options of the datatable
@@ -317,7 +317,7 @@ mod_settings_data_management_server <- function(id, r, language){
               list(className = "dt-center", targets = c(0, -1, -2, -3)),
               # -1 : action column / -2 : datetime column
               list(width = "80px", targets = -1), list(width = "130px", targets = -2),
-              list(sortable = FALSE, targets = data_management_datatable_options(data_management_data(prefix, r), id, "non_sortable")))
+              list(sortable = FALSE, targets = data_management_datatable_options(data_management_data(prefix, r), prefix, "non_sortable")))
             ),
             rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
             editable = list(target = "cell", disable = list(columns = data_management_datatable_options(data_management_data(prefix, r), id, "disable"))),
@@ -339,23 +339,29 @@ mod_settings_data_management_server <- function(id, r, language){
         })
     
         # Each time a dropdown is updated, modify temp variable
-        observeEvent(r[[prefix]], {
-          sapply(r[[prefix]] %>% dplyr::filter(!deleted) %>% dplyr::pull(id), function(id){
-            sapply(dropdowns %>% dplyr::filter(page_name == prefix) %>% dplyr::pull(dropdowns) %>% unlist(), function(dropdown){
-              observeEvent(input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]], {
-                r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <-
-                  input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]]
-                # Store that this row has been modified
-                r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), "modified"]] <- TRUE
+        if (prefix %not_in% c("thesaurus", "thesaurus_items")){
+          observeEvent(r[[prefix]], {
+            sapply(r[[prefix]] %>% dplyr::filter(!deleted) %>% dplyr::pull(id), function(id){
+              sapply(dropdowns %>% dplyr::filter(page_name == prefix) %>% dplyr::pull(dropdowns) %>% unlist(), function(dropdown){
+                observeEvent(input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]], {
+                  r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <-
+                    input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]]
+                  # Store that this row has been modified
+                  r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), "modified"]] <- TRUE
+                })
               })
             })
-          })
-        })
+          }) 
+        }
       
         observeEvent(input[[paste0(prefix, "_management_save")]], {
           # Make sure there's no duplicate in names
-          duplicates <- r[[paste0(prefix, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
-            dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+          duplicates <- 0
+          # Duplicates are allowed in thesaurus_items
+          if (prefix != "thesaurus_items"){
+            duplicates <- r[[paste0(prefix, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
+              dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+          }
           if (duplicates > 0){
             output$warnings1 <- renderUI({
               div(shiny.fluent::MessageBar(translate(language, "modif_names_duplicates"), messageBarType = 3), style = "margin-top:10px;")
@@ -372,8 +378,8 @@ mod_settings_data_management_server <- function(id, r, language){
           DBI::dbAppendTable(r$db, prefix, r[[paste0(prefix, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
           
           # Reload r variable
-          r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix))
-          r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
+          # r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix))
+          # r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
           
           # Notification to user
           output$warnings2 <- renderUI({
@@ -531,6 +537,20 @@ mod_settings_data_management_server <- function(id, r, language){
           paste(captured_output, collapse = "\n")
         })
       })
+      
+      ##########################################
+      # Load sub datatable with action button  #
+      ##########################################
+      
+      observeEvent(input[[paste0(prefix, "_sub_datatable")]], {
+        shiny.fluent::updateToggle.shinyInput(session, "thesaurus_items_datatable_card_toggle", value = TRUE)
+        link_id_filter <- as.integer(substr(input[[paste0(prefix, "_sub_datatable")]], nchar(paste0(prefix, "_sub_datatable_")) + 1, nchar(input[[paste0(prefix, "_sub_datatable")]])))
+        # if (prefix == "thesaurus_items"){
+          r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", link_id_filter))
+          r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
+        # }
+      })
+      
     })
   })
 }

@@ -231,6 +231,8 @@ get_translations <- function(){
             "FR", "thesaurus_management_card", "Gestion des thésaurus",
             "EN", "thesaurus_items_management_card", "Items mngmt",
             "FR", "thesaurus_items_management_card", "Items des thésaurus",
+            "EN", "thesaurus_items_management", "Items management",
+            "FR", "thesaurus_items_management", "Gestion des items",
             "EN", "matching_people", "Matching people",
             "FR", "matching_people", "Personnes correspondant",
             "EN", "no_results_found", "No results found",

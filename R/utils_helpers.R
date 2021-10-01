@@ -58,9 +58,9 @@ id_get_other_name <- function(id, type, language = NULL){
       result <- c(result, translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
     }
     if (id == "thesaurus_items"){
-      result <- c(translate(language, "id"), translate(language, "item_id"), translate(language, "thesaurus_id"), translate(language, "name"),
+      result <- c(translate(language, "id"), translate(language, "thesaurus_id"), translate(language, "item_id"), translate(language, "name"),
                   translate(language, "display_name"), translate(language, "category"), translate(language, "unit"),
-                  translate(language, "datetime"))
+                  translate(language, "datetime"), translate(language, "action"))
     }
   }
   
