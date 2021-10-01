@@ -373,7 +373,6 @@ mod_page_main_ui <- function(id, language, page_style, page){
 mod_page_main_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    output$test <- shiny::renderText("Mon texte")
   })
 }
     

@@ -15,8 +15,12 @@ mod_settings_plugins_ui <- function(id, language, page_style, page){
     div(class = "main",
       shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
       shiny.fluent::reactOutput(ns("plugins_delete_confirm")), 
-      settings_toggle_card(language, ns, description_card = "plugins_description_card", creation_card = "plugins_creation_card", 
-                           datatable_card = "plugins_management_card", edit_code_card = "plugins_edit_code_card", activated = c("")),
+      settings_toggle_card(language, ns, cards = list(
+        list(key = "description_card", label = "plugins_description_card"),
+        list(key = "creation_card", label = "plugins_creation_card"),
+        list(key = "datatable_card", label = "plugins_management_card"),
+        list(key = "edit_code_card", label = "plugins_edit_code_card")
+      )),
       div(
         id = ns("description_card"),
         make_card(
@@ -274,7 +278,7 @@ mod_settings_plugins_server <- function(id, r, language){
           category_filter <- "plugin"
           link_id_filter <- as.integer(substr(input$edit_code, nchar("edit_code") + 1, nchar(input$edit_code)))
           code <- r$code %>% dplyr::filter(category == category_filter & link_id == link_id_filter) %>% dplyr::pull(code)
-          settings_edit_code_card(language, ns, type = "code", code = code, link_id = link_id_filter, title = paste0("edit_", category_filter, "_code"))
+          settings_edit_code_card(language, ns, type = "code", code = code, link_id = link_id_filter, title = paste0("edit_", category_filter, "_code"), prefix = prefix)
         })
         output$code_result <- renderText("")
       })

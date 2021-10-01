@@ -16,8 +16,11 @@ mod_settings_modules_ui <- function(id, language, page_style, page){
     div(class = "main",
       shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
       shiny.fluent::reactOutput(ns("modules_delete_confirm")), 
-      settings_toggle_card(language, ns, creation_card = "modules_creation_card", datatable_card = "modules_management_card",
-                           options_card = "modules_options_card", activated = c("")),
+      settings_toggle_card(language, ns, cards = list(
+        list(key = "creation_card", label = "modules_creation_card"),
+        list(key = "datatable_card", label = "modules_management_card"),
+        list(key = "options_card", label = "modules_options_card")
+      )),
       div(
         id = ns("creation_card"),
         make_card(

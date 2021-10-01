@@ -55,7 +55,7 @@ db_create_tables <- function(db){
       datetime = lubridate::ymd_hms(), deleted = logical()))
   
   db_create_table(db, "thesaurus_items",
-    tibble::tibble(id = integer(), thesaurus_id = integer(),
+    tibble::tibble(id = integer(), thesaurus_id = integer(), item_id = integer(),
       name = character(), display_name = character(), category = character(), unit = character(),
       datetime = lubridate::ymd_hms(), deleted = logical()))
   

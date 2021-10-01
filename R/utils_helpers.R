@@ -29,6 +29,8 @@ id_get_other_name <- function(id, type, language = NULL){
            "datamarts" = "datamart",
            "studies" = "study",
            "subsets" = "subset",
+           "thesaurus" = "thesaurus",
+           "thesaurus" = "thesaurus_items",
            "patient_lvl_module_families" = "patient_lvl_module_family",
            "aggregated_module_families" = "aggregated_module_family") -> result
   }
@@ -39,18 +41,27 @@ id_get_other_name <- function(id, type, language = NULL){
            "datamart" = "datamarts",
            "study" = "studies",
            "subset" = "subsets",
+           "thesaurus" = "thesaurus",
+           "thesaurus" = "thesaurus_items",
            "patient_lvl_module_family" = "patient_lvl_module_families",
            "aggregated_module_family" = "aggregated_module_families") -> result
   }
   
   if (type == "colnames_text_version"){
-    result <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"))
-    c(result, switch(id,
-      "datamarts" = translate(language, "data_source"),
-      "studies" = c(translate(language, "datamart"), translate(language, "patient_lvl_module_family"),
-                             translate(language, "aggregated_module_family")),
-      "subsets" = translate(language, "study"))) -> result
-    result <- c(result, translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
+    if (id %in% c("data_sources", "datamarts", "studies", "subsets", "thesaurus")){
+      result <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"))
+      c(result, switch(id,
+        "datamarts" = translate(language, "data_source"),
+        "studies" = c(translate(language, "datamart"), translate(language, "patient_lvl_module_family"),
+                               translate(language, "aggregated_module_family")),
+        "subsets" = translate(language, "study"))) -> result
+      result <- c(result, translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
+    }
+    if (id == "thesaurus_items"){
+      result <- c(translate(language, "id"), translate(language, "item_id"), translate(language, "thesaurus_id"), translate(language, "name"),
+                  translate(language, "display_name"), translate(language, "category"), translate(language, "unit"),
+                  translate(language, "datetime"))
+    }
   }
   
   if (type == "options_by_cat"){

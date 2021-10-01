@@ -41,6 +41,7 @@ golem_add_external_resources <- function(css){
     htmltools::tags$link(href = css, rel = "stylesheet", type = "text/css"),
     shinyjs::useShinyjs(),
     shinyFeedback::useShinyFeedback(),
+    shinybusy::add_busy_bar(timeout = 1000, color = "#0D98FF", height = "3px"),
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
   )
