@@ -11,60 +11,60 @@
 mod_settings_modules_ui <- function(id, language, page_style, page){
   ns <- NS(id)
   result <- ""
+  if (page == "settings/modules_patient_lvl") prefix <- "patient_lvl"
+  if (page == "settings/modules_aggregated") prefix <- "aggregated"
   
   if (page_style == "fluent"){
     div(class = "main",
-      shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
-      shiny.fluent::reactOutput(ns("modules_delete_confirm")), 
+      settings_default_elements(ns, prefix),
       settings_toggle_card(language, ns, cards = list(
-        list(key = "creation_card", label = "modules_creation_card"),
-        list(key = "datatable_card", label = "modules_management_card"),
-        list(key = "options_card", label = "modules_options_card")
+        list(key = paste0(prefix, "_creation_card"), label = "modules_creation_card"),
+        list(key = paste0(prefix, "_datatable_card"), label = "modules_management_card"),
+        list(key = paste0(prefix, "_options_card"), label = "modules_options_card")
       )),
+      # Don't use settings_creation_card because of the conditionnal panel
       div(
-        id = ns("creation_card"),
+        id = ns(paste0(prefix, "_creation_card")),
         make_card(
           translate(language, "modules_creation"),
           div(
-            shiny.fluent::ChoiceGroup.shinyInput(ns("creation_module_type"), value = "module", options = list(
+            shiny.fluent::ChoiceGroup.shinyInput(ns(paste0(prefix, "_creation_module_type")), value = "module", options = list(
               list(key = "module", text = translate(language, "module")),
               list(key = "family", text = translate(language, "module_family"))
             ), className = "inline_choicegroup"),
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_textfield(language, ns, "name", width = "300px"),
-              make_textfield(language, ns, "description", width = "300px")
+              make_textfield(language, ns, id = paste0(prefix, "_name"), label = "name", width = "300px"),
+              make_textfield(language, ns, id = paste0(prefix, "_description"), label = "description", width = "300px")
             ),
             shiny::conditionalPanel(
-              condition = "input.creation_module_type == 'module'", ns = ns,
+              condition = paste0("input.", prefix, "_creation_module_type == 'module'"), ns = ns,
               shiny.fluent::Stack(
                 horizontal = TRUE, tokens = list(childrenGap = 20),
-                make_dropdown(language, ns, "module_family", width = "300px"),
-                make_dropdown(language, ns, "module_parent", width = "300px")
+                make_dropdown(language, ns, id = paste0(prefix, "_module_family"), label = "module_family", width = "300px"),
+                make_dropdown(language, ns, id = paste0(prefix, "_module_parent"), label = "module_parent", width = "300px")
               )
             ),
             htmltools::br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("add"), translate(language, "add"))
+            shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_add")), translate(language, "add"))
           )
         )
       ),
       div(
-        id = ns("datatable_card"),
+        id = ns(paste0(prefix, "_datatable_card")),
         make_card(
           translate(language, "modules_management"),
           div(
-            shiny.fluent::ChoiceGroup.shinyInput(ns("management_module_type"), value = "module", options = list(
+            shiny.fluent::ChoiceGroup.shinyInput(ns(paste0(prefix, "_management_module_type")), value = "module", options = list(
               list(key = "module", text = translate(language, "module")),
               list(key = "family", text = translate(language, "module_family"))
             ), className = "inline_choicegroup"),
-            DT::DTOutput(ns("management_datatable")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save"), style = "top:-20px;")
+            DT::DTOutput(ns(paste0(prefix, "_management_datatable"))),
+            shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_management_save")), translate(language, "save"), style = "top:-20px;")
           )
         )
       ),
-      div(
-        shiny::uiOutput(ns("options_card")),
-      )
+      shiny::uiOutput(ns(paste0(prefix, "_options_card")))
     ) -> result
   }
   
@@ -79,54 +79,60 @@ mod_settings_modules_server <- function(id, r, language){
     ns <- session$ns
  
     toggles <- c("creation_card", "datatable_card", "options_card")
-    
-    ##########################################
-    # Show or hide cards   #
-    ##########################################
-    
+    if (id == "settings_patient_lvl_modules") prefix <- "patient_lvl"
+    if (id == "settings_aggregated_modules") prefix <- "aggregated"
+    # 
+    # ##########################################
+    # # Show or hide cards   #
+    # ##########################################
+    # 
     sapply(toggles, function(toggle){
-      observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
+      observeEvent(input[[paste0(prefix, "_", toggle, "_toggle")]], if(input[[paste0(prefix, "_", toggle, "_toggle")]]) shinyjs::show(paste0(prefix, "_", toggle)) else shinyjs::hide(paste0(prefix, "_", toggle)))
     })
-    
-    ##########################################
-    # Add a new module                       #
-    ##########################################
-    
-    # Update dropdowns with reactive data
-    data_var_families <- switch(id, "settings_patient_lvl_modules" = "patient_lvl_module_families", 
-                           "settings_aggregated_modules" = "aggregated_module_families")
-    data_var_modules <- switch(id, "settings_patient_lvl_modules" = "patient_lvl_modules", 
-                               "settings_aggregated_modules" = "aggregated_modules")
-    
+    # 
+    # ##########################################
+    # # Add a new module                       #
+    # ##########################################
+    # 
+    # # Update dropdowns with reactive data
+    data_var_families <- switch(id,
+      "settings_patient_lvl_modules" = "patient_lvl_module_families",
+      "settings_aggregated_modules" = "aggregated_module_families")
+    data_var_modules <- switch(id,
+      "settings_patient_lvl_modules" = "patient_lvl_modules",
+      "settings_aggregated_modules" = "aggregated_modules")
+
     observeEvent(r[[data_var_families]], {
       options <- tibble_to_list(r[[data_var_families]], "id", "name", rm_deleted_rows = TRUE)
-      shiny.fluent::updateDropdown.shinyInput(session, "module_family",
+      shiny.fluent::updateDropdown.shinyInput(session, paste0(prefix, "_module_family"),
         options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
     })
-    
-    observeEvent(input$module_family, {
-      module_parents <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var_modules, " WHERE module_family_id = ", input$module_family))
+
+    observeEvent(input[[paste0(prefix, "_module_family")]], {
+      # Prevent bug if input is empty
+      req(input[[paste0(prefix, "_module_family")]])
+      module_parents <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var_modules, " WHERE module_family_id = ", input[[paste0(prefix, "_module_family")]]))
       options <- tibble_to_list(module_parents, "id", "name", rm_deleted_rows = TRUE, null_value = TRUE, language = language)
-      shiny.fluent::updateDropdown.shinyInput(session, "module_parent",
+      shiny.fluent::updateDropdown.shinyInput(session, paste0(prefix, "_module_parent"),
         options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
     })
-    
-    observeEvent(input$add, {
-      new_name <- input$name
+
+    observeEvent(input[[paste0(prefix, "_add")]], {
+      new_name <- input[[paste0(prefix, "_name")]]
       name_check <- FALSE
 
       if (!is.null(new_name)){
         if (new_name != "") name_check <- TRUE
       }
-      if (!name_check) shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = translate(language, "provide_valid_name"))
-      if (name_check) shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = NULL)
+      if (!name_check) shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_name"), errorMessage = translate(language, "provide_valid_name"))
+      if (name_check) shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_name"), errorMessage = NULL)
 
       req(name_check)
 
       # Check if chosen name is already used
-      if (input$creation_module_type == "module") table <- switch(id, "settings_patient_lvl_modules" = "patient_lvl_modules", "settings_aggregated_modules" = "aggregated_modules")
-      if (input$creation_module_type == "family") table <- switch(id, "settings_patient_lvl_modules" = "patient_lvl_module_families", "settings_aggregated_modules" = "aggregated_module_families")
-      
+      if (input[[paste0(prefix, "_creation_module_type")]] == "module") table <- switch(id, "settings_patient_lvl_modules" = "patient_lvl_modules", "settings_aggregated_modules" = "aggregated_modules")
+      if (input[[paste0(prefix, "_creation_module_type")]] == "family") table <- switch(id, "settings_patient_lvl_modules" = "patient_lvl_module_families", "settings_aggregated_modules" = "aggregated_module_families")
+
       distinct_names <- DBI::dbGetQuery(r$db, paste0("SELECT DISTINCT(name) FROM ", table, " WHERE deleted IS FALSE")) %>% dplyr::pull()
 
       if (new_name %in% distinct_names){
@@ -138,14 +144,23 @@ mod_settings_modules_server <- function(id, r, language){
 
       last_row <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(id), 0) FROM ", table)) %>% dplyr::pull()
 
-      new_data <- switch(input$creation_module_type,
+      new_data <- switch(input[[paste0(prefix, "_creation_module_type")]],
         "module" = tibble::tribble(~id, ~name, ~description, ~module_family_id, ~parent_module_id, ~creator_id, ~datetime, ~deleted,
-          last_row + 1, as.character(new_name), ifelse(is.null(input$description), "", as.character(input$description)),
-          as.integer(input$module_family), ifelse(is.null(input$module_parent), NA_integer_, as.integer(input$module_parent)),
-          r$creator_id, as.character(Sys.time()), FALSE),
+          last_row + 1,
+          as.character(new_name),
+          coalesce2("char", input[[paste0(prefix, "_description")]]),
+          coalesce2("int", input[[paste0(prefix, "_module_family")]]),
+          coalesce2("int", input[[paste0(prefix, "_module_parent")]]),
+          r$user_id,
+          as.character(Sys.time()),
+          FALSE),
         "family" = tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
-          last_row + 1, as.character(new_name), ifelse(is.null(input$description), "", as.character(input$description)),
-          r$creator_id, as.character(Sys.time()), FALSE))
+          last_row + 1,
+          as.character(new_name),
+          coalesce2("char", input[[paste0(prefix, "_description")]]),
+          r$user_id,
+          as.character(Sys.time()),
+          FALSE))
 
       DBI::dbAppendTable(r$db, table, new_data)
 
@@ -163,8 +178,8 @@ mod_settings_modules_server <- function(id, r, language){
       shinyjs::delay(3000, shinyjs::hide("warnings1"))
 
       # Reset textfields
-      shiny.fluent::updateTextField.shinyInput(session, "name", value = "")
-      shiny.fluent::updateTextField.shinyInput(session, "description", value = "")
+      shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_name"), value = "")
+      shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_description"), value = "")
     })
     
     ##########################################
@@ -175,28 +190,50 @@ mod_settings_modules_server <- function(id, r, language){
     # Generate datatable                     #
     ##########################################
 
-    observeEvent(c(input$management_module_type, r$patient_lvl_module_families, r$patient_lvl_modules,
-                   r$aggregated_module_families, r$aggregated_modules), {
+    observeEvent(c(input[[paste0(prefix, "_management_module_type")]],
+      r$patient_lvl_module_families, r$patient_lvl_modules, r$aggregated_module_families, r$aggregated_modules), {
+
       # Get data
-      req(input$management_module_type)
-      if (input$management_module_type == "module") data_var <- data_var_modules
-      if (input$management_module_type == "family") data_var <- data_var_families
+      req(input[[paste0(prefix, "_management_module_type")]])
+      if (input[[paste0(prefix, "_management_module_type")]] == "module") data_var <- data_var_modules
+      if (input[[paste0(prefix, "_management_module_type")]] == "family") data_var <- data_var_families
       data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var, " WHERE deleted IS FALSE"))
       if (nrow(data) != 0){
         data <- data %>% dplyr::select(-deleted)
       }
 
       # Render datatable
-      output$management_datatable <- DT::renderDT(
-        data,
-        # settings_datatable(
-        #   ns = ns, r = r, id = id, name = substr(id, nchar("settings_") + 1, nchar(id)), 
-        #   data = data, 
-        #   data_variables = c("patient_lvl_modules", "patient_lvl_module_families", "aggregated_modules", "aggregated_module_families"), 
-        #   dropdowns = c("module_family_id" = "patient_lvl_module_families"), 
-        #   action_buttons = "", 
-        #   new_colnames = "", 
-        #   subpages = FALSE),
+      output[[paste0(prefix, "_management_datatable")]] <- DT::renderDT(
+        # data,
+        settings_datatable(
+          ns = ns, r = r, id = id, prefix = prefix,
+          data = data,
+          data_variables = c("patient_lvl_modules", "patient_lvl_module_families", "aggregated_modules", "aggregated_module_families"),
+          dropdowns = switch(prefix,
+            "patient_lvl" =
+              switch(input[[paste0(prefix, "_management_module_type")]],
+                "module" = c("module_family_id" = "patient_lvl_module_families", "parent_module_id" = "patient_lvl_modules"),
+                "family" = ""),
+            "aggregated" =
+              switch(input[[paste0(prefix, "_management_module_type")]],
+                "module" = c("module_family_id" = "aggregated_module_families", "parent_module_id" = "aggregated_modules"),
+                "family" = "")),
+          action_buttons = "delete",
+          new_colnames =
+          switch(prefix,
+          "patient_lvl" =
+            switch(input[[paste0(prefix, "_management_module_type")]],
+              "module" = c(translate(language, "id"), translate(language, "name"), translate(language, "description"), translate(language, "module_family"), 
+                translate(language, "module_parent"), translate(language, "creator"), translate(language, "datetime"), translate(language, "action")),
+              "family" = c(translate(language, "id"), translate(language, "name"), translate(language, "description"),
+                translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))),
+          "aggregated" =
+            switch(input[[paste0(prefix, "_management_module_type")]],
+              "module" = c(translate(language, "id"), translate(language, "name"), translate(language, "description"), translate(language, "module_family"), 
+                translate(language, "module_parent"), translate(language, "creator"), translate(language, "datetime"), translate(language, "action")),
+              "family" = c(translate(language, "id"), translate(language, "name"), translate(language, "description"),
+                translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))))
+        ),
         # settings_management_datatable(data, ns, r, language,
         #                              dropdowns = c("module_type" = "modules_types"))#,
         options = list(dom = "t<'bottom'p>")#,

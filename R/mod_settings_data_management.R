@@ -173,7 +173,7 @@ mod_settings_data_management_server <- function(id, r, language){
     
     # Prefix used for inputs
     # It also corresponds to database tables names
-    input_prefix <- switch(substr(id, nchar("settings_") + 1, nchar(id)),
+    prefix <- switch(substr(id, nchar("settings_") + 1, nchar(id)),
       "data_sources" = "data_sources", "datamarts" = "datamarts", "studies" = "studies", "subsets" = "subsets",
       "thesaurus" = c("thesaurus", "thesaurus_items"))
     
@@ -181,7 +181,7 @@ mod_settings_data_management_server <- function(id, r, language){
     # Data management / Show or hide cards   #
     ##########################################
     
-    sapply(input_prefix, function(prefix){
+    sapply(prefix, function(prefix){
     
       sapply(toggles, function(toggle){
         observeEvent(input[[paste0(prefix, "_", toggle, "_toggle")]], if(input[[paste0(prefix, "_", toggle, "_toggle")]]) shinyjs::show(paste0(prefix, "_", toggle)) else shinyjs::hide(paste0(prefix, "_", toggle)))
@@ -312,7 +312,7 @@ mod_settings_data_management_server <- function(id, r, language){
               new_colnames = id_get_other_name(prefix, "colnames_text_version", language = language)),
             # Options of the datatable
             # We use a function (data_management_datatable_options) for this module
-            options = list(dom = "t<'bottom'p>",
+            options = list(dom = "<'datatable_length'l><'top'ft><'bottom'p>",
             columnDefs = list(
               list(className = "dt-center", targets = c(0, -1, -2, -3)),
               # -1 : action column / -2 : datetime column

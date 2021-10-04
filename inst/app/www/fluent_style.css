@@ -103,3 +103,8 @@ body {
 .router-hidden {
   display: none;
 }
+
+.datatable_length {
+  float: right;
+  margin-left: 10px;
+}
