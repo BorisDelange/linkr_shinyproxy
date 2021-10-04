@@ -247,9 +247,13 @@
   settings_datatable <- function(ns, r, id, prefix, data, data_variables, dropdowns = NULL, action_buttons = "", new_colnames = ""){
     if (nrow(data) == 0) return(data)
     
+    # Order data by ID
+    data <- data %>% dplyr::arrange(id)
+    
     # Create vars with existing options (ie : for data_sources, a list of existing data_sources in the database)
     sapply(data_variables, function(data_var){
-      assign(data_var, tibble_to_list(r[[data_var]], "id", "name", rm_deleted_rows = TRUE), envir = parent.env(environment()))
+      if (data_var %in% c("patient_lvl_modules", "aggregated_modules")) null_value <- TRUE else null_value <- FALSE
+        assign(data_var, tibble_to_list(r[[data_var]], "id", "name", null_value = null_value, rm_deleted_rows = TRUE), envir = parent.env(environment()))
     })
     
     # Add a column action in the DataTable

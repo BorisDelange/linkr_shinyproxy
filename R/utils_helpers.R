@@ -43,7 +43,9 @@ id_get_other_name <- function(id, type, language = NULL){
            "subset" = "subsets",
            "thesaurus" = "thesaurus",
            "thesaurus" = "thesaurus_items",
+           "patient_lvl_module" = "patient_lvl_modules",
            "patient_lvl_module_family" = "patient_lvl_module_families",
+           "aggregated_module" = "aggregated_modules",
            "aggregated_module_family" = "aggregated_module_families") -> result
   }
   
