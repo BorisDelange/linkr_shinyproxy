@@ -27,53 +27,53 @@ db_create_tables <- function(db){
   # Create tables if not exist
   db_create_table(db, "users",
     tibble::tibble(id = integer(), username = character(), firstname = character(), lastname = character(), password = character(),
-      user_access_id = integer(), user_status_id = integer(), datetime = lubridate::ymd_hms(), deleted = logical()))
+      user_access_id = integer(), user_status_id = integer(), datetime = character(), deleted = logical()))
   
   db_create_table(db, "users_accesses_statuses",
     tibble::tibble(id = integer(), type = character(), name = character(), description = character(),
-      datetime = lubridate::ymd_hms(), deleted = logical()))
+      datetime = character(), deleted = logical()))
   
   db_create_table(db, "data_sources",
-    tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = lubridate::ymd_hms(),
+    tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
       deleted = logical()))
   
   db_create_table(db, "users_accesses_details",
     tibble::tibble(id = integer(), link_id = integer(), action = character(), value = character(), value_num = numeric(),
-      datetime = lubridate::ymd_hms(), deleted = logical()))
+      datetime = character(), deleted = logical()))
   
   db_create_table(db, "datamarts",
     tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
-      datetime = lubridate::ymd_hms(), deleted = logical()))
+      datetime = character(), deleted = logical()))
   
   db_create_table(db, "studies",
     tibble::tibble(id = integer(), name = character(), description = character(), datamart_id = integer(),
       patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = integer(),
-      datetime = lubridate::ymd_hms(), deleted = logical()))
+      datetime = character(), deleted = logical()))
   
   db_create_table(db, "thesaurus",
     tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(),
-      datetime = lubridate::ymd_hms(), deleted = logical()))
+      datetime = character(), deleted = logical()))
   
   db_create_table(db, "thesaurus_items",
     tibble::tibble(id = integer(), thesaurus_id = integer(), item_id = integer(),
       name = character(), display_name = character(), category = character(), unit = character(),
-      datetime = lubridate::ymd_hms(), deleted = logical()))
+      datetime = character(), deleted = logical()))
   
   db_create_table(db, "plugins",
     tibble::tibble(id = integer(), name = character(), description = character(), module_type = character(), 
-      datetime = lubridate::ymd_hms(), deleted = logical()))
+      datetime = character(), deleted = logical()))
   
   # db_create_table(db, "plugins_options",
   #   tibble::tibble(id = integer(), plugin_id = integer(), name = character(), description = character(), 
   #   value = character(), valuenum = numeric()))
   
   db_create_table(db, "patient_lvl_module_families",
-    tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = lubridate::ymd_hms(),
+    tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
       deleted = logical()))
   
   db_create_table(db, "patient_lvl_modules",
     tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
-      creator_id = integer(), datetime = lubridate::ymd_hms(), deleted = logical()))
+      creator_id = integer(), datetime = character(), deleted = logical()))
   
   db_create_table(db, "patient_lvl_modules_elements",
     tibble::tibble(id = integer(), module_id = integer(), plugin_id = integer(), thesaurus_item_id = integer(),
@@ -83,20 +83,23 @@ db_create_tables <- function(db){
   #   tibble::tibble(id = integer(), module_id = integer(), plugin_id = integer(), option_id = integer(), value = character(), valuenum = numeric())
   
   db_create_table(db, "aggregated_module_families",
-    tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = lubridate::ymd_hms(),
+    tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
       deleted = logical()))
   
   db_create_table(db, "aggregated_modules",
     tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
-      creator_id = integer(), datetime = lubridate::ymd_hms(), deleted = logical()))
+      creator_id = integer(), datetime = character(), deleted = logical()))
   
   db_create_table(db, "code",
     tibble::tibble(id = integer(), category = character(), link_id = integer(), code = character(), creator_id = integer(),
-      datetime = lubridate::ymd_hms(), deleted = logical()))
+      datetime = character(), deleted = logical()))
   
   db_create_table(db, "options",
     tibble::tibble(id = integer(), category = character(), link_id = integer(), name = character(), value = character(),
-      value_num = numeric(), creator_id = integer(), datetime = lubridate::ymd_hms(), deleted = logical()))
+      value_num = numeric(), creator_id = integer(), datetime = character(), deleted = logical()))
+  
+  db_create_table(db, "cache",
+    tibble::tibble(id = integer(), category = character(), link_id = integer(), value = character(), datetime = character()))
 }
 
 get_local_db <- function(){
