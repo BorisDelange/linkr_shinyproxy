@@ -63,6 +63,10 @@ db_create_tables <- function(db){
     tibble::tibble(id = integer(), name = character(), description = character(), module_type = character(), 
       datetime = lubridate::ymd_hms(), deleted = logical()))
   
+  # db_create_table(db, "plugins_options",
+  #   tibble::tibble(id = integer(), plugin_id = integer(), name = character(), description = character(), 
+  #   value = character(), valuenum = numeric()))
+  
   db_create_table(db, "patient_lvl_module_families",
     tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = lubridate::ymd_hms(),
       deleted = logical()))
@@ -70,6 +74,13 @@ db_create_tables <- function(db){
   db_create_table(db, "patient_lvl_modules",
     tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
       creator_id = integer(), datetime = lubridate::ymd_hms(), deleted = logical()))
+  
+  db_create_table(db, "patient_lvl_modules_elements",
+    tibble::tibble(id = integer(), module_id = integer(), plugin_id = integer(), thesaurus_item_id = integer(),
+      thesaurus_item_display_name = character(), thesaurus_item_unit = character(), order = integer()))
+  
+  # db_create_table(db, "patient_lvl_modules_options",
+  #   tibble::tibble(id = integer(), module_id = integer(), plugin_id = integer(), option_id = integer(), value = character(), valuenum = numeric())
   
   db_create_table(db, "aggregated_module_families",
     tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = lubridate::ymd_hms(),

@@ -15,15 +15,6 @@ mod_patient_and_aggregated_data_ui <- function(id, language, page_style, page){
     div(class = "main",
       # uiOutput(ns("breadcrumb")),
       uiOutput(ns("main")),
-      # shiny.fluent::Pivot(
-      #   shiny.fluent::PivotItem(headerText = "test1", "description"),
-      #   shiny.fluent::PivotItem(headerText = "test2",
-      #     shiny.fluent::Pivot(
-      #       shiny.fluent::PivotItem(headerText = "test2", "descr")
-      #     )
-      #   )
-        # shiny.fluent::PivotItem()
-      # ),
       textOutput(ns("test"))
     ) -> result
   }
@@ -60,7 +51,34 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
           dplyr::select(-parent_level)
       }
       
-      # r$num_levels <- max(patient_lvl_modules$level)
+      max_level <- max(patient_lvl_modules$level)
+      r$result <- list()
+      for (i in 1:nrow(patient_lvl_modules)){
+        r$result <- rlist::list.append(r$result, 
+                                     list(id = patient_lvl_modules[[i, "id"]], level = patient_lvl_modules[[i, "level"]], parent_module_id = patient_lvl_modules[[i, "parent_module_id"]],
+                                          name = patient_lvl_modules[[i, "name"]], description = patient_lvl_modules[[i, "description"]], code = tagList(), code_server = ""))
+      }
+      for(current_level in max_level:1){
+        for (i in 1:length(r$result)){
+          if (r$result[[i]]$level == current_level){
+            children <- rlist::list.filter(r$result, r$result[[i]]$id %in% parent_module_id)
+            children_code <- tagList()
+            for (j in children){
+              children_code <- tagList(children_code, j$code)
+            }
+            if (length(children_code) == 0){
+              r$result[[i]]$code <- shiny.fluent::PivotItem(headerText = r$result[[i]]$name, make_card("", textOutput(ns(paste0("module_", r$result[[i]]$id)))))
+              r$result[[i]]$code_server <- "not_empty"
+            }
+            else r$result[[i]]$code <- shiny.fluent::PivotItem(headerText = r$result[[i]]$name, shiny.fluent::Pivot(children_code))
+          }
+        }
+      }
+      
+      result_concat <- tagList()
+      for (i in 1:length(r$result)){
+        if (r$result[[i]]$level == 1) result_concat <- tagList(result_concat, r$result[[i]]$code)
+      }
       
       # output$breadcrumb <- renderUI({
       #   items <- list(
@@ -71,36 +89,17 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
       # })
       
       output$main <- renderUI({
-        max_level <- max(patient_lvl_modules$level)
-        result <- list()
-        for (i in 1:nrow(patient_lvl_modules)){
-          result <- rlist::list.append(result, 
-            list(id = patient_lvl_modules[[i, "id"]], level = patient_lvl_modules[[i, "level"]], parent_module_id = patient_lvl_modules[[i, "parent_module_id"]],
-                 name = patient_lvl_modules[[i, "name"]], description = patient_lvl_modules[[i, "description"]], code = tagList()))
-        }
-        for(current_level in max_level:1){
-          for (i in 1:length(result)){
-            if (result[[i]]$level == current_level){
-              children <- rlist::list.filter(result, result[[i]]$id %in% parent_module_id)
-              children_code <- tagList()
-              for (j in children){
-                children_code <- tagList(children_code, j$code)
-              }
-              if (length(children_code) == 0) result[[i]]$code <- shiny.fluent::PivotItem(headerText = result[[i]]$name, result[[i]]$description)
-              else result[[i]]$code <- shiny.fluent::PivotItem(headerText = result[[i]]$name, shiny.fluent::Pivot(children_code))
-            }
-          }
-        }
-        
-        result_concat <- tagList()
-        for (i in 1:length(result)){
-          if (result[[i]]$level == 1) result_concat <- tagList(result_concat, result[[i]]$code)
-        }
-
-        make_card("", shiny.fluent::Pivot(result_concat))
+       shiny.fluent::Pivot(result_concat)
       })
-      
-      
+    })
+    
+    # Once a patient is chosen, render its tabs
+    observeEvent(r$chosen_patient, {
+      sapply(1:length(r$result), function(i){
+        if (r$result[[i]]$code_server != ""){
+          output[[paste0("module_", r$result[[i]]$id)]] <- renderText(paste0(r$result[[i]]$id))
+        }
+      })
     })
     
   })

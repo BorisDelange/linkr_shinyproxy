@@ -12,6 +12,7 @@ app_server <- function(page_style, router, language){
     r$user_id <- 1
     r$local_db <- get_local_db()
     r$db <- get_db()
+    r$result <- list()
     
     # Load all data from database
     observeEvent(r$db, {

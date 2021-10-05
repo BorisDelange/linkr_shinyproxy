@@ -137,6 +137,8 @@ get_translations <- function(){
             "FR", "modules_plugins", "Modules & plugins",
             "EN", "plugins", "Plugins",
             "FR", "plugins", "Plugins",
+            "EN", "plugin", "Plugin",
+            "FR", "plugin", "Plugin",
             "EN", "modules_patient_lvl", "Modules patient-level data",
             "FR", "modules_patient_lvl", "Modules données individuelles",
             "EN", "modules_aggregated", "Modules aggregated data",
@@ -504,7 +506,17 @@ get_translations <- function(){
             "EN", "unit", "Unit",
             "FR", "unit", "Unité",
             "EN", "item_id", "Item ID",
-            "FR", "item_id", "ID de l'item"
+            "FR", "item_id", "ID de l'item",
+            "EN", "ui", "UI",
+            "FR", "ui", "UI",
+            "EN", "server", "Server",
+            "FR", "server", "Server",
+            "EN", "module_options", "Module options",
+            "FR", "module_options", "Options du module",
+            "EN", "add_module_element", "Add a module element",
+            "FR", "add_module_element", "Ajouter une figure",
+            "EN", "datatable_module_elements", "Module elements management",
+            "FR", "datatable_module_elements", "Gestion des figures",
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

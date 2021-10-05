@@ -83,17 +83,17 @@ mod_settings_modules_server <- function(id, r, language){
     if (id == "settings_patient_lvl_modules") prefix <- "patient_lvl"
     if (id == "settings_aggregated_modules") prefix <- "aggregated"
 
-    # ##########################################
-    # # Show or hide cards   #
-    # ##########################################
+    ##########################################
+    # Show or hide cards   #
+    ##########################################
 
     sapply(toggles, function(toggle){
       observeEvent(input[[paste0(prefix, "_", toggle, "_toggle")]], if(input[[paste0(prefix, "_", toggle, "_toggle")]]) shinyjs::show(paste0(prefix, "_", toggle)) else shinyjs::hide(paste0(prefix, "_", toggle)))
     })
 
-    # ##########################################
-    # # Add a new module                       #
-    # ##########################################
+    ##########################################
+    # Add a new module                       #
+    ##########################################
 
     # Update dropdowns with reactive data
     data_var_families <- switch(id,
@@ -281,7 +281,7 @@ mod_settings_modules_server <- function(id, r, language){
           sapply(names(dropdowns), function(name){
             observeEvent(input[[paste0(dropdowns[[name]], id)]], {
               r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), name]] <-
-                input[[paste0(dropdowns[[name]], id)]]
+                coalesce2("int", input[[paste0(dropdowns[[name]], id)]])
               # Store that this row has been modified
               r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
             })
@@ -290,13 +290,13 @@ mod_settings_modules_server <- function(id, r, language){
       })
 
       observeEvent(input[[paste0(prefix, "_management_save")]], {
-        
+
         # Make sure there's no duplicate in names
         duplicates <- 0
 
         module_type <- input[[paste0(prefix, "_management_module_type")]]
         table <- settings_modules_get_table(prefix, module_type)
-        
+
         duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
           dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
 
@@ -308,11 +308,11 @@ mod_settings_modules_server <- function(id, r, language){
           shinyjs::delay(3000, shinyjs::hide("warnings1"))
         }
         req(duplicates == 0)
-        
+
         # Make sure parent module is not the module itself
         parent_is_itself <- FALSE
         if (module_type == "module"){
-          if (nrow(r[[paste0(table, "_temp")]] %>% 
+          if (nrow(r[[paste0(table, "_temp")]] %>%
               dplyr::select(name, parent_module_id) %>%
               dplyr::left_join(r[[paste0(table, "_temp")]] %>% dplyr::select(parent_module_id = id, parent_name = name), by = "parent_module_id") %>%
               dplyr::filter(!is.na(parent_name)) %>% dplyr::filter(name == parent_name)) != 0) parent_is_itself <- TRUE
@@ -388,6 +388,101 @@ mod_settings_modules_server <- function(id, r, language){
           shinyjs::delay(3000, shinyjs::hide("warnings3"))
         })
       })
+      
+      ##########################################
+      # Edit options by selecting a row        #
+      ##########################################
+      
+      observeEvent(input[[paste0(prefix, "_options")]], {
+        # Show options toggle
+        shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_options_card_toggle"), value = TRUE)
+        
+        # Get module ID
+        link_id_filter <- as.integer(substr(input[[paste0(prefix, "_options")]], nchar(paste0(prefix, "_options_")) + 1, nchar(input[[paste0(prefix, "_options")]])))
+        
+        output[[paste0(prefix, "_options_card")]] <- renderUI({
+          make_card(tagList(translate(language, "module_options"), span(paste0(" (ID = ", link_id_filter, ")"), style = "font-size: 15px;")),
+            div(
+              shiny.fluent::ChoiceGroup.shinyInput(ns(paste0(prefix, "_module_options_action")), value = "add", options = list(
+                list(key = "add", text = translate(language, "add_module_element")),
+                list(key = "datatable", text = translate(language, "datatable_module_elements"))
+              ), className = "inline_choicegroup"),
+              
+              # Add a module element
+              shiny::conditionalPanel(
+                condition = paste0("input.", prefix, "_module_options_action == 'add'"), ns = ns,
+                div(
+                  shiny.fluent::Stack(
+                    horizontal = TRUE, tokens = list(childrenGap = 20),
+                    make_dropdown(language, ns, id = paste0(prefix, "_module_options_plugin"), label = "plugin", width = "300px",
+                      options = tibble_to_list(r$plugins %>% dplyr::filter(!deleted, module_type == paste0(prefix, "_data")), "id", "name", rm_deleted_rows =  TRUE)),
+                    make_dropdown(language, ns, id = paste0(prefix, "_module_options_thesaurus"), label = "thesaurus", width = "300px",
+                      options = tibble_to_list(r$thesaurus %>% dplyr::filter(!deleted), "id", "name"))
+                  ),
+                  htmltools::br(),
+                  shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "module_options_add")), translate(language, "add"))
+                )
+              ),
+              
+              # Management datatable
+              shiny::conditionalPanel(
+                condition = paste0("input.", prefix, "_module_options_action == 'datatable'"), ns = ns,
+                div(
+                  shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "module_options_save")), translate(language, "save"))
+                )
+              )
+            )
+          )
+        })
+      })
+      
+      # 
+      # observeEvent(input[[paste0(prefix, "_options_save")]], {
+      #   category_filter <- id_get_other_name(id, "singular_form")
+      #   link_id_filter <- as.integer(substr(input[[paste0(prefix, "_options")]], nchar(paste0(prefix, "_options_")) + 1, nchar(input[[paste0(prefix, "_options")]])))
+      #   
+      #   options <- r$options %>% dplyr::filter(category == category_filter, link_id == link_id_filter)
+      #   options_by_cat <- id_get_other_name(id, "options_by_cat")
+      #   
+      #   if("show_only_aggregated_data" %in% options_by_cat){
+      #     option_id <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(id)
+      #     DBI::dbSendStatement(r$db, paste0("UPDATE options SET value_num = ", input[[paste0(prefix, "_", category_filter, "_show_only_aggregated_data")]], "
+      #                                     WHERE id = ", option_id)) -> query
+      #     DBI::dbClearResult(query)
+      #     r$options <- DBI::dbGetQuery(r$db, "SELECT * FROM options")
+      #   }
+      #   
+      #   if ("user_allowed_read" %in% options_by_cat){
+      #     users_already_allowed <- options %>% dplyr::filter(name == "user_allowed_read") %>% dplyr::pull(value_num)
+      #     users_allowed <- input[[paste0(prefix, "_", category_filter, "_users_allowed_read")]]
+      #     last_row <- max(r[[prefix]]["id"])
+      #     
+      #     # Delete users not in the selected list
+      #     rows_to_del <- options %>% dplyr::filter(name == "user_allowed_read") %>% dplyr::pull(id)
+      #     rows_to_del <-
+      #       options %>%
+      #       dplyr::filter(name == "user_allowed_read" & value_num %not_in% users_allowed) %>%
+      #       dplyr::pull(id)
+      #     DBI::dbSendStatement(r$db, paste0("DELETE FROM options WHERE id IN (", paste(rows_to_del, collapse = ","),")")) -> query
+      #     DBI::dbClearResult(query)
+      #     r$options <- DBI::dbGetQuery(r$db, "SELECT * FROM options")
+      #     
+      #     # Add users in the selected list
+      #     users_allowed <- users_allowed[!users_allowed %in% users_already_allowed]
+      #     if (length(users_allowed) != 0){
+      #       DBI::dbAppendTable(r$db, "options",
+      #                          tibble::tibble(id = ((last_row + 1) + (1:length(users_allowed))), category = category_filter, link_id = link_id_filter,
+      #                                         name = "user_allowed_read", value = "", value_num = users_allowed, creator_id = as.integer(r$user_id),
+      #                                         datetime = as.character(Sys.time()), deleted = FALSE))
+      #     }
+      #   }
+      #   
+      #   output$warnings4 <- renderUI({
+      #     div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
+      #   })
+      #   shinyjs::show("warnings4")
+      #   shinyjs::delay(3000, shinyjs::hide("warnings4"))
+      # })
 
   })
 }

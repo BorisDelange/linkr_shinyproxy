@@ -87,7 +87,7 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
                 ),
                 initialSelectedKey = "data_source",
                 selectedKey = substr(page, nchar("settings") + 2, 100),
-                isExpanded = TRUE),
+                isExpanded = FALSE),
               list(name = translate(language, "modules_plugins"), key = "modules", links = list(
                 list(name = translate(language, "plugins"), key = "plugins", url = shiny.router::route_link("settings/plugins")),
                 list(name = translate(language, "modules_patient_lvl"), key = "modules_patient_lvl", url = shiny.router::route_link("settings/modules_patient_lvl")),
@@ -95,7 +95,7 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
               ),
               initialSelectedKey = "data_source",
               selectedKey = substr(page, nchar("settings") + 2, 100),
-              isExpanded = TRUE),
+              isExpanded = FALSE),
               list(name = translate(language, "help_pages"), key = "help_pages", url = shiny.router::route_link("settings/help_pages")),
               list(name = translate(language, "log"), key = "log", url = shiny.router::route_link("settings/log"))
               # list(name = 'Analysis', url = '#!/other', key = 'analysis', icon = 'AnalyticsReport'),
@@ -240,6 +240,14 @@ mod_page_sidenav_server <- function(id, r, language){
       # patients <- r$data_patients %>% dplyr::filter()
       shiny.fluent::updateDropdown.shinyInput(session, "patient", options = tibble_to_list(r$data_patients, "subject_id", "subject_id"))
     })
+    
+    observeEvent(input$patient, {
+      r$chosen_patient <- input$patient
+      
+      # Load stays of the patient & update dropdown
+      # shiny.fluent::updateDropdown.shinyInput(session, "stay", options = tibble_to_list(r$data_patients, "subject_id", "subject_id"))
+    })
+    
     
 
     # Update the two pages dropdowns (patient-level data page & aggregated data page)

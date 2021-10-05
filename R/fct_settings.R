@@ -169,9 +169,18 @@
   ##########################################
   
   settings_edit_code_card <- function(language, ns, type = "code", code, link_id, title, prefix){
+    choice_ui_server <- tagList()
+    if (prefix == "plugins"){
+      shiny.fluent::ChoiceGroup.shinyInput(ns(paste0(prefix, "_edit_code_choice_ui_server")), value = "ui", options = list(
+        list(key = "ui", text = translate(language, "ui")),
+        list(key = "server", text = translate(language, "server"))
+      ), className = "inline_choicegroup") -> choice_ui_server
+    }
+    
     div(id = ns(paste0(prefix, "_edit_code_card")),
       make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
         div(
+          choice_ui_server,
           div(shinyAce::aceEditor(ns(paste0(prefix, "_ace_edit_code")), code, mode = "r", height = "400px"), style = "width: 100%;"),
           shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_edit_code_save")), translate(language, "save")), " ",
           shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_execute_code")), translate(language, "execute_code")), 
@@ -235,94 +244,136 @@
   ##########################################
   # Datatable                             #
   ##########################################
+    
+    ##########################################
+    # Generate datatable                     #
+    ##########################################
   
-  # ===== settings_datatable function =====
-  # id = id of the module (eg : settings_datamarts)
-  # prefix = name of the page or element of the page (eg : datamarts for datamarts page, users_accesses for subpage accesses of user page)
-  # data = data used in datatable
-  # data_variables = variables r$... containing data (eg : r$datamarts)
-  # dropdowns = dropdowns shown in the datatable
-  # action_buttons = actions buttons created (eg : "delete", "edit_code", "options")
-  
-  settings_datatable <- function(ns, r, id, prefix, data, data_variables, dropdowns = NULL, action_buttons = "", new_colnames = ""){
-    if (nrow(data) == 0) return(data)
-    
-    # Order data by ID
-    data <- data %>% dplyr::arrange(id)
-    
-    # Create vars with existing options (ie : for data_sources, a list of existing data_sources in the database)
-    sapply(data_variables, function(data_var){
-      if (data_var %in% c("patient_lvl_modules", "aggregated_modules")) null_value <- TRUE else null_value <- FALSE
-        assign(data_var, tibble_to_list(r[[data_var]], "id", "name", null_value = null_value, rm_deleted_rows = TRUE), envir = parent.env(environment()))
-    })
-    
-    # Add a column action in the DataTable
-    data["action"] <- NA_character_
-    
-    # Transform dropdowns columns in the dataframe to character
-    lapply(names(dropdowns), function(name) data %>% dplyr::mutate_at(name, as.character) ->> data)
-    
-    # For each row of the dataframe :
-    # - transform dropdowns columns to show dropdowns in Shiny app
-    # - add an Action column with delete action button (+/- options / edit code buttons)
-    # - show creator name
-    if (nrow(data) != 0){
-      for (i in 1:nrow(data)){
-        lapply(names(dropdowns), function(name){
-          data[i, name] <<- as.character(
-            div(
-              shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
-                options = eval(parse(text = dropdowns[name])), value = as.integer(data[i, name])), style = "width:100%")
-          )
+      # ===== settings_datatable function =====
+      # id = id of the module (eg : settings_datamarts)
+      # prefix = name of the page or element of the page (eg : datamarts for datamarts page, users_accesses for subpage accesses of user page)
+      # data = data used in datatable
+      # data_variables = variables r$... containing data (eg : r$datamarts)
+      # dropdowns = dropdowns shown in the datatable
+      # action_buttons = actions buttons created (eg : "delete", "edit_code", "options")
+      
+      settings_datatable <- function(ns, r, id, prefix, data, data_variables, dropdowns = NULL, action_buttons = "", new_colnames = ""){
+        if (nrow(data) == 0) return(data)
+        
+        # Order data by ID
+        data <- data %>% dplyr::arrange(id)
+        
+        # Create vars with existing options (ie : for data_sources, a list of existing data_sources in the database)
+        sapply(data_variables, function(data_var){
+          if (data_var %in% c("patient_lvl_modules", "aggregated_modules")) null_value <- TRUE else null_value <- FALSE
+            assign(data_var, tibble_to_list(r[[data_var]], "id", "name", null_value = null_value, rm_deleted_rows = TRUE), envir = parent.env(environment()))
         })
-
-        # Action buttons : if in action_buttons vector, add action button
-        actions <- tagList()
-
-        # Add delete button
-        if ("delete" %in% action_buttons){
-          actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_delete_", data[i, 1]), "", icon = icon("trash-alt"),
-          onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_deleted_pressed', this.id, {priority: 'event'})")))}
-
-        # Add options button
-        if ("options" %in% action_buttons){
-          actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_options_", data[i, 1]), "", icon = icon("cog"),
-          onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_options", "', this.id, {priority: 'event'})")), "")}
-
-        # Add edit code button
-        if ("edit_code" %in% action_buttons){
-          actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_edit_code_", data[i, 1]), "", icon = icon("file-code"),
-          onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_edit_code", "', this.id, {priority: 'event'})")), "")}
-
-        # Add sub datatable button
-        if ("sub_datatable" %in% action_buttons){
-          actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_sub_datatable_", data[i, 1]), "", icon = icon("table"),
-            onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_sub_datatable", "', this.id, {priority: 'event'})")), "")}
-
-        # Update action column in dataframe
-        data[i, "action"] <- as.character(div(actions))
-        # if (prefix == "thesaurus_items") data <- data %>% dplyr::select(-action)
-
-        # Get creator name
-        if (prefix != "thesaurus_items"){
-          data[i, "creator_id"] <- r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>%
-            dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator)
+        
+        # Add a column action in the DataTable
+        data["action"] <- NA_character_
+        
+        # Transform dropdowns columns in the dataframe to character
+        lapply(names(dropdowns), function(name) data %>% dplyr::mutate_at(name, as.character) ->> data)
+        
+        # For each row of the dataframe :
+        # - transform dropdowns columns to show dropdowns in Shiny app
+        # - add an Action column with delete action button (+/- options / edit code buttons)
+        # - show creator name
+        if (nrow(data) != 0){
+          for (i in 1:nrow(data)){
+            lapply(names(dropdowns), function(name){
+              data[i, name] <<- as.character(
+                div(
+                  shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+                    options = eval(parse(text = dropdowns[name])), value = as.integer(data[i, name])), style = "width:100%")
+              )
+            })
+    
+            # Action buttons : if in action_buttons vector, add action button
+            actions <- tagList()
+    
+            # Add delete button
+            if ("delete" %in% action_buttons){
+              actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_delete_", data[i, 1]), "", icon = icon("trash-alt"),
+              onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_deleted_pressed', this.id, {priority: 'event'})")))}
+    
+            # Add options button
+            if ("options" %in% action_buttons){
+              actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_options_", data[i, 1]), "", icon = icon("cog"),
+              onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_options", "', this.id, {priority: 'event'})")), "")}
+    
+            # Add edit code button
+            if ("edit_code" %in% action_buttons){
+              actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_edit_code_", data[i, 1]), "", icon = icon("file-code"),
+              onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_edit_code", "', this.id, {priority: 'event'})")), "")}
+    
+            # Add sub datatable button
+            if ("sub_datatable" %in% action_buttons){
+              actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_sub_datatable_", data[i, 1]), "", icon = icon("table"),
+                onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_sub_datatable", "', this.id, {priority: 'event'})")), "")}
+    
+            # Update action column in dataframe
+            data[i, "action"] <- as.character(div(actions))
+            # if (prefix == "thesaurus_items") data <- data %>% dplyr::select(-action)
+    
+            # Get creator name
+            if (prefix != "thesaurus_items"){
+              data[i, "creator_id"] <- r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>%
+                dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator)
+            }
+          }
         }
+        
+        # Change name of cols 
+        colnames(data) <- new_colnames
+        
+        data
       }
-    }
+      
+      datatable_callback <- function(){
+        htmlwidgets::JS("table.rows().every(function(i, tab, row) {
+                var $this = $(this.node());
+                $this.attr('id', this.data()[0]);
+                $this.addClass('shiny-input-container');
+              });
+              Shiny.unbindAll(table.table().node());
+              Shiny.bindAll(table.table().node());")
+      }
     
-    # Change name of cols 
-    colnames(data) <- new_colnames
+    ##########################################
+    # Delete a row in datatable              #
+    ##########################################
     
-    data
-  }
-  
-  datatable_callback <- function(){
-    htmlwidgets::JS("table.rows().every(function(i, tab, row) {
-            var $this = $(this.node());
-            $this.attr('id', this.data()[0]);
-            $this.addClass('shiny-input-container');
-          });
-          Shiny.unbindAll(table.table().node());
-          Shiny.bindAll(table.table().node());")
-  }
+      settings_delete_row <- function(input, output, r, ns, language, prefix, data_var, message){
+        
+        # Create & show dialog box 
+        output[[paste0(prefix, "_delete_confirm")]] <- shiny.fluent::renderReact(settings_delete_react(prefix, ns, language, r[[paste0(prefix, "_delete_dialog")]]))
+        
+        # Whether to close or not delete dialog box
+        observeEvent(input[[paste0(prefix, "_hide_dialog")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
+        observeEvent(input[[paste0(prefix, "_delete_canceled")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
+        observeEvent(input[[paste0(prefix, "_deleted_pressed")]], r[[paste0(prefix, "_delete_dialog")]] <<- TRUE)
+        
+        # When the delete is confirmed...
+        observeEvent(input[[paste0(prefix, "_delete_confirmed")]], {
+          
+          # Close dialog box
+          r[[paste0(prefix, "_delete_dialog")]] <- FALSE
+          
+          # Get the ID of row deleted
+          deleted_pressed_value <- isolate(input[[paste0(prefix, "_deleted_pressed")]])
+          row_deleted <- as.integer(substr(deleted_pressed_value, nchar(paste0(prefix, "_delete_")) + 1, nchar(deleted_pressed_value)))
+          # Delete row in database
+          DBI::dbSendStatement(r$db, paste0("UPDATE ", data_var, " SET deleted = TRUE WHERE id = ", row_deleted))
+          # Update r vars (including temp variable, used in management datatables)
+          r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
+          r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
+          
+          # Notification to user
+          output$warnings3 <- renderUI({
+            div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
+          })
+          shinyjs::show("warnings3")
+          shinyjs::delay(3000, shinyjs::hide("warnings3"))
+        }) 
+      }
