@@ -50,6 +50,7 @@ mod_settings_modules_ui <- function(id, language, page_style, page){
           )
         )
       ),
+      shiny::uiOutput(ns(paste0(prefix, "_options_card"))),
       div(
         id = ns(paste0(prefix, "_datatable_card")),
         make_card(
@@ -60,11 +61,10 @@ mod_settings_modules_ui <- function(id, language, page_style, page){
               list(key = "family", text = translate(language, "module_families"))
             ), className = "inline_choicegroup"),
             DT::DTOutput(ns(paste0(prefix, "_management_datatable"))),
-            shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_management_save")), translate(language, "save"), style = "top:-20px;")
+            shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_management_save")), translate(language, "save"), style = "top:-30px;")
           )
         )
-      ),
-      shiny::uiOutput(ns(paste0(prefix, "_options_card")))
+      )
     ) -> result
   }
   
@@ -400,6 +400,9 @@ mod_settings_modules_server <- function(id, r, language){
         # Get module ID
         link_id_filter <- as.integer(substr(input[[paste0(prefix, "_options")]], nchar(paste0(prefix, "_options_")) + 1, nchar(input[[paste0(prefix, "_options")]])))
         
+        # r variable with selected thesaurus items
+        r[[paste0(prefix, "_thesaurus_items_selected")]] <- list()
+        
         output[[paste0(prefix, "_options_card")]] <- renderUI({
           make_card(tagList(translate(language, "module_options"), span(paste0(" (ID = ", link_id_filter, ")"), style = "font-size: 15px;")),
             div(
@@ -412,12 +415,24 @@ mod_settings_modules_server <- function(id, r, language){
               shiny::conditionalPanel(
                 condition = paste0("input.", prefix, "_module_options_action == 'add'"), ns = ns,
                 div(
-                  shiny.fluent::Stack(
-                    horizontal = TRUE, tokens = list(childrenGap = 20),
-                    make_dropdown(language, ns, id = paste0(prefix, "_module_options_plugin"), label = "plugin", width = "300px",
-                      options = tibble_to_list(r$plugins %>% dplyr::filter(!deleted, module_type == paste0(prefix, "_data")), "id", "name", rm_deleted_rows =  TRUE)),
-                    make_dropdown(language, ns, id = paste0(prefix, "_module_options_thesaurus"), label = "thesaurus", width = "300px",
-                      options = tibble_to_list(r$thesaurus %>% dplyr::filter(!deleted), "id", "name"))
+                  shiny.fluent::Pivot(
+                    shiny.fluent::PivotItem(headerText = translate(language, "plugin"), htmltools::br(),
+                      div(shiny.fluent::Dropdown.shinyInput(ns(paste0(prefix, "_module_options_add_plugin")),
+                        options = tibble_to_list(r$plugins %>% dplyr::filter(!deleted, module_type == paste0(prefix, "_data")), "id", "name", rm_deleted_rows =  TRUE)),
+                        style = "width: 300px;"),
+                      htmltools::br(), "... Plugin options"
+                    ),
+                    shiny.fluent::PivotItem(headerText = translate(language, "thesaurus"), htmltools::br(),
+                      shiny.fluent::Stack(
+                        horizontal = TRUE, tokens = list(childrenGap = 20),
+                        div(shiny.fluent::Dropdown.shinyInput(ns(paste0(prefix, "_module_options_add_thesaurus")),
+                          options = tibble_to_list(r$thesaurus %>% dplyr::filter(!deleted), "id", "name", rm_deleted_rows =  TRUE)),
+                          style = "width: 300px;"),
+                        div(shiny.fluent::Dropdown.shinyInput(ns(paste0(prefix, "module_options_add_thesaurus_items_selected"))),
+                          style = "width: 80%;")
+                      ),
+                      div(DT::DTOutput(ns(paste0(prefix, "_module_options_add_thesaurus_items"))), style = "margin-top: 15px; margin-bottom: -20px;")
+                    )
                   ),
                   htmltools::br(),
                   shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "module_options_add")), translate(language, "add"))
@@ -434,6 +449,69 @@ mod_settings_modules_server <- function(id, r, language){
             )
           )
         })
+      })
+      
+      observeEvent(input[[paste0(prefix, "_module_options_add_thesaurus")]], {
+        # thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", input[[paste0(prefix, "_module_options_add_thesaurus")]],
+        #   " AND deleted IS FALSE"))
+        # r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
+        r[[paste0(prefix, "_thesaurus_items")]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", input[[paste0(prefix, "_module_options_add_thesaurus")]], " AND deleted IS FALSE"))
+        # 
+        # shiny.fluent::updateDropdown.shinyInput(session, paste0(prefix, "module_options_add_thesaurus_items_selected"),
+        #   options = list(list(key = "test1", text = "Test 1"), list(key = "test2", text = "Test 2")),
+        #   value = c("test1", "test2"), multiSelect = TRUE, multiSelectDelimiter = ", ")
+        
+        output[[paste0(prefix, "_module_options_add_thesaurus_items")]] <- DT::renderDT(
+          settings_modules_thesaurus_datatable(ns, r, language, id, prefix, r[[paste0(prefix, "_thesaurus_items")]]),
+          options = list(
+            dom = "<'datatable_length'l><'top'ft><'bottom'p>",
+            columnDefs = list(
+              list(className = "dt-center", targets = c(0, 1, 2, -1))#,
+              # list(sortable = FALSE, targets = c())
+          )),
+          rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
+          editable = list(target = "cell", disable = list(columns = c(0, 1, 2, 3, 5, 6, 7, 8))),
+          callback = datatable_callback()
+        )
+      })
+      
+      # When add action button is clicked
+      observeEvent(input[[paste0(prefix, "_item_selected")]], {
+        link_id_filter <- as.integer(substr(input[[paste0(prefix, "_item_selected")]], nchar(paste0(prefix, "_select_")) + 1, nchar(input[[paste0(prefix, "_item_selected")]])))
+        
+        value <- input[[paste0(prefix, "module_options_add_thesaurus_items_selected")]]
+        if (link_id_filter %not_in% value) value <- c(value, link_id_filter)
+        options <- tibble_to_list(
+          r[[paste0(prefix, "_thesaurus_items")]] %>% dplyr::filter(id %in% value),
+          # DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE id IN (", paste(value, collapse = ","), ")")),
+          "id", "name", rm_deleted_rows = TRUE
+        )
+        
+        shiny.fluent::updateDropdown.shinyInput(session, paste0(prefix, "module_options_add_thesaurus_items_selected"),
+          options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+      })
+      
+      # When remove action button is clicked
+      observeEvent(input[[paste0(prefix, "_item_removed")]], {
+        link_id_filter <- as.integer(substr(input[[paste0(prefix, "_item_selected")]], nchar(paste0(prefix, "_select_")) + 1, nchar(input[[paste0(prefix, "_item_selected")]])))
+
+        value <- input[[paste0(prefix, "module_options_add_thesaurus_items_selected")]]
+        value <- value[!value %in% link_id_filter]
+        options <- tibble_to_list(
+          r[[paste0(prefix, "_thesaurus_items")]] %>% dplyr::filter(id %in% value),
+          # DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE id IN (", paste(value, collapse = ","), ")")),
+          "id", "name", rm_deleted_rows = TRUE
+        )
+
+        shiny.fluent::updateDropdown.shinyInput(session, paste0(prefix, "module_options_add_thesaurus_items_selected"),
+          options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+      })
+      
+      # When a cell of the datatable is edited
+      observeEvent(input[[paste0(prefix, "_module_options_add_thesaurus_items_cell_edit")]], {
+        edit_info <- input[[paste0(prefix, "_module_options_add_thesaurus_items_cell_edit")]]
+        edit_info$col <- edit_info$col + 1 # Datatable cols starts at 0, we have to add 1
+        r[[paste0(prefix, "_thesaurus_items")]] <- DT::editData(r[[paste0(prefix, "_thesaurus_items")]], edit_info)
       })
       
       # 
