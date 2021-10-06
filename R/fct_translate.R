@@ -229,6 +229,8 @@ get_translations <- function(){
             "FR", "thesaurus_management", "Gestion des thésaurus",
             "EN", "thesaurus_management_card", "Thesaurus mngmt",
             "FR", "thesaurus_management_card", "Gestion des thésaurus",
+            "EN", "thesaurus_items", "Items",
+            "FR", "thesaurus_items", "Items",
             "EN", "thesaurus_items_management_card", "Items mngmt",
             "FR", "thesaurus_items_management_card", "Items des thésaurus",
             "EN", "thesaurus_items_management", "Items management",
@@ -524,7 +526,21 @@ get_translations <- function(){
             "EN", "DT_search", "Search : ",
             "FR", "DT_search", "Rechercher : ",
             "EN", "DT_length", "Show _MENU_ entries",
-            "FR", "DT_length", "Afficher _MENU_ lignes"
+            "FR", "DT_length", "Afficher _MENU_ lignes",
+            "EN", "fields_empty", "Some fields are empty",
+            "FR", "fields_empty", "Certains champs ne sont pas complétés",
+            "EN", "module_element_added", "Module element added",
+            "FR", "module_element_added", "Figure ajoutée",
+            "EN", "thesaurus_item", "Thesaurus item",
+            "FR", "thesaurus_item", "Item du thésaurus",
+            "EN", "thesaurus_item_display_name", "Display name",
+            "FR", "thesaurus_item_display_name", "Nom d'affichage de l'item",
+            "EN", "thesaurus_item_unit", "Item unit",
+            "FR", "thesaurus_item_unit", "Unité de l'item",
+            "EN", "display_order", "Display order",
+            "FR", "display_order", "Order d'affichage",
+            "EN", "module_element", "Module element",
+            "FR", "module_element", "Nom de la figure"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

@@ -246,6 +246,16 @@
   ##########################################
     
     ##########################################
+    # Data                                   #
+    ##########################################
+    
+    settings_datatable_data <- function(prefix, r){
+      data <- r[[paste0(prefix, "_temp")]]
+      if (nrow(data) != 0) data <- data %>% dplyr::select(-deleted, -modified)
+      data
+    }  
+  
+    ##########################################
     # Generate datatable                     #
     ##########################################
   

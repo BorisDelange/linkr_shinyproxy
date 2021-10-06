@@ -75,9 +75,10 @@ db_create_tables <- function(db){
     tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
       creator_id = integer(), datetime = character(), deleted = logical()))
   
-  db_create_table(db, "patient_lvl_modules_elements",
-    tibble::tibble(id = integer(), module_id = integer(), plugin_id = integer(), thesaurus_item_id = integer(),
-      thesaurus_item_display_name = character(), thesaurus_item_unit = character(), order = integer()))
+  db_create_table(db, "patient_lvl_module_elements",
+    tibble::tibble(id = integer(), name = character(), module_id = integer(), plugin_id = integer(), thesaurus_item_id = integer(),
+      thesaurus_item_display_name = character(), thesaurus_item_unit = character(), display_order = integer(),
+      creator_id = integer(), datetime = character(), deleted = logical()))
   
   # db_create_table(db, "patient_lvl_modules_options",
   #   tibble::tibble(id = integer(), module_id = integer(), plugin_id = integer(), option_id = integer(), value = character(), valuenum = numeric())

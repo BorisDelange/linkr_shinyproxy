@@ -243,7 +243,7 @@ mod_settings_data_management_server <- function(id, r, language){
         ))
         
         DBI::dbAppendTable(r$db, prefix, new_data)
-        r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, "WHERE deleted IS FALSE ORDER BY id"))
+        r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, " WHERE deleted IS FALSE ORDER BY id"))
         r[[paste0(prefix, "_temp")]] <- r[[prefix]]  %>% dplyr::mutate(modified = FALSE)
 
         # # Add new rows in code table & options table
@@ -307,7 +307,7 @@ mod_settings_data_management_server <- function(id, r, language){
             # This function generates the data for the datatable
             settings_datatable(
               id = id, prefix = prefix,
-              data = data_management_data(prefix, r), ns = ns, r = r, data_variables = data_management_elements,
+              data = settings_datatable_data(prefix, isolate(r)), ns = ns, r = r, data_variables = data_management_elements,
               dropdowns = switch(prefix,
                 "data_sources" = "",
                 "datamarts" = c("data_source_id" = "data_sources"),
@@ -327,20 +327,19 @@ mod_settings_data_management_server <- function(id, r, language){
             # Options of the datatable
             # We use a function (data_management_datatable_options) for this module
             options = list(dom = "<'datatable_length'l><'top'ft><'bottom'p>",
-            stateSave = TRUE, stateDuration = 30, autoFill = list(enable = FALSE),
-            pageLength = page_length, displayStart = start, #search = list(search = ""),
-            columnDefs = list(
-              list(className = "dt-center", targets = c(0, -1, -2, -3)),
-              # -1 : action column / -2 : datetime column
-              list(width = "80px", targets = -1), list(width = "130px", targets = -2),
-              list(sortable = FALSE, targets = data_management_datatable_options(data_management_data(prefix, r), prefix, "non_sortable"))),
-            language = list(
-              paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
-              search = translate(language, "DT_search"),
-              lengthMenu = translate(language, "DT_length"))
+              stateSave = TRUE, stateDuration = 30, autoFill = list(enable = FALSE),
+              pageLength = page_length, displayStart = start, #search = list(search = ""),
+              columnDefs = list(
+                # -1 : action column / -2 : datetime column
+                list(width = "80px", targets = -1), list(width = "130px", targets = -2),
+                list(sortable = FALSE, targets = data_management_datatable_options(settings_datatable_data(prefix, r), prefix, "non_sortable"))),
+              language = list(
+                paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
+                search = translate(language, "DT_search"),
+                lengthMenu = translate(language, "DT_length"))
             ),
             rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
-            editable = list(target = "cell", disable = list(columns = data_management_datatable_options(data_management_data(prefix, r), id, "disable"))),
+            editable = list(target = "cell", disable = list(columns = data_management_datatable_options(settings_datatable_data(prefix, r), id, "disable"))),
             callback = datatable_callback()
           )
         })

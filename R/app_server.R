@@ -23,8 +23,9 @@ app_server <- function(page_style, router, language){
                   )
       sapply(tables, function(table){
         # Don't load all table if this is thesaurus_items table
-        if (table == "thesaurus_items") r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " LIMIT 0"))
-        if (table != "thesaurus_items") r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
+        # if (table == "thesaurus_items") r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " LIMIT 0"))
+        # if (table != "thesaurus_items") r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
+        r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
         r[[paste0(table, "_temp")]] <- r[[table]]
         r[[paste0(table, "_temp")]] <- r[[paste0(table, "_temp")]] %>% dplyr::mutate(modified = FALSE)
       })

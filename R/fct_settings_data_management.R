@@ -26,19 +26,6 @@ data_management_new_data <- function(prefix, new_id, name, description, creator_
 }
 
 ##########################################
-# Data                                   #
-##########################################
-
-data_management_data <- function(prefix, r){
-  # if (prefix != "thesaurus_items") data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, " WHERE deleted IS FALSE"))
-  data <- r[[paste0(prefix, "_temp")]]
-  # if (prefix != "thesaurus_items") data <- r[[paste0(prefix, "_temp")]]
-  # if (prefix == "thesaurus_items") data <- r$thesaurus_items 
-  if (nrow(data) != 0) data <- data %>% dplyr::select(-deleted, -modified)
-  data
-}
-
-##########################################
 # Datatable options                      #
 ##########################################
 

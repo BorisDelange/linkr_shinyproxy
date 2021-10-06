@@ -66,16 +66,31 @@ settings_modules_thesaurus_cache <- function(r, prefix, page_id, data){
   data
 }
 
-settings_modules_thesaurus_datatable <- function(ns, r, language, page_id, prefix, data, new_colnames = ""){
+settings_modules_datatable_data <- function(ns, r, type, prefix, data, new_colnames = ""){
   if (nrow(data) == 0) return(data)
   
   # Order data by ID
   data <- data %>% dplyr::arrange(id) %>% dplyr::select(-deleted)
-
+  
+  # Link with module, plugin & thesaurus names
+  if (type == "elements_management"){
+    data <- data %>%
+      # dplyr::left_join(r[[paste0(prefix, "_modules")]] %>% dplyr::select(module_id = id, module_name = name), by = "module_id") %>%
+      # dplyr::relocate(module_name, .after = "name") %>%
+      # dplyr::left_join(r$plugins %>% dplyr::select(plugin_id = id, plugin_name = name), by = "plugin_id") %>%
+      # dplyr::relocate(plugin_name, .after = "name") %>%
+      dplyr::left_join(r$thesaurus_items %>% dplyr::select(thesaurus_item_id = id, thesaurus_item_name = name), by = "thesaurus_item_id") %>%
+      dplyr::relocate(thesaurus_item_name, .after = "id") %>%
+      dplyr::left_join(r$users %>% dplyr::transmute(creator_id = id, creator_name = paste0(firstname, " ", lastname)), by = "creator_id") %>%
+      dplyr::relocate(creator_name, .after = "thesaurus_item_unit") %>%
+      # Delete id col, the important one is group_id
+      dplyr::select(-name, -display_order, -module_id, -plugin_id, -thesaurus_item_id, -creator_id)
+    
+    data["action"] <- NA_character_
+  }
+  
   # Change name of cols
-  colnames(data) <- c(translate(language, "id"), translate(language, "thesaurus_id"), translate(language, "item_id"),
-    translate(language, "name"), translate(language, "display_name"), translate(language, "category"), translate(language, "unit"),
-    translate(language, "datetime"), translate(language, "action"))
+  colnames(data) <- new_colnames
   
   data
 }
