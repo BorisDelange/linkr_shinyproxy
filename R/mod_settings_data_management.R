@@ -63,7 +63,8 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
           dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
         settings_datatable_card(language, ns, title = "datamarts_management", prefix = prefix),
         shiny::uiOutput(ns(paste0(prefix, "_edit_code_card"))),
-        shiny::uiOutput(ns(paste0(prefix, "_options_card")))
+        shiny::uiOutput(ns(paste0(prefix, "_options_card"))),
+        textOutput(ns("test"))
       ) -> result
     }
     
@@ -177,6 +178,7 @@ mod_settings_data_management_server <- function(id, r, language){
       "data_sources" = "data_sources", "datamarts" = "datamarts", "studies" = "studies", "subsets" = "subsets",
       "thesaurus" = c("thesaurus", "thesaurus_items"))
     
+    
     ##########################################
     # Data management / Show or hide cards   #
     ##########################################
@@ -241,8 +243,8 @@ mod_settings_data_management_server <- function(id, r, language){
         ))
         
         DBI::dbAppendTable(r$db, prefix, new_data)
-        r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix))
-        r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::mutate(modified = FALSE)
+        r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, "WHERE deleted IS FALSE ORDER BY id"))
+        r[[paste0(prefix, "_temp")]] <- r[[prefix]]  %>% dplyr::mutate(modified = FALSE)
 
         # # Add new rows in code table & options table
         last_row_code <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM code") %>% dplyr::pull()
@@ -283,12 +285,24 @@ mod_settings_data_management_server <- function(id, r, language){
     # Data management / Elements management  #
     ##########################################
     
+      # Datatable states
+      # observeEvent(r[[prefix]], {
+      #   r[[paste0(id, "_", prefix, "_management_datatable_state")]] <- list(
+      #     length = 10, start = 0, search = ""
+      #   )
+      # })
+      
       ##########################################
       # Generate datatable                     #
       ##########################################
     
         # If r$... variable changes
-        observeEvent(r[[prefix]], {
+        observeEvent(r[[paste0(prefix, "_temp")]], {
+          # Restore datatable state
+          page_length <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$length)
+          start <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$start)
+          search_recorded <- ""
+          
           output[[paste0(prefix, "_management_datatable")]] <- DT::renderDT(
             # This function generates the data for the datatable
             settings_datatable(
@@ -313,17 +327,35 @@ mod_settings_data_management_server <- function(id, r, language){
             # Options of the datatable
             # We use a function (data_management_datatable_options) for this module
             options = list(dom = "<'datatable_length'l><'top'ft><'bottom'p>",
+            stateSave = TRUE, stateDuration = 30, autoFill = list(enable = FALSE),
+            pageLength = page_length, displayStart = start, #search = list(search = ""),
             columnDefs = list(
               list(className = "dt-center", targets = c(0, -1, -2, -3)),
               # -1 : action column / -2 : datetime column
               list(width = "80px", targets = -1), list(width = "130px", targets = -2),
-              list(sortable = FALSE, targets = data_management_datatable_options(data_management_data(prefix, r), prefix, "non_sortable")))
+              list(sortable = FALSE, targets = data_management_datatable_options(data_management_data(prefix, r), prefix, "non_sortable"))),
+            language = list(
+              paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
+              search = translate(language, "DT_search"),
+              lengthMenu = translate(language, "DT_length"))
             ),
             rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
             editable = list(target = "cell", disable = list(columns = data_management_datatable_options(data_management_data(prefix, r), id, "disable"))),
             callback = datatable_callback()
           )
         })
+      
+      ##########################################
+      # Datatable state changed                #
+      ##########################################
+
+      # observeEvent(input[[paste0(prefix, "_management_datatable_state")]], {
+      #   r[[paste0(id, "_", prefix, "_management_datatable_state")]] <- list(
+      #     length = input[[paste0(prefix, "_management_datatable_state")]]$length,
+      #     start = input[[paste0(prefix, "_management_datatable_state")]]$start,
+      #     search = input[[paste0(prefix, "_management_datatable_state")]]$search[1]
+      #   )
+      # })
     
       ##########################################
       # Save changes in datatable              #
@@ -332,26 +364,51 @@ mod_settings_data_management_server <- function(id, r, language){
       # Each time a row is updated, modify temp variable
         observeEvent(input[[paste0(prefix, "_management_datatable_cell_edit")]], {
           edit_info <- input[[paste0(prefix, "_management_datatable_cell_edit")]]
-          edit_info$col <- edit_info$col + 1 # Datatable cols starts at 0, we have to add 1
-          r[[paste0(prefix, "_temp")]] <- DT::editData(r[[paste0(prefix, "_temp")]], edit_info)
+          # edit_info$col <- edit_info$col + 1 # Datatable cols starts at 0, we have to add 1
+          r[[paste0(prefix, "_temp")]] <- DT::editData(r[[paste0(prefix, "_temp")]], edit_info, rownames = FALSE)
           # Store that this row has been modified
           r[[paste0(prefix, "_temp")]][[edit_info$row, "modified"]] <- TRUE
         })
+      
+      observeEvent(input[[paste0(prefix, "_management_datatable_state")]], {
+        output$test <- renderText(paste0(
+          # "length = ", input[[paste0(prefix, "_management_datatable_state")]]$length#,
+          # " // length = ", input[[paste0(prefix, "_management_datatable_state")]]$length,
+          " // search = ", input[[paste0(prefix, "_management_datatable_state")]]$search$search
+          ))
+      })
     
-        # Each time a dropdown is updated, modify temp variable
+      # Each time a dropdown is updated, modify temp variable
+        # observeEvent(input[[paste0(prefix, "_dropdown_updated")]], {
+        #   value <- input[[paste0(prefix, "_dropdown_updated")]]
+        #   colname <- paste0(id_get_other_name(gsub("[0-9]", "", value), "singular_form"), "_id")
+        #   id <- gsub("[a-zA-Z_]", "", value)
+        #   output$test <- renderText(paste0("value = ", value, " // colname = ", colname, " // id = ", id,
+        #   " // data = ", r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), colname]],
+        #   " // new_value = ", input[[value]]))
+        #   
+        #   r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), colname]] <- input[[value]]
+        #   r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), "modified"]] <- TRUE
+        # })  
+      
         if (prefix %not_in% c("thesaurus", "thesaurus_items")){
           observeEvent(r[[prefix]], {
-            sapply(r[[prefix]] %>% dplyr::filter(!deleted) %>% dplyr::pull(id), function(id){
+            sapply(r[[prefix]] %>% dplyr::pull(id), function(id){
               sapply(dropdowns %>% dplyr::filter(page_name == prefix) %>% dplyr::pull(dropdowns) %>% unlist(), function(dropdown){
                 observeEvent(input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]], {
-                  r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <-
-                    input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]]
-                  # Store that this row has been modified
-                  r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), "modified"]] <- TRUE
+                  # When we load a page, every dropdown triggers the event
+                  # Change temp variable only if new value is different than old value
+                  old_value <- r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), paste0(dropdown, "_id")]]
+                  new_value <- input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]]
+                  if (new_value != old_value){
+                    r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <- new_value
+                    # Store that this row has been modified
+                    r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), "modified"]] <- TRUE
+                  }
                 })
               })
             })
-          }) 
+          })
         }
       
         observeEvent(input[[paste0(prefix, "_management_save")]], {
@@ -378,8 +435,8 @@ mod_settings_data_management_server <- function(id, r, language){
           DBI::dbAppendTable(r$db, prefix, r[[paste0(prefix, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
           
           # Reload r variable
-          # r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix))
-          # r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
+          # r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, " WHERE deleted IS FALSE ORDER BY id))
+          # r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::mutate(modified = FALSE)
           
           # Notification to user
           output$warnings2 <- renderUI({
@@ -416,8 +473,8 @@ mod_settings_data_management_server <- function(id, r, language){
           # Delete row in database
           DBI::dbSendStatement(r$db, paste0("UPDATE ", prefix, " SET deleted = TRUE WHERE id = ", row_deleted))
           # Update r vars (including temp variable, used in management datatables)
-          r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix))
-          r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
+          r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, " WHERE deleted IS FALSE ORDER BY id"))
+          r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::mutate(modified = FALSE)
           
           # Notification to user
           message <- paste0(id_get_other_name(prefix, "singular_form"), "_deleted")
@@ -455,7 +512,7 @@ mod_settings_data_management_server <- function(id, r, language){
             DBI::dbSendStatement(r$db, paste0("UPDATE options SET value_num = ", input[[paste0(prefix, "_", category_filter, "_show_only_aggregated_data")]], "
                                           WHERE id = ", option_id)) -> query
             DBI::dbClearResult(query)
-            r$options <- DBI::dbGetQuery(r$db, "SELECT * FROM options")
+            r$options <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE deleted IS FALSE ORDER BY id")
           }
           
           if ("user_allowed_read" %in% options_by_cat){
@@ -471,7 +528,7 @@ mod_settings_data_management_server <- function(id, r, language){
               dplyr::pull(id)
             DBI::dbSendStatement(r$db, paste0("DELETE FROM options WHERE id IN (", paste(rows_to_del, collapse = ","),")")) -> query
             DBI::dbClearResult(query)
-            r$options <- DBI::dbGetQuery(r$db, "SELECT * FROM options")
+            r$options <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE deleted IS FALSE ORDER BY id")
             
             # Add users in the selected list
             users_allowed <- users_allowed[!users_allowed %in% users_already_allowed]
@@ -509,12 +566,12 @@ mod_settings_data_management_server <- function(id, r, language){
         category_filter <- id_get_other_name(id, "singular_form")
         link_id_filter <- as.integer(substr(input[[paste0(prefix, "_edit_code")]], nchar(paste0(prefix, "_edit_code_")) + 1, nchar(input[[paste0(prefix, "_edit_code")]])))
         # Reload r$code before querying
-        r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code")
+        r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
         code_id <- r$code %>% dplyr::filter(category == category_filter, link_id == link_id_filter) %>% dplyr::pull(id)
         # Replace ' with '' and store in the database
         DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input[[paste0(prefix, "_ace_edit_code")]], "'", "''"), "' WHERE id = ", code_id)) -> query
         DBI::dbClearResult(query)
-        r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code")
+        r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
         
         output$warnings4 <- renderUI({
           div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
@@ -546,8 +603,8 @@ mod_settings_data_management_server <- function(id, r, language){
         shiny.fluent::updateToggle.shinyInput(session, "thesaurus_items_datatable_card_toggle", value = TRUE)
         link_id_filter <- as.integer(substr(input[[paste0(prefix, "_sub_datatable")]], nchar(paste0(prefix, "_sub_datatable_")) + 1, nchar(input[[paste0(prefix, "_sub_datatable")]])))
         # if (prefix == "thesaurus_items"){
-          r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", link_id_filter))
-          r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
+          r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", link_id_filter, " AND deleted IS FALSE ORDER BY id"))
+          r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
         # }
       })
       

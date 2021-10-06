@@ -285,7 +285,9 @@
               data[i, name] <<- as.character(
                 div(
                   shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
-                    options = eval(parse(text = dropdowns[name])), value = as.integer(data[i, name])), style = "width:100%")
+                    options = eval(parse(text = dropdowns[name])), value = as.integer(data[i, name])), 
+                    onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
+                  style = "width:100%")
               )
             })
     

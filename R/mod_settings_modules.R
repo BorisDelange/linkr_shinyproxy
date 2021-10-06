@@ -112,7 +112,7 @@ mod_settings_modules_server <- function(id, r, language){
     observeEvent(c(input[[paste0(prefix, "_module_family")]], r$patient_lvl_modules, r$aggregated_modules), {
       # Prevent bug if input is empty
       req(input[[paste0(prefix, "_module_family")]])
-      module_parents <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var_modules, " WHERE module_family_id = ", input[[paste0(prefix, "_module_family")]]))
+      module_parents <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var_modules, " WHERE module_family_id = ", input[[paste0(prefix, "_module_family")]], " ORDER BY id"))
       options <- tibble_to_list(module_parents, "id", "name", rm_deleted_rows = TRUE, null_value = TRUE, language = language)
       shiny.fluent::updateDropdown.shinyInput(session, paste0(prefix, "_module_parent"),
         options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
@@ -177,7 +177,7 @@ mod_settings_modules_server <- function(id, r, language){
 
       DBI::dbAppendTable(r$db, table, new_data)
 
-      r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table))
+      r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
       r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
 
       # Add a row in options table
@@ -214,7 +214,7 @@ mod_settings_modules_server <- function(id, r, language){
         module_type <- input[[paste0(prefix, "_management_module_type")]]
         if (module_type == "module") data_var <- data_var_modules
         if (module_type == "family") data_var <- data_var_families
-        data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var, " WHERE deleted IS FALSE"))
+        data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var, " WHERE deleted IS FALSE ORDER BY id"))
         if (nrow(data) != 0){
           data <- data %>% dplyr::select(-deleted)
         }
@@ -259,11 +259,10 @@ mod_settings_modules_server <- function(id, r, language){
       # Each time a row is updated, modify temp variable
       observeEvent(input[[paste0(prefix, "_management_datatable_cell_edit")]], {
         edit_info <- input[[paste0(prefix, "_management_datatable_cell_edit")]]
-        edit_info$col <- edit_info$col + 1 # Datatable cols starts at 0, we have to add 1
 
         table <- settings_modules_get_table(prefix, input[[paste0(prefix, "_management_module_type")]])
 
-        r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info)
+        r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
         # Store that this row has been modified
         r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
       })
@@ -376,7 +375,7 @@ mod_settings_modules_server <- function(id, r, language){
           # Delete row in database
           DBI::dbSendStatement(r$db, paste0("UPDATE ", table, " SET deleted = TRUE WHERE id = ", row_deleted))
           # Update r vars (including temp variable, used in management datatables)
-          r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table))
+          r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
           r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
   
           # Notification to user
@@ -457,11 +456,10 @@ mod_settings_modules_server <- function(id, r, language){
         #   " AND deleted IS FALSE"))
         # r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
         r[[paste0(prefix, "_thesaurus_items")]] <- settings_modules_thesaurus_cache(r, prefix, page_id = id,
-          DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", input[[paste0(prefix, "_module_options_add_thesaurus")]], " AND deleted IS FALSE")))
-        data <- r[[paste0(prefix, "_thesaurus_items")]]
+          DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", input[[paste0(prefix, "_module_options_add_thesaurus")]], " AND deleted IS FALSE ORDER BY id")))
         
         output[[paste0(prefix, "_module_options_add_thesaurus_items")]] <- DT::renderDT(
-          settings_modules_thesaurus_datatable(ns, r, language, id, prefix, data),
+          settings_modules_thesaurus_datatable(ns, r, language, id, prefix, r[[paste0(prefix, "_thesaurus_items")]]),
           options = list(
             dom = "<'datatable_length'l><'top'ft><'bottom'p>",
             columnDefs = list(
@@ -509,8 +507,7 @@ mod_settings_modules_server <- function(id, r, language){
       # When a cell of the datatable is edited
       observeEvent(input[[paste0(prefix, "_module_options_add_thesaurus_items_cell_edit")]], {
         edit_info <- input[[paste0(prefix, "_module_options_add_thesaurus_items_cell_edit")]]
-        edit_info$col <- edit_info$col + 1 # Datatable cols starts at 0, we have to add 1
-        # r[[paste0(prefix, "_thesaurus_items")]] <- DT::editData(r[[paste0(prefix, "_thesaurus_items")]], edit_info)
+        r[[paste0(prefix, "_thesaurus_items")]] <- DT::editData(r[[paste0(prefix, "_thesaurus_items")]], edit_info, rownames = FALSE)
       })
       
       # 

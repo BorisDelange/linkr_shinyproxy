@@ -517,6 +517,14 @@ get_translations <- function(){
             "FR", "add_module_element", "Ajouter une figure",
             "EN", "datatable_module_elements", "Module elements management",
             "FR", "datatable_module_elements", "Gestion des figures",
+            "EN", "DT_previous_page", "Previous",
+            "FR", "DT_previous_page", "Précédente",
+            "EN", "DT_next_page", "Next",
+            "FR", "DT_next_page", "Suivante",
+            "EN", "DT_search", "Search : ",
+            "FR", "DT_search", "Rechercher : ",
+            "EN", "DT_length", "Show _MENU_ entries",
+            "FR", "DT_length", "Afficher _MENU_ lignes"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
