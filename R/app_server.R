@@ -18,7 +18,8 @@ app_server <- function(page_style, router, language){
     observeEvent(r$db, {
       tables <- c("users", "users_accesses_statuses", "users_accesses_details",
                   "data_sources", "datamarts", "studies", "subsets", "thesaurus", "thesaurus_items",
-                  "plugins", "patient_lvl_module_families", "patient_lvl_modules", "aggregated_module_families", "aggregated_modules",
+                  "plugins", "patient_lvl_module_families", "patient_lvl_modules", "patient_lvl_module_elements",
+                  "aggregated_module_families", "aggregated_modules", #"aggregated_module_elements",
                   "code", "options"
                   )
       sapply(tables, function(table){

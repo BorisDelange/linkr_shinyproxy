@@ -650,7 +650,7 @@ mod_settings_modules_server <- function(id, r, language){
                   new_colnames = c(translate(language, "id"), translate(language, "thesaurus_item"), translate(language, "thesaurus_item_display_name"),
                     translate(language, "thesaurus_item_unit"), translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))),
                 options = list(
-                  dom = "<'datatable_length'l><'top'ft><'bottom'p>",
+                  dom = "<'top't><'bottom'p>",
                   # stateSave = TRUE, stateDuration = 30, autoFill = list(enable = FALSE),
                   # pageLength = page_length, displayStart = start,
                   language = list(

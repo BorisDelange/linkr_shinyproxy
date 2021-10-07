@@ -35,7 +35,7 @@ mod_settings_plugins_ui <- function(id, language, page_style, page){
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 20),
               make_textfield(language, ns, label = "name", id = paste0(prefix, "_name"), width = "300px"),
-              make_textfield(language, ns, label = "name", id = paste0(prefix, "_description"), width = "300px"),
+              make_textfield(language, ns, label = "description", id = paste0(prefix, "_description"), width = "300px"),
               make_dropdown(language, ns, label = "module_type", id = paste0(prefix, "_module_type"), width = "300px", options = list(
                 list(key = "patient_lvl_data", text = translate(language, "patient_level_data")),
                 list(key = "aggregated_data", text = translate(language, "aggregated_data"))
@@ -57,7 +57,7 @@ mod_settings_plugins_ui <- function(id, language, page_style, page){
         )
       ),
       div(
-        shiny::uiOutput(ns(paste0(prefix, "_edit_code_card"))),
+        shiny::uiOutput(ns(paste0(prefix, "_edit_code_card")))
       )
     ) -> result
   }
@@ -128,7 +128,8 @@ mod_settings_plugins_server <- function(id, r, language){
       last_row_code <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM code") %>% dplyr::pull()
         DBI::dbAppendTable(r$db, "code",
         tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-          last_row_code + 1, "plugin", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
+          last_row_code + 1, "plugin_ui", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_code + 2, "plugin_server", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
       
       output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "new_plugin_added"), messageBarType = 4), style = "margin-top:10px;"))
       shinyjs::show("warnings1")
@@ -240,17 +241,29 @@ mod_settings_plugins_server <- function(id, r, language){
       observeEvent(input[[paste0(prefix, "_edit_code")]], {
         req(input[[paste0(prefix, "_edit_code")]])
         shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_edit_code_card_toggle"), value = TRUE)
+        
+        if (is.null(input[[paste0(prefix, "_edit_code_choice_ui_server")]])) choice_ui_server <- "ui"
+        if (!is.null(input[[paste0(prefix, "_edit_code_choice_ui_server")]])) choice_ui_server <- input[[paste0(prefix, "_edit_code_choice_ui_server")]]
+        category_filter <- paste0("plugin_", choice_ui_server)
+        link_id_filter <- as.integer(substr(input[[paste0(prefix, "_edit_code")]], nchar(paste0(prefix, "_edit_code_")) + 1, nchar(input[[paste0(prefix, "_edit_code")]])))
+        code <- r$code %>% dplyr::filter(category == category_filter & link_id == link_id_filter) %>% dplyr::pull(code)
+        
         output[[paste0(prefix, "_edit_code_card")]] <- renderUI({
-          category_filter <- "plugin"
-          link_id_filter <- as.integer(substr(input[[paste0(prefix, "_edit_code")]], nchar(paste0(prefix, "_edit_code_")) + 1, nchar(input[[paste0(prefix, "_edit_code")]])))
-          code <- r$code %>% dplyr::filter(category == category_filter & link_id == link_id_filter) %>% dplyr::pull(code)
           settings_edit_code_card(language, ns, type = "code", code = code, link_id = link_id_filter, title = paste0("edit_", category_filter, "_code"), prefix = prefix)
         })
-        output[[paste0(prefix, "_code_result")]] <- renderText("")
+      })
+      
+      observeEvent(input[[paste0(prefix, "_edit_code_choice_ui_server")]], {
+        category_filter <- paste0("plugin_", input[[paste0(prefix, "_edit_code_choice_ui_server")]])
+        link_id_filter <- as.integer(substr(input[[paste0(prefix, "_edit_code")]], nchar(paste0(prefix, "_edit_code_")) + 1, nchar(input[[paste0(prefix, "_edit_code")]])))
+        code <- r$code %>% dplyr::filter(category == category_filter & link_id == link_id_filter) %>% dplyr::pull(code)
+        shinyAce::updateAceEditor(session, paste0(prefix, "_ace_edit_code"), value = code)
       })
       
       observeEvent(input[[paste0(prefix, "_edit_code_save")]], {
-        category_filter <- "plugin"
+        if (is.null(input[[paste0(prefix, "_edit_code_choice_ui_server")]])) choice_ui_server <- "ui"
+        if (!is.null(input[[paste0(prefix, "_edit_code_choice_ui_server")]])) choice_ui_server <- input[[paste0(prefix, "_edit_code_choice_ui_server")]]
+        category_filter <- paste0("plugin_", choice_ui_server)
         link_id_filter <- as.integer(substr(input[[paste0(prefix, "_edit_code")]], nchar(paste0(prefix, "_edit_code_")) + 1, nchar(input[[paste0(prefix, "_edit_code")]])))
         code_id <- r$code %>% dplyr::filter(category == category_filter, link_id == link_id_filter) %>% dplyr::pull(id)
         # Replace ' with '' and store in the database

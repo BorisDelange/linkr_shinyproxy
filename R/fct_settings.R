@@ -177,6 +177,18 @@
       ), className = "inline_choicegroup") -> choice_ui_server
     }
     
+    # if (prefix == "plugins"){
+    #   div(
+    #     shiny::conditionalPanel(
+    #       condition = paste0("input.", prefix, "_edit_code_choice_ui_server == 'ui'"), ns = ns,
+    #       div(shinyAce::aceEditor(ns(paste0(prefix, "_ace_edit_code_ui")), code, mode = "r", height = "400px"), style = "width: 100%;")),
+    #     shiny::conditionalPanel(
+    #       condition = paste0("input.", prefix, "_edit_code_choice_ui_server == 'server'"), ns = ns,
+    #       div(shinyAce::aceEditor(ns(paste0(prefix, "_ace_edit_code_server")), code, mode = "r", height = "400px"), style = "width: 100%;"))
+    #   ) -> ace_editor
+    # }
+    # if (prefix != "plugins") div(shinyAce::aceEditor(ns(paste0(prefix, "_ace_edit_code")), code, mode = "r", height = "400px"), style = "width: 100%;") -> ace_editor
+    
     div(id = ns(paste0(prefix, "_edit_code_card")),
       make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
         div(

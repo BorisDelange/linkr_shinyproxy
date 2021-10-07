@@ -13,6 +13,7 @@ mod_patient_and_aggregated_data_ui <- function(id, language, page_style, page){
   
   if (page_style == "fluent"){
     div(class = "main",
+      shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")), shiny::uiOutput(ns("warnings4")),
       # uiOutput(ns("breadcrumb")),
       uiOutput(ns("main")),
       textOutput(ns("test"))
@@ -55,29 +56,58 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
       r$result <- list()
       for (i in 1:nrow(patient_lvl_modules)){
         r$result <- rlist::list.append(r$result, 
-                                     list(id = patient_lvl_modules[[i, "id"]], level = patient_lvl_modules[[i, "level"]], parent_module_id = patient_lvl_modules[[i, "parent_module_id"]],
-                                          name = patient_lvl_modules[[i, "name"]], description = patient_lvl_modules[[i, "description"]], code = tagList(), code_server = ""))
+          list(id = patient_lvl_modules[[i, "id"]], level = patient_lvl_modules[[i, "level"]], parent_module_id = patient_lvl_modules[[i, "parent_module_id"]],
+            name = patient_lvl_modules[[i, "name"]], description = patient_lvl_modules[[i, "description"]], code_ui = tagList(), code_server = ""))
       }
       for(current_level in max_level:1){
         for (i in 1:length(r$result)){
           if (r$result[[i]]$level == current_level){
             children <- rlist::list.filter(r$result, r$result[[i]]$id %in% parent_module_id)
-            children_code <- tagList()
+            children_code_ui <- tagList()
             for (j in children){
-              children_code <- tagList(children_code, j$code)
+              children_code_ui <- tagList(children_code_ui, j$code_ui)
             }
-            if (length(children_code) == 0){
-              r$result[[i]]$code <- shiny.fluent::PivotItem(headerText = r$result[[i]]$name, make_card("", textOutput(ns(paste0("module_", r$result[[i]]$id)))))
+            if (length(children_code_ui) == 0){
+              # Load module elements
+              module_elements <- r$patient_lvl_module_elements %>% dplyr::filter(module_id == r$result[[i]]$id)
+              
+              # Group module elements by name
+              distinct_cards <- unique(module_elements$name)
+              
+              code_ui <- tagList()
+              
+              # Loop over distinct cards
+              sapply(distinct_cards, function(card_name){
+                card <- module_elements %>% dplyr::filter(name == card_name)
+                plugin_id <- card %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
+                code_ui_card <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_ui") %>% dplyr::pull(code)
+                
+                # Try to run plugin UI code
+                # ID of UI element is in the following format : "module_[ID]_element_[ID]"
+                tryCatch(
+                  # code_ui <<- tagList(code_ui, make_card("", paste0("plugin_id = ", plugin_id, " // code = ", code_ui_card))),
+                  code_ui <<- tagList(code_ui, make_card("", eval(parse(text = code_ui_card)))),
+                  error = function(e){
+                    output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "error_run_plugin_ui_code"), messageBarType = 3), style = "margin-top:10px;"))
+                    shinyjs::show("warnings1")
+                    shinyjs::delay(3000, shinyjs::hide("warnings1"))
+                  })
+              })
+              
+              # Merge UIs
+              r$result[[i]]$code_ui <- shiny.fluent::PivotItem(headerText = r$result[[i]]$name, code_ui)
+              
+              # Server code
               r$result[[i]]$code_server <- "not_empty"
             }
-            else r$result[[i]]$code <- shiny.fluent::PivotItem(headerText = r$result[[i]]$name, shiny.fluent::Pivot(children_code))
+            else r$result[[i]]$code_ui <- shiny.fluent::PivotItem(headerText = r$result[[i]]$name, shiny.fluent::Pivot(children_code_ui))
           }
         }
       }
       
       result_concat <- tagList()
       for (i in 1:length(r$result)){
-        if (r$result[[i]]$level == 1) result_concat <- tagList(result_concat, r$result[[i]]$code)
+        if (r$result[[i]]$level == 1) result_concat <- tagList(result_concat, r$result[[i]]$code_ui)
       }
       
       # output$breadcrumb <- renderUI({
@@ -88,17 +118,19 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
       #   shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3)
       # })
       
+      # observeEvent(r$chosen_study, {
       output$main <- renderUI({
        shiny.fluent::Pivot(result_concat)
       })
+      # })
     })
     
     # Once a patient is chosen, render its tabs
     observeEvent(r$chosen_patient, {
       sapply(1:length(r$result), function(i){
-        if (r$result[[i]]$code_server != ""){
-          output[[paste0("module_", r$result[[i]]$id)]] <- renderText(paste0(r$result[[i]]$id))
-        }
+        # if (r$result[[i]]$code_server != ""){
+          output[[paste0("module_", r$result[[i]]$id)]] <- renderText(paste0("Module ID = ", r$result[[i]]$id))
+        # }
       })
     })
     
