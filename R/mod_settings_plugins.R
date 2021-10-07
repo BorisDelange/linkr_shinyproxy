@@ -47,6 +47,9 @@ mod_settings_plugins_ui <- function(id, language, page_style, page){
         )
       ),
       div(
+        shiny::uiOutput(ns(paste0(prefix, "_edit_code_card")))
+      ),
+      div(
         id = ns(paste0(prefix, "_datatable_card")),
         make_card(
           translate(language, "plugins_management"),
@@ -55,9 +58,6 @@ mod_settings_plugins_ui <- function(id, language, page_style, page){
             shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_management_save")), translate(language, "save"), style = "top:-20px;")
           )
         )
-      ),
-      div(
-        shiny::uiOutput(ns(paste0(prefix, "_edit_code_card")))
       )
     ) -> result
   }
@@ -121,6 +121,7 @@ mod_settings_plugins_server <- function(id, r, language){
       
       DBI::dbAppendTable(r$db, "plugins", new_data)
       
+      # Reload r variable
       r$plugins <- DBI::dbGetQuery(r$db, "SELECT * FROM plugins")
       r$plugins_temp <- r$plugins %>% dplyr::mutate(modified = FALSE)
       
@@ -131,6 +132,9 @@ mod_settings_plugins_server <- function(id, r, language){
           last_row_code + 1, "plugin_ui", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
           last_row_code + 2, "plugin_server", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
       
+      # Reload r variable
+      r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code")
+        
       output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "new_plugin_added"), messageBarType = 4), style = "margin-top:10px;"))
       shinyjs::show("warnings1")
       shinyjs::delay(3000, shinyjs::hide("warnings1"))
@@ -148,18 +152,17 @@ mod_settings_plugins_server <- function(id, r, language){
       # Generate datatable                     #
       ##########################################
       
-      observeEvent(r$plugins, {
-        # Get data
-        data <- DBI::dbGetQuery(r$db, "SELECT * FROM plugins WHERE deleted IS FALSE")
-        if (nrow(data) != 0){
-          data <- data %>% dplyr::select(-deleted)
-        }
+      observeEvent(r$plugins_temp, {
+        # Datatable state
+        page_length <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$length)
+        start <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$start)
         
         # Render datatable
         output[[paste0(prefix, "_management_datatable")]] <- DT::renderDT(
-          plugins_management_datatable(data, ns, r, language, prefix,
+          plugins_management_datatable(settings_datatable_data(prefix, r), ns, r, language, prefix,
             dropdowns = c("module_type" = "modules_types")),
-          options = list(dom = "t<'bottom'p>",
+          options = list(dom = "<'datatable_length'l><'top'ft><'bottom'p>",
+            stateSave = TRUE, stateDuration = 30, pageLength = page_length, displayStart = start,
             columnDefs = list(list(className = "dt-center", targets = c(0, 4, 5)),
               list(sortable = FALSE, targets = c(3, 5)))),
           rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
@@ -175,8 +178,7 @@ mod_settings_plugins_server <- function(id, r, language){
       # Each time a row is updated, modify temp variable
       observeEvent(input[[paste0(prefix, "_management_datatable_cell_edit")]], {
         edit_info <- input[[paste0(prefix, "_management_datatable_cell_edit")]]
-        edit_info$col <- edit_info$col + 1 # Datatable cols starts at 0, we have to add 1
-        r$plugins_temp <- DT::editData(r$plugins_temp, edit_info)
+        r$plugins_temp <- DT::editData(r$plugins_temp, edit_info, rownames = FALSE)
         # Store that this row has been modified
         r$plugins_temp[[edit_info$row, "modified"]] <- TRUE
       })

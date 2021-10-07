@@ -50,7 +50,8 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
         make_dropdown(language, ns, "subset"),
         htmltools::br(), htmltools::hr(),
         make_dropdown(language, ns, "patient"),
-        make_dropdown(language, ns, "stay")
+        make_dropdown(language, ns, "stay"),
+        textOutput(ns("test"))
       ) -> result
     }
     
@@ -244,14 +245,16 @@ mod_page_sidenav_server <- function(id, r, language){
     observeEvent(input$patient, {
       r$chosen_patient <- input$patient
       
+      output$test <- renderText(paste0("r$chosen_patient = ", r$chosen_patient))
       # Load stays of the patient & update dropdown
-      # shiny.fluent::updateDropdown.shinyInput(session, "stay", options = tibble_to_list(r$data_patients, "subject_id", "subject_id"))
+      shiny.fluent::updateDropdown.shinyInput(session, "stay", options = tibble_to_list(r$data_patients, "subject_id", "subject_id"))
     })
     
     
 
     # Update the two pages dropdowns (patient-level data page & aggregated data page)
     observeEvent(r$chosen_datamart, {
+      req(!is.na(r$chosen_datamart))
       datamarts_allowed <- 
         r$options %>% 
         dplyr::filter(category == "datamart" & name == "user_allowed_read" & value_num == r$user_id) %>%
@@ -262,6 +265,7 @@ mod_page_sidenav_server <- function(id, r, language){
     })
     
     observeEvent(r$chosen_study, {
+      req(!is.na(r$chosen_study))
       studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
       studies_allowed <-
         r$options %>%
@@ -273,6 +277,7 @@ mod_page_sidenav_server <- function(id, r, language){
     })
     
     observeEvent(r$chosen_subset, {
+      req(!is.na(r$chosen_datamart))
       subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
       shiny.fluent::updateDropdown.shinyInput(session, "subset", options = tibble_to_list(subsets, "id", "name", rm_deleted_rows = TRUE),
         value = r$chosen_subset)

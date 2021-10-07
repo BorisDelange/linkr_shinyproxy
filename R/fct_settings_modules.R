@@ -84,7 +84,7 @@ settings_modules_datatable_data <- function(ns, r, type, prefix, data, new_colna
       dplyr::left_join(r$users %>% dplyr::transmute(creator_id = id, creator_name = paste0(firstname, " ", lastname)), by = "creator_id") %>%
       dplyr::relocate(creator_name, .after = "thesaurus_item_unit") %>%
       # Delete id col, the important one is group_id
-      dplyr::select(-name, -display_order, -module_id, -plugin_id, -thesaurus_item_id, -creator_id)
+      dplyr::select(-name, -group_id, -display_order, -module_id, -plugin_id, -thesaurus_item_id, -creator_id)
     
     data["action"] <- NA_character_
   }

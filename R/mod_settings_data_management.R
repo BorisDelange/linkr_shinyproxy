@@ -61,10 +61,9 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
           language, ns, title = "create_datamart", prefix = prefix,
           textfields = c("name", "description"), textfields_width = "300px",
           dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
-        settings_datatable_card(language, ns, title = "datamarts_management", prefix = prefix),
         shiny::uiOutput(ns(paste0(prefix, "_edit_code_card"))),
         shiny::uiOutput(ns(paste0(prefix, "_options_card"))),
-        textOutput(ns("test"))
+        settings_datatable_card(language, ns, title = "datamarts_management", prefix = prefix)
       ) -> result
     }
     
@@ -368,14 +367,6 @@ mod_settings_data_management_server <- function(id, r, language){
           # Store that this row has been modified
           r[[paste0(prefix, "_temp")]][[edit_info$row, "modified"]] <- TRUE
         })
-      
-      observeEvent(input[[paste0(prefix, "_management_datatable_state")]], {
-        output$test <- renderText(paste0(
-          # "length = ", input[[paste0(prefix, "_management_datatable_state")]]$length#,
-          # " // length = ", input[[paste0(prefix, "_management_datatable_state")]]$length,
-          " // search = ", input[[paste0(prefix, "_management_datatable_state")]]$search$search
-          ))
-      })
     
       # Each time a dropdown is updated, modify temp variable
         # observeEvent(input[[paste0(prefix, "_dropdown_updated")]], {

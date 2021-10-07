@@ -76,7 +76,7 @@ db_create_tables <- function(db){
       creator_id = integer(), datetime = character(), deleted = logical()))
   
   db_create_table(db, "patient_lvl_module_elements",
-    tibble::tibble(id = integer(), name = character(), module_id = integer(), plugin_id = integer(), thesaurus_item_id = integer(),
+    tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), thesaurus_item_id = integer(),
       thesaurus_item_display_name = character(), thesaurus_item_unit = character(), display_order = integer(),
       creator_id = integer(), datetime = character(), deleted = logical()))
   

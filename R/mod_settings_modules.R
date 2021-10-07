@@ -589,7 +589,8 @@ mod_settings_modules_server <- function(id, r, language){
                 plugin_id <- as.integer(input[[paste0(prefix, "_module_options_add_plugin")]])
                 last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM patient_lvl_module_elements WHERE module_id = ", module_id, " AND deleted IS FALSE")) %>% dplyr::pull()
                 last_id <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(id), 0) FROM patient_lvl_module_elements")) %>% dplyr::pull()
-                new_data <- tibble::tribble(~id, ~name, ~module_id, ~plugin_id, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~display_order, ~creator_id, ~datetime, ~deleted)
+                last_group_id <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM patient_lvl_module_elements")) %>% dplyr::pull()
+                new_data <- tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~display_order, ~creator_id, ~datetime, ~deleted)
                 
                 sapply(input[[paste0(prefix, "_module_options_add_thesaurus_items_selected")]], function(item){
                   last_id <<- last_id + 1
@@ -599,8 +600,8 @@ mod_settings_modules_server <- function(id, r, language){
                   thesaurus_item_unit <- as.character(thesaurus_item %>% dplyr::select(unit) %>% dplyr::pull())
   
                   new_data <<- new_data %>% dplyr::bind_rows(
-                    tibble::tribble(~id, ~name,  ~module_id, ~plugin_id, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~display_order, ~creator_id, ~datetime, ~deleted,
-                      last_id, new_name, module_id, plugin_id, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE))
+                    tibble::tribble(~id, ~name, ~group_id,  ~module_id, ~plugin_id, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~display_order, ~creator_id, ~datetime, ~deleted,
+                      last_id, new_name, last_group_id + 1, module_id, plugin_id, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE))
                 })
   
                 DBI::dbAppendTable(r$db, "patient_lvl_module_elements", new_data)
@@ -658,8 +659,8 @@ mod_settings_modules_server <- function(id, r, language){
                     search = translate(language, "DT_search"),
                     lengthMenu = translate(language, "DT_length")),
                   columnDefs = list(
-                    list(className = "dt-center", targets = c(0, 4, -1, -2))#,
-                    # list(sortable = FALSE, targets = c())
+                    list(className = "dt-center", targets = c(0, 4, -1, -2)),
+                    list(sortable = FALSE, targets = c(-1))
                   )),
                 rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
                 editable = list(target = "cell", disable = list(columns = c(0, 1, 2, 4, 5, 6, 7, 8))),
