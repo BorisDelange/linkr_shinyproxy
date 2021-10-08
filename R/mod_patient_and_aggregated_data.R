@@ -29,17 +29,9 @@ mod_patient_and_aggregated_data_ui <- function(id, language, page_style, page){
 mod_patient_and_aggregated_data_server <- function(id, r, language){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
- 
-    # r$current_pivot <- "none"
-    # r$current_pivot_level <- 1
-    
-    # observeEvent(input$current_tab, {
-      output$test <- renderText(paste0("Current tab = ", input$current_tab))
-    # })
     
     # Once a study is chosen, load its tabs
     observeEvent(r$chosen_study, {
-      r$current_tab <- 0L
       
       study_infos <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE id = ", r$chosen_study))
       
@@ -162,7 +154,7 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
         
         req(nrow(r$patient_lvl_modules > 0) & "level" %in% names(r$patient_lvl_modules))
         
-        # At initialization, r$current_tab is equal to zero
+        # At initialization, input$current_tab is null
         if (is.null(input$current_tab)){
           
           # # First module shown
@@ -190,40 +182,41 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
         }
         
         if (!is.null(input$current_tab)){
-          current_level <- r$patient_lvl_modules %>% dplyr::filter(id == input$current_tab) %>% dplyr::pull(level)
-          if (current_level == 1){
-            show_modules <- r$patient_lvl_modules %>% dplyr::filter(level == 1)
+          # has_children <- r$patient_lvl_modules %>% dplyr::filter(parent_module_id == input$current_tab)
+          # current_level <- r$patient_lvl_modules %>% dplyr::filter(id == input$current_tab) %>% dplyr::pull(level)
+          # if (current_level == 1){
+          #   show_modules <- r$patient_lvl_modules %>% dplyr::filter(level == 1)
+          # }
+          # if (current_level != 1){
+          shown_modules_temp <- r$patient_lvl_modules %>% dplyr::filter(parent_module_id == input$current_tab)
+          if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
+          if (nrow(shown_modules_temp) == 0){
+            current_module <- r$patient_lvl_modules %>% dplyr::filter(id == input$current_tab) 
+            shown_modules <- r$patient_lvl_modules %>% dplyr::filter(parent_module_id == current_module$parent_module_id & level == current_module$level) 
+            # If not any "brother", we are at level one
+            if (nrow(shown_modules) == 0){
+              shown_modules <- r$patient_lvl_modules %>% dplyr::filter(level == 1)
+            }
           }
-          if (current_level != 1){
-            shown_modules_temp <- r$patient_lvl_modules %>% dplyr::filter(parent_module_id == input$current_tab)
-            if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
-            if (nrow(shown_modules_temp) == 0) shown_modules <- r$patient_lvl_modules %>% dplyr::filter(id == input$current_tab) 
-          }
+          # }
         }
         
-        # if (r$current_pivot_level == 1) shown_modules <- patient_lvl_modules %>% dplyr::filter(level == 1)
-        # if (r$current_pivot_level != 1) shown_modules <- patient_lvl_modules %>% dplyr::filter(parent_module_id == input$current_tab)
-        
+        selected_key <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
+        if (!is.null(input$current_tab)){
+          if (input$current_tab %in% shown_modules$id) selected_key <- input$current_tab
+        }
         
         shown_tabs <- tagList()
         sapply(1:nrow(shown_modules), function(i){
-          shown_tabs <<- tagList(shown_tabs, shiny.fluent::PivotItem(id = shown_modules[[i, "id"]], headerText = shown_modules[[i, "name"]], "test"))
+          shown_tabs <<- tagList(shown_tabs, shiny.fluent::PivotItem(id = shown_modules[[i, "id"]], itemKey = shown_modules[[i, "id"]], headerText = shown_modules[[i, "name"]], "test"))
         })
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shown_tabs
+          selectedKey = selected_key, shown_tabs
         )
       })
       
-      observeEvent(input$current_tab, {
-        r$current_tab <- input$current_tab
-      })
       
-      output$test2 <- renderText(paste0("test2 = ", input$current_tab))
-      
-      output$test <- renderTable(r$patient_lvl_modules)
-      # })
-    # })
     
     # Once a patient is chosen, render its tabs
     observeEvent(r$chosen_patient, {
