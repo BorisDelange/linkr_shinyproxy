@@ -12,11 +12,11 @@ app_server <- function(page_style, router, language){
     r$user_id <- 1
     r$local_db <- get_local_db()
     r$db <- get_db()
-    r$result <- list()
+    
     # r$chosen_datamart <- NA_integer_
     # r$chosen_study <- NA_integer_
     # r$chosen_subset <- NA_integer_
-    r$chosen_patient <- NA_integer_
+    # r$chosen_patient <- NA_integer_
     # r$chosen_stay <- NA_integer_
     
     # Load all data from database
@@ -35,6 +35,8 @@ app_server <- function(page_style, router, language){
         r[[paste0(table, "_temp")]] <- r[[table]]
         r[[paste0(table, "_temp")]] <- r[[paste0(table, "_temp")]] %>% dplyr::mutate(modified = FALSE)
       })
+      
+      r$result <- list()
     })
     
     if (page_style == "fluent") router$server(input, output, session)
