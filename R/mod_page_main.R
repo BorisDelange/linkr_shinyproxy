@@ -328,6 +328,14 @@ mod_page_main_ui <- function(id, language, page_style, page){
         # ) -> result
       }
     }
+    
+    ##########################################
+    # Fluent / Help                          #
+    ##########################################
+    
+    if (grepl("^help", page)){
+      mod_help_ui(stringr::str_replace(page, "/", "_"), language, page_style, page) -> result
+    }
   }
   
   ##########################################

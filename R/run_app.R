@@ -60,10 +60,16 @@ run_app <- function(
       shiny.router::route("settings/plugins", make_layout(language = language, page_style = page_style, page = "settings/plugins")),
       shiny.router::route("settings/modules_patient_lvl", make_layout(language = language, page_style = page_style, page = "settings/modules_patient_lvl")),
       shiny.router::route("settings/modules_aggregated", make_layout(language = language, page_style = page_style, page = "settings/modules_aggregated")),
-      shiny.router::route("settings/help_pages", make_layout(language = language, page_style = page_style, page = "settings/help_pages")),
       shiny.router::route("settings/log", make_layout(language = language, page_style = page_style, page = "settings/log")),
       shiny.router::route("help/get_started", make_layout(language = language, page_style = page_style, page = "help/get_started")),
-      shiny.router::route("help/data_management", make_layout(language = language, page_style = page_style, page = "help/data_management"))
+      shiny.router::route("help/user_data_management", make_layout(language = language, page_style = page_style, page = "help/user_data_management")),
+      shiny.router::route("help/user_modules_plugins", make_layout(language = language, page_style = page_style, page = "help/user_modules_plugins")),
+      shiny.router::route("help/user_patient_lvl_data", make_layout(language = language, page_style = page_style, page = "help/user_patient_lvl_data")),
+      shiny.router::route("help/user_aggregated_data", make_layout(language = language, page_style = page_style, page = "help/user_aggregated_data")),
+      shiny.router::route("help/dev_app_db", make_layout(language = language, page_style = page_style, page = "help/dev_app_db")),
+      shiny.router::route("help/dev_users", make_layout(language = language, page_style = page_style, page = "help/dev_users")),
+      shiny.router::route("help/dev_data_management", make_layout(language = language, page_style = page_style, page = "help/dev_data_management")),
+      shiny.router::route("help/dev_modules_plugins", make_layout(language = language, page_style = page_style, page = "help/dev_modules_plugins"))
     ) -> page
   }
   

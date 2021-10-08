@@ -122,7 +122,7 @@ mod_settings_plugins_server <- function(id, r, language){
       DBI::dbAppendTable(r$db, "plugins", new_data)
       
       # Reload r variable
-      r$plugins <- DBI::dbGetQuery(r$db, "SELECT * FROM plugins")
+      r$plugins <- DBI::dbGetQuery(r$db, "SELECT * FROM plugins WHERE deleted IS FALSE")
       r$plugins_temp <- r$plugins %>% dplyr::mutate(modified = FALSE)
       
       # Add a row in code table
@@ -133,7 +133,7 @@ mod_settings_plugins_server <- function(id, r, language){
           last_row_code + 2, "plugin_server", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
       
       # Reload r variable
-      r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code")
+      r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE")
         
       output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "new_plugin_added"), messageBarType = 4), style = "margin-top:10px;"))
       shinyjs::show("warnings1")
@@ -216,8 +216,8 @@ mod_settings_plugins_server <- function(id, r, language){
         DBI::dbAppendTable(r$db, "plugins", r$plugins_temp %>% dplyr::filter(modified) %>% dplyr::select(-modified))
         
         # Reload r variable
-        r$plugins <- DBI::dbGetQuery(r$db, "SELECT * FROM plugins")
-        r$plugins_temp <- r$plugins %>% dplyr::filter(deleted == FALSE) %>% dplyr::mutate(modified = FALSE)
+        r$plugins <- DBI::dbGetQuery(r$db, "SELECT * FROM plugins WHERE deleted IS FALSE")
+        r$plugins_temp <- r$plugins %>% dplyr::mutate(modified = FALSE)
         
         # Notification to user
         output$warnings2 <- renderUI({
@@ -271,7 +271,7 @@ mod_settings_plugins_server <- function(id, r, language){
         # Replace ' with '' and store in the database
         DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input[[paste0(prefix, "_ace_edit_code")]], "'", "''"), "' WHERE id = ", code_id)) -> query
         DBI::dbClearResult(query)
-        r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code")
+        r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE")
 
         output$warnings3 <- renderUI({
           div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")

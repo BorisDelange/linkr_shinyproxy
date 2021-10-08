@@ -50,8 +50,7 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
         make_dropdown(language, ns, "subset"),
         htmltools::br(), htmltools::hr(),
         make_dropdown(language, ns, "patient"),
-        make_dropdown(language, ns, "stay"),
-        textOutput(ns("test"))
+        make_dropdown(language, ns, "stay")
       ) -> result
     }
     
@@ -88,16 +87,15 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
                 ),
                 initialSelectedKey = "data_source",
                 selectedKey = substr(page, nchar("settings") + 2, 100),
-                isExpanded = FALSE),
+                isExpanded = TRUE),
               list(name = translate(language, "modules_plugins"), key = "modules", links = list(
                 list(name = translate(language, "plugins"), key = "plugins", url = shiny.router::route_link("settings/plugins")),
                 list(name = translate(language, "modules_patient_lvl"), key = "modules_patient_lvl", url = shiny.router::route_link("settings/modules_patient_lvl")),
                 list(name = translate(language, "modules_aggregated"), key = "modules_aggregated", url = shiny.router::route_link("settings/modules_aggregated"))
-              ),
-              initialSelectedKey = "data_source",
-              selectedKey = substr(page, nchar("settings") + 2, 100),
-              isExpanded = FALSE),
-              list(name = translate(language, "help_pages"), key = "help_pages", url = shiny.router::route_link("settings/help_pages")),
+                ),
+                initialSelectedKey = "data_source",
+                selectedKey = substr(page, nchar("settings") + 2, 100),
+                isExpanded = TRUE),
               list(name = translate(language, "log"), key = "log", url = shiny.router::route_link("settings/log"))
               # list(name = 'Analysis', url = '#!/other', key = 'analysis', icon = 'AnalyticsReport'),
             ))
@@ -125,7 +123,20 @@ mod_page_sidenav_ui <- function(id, language, page_style, page){
             groups = list(
               list(links = list(
                 list(name = translate(language, "get_started"), key = "get_started", url = shiny.router::route_link("help/get_started")),
-                list(name = translate(language, "data_management"), key = "data_management", url = shiny.router::route_link("help/data_management"))
+                list(name = translate(language, "user_side"), key = "user_side", links = list(
+                  list(name = translate(language, "data_management"), key = "user_data_management", url = shiny.router::route_link("help/user_data_management")),
+                  list(name = translate(language, "modules_plugins"), key = "user_modules_plugins", url = shiny.router::route_link("help/user_modules_plugins")),
+                  list(name = translate(language, "patient_level_data"), key = "user_patient_lvl_data", url = shiny.router::route_link("help/user_patient_lvl_data")),
+                  list(name = translate(language, "aggregated_data"), key = "user_aggregated_data", url = shiny.router::route_link("help/user_aggregated_data"))
+                ),
+                initialSelectedKey = "data_management", selectedKey = substr(page, nchar("help") + 2, 100), isExpanded = TRUE),
+                list(name = translate(language, "dev_side"), key = "dev_side", links = list(
+                  list(name = translate(language, "app_db"), key = "dev_app_db", url = shiny.router::route_link("help/dev_app_db")),
+                  list(name = translate(language, "users"), key = "dev_users", url = shiny.router::route_link("help/dev_users")),
+                  list(name = translate(language, "data_management"), key = "dev_data_management", url = shiny.router::route_link("help/dev_data_management")),
+                  list(name = translate(language, "modules_plugins"), key = "dev_modules_plugins", url = shiny.router::route_link("help/dev_modules_plugins"))
+                ),
+                initialSelectedKey = "data_management", selectedKey = substr(page, nchar("help") + 2, 100), isExpanded = TRUE)
               ))
             ),
             initialSelectedKey = "get_started",
@@ -245,7 +256,6 @@ mod_page_sidenav_server <- function(id, r, language){
     observeEvent(input$patient, {
       r$chosen_patient <- input$patient
       
-      output$test <- renderText(paste0("r$chosen_patient = ", r$chosen_patient))
       # Load stays of the patient & update dropdown
       shiny.fluent::updateDropdown.shinyInput(session, "stay", options = tibble_to_list(r$data_patients, "subject_id", "subject_id"))
     })
@@ -254,7 +264,6 @@ mod_page_sidenav_server <- function(id, r, language){
 
     # Update the two pages dropdowns (patient-level data page & aggregated data page)
     observeEvent(r$chosen_datamart, {
-      req(!is.na(r$chosen_datamart))
       datamarts_allowed <- 
         r$options %>% 
         dplyr::filter(category == "datamart" & name == "user_allowed_read" & value_num == r$user_id) %>%
@@ -265,7 +274,7 @@ mod_page_sidenav_server <- function(id, r, language){
     })
     
     observeEvent(r$chosen_study, {
-      req(!is.na(r$chosen_study))
+      req(input$datamart)
       studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
       studies_allowed <-
         r$options %>%
@@ -277,7 +286,7 @@ mod_page_sidenav_server <- function(id, r, language){
     })
     
     observeEvent(r$chosen_subset, {
-      req(!is.na(r$chosen_datamart))
+      req(input$study)
       subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
       shiny.fluent::updateDropdown.shinyInput(session, "subset", options = tibble_to_list(subsets, "id", "name", rm_deleted_rows = TRUE),
         value = r$chosen_subset)

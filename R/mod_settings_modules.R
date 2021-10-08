@@ -470,8 +470,7 @@ mod_settings_modules_server <- function(id, r, language){
         
           # When the thesaurus is chosen
           observeEvent(input[[paste0(prefix, "_module_options_add_thesaurus")]], {
-            r[[paste0(prefix, "_thesaurus_items")]] <- settings_modules_thesaurus_cache(r, prefix, page_id = id,
-              DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", input[[paste0(prefix, "_module_options_add_thesaurus")]], " AND deleted IS FALSE ORDER BY id")))
+            r[[paste0(prefix, "_thesaurus_items")]] <- settings_modules_thesaurus_cache(r, prefix, page_id = id, thesaurus_id = input[[paste0(prefix, "_module_options_add_thesaurus")]])
             
             # Reset items dropdown
             shiny.fluent::updateDropdown.shinyInput(session, paste0(prefix, "_module_options_add_thesaurus_items_selected"), value = NULL, options = list())
@@ -596,11 +595,14 @@ mod_settings_modules_server <- function(id, r, language){
                   last_id <<- last_id + 1
                   thesaurus_item_id <- as.integer(item)
                   thesaurus_item <- r[[paste0(prefix, "_thesaurus_items")]] %>% dplyr::filter(id == thesaurus_item_id)
-                  thesaurus_item_display_name <- as.character(thesaurus_item %>% dplyr::select(display_name) %>% dplyr::pull())
-                  thesaurus_item_unit <- as.character(thesaurus_item %>% dplyr::select(unit) %>% dplyr::pull())
+                  # If display name is empty, take original thesaurus name
+                  thesaurus_item_display_name <- thesaurus_item %>% 
+                    dplyr::mutate(final_name = dplyr::case_when(display_name != "" ~ display_name, TRUE ~ name)) %>%
+                    dplyr::select(final_name) %>% dplyr::pull() %>% as.character()
+                  thesaurus_item_unit <- thesaurus_item %>% dplyr::select(unit) %>% dplyr::pull() %>% as.character()
   
                   new_data <<- new_data %>% dplyr::bind_rows(
-                    tibble::tribble(~id, ~name, ~group_id,  ~module_id, ~plugin_id, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~display_order, ~creator_id, ~datetime, ~deleted,
+                  tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~display_order, ~creator_id, ~datetime, ~deleted,
                       last_id, new_name, last_group_id + 1, module_id, plugin_id, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE))
                 })
   

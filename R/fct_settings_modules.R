@@ -24,9 +24,11 @@ settings_modules_get_dropdowns <- function(prefix, module_type){
         "family" = ""))
 }
 
-settings_modules_thesaurus_cache <- function(r, prefix, page_id, data){
+settings_modules_thesaurus_cache <- function(r, prefix, page_id, thesaurus_id){
   
   if (prefix == "patient_lvl"){
+    
+    data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE ORDER BY id"))
     
     data %>%
       dplyr::left_join(
@@ -38,28 +40,38 @@ settings_modules_thesaurus_cache <- function(r, prefix, page_id, data){
     reload_cache <- FALSE
     if ("action" %not_in% names(data)) reload_cache <- TRUE
     if ("action" %in% names(data)){
-      if (NA_character_ %in% data$action) reload_cache <- TRUE
+      if (NA_character_ %in% data$action | "" %in% data$action) reload_cache <- TRUE
     }
     
     if (reload_cache){
+      # Reload data
+      data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE ORDER BY id"))
+
+      # Make action column
       data <- data %>% dplyr::rowwise() %>% dplyr::mutate(action = as.character(
         tagList(
           shiny::actionButton(paste0(prefix, "_select_", id), "", icon = icon("plus"),
             onclick = paste0("Shiny.setInputValue('", page_id, "-", prefix, "_item_selected', this.id, {priority: 'event'})")),
           shiny::actionButton(paste0(prefix, "_remove_", id), "", icon = icon("minus"),
             onclick = paste0("Shiny.setInputValue('", page_id, "-", prefix, "_item_removed', this.id, {priority: 'event'})")))))
-      
-      last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM cache") %>% dplyr::pull()
-      DBI::dbAppendTable(r$db, "cache",
-       data %>% 
-         dplyr::transmute(
-           category = "modules_patient_lvl_thesaurus_items",
-           link_id = id,
-           value = action,
-           datetime = as.character(Sys.time())) %>%
-         dplyr::mutate(id = 1:dplyr::n() + last_row) %>%
-         dplyr::relocate(id)
-      )
+
+      # # Delete old cache
+      DBI::dbSendStatement(r$db, "DELETE FROM cache WHERE category = 'modules_patient_lvl_thesaurus_items'") -> query
+      DBI::dbClearResult(query)
+      # 
+      last_row <- as.integer(DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM cache") %>% dplyr::pull())
+      data_insert <-
+        data %>%
+        dplyr::transmute(
+          category = "modules_patient_lvl_thesaurus_items",
+          link_id = id,
+          value = action,
+          datetime = as.character(Sys.time()))
+      data_insert$id <- seq.int(nrow(data_insert)) + last_row
+      data_insert <- data_insert %>% dplyr::relocate(id)
+
+      # Add data in cache table
+      DBI::dbAppendTable(r$db, "cache", data_insert)
     }
   }
   

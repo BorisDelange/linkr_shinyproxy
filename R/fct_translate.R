@@ -509,6 +509,8 @@ get_translations <- function(){
             "FR", "unit", "Unité",
             "EN", "item_id", "Item ID",
             "FR", "item_id", "ID de l'item",
+            "EN", "item_name", "Item name",
+            "FR", "item_name", "Nom de l'item",
             "EN", "ui", "UI",
             "FR", "ui", "UI",
             "EN", "server", "Server",
@@ -544,7 +546,15 @@ get_translations <- function(){
             "EN", "error_run_plugin_ui_code", "Error when running plugin's UI code",
             "FR", "error_run_plugin_ui_code", "Erreur à l'éxécution du code de l'interface utilisateur du plugin",
             "EN", "error_run_plugin_server_code", "Error when running plugin's server code",
-            "FR", "error_run_plugin_server_code", "Erreur à l'éxécution du code serveur du plugin"
+            "FR", "error_run_plugin_server_code", "Erreur à l'éxécution du code serveur du plugin",
+            "EN", "valuenum", "Numeric value",
+            "FR", "valuenum", "Valeur numérique",
+            "EN", "value", "Value",
+            "FR", "value", "Valeur",
+            "EN", "user_side", "User side",
+            "FR", "user_side", "En tant qu'utilisateur",
+            "EN", "dev_side", "Developper side",
+            "FR", "dev_side", "En tant que développeur"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
