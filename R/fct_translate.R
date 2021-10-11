@@ -556,7 +556,27 @@ get_translations <- function(){
             "EN", "dev_side", "Developper side",
             "FR", "dev_side", "En tant que développeur",
             "EN", "libraries_needed_plugin", "Librairies needed to run this plugin",
-            "FR", "libraries_needed_plugin", "Librairies nécessaires pour utiliser ce plugin" 
+            "FR", "libraries_needed_plugin", "Librairies nécessaires pour utiliser ce plugin",
+            "EN", "valid_col_names_are", "Column names are not valid. Valid col names are : ",
+            "FR", "valid_col_names_are", "Noms de colonnes non valides. Les noms requis sont : ",
+            "EN", "column", "Column",
+            "FR", "column", "La colonne",
+            "EN", "type_must_be_integer", "type must be integer",
+            "FR", "type_must_be_integer", "doit être de type integer",
+            "EN", "type_must_be_character", "type must be character",
+            "FR", "type_must_be_character", "doit être de type character",
+            "EN", "type_must_be_numeric", "type must be numeric",
+            "FR", "type_must_be_numeric", "doit être de type numeric",
+            "EN", "type_must_be_datetime", "type must be datetime",
+            "FR", "type_must_be_datetime", "doit être de type datetime",
+            "EN", "error_saving_csv", "Error saving CSV file",
+            "FR", "error_saving_csv", "Erreur dans l'enregistrement du fichier CSV",
+            "EN", "var_type_not_valid", "Variable 'type' is not valid",
+            "FR", "var_type_not_valid", "La variable 'type' n'est pas valide",
+            "EN", "error_transforming_tibble", "Error transforming data to tibble",
+            "FR", "error_transforming_tibble", "Erreur dans la conversion de la variable au format tibble",
+            "EN", "error_loading_csv", "Error loading CSV file",
+            "FR", "error_loading_csv", "Erreur lors du chargement du fichier CSV"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
