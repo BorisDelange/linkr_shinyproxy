@@ -91,3 +91,7 @@ coalesce2 <- function(type, x){
   }
   result
 }
+
+is_datetime <- function(datetime){
+  tryCatch(!is.na(lubridate::ymd_hms(datetime)), error = function(e) {FALSE})
+}

@@ -166,5 +166,6 @@ get_db <- function(){
   DBI::dbGetQuery(db, "SELECT value FROM options WHERE category = 'distant_db' AND name = 'connection_type'") %>%
     dplyr::pull() -> choice_distant_db
   if (choice_distant_db == "distant") db <- get_distant_db(db)
+  
   db
 }
