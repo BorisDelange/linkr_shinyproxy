@@ -15,9 +15,7 @@ mod_patient_and_aggregated_data_ui <- function(id, language, page_style, page){
     div(class = "main",
       # uiOutput(ns("breadcrumb")),
       shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")), shiny::uiOutput(ns("warnings4")),
-      uiOutput(ns("main")),
-      tableOutput(ns("test")),
-      textOutput(ns("test2"))
+      uiOutput(ns("main"))
     ) -> result
   }
   result
@@ -155,39 +153,34 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
         req(nrow(r$patient_lvl_modules > 0) & "level" %in% names(r$patient_lvl_modules))
         
         # At initialization, input$current_tab is null
-        if (is.null(input$current_tab)){
-          
-          # # First module shown
-          first_module_shown <- r$patient_lvl_modules %>% dplyr::filter(level == 1) %>% dplyr::slice(1)
-          if (max(r$patient_lvl_modules$level) >= 2){
-            sapply(2:max(r$patient_lvl_modules$level), function(current_level){
-              children <- r$patient_lvl_modules %>% dplyr::filter(level == current_level, parent_module_id == first_module_shown$id) %>% dplyr::slice(1)
-              if (nrow(children) > 0) first_module_shown <<- children
-            })
-          }
-          
-          # result <- paste0("ID = ", first_module_shown$id)
-          
-          # If we are at level one, show all levels one
-          if (first_module_shown$level == 1){
-            shown_modules <- r$patient_lvl_modules %>% dplyr::filter(level == 1)
-          }
-          
-          # Else, show only current & those who has same level & same parent
-          if (first_module_shown$level > 1){
-            shown_modules_temp <- r$patient_lvl_modules %>% dplyr::filter(level == first_module_shown$level & parent_module_id == first_module_shown$parent_module_id)
-            if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
-            if (nrow(shown_modules_temp) == 0) shown_modules <- first_module_shown
-          }
+        # if (is.null(input$current_tab)){
+        
+        # First module shown
+        first_module_shown <- r$patient_lvl_modules %>% dplyr::filter(level == 1) %>% dplyr::slice(1)
+        if (max(r$patient_lvl_modules$level) >= 2){
+          sapply(2:max(r$patient_lvl_modules$level), function(current_level){
+            children <- r$patient_lvl_modules %>% dplyr::filter(level == current_level, parent_module_id == first_module_shown$id) %>% dplyr::slice(1)
+            if (nrow(children) > 0) first_module_shown <<- children
+          })
         }
         
+        # If we are at level one, show all levels one
+        if (first_module_shown$level == 1){
+          shown_modules <- r$patient_lvl_modules %>% dplyr::filter(level == 1)
+        }
+        
+        # Else, show only current & those who has same level & same parent
+        if (first_module_shown$level > 1){
+          shown_modules_temp <- r$patient_lvl_modules %>% dplyr::filter(level == first_module_shown$level & parent_module_id == first_module_shown$parent_module_id)
+          if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
+          if (nrow(shown_modules_temp) == 0) shown_modules <- first_module_shown
+        }
+        # }
+        
         if (!is.null(input$current_tab)){
-          # has_children <- r$patient_lvl_modules %>% dplyr::filter(parent_module_id == input$current_tab)
-          # current_level <- r$patient_lvl_modules %>% dplyr::filter(id == input$current_tab) %>% dplyr::pull(level)
-          # if (current_level == 1){
-          #   show_modules <- r$patient_lvl_modules %>% dplyr::filter(level == 1)
-          # }
-          # if (current_level != 1){
+          # If value = 0, go back to first level
+          # if (input$current_tab == 0)
+          
           shown_modules_temp <- r$patient_lvl_modules %>% dplyr::filter(parent_module_id == input$current_tab)
           if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
           if (nrow(shown_modules_temp) == 0){
@@ -198,21 +191,58 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
               shown_modules <- r$patient_lvl_modules %>% dplyr::filter(level == 1)
             }
           }
-          # }
         }
         
+        # Currently selected tab
         selected_key <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
         if (!is.null(input$current_tab)){
           if (input$current_tab %in% shown_modules$id) selected_key <- input$current_tab
+        }
+
+        nb_levels <- max(shown_modules$level)
+
+        # First level
+        is_current_item <- FALSE
+        if (nb_levels == 1) is_current_item <- TRUE
+        items <- list(
+          list(key = "main", text = translate(language, "patient_level_data"), href = "#!/patient_level_data", isCurrentItem = is_current_item,
+               onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', ", first_module_shown$id, ")"))))
+
+        # Other levels
+        if (nb_levels >= 2){
+          # Remove last level
+          modules_tree <- r$patient_lvl_modules %>% dplyr::filter(level < nb_levels)
+          modules_tree2 <- r$patient_lvl_modules %>% dplyr::filter(level < nb_levels)
+          current_parent <- NA_integer_
+          sapply(nb_levels:1, function(current_level){
+            if (!is.na(current_parent)){
+              modules_tree <<- modules_tree %>% dplyr::filter(level != current_level | id == current_parent)
+              current_parent <<- r$patient_lvl_modules %>% dplyr::filter(id == current_parent) %>% dplyr::pull(parent_module_id)
+            }
+            if (is.na(current_parent)) current_parent <<- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(parent_module_id)
+          })
+          modules_tree <- modules_tree %>% dplyr::arrange(level)
+          sapply(1:nrow(modules_tree), function(i){
+            is_current_item <- FALSE
+            if (modules_tree[[i, "level"]] == nb_levels) is_current_item <- TRUE
+            items <<- rlist::list.append(items, list(
+              key = modules_tree[[i, "name"]], text = modules_tree[[i, "name"]], href = "#!/patient_level_data", isCurrentItem = is_current_item,
+              onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', ", modules_tree[[i, "id"]], ")"))
+            ))
+          })
         }
         
         shown_tabs <- tagList()
         sapply(1:nrow(shown_modules), function(i){
           shown_tabs <<- tagList(shown_tabs, shiny.fluent::PivotItem(id = shown_modules[[i, "id"]], itemKey = shown_modules[[i, "id"]], headerText = shown_modules[[i, "name"]], "test"))
         })
-        shiny.fluent::Pivot(
-          onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          selectedKey = selected_key, shown_tabs
+        
+        tagList(
+          shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
+          shiny.fluent::Pivot(
+            onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+            selectedKey = selected_key, shown_tabs
+          )
         )
       })
       
