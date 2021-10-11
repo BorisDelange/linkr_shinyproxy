@@ -576,7 +576,15 @@ get_translations <- function(){
             "EN", "error_transforming_tibble", "Error transforming data to tibble",
             "FR", "error_transforming_tibble", "Erreur dans la conversion de la variable au format tibble",
             "EN", "error_loading_csv", "Error loading CSV file",
-            "FR", "error_loading_csv", "Erreur lors du chargement du fichier CSV"
+            "FR", "error_loading_csv", "Erreur lors du chargement du fichier CSV",
+            "EN", "no_study_available", "No study available",
+            "FR", "no_study_available", "Pas d'étude disponible",
+            "EN", "no_subset_available", "No subset available",
+            "FR", "no_subset_available", "Pas de subset disponible",
+            "EN", "no_patient_available", "No patient available",
+            "FR", "no_patient_available", "Pas de patient disponible",
+            "EN", "no_stay_available", "No stay available",
+            "FR", "no_stay_available", "Pas de séjour disponible"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

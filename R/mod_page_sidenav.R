@@ -227,37 +227,55 @@ mod_page_sidenav_server <- function(id, r, language){
         dplyr::filter(category == "study" & link_id %in% studies$id & name == "user_allowed_read" & value_num == r$user_id) %>%
         dplyr::pull(link_id)
       studies <- studies %>% dplyr::filter(id %in% studies_allowed)
-      # Update dropdowns
-      shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE))
-      shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list())
-      shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list())
-      shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list())
-      # Reset r$chosen_study
+      
+      # Reset r$chosen_study (to reset main display)
       r$chosen_study <- NA_integer_
+      
       # Save value in r$chosen_dropdown, to update patient-level data dropdowns AND aggregated data dropdowns
       r$chosen_datamart <- input$datamart
       
-      # Load data of the datamart
-      code <- DBI::dbGetQuery(r$db, paste0("SELECT code FROM code WHERE category = 'datamart' AND link_id = ", input$datamart)) %>% dplyr::pull()
-      try(eval(parse(text = code)))
+      # Update dropdowns
+      shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL)
+      shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
+      shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
+      
+      # If studies is empty...
+      if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available"))
+      
+      if (nrow(studies) > 0){
+        
+        # Update dropdowns
+        shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE))
+        
+        # Load data of the datamart
+        code <- DBI::dbGetQuery(r$db, paste0("SELECT code FROM code WHERE category = 'datamart' AND link_id = ", input$datamart)) %>% dplyr::pull()
+        try(eval(parse(text = code)))
+      }
     })
     
     observeEvent(input$study, {
+      r$chosen_study <- input$study
+      
       # Subsets depending on the chosen study
       subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
+      
       # Update dropdowns
-      shiny.fluent::updateDropdown.shinyInput(session, "subset", options = tibble_to_list(subsets, "id", "name", rm_deleted_rows = TRUE))
-      shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list())
-      shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list())
-      r$chosen_study <- input$study
+      shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
+      shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
+      
+      # If subsets si empty...
+      if (nrow(subsets) == 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available"))
+      if (nrow(subsets) > 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = tibble_to_list(subsets, "id", "name", rm_deleted_rows = TRUE))
     })
     
     observeEvent(input$subset, {
       r$chosen_subset <- input$subset
       
-      # Update dropdowns
-      shiny.fluent::updateDropdown.shinyInput(session, "patient", options = tibble_to_list(r$data_patients, "subject_id", "subject_id"))
-      shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list())
+      # Update dropdown
+      shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
+      
+      if (nrow(r$data_patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))
+      if (nrow(r$data_patients) > 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = tibble_to_list(r$data_patients, "subject_id", "subject_id"))
     })
     
     observeEvent(input$patient, {
@@ -281,7 +299,7 @@ mod_page_sidenav_server <- function(id, r, language){
     })
     
     observeEvent(r$chosen_study, {
-      req(input$datamart)
+      req(input$datamart & !is.na(r$chosen_study))
       studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
       studies_allowed <-
         r$options %>%
