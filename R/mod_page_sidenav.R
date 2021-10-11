@@ -227,8 +227,13 @@ mod_page_sidenav_server <- function(id, r, language){
         dplyr::filter(category == "study" & link_id %in% studies$id & name == "user_allowed_read" & value_num == r$user_id) %>%
         dplyr::pull(link_id)
       studies <- studies %>% dplyr::filter(id %in% studies_allowed)
-      # Update dropdown
+      # Update dropdowns
       shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE))
+      shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list())
+      shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list())
+      shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list())
+      # Reset r$chosen_study
+      r$chosen_study <- NA_integer_
       # Save value in r$chosen_dropdown, to update patient-level data dropdowns AND aggregated data dropdowns
       r$chosen_datamart <- input$datamart
       
@@ -240,17 +245,19 @@ mod_page_sidenav_server <- function(id, r, language){
     observeEvent(input$study, {
       # Subsets depending on the chosen study
       subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
-      # Update dropdown
+      # Update dropdowns
       shiny.fluent::updateDropdown.shinyInput(session, "subset", options = tibble_to_list(subsets, "id", "name", rm_deleted_rows = TRUE))
+      shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list())
+      shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list())
       r$chosen_study <- input$study
     })
     
     observeEvent(input$subset, {
       r$chosen_subset <- input$subset
       
-      # Load patients of the subset & update dropdown
-      # patients <- r$data_patients %>% dplyr::filter()
+      # Update dropdowns
       shiny.fluent::updateDropdown.shinyInput(session, "patient", options = tibble_to_list(r$data_patients, "subject_id", "subject_id"))
+      shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list())
     })
     
     observeEvent(input$patient, {

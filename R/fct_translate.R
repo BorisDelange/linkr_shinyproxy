@@ -554,7 +554,9 @@ get_translations <- function(){
             "EN", "user_side", "User side",
             "FR", "user_side", "En tant qu'utilisateur",
             "EN", "dev_side", "Developper side",
-            "FR", "dev_side", "En tant que développeur"
+            "FR", "dev_side", "En tant que développeur",
+            "EN", "libraries_needed_plugin", "Librairies needed to run this plugin",
+            "FR", "libraries_needed_plugin", "Librairies nécessaires pour utiliser ce plugin" 
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
