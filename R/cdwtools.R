@@ -8,7 +8,7 @@
 #' @importFrom shiny shinyApp
 #' @importFrom golem with_golem_options 
 #' @importFrom magrittr %>%
-run_app <- function(
+cdwtools <- function(
   onStart = NULL,
   options = list(), 
   enableBookmarking = NULL,

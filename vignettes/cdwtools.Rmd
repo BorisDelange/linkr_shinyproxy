@@ -1,0 +1,28 @@
+---
+title: "Get started"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{cdwtools}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# First launch
+
+When cdwtools package is installed, run the Shiny application with :
+
+```r
+cdwtools()
+```
+
+First connection : user ... App ...
+Screenshots...
+
+The first time you launch the application, a **local database** is created, on the library directory.

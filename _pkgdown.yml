@@ -1,0 +1,13 @@
+articles:
+- title: FR - Aide
+  navbar: FR - Aide
+  contents:
+  - FR_user_help
+  - FR_developper_help
+  - FR_use_case_mimic_iv
+- title: EN - Help
+  navbar: EN - Help
+  contents:
+  - EN_user_help
+  - EN_developper_help
+  - EN_use_case_mimic_iv

@@ -12,7 +12,6 @@ Imports:
     DBI,
     dplyr,
     DT,
-    dygraphs,
     ggplot2,
     golem,
     magrittr,
@@ -31,9 +30,7 @@ Imports:
     shinyFeedback,
     shinyjs,
     shinythemes,
-    spelling,
-    vistime,
-    vroom
+    spelling
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
@@ -42,7 +39,9 @@ BugReports: https://github.com/BorisDelange/cdwtools/issues
 Suggests:
     rmarkdown,
     knitr,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    dygraphs,
+    vistime
 Config/testthat/edition: 3
 Language: en-US
 Remotes: 

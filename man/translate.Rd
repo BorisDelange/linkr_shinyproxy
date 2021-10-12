@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_translate.R
 \name{translate}
 \alias{translate}
-\title{Translates a word}
+\title{Translate a word}
 \usage{
 translate(language, reference_word)
 }
@@ -19,9 +19,9 @@ Translates a reference word to the requested language
 }
 \examples{
 words <- dplyr::tribble(~language, ~reference_word, ~translated_word,
-"FR", "Settings", "Parametres",
-"IT", "Settings", "Impostazioni")
+"FR", "settings", "Parametres",
+"IT", "settings", "Impostazioni")
 
-translate("ESP", words, "Settings")
-translate("FR", words, "Settings")
+cdwtools::translate("IT", words, "settings")
+cdwtools::translate("FR", words, "settings")
 }

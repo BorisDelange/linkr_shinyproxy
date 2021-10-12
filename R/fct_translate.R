@@ -1,4 +1,4 @@
-#' Translates a word
+#' Translate a word
 #'
 #' @param language A two-letters or three-letters character indicating the requested language
 #' @param words A tibble containing the translations
@@ -7,11 +7,11 @@
 #' @return Returns the translated word (character)
 #' @examples
 #' words <- dplyr::tribble(~language, ~reference_word, ~translated_word,
-#' "FR", "Settings", "Parametres",
-#' "IT", "Settings", "Impostazioni")
+#' "FR", "settings", "Parametres",
+#' "IT", "settings", "Impostazioni")
 #' 
-#' translate("ESP", words, "Settings")
-#' translate("FR", words, "Settings")
+#' cdwtools::translate("IT", words, "settings")
+#' cdwtools::translate("FR", words, "settings")
 
 translate <- function(language, reference_word){
   words <- get_translations()
@@ -227,11 +227,11 @@ get_translations <- function(){
             "FR", "thesaurus_create", "Créer un thésaurus",
             "EN", "thesaurus_management", "Thesaurus management",
             "FR", "thesaurus_management", "Gestion des thésaurus",
-            "EN", "thesaurus_management_card", "Thesaurus mngmt",
+            "EN", "thesaurus_management_card", "Thesaurus management",
             "FR", "thesaurus_management_card", "Gestion des thésaurus",
             "EN", "thesaurus_items", "Items",
             "FR", "thesaurus_items", "Items",
-            "EN", "thesaurus_items_management_card", "Items mngmt",
+            "EN", "thesaurus_items_management_card", "Items management",
             "FR", "thesaurus_items_management_card", "Items des thésaurus",
             "EN", "thesaurus_items_management", "Items management",
             "FR", "thesaurus_items_management", "Gestion des items",
@@ -584,7 +584,13 @@ get_translations <- function(){
             "EN", "no_patient_available", "No patient available",
             "FR", "no_patient_available", "Pas de patient disponible",
             "EN", "no_stay_available", "No stay available",
-            "FR", "no_stay_available", "Pas de séjour disponible"
+            "FR", "no_stay_available", "Pas de séjour disponible",
+            "EN", "thesaurus_no_items_to_insert", "There's not any new items to insert in the database",
+            "FR", "thesaurus_no_items_to_insert", "Pas de nouvel item à insérer dans la base de données",
+            "EN", "error_get_actual_items", "Error with getting actual thesaurus items",
+            "FR", "error_get_actual_items", "Erreur lors du chargement des items actuels du thésaurus",
+            "EN", "thesaurus_error_append_table", "Error adding new thesaurus items to database table",
+            "FR", "thesaurus_error_append_table", "Erreur lors de l'ajout des nouveaux items dans la table du thésaurus"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
