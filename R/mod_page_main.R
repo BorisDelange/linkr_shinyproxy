@@ -334,7 +334,11 @@ mod_page_main_ui <- function(id, language, page_style, page){
     ##########################################
     
     if (grepl("^help", page)){
+      # mod_help_ui("help", language, page_style, page) -> result
       mod_help_ui(stringr::str_replace(page, "/", "_"), language, page_style, page) -> result
+      # html_code <- browseURL(paste0(golem::get_golem_wd(), "/inst/app/www/help_pages/EN_dev_data_management.html"))
+      # tags$iframe(src = paste0(golem::get_golem_wd(), "/inst/app/www/help_pages/EN_dev_data_management.html"),
+      #             height = "100%", width = "100%") -> result
     }
   }
   

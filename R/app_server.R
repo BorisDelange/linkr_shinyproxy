@@ -61,5 +61,6 @@ app_server <- function(page_style, router, language){
     mod_settings_plugins_server("settings_plugins", r, language)
     mod_settings_modules_server("settings_patient_lvl_modules", r, language)
     mod_settings_modules_server("settings_aggregated_modules", r, language)
+    mod_help_server("help_dev_data_management")
   }
 }

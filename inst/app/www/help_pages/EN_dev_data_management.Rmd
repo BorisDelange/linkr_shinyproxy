@@ -1,6 +1,56 @@
 ---
-output: html_fragment
+output: html_document
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+# rmarkdown::render("inst/app/www/help_pages/EN_dev_data_management.Rmd", output_format = "html_fragment", output_file = "EN_dev_data_management.html")
 ```
+
+# 1) Data sources
+
+# 2) Datamarts
+
+In the 'Datamarts' section, you create and manage datamarts available in the application.
+
+## Create a datamart
+
+To create a datamart, the name must be unique. You can add a short description, which is optional.
+Choose a data source : it links the thesaurus (one thesaurus is attached to one or multiple data source(s)) and the datamart.
+
+## Datamarts management
+
+You can edit name & description by double-clicking on the field, edit data source by changing the value of the dropdown. The other fields cannot be updated. In the action column, you can delete a datamart, edit options or edit code.
+
+## Edit datamart code
+
+Edit a datamart code with the ShinyAce editor.
+
+The code has to be as follows :
+
+```{r eval = FALSE, class.source = "bg-success"}
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost", port = 5432, user = "admin", password = "admin")
+
+patients <- function(){
+    DBI::dbGetQuery(con, paste0("SELECT * FROM mimic_core.patients LIMIT 10")) %>%
+    dplyr::select(patient_id = subject_id, gender, age = anchor_age, dod)
+}
+create_datamart(r = r, datamart_id = 3, data = patients(), type = "patients", save_as_csv = TRUE, rewrite = FALSE, language = "FR")
+
+DBI::dbDisconnect(con)
+```
+
+There's five data variables to create : `patients`, `stays`, `labs_vitals`, `text` and `orders`.
+
+For each data variable, you have to :
+- create a function, containing code that allows to get data
+- run `create_datamart` function, with the function as `data` argument
+
+The advantage to store the code that allows to get data in a function is that this code is not run each time a user uses the datamart. If you set the argument `save_as_csv` to TRUE (and `rewrite` to FALSE), then the code is run only the first time the script is excecuted.
+
+See `create_datamart` documentation for more informations (`?create_datamart`).
+
+# 3) Studies
+
+# 4) Subsets
+
+# 5) Thesaurus
