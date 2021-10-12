@@ -590,7 +590,11 @@ get_translations <- function(){
             "EN", "error_get_actual_items", "Error with getting actual thesaurus items",
             "FR", "error_get_actual_items", "Erreur lors du chargement des items actuels du thésaurus",
             "EN", "thesaurus_error_append_table", "Error adding new thesaurus items to database table",
-            "FR", "thesaurus_error_append_table", "Erreur lors de l'ajout des nouveaux items dans la table du thésaurus"
+            "FR", "thesaurus_error_append_table", "Erreur lors de l'ajout des nouveaux items dans la table du thésaurus",
+            "EN", "import_datamart_success", "Datamart imported with success",
+            "FR", "import_datamart_success", "Datamart importé avec succès",
+            "EN", "import_thesaurus_success", "Thesaurus imported with success",
+            "FR", "import_thesaurus_success", "Thesaurus importé avec succès"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }
