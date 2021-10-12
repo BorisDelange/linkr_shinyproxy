@@ -24,7 +24,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
       "settings/datamarts", "data_source",
       "settings/studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
       "settings/subsets", "study",
-      "settings/thesaurus", "")
+      "settings/thesaurus", "data_source")
     
     ##########################################
     # Settings / Data sources                #
@@ -125,7 +125,8 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
         )),
         settings_creation_card(
           language, ns, title = "create_thesaurus", prefix = "thesaurus",
-          textfields = c("name", "description"), textfields_width = "300px"),
+          textfields = c("name", "description"), textfields_width = "300px",
+          dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
         settings_datatable_card(language, ns, title = "thesaurus_management", prefix = "thesaurus"),
         settings_datatable_card(language, ns, title = "thesaurus_items_management", prefix = "thesaurus_items"),
         shiny::uiOutput(ns("thesaurus_edit_code_card")),
@@ -169,7 +170,7 @@ mod_settings_data_management_server <- function(id, r, language){
       "datamarts", "data_source",
       "studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
       "subsets", c("datamart", "study"),
-      "thesaurus", "")
+      "thesaurus", "data_source")
     
     # Prefix used for inputs
     # It also corresponds to database tables names
@@ -219,11 +220,17 @@ mod_settings_data_management_server <- function(id, r, language){
         distinct_names <- DBI::dbGetQuery(r$db, paste0("SELECT DISTINCT(name) FROM ", prefix, " WHERE deleted IS FALSE")) %>% dplyr::pull()
         
         if (new_name %in% distinct_names){
-          output$warnings2 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "name_already_used"), messageBarType = 3), style = "margin-top:10px;"))
-          shinyjs::show("warnings2")
-          shinyjs::delay(3000, shinyjs::hide("warnings2"))
+          output$message_bar2 <- message_bar(2, "name_already_used", "severeWarning", language)
         }
         req(new_name %not_in% distinct_names)
+        
+        # Check if dropdowns are not empty
+        dropdowns_check <- TRUE
+        sapply(dropdowns %>% dplyr::filter(page_name == prefix) %>% dplyr::pull(dropdowns), function(dropdown){
+          if (input[[paste0(prefix, "_", dropdown)]] == "") dropdowns_check <<- FALSE
+        })
+        if (!dropdowns_check) output$message_bar2 <- message_bar(2, "dropdown_empty", "severeWarning", language)
+        req(dropdowns_check)
         
         last_row <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(id), 0) FROM ", prefix)) %>% dplyr::pull()
         
@@ -270,11 +277,8 @@ mod_settings_data_management_server <- function(id, r, language){
         shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_creation_card_toggle"), value = FALSE)
         shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_datatable_card_toggle"), value = TRUE)
         
-        message <- paste0(id_get_other_name(prefix, "singular_form"), "_added")
-        
-        output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 4), style = "margin-top:10px;"))
-        shinyjs::show("warnings1")
-        shinyjs::delay(3000, shinyjs::hide("warnings1"))
+
+        output$message_bar1 <- message_bar(1, paste0(id_get_other_name(prefix, "singular_form"), "_added"), "success", language)
         
         # Reset textfields
         sapply(c("name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_", name), value = ""))
@@ -312,7 +316,7 @@ mod_settings_data_management_server <- function(id, r, language){
                 "datamarts" = c("data_source_id" = "data_sources"),
                 "studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
                 "subsets" = c("study_id" = "studies"),
-                "thesaurus" = "",
+                "thesaurus" = c("data_source_id" = "data_sources"),
                 "thesaurus_items" = ""),
               action_buttons = switch(prefix,
                 "data_sources" = "delete",
@@ -409,13 +413,7 @@ mod_settings_data_management_server <- function(id, r, language){
             duplicates <- r[[paste0(prefix, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
               dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
           }
-          if (duplicates > 0){
-            output$warnings1 <- renderUI({
-              div(shiny.fluent::MessageBar(translate(language, "modif_names_duplicates"), messageBarType = 3), style = "margin-top:10px;")
-            })
-            shinyjs::show("warnings1")
-            shinyjs::delay(3000, shinyjs::hide("warnings1"))
-          }
+          if (duplicates > 0) output$message_bar1 <- message_bar(1, "modif_names_duplicates", "severeWarning", language)
           req(duplicates == 0)
           
           # Save changes in database
@@ -429,11 +427,7 @@ mod_settings_data_management_server <- function(id, r, language){
           # r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::mutate(modified = FALSE)
           
           # Notification to user
-          output$warnings2 <- renderUI({
-            div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
-          })
-          shinyjs::show("warnings2")
-          shinyjs::delay(3000, shinyjs::hide("warnings2"))
+          output$message_bar2 <- message_bar(2, "modif_saved", "success", language)
         })
     
       ##########################################
@@ -467,12 +461,7 @@ mod_settings_data_management_server <- function(id, r, language){
           r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::mutate(modified = FALSE)
           
           # Notification to user
-          message <- paste0(id_get_other_name(prefix, "singular_form"), "_deleted")
-          output$warnings3 <- renderUI({
-            div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
-          })
-          shinyjs::show("warnings3")
-          shinyjs::delay(3000, shinyjs::hide("warnings3"))
+          outputmessage_bar3 <- message_bar(3, paste0(id_get_other_name(prefix, "singular_form"), "_deleted"), "severeWarning", language)
         })
       
       ##########################################
@@ -530,11 +519,7 @@ mod_settings_data_management_server <- function(id, r, language){
             }
           }
           
-          output$warnings4 <- renderUI({
-            div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
-          })
-          shinyjs::show("warnings4")
-          shinyjs::delay(3000, shinyjs::hide("warnings4"))
+          output$message_bar4 <- message_bar(4, "modif_saved", "success", language)
         })
       
       ##########################################
@@ -563,11 +548,7 @@ mod_settings_data_management_server <- function(id, r, language){
         DBI::dbClearResult(query)
         r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
         
-        output$warnings4 <- renderUI({
-          div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
-        })
-        shinyjs::show("warnings4")
-        shinyjs::delay(3000, shinyjs::hide("warnings4"))
+        output$message_bar4 <- message_bar(4, "modif_saved", "success", language)
       })
       
       observeEvent(input[[paste0(prefix, "_execute_code")]], {

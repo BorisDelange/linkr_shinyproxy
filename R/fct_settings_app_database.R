@@ -34,8 +34,8 @@ db_create_tables <- function(db){
       datetime = character(), deleted = logical()))
   
   db_create_table(db, "data_sources",
-    tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
-      deleted = logical()))
+    tibble::tibble(id = integer(), name = character(), description = character(), thesaurus_id = integer(), creator_id = integer(),
+      datetime = character(), deleted = logical()))
   
   db_create_table(db, "users_accesses_details",
     tibble::tibble(id = integer(), link_id = integer(), action = character(), value = character(), value_num = numeric(),

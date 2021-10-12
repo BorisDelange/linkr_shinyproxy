@@ -166,11 +166,7 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
               libraries_needed <- paste0(translate(language, "libraries_needed_plugin"), " : ", 
                 strsplit(code_ui_card, " ") %>% unlist() %>% grep("::", ., value = TRUE) %>% sub("::.*", "", .) %>% sub("\n", "", .) %>% toString(), ".")
               plugin_name <- r$plugins %>% dplyr::filter(id == plugin_id) %>% dplyr::pull(name)
-              output$warnings1 <<- renderUI(div(shiny.fluent::MessageBar(
-                paste0(translate(language, "error_run_plugin_ui_code"), " (group_id = ", loop_group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, "). ", libraries_needed),
-                messageBarType = 3), style = "margin-top:10px;"))
-              shinyjs::show("warnings1")
-              shinyjs::delay(10000, shinyjs::hide("warnings1"))
+              output$message_bar1 <- message_bar(1, paste0(translate(language, "error_run_plugin_ui_code"), " (group_id = ", loop_group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, "). ", libraries_needed), "severeWarning", language)
             })
           })
         }
@@ -221,11 +217,7 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
           },
           error = function(e){
             plugin_name <- r$plugins %>% dplyr::filter(id == plugin_id) %>% dplyr::pull(name)
-            output$warnings2 <<- renderUI(div(shiny.fluent::MessageBar(
-              paste0(translate(language, "error_run_plugin_server_code"), " (group_id = ", loop_group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, ")"),
-              messageBarType = 3), style = "margin-top:10px;"))
-            shinyjs::show("warnings2")
-            shinyjs::delay(10000, shinyjs::hide("warnings2"))
+            output$message_bar2 <- message_bar(1, paste0(translate(language, "error_run_plugin_server_code"), " (group_id = ", loop_group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, ")"), "severeWarning", language) 
           }
           )
         })

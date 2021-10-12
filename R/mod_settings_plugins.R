@@ -102,11 +102,7 @@ mod_settings_plugins_server <- function(id, r, language){
       # Check if chosen name is already used
       distinct_names <- DBI::dbGetQuery(r$db, "SELECT DISTINCT(name) FROM plugins WHERE deleted IS FALSE") %>% dplyr::pull()
       
-      if (new_name %in% distinct_names){
-        output$warnings2 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "name_already_used"), messageBarType = 3), style = "margin-top:10px;"))
-        shinyjs::show("warnings2")
-        shinyjs::delay(3000, shinyjs::hide("warnings2"))
-      }
+      if (new_name %in% distinct_names) output$message_bar2 <- message_bar(2, "name_already_used", "severeWarning", language)
       req(new_name %not_in% distinct_names)
       
       last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM plugins") %>% dplyr::pull()
@@ -135,9 +131,7 @@ mod_settings_plugins_server <- function(id, r, language){
       # Reload r variable
       r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE")
         
-      output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "new_plugin_added"), messageBarType = 4), style = "margin-top:10px;"))
-      shinyjs::show("warnings1")
-      shinyjs::delay(3000, shinyjs::hide("warnings1"))
+      output$message_bar1 <- message_bar(1, "new_plugin_added", "success", language)
       
       # Reset textfields
       shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_name"), value = "")
@@ -200,13 +194,7 @@ mod_settings_plugins_server <- function(id, r, language){
         data <- r$plugins_temp
         duplicates <- data %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
           dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-        if (duplicates > 0){
-          output$warnings1 <- renderUI({
-            div(shiny.fluent::MessageBar(translate(language, "modif_names_duplicates"), messageBarType = 3), style = "margin-top:10px;")
-          })
-          shinyjs::show("warnings1")
-          shinyjs::delay(3000, shinyjs::hide("warnings1"))
-        }
+        if (duplicates > 0) output$message_bar1 <- message_bar(3, "modif_names_duplicates", "severeWarning", language)
         req(duplicates == 0)
         
         # Save changes in database
@@ -220,11 +208,7 @@ mod_settings_plugins_server <- function(id, r, language){
         r$plugins_temp <- r$plugins %>% dplyr::mutate(modified = FALSE)
         
         # Notification to user
-        output$warnings2 <- renderUI({
-          div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
-        })
-        shinyjs::show("warnings2")
-        shinyjs::delay(3000, shinyjs::hide("warnings2"))
+        output$message_bar2 <- message_bar(3, "modif_saved", "severeWarning", language)
       })
     
       ##########################################
@@ -273,11 +257,7 @@ mod_settings_plugins_server <- function(id, r, language){
         DBI::dbClearResult(query)
         r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE")
 
-        output$warnings3 <- renderUI({
-          div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
-        })
-        shinyjs::show("warnings3")
-        shinyjs::delay(3000, shinyjs::hide("warnings3"))
+        output$message_bar3 <- message_bar(3, "modif_saved", "success", language)
       })
 
       observeEvent(input[[paste0(prefix, "_execute_code")]], {

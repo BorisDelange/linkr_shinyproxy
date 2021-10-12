@@ -594,7 +594,9 @@ get_translations <- function(){
             "EN", "import_datamart_success", "Datamart imported with success",
             "FR", "import_datamart_success", "Datamart importé avec succès",
             "EN", "import_thesaurus_success", "Thesaurus imported with success",
-            "FR", "import_thesaurus_success", "Thesaurus importé avec succès"
+            "FR", "import_thesaurus_success", "Thesaurus importé avec succès",
+            "EN", "dropdown_empty", "At least one dropdown is empty",
+            "FR", "dropdown_empty", "Il manque au moins une valeur dans les menus déroulants"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

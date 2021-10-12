@@ -136,23 +136,14 @@ mod_settings_modules_server <- function(id, r, language){
 
       distinct_names <- DBI::dbGetQuery(r$db, paste0("SELECT DISTINCT(name) FROM ", table, " WHERE deleted IS FALSE")) %>% dplyr::pull()
 
-      if (new_name %in% distinct_names){
-        output$warnings2 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "name_already_used"), messageBarType = 3), style = "margin-top:10px;"))
-        shinyjs::show("warnings2")
-        shinyjs::delay(3000, shinyjs::hide("warnings2"))
-      }
+      if (new_name %in% distinct_names) output$message_bar2 <- message_bar(2, "name_already_used", "severeWarning", language)
       req(new_name %not_in% distinct_names)
 
       # Check if module family is not empty
       module_family_check <- TRUE
       if (input[[paste0(prefix, "_creation_module_type")]] == "module" & input[[paste0(prefix, "_module_family")]] == "") module_family_check <- FALSE
       
-      if (!module_family_check){
-        output$warnings2 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "req_module_family"), messageBarType = 3), style = "margin-top:10px;"))
-        shinyjs::show("warnings2")
-        shinyjs::delay(3000, shinyjs::hide("warnings2"))
-      }
-      
+      if (!module_family_check) output$message_bar2 <- message_bar(2, "req_module_family", "severeWarning", language)
       req(module_family_check)
       
       last_row <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(id), 0) FROM ", table)) %>% dplyr::pull()
@@ -186,9 +177,7 @@ mod_settings_modules_server <- function(id, r, language){
       #   tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       #     last_row_options + 1, table, last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
 
-      output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "new_module_added"), messageBarType = 4), style = "margin-top:10px;"))
-      shinyjs::show("warnings1")
-      shinyjs::delay(3000, shinyjs::hide("warnings1"))
+      output$message_bar1 <- message_bar(3, "new_module_added", "success", language)
       
       # Show management card
       shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_datatable_card_toggle"), value = TRUE)
@@ -307,13 +296,7 @@ mod_settings_modules_server <- function(id, r, language){
         duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
           dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
 
-        if (duplicates > 0){
-          output$warnings1 <- renderUI({
-            div(shiny.fluent::MessageBar(translate(language, "modif_names_duplicates"), messageBarType = 3), style = "margin-top:10px;")
-          })
-          shinyjs::show("warnings1")
-          shinyjs::delay(3000, shinyjs::hide("warnings1"))
-        }
+        if (duplicates > 0) output$message_bar1 <- message_bar(1, "modif_names_duplicates", "severeWarning", language)
         req(duplicates == 0)
 
         # Make sure parent module is not the module itself
@@ -324,13 +307,7 @@ mod_settings_modules_server <- function(id, r, language){
               dplyr::left_join(r[[paste0(table, "_temp")]] %>% dplyr::select(parent_module_id = id, parent_name = name), by = "parent_module_id") %>%
               dplyr::filter(!is.na(parent_name)) %>% dplyr::filter(name == parent_name)) != 0) parent_is_itself <- TRUE
         }
-        if (parent_is_itself){
-          output$warnings2 <- renderUI({
-            div(shiny.fluent::MessageBar(translate(language, "parent_module_is_itself"), messageBarType = 3), style = "margin-top:10px;")
-          })
-          shinyjs::show("warnings2")
-          shinyjs::delay(3000, shinyjs::hide("warnings2"))
-        }
+        if (parent_is_itself) output$message_bar2 <- message_bar(2, "parent_module_is_itself", "severeWarning", language)
         req(!parent_is_itself)
 
         # Save changes in database
@@ -340,11 +317,7 @@ mod_settings_modules_server <- function(id, r, language){
         DBI::dbAppendTable(r$db, table, r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
 
         # Notification to user
-        output$warnings2 <- renderUI({
-          div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;")
-        })
-        shinyjs::show("warnings2")
-        shinyjs::delay(3000, shinyjs::hide("warnings2"))
+        output$message_bar2 <- message_bar(2, "modif_saved", "success", language)
       })
       
       ##########################################
@@ -387,12 +360,7 @@ mod_settings_modules_server <- function(id, r, language){
           r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
   
           # Notification to user
-          message <- paste0("modules_", module_type, "_deleted")
-          output$warnings3 <- renderUI({
-            div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
-          })
-          shinyjs::show("warnings3")
-          shinyjs::delay(3000, shinyjs::hide("warnings3"))
+          output$message_bar3 <- message_bar(3, paste0("modules_", module_type, "_deleted"), "severeWarning", language)
         })
       })
       
@@ -558,11 +526,7 @@ mod_settings_modules_server <- function(id, r, language){
                     is.null(input[[paste0(prefix, "_module_options_add_thesaurus")]]) | 
                     is.null(input[[paste0(prefix, "_module_options_add_thesaurus_items_selected")]])) fields_check <- FALSE
                 
-                if (!fields_check){
-                  output$warnings1 <- renderUI( div(shiny.fluent::MessageBar(translate(language, "fields_empty"), messageBarType = 3), style = "margin-top:10px;"))
-                  shinyjs::show("warnings1")
-                  shinyjs::delay(3000, shinyjs::hide("warnings1"))
-                }
+                if (!fields_check) output$message_bar1 <- message_bar(1, "fields_empty", "severeWarning", language)
                 req(fields_check)
                 
                 module_id <- as.integer(substr(input[[paste0(prefix, "_options")]], nchar(paste0(prefix, "_options_")) + 1, nchar(input[[paste0(prefix, "_options")]])))
@@ -578,11 +542,7 @@ mod_settings_modules_server <- function(id, r, language){
                 
                 distinct_names <- DBI::dbGetQuery(r$db, paste0("SELECT DISTINCT(name) FROM ", prefix, "_module_elements WHERE module_id = ", module_id, " AND deleted IS FALSE")) %>% dplyr::pull()
                 
-                if (new_name %in% distinct_names){
-                  output$warnings2 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "name_already_used"), messageBarType = 3), style = "margin-top:10px;"))
-                  shinyjs::show("warnings2")
-                  shinyjs::delay(3000, shinyjs::hide("warnings2"))
-                }
+                if (new_name %in% distinct_names) output$message_bar2 <- message_bar(3, "name_already_used", "severeWarning", language)
                 req(new_name %not_in% distinct_names)
                 
                 plugin_id <- as.integer(input[[paste0(prefix, "_module_options_add_plugin")]])
@@ -612,9 +572,7 @@ mod_settings_modules_server <- function(id, r, language){
                 shiny.fluent::updateDropdown.shinyInput(session, paste0(prefix, "_module_options_add_plugin"), value = NULL)
                 shiny.fluent::updateDropdown.shinyInput(session, paste0(prefix, "_module_options_add_thesaurus_items_selected"), value = NULL, options = list())
                 
-                output$warnings4 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "module_element_added"), messageBarType = 4), style = "margin-top:10px;"))
-                shinyjs::show("warnings4")
-                shinyjs::delay(3000, shinyjs::hide("warnings4"))
+                output$message_bar4 <- message_bar(4, "module_element_added", "success", language)
               })
 
           ##########################################

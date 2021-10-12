@@ -15,7 +15,7 @@
   ##########################################
   
   settings_default_elements <- function(ns, prefix){
-    tagList(shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")), shiny::uiOutput(ns("warnings4")),
+    tagList(shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), shiny::uiOutput(ns("message_bar4")),
     shiny.fluent::reactOutput(ns(paste0(prefix, "_delete_confirm"))))
   }
 
@@ -221,6 +221,7 @@
         tibble::tribble(~datamart_id,  ~patient_lvl_module_family_id, ~aggregated_module_family_id,
           data$datamart_id, data$patient_lvl_module_family_id, data$aggregated_module_family_id))
       if (prefix == "subsets") result <- result %>% dplyr::bind_cols(tibble::tribble(~study_id, data$study_id))
+      if (prefix == "thesaurus") result <- result %>% dplyr::bind_cols(tibble::tribble(~data_source_id, data$data_source_id))
       # if (prefix == "thesaurus")
       # if (prefix == "thesaurus_items")
       
