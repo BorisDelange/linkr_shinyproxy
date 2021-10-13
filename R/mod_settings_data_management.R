@@ -61,8 +61,8 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
           language, ns, title = "create_datamart", prefix = prefix,
           textfields = c("name", "description"), textfields_width = "300px",
           dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
-        shiny::uiOutput(ns(paste0(prefix, "_edit_code_card"))),
-        shiny::uiOutput(ns(paste0(prefix, "_options_card"))),
+        uiOutput(ns(paste0(prefix, "_edit_code_card"))),
+        uiOutput(ns(paste0(prefix, "_options_card"))),
         settings_datatable_card(language, ns, title = "datamarts_management", prefix = prefix)
       ) -> result
     }
@@ -86,7 +86,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
           dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(),
           dropdowns_width = "300px"),
         settings_datatable_card(language, ns, title = "studies_management", prefix = prefix),
-        shiny::uiOutput(ns(paste0(prefix, "_options_card")))
+        uiOutput(ns(paste0(prefix, "_options_card")))
       ) -> result
     }
     
@@ -100,12 +100,14 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
         settings_default_elements(ns, prefix),
         settings_toggle_card(language, ns, cards = list(
           list(key = paste0(prefix, "_creation_card"), label = "create_subset"),
-          list(key = paste0(prefix, "_datatable_card"), label = "subsets_management")
+          list(key = paste0(prefix, "_datatable_card"), label = "subsets_management"),
+          list(key = paste0(prefix, "_edit_code_card"), label = "edit_subset_code")
         )),
         settings_creation_card(
           language, ns, title = "create_subset", prefix = prefix,
           textfields = c("name", "description"), textfields_width = "300px",
           dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
+        uiOutput(ns(paste0(prefix, "_edit_code_card"))),
         settings_datatable_card(language, ns, title = "subsets_management", prefix = prefix)
       ) -> result
     }
@@ -129,8 +131,8 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
           dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
         settings_datatable_card(language, ns, title = "thesaurus_management", prefix = "thesaurus"),
         settings_datatable_card(language, ns, title = "thesaurus_items_management", prefix = "thesaurus_items"),
-        shiny::uiOutput(ns("thesaurus_edit_code_card")),
-        shiny::uiOutput(ns("thesaurus_options_card"))
+        uiOutput(ns("thesaurus_edit_code_card")),
+        uiOutput(ns("thesaurus_options_card"))
       ) -> result
     }
   }
@@ -218,22 +220,24 @@ mod_settings_data_management_server <- function(id, r, language){
         req(name_check)
         
         distinct_names <- DBI::dbGetQuery(r$db, paste0("SELECT DISTINCT(name) FROM ", prefix, " WHERE deleted IS FALSE")) %>% dplyr::pull()
-        
+
         if (new_name %in% distinct_names){
-          output$message_bar2 <- message_bar(2, "name_already_used", "severeWarning", language)
+          message_bar(output, 2, "name_already_used", "severeWarning", language)
         }
         req(new_name %not_in% distinct_names)
-        
+
         # Check if dropdowns are not empty
         dropdowns_check <- TRUE
-        sapply(dropdowns %>% dplyr::filter(page_name == prefix) %>% dplyr::pull(dropdowns), function(dropdown){
-          if (input[[paste0(prefix, "_", dropdown)]] == "") dropdowns_check <<- FALSE
+        sapply(dropdowns %>% dplyr::filter(page_name == prefix) %>% dplyr::pull(dropdowns) %>% unlist(), function(dropdown){
+          if (!is.null(input[[paste0(prefix, "_", dropdown)]])){
+            if (input[[paste0(prefix, "_", dropdown)]] == "") dropdowns_check <<- FALSE
+          }
         })
-        if (!dropdowns_check) output$message_bar2 <- message_bar(2, "dropdown_empty", "severeWarning", language)
+        if (!dropdowns_check) message_bar(output, 2, "dropdown_empty", "severeWarning", language)
         req(dropdowns_check)
-        
+
         last_row <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(id), 0) FROM ", prefix)) %>% dplyr::pull()
-        
+
         new_data <- settings_new_data(prefix, data = list(
           id = last_row + 1,
           name = as.character(new_name),
@@ -247,39 +251,64 @@ mod_settings_data_management_server <- function(id, r, language){
           patient_lvl_module_family_id = coalesce2("int", input[[paste0(prefix, "_patient_lvl_module_family")]]),
           aggregated_module_family_id = coalesce2("int", input[[paste0(prefix, "_aggregated_module_family")]])
         ))
-        
+
         DBI::dbAppendTable(r$db, prefix, new_data)
         r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, " WHERE deleted IS FALSE ORDER BY id"))
         r[[paste0(prefix, "_temp")]] <- r[[prefix]]  %>% dplyr::mutate(modified = FALSE)
 
-        # # Add new rows in code table & options table
+        # Add new rows in code table & options table
+        # Add default subsets when creating a new study
         last_row_code <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM code") %>% dplyr::pull()
         last_row_options <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull()
+        last_row_subsets <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM subsets") %>% dplyr::pull()
+
         if (prefix %in% c("datamarts", "thesaurus")){
           DBI::dbAppendTable(r$db, "code",
           tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-            last_row_code + 1, "thesaurus", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
+            last_row_code + 1, prefix, last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
+          # Update r$code
+          update_r(r, "code", language)
         }
+
         if (prefix == "datamarts"){
           DBI::dbAppendTable(r$db, "options",
             tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
               last_row_options + 1, "datamart", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
               last_row_options + 2, "datamart", last_row + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE))
+          # Update r$options
+          update_r(r, "options", language)
         }
+
         if (prefix == "studies"){
           DBI::dbAppendTable(r$db, "options",
             tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
               last_row_options + 1, "study", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
+          # Add rows in subsets table, for inclusion / exclusion subsets
+          # Add also code corresponding to each subset
+          DBI::dbAppendTable(r$db, "subsets",
+            tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id,  ~datetime, ~deleted,
+              last_row_subsets + 1, translate(language, "subset_all_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+              last_row_subsets + 2, translate(language, "subset_included_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+              last_row_subsets + 3, translate(language, "subset_excluded_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE))
+          DBI::dbAppendTable(r$db, "code",
+            tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+              last_row_code + 1, "subset", last_row_subsets + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
+              last_row_code + 2, "subset", last_row_subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
+              last_row_code + 3, "subset", last_row_subsets + 3, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
+
+          # Update r$options, r$code & r$subsets
+          update_r(r, "options", language)
+          update_r(r, "subsets", language)
+          update_r(r, "code", language)
         }
-        
+
         # Hide creation card & options card, show management card
         shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_options_card_toggle"), value = FALSE)
         shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_creation_card_toggle"), value = FALSE)
         shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_datatable_card_toggle"), value = TRUE)
-        
 
-        output$message_bar1 <- message_bar(1, paste0(id_get_other_name(prefix, "singular_form"), "_added"), "success", language)
-        
+        message_bar(output, 1, paste0(id_get_other_name(prefix, "singular_form"), "_added"), "success", language)
+
         # Reset textfields
         sapply(c("name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_", name), value = ""))
       })
@@ -313,16 +342,19 @@ mod_settings_data_management_server <- function(id, r, language){
               data = settings_datatable_data(prefix, isolate(r)), ns = ns, r = r, data_variables = data_management_elements,
               dropdowns = switch(prefix,
                 "data_sources" = "",
-                "datamarts" = c("data_source_id" = "data_sources"),
-                "studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
-                "subsets" = c("study_id" = "studies"),
+                "datamarts" = "",
+                # "datamarts" = c("data_source_id" = "data_sources"),
+                # "studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
+                "studies" = c("patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
+                "subsets" = "",
+                # "subsets" = c("study_id" = "studies"),
                 "thesaurus" = c("data_source_id" = "data_sources"),
                 "thesaurus_items" = ""),
               action_buttons = switch(prefix,
                 "data_sources" = "delete",
                 "datamarts" = c("delete", "edit_code", "options"),
                 "studies" = c("delete", "options"),
-                "subsets" = "delete",
+                "subsets" = c("delete", "edit_code"),
                 "thesaurus" = c("delete", "edit_code", "sub_datatable"),
                 "thesaurus_items" = ""
                 ),
@@ -413,7 +445,7 @@ mod_settings_data_management_server <- function(id, r, language){
             duplicates <- r[[paste0(prefix, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
               dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
           }
-          if (duplicates > 0) output$message_bar1 <- message_bar(1, "modif_names_duplicates", "severeWarning", language)
+          if (duplicates > 0) message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
           req(duplicates == 0)
           
           # Save changes in database
@@ -427,7 +459,7 @@ mod_settings_data_management_server <- function(id, r, language){
           # r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::mutate(modified = FALSE)
           
           # Notification to user
-          output$message_bar2 <- message_bar(2, "modif_saved", "success", language)
+          message_bar(output, 2, "modif_saved", "success", language)
         })
     
       ##########################################
@@ -461,7 +493,7 @@ mod_settings_data_management_server <- function(id, r, language){
           r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::mutate(modified = FALSE)
           
           # Notification to user
-          outputmessage_bar3 <- message_bar(3, paste0(id_get_other_name(prefix, "singular_form"), "_deleted"), "severeWarning", language)
+          message_bar(output, 3, paste0(id_get_other_name(prefix, "singular_form"), "_deleted"), "severeWarning", language)
         })
       
       ##########################################
@@ -519,7 +551,7 @@ mod_settings_data_management_server <- function(id, r, language){
             }
           }
           
-          output$message_bar4 <- message_bar(4, "modif_saved", "success", language)
+          message_bar(output, 4, "modif_saved", "success", language)
         })
       
       ##########################################
@@ -548,7 +580,7 @@ mod_settings_data_management_server <- function(id, r, language){
         DBI::dbClearResult(query)
         r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
         
-        output$message_bar4 <- message_bar(4, "modif_saved", "success", language)
+        message_bar(output, 4, "modif_saved", "success", language)
       })
       
       observeEvent(input[[paste0(prefix, "_execute_code")]], {

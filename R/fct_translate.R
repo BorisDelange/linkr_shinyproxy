@@ -18,9 +18,13 @@ translate <- function(language, reference_word){
   if (nchar(language) %not_in% c(2, 3)) stop("Input 'language' has less than 2 or more than 3 characters")
   if (!is.data.frame(words)) stop("Input 'words' is not a dataframe")
   if (!is.character(reference_word) | nchar(reference_word) == 0) stop("Input 'reference word' is not a character or is of length 0")
+  
+  # return empty word if doesn't exist
   words %>%
     dplyr::filter(language == !!language, reference_word == !!reference_word) %>%
-    dplyr::pull(translated_word)
+    dplyr::pull(translated_word) -> result
+  if (length(result) == 0) result <- ""
+  result
 }
 
 #' Create a tibble with translations
@@ -323,6 +327,8 @@ get_translations <- function(){
             "FR", "edit_thesaurus_code", "Editer le code du thésaurus",
             "EN", "edit_plugin_code", "Edit plugin code",
             "FR", "edit_plugin_code", "Editer le code du plugin",
+            "EN", "edit_subset_code", "Edit subset code",
+            "FR", "edit_subset_code", "Editer le code du subset",
             "EN", "provide_valid_name", "Please provide a valid name",
             "FR", "provide_valid_name", "Nom valide requis",
             "EN", "provide_valid_username", "Please provide a valid username",
@@ -596,7 +602,23 @@ get_translations <- function(){
             "EN", "import_thesaurus_success", "Thesaurus imported with success",
             "FR", "import_thesaurus_success", "Thesaurus importé avec succès",
             "EN", "dropdown_empty", "At least one dropdown is empty",
-            "FR", "dropdown_empty", "Il manque au moins une valeur dans les menus déroulants"
+            "FR", "dropdown_empty", "Il manque au moins une valeur dans les menus déroulants",
+            "EN", "subset_all_patients", "All patients",
+            "FR", "subset_all_patients", "Tous les patients",
+            "EN", "subset_all_patients_long", "Subset containing all patients",
+            "FR", "subset_all_patients_long", "Subset comprenant tous les patients",
+            "EN", "subset_included_patients", "Included patients",
+            "FR", "subset_included_patients", "Patients inclus",
+            "EN", "subset_included_patients_long", "Subset containing only included patients",
+            "FR", "subset_included_patients_long", "Subset comprenant seulement les patients inclus",
+            "EN", "subset_excluded_patients", "Excluded patients",
+            "FR", "subset_excluded_patients", "Patients exclus",
+            "EN", "subset_excluded_patients_long", "Subset containing only excluded patients",
+            "FR", "subset_excluded_patients_long", "Subset comprenant seulement les patients exclus",
+            "EN", "invalid_table_name", "Invalid table name",
+            "FR", "invalid_table_name", "Nom de table non valide",
+            "EN", "tables_allowed", "Tables allowed",
+            "FR", "tables_allowed", "Tables autorisées"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

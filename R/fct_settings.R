@@ -317,11 +317,6 @@
             # Action buttons : if in action_buttons vector, add action button
             actions <- tagList()
     
-            # Add delete button
-            if ("delete" %in% action_buttons){
-              actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_delete_", data[i, 1]), "", icon = icon("trash-alt"),
-              onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_deleted_pressed', this.id, {priority: 'event'})")))}
-    
             # Add options button
             if ("options" %in% action_buttons){
               actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_options_", data[i, 1]), "", icon = icon("cog"),
@@ -336,16 +331,32 @@
             if ("sub_datatable" %in% action_buttons){
               actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_sub_datatable_", data[i, 1]), "", icon = icon("table"),
                 onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_sub_datatable", "', this.id, {priority: 'event'})")), "")}
+            
+            # Add delete button
+            if ("delete" %in% action_buttons){
+              # If row is deletable (not a column for deletable or not, only default subsets are not deletable)
+              if (prefix != "subsets" | data[i, "name"] %not_in% c("All patients", "Included patients", "Excluded patients")){
+                actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_delete_", data[i, 1]), "", icon = icon("trash-alt"),
+                                                                onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_deleted_pressed', this.id, {priority: 'event'})")))} 
+            }
     
             # Update action column in dataframe
             data[i, "action"] <- as.character(div(actions))
             # if (prefix == "thesaurus_items") data <- data %>% dplyr::select(-action)
     
             # Get creator name
-            if (prefix != "thesaurus_items"){
+            if ("creator_id" %in% names(data)){
               data[i, "creator_id"] <- r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>%
                 dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator)
             }
+            sapply(data_variables, function(data_var){
+              data_var_id <- paste0(id_get_other_name(data_var, "singular_form"), "_id")
+              if (data_var_id %in% names(data) & data_var_id %not_in% names(dropdowns)){
+                result <- r[[data_var]] %>% dplyr::filter(id == data[[i, data_var_id]]) %>% dplyr::pull(name)
+                if (length(result) == 0) result <- ""
+                data[[i, data_var_id]] <- result
+              }
+            })
           }
         }
         
