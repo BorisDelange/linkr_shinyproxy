@@ -50,6 +50,13 @@ db_create_tables <- function(db){
       patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = integer(),
       datetime = character(), deleted = logical()))
   
+  db_create_table(db, "subsets",
+    tibble::tibble(id = integer(), name = character(), description = character(), study_id = integer(), creator_id = integer(),
+      datetime = character(), deleted = logical()))
+  
+  db_create_table(db, "subset_patients",
+    tibble::tibble(id = integer(), subset_id = integer(), patient_id = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+  
   db_create_table(db, "thesaurus",
     tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = character(), creator_id = integer(),
       datetime = character(), deleted = logical()))

@@ -636,7 +636,17 @@ get_translations <- function(){
             "EN", "success_load_text", "Success loading r$text",
             "FR", "success_load_text", "Chargement de la variable r$text avec succès",
             "EN", "success_load_orders", "Success loading r$orders",
-            "FR", "success_load_orders", "Chargement de la variable r$orders avec succès"
+            "FR", "success_load_orders", "Chargement de la variable r$orders avec succès",
+            "EN", "subset_containing_patients_erase_false", "Subset already containing patients. Set erase to TRUE if you want to remove these patients.",
+            "FR", "subset_containing_patients_erase_false", "Subset contenant déjà des patients. Mettre la variable erase à TRUE pour les supprimer.",
+            "EN", "error_erasing_data", "Error erasing existing data",
+            "FR", "error_erasing_data", "Erreur lors de la suppression des données",
+            "EN", "error_inserting_data", "Error inserting data in database",
+            "FR", "error_inserting_data", "Erreur lors de l'insertion de données dans la BDD",
+            "EN", "add_patients_subset_success", "Success adding patients to subset",
+            "FR", "add_patients_subset_success", "Insertion de patients dans le subset avec succès",
+            "EN", "invalid_subset_id_value", "Invalid subset_id value",
+            "FR", "invalid_subset_id_value", "Valeur de subset_id non valide"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

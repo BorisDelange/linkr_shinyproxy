@@ -6,7 +6,7 @@
 #' @param type type or name of data to create c("patients", "stays", "labs_vitals", "text", "orders")
 #' @param save_as_csv save or not the data to CSV file (logical, default = TRUE)
 #' @param rewrite if save_as_csv is TRUE, rewrite or not existing CSV file (logical, default = FALSE)
-#' @param language language used for error / warning messages (character, default = language)
+#' @param language language used for error / warning messages (character, default = "EN")
 #' @description Load +/- save data when a datamart is chosen by the user.
 #' @details The function is used in a datamart code and is launched each time a user selects a datamart. \cr
 #' You can choose to \strong{load data each time} the function is used with save_as_csv set to FALSE (eg when datamart is small and the
@@ -48,7 +48,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   }
   
   # Transform as tibble
-  tryCatch(tibble::as_tibble(data), 
+  tryCatch(data <- tibble::as_tibble(data), 
     error = function(e){
       message_bar(output, 1, "error_transforming_tibble", "severeWarning", language)
       stop(translate(language, "error_transforming_tibble"))
@@ -171,7 +171,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
 #' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param thesaurus_id ID of the thesaurus, used to update thesaurus table (integer)
 #' @param thesaurus thesaurus data variable (data.frame or tibble)
-#' @param language language used for error / warning messages (character, default = language)
+#' @param language language used for error / warning messages (character, default = "EN")
 #' @description Add new thesaurus items to database
 #' @details The function is used in a thesaurus code, it is launched only when you click on "Run code" on the thesaurus page.
 #' @examples
@@ -211,7 +211,7 @@ import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id =
   })
   
   # Transform as tibble
-  tryCatch(tibble::as_tibble(thesaurus), 
+  tryCatch(thesaurus <- tibble::as_tibble(thesaurus), 
     error = function(e){
       message_bar(output, 1, "error_transforming_tibble", "severeWarning", language)
       stop(translate(language, "error_transforming_tibble"))

@@ -11,8 +11,8 @@
 ##########################################
 
 data_management_new_data <- function(prefix, new_id, name, description, creator_id, datetime = as.character(Sys.time()), deleted = FALSE, 
-                                     data_source_id = NA_integer_, datamart_id = NA_integer_, study_id = NA_integer_,
-                                     patient_lvl_module_family_id = NA_integer_, aggregated_module_family_id = NA_integer_){
+  data_source_id = NA_integer_, datamart_id = NA_integer_, study_id = NA_integer_,
+  patient_lvl_module_family_id = NA_integer_, aggregated_module_family_id = NA_integer_){
   data <- tibble::tribble(~id, ~name, ~description, new_id, name, description)
   if (prefix == "datamarts") data <- data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, data_source_id))
   if (prefix == "studies") data <- data %>% dplyr::bind_cols(

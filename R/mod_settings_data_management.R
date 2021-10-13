@@ -604,9 +604,9 @@ mod_settings_data_management_server <- function(id, r, language){
         output[[paste0(prefix, "_code_result")]] <- renderText({
           # Replace %datamart_id% from code to real r$datamart_id
           code <- isolate(input[[paste0(prefix, "_ace_edit_code")]]) %>%
-            stringr::str_replace_all("%datamart_id%", as.character(r$datamart_id)) %>%
-            stringr::str_replace_all("%subset_id%", as.character(r$subset_id)) %>%
-            stringr::str_replace_all("%thesaurus_id%", as.character(r$thesaurus_id))
+            stringr::str_replace_all("%datamart_id%", as.character(isolate(r$datamart_id))) %>%
+            stringr::str_replace_all("%subset_id%", as.character(isolate(r$subset_id))) %>%
+            stringr::str_replace_all("%thesaurus_id%", as.character(isolate(r$thesaurus_id)))
           # Change this option to display correctly tibble in textbox
           eval(parse(text = "options('cli.num_colors' = 1)"))
           # Capture console output of our code
