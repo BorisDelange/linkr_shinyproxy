@@ -51,7 +51,7 @@ db_create_tables <- function(db){
       datetime = character(), deleted = logical()))
   
   db_create_table(db, "thesaurus",
-    tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
+    tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = character(), creator_id = integer(),
       datetime = character(), deleted = logical()))
   
   db_create_table(db, "thesaurus_items",

@@ -55,7 +55,10 @@
             horizontal = TRUE,
             tokens = list(childrenGap = 50),
             lapply(dropdowns, function(name){
-              make_dropdown(language, ns, name, options = "", id = paste0(prefix, "_", name), width = dropdowns_width)
+              # Allow multiSelect for thesaurus, column data source
+              multiSelect <- FALSE
+              if (prefix == "thesaurus") multiSelect <- TRUE
+              make_dropdown(language, ns, name, options = "", id = paste0(prefix, "_", name), multiSelect = multiSelect, width = dropdowns_width)
             })
           ),
           htmltools::br(),
@@ -305,13 +308,24 @@
         if (nrow(data) != 0){
           for (i in 1:nrow(data)){
             lapply(names(dropdowns), function(name){
-              data[i, name] <<- as.character(
-                div(
-                  shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
-                    options = eval(parse(text = dropdowns[name])), value = as.integer(data[i, name])), 
+              if (prefix == "thesaurus"){
+                data[i, name] <<- as.character(
+                  div(
+                    shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+                      options = eval(parse(text = dropdowns[name])), multiSelect = TRUE, selectedKeys = stringr::str_split(data[i, name], ", ") %>% unlist() %>% as.integer()), 
                     onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
-                  style = "width:100%")
-              )
+                    style = "width:100%")
+                )
+              }
+              else {
+                data[i, name] <<- as.character(
+                  div(
+                    shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+                      options = eval(parse(text = dropdowns[name])), value = as.integer(data[i, name])), 
+                    onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
+                    style = "width:100%")
+                ) 
+              }
             })
     
             # Action buttons : if in action_buttons vector, add action button
@@ -349,14 +363,24 @@
               data[i, "creator_id"] <- r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>%
                 dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator)
             }
-            sapply(data_variables, function(data_var){
-              data_var_id <- paste0(id_get_other_name(data_var, "singular_form"), "_id")
-              if (data_var_id %in% names(data) & data_var_id %not_in% names(dropdowns)){
-                result <- r[[data_var]] %>% dplyr::filter(id == data[[i, data_var_id]]) %>% dplyr::pull(name)
-                if (length(result) == 0) result <- ""
-                data[[i, data_var_id]] <- result
-              }
-            })
+            
+            # Get names for other columns if there are not dropdowns
+            # Failed to loop that...
+            if ("data_source_id" %in% names(data) & "data_source_id" %not_in% names(dropdowns)){
+              result <- r$data_sources %>% dplyr::filter(id == data[[i, "data_source_id"]]) %>% dplyr::pull(name)
+              if (length(result) == 0) result <- ""
+              data[[i, "data_source_id"]] <- result
+            }
+            if ("datamart_id" %in% names(data) & "datamart_id" %not_in% names(dropdowns)){
+              result <- r$datamarts %>% dplyr::filter(id == data[[i, "datamart_id"]]) %>% dplyr::pull(name)
+              if (length(result) == 0) result <- ""
+              data[[i, "datamart_id"]] <- result
+            }
+            if ("study_id" %in% names(data) & "study_id" %not_in% names(dropdowns)){
+              result <- r$studies %>% dplyr::filter(id == data[[i, "study_id"]]) %>% dplyr::pull(name)
+              if (length(result) == 0) result <- ""
+              data[[i, "study_id"]] <- result
+            }
           }
         }
         

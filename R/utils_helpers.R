@@ -56,7 +56,8 @@ id_get_other_name <- function(id, type, language = NULL){
         "datamarts" = translate(language, "data_source"),
         "studies" = c(translate(language, "datamart"), translate(language, "patient_lvl_module_family"),
                                translate(language, "aggregated_module_family")),
-        "subsets" = translate(language, "study"))) -> result
+        "subsets" = translate(language, "study"),
+        "thesaurus" = translate(language, "data_sources"))) -> result
       result <- c(result, translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
     }
     if (id == "thesaurus_items"){

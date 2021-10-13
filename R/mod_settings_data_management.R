@@ -245,7 +245,8 @@ mod_settings_data_management_server <- function(id, r, language){
           creator_id = as.numeric(r$user_id),
           datetime = as.character(Sys.time()),
           deleted = FALSE,
-          data_source_id = coalesce2("int", input[[paste0(prefix, "_data_source")]]),
+          # If prefix == thesaurus, data_source_id is character (multiSelect = TRUE)
+          data_source_id = ifelse(prefix == "thesaurus", coalesce2("char", toString(input[[paste0(prefix, "_data_source")]])), coalesce2("int", input[[paste0(prefix, "_data_source")]])),
           datamart_id = coalesce2("int", input[[paste0(prefix, "_datamart")]]),
           study_id = coalesce2("int", input[[paste0(prefix, "_study")]]),
           patient_lvl_module_family_id = coalesce2("int", input[[paste0(prefix, "_patient_lvl_module_family")]]),
@@ -425,7 +426,9 @@ mod_settings_data_management_server <- function(id, r, language){
                   # When we load a page, every dropdown triggers the event
                   # Change temp variable only if new value is different than old value
                   old_value <- r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), paste0(dropdown, "_id")]]
-                  new_value <- input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]]
+                  # If thesaurus, data_source_id can accept multiple values (converting to string)
+                  new_value <- ifelse(prefix == "thesaurus", toString(input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]]),
+                    as.integer(input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]]))
                   if (new_value != old_value){
                     r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <- new_value
                     # Store that this row has been modified

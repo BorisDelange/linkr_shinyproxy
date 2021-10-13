@@ -63,7 +63,7 @@ make_textfield <- function(language, ns, label, id = NULL, value = NULL, type = 
   )
 }
 
-make_dropdown <- function(language, ns, label, options = list(), 
+make_dropdown <- function(language, ns, label, options = list(), multiSelect = FALSE,
                           id = NULL, value = NULL, width = NULL, min_width = NULL, max_width = NULL, margin_right = NULL){
   if (is.null(id)) id <- label
   style <- ""
@@ -72,7 +72,7 @@ make_dropdown <- function(language, ns, label, options = list(),
   if (!is.null(margin_right)) style <- paste0(style, "margin-right:", margin_right, ";")
   div(
     div(class = "input_title", translate(language, label)),
-    div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options), style = style)
+    div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect), style = style)
   )
 }
 
