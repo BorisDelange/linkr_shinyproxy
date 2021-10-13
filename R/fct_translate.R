@@ -563,6 +563,10 @@ get_translations <- function(){
             "FR", "dev_side", "En tant que développeur",
             "EN", "libraries_needed_plugin", "Librairies needed to run this plugin",
             "FR", "libraries_needed_plugin", "Librairies nécessaires pour utiliser ce plugin",
+            "EN", "invalid_col_names", "Invalid column names",
+            "FR", "invalid_col_names", "Nom de colonnes non valides",
+            "EN", "invalid_col_types", "Invalid column types",
+            "FR", "invalid_col_types", "Types de colonne non valides",
             "EN", "valid_col_names_are", "Column names are not valid. Valid col names are : ",
             "FR", "valid_col_names_are", "Noms de colonnes non valides. Les noms requis sont : ",
             "EN", "column", "Column",
@@ -618,7 +622,21 @@ get_translations <- function(){
             "EN", "invalid_table_name", "Invalid table name",
             "FR", "invalid_table_name", "Nom de table non valide",
             "EN", "tables_allowed", "Tables allowed",
-            "FR", "tables_allowed", "Tables autorisées"
+            "FR", "tables_allowed", "Tables autorisées",
+            "EN", "fail_load_code", "Failed loading code",
+            "FR", "fail_load_code", "Erreur lors du chargement du code",
+            "EN", "fail_execute_code", "Failed executing code",
+            "FR", "fail_execute_code", "Erreur lors de l'éxécution du code",
+            "EN", "success_load_patients", "Success loading r$patients",
+            "FR", "success_load_patients", "Chargement de la variable r$patients avec succès",
+            "EN", "success_load_stays", "Success loading r$stays",
+            "FR", "success_load_stays", "Chargement de la variable r$stays avec succès",
+            "EN", "success_load_labs_vitals", "Success loading r$labs_vitals",
+            "FR", "success_load_labs_vitals", "Chargement de la variable r$labs_vitals avec succès",
+            "EN", "success_load_text", "Success loading r$text",
+            "FR", "success_load_text", "Chargement de la variable r$text avec succès",
+            "EN", "success_load_orders", "Success loading r$orders",
+            "FR", "success_load_orders", "Chargement de la variable r$orders avec succès"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

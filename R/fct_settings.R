@@ -15,8 +15,8 @@
   ##########################################
   
   settings_default_elements <- function(ns, prefix){
-    tagList(shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), shiny::uiOutput(ns("message_bar4")),
-    shiny.fluent::reactOutput(ns(paste0(prefix, "_delete_confirm"))))
+    tagList(shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
+      shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")), shiny.fluent::reactOutput(ns(paste0(prefix, "_delete_confirm"))))
   }
 
   ##########################################

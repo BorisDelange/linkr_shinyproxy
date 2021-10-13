@@ -566,6 +566,20 @@ mod_settings_data_management_server <- function(id, r, language){
         output[[paste0(prefix, "_edit_code_card")]] <- renderUI({
           category_filter <- id_get_other_name(id, "singular_form")
           link_id_filter <- as.integer(substr(input[[paste0(prefix, "_edit_code")]], nchar(paste0(prefix, "_edit_code_")) + 1, nchar(input[[paste0(prefix, "_edit_code")]])))
+          # Save ID value in r variable, to get this during code execution
+          r$datamart_id <- NA_integer_
+          r$subset_id <- NA_integer_
+          r$thesaurus_id <- NA_integer_
+          if (prefix == "datamarts") r$datamart_id <- link_id_filter
+          if (prefix == "subsets"){
+            # Get subset_id & datamart_id
+            r$datamart_id <- r$studies %>% 
+              dplyr::filter(id == (r$subsets %>% dplyr::filter(id == link_id_filter) %>% dplyr::pull(study_id))) %>%
+              dplyr::pull(datamart_id)
+            r$subset_id <- link_id_filter
+          } 
+          if (prefix == "thesaurus") r$thesaurus_id <- link_id_filter
+          
           code <- r$code %>% dplyr::filter(category == category_filter & link_id == link_id_filter) %>% dplyr::pull(code)
           settings_edit_code_card(language, ns, type = "code", code = code, link_id = link_id_filter, title = paste0("edit_", category_filter, "_code"), prefix = prefix)
         })
@@ -588,11 +602,16 @@ mod_settings_data_management_server <- function(id, r, language){
       
       observeEvent(input[[paste0(prefix, "_execute_code")]], {
         output[[paste0(prefix, "_code_result")]] <- renderText({
+          # Replace %datamart_id% from code to real r$datamart_id
+          code <- isolate(input[[paste0(prefix, "_ace_edit_code")]]) %>%
+            stringr::str_replace_all("%datamart_id%", as.character(r$datamart_id)) %>%
+            stringr::str_replace_all("%subset_id%", as.character(r$subset_id)) %>%
+            stringr::str_replace_all("%thesaurus_id%", as.character(r$thesaurus_id))
           # Change this option to display correctly tibble in textbox
           eval(parse(text = "options('cli.num_colors' = 1)"))
           # Capture console output of our code
           captured_output <- capture.output(
-            tryCatch(eval(parse(text = isolate(input[[paste0(prefix, "_ace_edit_code")]]))), error = function(e) print(e), warning = function(w) print(w))
+            tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w))
           )
           # Restore normal value
           eval(parse(text = "options('cli.num_colors' = NULL)"))
