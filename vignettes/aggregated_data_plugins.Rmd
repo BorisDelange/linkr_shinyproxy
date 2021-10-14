@@ -1,0 +1,68 @@
+---
+title: "Aggregated data plugins"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{aggregated_data_plugins}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Inclusion / exclusion / flowchart plugin
+
+### Description
+
+- Version : 1.0.0
+- Libraries : ...
+- Data needed : ...
+
+### UI code
+### Server code
+
+## Data cleaning plugin
+
+### Description
+### UI code
+### Server code
+
+## Features creation plugin
+
+### Description
+### UI code
+### Server code
+
+## Features visualization plugin
+
+### Description
+### UI code
+### Server code
+
+## Machine learning models plugin
+
+### Description
+### UI code
+### Server code
+
+## Extract CSV plugin
+
+### Description
+### UI code
+### Server code
+
+## Report creation plugin
+
+### Description
+### UI code
+### Server code
+
+## Study guidelines plugin
+
+### Description
+### UI code
+### Server code

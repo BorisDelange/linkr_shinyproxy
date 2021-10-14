@@ -11,7 +11,63 @@
 #' @details The function is used in a datamart code and is launched each time a user selects a datamart. \cr
 #' You can choose to \strong{load data each time} the function is used with save_as_csv set to FALSE (eg when datamart is small and the
 #' connection to source database is good) or you can \strong{save the data in a CSV file} with save_as_csv set to TRUE. \cr
-#' Basically, 5 data variables are created for each datamart (distinct values of 'type' parameter).
+#' Basically, 5 data variables are created for each datamart (distinct values of 'type' parameter).\cr\cr
+#' Columns needed for each data type :\cr\cr
+#' \strong{type = "patients"} :\cr
+#' \itemize{
+#' \item{patient_id = integer}
+#' \item{gender = numeric}
+#' \item{age = numeric}
+#' \item{dod = datetime}
+#' }
+#' \strong{type = "stays"} :\cr
+#' \itemize{
+#' \item{patient_id = integer}
+#' \item{stay_id = integer}
+#' \item{unit_name = character}
+#' \item{admission_datetime = datetime}
+#' \item{discharge_datetime = datetime}
+#' }
+#' \strong{type = "labs_vitals"} :\cr
+#' \itemize{
+#' \item{patient_id = integer}
+#' \item{thesaurus_name = character}
+#' \item{item_id = integer}
+#' \item{datetime_start = datetime}
+#' \item{datetime_stop = datetime}
+#' \item{value = character}
+#' \item{value_num = numeric}
+#' \item{comments = character}
+#' }
+#' \strong{type = "text"} :\cr
+#' \itemize{
+#' \item{patient_id = integer}
+#' \item{thesaurus_name = character}
+#' \item{item_id = integer}
+#' \item{datetime_start = datetime}
+#' \item{datetime_stop = datetime}
+#' \item{value = character}
+#' \item{comments = character}
+#' }
+#' \strong{type = "orders"} :\cr
+#' \itemize{
+#' \item{patient_id = integer}
+#' \item{thesaurus_name = character}
+#' \item{item_id = integer}
+#' \item{datetime_start = datetime}
+#' \item{datetime_stop = datetime}
+#' \item{route = character}
+#' \item{continuous = integer}
+#' \item{duration = numeric}
+#' \item{duration_unit = character}
+#' \item{amount = numeric}
+#' \item{amount_unit = character}
+#' \item{rate = numeric}
+#' \item{rate_unit = character}
+#' \item{concentration = numeric}
+#' \item{concentration_unit = character}
+#' \item{comments = character}
+#' }
 #' @examples
 #' \dontrun{
 #' patients <- tibble::tribble(~patient_id, ~gender, ~age, ~dod, 44565L, "F", 45, "2021-05-01 00:00:00") %>%
@@ -21,6 +77,20 @@
 #'   save_as_csv = FALSE, rewrite = FALSE, language = language)
 #' }
 import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = integer(), data = tibble::tibble(), type = "patients", save_as_csv = TRUE, rewrite = FALSE, language = "EN"){
+  # Check datamart_id
+  tryCatch(datamart_id <- as.integer(datamart_id),
+  error = function(e){
+    message_bar(output, 1, "invalid_datamart_id_value", "severeWarning", language)
+    stop(translate(language, "invalid_datamart_id_value"))
+  }, warning = function(w){
+    message_bar(output, 1, "invalid_datamart_id_value", "severeWarning", language)
+    stop(translate(language, "invalid_datamart_id_value"))
+  })
+  if (is.na(datamart_id) | length(datamart_id) == 0){
+    message_bar(output, 1, "invalid_datamart_id_value", "severeWarning", language)
+    stop(translate(language, "invalid_datamart_id_value"))
+  }
+  
   # Type = c("patients", "stays", "labs_vitals", "text", "orders")
   # Check if type is valid
   if (type %not_in% c("patients", "stays", "labs_vitals", "text", "orders")){
@@ -35,7 +105,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   if (save_as_csv & !rewrite & file.exists(path)){
     tryCatch({
       message_bar(output, 1, "import_datamart_success", "success", language)
-      print(translate(language, "import_datamart_success"))
+      print(paste0(translate(language, "import_datamart_success"), " (type = ", type ,")"))
       return(r[[type]] <- readr::read_csv(path))
       }, 
       error = function(e){
@@ -92,7 +162,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
       "datetime_stop", "datetime",
       "value", "character",
       "comments", "character"),
-    "order", tibble::tribble(
+    "orders", tibble::tribble(
       ~name, ~type,
       "patient_id", "integer",
       "thesaurus_name", "character",
@@ -163,7 +233,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   
   r[[type]] <- data
   message_bar(output, 1, "import_datamart_success", "success", language)
-  print(translate(language, "import_datamart_success"))
+  print(paste0(translate(language, "import_datamart_success"), " (type = ", type ,")"))
 }
 
 #' Import a thesaurus
@@ -183,6 +253,20 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
 #' import_thesaurus(r = r, thesaurus_id = 5, thesaurus = thesaurus, language = language)
 #' }
 import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id = integer(), thesaurus = tibble::tibble(), language = "EN"){
+  # Check thesaurus_id
+  tryCatch(thesaurus_id <- as.integer(thesaurus_id), 
+    error = function(e){
+      message_bar(output, 1, "invalid_thesaurus_id_value", "severeWarning", language)
+      stop(translate(language, "invalid_thesaurus_id_value"))
+    }, warning = function(w){
+      message_bar(output, 1, "invalid_thesaurus_id_value", "severeWarning", language)
+      stop(translate(language, "invalid_thesaurus_id_value")) 
+    })
+  if (is.na(thesaurus_id) | length(thesaurus_id) == 0){
+    message_bar(output, 1, "invalid_thesaurus_id_value", "severeWarning", language)
+    stop(translate(language, "invalid_thesaurus_id_value"))
+  }
+  
   var_cols <- tibble::tribble(
     ~name, ~type,
     "item_id", "integer",

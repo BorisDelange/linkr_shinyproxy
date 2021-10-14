@@ -9,7 +9,7 @@
 #' @param language language used for the translation (character)
 #' @param time time the message bar will by displayed, in ms (integer)
 #' @examples 
-#' \dontrun {
+#' \dontrun{
 #' message_bar(id = 2, message = "name_already_used", type = "severeWarning", language = language, time = 5000)
 #' }
 
@@ -27,7 +27,7 @@ message_bar <- function(output, id = integer(), message = character(), type = "s
 #' @param table Database table name (character)
 #' @param language language used for the translation (character)
 #' @examples
-#' \dontrun {
+#' \dontrun{
 #' update_r(r = r, table = "subsets")
 #' }
 

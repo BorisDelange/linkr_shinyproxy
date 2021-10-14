@@ -84,6 +84,9 @@
   </a>
 </li>
 <li>
+  <a href="../articles/cdwtools.html">Get started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -93,11 +96,41 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li class="divider"></li>
+    <li class="dropdown-header">FR - Aide</li>
     <li>
-      <a href="../articles/dev_data_management.html">dev_data_management</a>
+      <a href="../articles/FR_user_help.html">Aide aux utilisateurs</a>
     </li>
     <li>
-      <a href="../articles/get_started.html">get_started</a>
+      <a href="../articles/FR_developper_help.html">Aide aux développeurs</a>
+    </li>
+    <li>
+      <a href="../articles/FR_use_case_mimic_iv.html">Application avec la MIMIC-IV</a>
+    </li>
+    <li>
+      <a href="../articles/FR_deploy_shiny_proxy.html">Déployer avec ShinyProxy</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">EN - Help</li>
+    <li>
+      <a href="../articles/EN_user_help.html">User help</a>
+    </li>
+    <li>
+      <a href="../articles/EN_developper_help.html">Developper help</a>
+    </li>
+    <li>
+      <a href="../articles/EN_use_case_mimic_iv.html">Use case with MIMIC-IV</a>
+    </li>
+    <li>
+      <a href="../articles/EN_deploy_shiny_proxy.html">Deploy with ShinyProxy</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Plugins</li>
+    <li>
+      <a href="../articles/patient_lvl_data_plugins.html">Patient-level data plugins</a>
+    </li>
+    <li>
+      <a href="../articles/aggregated_data_plugins.html">Aggregated data plugins</a>
     </li>
   </ul>
 </li>
@@ -139,7 +172,7 @@
     <tbody>
       <tr>
         <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
+          <h2 id="section-launch-the-application-from-r" class="hasAnchor"><a href="#section-launch-the-application-from-r" class="anchor"></a>Launch the application from R</h2>
           <p class="section-desc"></p>
         </th>
       </tr>
@@ -151,15 +184,84 @@
       <tr>
         
         <td>
-          <p><code><a href="run_app.html">run_app()</a></code> </p>
+          <p><code><a href="cdwtools.html">cdwtools()</a></code> </p>
         </td>
         <td><p>Run the Shiny Application</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-manipulate-data-inside-the-app" class="hasAnchor"><a href="#section-manipulate-data-inside-the-app" class="anchor"></a>Manipulate data inside the App</h2>
+          <p class="section-desc"><p><em>Use these functions from inside the App in developper mode.</em></p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="import_datamart.html">import_datamart()</a></code> </p>
+        </td>
+        <td><p>Import a datamart</p></td>
       </tr><tr>
+        
+        <td>
+          <p><code><a href="import_thesaurus.html">import_thesaurus()</a></code> </p>
+        </td>
+        <td><p>Import a thesaurus</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="run_datamart_code.html">run_datamart_code()</a></code> </p>
+        </td>
+        <td><p>Run datamart code</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="subset_add_patients.html">subset_add_patients()</a></code> </p>
+        </td>
+        <td><p>Add patients to a subset</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-layout-functions" class="hasAnchor"><a href="#section-layout-functions" class="anchor"></a>Layout functions</h2>
+          <p class="section-desc"><p><em>Use these functions from inside the App in developper mode.</em></p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="message_bar.html">message_bar()</a></code> </p>
+        </td>
+        <td><p>Display an error message</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-other-functions" class="hasAnchor"><a href="#section-other-functions" class="anchor"></a>Other functions</h2>
+          <p class="section-desc"><p><em>Use these functions from inside the App in developper mode.</em></p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
         
         <td>
           <p><code><a href="translate.html">translate()</a></code> </p>
         </td>
-        <td><p>Translates a word</p></td>
+        <td><p>Translate a word</p></td>
       </tr>
     </tbody>
     </table>

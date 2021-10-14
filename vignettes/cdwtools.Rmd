@@ -14,7 +14,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-# First launch
+> Create a first project step by step, from data import to data exploitation.
+
+## First launch
 
 When cdwtools package is installed, run the Shiny application with :
 
@@ -22,7 +24,40 @@ When cdwtools package is installed, run the Shiny application with :
 cdwtools()
 ```
 
-First connection : user ... App ...
-Screenshots...
-
 The first time you launch the application, a **local database** is created, on the library directory.
+
+An *admin* user is created, with login = admin & password = admin.
+
+*screenshot*
+
+## Users management
+
+*Create new user status, user accesses & users*
+*Basic example with creation of one clinician user*
+*At the end, after importing data, reconnect with this account*
+
+## Import data
+
+*Basic example with data available from inside the App, 3 patients, various random data ...*
+*Same with thesaurus*
+
+## Import plugins
+
+*Import one or two plugins from website*
+*One or two for individual patient data, as Dygraph & Datatable...*
+*One for aggregated data, as Flowchart*
+
+## Create a project
+
+*Connect from the user we have created*
+*The user has access to the datamart we created, create a study*
+*Create two pages in patient-lvl, one page in aggregated*
+*Screenshot with result*
+
+## Next ?
+
+You've created your first project.
+It is possible to import data from various sources, as **clinical datawarehouses** (MIMIC, OMOP, eHOP...) but also from **csv files** or **xls files**.
+Even if your data file contains already transformed data (ie one row per patient with one variable per column), you can import it and manipulate data from the Aggregated pages.
+
+*Screenshot of this last example ?*

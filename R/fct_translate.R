@@ -646,7 +646,11 @@ get_translations <- function(){
             "EN", "add_patients_subset_success", "Success adding patients to subset",
             "FR", "add_patients_subset_success", "Insertion de patients dans le subset avec succès",
             "EN", "invalid_subset_id_value", "Invalid subset_id value",
-            "FR", "invalid_subset_id_value", "Valeur de subset_id non valide"
+            "FR", "invalid_subset_id_value", "Valeur de subset_id non valide",
+            "EN", "invalid_datamart_id_value", "Invalid datamart_id value",
+            "FR", "invalid_datamart_id_value", "Valeur de datamart_id non valide",
+            "EN", "invalid_thesaurus_id_value", "Invalid thesaurus_id value",
+            "FR", "invalid_thesaurus_id_value", "Valeur de thesaurus_id non valide"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

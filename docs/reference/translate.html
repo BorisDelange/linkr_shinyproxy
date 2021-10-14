@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Translates a word — translate • cdwtools</title>
+<title>Translate a word — translate • cdwtools</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,7 @@
 
 
 
-<meta property="og:title" content="Translates a word — translate" />
+<meta property="og:title" content="Translate a word — translate" />
 <meta property="og:description" content="Translates a reference word to the requested language" />
 
 
@@ -85,6 +85,9 @@
   </a>
 </li>
 <li>
+  <a href="../articles/cdwtools.html">Get started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -94,11 +97,41 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li class="divider"></li>
+    <li class="dropdown-header">FR - Aide</li>
     <li>
-      <a href="../articles/dev_data_management.html">dev_data_management</a>
+      <a href="../articles/FR_user_help.html">Aide aux utilisateurs</a>
     </li>
     <li>
-      <a href="../articles/get_started.html">get_started</a>
+      <a href="../articles/FR_developper_help.html">Aide aux développeurs</a>
+    </li>
+    <li>
+      <a href="../articles/FR_use_case_mimic_iv.html">Application avec la MIMIC-IV</a>
+    </li>
+    <li>
+      <a href="../articles/FR_deploy_shiny_proxy.html">Déployer avec ShinyProxy</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">EN - Help</li>
+    <li>
+      <a href="../articles/EN_user_help.html">User help</a>
+    </li>
+    <li>
+      <a href="../articles/EN_developper_help.html">Developper help</a>
+    </li>
+    <li>
+      <a href="../articles/EN_use_case_mimic_iv.html">Use case with MIMIC-IV</a>
+    </li>
+    <li>
+      <a href="../articles/EN_deploy_shiny_proxy.html">Deploy with ShinyProxy</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Plugins</li>
+    <li>
+      <a href="../articles/patient_lvl_data_plugins.html">Patient-level data plugins</a>
+    </li>
+    <li>
+      <a href="../articles/aggregated_data_plugins.html">Aggregated data plugins</a>
     </li>
   </ul>
 </li>
@@ -126,7 +159,7 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Translates a word</h1>
+    <h1>Translate a word</h1>
     <small class="dont-index">Source: <a href='https://github.com/BorisDelange/cdwtools/blob/master/R/fct_translate.R'><code>R/fct_translate.R</code></a></small>
     <div class="hidden name"><code>translate.Rd</code></div>
     </div>
@@ -156,12 +189,12 @@
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='va'>words</span> <span class='op'>&lt;-</span> <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://tibble.tidyverse.org/reference/tribble.html'>tribble</a></span><span class='op'>(</span><span class='op'>~</span><span class='va'>language</span>, <span class='op'>~</span><span class='va'>reference_word</span>, <span class='op'>~</span><span class='va'>translated_word</span>,
-<span class='st'>"FR"</span>, <span class='st'>"Settings"</span>, <span class='st'>"Parametres"</span>,
-<span class='st'>"IT"</span>, <span class='st'>"Settings"</span>, <span class='st'>"Impostazioni"</span><span class='op'>)</span>
+<span class='st'>"FR"</span>, <span class='st'>"settings"</span>, <span class='st'>"Parametres"</span>,
+<span class='st'>"IT"</span>, <span class='st'>"settings"</span>, <span class='st'>"Impostazioni"</span><span class='op'>)</span>
 
-<span class='fu'>translate</span><span class='op'>(</span><span class='st'>"ESP"</span>, <span class='va'>words</span>, <span class='st'>"Settings"</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in translate("ESP", words, "Settings"): impossible de trouver la fonction "translate"</span></div><div class='input'><span class='fu'>translate</span><span class='op'>(</span><span class='st'>"FR"</span>, <span class='va'>words</span>, <span class='st'>"Settings"</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in translate("FR", words, "Settings"): impossible de trouver la fonction "translate"</span></div></pre>
+<span class='fu'>cdwtools</span><span class='fu'>::</span><span class='fu'>translate</span><span class='op'>(</span><span class='st'>"IT"</span>, <span class='va'>words</span>, <span class='st'>"settings"</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='error'>Error: 'translate' n’est un object exporté depuis 'namespace:cdwtools'</span></div><div class='input'><span class='fu'>cdwtools</span><span class='fu'>::</span><span class='fu'>translate</span><span class='op'>(</span><span class='st'>"FR"</span>, <span class='va'>words</span>, <span class='st'>"settings"</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='error'>Error: 'translate' n’est un object exporté depuis 'namespace:cdwtools'</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

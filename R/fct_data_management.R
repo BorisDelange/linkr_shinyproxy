@@ -78,9 +78,9 @@ subset_add_patients <- function(output, r = shiny::reactiveValues(), patients = 
     message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language)
     stop(translate(language, "invalid_subset_id_value")) 
   })
-  if (length(subset_id) == 0){
+  if (is.na(subset_id) | length(subset_id) == 0){
     message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language)
-    stop(translate(language, "invalid_subset_id_value"), toString(var_cols %>% dplyr::pull(name)))
+    stop(translate(language, "invalid_subset_id_value"))
   }
   
   var_cols <- tibble::tribble(

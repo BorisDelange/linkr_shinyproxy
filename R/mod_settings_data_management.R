@@ -291,16 +291,27 @@ mod_settings_data_management_server <- function(id, r, language){
               last_row_subsets + 1, translate(language, "subset_all_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
               last_row_subsets + 2, translate(language, "subset_included_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
               last_row_subsets + 3, translate(language, "subset_excluded_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE))
+          # Add code for creating subset with all patients
+          code <- paste0("run_datamart_code(output, r, %datamart_id%)\n",
+                         "patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)\n",
+                         "subset_add_patients(output, r, patients, %subset_id%, erase = FALSE)")
           DBI::dbAppendTable(r$db, "code",
             tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-              last_row_code + 1, "subset", last_row_subsets + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
+              last_row_code + 1, "subset", last_row_subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
               last_row_code + 2, "subset", last_row_subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
               last_row_code + 3, "subset", last_row_subsets + 3, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
-
+          
           # Update r$options, r$code & r$subsets
           update_r(r, "options", language)
           update_r(r, "subsets", language)
           update_r(r, "code", language)
+          
+          # Execute code for creating subset with all patients
+          # datamart_id <- r$studies %>% dplyr::filter(datamart_id == last_row + 1) %>% dplyr::pull(id)
+          # code <- code %>% 
+          #   stringr::str_replace_all("%datamart_id%", as.character(datamart_id)) %>%
+          #   stringr::str_replace_all("%subset_id%", as.character(last_row_subsets + 1))
+          # tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w))
         }
 
         # Hide creation card & options card, show management card

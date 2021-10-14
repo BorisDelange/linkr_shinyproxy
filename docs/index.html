@@ -46,6 +46,9 @@
   </a>
 </li>
 <li>
+  <a href="articles/cdwtools.html">Get started</a>
+</li>
+<li>
   <a href="reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -55,11 +58,41 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="articles/dev_data_management.html">dev_data_management</a>
+<li class="divider">
+    <li class="dropdown-header">FR - Aide</li>
+    <li>
+      <a href="articles/FR_user_help.html">Aide aux utilisateurs</a>
     </li>
     <li>
-      <a href="articles/get_started.html">get_started</a>
+      <a href="articles/FR_developper_help.html">Aide aux développeurs</a>
+    </li>
+    <li>
+      <a href="articles/FR_use_case_mimic_iv.html">Application avec la MIMIC-IV</a>
+    </li>
+    <li>
+      <a href="articles/FR_deploy_shiny_proxy.html">Déployer avec ShinyProxy</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">EN - Help</li>
+    <li>
+      <a href="articles/EN_user_help.html">User help</a>
+    </li>
+    <li>
+      <a href="articles/EN_developper_help.html">Developper help</a>
+    </li>
+    <li>
+      <a href="articles/EN_use_case_mimic_iv.html">Use case with MIMIC-IV</a>
+    </li>
+    <li>
+      <a href="articles/EN_deploy_shiny_proxy.html">Deploy with ShinyProxy</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">Plugins</li>
+    <li>
+      <a href="articles/patient_lvl_data_plugins.html">Patient-level data plugins</a>
+    </li>
+    <li>
+      <a href="articles/aggregated_data_plugins.html">Aggregated data plugins</a>
     </li>
   </ul>
 </li>
@@ -86,9 +119,42 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-CDW Tools package gives some tools to help clinicians without advanced programmation skills, 
-  statisticiants and data scientists use their clinical data warehouse, from patient-level data visualization 
-  to pooled patient data analytics, using a web application created with {shiny}.
+<div id="cdwtools" class="section level1">
+<div class="page-header"><h1 class="hasAnchor">
+<a href="#cdwtools" class="anchor"></a>cdwtools</h1></div>
+<!-- badges: start -->
+
+<p>cdwtools stands for <strong>Clinical Data Warehouse tools</strong>. This package aims to help clinicians, statisticians &amp; data scientists work with CDW data, with data visualization, data cleaning, exploratory data analysis &amp; model building tools, using a Shiny web application.</p>
+<div id="installation" class="section level2">
+<h2 class="hasAnchor">
+<a href="#installation" class="anchor"></a>Installation</h2>
+<!--You can install the released version of cdwtools from [CRAN](https://CRAN.R-project.org) with:
+
+``` r
+install.packages("cdwtools")
+```
+-->
+<p>You can install the development version from Github, with :</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span><span class="op">(</span><span class="st">"BorisDelange/cdwtools"</span><span class="op">)</span></code></pre></div>
+</div>
+<div id="overview" class="section level2">
+<h2 class="hasAnchor">
+<a href="#overview" class="anchor"></a>Overview</h2>
+<p><em>Screenshot here</em></p>
+<p>The core principle of the App is the <strong>modularity</strong> : each user chooses which pages to display (called <strong>modules</strong> in the App), which <strong>figures</strong> display in each page, which <strong>thesaurus items</strong> each figure uses.</p>
+<p>For example, a user can choose to display heart rate &amp; systolic arterial blood pressure in a graph, in a page named <em>Haemodynamics</em>. This page will be automatically updated for each patient. He then creates a <em>Flowchart page</em> in Aggregated data, which will display a flowchart with the patients he has included &amp; excluded. He finally creates a <em>Report page</em> where he can create a report of his work, choose which figures to display (dynamically update with modifications on data), and download it as a PDF.</p>
+<p>The App contains two sides : a <strong>user side</strong>, which requires no particular skill in R and a <strong>developper side</strong>, where new plugins can be developped. A <strong>plugin</strong> is a Shiny code used to render and manipulate data. Some plugins are available in the <strong>Articles section</strong> of this website. You can create new plugins and share it with other people.</p>
+</div>
+<div id="security" class="section level2">
+<h2 class="hasAnchor">
+<a href="#security" class="anchor"></a>Security</h2>
+</div>
+<div id="troubleshooting" class="section level2">
+<h2 class="hasAnchor">
+<a href="#troubleshooting" class="anchor"></a>Troubleshooting</h2>
+</div>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -121,7 +187,13 @@ CDW Tools package gives some tools to help clinicians without advanced programma
 </ul>
 </div>
 
-  </div>
+  <div class="dev-status">
+<h2>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
+</ul>
+</div>
+</div>
 </div>
 
 

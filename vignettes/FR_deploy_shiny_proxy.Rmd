@@ -1,0 +1,15 @@
+---
+title: "Déployer avec ShinyProxy"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{FR_deploy_shiny_proxy}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```

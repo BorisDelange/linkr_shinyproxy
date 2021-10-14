@@ -1,0 +1,91 @@
+---
+title: "Patient-level data plugins"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{patient_lvl_data_plugins}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Dygraph plugin
+
+### Description
+
+- Version : 1.0.0
+- Libraries : dygraphs
+- Data allowed : r$labs_vitals
+
+This plugin generates a dygraph ...
+
+### UI code
+
+```{r, eval = FALSE}
+dygraphs::dygraphOutput(ns("group_%group_id%"), height = "250px")
+```
+
+### Server code
+
+```{r, eval = FALSE}
+observeEvent(r$chosen_patient, {
+  lungDeaths <- cbind(mdeaths, fdeaths)
+  output$group_%group_id% <- dygraphs::renderDygraph({
+      dygraphs::dygraph(lungDeaths)
+  })
+})
+```
+
+## Datatable plugin
+
+### Description
+
+- Version : 1.0.0
+- Libraries : DT
+- Data allowed : `r$labs_vitals`
+
+This plugin generates a datatable ...
+
+### UI code
+
+```{r, eval = FALSE}
+DT::DTOutput(ns("group_%group_id%"))
+```
+
+### Server code
+
+```{r, eval = FALSE}
+# Thesaurus items are on the thesaurus_items tibble, with columns = item_id (own thesaurus item_id), thesaurus_item_display_name & thesaurus_item_unit
+
+data <- r$data_labs %>%
+  # Filter on subject & thesaurus items
+  dplyr::filter(subject_id == as.integer(%patient_id%)) %>%
+  # Make sure itemid is integer
+  dplyr::mutate_at("itemid", as.integer) %>%
+  dplyr::inner_join(thesaurus_items %>% dplyr::select(itemid = item_id, thesaurus_item_display_name, thesaurus_item_unit), by = "itemid") %>%
+  dplyr::mutate(charttime = stringr::str_replace_all(stringr::str_replace_all(as.character(charttime), "T", " "), "Z", "")) %>%
+  dplyr::select(itemid, thesaurus_item_display_name, charttime, valuenum, thesaurus_item_unit)
+    
+colnames(data) <- c(translate(language, "item_id"), translate(language, "item_name"), translate(language, "datetime"), translate(language, "value"), translate(language, "unit"))
+  
+observeEvent(r$chosen_patient, {
+    
+  page_length <- isolate(input$group_%group_id%_management_datatable_state$length)
+  start <- isolate(input$group_%group_id%_management_datatable_state$start)
+  
+  output$group_%group_id% <- DT::renderDT(data,
+  options = list(dom = "<'datatable_length'l><'top'ft><'bottom'p>",
+      stateSave = TRUE, stateDuration = 30,
+      pageLength = page_length, displayStart = start,
+      language = list(
+          paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
+          search = translate(language, "DT_search"),
+          lengthMenu = translate(language, "DT_length"))),
+      rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
+})
+```

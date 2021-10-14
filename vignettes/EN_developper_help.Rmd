@@ -13,13 +13,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-# App database
+## App database
 
-# Users
+## Users
 
-# Data management
+## Data management
 
-## Data sources
+### Data sources
 
 A data source can be a data warehouse, a CSV file etc.
 
@@ -28,9 +28,9 @@ The thesaurus are attached to the data source later, in the thesaurus section.
 
 You can **edit** name & description by double-clicking on the field, delete a data source.
 
-## Datamarts
+### Datamarts
 
-A datamart is a ***data access to a part of a data warehouse**. It is often the screening criteria of a study (eg : all patients who received Meropenem in the ICU unit of my hospital, between 2021-01 & 2021-06).
+A datamart is a **data access to a part of a data warehouse**. It is often the screening criteria of a study (eg : all patients who received Meropenem in the ICU unit of my hospital, between 2021-01 & 2021-06).
 
 To **create a datamart**, the name must be unique. You can add a short description, which is optional.
 Choose a data source : it links the thesaurus (one thesaurus is attached to one or multiple data source(s)) and the datamart.
@@ -42,16 +42,21 @@ On the **Edit code page**, you can edit the code that creates the datamart with 
 The code has to be as follows :
 
 ```{r eval = FALSE}
+# Connection to the database, from where we extract data
 con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
-                      port = 5432, user = "admin", password = "admin")
+  port = 5432, user = "admin", password = "admin")
 
+# Create a patients function which, when executed, gets the patients data
 patients <- function(){
-    DBI::dbGetQuery(con, paste0("SELECT * FROM mimic_core.patients LIMIT 10")) %>%
-    dplyr::select(patient_id = subject_id, gender, age = anchor_age, dod)
+  DBI::dbGetQuery(con, paste0("SELECT * FROM mimic_core.patients LIMIT 10")) %>%
+  dplyr::select(patient_id = subject_id, gender, age = anchor_age, dod)
 }
-create_datamart(r = r, datamart_id = 3, data = patients(), type = "patients", 
-                save_as_csv = TRUE, rewrite = FALSE, language = "FR")
 
+# Run import_datamart function, with patients function as data argument
+import_datamart(output = output r = r, datamart_id = %datamart_id%, data = patients(), type = "patients", 
+  save_as_csv = TRUE, rewrite = FALSE, language = "EN")
+
+# Close connection
 DBI::dbDisconnect(con)
 ```
 
@@ -60,20 +65,22 @@ There's **five data variables** to create : `patients`, `stays`, `labs_vitals`, 
 For each data variable, you have to :
 
 - create a function, containing code that allows to get data
-- run `create_datamart` function, with the function as `data` argument
+- run `import_datamart` function, with the function as `data` argument
 
 The advantage to store the code that allows to get data in a function is that this code is not run each time a user uses the datamart.
 If you set the argument `save_as_csv` to TRUE (and `rewrite` to FALSE), then the code is run only the first time the script is excecuted.
 
 You can **Run the code**, with Run code button. It executes all the R code contained in the editor.
 
-See `create_datamart` documentation for more informations (`?create_datamart`).
+Note that you can use `%datamart_id%` : it will be replaced by the current datamart_id before executing the code.
+
+See `import_datamart` documentation for more informations (`?import_datamart`).
 
 On the **options page**, you can choose if the users are allowed to see individual patients data, or just aggregated data. It can be useful to have frequent statistics about a group of patients without having to see individual data : eg a weekly updated datamart with bed occupancy of a hospital unit.
 
 You have to choose which users will have access to this datamart.
 
-## Studies
+### Studies
 
 A study is a project using a datamart. One datamart can contains several studies. Each study contains all patients of the datamart.
 
@@ -92,7 +99,15 @@ You can delete a study, edit its options.
 
 You can choose who has access to a study. 
 
-## Subsets
+When a study is created, it automatically **creates three subsets** :
+
+- All patients : this subset contains all patients of the datamart
+- Included patients : it will be used to save patients included in the study
+- Excluded patients
+
+The code to generate All patients subset is added in the subset code (see next section).
+
+### Subsets
 
 A subset is a set of patients picked in a study. All patients, included & excluded patients subsets are created by default and are not deletable.
 
@@ -102,7 +117,30 @@ You have to choose a study, from which the patients comes.
 You can **edit** name & description by double-clicking on the field, edit study by modifying the value of the dropdown.
 You can delete a subset (except All / Included / Excluded patients subsets), edit options : add or delete patients from the subset.
 
-## Thesaurus
+On the **Edit code page**, you can edit the code that adds patients in a subset with the ShinyAce editor.
+
+The code has to be as follows :
+
+```{r eval = FALSE}
+# Run code that allows access to datamart data
+# After running this function, data is accessible with r$... variables (eg r$patients for patients)
+run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)
+
+# We create a patients dataframe, containing patients we want to include in this subset
+# We can add some filters here (eg r$patients %>% dplyr::filter(age > 18) to get patients with an age superior to 18 y-old)
+patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
+
+# We finally run subset_add_patients function, with our patients datafarme as patients argument
+# It will add our patients to the subset specified with subset_id
+# Note that if erase is set to FALSE, it will not add patients as long as there are already some patients in this subset
+subset_add_patients(output = output, r = r, patients = patients, subset_id = %subset_id%, erase = FALSE)
+```
+
+It is the same principle here than developped in datamarts section : you can use `%datamart_id%` & `%subset_id%` to access to current datamart's & subset's IDs.
+
+See `run_datamart_code` & `subset_add_patients` documentation for more informations (`?run_datamart_code` or `?subset_add_patients`).
+
+### Thesaurus
 
 A thesaurus contains concepts used in the data warehouse (eg heart rate, respiratory rate, medication etc).
 
@@ -117,18 +155,26 @@ On the **Edit code page**, you can edit the code that creates thesaurus with the
 The code has to be as follows :
 
 ```{r eval = FALSE}
+# Connection to the database, from where we extract data
 con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
-                      port = 5432, user = "admin", password = "admin")
+  port = 5432, user = "admin", password = "admin")
 
+# Create a thesaurus function which, when executed, gets the thesaurus data
 thesaurus <- function(){
-    DBI::dbGetQuery(con, paste0("SELECT * FROM mimic_core.patients LIMIT 10")) %>%
-    dplyr::select(patient_id = subject_id, gender, age = anchor_age, dod)
+  DBI::dbGetQuery(con, "SELECT itemid AS item_id, label AS name, category, unitname AS unit FROM mimic_icu.d_items") %>% 
+  tibble::as_tibble() %>% dplyr::transmute(item_id, name, display_name = "", category, unit)
 }
-create_thesaurus(r = r, datamart_id = 3, data = patients(), type = "patients", 
-                save_as_csv = TRUE, rewrite = FALSE, language = "FR")
 
+# Run import_thesaurus function, with thesaurus function as thesaurus argument
+import_thesaurus(output = output, r = r, thesaurus_id = %thesaurus_id%, thesaurus = thesaurus(), language = "EN")
+
+# Close connection
 DBI::dbDisconnect(con)
 ```
+
+Note that you can use `%thesaurus_id%` : it will be replaced by the current thesaurus_id before executing the code.
+
+See `import_thesaurus` documentation for more informations (`?import_thesaurus`).
 
 On the **Thesaurus items page**, you can display thesaurus items by clicking on the table icon, on action column of thesaurus management.
 You can edit item name, display name, category & unit.
@@ -137,10 +183,10 @@ The **display name** is the named used by default in the figures, when the item 
 The **category** is useful to search an item (eg : Haemodynamics for Heart rate, Systolic arterial blood pressure, Noradrenaline etc).
 You can edit an item **unit name**. The unit conversion is not yet available.
 
-# Modules & plugins
+## Modules & plugins
 
-## Plugins
+### Plugins
 
-## Modules
+### Modules
 
-# Log
+## Log

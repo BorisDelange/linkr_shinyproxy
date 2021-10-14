@@ -2,7 +2,16 @@ pandoc: 2.11.4
 pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
-  dev_data_management: dev_data_management.html
-  get_started: get_started.html
-last_built: 2021-10-12T09:29Z
+  aggregated_data_plugins: aggregated_data_plugins.html
+  cdwtools: cdwtools.html
+  EN_deploy_shiny_proxy: EN_deploy_shiny_proxy.html
+  EN_developper_help: EN_developper_help.html
+  EN_user_help: EN_user_help.html
+  EN_use_case_mimic_iv: EN_use_case_mimic_iv.html
+  FR_deploy_shiny_proxy: FR_deploy_shiny_proxy.html
+  FR_developper_help: FR_developper_help.html
+  FR_user_help: FR_user_help.html
+  FR_use_case_mimic_iv: FR_use_case_mimic_iv.html
+  patient_lvl_data_plugins: patient_lvl_data_plugins.html
+last_built: 2021-10-14T09:02Z
 

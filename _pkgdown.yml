@@ -1,3 +1,25 @@
+reference:
+- title: "Launch the application from R"
+  contents: 
+  - cdwtools
+- title: "Manipulate data inside the App"
+  desc: >
+    *Use these functions from inside the App in developper mode.*
+  contents:
+  - import_datamart
+  - import_thesaurus
+  - run_datamart_code
+  - subset_add_patients
+- title: "Layout functions"
+  desc: >
+    *Use these functions from inside the App in developper mode.*
+  contents:
+  - message_bar
+- title: "Other functions"
+  desc: >
+    *Use these functions from inside the App in developper mode.*
+  contents:
+  - translate
 articles:
 - title: FR - Aide
   navbar: FR - Aide
@@ -5,9 +27,16 @@ articles:
   - FR_user_help
   - FR_developper_help
   - FR_use_case_mimic_iv
+  - FR_deploy_shiny_proxy
 - title: EN - Help
   navbar: EN - Help
   contents:
   - EN_user_help
   - EN_developper_help
   - EN_use_case_mimic_iv
+  - EN_deploy_shiny_proxy
+- title: Plugins
+  navbar: Plugins
+  contents:
+  - patient_lvl_data_plugins
+  - aggregated_data_plugins
