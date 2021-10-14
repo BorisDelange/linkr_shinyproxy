@@ -6,6 +6,18 @@
 \usage{
 make_page(title, subtitle, contents)
 }
+\arguments{
+\item{title}{Title of the page (character)}
+
+\item{subtitle}{Subtitle of the page (character)}
+
+\item{contents}{Contents of the page (character)}
+}
 \description{
-Make a page
+Code available in shiny.fluent github pages (Articles). Creates a shiny.fluent page.
+}
+\examples{
+\dontrun{
+make_page(title = "My page title", subtitle = "My page subtitle", contents = "shiny::div('My page content')")
+}
 }

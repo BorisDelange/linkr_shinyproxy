@@ -14,7 +14,7 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
   # Reset r$chosen_datamart to clear patient-level data & aggregated data (use the same r variables for data) 
   
   # Get code from datamart
-  tryCatch(code <- r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code),
+  tryCatch(r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code),
     error = function(e){
       show_message_bar(output, 1, "fail_load_code", "severeWarning", language)
       stop(translate(language, "fail_load_code"))
@@ -22,9 +22,10 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
       show_message_bar(output, 1, "fail_load_code", "severeWarning", language)
       stop(translate(language, "fail_load_code"))
     })
+  code <- r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code)
   
   # Replace %datamart_id% with real datamart_id
-  code <- code %>% stringr::str_replace_all("%datamart_id%", as.character(r$datamart_id))
+  code <- code %>% stringr::str_replace_all("%datamart_id%", as.character(datamart_id))
   
   # Reset r variables
   r$patients <- tibble::tibble()

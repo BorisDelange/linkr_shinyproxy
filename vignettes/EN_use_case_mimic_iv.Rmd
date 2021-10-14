@@ -164,12 +164,12 @@ import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = orde
 DBI::dbDisconnect(con)
 ```
 
-**Put it all together** (copy and paste this entire code in your App and Save) :
+**Put it all together** (copy and paste the entire code in your App and Save) :
 
 ```{r eval = FALSE}
 # Connection to the database, from where we extract data
-con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
-  port = 5432, user = "admin", password = "admin")
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost", port = 5432, 
+    user = "admin", password = "admin")
 
 ########## PATIENTS ##########
 patients <- function(){
@@ -260,17 +260,24 @@ MIMIC-IV thesaurus can be found in these tables : [*d_items*](https://mimic.mit.
 Let's see documentation with `?import_thesaurus`.
 
 ```{r, eval = FALSE}
+# Connection to the database, from where we extract data
 con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
   port = 5432, user = "admin", password = "admin")
 
 # Create a function which, when executed, gets thesaurus data
 thesaurus <- function(){
-  
+    DBI::dbGetQuery(con, 
+      "SELECT itemid AS item_id, label AS name, '' AS display_name, category, unitname AS unit 
+      FROM mimic_icu.d_items
+UNION SELECT itemid AS item_id, label AS name, '' AS display_name, category, '' AS unit
+      FROM mimic_hosp.d_labitems") %>%
+    dplyr::mutate_at("item_id", as.integer)
 }
 
 # Run import_thesaurus function
+import_thesaurus(output = output, r = r, thesaurus_id = %thesaurus_id%, thesaurus = thesaurus(), language = language)
 
-
+# Disconnect
 DBI::dbDisconnect(con)
 ```
 

@@ -25,6 +25,18 @@ make_card <- function(title, content, size = 12, style = "") {
 }
 
 #' Make a page
+#' 
+#' @description Code available in shiny.fluent github pages (Articles). Creates a shiny.fluent page.
+#' @param title Title of the page (character)
+#' @param subtitle Subtitle of the page (character)
+#' @param contents Contents of the page (character)
+#' 
+#' @result Returns HTML code of the page
+#' 
+#' @examples
+#' \dontrun{
+#' make_page(title = "My page title", subtitle = "My page subtitle", contents = "shiny::div('My page content')")
+#' }
 make_page <- function (title, subtitle, contents) {
   tagList(div(
     class = "page-title",

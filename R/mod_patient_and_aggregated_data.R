@@ -13,8 +13,8 @@ mod_patient_and_aggregated_data_ui <- function(id, language, page_style, page){
   
   if (page_style == "fluent"){
     div(class = "main",
-        # uiOutput(ns("breadcrumb")),
-        shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")), shiny::uiOutput(ns("warnings4")),
+        shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
+        shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")),
         uiOutput(ns("main"))
     ) -> result
   }
@@ -27,6 +27,12 @@ mod_patient_and_aggregated_data_ui <- function(id, language, page_style, page){
 mod_patient_and_aggregated_data_server <- function(id, r, language){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    # Once a datamart is chosen, load its data
+    
+    observeEvent(r$chosen_datamart, {
+      run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language) 
+    })
 
     # Once a study is chosen, load its tabs
     observeEvent(r$chosen_study, {

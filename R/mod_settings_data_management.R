@@ -52,16 +52,16 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
       prefix <- "datamarts"
       div(class = "main",
         settings_default_elements(ns, prefix),
-        settings_toggle_card(language, ns, cards = list(
+        settings_toggle_card(language = language, ns = ns, cards = list(
           list(key = paste0(prefix, "_creation_card"), label = "create_datamart"),
           list(key = paste0(prefix, "_datatable_card"), label = "datamarts_management"),
-          list(key = paste0(prefix, "_edit_code_card"), label = "edit_datamart_code"),
+          list(key = "edit_code_card", label = "edit_datamart_code"),
           list(key = paste0(prefix, "_options_card"), label = "datamart_options"))),
         settings_creation_card(
           language, ns, title = "create_datamart", prefix = prefix,
           textfields = c("name", "description"), textfields_width = "300px",
           dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
-        uiOutput(ns(paste0(prefix, "_edit_code_card"))),
+        uiOutput(ns("edit_code_card")),
         uiOutput(ns(paste0(prefix, "_options_card"))),
         settings_datatable_card(language, ns, title = "datamarts_management", prefix = prefix)
       ) -> result
@@ -119,11 +119,11 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
     if (page == "settings/thesaurus"){
       div(class = "main",
         settings_default_elements(ns, "thesaurus"),
-        settings_toggle_card(language, ns, cards = list(
+        settings_toggle_card(language = language, ns = ns, cards = list(
           list(key = "thesaurus_creation_card", label = "create_thesaurus"),
           list(key = "thesaurus_datatable_card", label = "thesaurus_management_card"),
           list(key = "thesaurus_items_datatable_card", label = "thesaurus_items_management_card"),
-          list(key = "thesaurus_edit_code_card", label = "edit_thesaurus_code")
+          list(key = "edit_code_card", label = "edit_thesaurus_code")
         )),
         settings_creation_card(
           language, ns, title = "create_thesaurus", prefix = "thesaurus",
@@ -131,7 +131,7 @@ mod_settings_data_management_ui <- function(id, language, page_style, page){
           dropdowns = dropdowns %>% dplyr::filter(page_name == page) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
         settings_datatable_card(language, ns, title = "thesaurus_management", prefix = "thesaurus"),
         settings_datatable_card(language, ns, title = "thesaurus_items_management", prefix = "thesaurus_items"),
-        uiOutput(ns("thesaurus_edit_code_card")),
+        uiOutput(ns("edit_code_card")),
         uiOutput(ns("thesaurus_options_card"))
       ) -> result
     }
@@ -572,60 +572,71 @@ mod_settings_data_management_server <- function(id, r, language){
       # Edit code by selecting a row           #
       ##########################################
       
-      observeEvent(input[[paste0(prefix, "_edit_code")]], {
-        shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_edit_code_card_toggle"), value = TRUE)
-        output[[paste0(prefix, "_edit_code_card")]] <- renderUI({
-          category_filter <- id_get_other_name(id, "singular_form")
-          link_id_filter <- as.integer(substr(input[[paste0(prefix, "_edit_code")]], nchar(paste0(prefix, "_edit_code_")) + 1, nchar(input[[paste0(prefix, "_edit_code")]])))
+      # Button "Edit code" is clicked on the datatable
+      observeEvent(input$edit_code, {
+        
+        # Display edit_code card
+        shiny.fluent::updateToggle.shinyInput(session, "edit_code_card_toggle", value = TRUE)
+        
+        # Render UI of this edit_code card
+        output$edit_code_card <- renderUI({
+          
+          # Get category & link_id variables, to update code table
+          category <- get_singular(id, language)
+          link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
+          
           # Save ID value in r variable, to get this during code execution
+          # Before, restart these variables
           r$datamart_id <- NA_integer_
           r$subset_id <- NA_integer_
           r$thesaurus_id <- NA_integer_
-          if (prefix == "datamarts") r$datamart_id <- link_id_filter
-          if (prefix == "subsets"){
-            # Get subset_id & datamart_id
-            r$datamart_id <- r$studies %>% 
-              dplyr::filter(id == (r$subsets %>% dplyr::filter(id == link_id_filter) %>% dplyr::pull(study_id))) %>%
-              dplyr::pull(datamart_id)
-            r$subset_id <- link_id_filter
-          } 
-          if (prefix == "thesaurus") r$thesaurus_id <- link_id_filter
           
-          code <- r$code %>% dplyr::filter(category == category_filter & link_id == link_id_filter) %>% dplyr::pull(code)
-          settings_edit_code_card(language, ns, type = "code", code = code, link_id = link_id_filter, title = paste0("edit_", category_filter, "_code"), prefix = prefix)
+          if (id == "settings_datamarts") r$datamart_id <- link_id
+          if (id == "settings_thesaurus") r$thesaurus_id <- link_id
+          if (id == "settings_subsets"){
+            r$datamart_id <- 
+              r$studies %>% 
+              dplyr::filter(id == (r$subsets %>% dplyr::filter(id == !!link_id) %>% dplyr::pull(study_id))) %>%
+              dplyr::pull(datamart_id)
+            r$subset_id <- link_id
+          } 
+          
+          # Get code from database
+          code <- r$code %>% dplyr::filter(category == !!category & link_id == !!link_id) %>% dplyr::pull(code)
+          
+          # Render UI
+          settings_edit_code_card(ns = ns, id = id, title = paste0("edit_", category, "_code"), code = code, link_id = link_id, language = language)
         })
-        output[[paste0(prefix, "_code_result")]] <- renderText("")
-      })
-      
-      observeEvent(input[[paste0(prefix, "_edit_code_save")]], {
-        category_filter <- id_get_other_name(id, "singular_form")
-        link_id_filter <- as.integer(substr(input[[paste0(prefix, "_edit_code")]], nchar(paste0(prefix, "_edit_code_")) + 1, nchar(input[[paste0(prefix, "_edit_code")]])))
-        # Reload r$code before querying
-        r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
-        code_id <- r$code %>% dplyr::filter(category == category_filter, link_id == link_id_filter) %>% dplyr::pull(id)
-        # Replace ' with '' and store in the database
-        DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input[[paste0(prefix, "_ace_edit_code")]], "'", "''"), "' WHERE id = ", code_id)) -> query
-        DBI::dbClearResult(query)
-        r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
         
-        show_message_bar(output, 4, "modif_saved", "success", language)
+        # Reset code_result textOutput
+        output$code_result <- renderText("")
       })
       
-      observeEvent(input[[paste0(prefix, "_execute_code")]], {
-        output[[paste0(prefix, "_code_result")]] <- renderText({
-          # Replace %datamart_id% from code to real r$datamart_id
-          code <- isolate(input[[paste0(prefix, "_ace_edit_code")]]) %>%
+      # When save button is clicked
+      observeEvent(input$edit_code_save, 
+        settings_edit_code_save(output = output, r = r, id = id, code_id_input = input$edit_code, code_edited = input$ace_edit_code, language = "EN"))
+      
+      # When Execute code button is clicked
+      observeEvent(input$execute_code, {
+        
+        output$code_result <- renderText({
+          
+          # Replace %CODE% from code to real values
+          code <- isolate(input$ace_edit_code) %>%
             stringr::str_replace_all("%datamart_id%", as.character(isolate(r$datamart_id))) %>%
             stringr::str_replace_all("%subset_id%", as.character(isolate(r$subset_id))) %>%
             stringr::str_replace_all("%thesaurus_id%", as.character(isolate(r$thesaurus_id)))
+          
           # Change this option to display correctly tibble in textbox
           eval(parse(text = "options('cli.num_colors' = 1)"))
+          
           # Capture console output of our code
           captured_output <- capture.output(
-            tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w))
-          )
+            tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
+          
           # Restore normal value
           eval(parse(text = "options('cli.num_colors' = NULL)"))
+          
           # Display result
           paste(captured_output, collapse = "\n")
         })

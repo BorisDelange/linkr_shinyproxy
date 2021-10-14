@@ -9,12 +9,19 @@ reference:
   - import_datamart
   - import_thesaurus
   - run_datamart_code
-  - subset_add_patients
+  - add_patients_to_subset
 - title: "Layout functions"
   desc: >
     *Use these functions from inside the App in developper mode.*
   contents:
-  - message_bar
+  - make_layout
+  - make_page
+  - make_card
+  - make_dropdown
+  - make_textfield
+  - make_people_picker
+  - make_toggle
+  - show_message_bar
 - title: "Other functions"
   desc: >
     *Use these functions from inside the App in developper mode.*

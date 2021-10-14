@@ -27,7 +27,15 @@ import_thesaurus(
 Add new thesaurus items to database
 }
 \details{
-The function is used in a thesaurus code, it is launched only when you click on "Run code" on the thesaurus page.
+The function is used in a thesaurus code, it is launched only when you click on "Run code" on the thesaurus page.\cr\cr
+Columns needed  :\cr\cr
+\itemize{
+\item{item_id = integer}
+\item{name = character}
+\item{display_name = character}
+\item{category = character}
+\item{unit = character}
+}
 }
 \examples{
 \dontrun{

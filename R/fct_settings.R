@@ -23,18 +23,37 @@
   # Toggle card                            #
   ##########################################
   
-  settings_toggle_card <- function(language, ns, cards = list(), activated = ""){
-    toggles <- tagList()
-    sapply(cards, function(card){
-      if (card$label != "") toggles <<- tagList(toggles, make_toggle(language, ns, label = card$label, 
+#' Render UI of toggles for card show / hide
+#' 
+#' @description At the top of main page, there's a card with toggle buttons, it allows to show or hide distinct cards of the page.
+#' @param ns Shiny namespace
+#' @param cards A list containing distinct cards (list)
+#' @param activated Which toggles are set to ON (character)
+#' @param language Language used (character)
+#' @examples
+#' \dontrun{
+#' cards <- list(
+#'   list(key = "creation_card", label = "create_datamart"),
+#'   list(key = "datatable_card", label = "datamarts_management"),
+#'   list(key = "edit_code_card", label = "edit_datamart_code"))
+#' settings_toggle_card(ns = NS("settings_datamart"), cards = cards, activated = c("creation_card", "datatable_card"), language = "EN")
+#' }
+  
+settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list(), activated = ""){
+  toggles <- tagList()
+  # For each card, create a toggle
+  sapply(cards, function(card){
+    if (card$label != "") toggles <<- tagList(toggles, 
+      make_toggle(language, ns, label = card$label, 
         id = paste0(card$key, "_toggle"), value = ifelse(card$key %in% activated, TRUE, FALSE), inline = TRUE))
-    })
-    make_card("",
-      shiny.fluent::Stack(
-        horizontal = TRUE, tokens = list(childrenGap = 10), toggles
-      )
+  })
+  # Render card with distinct toggles
+  make_card("",
+    shiny.fluent::Stack(
+      horizontal = TRUE, tokens = list(childrenGap = 10), toggles
     )
-  }
+  )
+}
   
   ##########################################
   # Creation card                          #
@@ -171,43 +190,44 @@
   # Edit code card                         #
   ##########################################
   
-  settings_edit_code_card <- function(language, ns, type = "code", code, link_id, title, prefix){
-    choice_ui_server <- tagList()
-    if (prefix == "plugins"){
-      shiny.fluent::ChoiceGroup.shinyInput(ns(paste0(prefix, "_edit_code_choice_ui_server")), value = "ui", options = list(
-        list(key = "ui", text = translate(language, "ui")),
-        list(key = "server", text = translate(language, "server"))
-      ), className = "inline_choicegroup") -> choice_ui_server
-    }
-    
-    # if (prefix == "plugins"){
-    #   div(
-    #     shiny::conditionalPanel(
-    #       condition = paste0("input.", prefix, "_edit_code_choice_ui_server == 'ui'"), ns = ns,
-    #       div(shinyAce::aceEditor(ns(paste0(prefix, "_ace_edit_code_ui")), code, mode = "r", height = "400px"), style = "width: 100%;")),
-    #     shiny::conditionalPanel(
-    #       condition = paste0("input.", prefix, "_edit_code_choice_ui_server == 'server'"), ns = ns,
-    #       div(shinyAce::aceEditor(ns(paste0(prefix, "_ace_edit_code_server")), code, mode = "r", height = "400px"), style = "width: 100%;"))
-    #   ) -> ace_editor
-    # }
-    # if (prefix != "plugins") div(shinyAce::aceEditor(ns(paste0(prefix, "_ace_edit_code")), code, mode = "r", height = "400px"), style = "width: 100%;") -> ace_editor
-    
-    div(id = ns(paste0(prefix, "_edit_code_card")),
-      make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
-        div(
-          choice_ui_server,
-          div(shinyAce::aceEditor(ns(paste0(prefix, "_ace_edit_code")), code, mode = "r", 
-            autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000, 
-            hotkeys = list(run_key = list(win = "Ctrl-Enter|Ctrl-Shift-Enter", mac = "CMD-ENTER|CMD-SHIFT-ENTER"))), style = "width: 100%;"),
-          shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_edit_code_save")), translate(language, "save")), " ",
-          shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_execute_code")), translate(language, "execute_code")), 
-          htmltools::br(), htmltools::br(),
-          div(shiny::verbatimTextOutput(ns(paste0(prefix, "_code_result"))), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
-        )
+#' Render UI of edit_code card
+#' 
+#' @param ns Shiny namespace
+#' @param id ID of the current page, format = "settings_[PAGE]" (character)
+#' @param title Title of the card (character)
+#' @param code Code to show in ShinyAce editor (character)
+#' @param link_id ID allows to link with code table (integer)
+#' @param language Language used (character)
+
+settings_edit_code_card <- function(ns = shiny::NS(), id = character(), title = character(), code = character(), link_id = integer(), language = "EN"){
+  # For plugin page, choose between UI code or Server code
+  choice_ui_server <- tagList()
+  
+  if (id == "settings_plugins"){
+    shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_choice_ui_server"), value = "ui", options = list(
+      list(key = "ui", text = translate(language, "ui")),
+      list(key = "server", text = translate(language, "server"))
+    ), className = "inline_choicegroup") -> choice_ui_server
+  }
+  
+  div(id = ns("edit_code_card"),
+    # Show current ID in the title
+    make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
+      div(
+        choice_ui_server,
+        div(shinyAce::aceEditor(ns("ace_edit_code"), code, mode = "r", 
+          autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000#, 
+          # hotkeys = list(run_key = list(win = "Ctrl-Enter|Ctrl-Shift-Enter", mac = "CMD-ENTER|CMD-SHIFT-ENTER"))
+          ), style = "width: 100%;"),
+        shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), translate(language, "save")), " ",
+        shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code")), 
+        htmltools::br(), htmltools::br(),
+        div(shiny::verbatimTextOutput(ns("code_result")), 
+            style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
       )
     )
-  }
+  )
+}
 
 ##########################################
 # SERVER FUNCTIONS                       #
@@ -340,8 +360,8 @@
     
             # Add edit code button
             if ("edit_code" %in% action_buttons){
-              actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_edit_code_", data[i, 1]), "", icon = icon("file-code"),
-              onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_edit_code", "', this.id, {priority: 'event'})")), "")}
+              actions <- tagList(actions, shiny::actionButton(paste0("edit_code_", data[i, 1]), "", icon = icon("file-code"),
+              onclick = paste0("Shiny.setInputValue('", id, "-edit_code", "', this.id, {priority: 'event'})")), "")}
     
             # Add sub datatable button
             if ("sub_datatable" %in% action_buttons){
@@ -439,3 +459,35 @@
           shinyjs::delay(3000, shinyjs::hide("warnings3"))
         }) 
       }
+      
+    ##########################################
+    # Save edition of the code               #
+    ##########################################  
+    
+#' Save code edition
+#' 
+#' @param output variable from Shiny, used to render messages on the message bar
+#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param id ID of the current page, format = "settings_[PAGE]" (character)
+#' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
+#' @param code_edited New code, after editing it (character)
+#' @param language Language used
+#' 
+settings_edit_code_save <- function(output, r = shiny::reactiveValues(), id = character(), code_id_input = integer(), code_edited = character(), language = "EN"){
+  
+  # Get category & link_id variables, to update code table
+  category <- get_singular(id, language)
+  link_id <- as.integer(substr(code_id_input, nchar("edit_code_") + 1, nchar(code_id_input)))
+  
+  # Reload r$code before querying
+  r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
+  code_id <- r$code %>% dplyr::filter(category == !!category, link_id == !!link_id) %>% dplyr::pull(id)
+  
+  # Replace ' with '' and store in the database
+  DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(code_edited, "'", "''"), "' WHERE id = ", code_id)) -> query
+  DBI::dbClearResult(query)
+  r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
+  
+  # Notification to user
+  show_message_bar(output, 4, "modif_saved", "success", language)
+}

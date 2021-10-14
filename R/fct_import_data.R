@@ -72,7 +72,7 @@
 #' patients <- tibble::tribble(~patient_id, ~gender, ~age, ~dod, 44565L, "F", 45, "2021-05-01 00:00:00") %>%
 #'   dplyr::mutate_at("dod", lubridate::ymd_hms)
 #'     
-#' create_datamart(r = r, datamart_id = 5, data = patients, type = "patients", 
+#' create_datamart(output = output, r = r, datamart_id = 5, data = patients, type = "patients", 
 #'   save_as_csv = FALSE, rewrite = FALSE, language = language)
 #' }
 import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = integer(), data = tibble::tibble(), type = "patients", save_as_csv = TRUE, rewrite = FALSE, language = "EN"){
@@ -100,7 +100,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
     show_message_bar(output, 1, "var_type_not_valid", "severeWarning", language) 
     stop(translate(language, "var_type_not_valid"))
   }
-  id_message_bar <- switch(type, "patients" = 1, "stays" = 2, "labs_vitals" = 3, "text" = 4, "order" = 5)
+  id_message_bar <- switch(type, "patients" = 1, "stays" = 2, "labs_vitals" = 3, "text" = 4, "orders" = 5)
   
   folder <- paste0(golem::get_golem_wd(), "/data/datamart_", datamart_id)
   path <- paste0(folder, "/", type, ".csv")
@@ -248,14 +248,22 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
 #' @param thesaurus thesaurus data variable (data.frame or tibble)
 #' @param language language used for error / warning messages (character, default = "EN")
 #' @description Add new thesaurus items to database
-#' @details The function is used in a thesaurus code, it is launched only when you click on "Run code" on the thesaurus page.
+#' @details The function is used in a thesaurus code, it is launched only when you click on "Run code" on the thesaurus page.\cr\cr
+#' Columns needed  :\cr\cr
+#' \itemize{
+#' \item{item_id = integer}
+#' \item{name = character}
+#' \item{display_name = character}
+#' \item{category = character}
+#' \item{unit = character}
+#' }
 #' @examples
 #' \dontrun{
 #' thesaurus <- tibble::tribble(~item_id, ~name, ~display_name, ~category, ~unit,
 #'   44543L, "Heart rate", "HR", "Vitals", "bpm",
 #'   46531L, "Respiratory rate", "RR", "Vitals", "cpm")
 #'   
-#' import_thesaurus(r = r, thesaurus_id = 5, thesaurus = thesaurus, language = language)
+#' import_thesaurus(output = output, r = r, thesaurus_id = 5, thesaurus = thesaurus, language = language)
 #' }
 import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id = integer(), thesaurus = tibble::tibble(), language = "EN"){
   # Check thesaurus_id

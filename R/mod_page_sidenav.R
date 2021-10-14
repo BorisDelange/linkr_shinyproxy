@@ -247,9 +247,7 @@ mod_page_sidenav_server <- function(id, r, language){
         # Update dropdowns
         shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE))
         
-        # Load data of the datamart
-        code <- DBI::dbGetQuery(r$db, paste0("SELECT code FROM code WHERE category = 'datamart' AND link_id = ", input$datamart)) %>% dplyr::pull()
-        try(eval(parse(text = code)))
+        # Code will be run from mod_patient_and_aggregated_data.R
       }
     })
     
