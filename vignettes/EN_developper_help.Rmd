@@ -130,15 +130,15 @@ run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)
 # We can add some filters here (eg r$patients %>% dplyr::filter(age > 18) to get patients with an age superior to 18 y-old)
 patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
 
-# We finally run subset_add_patients function, with our patients datafarme as patients argument
+# We finally run add_patients_to_subset function, with our patients datafarme as patients argument
 # It will add our patients to the subset specified with subset_id
 # Note that if erase is set to FALSE, it will not add patients as long as there are already some patients in this subset
-subset_add_patients(output = output, r = r, patients = patients, subset_id = %subset_id%, erase = FALSE)
+add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%, erase = FALSE)
 ```
 
 It is the same principle here than developped in datamarts section : you can use `%datamart_id%` & `%subset_id%` to access to current datamart's & subset's IDs.
 
-See `run_datamart_code` & `subset_add_patients` documentation for more informations (`?run_datamart_code` or `?subset_add_patients`).
+See `run_datamart_code` & `add_patients_to_subset` documentation for more informations (`?run_datamart_code` or `?add_patients_to_subset`).
 
 ### Thesaurus
 

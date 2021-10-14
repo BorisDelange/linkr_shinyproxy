@@ -13,3 +13,273 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+
+> A complete use case with data from the [MIMIC-IV database](https://mimic.mit.edu/).
+
+## Ask access to MIMIC-IV data
+
+...
+
+You can see database's tables strucutre [here](https://mimic.mit.edu/docs/iv/modules/core/admissions/).
+
+## Data source & datamart
+
+First, create a *Data source* called *MIMIC-IV* in Settings/Data management/Data sources.
+
+Then, create a *Datamart* called *MIMIC-IV tutorial datamart*. Don't forget to attribute access to some users.
+
+**Edit the code** of your datamart, enter this code, after having modified `dbConnect` informations.
+
+First, let's import **patients data** (from table [*admissions*](https://mimic.mit.edu/docs/iv/modules/core/patients/)).  
+See `import_datamart` documentation to know which columns & which data type is required (`?import_datamart`).
+
+```{r, eval = FALSE}
+# Connection to the database, from where we extract data
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
+  port = 5432, user = "admin", password = "admin")
+
+# Create a patients function which, when executed, gets patients data
+patients <- function(){
+    DBI::dbGetQuery(con, paste0(
+        "SELECT icu.subject_id AS patient_id, p.gender, p.anchor_age AS age, p.dod
+        FROM mimic_icu.icustays icu 
+        INNER JOIN mimic_core.patients p ON icu.subject_id = p.subject_id
+        LIMIT 10")) %>%
+    dplyr::mutate_at("patient_id", as.integer) %>%
+    dplyr::mutate_at("dod", lubridate::ymd_hms)}
+
+# Run import_datamart function, with patients function as data argument
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = patients(), type = "patients", 
+  save_as_csv = TRUE, rewrite = FALSE, language = "EN")
+
+# Create a patients_list function, which facilitates next SQL queries
+patients_list <- function() paste(patients() %>% dplyr::pull(patient_id), collapse = ",")
+
+# Disconnect from the DB
+DBI::dbDisconnect(con)
+```
+
+**Error messages** are printed in box, below the editor.
+
+If you want to check the data before running `import_datamart`, you can print it in the console with :
+
+```{r, eval = FALSE}
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
+  port = 5432, user = "admin", password = "admin")
+patients <- function(){
+    DBI::dbGetQuery(con, paste0("SELECT * FROM mimic_core.patients p LIMIT 10")) %>%
+    dplyr::select(patient_id = subject_id, gender, age = anchor_age, dod)}
+
+# Prints the dataframe
+print(patients())
+
+DBI::dbDisconnect(con)
+```
+
+We then create **stays data**, containing informations on distinct hospital stays (from table [*admissions*](https://mimic.mit.edu/docs/iv/modules/core/admissions/)).
+
+```{r, eval = FALSE}
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
+  port = 5432, user = "admin", password = "admin")
+
+# Create a stays function & import this data
+stays <- function(){
+    DBI::dbGetQuery(con, paste0("
+        SELECT subject_id AS patient_id, hadm_id AS stay_id, 'Un service' AS unit_name, 
+        admittime AS admission_datetime, dischtime AS discharge_datetime
+        FROM mimic_core.admissions 
+        WHERE subject_id IN (", patients_list(), ")")) %>%
+    dplyr::mutate_at("patient_id", as.integer)}
+
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = stays(), type = "stays",
+  save_as_csv = TRUE, rewrite = FALSE, language = "EN")
+
+DBI::dbDisconnect(con)
+```
+
+Import **labs_vitals**, containing labs data (from [*labevents*](https://mimic.mit.edu/docs/iv/modules/hosp/labevents/) table), vitals (from [*chartevents*](https://mimic.mit.edu/docs/iv/modules/icu/chartevents/) table) and other informations like output events (table [*outputevents*](https://mimic.mit.edu/docs/iv/modules/icu/outputevents/)) & datetime events (table [*datetimeevents*](https://mimic.mit.edu/docs/iv/modules/icu/datetimesevents/)).
+
+```{r, eval = FALSE}
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
+  port = 5432, user = "admin", password = "admin")
+
+# Do the same with labs_vitals data
+labs_vitals <- function(){
+    DBI::dbGetQuery(con, paste0(
+        "SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, 
+        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, 
+        valueuom AS unit, '' AS comments
+        FROM mimic_icu.chartevents
+        WHERE subject_id IN (", patients_list(), ")
+  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, 
+        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, 
+        valueuom AS unit, '' AS comments
+        FROM mimic_hosp.labevents
+        WHERE subject_id IN (", patients_list(), ")
+  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, 
+        charttime AS datetime_start, '' AS datetime_stop, CAST(value AS VARCHAR(255)) AS value, 
+        NULL AS value_num, valueuom AS unit, '' AS comments
+        FROM mimic_icu.datetimeevents
+        WHERE subject_id IN (", patients_list(), ")
+  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, 
+        charttime AS datetime_start, '' AS datetime_stop, '' AS value, value AS value_num, 
+        valueuom AS unit, '' AS comments
+        FROM mimic_icu.outputevents
+        WHERE subject_id IN (", patients_list(), ")
+        ")) %>%
+    dplyr::mutate_at("patient_id", as.integer) %>%
+    dplyr::mutate_at("value", as.character) %>%
+    dplyr::mutate_at("value_num", as.numeric) %>%
+    dplyr::mutate_at("datetime_stop", lubridate::ymd_hms)}
+
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = labs_vitals(), 
+  type = "labs_vitals", save_as_csv = TRUE, rewrite = FALSE, language = "EN")
+
+DBI::dbDisconnect(con)
+```
+
+For now, we do not have access to clinical notes from the MIMIC-IV database, we **do not import text data**.
+
+Finally, let's import **orders data** (we use only table [*inputevents*](https://mimic.mit.edu/docs/iv/modules/icu/inputevents/))
+
+```{r, eval = FALSE}
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
+  port = 5432, user = "admin", password = "admin")
+
+orders <- function(){
+    DBI::dbGetQuery(con, paste0("
+        SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, 
+        starttime AS datetime_start, endtime AS datetime_stop, '' AS route,
+        NULL AS continuous, amount, amountuom AS amount_unit, rate, rateuom AS rate_unit, 
+        NULL AS concentration, '' AS concentration_unit, '' AS comments
+        FROM mimic_icu.inputevents
+        WHERE subject_id IN (", patients_list(), ")")) %>%
+    dplyr::mutate_at("patient_id", as.integer) %>%
+    dplyr::mutate_at("continuous", as.integer) %>%
+    dplyr::mutate_at("concentration", as.numeric)}
+
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = orders(), type = "orders", 
+  save_as_csv = TRUE, rewrite = FALSE, language = "EN")
+
+DBI::dbDisconnect(con)
+```
+
+**Put it all together** (copy and paste this entire code in your App and Save) :
+
+```{r eval = FALSE}
+# Connection to the database, from where we extract data
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
+  port = 5432, user = "admin", password = "admin")
+
+########## PATIENTS ##########
+patients <- function(){
+    DBI::dbGetQuery(con, paste0(
+        "SELECT icu.subject_id AS patient_id, p.gender, p.anchor_age AS age, p.dod
+        FROM mimic_icu.icustays icu 
+        INNER JOIN mimic_core.patients p ON icu.subject_id = p.subject_id
+        LIMIT 10")) %>%
+    dplyr::mutate_at("patient_id", as.integer) %>%
+    dplyr::mutate_at("dod", lubridate::ymd_hms)}
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = patients(), type = "patients", 
+  save_as_csv = TRUE, rewrite = FALSE, language = "EN")
+patients_list <- function() paste(patients() %>% dplyr::pull(patient_id), collapse = ",")
+
+########## STAYS ##########
+stays <- function(){
+    DBI::dbGetQuery(con, paste0("
+        SELECT subject_id AS patient_id, hadm_id AS stay_id, 'Un service' AS unit_name, 
+        admittime AS admission_datetime, dischtime AS discharge_datetime
+        FROM mimic_core.admissions 
+        WHERE subject_id IN (", patients_list(), ")")) %>%
+    dplyr::mutate_at("patient_id", as.integer)}
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = stays(), type = "stays",
+  save_as_csv = TRUE, rewrite = FALSE, language = "EN")
+
+########## STAYS_VITALS ##########
+labs_vitals <- function(){
+    DBI::dbGetQuery(con, paste0(
+        "SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, 
+        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, 
+        valueuom AS unit, '' AS comments
+        FROM mimic_icu.chartevents
+        WHERE subject_id IN (", patients_list(), ")
+  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, 
+        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, 
+        valueuom AS unit, '' AS comments
+        FROM mimic_hosp.labevents
+        WHERE subject_id IN (", patients_list(), ")
+  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, 
+        charttime AS datetime_start, '' AS datetime_stop, CAST(value AS VARCHAR(255)) AS value, 
+        NULL AS value_num, valueuom AS unit, '' AS comments
+        FROM mimic_icu.datetimeevents
+        WHERE subject_id IN (", patients_list(), ")
+  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, 
+        charttime AS datetime_start, '' AS datetime_stop, '' AS value, value AS value_num, 
+        valueuom AS unit, '' AS comments
+        FROM mimic_icu.outputevents
+        WHERE subject_id IN (", patients_list(), ")
+        ")) %>%
+    dplyr::mutate_at("patient_id", as.integer) %>%
+    dplyr::mutate_at("value", as.character) %>%
+    dplyr::mutate_at("value_num", as.numeric) %>%
+    dplyr::mutate_at("datetime_stop", lubridate::ymd_hms)}
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = labs_vitals(), 
+  type = "labs_vitals", save_as_csv = TRUE, rewrite = FALSE, language = "EN")
+
+########## ORDERS ##########
+orders <- function(){
+    DBI::dbGetQuery(con, paste0("
+        SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, 
+        starttime AS datetime_start, endtime AS datetime_stop, '' AS route,
+        NULL AS continuous, amount, amountuom AS amount_unit, rate, rateuom AS rate_unit, 
+        NULL AS concentration, '' AS concentration_unit, '' AS comments
+        FROM mimic_icu.inputevents
+        WHERE subject_id IN (", patients_list(), ")")) %>%
+    dplyr::mutate_at("patient_id", as.integer) %>%
+    dplyr::mutate_at("continuous", as.integer) %>%
+    dplyr::mutate_at("concentration", as.numeric)}
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = orders(), type = "orders", 
+  save_as_csv = TRUE, rewrite = FALSE, language = "EN")
+
+# Disconnect from the DB
+DBI::dbDisconnect(con)
+```
+
+## Thesaurus
+
+Let's now **import the thesaurus**.
+
+Go to **settings/thesaurus** and create a new thesaurus.
+
+As you've seen in previous section, we have called the thesaurus 'MIMIC-IV', so we need to call our thesaurus 'MIMIV-IV' here too.
+
+Then, **edit the code** of the thesaurus you've just created.
+
+MIMIC-IV thesaurus can be found in these tables : [*d_items*](https://mimic.mit.edu/docs/iv/modules/icu/d_items/) and [*d_labitems*](https://mimic.mit.edu/docs/iv/modules/hosp/d_labitems/).
+
+Let's see documentation with `?import_thesaurus`.
+
+```{r, eval = FALSE}
+con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
+  port = 5432, user = "admin", password = "admin")
+
+# Create a function which, when executed, gets thesaurus data
+thesaurus <- function(){
+  
+}
+
+# Run import_thesaurus function
+
+
+DBI::dbDisconnect(con)
+```
+
+## Modules & plugins
+
+*Import plugins from the website*
+*Create modules*
+
+## Manipulate data
+
+*Patient-lvl data*
+*Aggregated data*

@@ -65,6 +65,7 @@ Columns needed for each data type :\cr\cr
 \item{datetime_stop = datetime}
 \item{value = character}
 \item{value_num = numeric}
+\item{unit = character}
 \item{comments = character}
 }
 \strong{type = "text"} :\cr
@@ -77,7 +78,7 @@ Columns needed for each data type :\cr\cr
 \item{value = character}
 \item{comments = character}
 }
-\strong{type = "order"} :\cr
+\strong{type = "orders"} :\cr
 \itemize{
 \item{patient_id = integer}
 \item{thesaurus_name = character}
@@ -86,8 +87,6 @@ Columns needed for each data type :\cr\cr
 \item{datetime_stop = datetime}
 \item{route = character}
 \item{continuous = integer}
-\item{duration = numeric}
-\item{duration_unit = character}
 \item{amount = numeric}
 \item{amount_unit = character}
 \item{rate = numeric}

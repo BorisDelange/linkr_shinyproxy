@@ -196,7 +196,9 @@
       make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
         div(
           choice_ui_server,
-          div(shinyAce::aceEditor(ns(paste0(prefix, "_ace_edit_code")), code, mode = "r", height = "400px"), style = "width: 100%;"),
+          div(shinyAce::aceEditor(ns(paste0(prefix, "_ace_edit_code")), code, mode = "r", 
+            autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000, 
+            hotkeys = list(run_key = list(win = "Ctrl-Enter|Ctrl-Shift-Enter", mac = "CMD-ENTER|CMD-SHIFT-ENTER"))), style = "width: 100%;"),
           shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_edit_code_save")), translate(language, "save")), " ",
           shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_execute_code")), translate(language, "execute_code")), 
           htmltools::br(), htmltools::br(),

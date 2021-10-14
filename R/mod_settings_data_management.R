@@ -222,7 +222,7 @@ mod_settings_data_management_server <- function(id, r, language){
         distinct_names <- DBI::dbGetQuery(r$db, paste0("SELECT DISTINCT(name) FROM ", prefix, " WHERE deleted IS FALSE")) %>% dplyr::pull()
 
         if (new_name %in% distinct_names){
-          message_bar(output, 2, "name_already_used", "severeWarning", language)
+          show_message_bar(output, 2, "name_already_used", "severeWarning", language)
         }
         req(new_name %not_in% distinct_names)
 
@@ -233,7 +233,7 @@ mod_settings_data_management_server <- function(id, r, language){
             if (input[[paste0(prefix, "_", dropdown)]] == "") dropdowns_check <<- FALSE
           }
         })
-        if (!dropdowns_check) message_bar(output, 2, "dropdown_empty", "severeWarning", language)
+        if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language)
         req(dropdowns_check)
 
         last_row <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(id), 0) FROM ", prefix)) %>% dplyr::pull()
@@ -319,7 +319,7 @@ mod_settings_data_management_server <- function(id, r, language){
         shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_creation_card_toggle"), value = FALSE)
         shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_datatable_card_toggle"), value = TRUE)
 
-        message_bar(output, 1, paste0(id_get_other_name(prefix, "singular_form"), "_added"), "success", language)
+        show_message_bar(output, 1, paste0(id_get_other_name(prefix, "singular_form"), "_added"), "success", language)
 
         # Reset textfields
         sapply(c("name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_", name), value = ""))
@@ -459,7 +459,7 @@ mod_settings_data_management_server <- function(id, r, language){
             duplicates <- r[[paste0(prefix, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
               dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
           }
-          if (duplicates > 0) message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
+          if (duplicates > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
           req(duplicates == 0)
           
           # Save changes in database
@@ -473,7 +473,7 @@ mod_settings_data_management_server <- function(id, r, language){
           # r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::mutate(modified = FALSE)
           
           # Notification to user
-          message_bar(output, 2, "modif_saved", "success", language)
+          show_message_bar(output, 2, "modif_saved", "success", language)
         })
     
       ##########################################
@@ -507,7 +507,7 @@ mod_settings_data_management_server <- function(id, r, language){
           r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::mutate(modified = FALSE)
           
           # Notification to user
-          message_bar(output, 3, paste0(id_get_other_name(prefix, "singular_form"), "_deleted"), "severeWarning", language)
+          show_message_bar(output, 3, paste0(id_get_other_name(prefix, "singular_form"), "_deleted"), "severeWarning", language)
         })
       
       ##########################################
@@ -565,7 +565,7 @@ mod_settings_data_management_server <- function(id, r, language){
             }
           }
           
-          message_bar(output, 4, "modif_saved", "success", language)
+          show_message_bar(output, 4, "modif_saved", "success", language)
         })
       
       ##########################################
@@ -608,7 +608,7 @@ mod_settings_data_management_server <- function(id, r, language){
         DBI::dbClearResult(query)
         r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
         
-        message_bar(output, 4, "modif_saved", "success", language)
+        show_message_bar(output, 4, "modif_saved", "success", language)
       })
       
       observeEvent(input[[paste0(prefix, "_execute_code")]], {

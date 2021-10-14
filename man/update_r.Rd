@@ -17,7 +17,7 @@ update_r(r = shiny::reactiveValues(), table = character(), language = "EN")
 Update r value, requesting the corresponding table in the database
 }
 \examples{
-\dontrun {
+\dontrun{
 update_r(r = r, table = "subsets")
 }
 }
