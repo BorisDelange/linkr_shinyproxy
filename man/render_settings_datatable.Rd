@@ -7,6 +7,8 @@
 render_settings_datatable(
   output,
   r = shiny::reactiveValues(),
+  ns = shiny::NS(),
+  language = "EN",
   id = character(),
   col_names = character(),
   table = character(),
@@ -16,13 +18,19 @@ render_settings_datatable(
   page_length = 10,
   start = 1,
   editable_cols = integer(),
-  column_defs = character()
+  sortable_cols = integer(),
+  centered_cols = character(),
+  column_widths = character()
 )
 }
 \arguments{
 \item{output}{variable from Shiny, used to render messages on the message bar}
 
 \item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
+
+\item{ns}{Shiny namespace}
+
+\item{language}{Language used (charater)}
 
 \item{id}{ID of the current page, format = "settings_[PAGE]" (character)}
 
@@ -40,10 +48,50 @@ render_settings_datatable(
 
 \item{start}{Which page display (used when we save datatable state), default to 1 (integer)}
 
-\item{editable_cols}{Which cols are editable (numeric vector)}
+\item{editable_cols}{Which cols are editable (character vector)}
 
-\item{column_defs}{DataTable columnDefs parameters (character)}
+\item{sortable_cols}{Which cols are sortable (character vector)}
+
+\item{centered_cols}{Which cols are centered (character vector)}
+
+\item{column_widths}{Columns widths (named character vector)}
 }
 \description{
-Render management datatable
+Renders a datatable (from library DT)
+}
+\details{
+NB : don't forget Action column in the col_names argument.\cr\cr
+For more informations about DT, see https://datatables.net/manual/options.\cr
+See DOM documentation here : https://datatables.net/reference/option/dom\cr
+See columnDefs doc here : https://datatables.net/reference/option/columnDefs
+}
+\examples{
+\dontrun{
+data <- tibble::tribble(~id, ~name, ~description, ~data_source_id,
+  2, "Name of the datamart", "Description of the datamart", 3)
+  
+
+col_names <- c("ID", "Name", "Description", "Data source ID", "Action")
+action_buttons <- c("delete", "edit_code")
+editable_cols <- c("id", "name")
+sortable_cols <- "id"
+centered_cols <- "id"
+column_widths <- c("name" = "200px", "description" = "300px")
+
+render_settings_datatable(
+  output = output, r = r, 
+  ns = NS("settings_datamart"), language = "EN",
+  id = "settings_datamart",
+  col_names = col_names, 
+  table = "datamarts", 
+  dropdowns = "data_source",
+  action_buttons = action_buttons, 
+  datatable_dom = "<'top'ft>",
+  page_length = 20, 
+  start = 1, 
+  editable_cols = editable_cols, 
+  sortable_cols = sortable_cols,
+  centered_cols = centered_cols, 
+  column_widths = column_widths)
+}
 }

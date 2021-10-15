@@ -162,6 +162,12 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 
 #' Render management datatable
 #' 
+#' @description Renders a datatable (from library DT)
+#' @details 
+#' NB : don't forget Action column in the col_names argument.\cr\cr
+#' For more informations about DT, see https://datatables.net/manual/options.\cr
+#' See DOM documentation here : https://datatables.net/reference/option/dom\cr
+#' See columnDefs doc here : https://datatables.net/reference/option/columnDefs
 #' @param output variable from Shiny, used to render messages on the message bar
 #' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param ns Shiny namespace
@@ -174,14 +180,44 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' @param datatable_dom Character containing DOM code for the datatable (character)
 #' @param page_length Page length of the datatable, default to 10 rows (integer)
 #' @param start Which page display (used when we save datatable state), default to 1 (integer)
-#' @param editable_cols Which cols are editable (numeric vector)
-#' @param sortable_cols Which cols are sortable (numeric vector)
+#' @param editable_cols Which cols are editable (character vector)
+#' @param sortable_cols Which cols are sortable (character vector)
+#' @param centered_cols Which cols are centered (character vector)
 #' @param column_widths Columns widths (named character vector)
+#' @examples 
+#' \dontrun{
+#' data <- tibble::tribble(~id, ~name, ~description, ~data_source_id,
+#'   2, "Name of the datamart", "Description of the datamart", 3)
+#'   
+#'
+#' col_names <- c("ID", "Name", "Description", "Data source ID", "Action")
+#' action_buttons <- c("delete", "edit_code")
+#' editable_cols <- c("id", "name")
+#' sortable_cols <- "id"
+#' centered_cols <- "id"
+#' column_widths <- c("name" = "200px", "description" = "300px")
+#'
+#' render_settings_datatable(
+#'   output = output, r = r, 
+#'   ns = NS("settings_datamart"), language = "EN",
+#'   id = "settings_datamart",
+#'   col_names = col_names, 
+#'   table = "datamarts", 
+#'   dropdowns = "data_source",
+#'   action_buttons = action_buttons, 
+#'   datatable_dom = "<'top'ft>",
+#'   page_length = 20, 
+#'   start = 1, 
+#'   editable_cols = editable_cols, 
+#'   sortable_cols = sortable_cols,
+#'   centered_cols = centered_cols, 
+#'   column_widths = column_widths)
+#' }
 
 render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", id = character(),
   col_names = character(), table = character(), dropdowns = character(), action_buttons = character(),
   datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 1,
-  editable_cols = integer(), sortable_cols = integer(), column_widths = character()
+  editable_cols = integer(), sortable_cols = integer(), centered_cols = character(), column_widths = character()
 ){
   
   # Load temp data
@@ -336,11 +372,23 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
     sortable_cols_vec <<- c(sortable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   non_sortable_cols_vec <- cols[!cols %in% sortable_cols_vec]
+  
+  # Which cols are centered
+  centered_cols_vec <- integer()
+  sapply(centered_cols, function(col){
+    centered_cols_vec <<- c(centered_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
 
   column_defs <- list()
+  # Add columns_widths to column_defs
   sapply(names(column_widths), function(name){
     column_defs <<- rlist::list.append(column_defs, list(width = column_widths[[name]], targets = which(grepl(paste0("^", name, "$"), names(data))) - 1))})
-  column_defs <<- rlist::list.append(column_defs, list(sortable = FALSE, targets = non_sortable_cols_vec))
+  
+  # Add centered_cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(className = "dt-body-center", targets = centered_cols_vec))
+  
+  # Add sortables cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(sortable = FALSE, targets = non_sortable_cols_vec))
 
   # Rename cols if lengths correspond
   if (length(col_names) == length(names(data))) names(data) <- col_names

@@ -250,6 +250,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # Column widths
           column_widths <- c("datetime" = "130px", "action" = "80px", "data_source_id" = "100px")
           
+          # Centered columns
+          centered_cols <- c("id", "data_source_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "creator", "datetime", "action")
+          
           # Restore datatable state
           page_length <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$length)
           start <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$start)
@@ -258,8 +261,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id,
             col_names =  get_col_names(table), table = table, dropdowns = dropdowns, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-            editable_cols = c("name", "description"), sortable_cols = sortable_cols, column_widths = column_widths
-          )
+            editable_cols = c("name", "description"), sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths)
         })
     
       ##########################################
@@ -328,7 +330,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       ##########################################
       
         # Indicate whether to close or not delete dialog box
-        r[[paste0(prefix, "_delete_dialog")]] <<- FALSE
+        r$delete_dialog <<- FALSE
         
         # Create & show dialog box 
         output[[paste0(prefix, "_delete_confirm")]] <- shiny.fluent::renderReact(settings_delete_react(prefix, ns, language, r[[paste0(prefix, "_delete_dialog")]]))
