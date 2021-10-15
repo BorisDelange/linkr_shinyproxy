@@ -129,6 +129,28 @@ render_settings_creation_card <- function(language = "EN", ns = shiny::NS(), id 
 # Datatable card                         #
 ##########################################
 
+#' Render UI of settings datatable card
+#' 
+#' @param language Language used (character)
+#' @param ns Shiny namespace
+#' @param output_id ID of DTOutput, allows to have multiple management_datatable in one module, default = "management_datatable" (character)
+#' @param title Title used to create the card, it will be translated with translate function (character)
+#' @examples 
+#' \dontrun{
+#' render_settings_datatable_card(language = "EN", ns = ns, output_id = "management_datatable", title = "datamarts_management")
+#' }
+render_settings_datatable_card <- function(language = "EN", ns = shiny::NS(), output_id = "management_datatable", title = character()){
+  div(id = ns("datatable_card"),
+    make_card(translate(language, title),
+      div(
+        DT::DTOutput(ns(output_id)),
+        shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save"), style = "top:-20px;")
+      )
+    )
+  )
+}
+
+# Delete asasp
 settings_datatable_card <- function(language, ns, title, prefix){
   div(id = ns("datatable_card"),
       make_card(translate(language, title),

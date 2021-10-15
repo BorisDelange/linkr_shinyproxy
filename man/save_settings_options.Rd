@@ -10,6 +10,7 @@ save_settings_options(
   id = character(),
   category = character(),
   code_id_input = integer(),
+  data = data,
   language = "EN"
 )
 }
@@ -24,9 +25,9 @@ save_settings_options(
 
 \item{code_id_input}{Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)}
 
-\item{language}{Language used}
-
 \item{data}{New data to store in options table (list)}
+
+\item{language}{Language used}
 }
 \description{
 Save options

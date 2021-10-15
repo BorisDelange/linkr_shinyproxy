@@ -24,7 +24,6 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
   ##########################################
   
   if (id == "settings_data_sources"){
-    prefix <- "data_sources"
     div(class = "main",
       render_settings_default_elements(ns = ns),
       render_settings_toggle_card(language = language, ns = ns, cards = list(
@@ -33,7 +32,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
       render_settings_creation_card(
         language = language, ns = ns, id = id, title = "create_data_source",
         textfields = c("name", "description"), textfields_width = "300px"),
-      settings_datatable_card(language, ns, title = "data_sources_management", prefix = prefix)
+      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = "data_sources_management")
     ) -> result
   }
   
@@ -42,7 +41,6 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
   ##########################################
   
   if (id == "settings_datamarts"){
-    prefix <- "datamarts"
     div(class = "main",
       render_settings_default_elements(ns = ns),
       render_settings_toggle_card(language = language, ns = ns, cards = list(
@@ -56,8 +54,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
       uiOutput(ns("edit_code_card")),
       uiOutput(ns("options_card")),
-      settings_datatable_card(language, ns, title = "datamarts_management", prefix = prefix),
-      textOutput(ns("test")), textOutput(ns("test2")), textOutput(ns("test3")), textOutput(ns("test4"))
+      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = "datamarts_management")
     ) -> result
   }
   
@@ -66,7 +63,6 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
   ##########################################
   
   if (id == "settings_studies"){
-    prefix <- "studies"
     div(class = "main",
       render_settings_default_elements(ns = ns),
       render_settings_toggle_card(language = language, ns = ns, cards = list(
@@ -78,8 +74,8 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         language = language, ns = ns, id = id, title = "create_study",
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
-      settings_datatable_card(language, ns, title = "studies_management", prefix = prefix),
-      uiOutput(ns("options_card"))
+      uiOutput(ns("options_card")),
+      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = "studies_management")
     ) -> result
   }
   
@@ -88,7 +84,6 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
   ##########################################
   
   if (id == "settings_subsets"){
-    prefix <- "subsets"
     div(class = "main",
       render_settings_default_elements(ns = ns),
       render_settings_toggle_card(language = language, ns = ns, cards = list(
@@ -101,7 +96,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
       uiOutput(ns("edit_code_card")),
-      settings_datatable_card(language, ns, title = "subsets_management", prefix = prefix)
+      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = "subsets_management")
     ) -> result
   }
   
@@ -122,8 +117,8 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         language = language, ns = ns, id = id, title = "create_thesaurus",
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
-      settings_datatable_card(language, ns, title = "thesaurus_management", prefix = "thesaurus"),
-      settings_datatable_card(language, ns, title = "thesaurus_items_management", prefix = "thesaurus_items"),
+      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = "thesaurus_management"),
+      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable_bis", title = "thesaurus_items_management"),
       uiOutput(ns("edit_code_card")),
       uiOutput(ns("options_card"))
     ) -> result
@@ -169,7 +164,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Data management / Show or hide cards   #
     ##########################################
     
-    # To remove asap
+    # To delete asap
     sapply(prefix, function(prefix){
     
     sapply(toggles, function(toggle){
@@ -216,80 +211,43 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     ##########################################
     # Data management / Elements management  #
     ##########################################
-    
-      # Datatable states
-      # observeEvent(r[[prefix]], {
-      #   r[[paste0(id, "_", prefix, "_management_datatable_state")]] <- list(
-      #     length = 10, start = 0, search = ""
-      #   )
-      # })
       
       ##########################################
       # Generate datatable                     #
       ##########################################
     
         # If r$... variable changes
-        observeEvent(r[[paste0(prefix, "_temp")]], {
+        observeEvent(r[[paste0(substr(id, nchar("settings_") + 1, nchar(id)), "_temp")]], {
+          
           # Restore datatable state
           page_length <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$length)
           start <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$start)
           search_recorded <- ""
           
-          output[[paste0(prefix, "_management_datatable")]] <- DT::renderDT(
-            # This function generates the data for the datatable
-            settings_datatable(
-              id = id, prefix = prefix,
-              data = settings_datatable_data(prefix, isolate(r)), ns = ns, r = r, data_variables = data_management_elements,
-              dropdowns = switch(prefix,
-                "data_sources" = "",
-                "datamarts" = "",
-                # "datamarts" = c("data_source_id" = "data_sources"),
-                # "studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
-                "studies" = c("patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
-                "subsets" = "",
-                # "subsets" = c("study_id" = "studies"),
-                "thesaurus" = c("data_source_id" = "data_sources"),
-                "thesaurus_items" = ""),
-              action_buttons = switch(prefix,
-                "data_sources" = "delete",
-                "datamarts" = c("delete", "edit_code", "options"),
-                "studies" = c("delete", "options"),
-                "subsets" = c("delete", "edit_code"),
-                "thesaurus" = c("delete", "edit_code", "sub_datatable"),
-                "thesaurus_items" = ""
-                ),
-              new_colnames = id_get_other_name(prefix, "colnames_text_version", language = language)),
-            # Options of the datatable
-            # We use a function (data_management_datatable_options) for this module
-            options = list(dom = "<'datatable_length'l><'top'ft><'bottom'p>",
-              stateSave = TRUE, stateDuration = 30, autoFill = list(enable = FALSE),
-              pageLength = page_length, displayStart = start, #search = list(search = ""),
-              columnDefs = list(
-                # -1 : action column / -2 : datetime column
-                list(width = "80px", targets = -1), list(width = "130px", targets = -2),
-                list(sortable = FALSE, targets = data_management_datatable_options(settings_datatable_data(prefix, r), prefix, "non_sortable"))),
-              language = list(
-                paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
-                search = translate(language, "DT_search"),
-                lengthMenu = translate(language, "DT_length"))
-            ),
-            rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
-            editable = list(target = "cell", disable = list(columns = data_management_datatable_options(settings_datatable_data(prefix, r), id, "disable"))),
-            callback = datatable_callback()
-          )
+          # columnDefs = list(
+          #   list(width = "80px", targets = -1), list(width = "130px", targets = -2),
+          #   list(sortable = FALSE, targets = data_management_datatable_options(settings_datatable_data(prefix, r), prefix, "non_sortable")))
+          
+          # dropdowns = switch(prefix,
+          #                    "data_sources" = "",
+          #                    "datamarts" = "",
+          #                    # "datamarts" = c("data_source_id" = "data_sources"),
+          #                    # "studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
+          #                    "studies" = c("patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
+          #                    "subsets" = "",
+          #                    # "subsets" = c("study_id" = "studies"),
+          #                    "thesaurus" = c("data_source_id" = "data_sources"),
+          #                    "thesaurus_items" = ""),
+          # action_buttons = switch(prefix,
+          #                         "data_sources" = "delete",
+          #                         "datamarts" = c("delete", "edit_code", "options"),
+          #                         "studies" = c("delete", "options"),
+          #                         "subsets" = c("delete", "edit_code"),
+          #                         "thesaurus" = c("delete", "edit_code", "sub_datatable"),
+          #                         "thesaurus_items" = ""
+          # ),
+          # new_colnames = id_get_other_name(prefix, "colnames_text_version", language = language)),
         })
-      
-      ##########################################
-      # Datatable state changed                #
-      ##########################################
-
-      # observeEvent(input[[paste0(prefix, "_management_datatable_state")]], {
-      #   r[[paste0(id, "_", prefix, "_management_datatable_state")]] <- list(
-      #     length = input[[paste0(prefix, "_management_datatable_state")]]$length,
-      #     start = input[[paste0(prefix, "_management_datatable_state")]]$start,
-      #     search = input[[paste0(prefix, "_management_datatable_state")]]$search[1]
-      #   )
-      # })
     
       ##########################################
       # Save changes in datatable              #
