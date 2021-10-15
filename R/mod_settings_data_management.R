@@ -159,6 +159,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       "data_sources" = "data_sources", "datamarts" = "datamarts", "studies" = "studies", "subsets" = "subsets",
       "thesaurus" = "thesaurus")
     
+    # Table name
+    table <- substr(id, nchar("settings_") + 1, nchar(id))
+    r[[paste0(table, "_delete_dialog")]] <- FALSE
     
     ##########################################
     # Data management / Show or hide cards   #
@@ -219,9 +222,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # If r$... variable changes
         observeEvent(r[[paste0(substr(id, nchar("settings_") + 1, nchar(id)), "_temp")]], {
           
-          # Table name
-          table <- substr(id, nchar("settings_") + 1, nchar(id))
-          
           # Dropdowns for each module / page
           # Finally, some columns are not editable (commented lines below)
           dropdowns = switch(id,
@@ -269,58 +269,51 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       ##########################################
     
       # Each time a row is updated, modify temp variable
-        observeEvent(input[[paste0(prefix, "_management_datatable_cell_edit")]], {
-          edit_info <- input[[paste0(prefix, "_management_datatable_cell_edit")]]
-          # edit_info$col <- edit_info$col + 1 # Datatable cols starts at 0, we have to add 1
-          r[[paste0(prefix, "_temp")]] <- DT::editData(r[[paste0(prefix, "_temp")]], edit_info, rownames = FALSE)
+        observeEvent(input$management_datatable_cell_edit, {
+          edit_info <- input$management_datatable_cell_edit
+          r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
           # Store that this row has been modified
-          r[[paste0(prefix, "_temp")]][[edit_info$row, "modified"]] <- TRUE
+          r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
         })
     
       # Each time a dropdown is updated, modify temp variable
-        if (prefix %not_in% c("thesaurus", "thesaurus_items")){
-          observeEvent(r[[prefix]], {
-            sapply(r[[prefix]] %>% dplyr::pull(id), function(id){
-              sapply(dropdowns %>% dplyr::filter(id == prefix) %>% dplyr::pull(dropdowns) %>% unlist(), function(dropdown){
-                observeEvent(input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]], {
-                  # When we load a page, every dropdown triggers the event
-                  # Change temp variable only if new value is different than old value
-                  old_value <- r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), paste0(dropdown, "_id")]]
-                  # If thesaurus, data_source_id can accept multiple values (converting to string)
-                  new_value <- ifelse(prefix == "thesaurus", toString(input[[paste0("data_sources", id)]]),
-                    as.integer(input[[paste0(id_get_other_name(dropdown, "plural_form"), id)]]))
-                  if (new_value != old_value){
-                    r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <- new_value
-                    # Store that this row has been modified
-                    r[[paste0(prefix, "_temp")]][[which(r[[paste0(prefix, "_temp")]]["id"] == id), "modified"]] <- TRUE
-                  }
-                })
+        observeEvent(r[[table]], {
+          sapply(r[[table]] %>% dplyr::pull(id), function(id){
+            sapply(dropdowns %>% dplyr::filter(id == prefix) %>% dplyr::pull(dropdowns) %>% unlist(), function(dropdown){
+              observeEvent(input[[get_plural(word = dropdown), id]], {
+                # When we load a page, every dropdown triggers the event
+                # Change temp variable only if new value is different than old value
+                old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]]
+                # If thesaurus, data_source_id can accept multiple values (converting to string)
+                new_value <- ifelse(prefix == "thesaurus", toString(input[[paste0("data_sources", id)]]),
+                  as.integer(input[[paste0(get_plural(dropdown), id)]]))
+                if (new_value != old_value){
+                  r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <- new_value
+                  # Store that this row has been modified
+                  r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
+                }
               })
             })
           })
-        }
+        })
       
-        observeEvent(input[[paste0(prefix, "_management_save")]], {
+        observeEvent(input$management_save, {
           # Make sure there's no duplicate in names
           duplicates <- 0
           # Duplicates are allowed in thesaurus_items
-          if (prefix != "thesaurus_items"){
-            duplicates <- r[[paste0(prefix, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
+          # if (table != "thesaurus_items"){
+            duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
               dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-          }
+          # }
           if (duplicates > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
           req(duplicates == 0)
           
           # Save changes in database
-          ids_to_del <- r[[paste0(prefix, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
-          DBI::dbSendStatement(r$db, paste0("DELETE FROM ", prefix, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
+          ids_to_del <- r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+          DBI::dbSendStatement(r$db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
           DBI::dbClearResult(query)
-          DBI::dbAppendTable(r$db, prefix, r[[paste0(prefix, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
-          
-          # Reload r variable
-          # r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, " WHERE deleted IS FALSE ORDER BY id))
-          # r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::mutate(modified = FALSE)
-          
+          DBI::dbAppendTable(r$db, table, r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
+
           # Notification to user
           show_message_bar(output, 2, "modif_saved", "success", language)
         })
@@ -328,37 +321,27 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       ##########################################
       # Delete a row in datatable              #
       ##########################################
-      
-        # Indicate whether to close or not delete dialog box
-        r$delete_dialog <<- FALSE
-        
-        # Create & show dialog box 
-        output[[paste0(prefix, "_delete_confirm")]] <- shiny.fluent::renderReact(settings_delete_react(prefix, ns, language, r[[paste0(prefix, "_delete_dialog")]]))
+
+        # Create & show dialog box
+        observeEvent(r[[paste0(table, "_delete_dialog")]] , {
+          output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = table, language = language))
+        })
         
         # Whether to close or not delete dialog box
-        observeEvent(input[[paste0(prefix, "_hide_dialog")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
-        observeEvent(input[[paste0(prefix, "_delete_canceled")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
-        observeEvent(input[[paste0(prefix, "_deleted_pressed")]], r[[paste0(prefix, "_delete_dialog")]] <<- TRUE)
+        observeEvent(input$hide_dialog, r[[paste0(table, "_delete_dialog")]] <- FALSE)
+        observeEvent(input$delete_canceled, r[[paste0(table, "_delete_dialog")]] <- FALSE)
+        observeEvent(input$deleted_pressed, r[[paste0(table, "_delete_dialog")]] <- TRUE)
         
         # When the delete is confirmed...
-        observeEvent(input[[paste0(prefix, "_delete_confirmed")]], {
-          
-          # Close dialog box
-          r[[paste0(prefix, "_delete_dialog")]] <<- FALSE
-          
-          # Get the ID of row deleted
-          deleted_pressed_value <- input[[paste0(prefix, "_deleted_pressed")]]
-          row_deleted <- as.integer(substr(deleted_pressed_value, nchar(paste0(prefix, "_delete_")) + 1, nchar(deleted_pressed_value)))
-          # Delete row in database
-          DBI::dbSendStatement(r$db, paste0("UPDATE ", prefix, " SET deleted = TRUE WHERE id = ", row_deleted))
-          # Update r vars (including temp variable, used in management datatables)
-          r[[prefix]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, " WHERE deleted IS FALSE ORDER BY id"))
-          r[[paste0(prefix, "_temp")]] <- r[[prefix]] %>% dplyr::mutate(modified = FALSE)
-          
-          # Notification to user
-          show_message_bar(output, 3, paste0(id_get_other_name(prefix, "singular_form"), "_deleted"), "severeWarning", language)
+        observeEvent(input$delete_confirmed, {
+
+          # Get value of deleted row
+          row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
+
+          # Delete row in DB table
+          delete_settings_datatable_row(output = output, r = r, ns = ns, language = language, row_deleted = row_deleted, table = table)
         })
-      
+        
       ##########################################
       # Edit options by selecting a row        #
       ##########################################
@@ -384,11 +367,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         data <- list()
         data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
         data$users_allowed_read <- input$users_allowed_read
-        
-        output$test <- renderText(paste0("length = ", length(data$users_allowed_read)))
-        output$test2 <- renderText(paste0("Users = ", data$users_allowed_read))
-        # output$test3 <- renderText(paste0("isnull_aggr = ", ifelse(is.null(data$show_only_aggregated_data), "YES", "NO")))
-        # output$test4 <- renderText(paste0("isnull_users = ", ifelse(is.null(data$users_allowed_read), "YES", "NO")))
 
         save_settings_options(output = output, r = r, id = id, category = category,
           code_id_input = input$options, language = language, data = data)

@@ -153,9 +153,6 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   sapply(c("name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
-
-
-
 ##########################################
 # Generate datatable                     #
 ##########################################
@@ -427,66 +424,66 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
 }
 
 ##########################################
-# Delete react                           #
+# Delete a row in datatable              #
 ##########################################
 
-# Code for the dialog box when the action button "delete" is pressed
-settings_delete_react <- function(name, ns, language, delete_dialog){
+#' Render delete react
+#' 
+#' @param r Shiny r reactive value to communicate between modules
+#' @param ns Shiny namespace
+#' @param table Name of the table used (character)
+#' @param language Language used (chara)
+#' @examples 
+#' \dontrun{
+#' render_settings_delete_react(r = r, table = "datamarts")
+#' }
+
+render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), language = "EN"){
   dialogContentProps <- list(
     type = 0,
-    title = translate(language, paste0(name, "_delete")),
+    title = translate(language, paste0(table, "_delete")),
     closeButtonAriaLabel = "Close",
-    subText = translate(language, paste0(name, "_delete_subtext"))
+    subText = translate(language, paste0(table, "_delete_subtext"))
   )
   shiny.fluent::Dialog(
-    hidden = !delete_dialog,
-    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", name, "_hide_dialog', Math.random()); }")),
+    hidden = !r[[paste0(table, "_delete_dialog")]],
+    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('hide_dialog', Math.random()); }")),
     dialogContentProps = dialogContentProps,
     modalProps = list(),
     shiny.fluent::DialogFooter(
-      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(name, "_delete_confirmed")), text = translate(language, "delete")),
-      shiny.fluent::DefaultButton.shinyInput(ns(paste0(name, "_delete_canceled")), text = translate(language, "dont_delete"))
+      shiny.fluent::PrimaryButton.shinyInput(ns("delete_confirmed"), text = translate(language, "delete")),
+      shiny.fluent::DefaultButton.shinyInput(ns("delete_canceled"), text = translate(language, "dont_delete"))
     )
   )
 }
 
+#' Delete a row in datatable
+#' 
+#' @param output Shiny output variable
+#' @param r r Shiny reactive value used to communicate between modules
+#' @param ns Shiny namespace
+#' @param language Language used (character)
+#' @param row_deleted ID of row to delete (integer) 
+#' @param table Name of the table used (character)
+#' @examples 
+#' \dontrun{
+#' delete_settings_datatable_row(output = output, r = r, ns = ns, language = "EN", row_deleted = 13, table = "datamarts")
+#' }
 
-##########################################
-# Delete a row in datatable              #
-##########################################
-
-settings_delete_row <- function(input, output, r, ns, language, prefix, data_var, message){
+delete_settings_datatable_row <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN",
+  row_deleted = integer(), table = character()){
   
-  # Create & show dialog box 
-  output[[paste0(prefix, "_delete_confirm")]] <- shiny.fluent::renderReact(settings_delete_react(prefix, ns, language, r[[paste0(prefix, "_delete_dialog")]]))
+  # Close dialog box
+  r[[paste0(table, "_delete_dialog")]] <- FALSE
   
-  # Whether to close or not delete dialog box
-  observeEvent(input[[paste0(prefix, "_hide_dialog")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
-  observeEvent(input[[paste0(prefix, "_delete_canceled")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
-  observeEvent(input[[paste0(prefix, "_deleted_pressed")]], r[[paste0(prefix, "_delete_dialog")]] <<- TRUE)
+  # Delete row in database
+  DBI::dbSendStatement(r$db, paste0("UPDATE ", table, " SET deleted = TRUE WHERE id = ", row_deleted))
   
-  # When the delete is confirmed...
-  observeEvent(input[[paste0(prefix, "_delete_confirmed")]], {
-    
-    # Close dialog box
-    r[[paste0(prefix, "_delete_dialog")]] <- FALSE
-    
-    # Get the ID of row deleted
-    deleted_pressed_value <- isolate(input[[paste0(prefix, "_deleted_pressed")]])
-    row_deleted <- as.integer(substr(deleted_pressed_value, nchar(paste0(prefix, "_delete_")) + 1, nchar(deleted_pressed_value)))
-    # Delete row in database
-    DBI::dbSendStatement(r$db, paste0("UPDATE ", data_var, " SET deleted = TRUE WHERE id = ", row_deleted))
-    # Update r vars (including temp variable, used in management datatables)
-    r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
-    r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
-    
-    # Notification to user
-    output$warnings3 <- renderUI({
-      div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
-    })
-    shinyjs::show("warnings3")
-    shinyjs::delay(3000, shinyjs::hide("warnings3"))
-  }) 
+  # Update r vars
+  update_r(r = r, table = table, language = language)
+  
+  # Notification to user
+  show_message_bar(output = output, id = 3, paste0(get_singular(word = table), "_deleted"), type ="severeWarning", language = language)
 }
 
 ##########################################
@@ -512,7 +509,7 @@ settings_delete_row <- function(input, output, r, ns, language, prefix, data_var
 #' }
 
 save_settings_options <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
-                                  code_id_input = integer(), data = data, language = "EN"){
+  code_id_input = integer(), data = data, language = "EN"){
   
   # Get link_id variable to update code table
   link_id <- as.integer(substr(code_id_input, nchar("options_") + 1, nchar(code_id_input)))
@@ -630,4 +627,68 @@ execute_settings_code <- function(output, r = shiny::reactiveValues(), edited_co
   
   # Display result
   paste(captured_output, collapse = "\n")
+}
+
+
+
+
+##########################################
+# TO DELETE                              #
+########################################## 
+
+
+# delete asap
+settings_delete_row <- function(input, output, r, ns, language, prefix, data_var, message){
+  
+  # Create & show dialog box 
+  output[[paste0(prefix, "_delete_confirm")]] <- shiny.fluent::renderReact(settings_delete_react(prefix, ns, language, r[[paste0(prefix, "_delete_dialog")]]))
+  
+  # Whether to close or not delete dialog box
+  observeEvent(input[[paste0(prefix, "_hide_dialog")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
+  observeEvent(input[[paste0(prefix, "_delete_canceled")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
+  observeEvent(input[[paste0(prefix, "_deleted_pressed")]], r[[paste0(prefix, "_delete_dialog")]] <<- TRUE)
+  
+  # When the delete is confirmed...
+  observeEvent(input[[paste0(prefix, "_delete_confirmed")]], {
+    
+    # Close dialog box
+    r[[paste0(prefix, "_delete_dialog")]] <- FALSE
+    
+    # Get the ID of row deleted
+    deleted_pressed_value <- isolate(input[[paste0(prefix, "_deleted_pressed")]])
+    row_deleted <- as.integer(substr(deleted_pressed_value, nchar(paste0(prefix, "_delete_")) + 1, nchar(deleted_pressed_value)))
+    # Delete row in database
+    DBI::dbSendStatement(r$db, paste0("UPDATE ", data_var, " SET deleted = TRUE WHERE id = ", row_deleted))
+    # Update r vars (including temp variable, used in management datatables)
+    r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
+    r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
+    
+    # Notification to user
+    output$warnings3 <- renderUI({
+      div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
+    })
+    shinyjs::show("warnings3")
+    shinyjs::delay(3000, shinyjs::hide("warnings3"))
+  }) 
+}
+
+
+# delete asap
+settings_delete_react <- function(name, ns, language, delete_dialog){
+  dialogContentProps <- list(
+    type = 0,
+    title = translate(language, paste0(name, "_delete")),
+    closeButtonAriaLabel = "Close",
+    subText = translate(language, paste0(name, "_delete_subtext"))
+  )
+  shiny.fluent::Dialog(
+    hidden = !delete_dialog,
+    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", name, "_hide_dialog', Math.random()); }")),
+    dialogContentProps = dialogContentProps,
+    modalProps = list(),
+    shiny.fluent::DialogFooter(
+      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(name, "_delete_confirmed")), text = translate(language, "delete")),
+      shiny.fluent::DefaultButton.shinyInput(ns(paste0(name, "_delete_canceled")), text = translate(language, "dont_delete"))
+    )
+  )
 }
