@@ -106,19 +106,17 @@ id_get_other_name <- function(id, type, language = NULL){
 #' coalesce2("char", "my_char")
 
 coalesce2 <- function(type, x){
+  if (length(x) >= 2) return(x)
   if (type == "int"){
-    if (is.null(x)) result <- NA_integer_ 
-    else {
-      if (x == "") result <- NA_integer_
-      else result <- as.integer(x)
-    }
+    if (is.null(x)) return(NA_integer_)
+    if (length(x) == 0) return(NA_integer_)
+    if (x == "") return(NA_integer_)
+    return(tryCatch(as.integer(x)))
   }
   if (type == "char"){
-    if (is.null(x)) result <- NA_character_ 
-    else {
-      if (x == "") result <- NA_character_
-      else result <- as.character(x)
-    }
+    if (is.null(x)) return(NA_character_)
+    if(length(x) == 0) return(NA_character_)
+    if (x == "") return(NA_character_)
+    return(tryCatch(as.character(x)))
   }
-  result
 }

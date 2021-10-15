@@ -31,7 +31,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         list(key = "creation_card", label = "create_data_source"),
         list(key = "datatable_card", label = "data_sources_management"))),
       render_settings_creation_card(
-        language = language, ns = ns, title = "create_data_source",
+        language = language, ns = ns, id = id, title = "create_data_source",
         textfields = c("name", "description"), textfields_width = "300px"),
       settings_datatable_card(language, ns, title = "data_sources_management", prefix = prefix)
     ) -> result
@@ -51,12 +51,13 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         list(key = "edit_code_card", label = "edit_datamart_code"),
         list(key = "options_card", label = "datamart_options"))),
       render_settings_creation_card(
-        language = language, ns = ns, title = "create_datamart",
+        language = language, ns = ns, id = id, title = "create_datamart",
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
       uiOutput(ns("edit_code_card")),
       uiOutput(ns(paste0(prefix, "_options_card"))),
-      settings_datatable_card(language, ns, title = "datamarts_management", prefix = prefix)
+      settings_datatable_card(language, ns, title = "datamarts_management", prefix = prefix),
+      textOutput(ns("test")), uiOutput(ns("test2"))
     ) -> result
   }
   
@@ -74,7 +75,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         list(key = "options_card", label = "study_options")
       )),
       render_settings_creation_card(
-        language = language, ns = ns, title = "create_study",
+        language = language, ns = ns, id = id, title = "create_study",
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
       settings_datatable_card(language, ns, title = "studies_management", prefix = prefix),
@@ -96,7 +97,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         list(key = "edit_code_card", label = "edit_subset_code")
       )),
       render_settings_creation_card(
-        language = language, ns = ns, title = "create_subset",
+        language = language, ns = ns, id = id, title = "create_subset",
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
       uiOutput(ns("edit_code_card")),
@@ -118,13 +119,14 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         list(key = "edit_code_card", label = "edit_thesaurus_code")
       )),
       render_settings_creation_card(
-        language = language, ns = ns, title = "create_thesaurus",
+        language = language, ns = ns, id = id, title = "create_thesaurus",
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
       settings_datatable_card(language, ns, title = "thesaurus_management", prefix = "thesaurus"),
       settings_datatable_card(language, ns, title = "thesaurus_items_management", prefix = "thesaurus_items"),
       uiOutput(ns("edit_code_card")),
-      uiOutput(ns("thesaurus_options_card"))
+      uiOutput(ns("thesaurus_options_card")),
+      textOutput(ns("test")), uiOutput(ns("test2"))
     ) -> result
   }
   
@@ -151,11 +153,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # To move, after remove prefix
     # Dropdowns in the management datatable, by page
     dropdowns <- tibble::tribble(~id, ~dropdowns,
-      "data_sources", "",
-      "datamarts", "data_source",
-      "studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
-      "subsets", c("datamart", "study"),
-      "thesaurus", "data_source")
+      "settings_data_sources", "",
+      "settings_datamarts", "data_source",
+      "settings_studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
+      "settings_subsets", c("datamart", "study"),
+      "settings_thesaurus", "data_source")
     
     # Prefix used for inputs
     # It also corresponds to database tables names
@@ -185,8 +187,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         observeEvent(r[[data_var]], {
           # Convert options to list
           options <- convert_tibble_to_list(data = r[[data_var]], key_col = "id", text_col = "name")
-          shiny.fluent::updateDropdown.shinyInput(session, get_singular(word = data_var),
-            options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
+          shiny.fluent::updateDropdown.shinyInput(session, get_singular(word = data_var), options = options)
         })
       })
     
@@ -203,6 +204,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         function(input_name){
           new_data[[input_name]] <<- coalesce2(type = new_data_var[[input_name]], x = input[[input_name]])
       })
+      # Convert data_source to string, for page thesaurus
+      if (id == "settings_thesaurus"){
+        if (length(new_data$data_source) == 1) new_data$data_source <- coalesce2(type = "char", x = input$data_source)
+        else new_data$data_source <- toString(new_data$data_source)
+      }
 
       add_settings_new_data(session = session, output = output, r = r, language = language, id = id, data = new_data,
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist())

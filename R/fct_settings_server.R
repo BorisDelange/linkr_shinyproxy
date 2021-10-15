@@ -46,7 +46,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # Check if dropdowns are not empty
   dropdowns_check <- TRUE
   sapply(dropdowns, function(dropdown){
-    if (data[[dropdown]] == "") dropdowns_check <<- FALSE
+    if (dropdown != "") if(is.na(data[[dropdown]])) dropdowns_check <<- FALSE
   })
   if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language)
   req(dropdowns_check)
