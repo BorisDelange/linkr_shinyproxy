@@ -146,83 +146,102 @@ settings_datatable_card <- function(language, ns, title, prefix){
 # Options card                           #
 ##########################################
 
-settings_options_card <- function(language, ns, id, r, category_filter, link_id_filter, title, prefix){
-  options <- r$options %>% dplyr::filter(category == category_filter, link_id == link_id_filter)
+#' Render UI of options card
+#' 
+#' @param ns Shiny namespace
+#' @param r Shiny r reactive value
+#' @param id ID of the current page, format = "settings_[PAGE]" (character)
+#' @param title Title of the card (character)
+#' @param code Code to show in ShinyAce editor (character)
+#' @param category Category allowing to link with code table (character)
+#' @param link_id ID allowing to link with code table (integer)
+#' @param language Language used (character)
+
+render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character(), title = character(), code = character(), 
+  category = character(), link_id = integer(), language = "EN"){
   
+  # Get options with category & link_id
+  options <- r$options %>% dplyr::filter(category == !!category, link_id == !!link_id)
+  
+  # Init UI variables
   people_picker <- ""
   toggles <- ""
   dropdowns <- ""
-  options_by_cat <- id_get_other_name(id, "options_by_cat")
+  
+  # Get options with page ID
+  page_options <- get_page_options(id = id)
   
   ##########################################
-  # Users allowed to read option           #
+  # Option = Users allowed to read         #
   ##########################################
   
-  if("user_allowed_read" %in% options_by_cat){
-    # List of users in the database
-    form_options <-
+  if("users_allowed_read" %in% page_options){
+    # List of users in the database, with status as secondaryText
+    picker_options <-
       r$users %>%
-      dplyr::filter(!deleted) %>%
       dplyr::left_join(r$users_accesses_statuses %>% dplyr::select(user_status_id = id, user_status = name), by = "user_status_id") %>%
-      dplyr::transmute(key = id, imageInitials = paste0(substr(firstname, 0, 1), substr(lastname, 0, 1)),
-        text = paste0(firstname, " ", lastname), secondaryText = user_status)
+      dplyr::transmute(
+        key = id, 
+        imageInitials = paste0(substr(firstname, 0, 1), substr(lastname, 0, 1)),
+        text = paste0(firstname, " ", lastname), 
+        secondaryText = user_status)
     
     # If this is study options, we have to show only users who have access to the parent datamart
-    if(category_filter == "study"){
-      datamart_id <- r$studies %>% dplyr::filter(id == link_id_filter) %>% dplyr::pull(datamart_id)
+    if(id == "settings_studies"){
+      datamart_id <- r$studies %>% dplyr::filter(id == link_id) %>% dplyr::pull(datamart_id)
       users_allowed_datamart <- 
         r$options %>% 
         dplyr::filter(category == "datamart", link_id == datamart_id, name == "user_allowed_read") %>%
         dplyr::pull(value_num)
-      form_options <- form_options %>% dplyr::filter(key %in% users_allowed_datamart)
+      picker_options <- picker_options %>% dplyr::filter(key %in% users_allowed_datamart)
     }
     
     # Users already allowed
     value <-
-      form_options %>%
+      picker_options %>%
       dplyr::mutate(n = 1:dplyr::n()) %>%
       dplyr::inner_join(
         options %>%
-          dplyr::filter(!deleted, name == "user_allowed_read") %>%
+          dplyr::filter(name == "user_allowed_read") %>%
           dplyr::select(key = value_num),
         by = "key"
       ) %>%
       dplyr::pull(key)
-    people_picker <- make_people_picker(language, ns, paste0(prefix, "_", id_get_other_name(id, "singular_form"), "_users_allowed_read"),
-      options = form_options, value = value, width = "100%")
+    people_picker <- make_people_picker(
+      language = language, ns = ns, id = "users_allowed_read", label = paste0(get_singular(id), "_users_allowed_read"),
+      options = picker_options, value = value, width = "100%")
   }
   
   ##########################################
-  # Show only aggregated data option       #
+  # Option = show only aggregated data     #
   ##########################################
   
-  if ("show_only_aggregated_data" %in% options_by_cat){
-    value_show_only_aggregated_data <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(value_num)
-    toggles <- tagList(
-      htmltools::br(), 
+  if ("show_only_aggregated_data" %in% page_options){
+    value <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(value_num)
+    toggles <- tagList(br(), 
       shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 10),
-        make_toggle(language, ns,
-          label = "show_only_aggregated_data",
-          id = paste0(prefix, "_", id_get_other_name(id, "singular_form"), "_show_only_aggregated_data"), value = value_show_only_aggregated_data, inline = TRUE)
+        make_toggle(language = language, ns = ns, label = "show_only_aggregated_data", value = value, inline = TRUE)
       )
     )
   }
   
+  
   ##########################################
-  # Result                                 #
+  # Final UI code                          #
   ##########################################
   
   div(id = ns("options_card"),
-    make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id_filter, ")"), style = "font-size: 15px;")),
+    make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
       div(
-        toggles, people_picker, htmltools::br(),
+        toggles, people_picker, br(),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), dropdowns),
-        shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_options_save")), translate(language, "save"))
+        shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save"))
       )
     )
   )
 }
+
 
 ##########################################
 # Edit code card                         #
@@ -237,7 +256,9 @@ settings_options_card <- function(language, ns, id, r, category_filter, link_id_
 #' @param link_id ID allows to link with code table (integer)
 #' @param language Language used (character)
 
-render_settings_code_card <- function(ns = shiny::NS(), id = character(), title = character(), code = character(), link_id = integer(), language = "EN"){
+render_settings_code_card <- function(ns = shiny::NS(), id = character(), title = character(), code = character(), 
+  link_id = integer(), language = "EN"){
+  
   # For plugin page, choose between UI code or Server code
   choice_ui_server <- tagList()
   

@@ -154,34 +154,36 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 }
 
 
-  ##########################################
-  # Delete react                           #
-  ##########################################
   
-  # Code for the dialog box when the action button "delete" is pressed
-  settings_delete_react <- function(name, ns, language, delete_dialog){
-    dialogContentProps <- list(
-      type = 0,
-      title = translate(language, paste0(name, "_delete")),
-      closeButtonAriaLabel = "Close",
-      subText = translate(language, paste0(name, "_delete_subtext"))
-    )
-    shiny.fluent::Dialog(
-      hidden = !delete_dialog,
-      onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", name, "_hide_dialog', Math.random()); }")),
-      dialogContentProps = dialogContentProps,
-      modalProps = list(),
-      shiny.fluent::DialogFooter(
-        shiny.fluent::PrimaryButton.shinyInput(ns(paste0(name, "_delete_confirmed")), text = translate(language, "delete")),
-        shiny.fluent::DefaultButton.shinyInput(ns(paste0(name, "_delete_canceled")), text = translate(language, "dont_delete"))
-      )
-    )
-  }
     
   ##########################################
   # Datatable                             #
   ##########################################
     
+##########################################
+# Delete react                           #
+##########################################
+
+# Code for the dialog box when the action button "delete" is pressed
+settings_delete_react <- function(name, ns, language, delete_dialog){
+  dialogContentProps <- list(
+    type = 0,
+    title = translate(language, paste0(name, "_delete")),
+    closeButtonAriaLabel = "Close",
+    subText = translate(language, paste0(name, "_delete_subtext"))
+  )
+  shiny.fluent::Dialog(
+    hidden = !delete_dialog,
+    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", name, "_hide_dialog', Math.random()); }")),
+    dialogContentProps = dialogContentProps,
+    modalProps = list(),
+    shiny.fluent::DialogFooter(
+      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(name, "_delete_confirmed")), text = translate(language, "delete")),
+      shiny.fluent::DefaultButton.shinyInput(ns(paste0(name, "_delete_canceled")), text = translate(language, "dont_delete"))
+    )
+  )
+}
+
     ##########################################
     # Data                                   #
     ##########################################
@@ -254,8 +256,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     
             # Add options button
             if ("options" %in% action_buttons){
-              actions <- tagList(actions, shiny::actionButton(paste0(prefix, "_options_", data[i, 1]), "", icon = icon("cog"),
-              onclick = paste0("Shiny.setInputValue('", id, "-", prefix, "_options", "', this.id, {priority: 'event'})")), "")}
+              actions <- tagList(actions, shiny::actionButton(paste0("options_", data[i, 1]), "", icon = icon("cog"),
+              onclick = paste0("Shiny.setInputValue('", id, "-options", "', this.id, {priority: 'event'})")), "")}
     
             # Add edit code button
             if ("edit_code" %in% action_buttons){
@@ -325,46 +327,114 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     # Delete a row in datatable              #
     ##########################################
     
-      settings_delete_row <- function(input, output, r, ns, language, prefix, data_var, message){
-        
-        # Create & show dialog box 
-        output[[paste0(prefix, "_delete_confirm")]] <- shiny.fluent::renderReact(settings_delete_react(prefix, ns, language, r[[paste0(prefix, "_delete_dialog")]]))
-        
-        # Whether to close or not delete dialog box
-        observeEvent(input[[paste0(prefix, "_hide_dialog")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
-        observeEvent(input[[paste0(prefix, "_delete_canceled")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
-        observeEvent(input[[paste0(prefix, "_deleted_pressed")]], r[[paste0(prefix, "_delete_dialog")]] <<- TRUE)
-        
-        # When the delete is confirmed...
-        observeEvent(input[[paste0(prefix, "_delete_confirmed")]], {
-          
-          # Close dialog box
-          r[[paste0(prefix, "_delete_dialog")]] <- FALSE
-          
-          # Get the ID of row deleted
-          deleted_pressed_value <- isolate(input[[paste0(prefix, "_deleted_pressed")]])
-          row_deleted <- as.integer(substr(deleted_pressed_value, nchar(paste0(prefix, "_delete_")) + 1, nchar(deleted_pressed_value)))
-          # Delete row in database
-          DBI::dbSendStatement(r$db, paste0("UPDATE ", data_var, " SET deleted = TRUE WHERE id = ", row_deleted))
-          # Update r vars (including temp variable, used in management datatables)
-          r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
-          r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
-          
-          # Notification to user
-          output$warnings3 <- renderUI({
-            div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
-          })
-          shinyjs::show("warnings3")
-          shinyjs::delay(3000, shinyjs::hide("warnings3"))
-        }) 
-      }
-      
+settings_delete_row <- function(input, output, r, ns, language, prefix, data_var, message){
+  
+  # Create & show dialog box 
+  output[[paste0(prefix, "_delete_confirm")]] <- shiny.fluent::renderReact(settings_delete_react(prefix, ns, language, r[[paste0(prefix, "_delete_dialog")]]))
+  
+  # Whether to close or not delete dialog box
+  observeEvent(input[[paste0(prefix, "_hide_dialog")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
+  observeEvent(input[[paste0(prefix, "_delete_canceled")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
+  observeEvent(input[[paste0(prefix, "_deleted_pressed")]], r[[paste0(prefix, "_delete_dialog")]] <<- TRUE)
+  
+  # When the delete is confirmed...
+  observeEvent(input[[paste0(prefix, "_delete_confirmed")]], {
+    
+    # Close dialog box
+    r[[paste0(prefix, "_delete_dialog")]] <- FALSE
+    
+    # Get the ID of row deleted
+    deleted_pressed_value <- isolate(input[[paste0(prefix, "_deleted_pressed")]])
+    row_deleted <- as.integer(substr(deleted_pressed_value, nchar(paste0(prefix, "_delete_")) + 1, nchar(deleted_pressed_value)))
+    # Delete row in database
+    DBI::dbSendStatement(r$db, paste0("UPDATE ", data_var, " SET deleted = TRUE WHERE id = ", row_deleted))
+    # Update r vars (including temp variable, used in management datatables)
+    r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
+    r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
+    
+    # Notification to user
+    output$warnings3 <- renderUI({
+      div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
+    })
+    shinyjs::show("warnings3")
+    shinyjs::delay(3000, shinyjs::hide("warnings3"))
+  }) 
+}
+
+##########################################
+# Save updates of options                #
+##########################################  
+
+#' Save options
+#' 
+#' @param output variable from Shiny, used to render messages on the message bar
+#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param id ID of the current page, format = "settings_[PAGE]" (character)
+#' @param category Category column in code table, eg : "datamart", "plugin" (character)
+#' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
+#' @param data New data to store in options table (list)
+#' @param language Language used
+#' @examples
+#' \dontrun{
+#' data <- list()
+#' data$show_only_aggregated_data <- TRUE
+#' data$users_allowed_read <- c(1, 3, 4)
+#' save_settings_options(output = output, r = r, id = "settings_datamart", category = "datamart", code_id_input = "edit_code_3",
+#'   data = data, language = "EN")
+#' }
+ 
+save_settings_options <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
+  code_id_input = integer(), data = data, language = "EN"){
+
+  # Get link_id variable to update code table
+  link_id <- as.integer(substr(code_id_input, nchar("options_") + 1, nchar(code_id_input)))
+  
+  # Get options with category & link_id
+  options <- r$options %>% dplyr::filter(category == !!category, link_id == !!link_id)
+  
+  # Get options with page ID
+  page_options <- get_page_options(id = id)
+  
+  if("show_only_aggregated_data" %in% page_options){
+    option_id <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(id)
+    DBI::dbSendStatement(r$db, paste0("UPDATE options SET value_num = ", data$show_only_aggregated_data, " WHERE id = ", option_id)) -> query
+    DBI::dbClearResult(query)
+    update_r(r = r, table = "options", language = language)
+  }
+
+  if ("users_allowed_read" %in% page_options){
+    
+    # The idea is to delete every rows of options for this module, and then reinsert one row per user
+    # Get unique ID (peoplePicker can select twice a user, if he's already checked at the initiation of the input)
+
+    # Delete all users allowed in the options table
+    rows_to_del <- options %>% dplyr::filter(name == "user_allowed_read") %>% dplyr::pull(id)
+    DBI::dbSendStatement(r$db, paste0("DELETE FROM options WHERE id IN (", paste(rows_to_del, collapse = ","),")")) -> query
+    DBI::dbClearResult(query)
+    update_r(r = r, table = "options", language = language)
+
+    # Add users in the selected list
+    if (length(data$users_allowed_read) != 0){
+      data$users_allowed_read <- unique(data$users_allowed_read)
+      last_row <- max(r$options["id"])
+      DBI::dbAppendTable(r$db, "options",
+        tibble::tibble(id = (last_row + (1:length(data$users_allowed_read))), category = category, link_id = link_id,
+          name = "user_allowed_read", value = "", value_num = data$users_allowed_read, creator_id = as.integer(r$user_id),
+          datetime = as.character(Sys.time()), deleted = FALSE))
+      update_r(r = r, table = "options", language = language)
+    }
+  }
+  
+  show_message_bar(output, 4, "modif_saved", "success", language)
+}
+
 ##########################################
 # Save edition of the code               #
 ##########################################  
     
 #' Save code edition
 #' 
+#' @description Save code in code table after editing it
 #' @param output variable from Shiny, used to render messages on the message bar
 #' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
@@ -372,7 +442,12 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
 #' @param edited_code New code, after editing it (character)
 #' @param language Language used
-#' 
+#' @examples
+#' \dontrun{
+#' save_settings_code(output = output, r = r, id = "settings_datamart", category = "datamart", code_id_input = "edit_code_5",
+#'   edited_code = "print('test code edition')", language = "EN")
+#' }
+
 save_settings_code <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
   code_id_input = integer(), edited_code = character(), language = "EN"){
   
@@ -380,7 +455,7 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
   link_id <- as.integer(substr(code_id_input, nchar("edit_code_") + 1, nchar(code_id_input)))
   
   # Reload r$code before querying
-  r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
+  update_r(r = r, table = "options", language = language)
   code_id <- r$code %>% dplyr::filter(category == !!category, link_id == !!link_id) %>% dplyr::pull(id)
   
   # Replace ' with '' and store in the database
@@ -398,9 +473,14 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
 
 #' Execute / test code after edition
 #' 
+#' @description Execute code entered in the ShinyAce editor
 #' @param output variable from Shiny, used to render messages on the message bar
 #' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param edited_code New code, after editing it (character)
+#' @examples 
+#' \dontrun{
+#' execute_settings_code(output = output, r = r, edited_code = "print('test')")
+#' }
             
 execute_settings_code <- function(output, r = shiny::reactiveValues(), edited_code = character()){
   

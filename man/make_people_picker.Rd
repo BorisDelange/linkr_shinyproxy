@@ -5,16 +5,46 @@
 \title{Make a shiny.fluent people picker}
 \usage{
 make_people_picker(
-  language,
-  ns,
-  label,
-  options,
+  language = "EN",
+  ns = shiny::NS(),
+  id = NA_character_,
+  label = character(),
+  options = tibble::tibble(),
   value = NULL,
-  width = NULL,
-  min_width = NULL,
-  max_width = NULL
+  width = NULL
 )
 }
+\arguments{
+\item{language}{Language used (character)}
+
+\item{ns}{Shiny namespace}
+
+\item{id}{ID used for the input (character)}
+
+\item{label}{Label used for the input (character)}
+
+\item{options}{Options available for the input (data.frame or tibble)}
+
+\item{value}{Options already selected (character)}
+
+\item{width}{CSS code for width, could be all CSS forms, as "200px" or "100%" etc (character)}
+}
+\value{
+HTML / Shiny UI code
+}
 \description{
-Make a shiny.fluent people picker
+Creates a shiny.fluent NormalPeoplePicker
+}
+\details{
+options argument has to be a data.frame or a tibble, with columns = c("key", "imageInitials", "text", "secondaryText")
+key is the ID of the choice, text is the text of the choice, imageInitials are the letters put on a circle,
+secondaryText is the text under the principal text
+}
+\examples{
+\dontrun{
+options <- tibble::tribble(~key,  ~imageInitials, ~text, ~secondaryText,
+  1, "JD", "John Doe", "Clinician",
+  2, "DA", "Doug Altman", "Statistician")
+make_people_picker(language = "EN", ns = ns, id = "my_people_picker", "My people picker", options = options, value = 2, width = "200px")
+}
 }

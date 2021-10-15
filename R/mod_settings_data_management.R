@@ -55,9 +55,9 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
       uiOutput(ns("edit_code_card")),
-      uiOutput(ns(paste0(prefix, "_options_card"))),
+      uiOutput(ns("options_card")),
       settings_datatable_card(language, ns, title = "datamarts_management", prefix = prefix),
-      textOutput(ns("test")), uiOutput(ns("test2"))
+      textOutput(ns("test")), textOutput(ns("test2")), textOutput(ns("test3")), textOutput(ns("test4"))
     ) -> result
   }
   
@@ -79,7 +79,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
       settings_datatable_card(language, ns, title = "studies_management", prefix = prefix),
-      uiOutput(ns(paste0(prefix, "_options_card")))
+      uiOutput(ns("options_card"))
     ) -> result
   }
   
@@ -125,8 +125,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
       settings_datatable_card(language, ns, title = "thesaurus_management", prefix = "thesaurus"),
       settings_datatable_card(language, ns, title = "thesaurus_items_management", prefix = "thesaurus_items"),
       uiOutput(ns("edit_code_card")),
-      uiOutput(ns("thesaurus_options_card")),
-      textOutput(ns("test")), uiOutput(ns("test2"))
+      uiOutput(ns("options_card"))
     ) -> result
   }
   
@@ -391,59 +390,36 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Edit options by selecting a row        #
       ##########################################
       
-        observeEvent(input[[paste0(prefix, "_options")]], {
-          # Show options toggle
-          shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = TRUE)
-          output[[paste0(prefix, "_options_card")]] <- renderUI({
-            category <- id_get_other_name(id, "singular_form")
-            link_id <- as.integer(substr(input[[paste0(prefix, "_options")]], nchar(paste0(prefix, "_options_")) + 1, nchar(input[[paste0(prefix, "_options")]])))
-            settings_options_card(language, ns, id, r, category_filter = category, link_id_filter = link_id,
-              title = paste0(id_get_other_name(id, "singular_form"), "_options"), prefix = prefix)
-          })
-        })
+      observeEvent(input$options, {
+        # Show options toggle
+        shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = TRUE)
         
-        observeEvent(input[[paste0(prefix, "_options_save")]], {
-          category_filter <- id_get_other_name(id, "singular_form")
-          link_id_filter <- as.integer(substr(input[[paste0(prefix, "_options")]], nchar(paste0(prefix, "_options_")) + 1, nchar(input[[paste0(prefix, "_options")]])))
+        # Render UI of options card
+        output$options_card <- renderUI({
+          # Get category & link_id to get informations in options table
+          category <- get_singular(word = id)
+          link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
           
-          options <- r$options %>% dplyr::filter(category == category_filter, link_id == link_id_filter)
-          options_by_cat <- id_get_other_name(id, "options_by_cat")
-          
-          if("show_only_aggregated_data" %in% options_by_cat){
-            option_id <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(id)
-            DBI::dbSendStatement(r$db, paste0("UPDATE options SET value_num = ", input[[paste0(prefix, "_", category_filter, "_show_only_aggregated_data")]], "
-                                          WHERE id = ", option_id)) -> query
-            DBI::dbClearResult(query)
-            r$options <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE deleted IS FALSE ORDER BY id")
-          }
-          
-          if ("user_allowed_read" %in% options_by_cat){
-            users_already_allowed <- options %>% dplyr::filter(name == "user_allowed_read") %>% dplyr::pull(value_num)
-            users_allowed <- input[[paste0(prefix, "_", category_filter, "_users_allowed_read")]]
-            last_row <- max(r[[prefix]]["id"])
-            
-            # Delete users not in the selected list
-            rows_to_del <- options %>% dplyr::filter(name == "user_allowed_read") %>% dplyr::pull(id)
-            rows_to_del <-
-              options %>%
-              dplyr::filter(name == "user_allowed_read" & value_num %not_in% users_allowed) %>%
-              dplyr::pull(id)
-            DBI::dbSendStatement(r$db, paste0("DELETE FROM options WHERE id IN (", paste(rows_to_del, collapse = ","),")")) -> query
-            DBI::dbClearResult(query)
-            r$options <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE deleted IS FALSE ORDER BY id")
-            
-            # Add users in the selected list
-            users_allowed <- users_allowed[!users_allowed %in% users_already_allowed]
-            if (length(users_allowed) != 0){
-              DBI::dbAppendTable(r$db, "options",
-                tibble::tibble(id = ((last_row + 1) + (1:length(users_allowed))), category = category_filter, link_id = link_id_filter,
-                  name = "user_allowed_read", value = "", value_num = users_allowed, creator_id = as.integer(r$user_id),
-                  datetime = as.character(Sys.time()), deleted = FALSE))
-            }
-          }
-          
-          show_message_bar(output, 4, "modif_saved", "success", language)
+          render_settings_options_card(ns = ns, id = id, r = r, title = paste0(get_singular(id), "_options"), 
+            category = category, link_id = link_id, language = language)
         })
+      })
+      
+      observeEvent(input$options_save, {
+        category <- get_singular(id)
+        
+        data <- list()
+        data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
+        data$users_allowed_read <- input$users_allowed_read
+        
+        output$test <- renderText(paste0("length = ", length(data$users_allowed_read)))
+        output$test2 <- renderText(paste0("Users = ", data$users_allowed_read))
+        # output$test3 <- renderText(paste0("isnull_aggr = ", ifelse(is.null(data$show_only_aggregated_data), "YES", "NO")))
+        # output$test4 <- renderText(paste0("isnull_users = ", ifelse(is.null(data$users_allowed_read), "YES", "NO")))
+
+        save_settings_options(output = output, r = r, id = id, category = category,
+          code_id_input = input$options, language = language, data = data)
+      })
       
       ##########################################
       # Edit code by selecting a row           #

@@ -10,7 +10,7 @@ show_message_bar(
   message = character(),
   type = "severeWarning",
   language = "EN",
-  time = 3000
+  time = 7000
 )
 }
 \arguments{

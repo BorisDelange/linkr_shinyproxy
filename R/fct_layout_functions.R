@@ -97,15 +97,39 @@ make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character()
 }
 
 #' Make a shiny.fluent people picker
-make_people_picker <- function(language, ns, label, options, value = NULL, width = NULL, min_width = NULL, max_width = NULL){
+#' 
+#' @description Creates a shiny.fluent NormalPeoplePicker
+#' @details 
+#' options argument has to be a data.frame or a tibble, with columns = c("key", "imageInitials", "text", "secondaryText")
+#' key is the ID of the choice, text is the text of the choice, imageInitials are the letters put on a circle,
+#' secondaryText is the text under the principal text
+#' @param language Language used (character)
+#' @param ns Shiny namespace
+#' @param id ID used for the input (character)
+#' @param label Label used for the input (character)
+#' @param options Options available for the input (data.frame or tibble)
+#' @param value Options already selected (character)
+#' @param width CSS code for width, could be all CSS forms, as "200px" or "100%" etc (character)
+#' @return HTML / Shiny UI code
+#' @examples
+#' \dontrun{
+#' options <- tibble::tribble(~key,  ~imageInitials, ~text, ~secondaryText,
+#'   1, "JD", "John Doe", "Clinician",
+#'   2, "DA", "Doug Altman", "Statistician")
+#' make_people_picker(language = "EN", ns = ns, id = "my_people_picker", "My people picker", options = options, value = 2, width = "200px")
+#' }
+
+make_people_picker <- function(language = "EN", ns = shiny::NS(), id = NA_character_, label = character(), 
+  options = tibble::tibble(), value = NULL, width = NULL){
+  
   style <- ""
   if (!is.null(width)) style <- paste0("width: ", width)
-  if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0("min-width: ", min_width, "; max-width: ", max_width)
+  if (is.na(id)) id <- label
   div(
     div(class = "input_title", translate(language, label)),
     div(shiny.fluent::NormalPeoplePicker.shinyInput(
-      ns(label),
-      options = options,# %>% dplyr::filter(key %not_in% value),
+      ns(id),
+      options = options,
       pickerSuggestionsProps = list(
         suggestionsHeaderText = translate(language, "matching_people"),
         noResultsFoundText = translate(language, "no_results_found"),
@@ -119,7 +143,20 @@ make_people_picker <- function(language, ns, label, options, value = NULL, width
 }
 
 #' Make a shiny.fluent toggle
-make_toggle <- function(language, ns, label, id = NULL, value = FALSE, inline = FALSE){
+#' 
+#' @param language Language used (character)
+#' @param ns Shiny namespace
+#' @param id ID used for the input (character)
+#' @param label Label used for the input (character)
+#' @param value Value of the toggle : TRUE or FALSE (logical)
+#' @param inline Should the toggle displayed inline (logical)
+#' @return HTML / Shiny UI code
+#' @examples
+#' \dontrun{
+#' make_toggle(language = "EN", ns = ns, label = "My toggle", id = "my_toggle", value = TRUE, inline = FALSE)
+#' }
+
+make_toggle <- function(language = "EN", ns = shiny::NS(), label = character(), id = NULL, value = FALSE, inline = FALSE){
   if (is.null(id)) id <- label
   if (inline){
     tagList(

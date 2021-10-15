@@ -18,12 +18,6 @@ app_server <- function(page_style, router, language){
       observe(on.exit(DBI::dbDisconnect(r$db)))
     })
     
-    # r$chosen_datamart <- NA_integer_
-    # r$chosen_study <- NA_integer_
-    # r$chosen_subset <- NA_integer_
-    # r$chosen_patient <- NA_integer_
-    # r$chosen_stay <- NA_integer_
-    
     # Load all data from database
     observeEvent(r$db, {
       tables <- c("users", "users_accesses_statuses", "users_accesses_details",
