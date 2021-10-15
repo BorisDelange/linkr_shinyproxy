@@ -5,10 +5,10 @@
 \title{Make a shiny.fluent textfield}
 \usage{
 make_textfield(
-  language,
-  ns,
-  label,
-  id = NULL,
+  language = "EN",
+  ns = shiny::NS(),
+  label = character(),
+  id = NA_character_,
   value = NULL,
   type = NULL,
   canRevealPassword = NULL,
@@ -17,6 +17,9 @@ make_textfield(
   max_width = NULL,
   margin_right = NULL
 )
+}
+\value{
+Shiny UI elements / HTML code
 }
 \description{
 Make a shiny.fluent textfield

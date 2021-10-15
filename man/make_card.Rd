@@ -4,7 +4,7 @@
 \alias{make_card}
 \title{Make a shiny.fluent card}
 \usage{
-make_card(title, content, size = 12, style = "")
+make_card(title = character(), content = character(), size = 12, style = "")
 }
 \arguments{
 \item{title}{Title of the card (character)}
@@ -15,11 +15,12 @@ make_card(title, content, size = 12, style = "")
 
 \item{style}{CSS code to custom the card (character)}
 }
+\value{
+Shiny UI elements / HTML code
+}
 \description{
 Code available in shiny.fluent github pages (Articles). Creates a shiny.fluent card.
 }
 \examples{
-\dontrun{
 make_card(title = "Introduction", content = "This is the text of my introduction card", size = 12)
-}
 }

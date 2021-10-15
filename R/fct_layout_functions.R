@@ -151,7 +151,7 @@ make_toggle <- function(language, ns, label, id = NULL, value = FALSE, inline = 
 #' message_bar(id = 2, message = "name_already_used", type = "severeWarning", language = language, time = 5000)
 #' }
 
-show_message_bar <- function(output, id = integer(), message = character(), type = "severeWarning", language = "EN", time = 3000){
+show_message_bar <- function(output, id = integer(), message = character(), type = "severeWarning", language = "EN", time = 7000){
   type <- switch(type, "info" = 0, "error" = 1, "blocked" = 2, "severeWarning" = 3, "success" = 4, "warning" = 5)
   shinyjs::show(paste0("message_bar", id))
   shinyjs::delay(time, shinyjs::hide(paste0("message_bar", id)))

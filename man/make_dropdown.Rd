@@ -5,12 +5,12 @@
 \title{Make a shiny.fluent dropdown}
 \usage{
 make_dropdown(
-  language,
-  ns,
-  label,
+  language = "EN",
+  ns = shiny::NS(),
+  label = character(),
   options = list(),
   multiSelect = FALSE,
-  id = NULL,
+  id = NA_character_,
   value = NULL,
   width = NULL,
   min_width = NULL,

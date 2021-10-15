@@ -1,11 +1,32 @@
-#' helpers 
-#'
-#' @description A utils function
-#'
-#' @return The return value, if any, from executing the utility.
-#'
-#' @noRd
+#' Convert a tibble to list
+#' 
+#' @param data a tibble or a dataframe containing data
+#' @param key_col name of the column containing the key (character)
+#' @param text_col name of the column containing the text (character)
+#' @param null_value add a null value (logical)
+#' @param language language used (character)
+#' @return A list with this structure : list(list(key = "my_key1", text = "my_text1"), list(key = "my_key2", text = "my_text2"))
+#' @examples
+#' data <- tibble::tribble(~key, ~text, "my_key1", "my_text1", "my_key2", "my_text2")
+#' my_list <- convert_tibble_to_list(data = data, key_col = "key", text_col = "text", null_value = TRUE, language = "EN")
+#' print(my_list)
 
+convert_tibble_to_list <- function(data = tibble::tibble(), key_col = character(), text_col = character(), null_value = FALSE, language = "EN"){
+
+  # Create a null / an empty value (used in dropdowns)
+  if (null_value) my_list <- list(list(key = "", text = translate(language, "none")))
+  if (!null_value) my_list <- list()
+  
+  # If our data is not empty, for each row append the list
+  if (nrow(data) != 0){
+    for (i in 1:nrow(data)){
+      my_list <- rlist::list.append(my_list, list(key = data[[i, key_col]], text = data[[i, text_col]]))
+    }
+  }
+  my_list
+}
+
+# Delete asap
 tibble_to_list <- function(data, key_col, text_col, rm_deleted_rows = FALSE, null_value = FALSE, language = "EN"){
   if (null_value) my_list <- list(list(key = "", text = translate(language, "none")))
   if (!null_value) my_list <- list()
@@ -20,6 +41,7 @@ tibble_to_list <- function(data, key_col, text_col, rm_deleted_rows = FALSE, nul
   return(my_list)
 }
 
+# Delete asap
 id_get_other_name <- function(id, type, language = NULL){
   if (grepl("settings_", id)) id <- substr(id, nchar("settings_") + 1, nchar(id))
   
@@ -74,6 +96,14 @@ id_get_other_name <- function(id, type, language = NULL){
   }
   result
 }
+
+#' Coalesce
+#' 
+#' @param type Type of the variable c("char", "int") (character)
+#' @param x Variable
+#' @return Return NA if variable is null or empty, returns the variable if not null & not empty
+#' @examples 
+#' coalesce2("char", "my_char")
 
 coalesce2 <- function(type, x){
   if (type == "int"){
