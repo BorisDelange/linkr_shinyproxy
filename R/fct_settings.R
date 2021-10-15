@@ -470,10 +470,10 @@ settings_edit_code_card <- function(ns = shiny::NS(), id = character(), title = 
 #' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
 #' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
-#' @param code_edited New code, after editing it (character)
+#' @param edited_code New code, after editing it (character)
 #' @param language Language used
 #' 
-settings_edit_code_save <- function(output, r = shiny::reactiveValues(), id = character(), code_id_input = integer(), code_edited = character(), language = "EN"){
+settings_edit_code_save <- function(output, r = shiny::reactiveValues(), id = character(), code_id_input = integer(), edited_code = character(), language = "EN"){
   
   # Get category & link_id variables, to update code table
   category <- get_singular(id, language)
@@ -484,10 +484,42 @@ settings_edit_code_save <- function(output, r = shiny::reactiveValues(), id = ch
   code_id <- r$code %>% dplyr::filter(category == !!category, link_id == !!link_id) %>% dplyr::pull(id)
   
   # Replace ' with '' and store in the database
-  DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(code_edited, "'", "''"), "' WHERE id = ", code_id)) -> query
+  DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(edited_code, "'", "''"), "' WHERE id = ", code_id)) -> query
   DBI::dbClearResult(query)
   r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
   
   # Notification to user
   show_message_bar(output, 4, "modif_saved", "success", language)
+}
+      
+    ##########################################
+    # Execute the code in edit_code          #
+    ########################################## 
+
+#' Execute / test code after edition
+#' 
+#' @param output variable from Shiny, used to render messages on the message bar
+#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param edited_code New code, after editing it (character)
+            
+settings_edit_code_execute <- function(output, r = shiny::reactiveValues(), edited_code = character()){
+  
+  # Replace %CODE% from code to real values
+  code <- edited_code %>%
+    stringr::str_replace_all("%datamart_id%", as.character(isolate(r$datamart_id))) %>%
+    stringr::str_replace_all("%subset_id%", as.character(isolate(r$subset_id))) %>%
+    stringr::str_replace_all("%thesaurus_id%", as.character(isolate(r$thesaurus_id)))
+  
+  # Change this option to display correctly tibble in textbox
+  eval(parse(text = "options('cli.num_colors' = 1)"))
+  
+  # Capture console output of our code
+  captured_output <- capture.output(
+    tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
+  
+  # Restore normal value
+  eval(parse(text = "options('cli.num_colors' = NULL)"))
+  
+  # Display result
+  paste(captured_output, collapse = "\n")
 }

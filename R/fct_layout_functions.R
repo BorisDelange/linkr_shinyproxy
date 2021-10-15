@@ -5,14 +5,11 @@
 #' @param content Content of the card (character)
 #' @param size Size of a card (integer)
 #' @param style CSS code to custom the card (character)
-#' 
-#' @result Returns HTML code of the card
-#' 
+#' @return Shiny UI elements / HTML code
 #' @examples 
-#' \dontrun{
 #' make_card(title = "Introduction", content = "This is the text of my introduction card", size = 12)
-#' }
-make_card <- function(title, content, size = 12, style = "") {
+
+make_card <- function(title = character(), content = character(), size = 12, style = "") {
   div(
     class = glue::glue("card ms-depth-8 ms-sm{size} ms-xl{size}"),
     style = style,
@@ -30,14 +27,11 @@ make_card <- function(title, content, size = 12, style = "") {
 #' @param title Title of the page (character)
 #' @param subtitle Subtitle of the page (character)
 #' @param contents Contents of the page (character)
-#' 
-#' @result Returns HTML code of the page
-#' 
+#' @return Shiny UI elements / HTML code
 #' @examples
-#' \dontrun{
 #' make_page(title = "My page title", subtitle = "My page subtitle", contents = "shiny::div('My page content')")
-#' }
-make_page <- function (title, subtitle, contents) {
+
+make_page <- function (title = character(), subtitle = character(), contents = character()) {
   tagList(div(
     class = "page-title",
     htmltools::span(title, class = "ms-fontSize-32 ms-fontWeight-semibold", style =
@@ -72,8 +66,12 @@ make_layout <- function(language, page_style, page){
 }
 
 #' Make a shiny.fluent textfield
-make_textfield <- function(language, ns, label, id = NULL, value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, margin_right = NULL){
-  if (is.null(id)) id <- label
+#' 
+#' @return Shiny UI elements / HTML code
+#' @examples
+make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(), id = NA_character_, 
+  value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, margin_right = NULL){
+  if (is.na(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
   if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0(style, "min-width: ", min_width, "; max-width: ", max_width, ";")
@@ -85,9 +83,9 @@ make_textfield <- function(language, ns, label, id = NULL, value = NULL, type = 
 }
 
 #' Make a shiny.fluent dropdown
-make_dropdown <- function(language, ns, label, options = list(), multiSelect = FALSE,
-                          id = NULL, value = NULL, width = NULL, min_width = NULL, max_width = NULL, margin_right = NULL){
-  if (is.null(id)) id <- label
+make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
+  id = NA_character_, value = NULL, width = NULL, min_width = NULL, max_width = NULL, margin_right = NULL){
+  if (is.na(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
   if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0(style, "min-width: ", min_width, "; max-width: ", max_width, ";")

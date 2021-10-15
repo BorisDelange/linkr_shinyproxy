@@ -43,6 +43,6 @@ thesaurus <- tibble::tribble(~item_id, ~name, ~display_name, ~category, ~unit,
   44543L, "Heart rate", "HR", "Vitals", "bpm",
   46531L, "Respiratory rate", "RR", "Vitals", "cpm")
   
-import_thesaurus(r = r, thesaurus_id = 5, thesaurus = thesaurus, language = language)
+import_thesaurus(output = output, r = r, thesaurus_id = 5, thesaurus = thesaurus, language = language)
 }
 }

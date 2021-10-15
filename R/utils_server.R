@@ -37,7 +37,7 @@ get_singular <- function(word = character(), language = "EN"){
     "studies" = "study",
     "subsets" = "subset",
     "thesaurus" = "thesaurus",
-    "thesaurus" = "thesaurus_items",
+    "thesaurus_items" = "thesaurus_item",
     "patient_lvl_module_families" = "patient_lvl_module_family",
     "aggregated_module_families" = "aggregated_module_family") -> result
   result  
@@ -59,7 +59,7 @@ get_plural <- function(word = character(), language = "EN"){
     "study" = "studies",
     "subset" = "subsets",
     "thesaurus" = "thesaurus",
-    "thesaurus" = "thesaurus_items",
+    "thesaurus_item" = "thesaurus_items",
     "patient_lvl_module" = "patient_lvl_modules",
     "patient_lvl_module_family" = "patient_lvl_module_families",
     "aggregated_module" = "aggregated_modules",

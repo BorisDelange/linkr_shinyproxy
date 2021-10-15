@@ -617,30 +617,10 @@ mod_settings_data_management_server <- function(id, r, language){
         settings_edit_code_save(output = output, r = r, id = id, code_id_input = input$edit_code, code_edited = input$ace_edit_code, language = "EN"))
       
       # When Execute code button is clicked
-      observeEvent(input$execute_code, {
-        
-        output$code_result <- renderText({
+      observeEvent(input$execute_code, (
+        output$code_result <- renderText(
+          settings_edit_code_execute(output = output, r = r, edited_code = input$ace_edit_code))))
           
-          # Replace %CODE% from code to real values
-          code <- isolate(input$ace_edit_code) %>%
-            stringr::str_replace_all("%datamart_id%", as.character(isolate(r$datamart_id))) %>%
-            stringr::str_replace_all("%subset_id%", as.character(isolate(r$subset_id))) %>%
-            stringr::str_replace_all("%thesaurus_id%", as.character(isolate(r$thesaurus_id)))
-          
-          # Change this option to display correctly tibble in textbox
-          eval(parse(text = "options('cli.num_colors' = 1)"))
-          
-          # Capture console output of our code
-          captured_output <- capture.output(
-            tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
-          
-          # Restore normal value
-          eval(parse(text = "options('cli.num_colors' = NULL)"))
-          
-          # Display result
-          paste(captured_output, collapse = "\n")
-        })
-      })
       
       ##########################################
       # Load sub datatable with action button  #
