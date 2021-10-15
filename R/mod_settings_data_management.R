@@ -267,8 +267,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
       # Each time a dropdown is updated, modify temp variable
         observeEvent(r[[table]], {
-          update_settings_datatable(r = r, ns = ns, table = table, 
-            dropdowns = dropdowns %>% dplyr::filter(id == table) %>% dplyr::pull(dropdowns) %>% unlist(), language = language)
+          update_settings_datatable(input = input, r = r, ns = ns, table = table, 
+            dropdowns = dropdowns %>% dplyr::filter(id == id) %>% dplyr::pull(dropdowns) %>% unlist(), language = language)
         })
       
         observeEvent(input$management_save, {
@@ -399,9 +399,3 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
      
   })
 }
-    
-## To be copied in the UI
-# mod_settings_data_management_ui("settings_studies_ui_1")
-    
-## To be copied in the server
-# mod_settings_data_management_server("settings_studies_ui_1")

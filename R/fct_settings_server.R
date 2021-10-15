@@ -429,25 +429,30 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
 
 #' Update datatable
 #' 
+#' @param input Shiny input variable
 #' @param r Shiny r reactive value to communicate between modules
 #' @param ns Shiny namespace
 #' @param table Name of the table used (character)
 #' @param dropdowns Dropdowns shown on datatable (character)
 #' @param language Language used (character)
+#' @examples 
+#' \dontrun{
+#' update_settings_datatable(r = r, ns = ns, table = "datamarts", dropdowns = "data_source", language = "EN")
+#' }
 
-update_settings_datatable <- function(r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), dropdowns = character(), language = "EN"){
+update_settings_datatable <- function(input, r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), dropdowns = character(), language = "EN"){
   
   sapply(r[[table]] %>% dplyr::pull(id), function(id){
     sapply(dropdowns, function(dropdown){
-      observeEvent(input[[get_plural(word = dropdown), id]], {
+      observeEvent(input[[paste0(get_plural(word = dropdown), id)]], {
         
         # When we load a page, every dropdown triggers the event
         # Change temp variable only if new value is different than old value
         old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]]
         
         # If thesaurus, data_source_id can accept multiple values (converting to string)
-        new_value <- ifelse(prefix == "thesaurus", toString(input[[paste0("data_sources", id)]]),
-          as.integer(input[[paste0(get_plural(dropdown), id)]]))
+        new_value <- ifelse(table == "thesaurus", toString(input[[paste0("data_sources", id)]]),
+          as.integer(input[[paste0(get_plural(word = dropdown), id)]]))
         
         if (new_value != old_value){
           r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <- new_value
@@ -466,6 +471,10 @@ update_settings_datatable <- function(r = shiny::reactiveValues(), ns = shiny::N
 #' @param ns Shiny namespace
 #' @param table Name of the table used (character)
 #' @param language Language used (character)
+#' @examples 
+#' \dontrun{
+#' save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datamarts", language = "EN")
+#' }
 
 save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), language = "EN"){
   
