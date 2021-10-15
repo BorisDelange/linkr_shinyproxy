@@ -45,9 +45,9 @@ get_page_options <- function(id = character()){
 get_col_names <- function(table_name = character(), language = "EN"){
   result <- ""
   
-  if (id %in% c("data_sources", "datamarts", "studies", "subsets", "thesaurus")){
+  if (table_name %in% c("data_sources", "datamarts", "studies", "subsets", "thesaurus")){
     result <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"))
-    c(result, switch(id,
+    c(result, switch(table_name,
       "datamarts" = translate(language, "data_source"),
       "studies" = c(translate(language, "datamart"), translate(language, "patient_lvl_module_family"),
                    translate(language, "aggregated_module_family")),
@@ -56,7 +56,7 @@ get_col_names <- function(table_name = character(), language = "EN"){
     result <- c(result, translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
   }
   
-  if (id == "thesaurus_items"){
+  if (table_name == "thesaurus_items"){
     result <- c(translate(language, "id"), translate(language, "thesaurus_id"), translate(language, "item_id"), translate(language, "name"),
     translate(language, "display_name"), translate(language, "category"), translate(language, "unit"),
     translate(language, "datetime"), translate(language, "action"))

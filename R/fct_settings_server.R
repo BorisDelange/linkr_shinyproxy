@@ -21,7 +21,7 @@
 #' }
 
 add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), language = "EN", id = character(),
-                                  data = tibble::tibble(), dropdowns = character()){
+  data = tibble::tibble(), dropdowns = character()){
   
   # Get table name
   table <- substr(id, nchar("settings_") + 1, nchar(id))
@@ -63,7 +63,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     if (id == "settings_datamarts") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, data$data_source))
     if (id == "settings_studies") new_data <- new_data %>% dplyr::bind_cols(
       tibble::tribble(~datamart_id,  ~patient_lvl_module_family_id, ~aggregated_module_family_id,
-                      data$datamart, data$patient_lvl_module_family, data$aggregated_module_family))
+        data$datamart, data$patient_lvl_module_family, data$aggregated_module_family))
     if (id == "settings_subsets") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~study_id, data$study))
     if (id == "settings_thesaurus") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, data$data_source))
     
@@ -87,8 +87,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   if (table %in% c("datamarts", "thesaurus")){
     
     DBI::dbAppendTable(r$db, "code",
-                       tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-                                       last_row_code + 1, get_singular(word = table), last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
+      tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+        last_row_code + 1, get_singular(word = table), last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
     update_r(r = r, table = "code", language = language)
   }
   
@@ -96,9 +96,9 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   if (id == "settings_datamarts"){
     
     DBI::dbAppendTable(r$db, "options",
-                       tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-                                       last_row_options + 1, "datamart", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-                                       last_row_options + 2, "datamart", last_row + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE))
+      tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+        last_row_options + 1, "datamart", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_options + 2, "datamart", last_row + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE))
     update_r(r = r, table = "options", language = language)
   }
   
@@ -106,26 +106,26 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   if (id == "settings_studies"){
     
     DBI::dbAppendTable(r$db, "options",
-                       tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-                                       last_row_options + 1, "study", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
+      tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+        last_row_options + 1, "study", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
     
     # Add rows in subsets table, for inclusion / exclusion subsets
     # Add also code corresponding to each subset
     DBI::dbAppendTable(r$db, "subsets",
-                       tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id,  ~datetime, ~deleted,
-                                       last_row_subsets + 1, translate(language, "subset_all_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-                                       last_row_subsets + 2, translate(language, "subset_included_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-                                       last_row_subsets + 3, translate(language, "subset_excluded_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE))
+      tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id,  ~datetime, ~deleted,
+        last_row_subsets + 1, translate(language, "subset_all_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_subsets + 2, translate(language, "subset_included_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_subsets + 3, translate(language, "subset_excluded_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE))
     
     # Add code for creating subset with all patients
     code <- paste0("run_datamart_code(output, r, %datamart_id%)\n",
                    "patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)\n",
                    "add_patients_to_subset(output, r, patients, %subset_id%, erase = FALSE)")
     DBI::dbAppendTable(r$db, "code",
-                       tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-                                       last_row_code + 1, "subset", last_row_subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-                                       last_row_code + 2, "subset", last_row_subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
-                                       last_row_code + 3, "subset", last_row_subsets + 3, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
+      tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+        last_row_code + 1, "subset", last_row_subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_code + 2, "subset", last_row_subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_code + 3, "subset", last_row_subsets + 3, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
     
     # Update r$options, r$code & r$subsets
     update_r(r, "options", language)
@@ -164,6 +164,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' 
 #' @param output variable from Shiny, used to render messages on the message bar
 #' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param ns Shiny namespace
+#' @param language Language used (charater)
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
 #' @param col_names A character vector containing colnames, already translated (character)
 #' @param table Name of a table of database (character)
@@ -176,7 +178,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' @param sortable_cols Which cols are sortable (numeric vector)
 #' @param column_widths Columns widths (named character vector)
 
-render_settings_datatable <- function(output, r = shiny::reactiveValues(), id = character(),
+render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", id = character(),
   col_names = character(), table = character(), dropdowns = character(), action_buttons = character(),
   datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 1,
   editable_cols = integer(), sortable_cols = integer(), column_widths = character()
@@ -185,124 +187,119 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), id = 
   # Load temp data
   data <- r[[paste0(table, "_temp")]]
   
-  # Rename cols if lengths correspond
-  if (length(col_names) == length(names(data))) names(data) <- col_names
-  
+  # Add a column action in the DataTable
+  data["action"] <- NA_character_
+
   # If no row in dataframe, stop here
   if (nrow(data) == 0) return(data)
-  
+
   # Drop deleted column & modified column : we don't want to show them in the datatable
   if (nrow(data) != 0) data <- data %>% dplyr::select(-deleted, -modified)
   
-  # Create vars with existing options (ie : for data_sources, a list of existing data_sources in the database)
-  # sapply(c("data_sources", "datamarts", "studies", "patient_lvl_modules", "aggregated_modules"), function(data_var){
-  #   # if (data_var %in% c("patient_lvl_modules", "aggregated_modules")) null_value <- TRUE else null_value <- FALSE
-  #   
-  #   assign(data_var, convert_tibble_to_list(
-  #     data = r[[data_var]], key_col = "id", text_col = "name", null_value = FALSE), envir = parent.env(environment()))
-  # })
-  
-  # Add a column action in the DataTable
-  data["action"] <- NA_character_
-  
   # Dropdowns is a named character vector, with names corresponding to column names (eg data_source_id)
   # and values corresponding to data_var / data variables names (eg data_sources)
-  
+
   # Transform dropdowns columns in the dataframe to character
   lapply(names(dropdowns), function(col_name) data %>% dplyr::mutate_at(col_name, as.character) ->> data)
-  
+
   # For each row of the dataframe :
   # - transform dropdowns columns to show dropdowns in Shiny app
   # - add an Action column with delete action button (+/- options / edit code buttons)
   # - show creator name
-  
+
   for (i in 1:nrow(data)){
-    
+
     #############
     # DROPDOWNS #
     #############
-    
+
     lapply(names(dropdowns), function(name){
-      
+
       # Particularity with thesaurus, data_source_id column can contains multiple values (multiSelect = TRUE)
       # We have to split data_source_id column, to have an integer vector (saved with collapse by commas)
-      multiSelect <- FALSE
-      value <- as.integer(data[i, name])
-      if (id == "settings_thesaurus"){ 
-        multiSelect <- TRUE
-        value <- stringr::str_split(data[i, name], ", ") %>% unlist() %>% as.integer()
-      }
-      
-      
+
       # name here is like "data_source_id"
       # dropdowns[name] here is like "data_sources"
       # so r[[dropdowns[[name]]]] is like r$data_sources, var containing data_sources data
+
+      if (id == "settings_thesaurus"){
+        data[i, name] <<- as.character(
+          div(
+            shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+            options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
+            value = stringr::str_split(data[i, name], ", ") %>% unlist() %>% as.integer(),
+            multiSelect = TRUE),
+            onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
+            style = "width:100%")
+        )
+      }
       
-      data[i, name] <<- as.character(
-        div(
-          # So ID is like "data_sources13" if ID = 13
-          shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
-                                            # To get options, convert data var to tibble (convert r$data_sources to list)
-                                            options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
-                                            # value is an integer, the value of the column like "data_source_id"
-                                            value = value), 
-          # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
-          onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
-          
-          style = "width:100%")
-      )
+      else {
+        data[i, name] <<- as.character(
+          div(
+            # So ID is like "data_sources13" if ID = 13
+            shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+              # To get options, convert data var to tibble (convert r$data_sources to list)
+              options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
+              # value is an integer, the value of the column like "data_source_id"
+              value = as.integer(data[i, name])),
+            # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
+            onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
+            style = "width:100%")
+        )
+      }
     })
-    
+
     ##################
     # ACTION BUTTONS #
     ##################
-    
+
     # Action buttons : if in action_buttons vector, add action button
     actions <- tagList()
-    
+
     # Add options button
     if ("options" %in% action_buttons){
       actions <- tagList(actions,
-                         shiny::actionButton(paste0("options_", data[i, 1]), "", icon = icon("cog"),
-                                             onclick = paste0("Shiny.setInputValue('", id, "-options", "', this.id, {priority: 'event'})")), "")}
-    
+        shiny::actionButton(paste0("options_", data[i, 1]), "", icon = icon("cog"),
+          onclick = paste0("Shiny.setInputValue('", id, "-options", "', this.id, {priority: 'event'})")), "")}
+
     # Add edit code button
     if ("edit_code" %in% action_buttons){
-      actions <- tagList(actions, 
-                         shiny::actionButton(paste0("edit_code_", data[i, 1]), "", icon = icon("file-code"),
-                                             onclick = paste0("Shiny.setInputValue('", id, "-edit_code", "', this.id, {priority: 'event'})")), "")}
-    
+      actions <- tagList(actions,
+        shiny::actionButton(paste0("edit_code_", data[i, 1]), "", icon = icon("file-code"),
+          onclick = paste0("Shiny.setInputValue('", id, "-edit_code", "', this.id, {priority: 'event'})")), "")}
+
     # Add sub datatable button
     if ("sub_datatable" %in% action_buttons){
-      actions <- tagList(actions, 
-                         shiny::actionButton(paste0("sub_datatable_", data[i, 1]), "", icon = icon("table"),
-                                             onclick = paste0("Shiny.setInputValue('", id, "-sub_datatable", "', this.id, {priority: 'event'})")), "")}
-    
+      actions <- tagList(actions,
+        shiny::actionButton(paste0("sub_datatable_", data[i, 1]), "", icon = icon("table"),
+          onclick = paste0("Shiny.setInputValue('", id, "-sub_datatable", "', this.id, {priority: 'event'})")), "")}
+
     # Add delete button
     if ("delete" %in% action_buttons){
-      
+
       # If row is deletable (we havn't made a function argument for deletable or not, only default subsets are not deletable)
       # Could be changed later
-      
-      if (prefix != "subsets" | data[i, "name"] %not_in% c("All patients", "Included patients", "Excluded patients")){
+
+      if (id != "settings_subsets" | data[i, "name"] %not_in% c("All patients", "Included patients", "Excluded patients")){
         actions <- tagList(actions, shiny::actionButton(paste0("delete_", data[i, 1]), "", icon = icon("trash-alt"),
-                                                        onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))} 
+          onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))}
     }
-    
+
     # Update action column in dataframe
     data[i, "action"] <- as.character(div(actions))
-    
+
     ################
     # CREATOR NAME #
     ################
-    
+
     if ("creator_id" %in% names(data)){
-      data[i, "creator_id"] <- 
+      data[i, "creator_id"] <-
         r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>%
-        dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>% 
+        dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>%
         dplyr::pull(creator)
     }
-    
+
     # Get names for other columns if there are not dropdowns
     # Failed to loop that...
     if ("data_source_id" %in% names(data) & "data_source_id" %not_in% names(dropdowns)){
@@ -325,34 +322,38 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), id = 
   # Which columns are non editable
   # Test with :
   # data <- tibble::tribble(~id, ~name, ~description, ~action, 1, "name1", "description1", "my_action")
-  
+
   cols <- c(1:length(names(data))) - 1
   editable_cols_vec <- integer()
   sapply(editable_cols, function(col){
-    editable_cols_vec <<- c(editable_cols_vec, c(which(grepl(col, names(data))) - 1))
+    editable_cols_vec <<- c(editable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
-  non_editable_cols_vecs <- cols[!cols %in% editable_cols_vec]
-  
+  non_editable_cols_vec <- cols[!cols %in% editable_cols_vec]
+
   # Which columns are non sortable
   sortable_cols_vec <- integer()
   sapply(sortable_cols, function(col){
-    sortable_cols_vec <<- c(sortable_cols_vec, c(which(grepl(col, names(data))) - 1))
+    sortable_cols_vec <<- c(sortable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
-  non_sortable_cols_vecs <- cols[!cols %in% sortable_cols_vec]
-  
-  colum_defs <- list(
-    sapply(names(column_widths), function(name) list(width = column_widths[[name]], targets = which(grepl(name, names(data))) - 1)),
-    list(sortable = FALSE, targets = non_sortable_cols_vecs))
+  non_sortable_cols_vec <- cols[!cols %in% sortable_cols_vec]
+
+  column_defs <- list()
+  sapply(names(column_widths), function(name){
+    column_defs <<- rlist::list.append(column_defs, list(width = column_widths[[name]], targets = which(grepl(paste0("^", name, "$"), names(data))) - 1))})
+  column_defs <<- rlist::list.append(column_defs, list(sortable = FALSE, targets = non_sortable_cols_vec))
+
+  # Rename cols if lengths correspond
+  if (length(col_names) == length(names(data))) names(data) <- col_names
   
   # So data is ready to be rendered in the datatable
-  
+
   output$management_datatable <- DT::renderDT(
     # Data
     data,
-    
+
     # Options of the datatable
     options = list(
-      dom = dom_datatable,
+      dom = datatable_dom,
       stateSave = TRUE, stateDuration = 30,
       pageLength = page_length, displayStart = start,
       columnDefs = column_defs,
@@ -361,11 +362,11 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), id = 
         search = translate(language, "DT_search"),
         lengthMenu = translate(language, "DT_length"))
     ),
-    editable = list(target = "cell", disable = list(columns = non_editable_cells)),
-    
+    editable = list(target = "cell", disable = list(columns = non_editable_cols_vec)),
+
     # Default options
     rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
-    
+
     # Javascript code allowing to have dropdowns & actionButtons on the DataTable
     callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
       var $this = $(this.node());
@@ -497,9 +498,9 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
       data$users_allowed_read <- unique(data$users_allowed_read)
       last_row <- max(r$options["id"])
       DBI::dbAppendTable(r$db, "options",
-                         tibble::tibble(id = (last_row + (1:length(data$users_allowed_read))), category = category, link_id = link_id,
-                                        name = "user_allowed_read", value = "", value_num = data$users_allowed_read, creator_id = as.integer(r$user_id),
-                                        datetime = as.character(Sys.time()), deleted = FALSE))
+        tibble::tibble(id = (last_row + (1:length(data$users_allowed_read))), category = category, link_id = link_id,
+          name = "user_allowed_read", value = "", value_num = data$users_allowed_read, creator_id = as.integer(r$user_id),
+          datetime = as.character(Sys.time()), deleted = FALSE))
       update_r(r = r, table = "options", language = language)
     }
   }
@@ -528,7 +529,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
 #' }
 
 save_settings_code <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
-                               code_id_input = integer(), edited_code = character(), language = "EN"){
+  code_id_input = integer(), edited_code = character(), language = "EN"){
   
   # Get link_id variable to update code table
   link_id <- as.integer(substr(code_id_input, nchar("edit_code_") + 1, nchar(code_id_input)))

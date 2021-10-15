@@ -244,17 +244,18 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           )
           
           # Sortable cols
-          sortable_cols <- c()
+          if (id == "settings_thesaurus") sortable_cols <- c("id", "name", "description", "creator_id", "datetime")
+          if (id != "settings_thesaurus") sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
           
           # Column widths
-          column_widths <- c("datetime" = "130px", "action" = "80px")
+          column_widths <- c("datetime" = "130px", "action" = "80px", "data_source_id" = "100px")
           
           # Restore datatable state
           page_length <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$length)
           start <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$start)
           # search_recorded <- ""
           
-          render_settings_datatable(output = output, r = r, id = id,
+          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id,
             col_names =  get_col_names(table), table = table, dropdowns = dropdowns, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
             editable_cols = c("name", "description"), sortable_cols = sortable_cols, column_widths = column_widths
