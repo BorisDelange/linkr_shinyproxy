@@ -140,11 +140,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
     # Toggles IDs
     toggles <- c("creation_card", "datatable_card", "edit_code_card", "options_card")
-    
-    # To delete asap...
-    data_management_elements <- c("data_sources", "datamarts", "studies", "subsets", "patient_lvl_module_families", "aggregated_module_families")
-    
-    # To move, after remove prefix
+
     # Dropdowns in the management datatable, by page
     dropdowns <- tibble::tribble(~id, ~dropdowns,
       "settings_data_sources", "",
@@ -153,22 +149,15 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       "settings_subsets", c("datamart", "study"),
       "settings_thesaurus", "data_source")
     
-    # Prefix used for inputs
-    # It also corresponds to database tables names
-    prefix <- switch(substr(id, nchar("settings_") + 1, nchar(id)),
-      "data_sources" = "data_sources", "datamarts" = "datamarts", "studies" = "studies", "subsets" = "subsets",
-      "thesaurus" = "thesaurus")
-    
     # Table name
     table <- substr(id, nchar("settings_") + 1, nchar(id))
+    
+    # Initi delete_dialog variable
     r[[paste0(table, "_delete_dialog")]] <- FALSE
     
     ##########################################
     # Data management / Show or hide cards   #
     ##########################################
-    
-    # To delete asap
-    sapply(prefix, function(prefix){
     
     sapply(toggles, function(toggle){
       observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
@@ -235,7 +224,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             "settings_thesaurus" = c("data_source_id" = "data_sources"))
           
           # Action buttons for each module / page
-          action_buttons = switch(prefix,
+          action_buttons = switch(table,
             "data_sources" = "delete",
             "datamarts" = c("delete", "edit_code", "options"),
             "studies" = c("delete", "options"),
@@ -254,8 +243,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           centered_cols <- c("id", "data_source_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "creator", "datetime", "action")
           
           # Restore datatable state
-          page_length <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$length)
-          start <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$start)
+          page_length <- isolate(input$management_datatable_state$length)
+          start <- isolate(input$management_datatable_state$start)
           # search_recorded <- ""
           
           render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id,
@@ -278,44 +267,12 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
       # Each time a dropdown is updated, modify temp variable
         observeEvent(r[[table]], {
-          sapply(r[[table]] %>% dplyr::pull(id), function(id){
-            sapply(dropdowns %>% dplyr::filter(id == prefix) %>% dplyr::pull(dropdowns) %>% unlist(), function(dropdown){
-              observeEvent(input[[get_plural(word = dropdown), id]], {
-                # When we load a page, every dropdown triggers the event
-                # Change temp variable only if new value is different than old value
-                old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]]
-                # If thesaurus, data_source_id can accept multiple values (converting to string)
-                new_value <- ifelse(prefix == "thesaurus", toString(input[[paste0("data_sources", id)]]),
-                  as.integer(input[[paste0(get_plural(dropdown), id)]]))
-                if (new_value != old_value){
-                  r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <- new_value
-                  # Store that this row has been modified
-                  r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
-                }
-              })
-            })
-          })
+          update_settings_datatable(r = r, ns = ns, table = table, 
+            dropdowns = dropdowns %>% dplyr::filter(id == table) %>% dplyr::pull(dropdowns) %>% unlist(), language = language)
         })
       
         observeEvent(input$management_save, {
-          # Make sure there's no duplicate in names
-          duplicates <- 0
-          # Duplicates are allowed in thesaurus_items
-          # if (table != "thesaurus_items"){
-            duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
-              dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-          # }
-          if (duplicates > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
-          req(duplicates == 0)
-          
-          # Save changes in database
-          ids_to_del <- r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
-          DBI::dbSendStatement(r$db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
-          DBI::dbClearResult(query)
-          DBI::dbAppendTable(r$db, table, r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
-
-          # Notification to user
-          show_message_bar(output, 2, "modif_saved", "success", language)
+          save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language)
         })
     
       ##########################################
@@ -431,16 +388,15 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Load sub datatable with action button  #
       ##########################################
       
-      observeEvent(input[[paste0(prefix, "_sub_datatable")]], {
-        shiny.fluent::updateToggle.shinyInput(session, "items_datatable_card_toggle", value = TRUE)
-        link_id_filter <- as.integer(substr(input[[paste0(prefix, "_sub_datatable")]], nchar(paste0(prefix, "_sub_datatable_")) + 1, nchar(input[[paste0(prefix, "_sub_datatable")]])))
-        # if (prefix == "thesaurus_items"){
-          r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", link_id_filter, " AND deleted IS FALSE ORDER BY id"))
-          r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-        # }
-      })
-      
-    })
+      # observeEvent(input[[paste0(prefix, "_sub_datatable")]], {
+      #   shiny.fluent::updateToggle.shinyInput(session, "items_datatable_card_toggle", value = TRUE)
+      #   link_id_filter <- as.integer(substr(input[[paste0(prefix, "_sub_datatable")]], nchar(paste0(prefix, "_sub_datatable_")) + 1, nchar(input[[paste0(prefix, "_sub_datatable")]])))
+      #   # if (prefix == "thesaurus_items"){
+      #     r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", link_id_filter, " AND deleted IS FALSE ORDER BY id"))
+      #     r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+      #   # }
+      # })
+     
   })
 }
     

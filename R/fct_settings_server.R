@@ -424,6 +424,72 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
 }
 
 ##########################################
+# Save updates in datatable              #
+##########################################
+
+#' Update datatable
+#' 
+#' @param r Shiny r reactive value to communicate between modules
+#' @param ns Shiny namespace
+#' @param table Name of the table used (character)
+#' @param dropdowns Dropdowns shown on datatable (character)
+#' @param language Language used (character)
+
+update_settings_datatable <- function(r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), dropdowns = character(), language = "EN"){
+  
+  sapply(r[[table]] %>% dplyr::pull(id), function(id){
+    sapply(dropdowns, function(dropdown){
+      observeEvent(input[[get_plural(word = dropdown), id]], {
+        
+        # When we load a page, every dropdown triggers the event
+        # Change temp variable only if new value is different than old value
+        old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]]
+        
+        # If thesaurus, data_source_id can accept multiple values (converting to string)
+        new_value <- ifelse(prefix == "thesaurus", toString(input[[paste0("data_sources", id)]]),
+          as.integer(input[[paste0(get_plural(dropdown), id)]]))
+        
+        if (new_value != old_value){
+          r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <- new_value
+          # Store that this row has been modified
+          r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
+        }
+      })
+    })
+  })
+}
+
+#' Save changes in datatable
+#' 
+#' @param output Shiny output variable
+#' @param r Shiny r reactive value to communicate between modules
+#' @param ns Shiny namespace
+#' @param table Name of the table used (character)
+#' @param language Language used (character)
+
+save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), language = "EN"){
+  
+  # Make sure there's no duplicate in names
+  duplicates <- 0
+  # Duplicates are allowed in thesaurus_items
+  # if (table != "thesaurus_items"){
+  duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+    dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+  # }
+  if (duplicates > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
+  req(duplicates == 0)
+  
+  # Save changes in database
+  ids_to_del <- r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+  DBI::dbSendStatement(r$db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
+  DBI::dbClearResult(query)
+  DBI::dbAppendTable(r$db, table, r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
+  
+  # Notification to user
+  show_message_bar(output, 2, "modif_saved", "success", language)
+}
+  
+##########################################
 # Delete a row in datatable              #
 ##########################################
 
@@ -432,7 +498,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
 #' @param r Shiny r reactive value to communicate between modules
 #' @param ns Shiny namespace
 #' @param table Name of the table used (character)
-#' @param language Language used (chara)
+#' @param language Language used (character)
 #' @examples 
 #' \dontrun{
 #' render_settings_delete_react(r = r, table = "datamarts")
