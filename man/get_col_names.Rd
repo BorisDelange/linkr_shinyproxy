@@ -6,6 +6,14 @@
 \usage{
 get_col_names(table_name = character(), language = "EN")
 }
+\arguments{
+\item{table_name}{Name of the table (character)}
+
+\item{language}{Language used (charater)}
+}
 \description{
 Get column names
+}
+\examples{
+get_col_names(table_name == "datamarts", language = "EN")
 }

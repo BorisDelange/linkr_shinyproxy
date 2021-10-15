@@ -7,7 +7,7 @@
 render_settings_datatable_card(
   language = "EN",
   ns = shiny::NS(),
-  id = character(),
+  output_id = "management_datatable",
   title = character()
 )
 }
@@ -16,7 +16,7 @@ render_settings_datatable_card(
 
 \item{ns}{Shiny namespace}
 
-\item{id}{ID of current module / page (character)}
+\item{output_id}{ID of DTOutput, allows to have multiple management_datatable in one module, default = "management_datatable" (character)}
 
 \item{title}{Title used to create the card, it will be translated with translate function (character)}
 }
@@ -25,6 +25,6 @@ Render UI of settings datatable card
 }
 \examples{
 \dontrun{
-render_settings_datatable_card(language = "EN", ns = ns, id = "settings_datamart", title = "datamarts_management")
+render_settings_datatable_card(language = "EN", ns = ns, output_id = "management_datatable", title = "datamarts_management")
 }
 }

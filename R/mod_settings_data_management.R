@@ -219,34 +219,46 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # If r$... variable changes
         observeEvent(r[[paste0(substr(id, nchar("settings_") + 1, nchar(id)), "_temp")]], {
           
+          # Table name
+          table <- substr(id, nchar("settings_") + 1, nchar(id))
+          
+          # Dropdowns for each module / page
+          # Finally, some columns are not editable (commented lines below)
+          dropdowns = switch(id,
+            "settings_data_sources" = "",
+            "settings_datamarts" = "",
+            # "settings_datamarts" = c("data_source_id" = "data_sources"),
+            # "settings_studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
+            "settings_studies" = c("patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
+            "settings_subsets" = "",
+            # "settings_subsets" = c("study_id" = "studies"),
+            "settings_thesaurus" = c("data_source_id" = "data_sources"))
+          
+          # Action buttons for each module / page
+          action_buttons = switch(prefix,
+            "data_sources" = "delete",
+            "datamarts" = c("delete", "edit_code", "options"),
+            "studies" = c("delete", "options"),
+            "subsets" = c("delete", "edit_code"),
+            "thesaurus" = c("delete", "edit_code", "sub_datatable")
+          )
+          
+          # Sortable cols
+          sortable_cols <- c()
+          
+          # Column widths
+          column_widths <- c("datetime" = "130px", "action" = "80px")
+          
           # Restore datatable state
           page_length <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$length)
           start <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$start)
-          search_recorded <- ""
+          # search_recorded <- ""
           
-          # columnDefs = list(
-          #   list(width = "80px", targets = -1), list(width = "130px", targets = -2),
-          #   list(sortable = FALSE, targets = data_management_datatable_options(settings_datatable_data(prefix, r), prefix, "non_sortable")))
-          
-          # dropdowns = switch(prefix,
-          #                    "data_sources" = "",
-          #                    "datamarts" = "",
-          #                    # "datamarts" = c("data_source_id" = "data_sources"),
-          #                    # "studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
-          #                    "studies" = c("patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
-          #                    "subsets" = "",
-          #                    # "subsets" = c("study_id" = "studies"),
-          #                    "thesaurus" = c("data_source_id" = "data_sources"),
-          #                    "thesaurus_items" = ""),
-          # action_buttons = switch(prefix,
-          #                         "data_sources" = "delete",
-          #                         "datamarts" = c("delete", "edit_code", "options"),
-          #                         "studies" = c("delete", "options"),
-          #                         "subsets" = c("delete", "edit_code"),
-          #                         "thesaurus" = c("delete", "edit_code", "sub_datatable"),
-          #                         "thesaurus_items" = ""
-          # ),
-          # new_colnames = id_get_other_name(prefix, "colnames_text_version", language = language)),
+          render_settings_datatable(output = output, r = r, id = id,
+            col_names =  get_col_names(table), table = table, dropdowns = dropdowns, action_buttons = action_buttons,
+            datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
+            editable_cols = c("name", "description"), sortable_cols = sortable_cols, column_widths = column_widths
+          )
         })
     
       ##########################################
