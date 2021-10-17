@@ -261,12 +261,12 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
   }
   
   ##########################################
-  # Option = rmarkdown description     #
+  # Option = markdown description     #
   ##########################################
   
-  if ("rmarkdown_description" %in% page_options){
-    value <- options %>% dplyr::filter(name == "rmarkdown_description") %>% dplyr::pull(value)
-    ace_editor <- div(shinyAce::aceEditor(ns("rmarkdown_description"), code, mode = "rmarkdown", 
+  if ("markdown_description" %in% page_options){
+    value <- options %>% dplyr::filter(name == "markdown_description") %>% dplyr::pull(value)
+    ace_editor <- div(shinyAce::aceEditor(ns("markdown_description"), value, mode = "markdown", 
       autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
     ), style = "width: 100%;")
   }

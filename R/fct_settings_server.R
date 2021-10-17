@@ -98,11 +98,14 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     update_r(r = r, table = "code", language = language)
   }
   
-  # For options of plugins, add one row for long description (RMarkdown)
+  # For options of plugins, add one row for long description (Markdown)
+  # The value is default syntax of a plugin description
   if (id == "settings_plugins"){
+    value <- paste0("- Version : 1.0.0\nLibraries : *put libraries needed here*\nData allowed : *put data allowed here*\n",
+      "\n\n*Put full description here*")
     DBI::dbAppendTable(r$db, "options",
       tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-        last_row_options + 1, "plugin", last_row + 1, "rmarkdown_description", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE))
+        last_row_options + 1, "plugin", last_row + 1, "markdown_description", value, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE))
     update_r(r = r, table = "options", language = language)
   }
   
@@ -649,9 +652,9 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
     }
   }
   
-  if ("rmarkdown_description" %in% page_options){
-    option_id <- options %>% dplyr::filter(name == "rmarkdown_description") %>% dplyr::pull(id)
-    DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = ", data$rmarkdown_description, " WHERE id = ", option_id)) -> query
+  if ("markdown_description" %in% page_options){
+    option_id <- options %>% dplyr::filter(name == "markdown_description") %>% dplyr::pull(id)
+    DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", stringr::str_replace_all(data$markdown_description, "'", "''"), "' WHERE id = ", option_id)) -> query
     DBI::dbClearResult(query)
     update_r(r = r, table = "options", language = language)
   }

@@ -18,6 +18,7 @@ mod_settings_plugins_ui <- function(id, language){
       list(key = "description_card", label = "plugins_description_card"),
       list(key = "creation_card", label = "plugins_creation_card"),
       list(key = "datatable_card", label = "plugins_management_card"),
+      list(key = "options_card", label = "plugins_options_card"),
       list(key = "edit_code_card", label = "plugins_edit_code_card")
     )),
     div(
@@ -44,7 +45,7 @@ mod_settings_plugins_server <- function(id, r, language){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
  
-    toggles <- c("description_card", "creation_card", "datatable_card", "edit_code_card")
+    toggles <- c("description_card", "creation_card", "datatable_card", "options_card", "edit_code_card")
     prefix <- "plugins"
     
     ##########################################
@@ -174,7 +175,7 @@ mod_settings_plugins_server <- function(id, r, language){
         category <- get_singular(id)
         
         data <- list()
-        data$rmarkdown_description <- as.character(input$rmarkdown_description)
+        data$markdown_description <- as.character(input$markdown_description)
         
         save_settings_options(output = output, r = r, id = id, category = category,
           code_id_input = input$options, language = language, data = data)
