@@ -32,7 +32,8 @@ get_page_options <- function(id = character()){
   result <- ""
   switch(id,
     "settings_datamarts" = c("show_only_aggregated_data", "users_allowed_read"),
-    "settings_studies" = "users_allowed_read") -> result
+    "settings_studies" = "users_allowed_read",
+    "settings_plugins" = "rmarkdown_description") -> result
   result
 }
 

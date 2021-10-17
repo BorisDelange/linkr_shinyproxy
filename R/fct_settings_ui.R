@@ -103,9 +103,9 @@ render_settings_creation_card <- function(language = "EN", ns = shiny::NS(), id 
   if (id == "settings_plugins"){
     plugins_dropdown <- make_dropdown(language = language, ns = ns, label = "module_type", id = "module_type", width = "300px", 
       options = list(
-        list(key = "patient_lvl_data", text = translate(language, "patient_level_data")),
-        list(key = "aggregated_data", text = translate(language, "aggregated_data"))
-    ), value = "patient_lvl_data")
+        list(key = 1, text = translate(language, "patient_level_data")),
+        list(key = 2, text = translate(language, "aggregated_data"))
+    ), value = 1)
   }
   
   div(id = ns("creation_card"),
@@ -200,6 +200,7 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
   people_picker <- ""
   toggles <- ""
   dropdowns <- ""
+  ace_editor <- ""
   
   # Get options with page ID
   page_options <- get_page_options(id = id)
@@ -259,6 +260,16 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
     )
   }
   
+  ##########################################
+  # Option = rmarkdown description     #
+  ##########################################
+  
+  if ("rmarkdown_description" %in% page_options){
+    value <- options %>% dplyr::filter(name == "rmarkdown_description") %>% dplyr::pull(value)
+    ace_editor <- div(shinyAce::aceEditor(ns("rmarkdown_description"), code, mode = "rmarkdown", 
+      autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+    ), style = "width: 100%;")
+  }
   
   ##########################################
   # Final UI code                          #
@@ -267,7 +278,7 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
   div(id = ns("options_card"),
     make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
       div(
-        toggles, people_picker, br(),
+        toggles, people_picker, ace_editor, br(),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), dropdowns),
         shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save"))
       )

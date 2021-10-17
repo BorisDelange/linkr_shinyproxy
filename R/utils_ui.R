@@ -17,7 +17,9 @@ get_singular <- function(word = character(), language = "EN"){
          "thesaurus" = "thesaurus",
          "thesaurus_items" = "thesaurus_item",
          "patient_lvl_module_families" = "patient_lvl_module_family",
-         "aggregated_module_families" = "aggregated_module_family") -> result
+         "aggregated_module_families" = "aggregated_module_family",
+         "module_types" = "module_type",
+         "plugins" = "plugin") -> result
   result  
 }
 
@@ -41,6 +43,8 @@ get_plural <- function(word = character(), language = "EN"){
          "patient_lvl_module" = "patient_lvl_modules",
          "patient_lvl_module_family" = "patient_lvl_module_families",
          "aggregated_module" = "aggregated_modules",
-         "aggregated_module_family" = "aggregated_module_families") -> result
+         "aggregated_module_family" = "aggregated_module_families",
+         "module_type" = "module_types",
+         "plugin" = "plugins") -> result
   result
 }

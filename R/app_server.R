@@ -35,6 +35,9 @@ app_server <- function(page_style, router, language){
         # r[[paste0(table, "_temp")]] <- r[[paste0(table, "_temp")]] %>% dplyr::mutate(modified = FALSE)
       })
       
+      # Add a module_types variable, for settings/plugins dropdown
+      r$module_types <- tibble::tribble(~id, ~name, 1, translate(language, "patient_level_data"), 2, translate(language, "aggregated_data"))
+      
       r$result <- list()
     })
     

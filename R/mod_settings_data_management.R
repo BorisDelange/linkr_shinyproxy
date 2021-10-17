@@ -152,8 +152,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Table name
     table <- substr(id, nchar("settings_") + 1, nchar(id))
     
-    # Initi delete_dialog variable
-    r[[paste0(table, "_delete_dialog")]] <- FALSE
+    # Init delete_dialog variable
+    # r[[paste0(table, "_delete_dialog")]] <- FALSE
     
     ##########################################
     # Data management / Show or hide cards   #

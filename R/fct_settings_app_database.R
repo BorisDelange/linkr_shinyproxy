@@ -67,7 +67,7 @@ db_create_tables <- function(db){
       datetime = character(), deleted = logical()))
   
   db_create_table(db, "plugins",
-    tibble::tibble(id = integer(), name = character(), description = character(), module_type = character(), 
+    tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 
       datetime = character(), deleted = logical()))
   
   # db_create_table(db, "plugins_options",
