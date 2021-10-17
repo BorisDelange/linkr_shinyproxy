@@ -10,6 +10,14 @@ reference:
   - import_thesaurus
   - run_datamart_code
   - add_patients_to_subset
+  - update_r
+- title: "Utils functions"
+  desc: >
+    *Use these functions from inside the App in developper mode.*
+  contents:
+  - translate
+  - convert_tibble_to_list
+  - coalesce2
 - title: "Layout functions"
   desc: >
     *Use these functions from inside the App in developper mode.*
@@ -22,11 +30,25 @@ reference:
   - make_people_picker
   - make_toggle
   - show_message_bar
-- title: "Other functions"
+- title: "Internal functions"
   desc: >
-    *Use these functions from inside the App in developper mode.*
+    *Functions used to create Shiny UI & Server code*
   contents:
-  - translate
+  - render_settings_default_elements
+  - render_settings_toggle_card
+  - render_settings_creation_card
+  - render_settings_datatable_card
+  - render_settings_options_card
+  - render_settings_code_card
+  - render_settings_datatable
+  - render_settings_delete_react
+  - add_settings_new_data
+  - update_settings_datatable
+  - save_settings_datatable_updates
+  - delete_settings_datatable_row
+  - save_settings_options
+  - save_settings_code
+  - execute_settings_code
 articles:
 - title: FR - Aide
   navbar: FR - Aide

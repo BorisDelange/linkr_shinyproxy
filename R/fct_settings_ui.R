@@ -9,7 +9,7 @@
 #' @param ns Shiny namespace
 #' @return Shiny UI elements / HTML code
 #' @examples
-#' settings_default_elements(ns = NS("settings_datamart"))
+#' render_settings_default_elements(ns = NS("settings_datamart"))
 
 render_settings_default_elements <- function(ns = shiny::NS()){
   tagList(shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
@@ -87,9 +87,9 @@ settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list
 #' @param id ID of current module / page (character)
 #' @param title Title used to create the card, it will be translated with translate function (character)
 #' @param textfields A character vector containing distinct textfields to render in the card (character)
-#' @param textfields_width Width of the textfields, CSS code, so it could be "100%", "200px" etc (character)
+#' @param textfields_width Width of the textfields, CSS code, so it could be "100\%", "200px" etc (character)
 #' @param dropdowns A character vector containing distinct dropdowns to render in the card (character)
-#' @param dropdowns_width Width of the dropdowns, CSS code, so it could be "100%", "200px" etc (character)
+#' @param dropdowns_width Width of the dropdowns, CSS code, so it could be "100\%", "200px" etc (character)
 #' @return Shiny UI elements / HTML code
 #' @examples 
 #' render_settings_creation_card(language = "EN", ns = NS("settings_datamart"), title = "create_datamart",
@@ -97,6 +97,16 @@ settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list
 
 render_settings_creation_card <- function(language = "EN", ns = shiny::NS(), id = character(), title = character(), 
   textfields = character(), textfields_width = "200px", dropdowns = character(), dropdowns_width = "200px"){
+  
+  # For plugins dropdown, add a dropdown with module choice
+  plugins_dropdown <- ""
+  if (id == "settings_plugins"){
+    plugins_dropdown <- make_dropdown(language = language, ns = ns, label = "module_type", id = "module_type", width = "300px", 
+      options = list(
+        list(key = "patient_lvl_data", text = translate(language, "patient_level_data")),
+        list(key = "aggregated_data", text = translate(language, "aggregated_data"))
+    ), value = "patient_lvl_data")
+  }
   
   div(id = ns("creation_card"),
     make_card(
@@ -118,7 +128,8 @@ render_settings_creation_card <- function(language = "EN", ns = shiny::NS(), id 
             if (id == "settings_thesaurus") multiSelect <- TRUE
             make_dropdown(language = language, ns = ns, label = label, id = label, multiSelect = multiSelect, width = dropdowns_width)
           })
-        ), br(),
+        ), 
+        plugins_dropdown, br(),
         shiny.fluent::PrimaryButton.shinyInput(ns("add"), translate(language, "add"))
       )
     )
@@ -277,6 +288,11 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
 #' @param code Code to show in ShinyAce editor (character)
 #' @param link_id ID allows to link with code table (integer)
 #' @param language Language used (character)
+#' @examples 
+#' \dontrun{
+#' render_settings_code_card(ns = NS("settings_datamarts"), id = "settings_datamarts", title = "edit_datamart_code",
+#'   code = "Enter your code here", link_id = 3, language = "EN")
+#' }
 
 render_settings_code_card <- function(ns = shiny::NS(), id = character(), title = character(), code = character(), 
   link_id = integer(), language = "EN"){

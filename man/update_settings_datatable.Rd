@@ -5,6 +5,7 @@
 \title{Update datatable}
 \usage{
 update_settings_datatable(
+  input,
   r = shiny::reactiveValues(),
   ns = shiny::NS(),
   table = character(),
@@ -13,6 +14,8 @@ update_settings_datatable(
 )
 }
 \arguments{
+\item{input}{Shiny input variable}
+
 \item{r}{Shiny r reactive value to communicate between modules}
 
 \item{ns}{Shiny namespace}
@@ -25,4 +28,9 @@ update_settings_datatable(
 }
 \description{
 Update datatable
+}
+\examples{
+\dontrun{
+update_settings_datatable(r = r, ns = ns, table = "datamarts", dropdowns = "data_source", language = "EN")
+}
 }

@@ -26,11 +26,11 @@ render_settings_creation_card(
 
 \item{textfields}{A character vector containing distinct textfields to render in the card (character)}
 
-\item{textfields_width}{Width of the textfields, CSS code, so it could be "100%", "200px" etc (character)}
+\item{textfields_width}{Width of the textfields, CSS code, so it could be "100\%", "200px" etc (character)}
 
 \item{dropdowns}{A character vector containing distinct dropdowns to render in the card (character)}
 
-\item{dropdowns_width}{Width of the dropdowns, CSS code, so it could be "100%", "200px" etc (character)}
+\item{dropdowns_width}{Width of the dropdowns, CSS code, so it could be "100\%", "200px" etc (character)}
 }
 \value{
 Shiny UI elements / HTML code

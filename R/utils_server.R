@@ -50,7 +50,7 @@ get_col_names <- function(table_name = character(), language = "EN"){
     c(result, switch(table_name,
       "datamarts" = translate(language, "data_source"),
       "studies" = c(translate(language, "datamart"), translate(language, "patient_lvl_module_family"),
-                   translate(language, "aggregated_module_family")),
+        translate(language, "aggregated_module_family")),
       "subsets" = translate(language, "study"),
       "thesaurus" = translate(language, "data_sources"))) -> result
     result <- c(result, translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
@@ -58,8 +58,13 @@ get_col_names <- function(table_name = character(), language = "EN"){
   
   if (table_name == "thesaurus_items"){
     result <- c(translate(language, "id"), translate(language, "thesaurus_id"), translate(language, "item_id"), translate(language, "name"),
-    translate(language, "display_name"), translate(language, "category"), translate(language, "unit"),
-    translate(language, "datetime"), translate(language, "action"))
+      translate(language, "display_name"), translate(language, "category"), translate(language, "unit"),
+      translate(language, "datetime"), translate(language, "action"))
+  }
+  
+  if (table_name == "plugins"){
+    result <- c(translate(language, "id"), translate(language, "name"), translate(language, "module_type"), 
+      translate(language, "datetime"), translate(language, "action"))
   }
   
   result

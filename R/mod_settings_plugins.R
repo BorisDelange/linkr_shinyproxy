@@ -2,65 +2,36 @@
 #'
 #' @description A shiny Module.
 #'
-#' @param id,input,output,session Internal parameters for {shiny}.
+#' @param id ID of the module (character)
+#' @param language Language used (character)
 #'
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_settings_plugins_ui <- function(id, language, page_style, page){
+
+mod_settings_plugins_ui <- function(id, language){
   ns <- NS(id)
-  result <- ""
   
-  if (page_style == "fluent"){
-    prefix <- "plugins"
-    div(class = "main",
-      settings_default_elements(ns, prefix),
-      settings_toggle_card(language, ns, cards = list(
-        list(key = paste0(prefix, "_description_card"), label = "plugins_description_card"),
-        list(key = paste0(prefix, "_creation_card"), label = "plugins_creation_card"),
-        list(key = paste0(prefix, "_datatable_card"), label = "plugins_management_card"),
-        list(key = paste0(prefix, "_edit_code_card"), label = "plugins_edit_code_card")
-      )),
-      div(
-        id = ns(paste0(prefix, "_description_card")),
-        make_card(
-          translate(language, "plugins_description"),
-          "")
-      ),
-      div(
-        id = ns(paste0(prefix, "_creation_card")),
-        make_card(
-          translate(language, "plugins_creation"),
-          div(
-            shiny.fluent::Stack(
-              horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_textfield(language, ns, label = "name", id = paste0(prefix, "_name"), width = "300px"),
-              make_textfield(language, ns, label = "description", id = paste0(prefix, "_description"), width = "300px"),
-              make_dropdown(language, ns, label = "module_type", id = paste0(prefix, "_module_type"), width = "300px", options = list(
-                list(key = "patient_lvl_data", text = translate(language, "patient_level_data")),
-                list(key = "aggregated_data", text = translate(language, "aggregated_data"))
-              ), value = "patient_lvl_data")
-            ),
-            htmltools::br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_add")), translate(language, "add"))
-          )
-        )
-      ),
-      div(
-        shiny::uiOutput(ns(paste0(prefix, "_edit_code_card")))
-      ),
-      div(
-        id = ns(paste0(prefix, "_datatable_card")),
-        make_card(
-          translate(language, "plugins_management"),
-          div(
-            DT::DTOutput(ns(paste0(prefix, "_management_datatable"))),
-            shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_management_save")), translate(language, "save"), style = "top:-20px;")
-          )
-        )
-      )
-    ) -> result
-  }
+  div(class = "main",
+    render_settings_default_elements(ns = ns),
+    render_settings_toggle_card(language = language, ns = ns, cards = list(
+      list(key = "description_card", label = "plugins_description_card"),
+      list(key = "creation_card", label = "plugins_creation_card"),
+      list(key = "datatable_card", label = "plugins_management_card"),
+      list(key = "edit_code_card", label = "plugins_edit_code_card")
+    )),
+    div(
+      id = ns("description_card"),
+      make_card(
+        translate(language, "plugins_description"),
+        "")
+    ),
+    render_settings_creation_card(language = language, ns = ns, id = id, title = "plugins_creation",
+      textfields = "name", textfields_width = "300px"),
+    uiOutput(ns("edit_code_card")),
+    uiOutput(ns("options_card")),
+    render_settings_datatable_card(language = language, ns = ns, output = "management_datatable", title = "plugins_management")
+  ) -> result
   
   result
 }
@@ -68,6 +39,7 @@ mod_settings_plugins_ui <- function(id, language, page_style, page){
 #' settings_plugins Server Functions
 #'
 #' @noRd 
+
 mod_settings_plugins_server <- function(id, r, language){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -80,136 +52,127 @@ mod_settings_plugins_server <- function(id, r, language){
     ##########################################
     
     sapply(toggles, function(toggle){
-      observeEvent(input[[paste0(prefix, "_", toggle, "_toggle")]], if(input[[paste0(prefix, "_", toggle, "_toggle")]]) shinyjs::show(paste0(prefix, "_", toggle)) else shinyjs::hide(paste0(prefix, "_", toggle)))
+      observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
     })
     
     ##########################################
     # Add a new plugin                       #
     ##########################################
     
-    observeEvent(input[[paste0(prefix, "_add")]], {
-      new_name <- input[[paste0(prefix, "_name")]]
-      name_check <- FALSE
+    # When add button is clicked
+    observeEvent(input$add, {
       
-      if (!is.null(new_name)){
-        if (new_name != "") name_check <- TRUE
-      }
-      if (!name_check) shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_name"), errorMessage = translate(language, "provide_valid_name"))
-      if (name_check) shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_name"), errorMessage = NULL)
+      # Create a list with new data
+      new_data <- list()
+      new_data_var <- c("name" = "char", "module_type" = "char")
+      sapply(names(new_data_var),
+        function(input_name){
+         new_data[[input_name]] <<- coalesce2(type = new_data_var[[input_name]], x = input[[input_name]])
+        })
       
-      req(name_check)
-      
-      # Check if chosen name is already used
-      distinct_names <- DBI::dbGetQuery(r$db, "SELECT DISTINCT(name) FROM plugins WHERE deleted IS FALSE") %>% dplyr::pull()
-      
-      if (new_name %in% distinct_names) show_message_bar(output, 2, "name_already_used", "severeWarning", language)
-      req(new_name %not_in% distinct_names)
-      
-      last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM plugins") %>% dplyr::pull()
-
-      new_data <- tibble::tribble(~id, ~name, ~description, ~module_type, ~datetime,  ~deleted,
-        last_row + 1,
-        as.character(new_name),
-        coalesce2("char", input[[paste0(prefix, "_description")]]),
-        coalesce2("char", input[[paste0(prefix, "_module_type")]]),
-        as.character(Sys.time()),
-        FALSE)
-      
-      DBI::dbAppendTable(r$db, "plugins", new_data)
-      
-      # Reload r variable
-      r$plugins <- DBI::dbGetQuery(r$db, "SELECT * FROM plugins WHERE deleted IS FALSE")
-      r$plugins_temp <- r$plugins %>% dplyr::mutate(modified = FALSE)
-      
-      # Add a row in code table
-      last_row_code <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM code") %>% dplyr::pull()
-        DBI::dbAppendTable(r$db, "code",
-        tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-          last_row_code + 1, "plugin_ui", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_code + 2, "plugin_server", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
-      
-      # Reload r variable
-      r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE")
-        
-      show_message_bar(output, 1, "new_plugin_added", "success", language)
-      
-      # Reset textfields
-      shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_name"), value = "")
-      shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_description"), value = "")
+      add_settings_new_data(session = session, output = output, r = r, language = language, id = id, data = new_data,
+        dropdowns = "module_type")
     })
     
     ##########################################
-    # Plugins management                     #
+    # Plugins data management                #
     ##########################################
     
       ##########################################
       # Generate datatable                     #
       ##########################################
       
+      # If r$... variable changes
       observeEvent(r$plugins_temp, {
-        # Datatable state
-        page_length <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$length)
-        start <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$start)
         
-        # Render datatable
-        output[[paste0(prefix, "_management_datatable")]] <- DT::renderDT(
-          plugins_management_datatable(settings_datatable_data(prefix, r), ns, r, language, prefix,
-            dropdowns = c("module_type" = "modules_types")),
-          options = list(dom = "<'datatable_length'l><'top'ft><'bottom'p>",
-            stateSave = TRUE, stateDuration = 30, pageLength = page_length, displayStart = start,
-            columnDefs = list(list(className = "dt-center", targets = c(0, 4, 5)),
-              list(sortable = FALSE, targets = c(3, 5)))),
-          rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
-          editable = list(target = "cell", disable = list(columns = c(0, 3, 4, 5))),
-          callback = datatable_callback()
-        )
+        dropdowns <- c("module_type" = "module_type")
+        
+        action_buttons <- c("delete", "edit_code", "options")
+        
+        sortable_cols <- c("id", "name", "datetime")
+        
+        # Column widths
+        column_widths <- c("datetime" = "130px", "action" = "80px")
+        
+        # Centered columns
+        centered_cols <- c("id", "datetime", "action")
+        
+        # Restore datatable state
+        page_length <- isolate(input$management_datatable_state$length)
+        start <- isolate(input$management_datatable_state$start)
+        
+        render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id,
+          col_names =  get_col_names("plugins"), table = "plugins", dropdowns = dropdowns, action_buttons = action_buttons,
+          datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
+          editable_cols = c("name"), sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths)
       })
     
       ##########################################
       # Save changes in datatable              #
       ##########################################
       
-      # Each time a row is updated, modify temp variable
-      observeEvent(input[[paste0(prefix, "_management_datatable_cell_edit")]], {
-        edit_info <- input[[paste0(prefix, "_management_datatable_cell_edit")]]
-        r$plugins_temp <- DT::editData(r$plugins_temp, edit_info, rownames = FALSE)
-        # Store that this row has been modified
-        r$plugins_temp[[edit_info$row, "modified"]] <- TRUE
-      })
-    
-      # Each time a dropdown is updated, modify temp variable
-      observeEvent(r$plugins, {
-        sapply(r$plugins %>% dplyr::filter(!deleted) %>% dplyr::pull(id), function(id){
-          observeEvent(input[[paste0(prefix, "_module_type", id)]], {
-            r$plugins_temp[[which(r$plugins_temp["id"] == id), "module_type"]] <-
-              input[[paste0(prefix, "_module_type", id)]]
-            # Store that if this row has been modified
-            r$plugins_temp[[which(r$plugins_temp["id"] == id), "modified"]] <- TRUE
-          })
+        # Each time a row is updated, modify temp variable
+        observeEvent(input$management_datatable_cell_edit, {
+          edit_info <- input$management_datatable_cell_edit
+          r$plugins_temp <- DT::editData(r$plugins_temp, edit_info, rownames = FALSE)
+          r$plugins_temp[[edit_info$row, "modified"]] <- TRUE
         })
-      })
-      
-      observeEvent(input[[paste0(prefix, "_management_save")]], {
-        # Make sure there's no duplicate in names
-        data <- r$plugins_temp
-        duplicates <- data %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
-          dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-        if (duplicates > 0) show_message_bar(output, 3, "modif_names_duplicates", "severeWarning", language)
-        req(duplicates == 0)
         
-        # Save changes in database
-        ids_to_del <- r$plugins_temp %>% dplyr::filter(modified) %>% dplyr::pull(id)
-        DBI::dbSendStatement(r$db, paste0("DELETE FROM plugins WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
-        DBI::dbClearResult(query)
-        DBI::dbAppendTable(r$db, "plugins", r$plugins_temp %>% dplyr::filter(modified) %>% dplyr::select(-modified))
+        # Each time a dropdown is updated, modify temp variable
+        observeEvent(r$plugins, {
+          update_settings_datatable(input = input, r = r, ns = ns, table = "plugins", 
+            dropdowns = "module_type", language = language)
+        })
         
-        # Reload r variable
-        r$plugins <- DBI::dbGetQuery(r$db, "SELECT * FROM plugins WHERE deleted IS FALSE")
-        r$plugins_temp <- r$plugins %>% dplyr::mutate(modified = FALSE)
-        
-        # Notification to user
-        show_message_bar(output, 3, "modif_saved", "severeWarning", language)
-      })
+        observeEvent(input$management_save, {
+          save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language)
+        })
+    
+      ##########################################
+      # Save changes in datatable              #
+      ##########################################
+      # 
+      # # Each time a row is updated, modify temp variable
+      # observeEvent(input[[paste0(prefix, "_management_datatable_cell_edit")]], {
+      #   edit_info <- input[[paste0(prefix, "_management_datatable_cell_edit")]]
+      #   r$plugins_temp <- DT::editData(r$plugins_temp, edit_info, rownames = FALSE)
+      #   # Store that this row has been modified
+      #   r$plugins_temp[[edit_info$row, "modified"]] <- TRUE
+      # })
+      # 
+      # # Each time a dropdown is updated, modify temp variable
+      # observeEvent(r$plugins, {
+      #   sapply(r$plugins %>% dplyr::filter(!deleted) %>% dplyr::pull(id), function(id){
+      #     observeEvent(input[[paste0(prefix, "_module_type", id)]], {
+      #       r$plugins_temp[[which(r$plugins_temp["id"] == id), "module_type"]] <-
+      #         input[[paste0(prefix, "_module_type", id)]]
+      #       # Store that if this row has been modified
+      #       r$plugins_temp[[which(r$plugins_temp["id"] == id), "modified"]] <- TRUE
+      #     })
+      #   })
+      # })
+      # 
+      # observeEvent(input[[paste0(prefix, "_management_save")]], {
+      #   # Make sure there's no duplicate in names
+      #   data <- r$plugins_temp
+      #   duplicates <- data %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
+      #     dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+      #   if (duplicates > 0) show_message_bar(output, 3, "modif_names_duplicates", "severeWarning", language)
+      #   req(duplicates == 0)
+      #   
+      #   # Save changes in database
+      #   ids_to_del <- r$plugins_temp %>% dplyr::filter(modified) %>% dplyr::pull(id)
+      #   DBI::dbSendStatement(r$db, paste0("DELETE FROM plugins WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
+      #   DBI::dbClearResult(query)
+      #   DBI::dbAppendTable(r$db, "plugins", r$plugins_temp %>% dplyr::filter(modified) %>% dplyr::select(-modified))
+      #   
+      #   # Reload r variable
+      #   r$plugins <- DBI::dbGetQuery(r$db, "SELECT * FROM plugins WHERE deleted IS FALSE")
+      #   r$plugins_temp <- r$plugins %>% dplyr::mutate(modified = FALSE)
+      #   
+      #   # Notification to user
+      #   show_message_bar(output, 3, "modif_saved", "severeWarning", language)
+      # })
     
       ##########################################
       # Delete a row in datatable              #

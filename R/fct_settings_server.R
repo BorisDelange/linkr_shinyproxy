@@ -72,6 +72,12 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~creator_id, ~datetime, ~deleted, r$user_id, as.character(Sys.time()), FALSE))
   }
   
+  # Creation of new_data variable for plugins page
+  if (table == "plugins"){
+    new_data <- tibble::tribble(~id, ~name, ~description, ~module_type, ~datetime, ~deleted,
+      last_row + 1, data$name, "", data$module_type, as.character(Sys.time()), FALSE)
+  }
+  
   # Append data to the table
   DBI::dbAppendTable(r$db, table, new_data)
   # Refresh r variables
@@ -220,6 +226,9 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # Load temp data
   data <- r[[paste0(table, "_temp")]]
   
+  # If page is plugins, remove column description from datatable (it will be editable from datatable row options edition)
+  if (id == "settings_plugins") data <- data %>% dplyr::select(-description)
+  
   # Add a column action in the DataTable
   data["action"] <- NA_character_
 
@@ -259,28 +268,43 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
         data[i, name] <<- as.character(
           div(
             shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
-            options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
-            value = stringr::str_split(data[i, name], ", ") %>% unlist() %>% as.integer(),
-            multiSelect = TRUE),
-            onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
-            style = "width:100%")
+              options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
+              value = stringr::str_split(data[i, name], ", ") %>% unlist() %>% as.integer(),
+              multiSelect = TRUE),
+              onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
+              style = "width:100%")
         )
       }
       
-      else {
+      if (id %in% c("settings_data_sources", "settings_datamarts", "settings_studies", "settings_subsets")) {
         data[i, name] <<- as.character(
           div(
             # So ID is like "data_sources13" if ID = 13
-            shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
-              # To get options, convert data var to tibble (convert r$data_sources to list)
-              options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
-              # value is an integer, the value of the column like "data_source_id"
-              value = as.integer(data[i, name])),
+          shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+            # To get options, convert data var to tibble (convert r$data_sources to list)
+            options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
+            # value is an integer, the value of the column like "data_source_id"
+            value = as.integer(data[i, name])),
             # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
             onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
             style = "width:100%")
         )
       }
+      
+      # For settings_plugins, dropdown has two values, patient_lvl_data & aggregated_data
+      if (id == "settings_plugins"){
+        data[i, name] <<- as.character(
+          div(
+            shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+              options = list(
+                list(key = "patient_lvl_data", text = translate(language, "patient_level_data")),
+                list(key = "aggregated_data", text = translate(language, "aggregated_data"))),
+              value = data[i, name]),
+            onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
+            style = "width:100%")
+        )
+      }
+      
     })
 
     ##################
@@ -442,17 +466,22 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
 
 update_settings_datatable <- function(input, r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), dropdowns = character(), language = "EN"){
   
-  sapply(r[[table]] %>% dplyr::pull(id), function(id){
+  sapply(r[[paste0(table, "_temp")]] %>% dplyr::pull(id), function(id){
     sapply(dropdowns, function(dropdown){
       observeEvent(input[[paste0(get_plural(word = dropdown), id)]], {
         
         # When we load a page, every dropdown triggers the event
         # Change temp variable only if new value is different than old value
-        old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]]
+        if (table == "plugins") old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), dropdown]]
+        if (table %in% c("thesaurus", "data_sources", "datamarts", "studies", "subsets")){
+          old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] 
+        }
         
         # If thesaurus, data_source_id can accept multiple values (converting to string)
-        new_value <- ifelse(table == "thesaurus", toString(input[[paste0("data_sources", id)]]),
-          as.integer(input[[paste0(get_plural(word = dropdown), id)]]))
+        # If plugins, dropdown is unique, it is "module_type" and is of character type
+        if (table == "thesaurus") new_value <- toString(input[[paste0("data_sources", id)]])
+        if (table == "plugins") new_value <- input[[paste0("module_type", id)]]
+        if (table %in% c("data_sources", "datamarts", "studies", "subsets")) new_value <- as.integer(input[[paste0(get_plural(word = dropdown), id)]])
         
         if (new_value != old_value){
           r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <- new_value

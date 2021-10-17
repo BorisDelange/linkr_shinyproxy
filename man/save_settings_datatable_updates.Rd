@@ -26,3 +26,8 @@ save_settings_datatable_updates(
 \description{
 Save changes in datatable
 }
+\examples{
+\dontrun{
+save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datamarts", language = "EN")
+}
+}

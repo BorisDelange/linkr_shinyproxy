@@ -58,7 +58,7 @@ mod_page_main_ui <- function(id, language, page_style, page){
       if (page == paste0("settings/", page_settings)) mod_settings_data_management_ui(id = paste0("settings_", page_settings), language = language) ->> result
     })
     
-    if (page == "settings/plugins") mod_settings_plugins_ui("settings_plugins", language, page_style, page) -> result
+    if (page == "settings/plugins") mod_settings_plugins_ui(id = "settings_plugins", language = language) -> result
     if (page == "settings/modules_patient_lvl") mod_settings_modules_ui("settings_patient_lvl_modules", language, page_style, page) -> result
     if (page == "settings/modules_aggregated") mod_settings_modules_ui("settings_aggregated_modules", language, page_style, page) -> result
     if (page == "settings/log") result

@@ -1,6 +1,6 @@
 #' settings_data_management UI Function
 #'
-#' @description A shiny Module.
+#' @description Shiny module of settings / data management
 #'
 #' @param id ID of the module (character)
 #' @param language Language used (character)
@@ -127,7 +127,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
   result
 }
     
-#' settings_studies Server Functions
+#' settings_data_management Server Functions
 #'
 #' @param id ID of the module (character)
 #' @param r Shiny reactive value

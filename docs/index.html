@@ -144,15 +144,22 @@ install.packages("cdwtools")
 <p><em>Screenshot here</em></p>
 <p>The core principle of the App is the <strong>modularity</strong> : each user chooses which pages to display (called <strong>modules</strong> in the App), which <strong>figures</strong> display in each page, which <strong>thesaurus items</strong> each figure uses.</p>
 <p>For example, a user can choose to display heart rate &amp; systolic arterial blood pressure in a graph, in a page named <em>Haemodynamics</em>. This page will be automatically updated for each patient. He then creates a <em>Flowchart page</em> in Aggregated data, which will display a flowchart with the patients he has included &amp; excluded. He finally creates a <em>Report page</em> where he can create a report of his work, choose which figures to display (dynamically update with modifications on data), and download it as a PDF.</p>
-<p>The App contains two sides : a <strong>user side</strong>, which requires no particular skill in R and a <strong>developper side</strong>, where new plugins can be developped. A <strong>plugin</strong> is a Shiny code used to render and manipulate data. Some plugins are available in the <strong>Articles section</strong> of this website. You can create new plugins and share it with other people.</p>
+<p>The App contains two sides : a <strong>user side</strong>, which requires no particular skill in R and a <strong>developper side</strong>, where new plugins can be developped. A <strong>plugin</strong> is a Shiny code used to render and manipulate data. Some plugins are available in the <strong>Articles section</strong> of this website. You can <strong>create new plugins</strong> and share it with other people.</p>
+</div>
+<div id="deployment" class="section level2">
+<h2 class="hasAnchor">
+<a href="#deployment" class="anchor"></a>Deployment</h2>
+<p>The App can be deployed <strong>locally</strong> or installed on a <strong>server</strong>. See <em>Deploy the App on ShinyProxy</em> in Articles for more details.</p>
 </div>
 <div id="security" class="section level2">
 <h2 class="hasAnchor">
 <a href="#security" class="anchor"></a>Security</h2>
+<p>The App uses <a href="https://github.com/datastorm-open/shinymanager">Shiny Manager</a> to secure the access. In the developper mode, you have direct access to the R environment and the database, so developper access must has to be used carefully. It is recommended to install the App on a secure local server, as health data will be handled.</p>
 </div>
 <div id="troubleshooting" class="section level2">
 <h2 class="hasAnchor">
 <a href="#troubleshooting" class="anchor"></a>Troubleshooting</h2>
+<p><em>install_github … shiny.fluent … ?</em></p>
 </div>
 </div>
   </div>

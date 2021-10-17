@@ -29,3 +29,9 @@ render_settings_code_card(
 \description{
 Render UI of edit_code card
 }
+\examples{
+\dontrun{
+render_settings_code_card(ns = NS("settings_datamarts"), id = "settings_datamarts", title = "edit_datamart_code",
+  code = "Enter your code here", link_id = 3, language = "EN")
+}
+}
