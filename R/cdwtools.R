@@ -1,6 +1,16 @@
 #' Run the Shiny Application
 #'
+#' @description 
+#' Runs the cdwtools Shiny Application.\cr
+#' Use language argument to choose default language to use ("EN" or "FR").\cr
+#' Use options to set options to shiny::shinyApp() function, see documentation of shinyApp for more informations.
+#' @param options A list of options that could be passed to shiny::shinyApp() function (list)
+#' @param language Default language to use in the App (character)
 #' @param ... arguments to pass to golem_opts. 
+#' @examples 
+#' \dontrun{
+#' cdwtools(language = "EN")
+#' }
 #' See `?golem::get_golem_options` for more details.
 #' @inheritParams shiny::shinyApp
 #'
@@ -8,42 +18,17 @@
 #' @importFrom shiny shinyApp
 #' @importFrom golem with_golem_options 
 #' @importFrom magrittr %>%
+
 cdwtools <- function(
-  onStart = NULL,
-  options = list(), 
-  enableBookmarking = NULL,
-  uiPattern = "/",
+  options = list(),
   language = "EN",
-  css = "fluent_style.css",
-  page_style = "fluent",
-  db_info = list(),
-  # page_theme = "",
-  # router_on = TRUE,
   ...
 ) {
   
-  # devtools::load_all(".")
-  # run_app(language = "FR", db_info = list(dbname = "cdwtools", host = "localhost", port = 5432, user = "postgres", password = "postgres"))
-  
   translations <- get_translations()
-  # language <- "EN"
-  # css <- "style.css"
-  # page_style <- "fluid"
-  # page_theme <- "lumen"
-  # router_on <- FALSE
-  pages <- c("home", "patient_level_data", "aggregated_data", "settings", "help")
-  page <- ""
   
-  # router <- shiny.router::make_router(
-  #   purrr::map(pages, ~ shiny.router::route(.x, make_layout(page_style = "fluent", page = .x))))
-  
-  routes <- vector("character", )
-  
-  if (page_style == "fluent"){
     css <- "fluent_style.css"
-    # shiny.router::make_router(sapply(pages, function(page){
-    #   shiny.router::route(page, make_layout(language = language, page_style = page_style, page = page))})) -> page
-      
+     
     shiny.router::make_router(
       shiny.router::route("home/datamarts_studies", make_layout(language = language, page_style = page_style, page = "home/datamarts_studies")),
       shiny.router::route("home/messages", make_layout(language = language, page_style = page_style, page = "home/messages")),
@@ -71,32 +56,12 @@ cdwtools <- function(
       shiny.router::route("help/dev_data_management", make_layout(language = language, page_style = page_style, page = "help/dev_data_management")),
       shiny.router::route("help/dev_modules_plugins", make_layout(language = language, page_style = page_style, page = "help/dev_modules_plugins"))
     ) -> page
-  }
-  
-  if (page_style == "fluid"){
-    css <- "fluent_style.css"
-    page_theme <- "lumen"
-    shiny::fluidPage(
-      theme = shinythemes::shinytheme(page_theme),
-      shiny::navbarPage(
-        title = "CDW Tools",
-        make_layout(language = language, page_style = page_style, page = "home"),
-        make_layout(language = language, page_style = page_style, page = "aggregated_data"),
-        make_layout(language = language, page_style = page_style, page = "patient_level_data"),
-        make_layout(language = language, page_style = page_style, page = "settings"),
-        make_layout(language = language, page_style = page_style, page = "messages")
-      )
-    ) -> page
-  }
   
   with_golem_options(
     app = shinyApp(
       ui = app_ui(css = css, page_style = page_style, page = page),
-      server = app_server(page_style = page_style, router = page, language = language),
-      onStart = onStart,
-      options = options, 
-      enableBookmarking = enableBookmarking, 
-      uiPattern = uiPattern
+      server = app_server(router = page, language = language),
+      options = options
     ), 
     golem_opts = list(...)
   )

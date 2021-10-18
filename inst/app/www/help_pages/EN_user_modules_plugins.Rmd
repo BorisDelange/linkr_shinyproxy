@@ -1,6 +1,0 @@
----
-output: html_fragment
----
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```

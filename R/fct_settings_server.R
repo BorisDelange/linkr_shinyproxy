@@ -245,11 +245,22 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   editable_cols = integer(), sortable_cols = integer(), centered_cols = character(), column_widths = character()
 ){
   
+  # Translation for datatable
+  dt_translation <- list(
+    paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
+    search = translate(language, "DT_search"),
+    lengthMenu = translate(language, "DT_length"),
+    emptyTable = translate(language, "DT_empty"))
+  
   # Load temp data
   data <- r[[paste0(table, "_temp")]]
   
   # If no row in dataframe, stop here
-  if (nrow(data) == 0) return(data)
+  if (nrow(data) == 0) return({
+    data <- tibble::tribble(~id, ~name, ~description,  ~datetime)
+    names(data) <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"), translate(language, "datetime"))
+    output$management_datatable <- DT::renderDT(data, options = list(dom = 'tp'))
+  })
   
   # If page is plugins, remove column description from datatable (it will be editable from datatable row options edition)
   if (id == "settings_plugins") data <- data %>% dplyr::select(-description)
@@ -365,10 +376,13 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
     ################
 
     if ("creator_id" %in% names(data)){
-      data[i, "creator_id"] <-
-        r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>%
-        dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>%
-        dplyr::pull(creator)
+      if (nrow(r$users %>% dplyr::filter(id == data[[i, "creator_id"]])) > 0){
+        data[i, "creator_id"] <-
+          r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>%
+          dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>%
+          dplyr::pull(creator)
+      }
+      else data[i, "creator_id"] <- translate(language, "deleted_user")
     }
 
     # Get names for other columns if there are not dropdowns
@@ -440,10 +454,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
       stateSave = TRUE, stateDuration = 30,
       pageLength = page_length, displayStart = start,
       columnDefs = column_defs,
-      language = list(
-        paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
-        search = translate(language, "DT_search"),
-        lengthMenu = translate(language, "DT_length"))
+      language = dt_translation
     ),
     editable = list(target = "cell", disable = list(columns = non_editable_cols_vec)),
 

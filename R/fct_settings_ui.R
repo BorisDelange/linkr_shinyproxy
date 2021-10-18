@@ -155,7 +155,7 @@ render_settings_datatable_card <- function(language = "EN", ns = shiny::NS(), ou
     make_card(translate(language, title),
       div(
         DT::DTOutput(ns(output_id)),
-        shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save"), style = "top:-20px;")
+        shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save"))
       )
     )
   )

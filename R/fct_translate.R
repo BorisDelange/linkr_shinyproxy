@@ -539,6 +539,8 @@ get_translations <- function(){
             "FR", "DT_search", "Rechercher : ",
             "EN", "DT_length", "Show _MENU_ entries",
             "FR", "DT_length", "Afficher _MENU_ lignes",
+            "EN", "DT_empty", "No data available",
+            "FR", "DT_empty", "Pas de données disponibles",
             "EN", "fields_empty", "Some fields are empty",
             "FR", "fields_empty", "Certains champs ne sont pas complétés",
             "EN", "module_element_added", "Module element added",
@@ -672,7 +674,9 @@ get_translations <- function(){
             "EN", "dev_only", "Developpers only",
             "FR", "dev_only", "Développeurs uniquemement",
             "EN", "public_access", "Public access",
-            "FR", "public_access", "Accès public"
+            "FR", "public_access", "Accès public",
+            "EN", "deleted_user", "Deleted user",
+            "FR", "deleted_user", "Utilisateur supprimé"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

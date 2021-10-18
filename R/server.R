@@ -4,7 +4,8 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
-app_server <- function(page_style, router, language){
+
+app_server <- function(router, language){
   function( input, output, session ) {
     
     r <- reactiveValues()
@@ -37,7 +38,7 @@ app_server <- function(page_style, router, language){
       r$result <- list()
     })
     
-    if (page_style == "fluent") router$server(input, output, session)
+    router$server(input, output, session)
     
     mod_page_sidenav_server(paste0("patient_level_data"), r, language)
     mod_page_sidenav_server(paste0("aggregated_data"), r, language)
