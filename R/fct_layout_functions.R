@@ -102,7 +102,7 @@ make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(
 #'   options = options, multiSelect = FALSE, value = "my_key1", width = "100%")
 #' }
 make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
-  id = NA_character_, value = NULL, width = "300px"){
+  id = NA_character_, value = NULL, width = NULL){
   
   if (is.na(id)) id <- label
   style <- ""

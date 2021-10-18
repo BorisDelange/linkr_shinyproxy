@@ -6,6 +6,7 @@
 \usage{
 render_settings_code_card(
   ns = shiny::NS(),
+  r = shiny::reactiveValues(),
   id = character(),
   title = character(),
   code = character(),
@@ -15,6 +16,8 @@ render_settings_code_card(
 }
 \arguments{
 \item{ns}{Shiny namespace}
+
+\item{r}{r Shiny reactive value to communicate between modules}
 
 \item{id}{ID of the current page, format = "settings_[PAGE]" (character)}
 
@@ -31,7 +34,7 @@ Render UI of edit_code card
 }
 \examples{
 \dontrun{
-render_settings_code_card(ns = NS("settings_datamarts"), id = "settings_datamarts", title = "edit_datamart_code",
+render_settings_code_card(ns = NS("settings_datamarts"), r = r, id = "settings_datamarts", title = "edit_datamart_code",
   code = "Enter your code here", link_id = 3, language = "EN")
 }
 }

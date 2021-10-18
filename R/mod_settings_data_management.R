@@ -366,7 +366,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           code <- r$code %>% dplyr::filter(category == !!category & link_id == !!link_id) %>% dplyr::pull(code)
           
           # Render UI
-          render_settings_code_card(ns = ns, id = id, title = paste0("edit_", category, "_code"), code = code, link_id = link_id, language = language)
+          render_settings_code_card(ns = ns, r = r, id = id, title = paste0("edit_", category, "_code"), code = code, link_id = link_id, language = language)
         })
         
         # Reset code_result textOutput
@@ -381,7 +381,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # When Execute code button is clicked
       observeEvent(input$execute_code, (
         output$code_result <- renderText(
-          execute_settings_code(output = output, r = r, edited_code = isolate(input$ace_edit_code)))))
+          execute_settings_code(output = output, id = id, ns = ns, r = r, language = language, edited_code = isolate(input$ace_edit_code)))))
           
       
       ##########################################

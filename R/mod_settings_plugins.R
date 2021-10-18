@@ -197,7 +197,7 @@ mod_settings_plugins_server <- function(id, r, language){
         
         # Render UI of this edit_code card
         output$edit_code_card <- renderUI({
-          render_settings_code_card(ns = ns, id = id, title = paste0("edit_plugins_code"), code = "", link_id = link_id, language = language)
+          render_settings_code_card(ns = ns, r = r, id = id, title = paste0("edit_plugins_code"), code = "", link_id = link_id, language = language)
         })
         
         # Reset code_result textOutput
@@ -225,70 +225,27 @@ mod_settings_plugins_server <- function(id, r, language){
           code_id_input = input$edit_code, edited_code = input$ace_edit_code, language = "EN"))
       
       # When Execute code button is clicked
-      observeEvent(input$execute_code, (
-        output$code_result <- renderText(
-          execute_settings_code(output = output, r = r, edited_code = isolate(input$ace_edit_code)))))
-      
-      
-      ##########################################
-      # Edit code by selecting a row           #
-      ##########################################
-      # 
-      # observeEvent(input[[paste0(prefix, "_edit_code")]], {
-      #   req(input[[paste0(prefix, "_edit_code")]])
-      #   shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_edit_code_card_toggle"), value = TRUE)
-      #   
-      #   if (is.null(input[[paste0(prefix, "_edit_code_choice_ui_server")]])) choice_ui_server <- "ui"
-      #   if (!is.null(input[[paste0(prefix, "_edit_code_choice_ui_server")]])) choice_ui_server <- input[[paste0(prefix, "_edit_code_choice_ui_server")]]
-      #   category_filter <- paste0("plugin_", choice_ui_server)
-      #   link_id_filter <- as.integer(substr(input[[paste0(prefix, "_edit_code")]], nchar(paste0(prefix, "_edit_code_")) + 1, nchar(input[[paste0(prefix, "_edit_code")]])))
-      #   code <- r$code %>% dplyr::filter(category == category_filter & link_id == link_id_filter) %>% dplyr::pull(code)
-      #   
-      #   output[[paste0(prefix, "_edit_code_card")]] <- renderUI({
-      #     settings_edit_code_card(language, ns, type = "code", code = code, link_id = link_id_filter, title = paste0("edit_", category_filter, "_code"), prefix = prefix)
-      #   })
-      # })
-      # 
-      # observeEvent(input[[paste0(prefix, "_edit_code_choice_ui_server")]], {
-      #   category_filter <- paste0("plugin_", input[[paste0(prefix, "_edit_code_choice_ui_server")]])
-      #   link_id_filter <- as.integer(substr(input[[paste0(prefix, "_edit_code")]], nchar(paste0(prefix, "_edit_code_")) + 1, nchar(input[[paste0(prefix, "_edit_code")]])))
-      #   code <- r$code %>% dplyr::filter(category == category_filter & link_id == link_id_filter) %>% dplyr::pull(code)
-      #   shinyAce::updateAceEditor(session, paste0(prefix, "_ace_edit_code"), value = code)
-      # })
-      # 
-      # observeEvent(input[[paste0(prefix, "_edit_code_save")]], {
-      #   if (is.null(input[[paste0(prefix, "_edit_code_choice_ui_server")]])) choice_ui_server <- "ui"
-      #   if (!is.null(input[[paste0(prefix, "_edit_code_choice_ui_server")]])) choice_ui_server <- input[[paste0(prefix, "_edit_code_choice_ui_server")]]
-      #   category_filter <- paste0("plugin_", choice_ui_server)
-      #   link_id_filter <- as.integer(substr(input[[paste0(prefix, "_edit_code")]], nchar(paste0(prefix, "_edit_code_")) + 1, nchar(input[[paste0(prefix, "_edit_code")]])))
-      #   code_id <- r$code %>% dplyr::filter(category == category_filter, link_id == link_id_filter) %>% dplyr::pull(id)
-      #   # Replace ' with '' and store in the database
-      #   DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input[[paste0(prefix, "_ace_edit_code")]], "'", "''"), "' WHERE id = ", code_id)) -> query
-      #   DBI::dbClearResult(query)
-      #   r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE")
-      # 
-      #   show_message_bar(output, 3, "modif_saved", "success", language)
-      # })
-      # 
-      # observeEvent(input[[paste0(prefix, "_execute_code")]], {
-      #   output[[paste0(prefix, "_code_result")]] <- renderText({
-      #     # Change this option to display correctly tibble in textbox
-      #     eval(parse(text = "options('cli.num_colors' = 1)"))
-      #     # Capture console output of our code
-      #     captured_output <- capture.output(
-      #       tryCatch(eval(parse(text = isolate(input[[paste0(prefix, "_ace_edit_code")]]))), error = function(e) print(e), warning = function(w) print(w))
-      #     )
-      #     # Restore normal value
-      #     eval(parse(text = "options('cli.num_colors' = NULL)"))
-      #     # Display result
-      #     paste(captured_output, collapse = "\n")
-      #   })
-      # })
+      observeEvent(input$execute_code, {
+        
+        # Get link_id variable to get the code from database
+        link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
+        
+        # if current edited code is UI, load UI from shinyAce editor & server from database
+        # if current edited code is server, load server ace editor & UI from database
+        if (input$edit_code_ui_server == "ui"){
+          ui_code <- isolate(input$ace_edit_code)
+          server_code <- r$code %>% dplyr::filter(category == "plugins_server" & link_id == !!link_id) %>% dplyr::pull(code)
+        }
+        if (input$edit_code_ui_server == "server"){
+          server_code <- isolate(input$ace_edit_code)
+          ui_code <- r$code %>% dplyr::filter(category == "plugins_ui" & link_id == !!link_id) %>% dplyr::pull(code)
+        }
+        
+        # Render result of executed code
+        output$code_result_ui <- renderUI(execute_settings_code(output = output, id = id, ns = ns, r = r, language = language,
+          edited_code = ui_code, code_type = "ui"))
+        output$code_result_server <- renderText(execute_settings_code(output = output, id = id, ns = ns, r = r, language = language,
+          edited_code = server_code, code_type = "server"))
+      })
   })
 }
-    
-## To be copied in the UI
-# mod_settings_plugins_ui("settings_plugins_ui_1")
-    
-## To be copied in the server
-# mod_settings_plugins_server("settings_plugins_ui_1")

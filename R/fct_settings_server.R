@@ -725,35 +725,56 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
 
 #' Execute / test code after edition
 #' 
-#' @description Execute code entered in the ShinyAce editor
+#' @description Execute code entered in the ShinyAce editor\cr
+#' For plugins page, UI & server code are displayed in distinct outputs (uiOutput for UI code, textOutput for server code to display error messages)
 #' @param output variable from Shiny, used to render messages on the message bar
+#' @param ns Shiny namespace used
 #' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param language Language used
+#' @param id ID of the current page / module
 #' @param edited_code New code, after editing it (character)
+#' @param code_type For plugins page, code_type could be UI or server (character)
 #' @examples 
 #' \dontrun{
 #' execute_settings_code(output = output, r = r, edited_code = "print('test')")
 #' }
 
-execute_settings_code <- function(output, r = shiny::reactiveValues(), edited_code = character()){
+execute_settings_code <- function(output, id = character(), ns = shiny::NS(), r = shiny::reactiveValues(), language = "EN",
+  edited_code = character(), code_type = ""){
+
+  result <- ""
   
-  # Replace %CODE% from code to real values
-  code <- edited_code %>%
-    stringr::str_replace_all("%datamart_id%", as.character(isolate(r$datamart_id))) %>%
-    stringr::str_replace_all("%subset_id%", as.character(isolate(r$subset_id))) %>%
-    stringr::str_replace_all("%thesaurus_id%", as.character(isolate(r$thesaurus_id)))
+  # If code is UI, execute it only
+  if (code_type == "ui"){
+    
+    tryCatch(eval(parse(text = code)), error = function(e) stop(e), warning = function(w) stop(w))
+    result <- eval(parse(text = code))
+  }
   
-  # Change this option to display correctly tibble in textbox
-  eval(parse(text = "options('cli.num_colors' = 1)"))
+  # If code is not UI, capture the console output
+  if (code_type != "ui"){
+    
+    # Replace %CODE% from code to real values
+    code <- edited_code %>%
+      stringr::str_replace_all("%datamart_id%", as.character(isolate(r$datamart_id))) %>%
+      stringr::str_replace_all("%subset_id%", as.character(isolate(r$subset_id))) %>%
+      stringr::str_replace_all("%thesaurus_id%", as.character(isolate(r$thesaurus_id)))
+    
+    # Change this option to display correctly tibble in textbox
+    eval(parse(text = "options('cli.num_colors' = 1)"))
+    
+    # Capture console output of our code
+    captured_output <- capture.output(
+      tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
+    
+    # Restore normal value
+    eval(parse(text = "options('cli.num_colors' = NULL)"))
+    
+    # Display result
+    paste(captured_output, collapse = "\n") -> result
+  }
   
-  # Capture console output of our code
-  captured_output <- capture.output(
-    tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
-  
-  # Restore normal value
-  eval(parse(text = "options('cli.num_colors' = NULL)"))
-  
-  # Display result
-  paste(captured_output, collapse = "\n")
+  result
 }
 
 

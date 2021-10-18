@@ -6,19 +6,32 @@
 \usage{
 execute_settings_code(
   output,
+  id = character(),
+  ns = shiny::NS(),
   r = shiny::reactiveValues(),
-  edited_code = character()
+  language = "EN",
+  edited_code = character(),
+  code_type = ""
 )
 }
 \arguments{
 \item{output}{variable from Shiny, used to render messages on the message bar}
 
+\item{id}{ID of the current page / module}
+
+\item{ns}{Shiny namespace used}
+
 \item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
 
+\item{language}{Language used (character)}
+
 \item{edited_code}{New code, after editing it (character)}
+
+\item{code_type}{For plugins page, code_type could be UI or server (character)}
 }
 \description{
-Execute code entered in the ShinyAce editor
+Execute code entered in the ShinyAce editor\cr
+For plugins page, UI & server code are displayed in distinct outputs (uiOutput for UI code, textOutput for server code to display error messages)
 }
 \examples{
 \dontrun{

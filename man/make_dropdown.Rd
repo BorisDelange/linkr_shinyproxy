@@ -12,7 +12,7 @@ make_dropdown(
   multiSelect = FALSE,
   id = NA_character_,
   value = NULL,
-  width = "300px"
+  width = NULL
 )
 }
 \arguments{

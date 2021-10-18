@@ -309,6 +309,7 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
 #' Render UI of edit_code card
 #' 
 #' @param ns Shiny namespace
+#' @param r r Shiny reactive value to communicate between modules
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
 #' @param title Title of the card (character)
 #' @param code Code to show in ShinyAce editor (character)
@@ -316,27 +317,58 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
 #' @param language Language used (character)
 #' @examples 
 #' \dontrun{
-#' render_settings_code_card(ns = NS("settings_datamarts"), id = "settings_datamarts", title = "edit_datamart_code",
+#' render_settings_code_card(ns = NS("settings_datamarts"), r = r, id = "settings_datamarts", title = "edit_datamart_code",
 #'   code = "Enter your code here", link_id = 3, language = "EN")
 #' }
 
-render_settings_code_card <- function(ns = shiny::NS(), id = character(), title = character(), code = character(), 
+render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValues(), id = character(), title = character(), code = character(), 
   link_id = integer(), language = "EN"){
   
-  # For plugin page, choose between UI code or Server code
   choice_ui_server <- tagList()
+  choice_data <- tagList()
+  
+  # Default output : text output
+  # For plugins, this output is UI, to test plugin's code
+  output_div <- div(shiny::verbatimTextOutput(ns("code_result")), 
+      style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+  
+  # For plugin page : 
+  # - choose between UI code or Server code
+  # - choose a datamart, a study & a subset (for aggregated data plugin) & a patient / a stay (for patient-lvl data)
   
   if (id == "settings_plugins"){
+    
+    # Dropdowns for choice of datamart etc
+    tagList(shiny.fluent::Stack(
+      horizontal = TRUE, tokens = list(childrenGap = 50),
+      make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
+        options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")),
+      make_dropdown(language = language, ns = ns, label = "study", width = "300px"),
+      make_dropdown(language = language, ns = ns, label = "subset", width = "300px")),
+      shiny.fluent::Stack(
+        horizontal = TRUE, tokens = list(childrenGap = 50),
+        make_dropdown(language = language, ns = ns, label = "patient", width = "300px"),
+        make_dropdown(language = language, ns = ns, label = "stay", width = "300px"))) -> choice_data
+    
+    # Toggle for choice of UI or server code
     shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
       list(key = "ui", text = translate(language, "ui")),
       list(key = "server", text = translate(language, "server"))
     ), className = "inline_choicegroup") -> choice_ui_server
+    
+    # UI output to render UI code of the plugin and text output to render server error messages
+    output_div <- tagList(
+      div(shiny::verbatimTextOutput(ns("code_result_server")), 
+          style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"), br(),
+      div(shiny::uiOutput(ns("code_result_ui")),
+        style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
   }
   
   div(id = ns("edit_code_card"),
     # Show current ID in the title
     make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
       div(
+        choice_data, br(),
         choice_ui_server,
         div(shinyAce::aceEditor(ns("ace_edit_code"), code, mode = "r", 
           autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000#, 
@@ -345,8 +377,7 @@ render_settings_code_card <- function(ns = shiny::NS(), id = character(), title 
         shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), translate(language, "save")), " ",
         shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code")), 
         htmltools::br(), htmltools::br(),
-        div(shiny::verbatimTextOutput(ns("code_result")), 
-          style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+        output_div
       )
     )
   )
