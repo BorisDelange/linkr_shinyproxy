@@ -19,11 +19,6 @@ RUN apt-get update && apt-get install -y \
     libssl1.1 \
     && rm -rf /var/lib/apt/lists/*
 
-#Ssystem library dependency for the euler app
-RUN apt-get update && apt-get install -y \
-    libmpfr-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 # Install R dependencies
 RUN R -e "install.packages(c('DBI', 'devtools', 'dplyr', 'DT', 'magrittr', 'readr', 'RPostgres', 'RSQLite', 'rlang', 'shiny', 'shiny.router',
 'shinyAce', 'shinybusy', 'shinyjs', 'golem', 'rlist', 'shinyFeedback', 'rmarkdown', 'knitr', 'dygraphs', 'vistime', 'ggplot2'), 
