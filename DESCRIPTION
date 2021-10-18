@@ -5,20 +5,13 @@ Authors@R: person('Boris', 'Delange', email = 'boris.delange@gmail.com', role = 
 Description: CDW Tools package gives some tools to help clinicians without advanced programmation skills, 
   statisticiants and data scientists use their clinical data warehouse, from patient-level data visualization 
   to pooled patient data analytics, using a web application created with {shiny}.
-License: MIT + file LICENSE
+License: GPL (>= 3)
 Imports: 
-    attempt,
-    config,
     DBI,
     dplyr,
     DT,
-    ggplot2,
-    golem,
     magrittr,
-    pkgload,
-    purrr,
     readr,
-    rlang,
     RPostgres,
     RSQLite,
     shiny (>= 1.6.0),
@@ -27,10 +20,7 @@ Imports:
     shiny.router,
     shinyAce,
     shinybusy,
-    shinyFeedback,
-    shinyjs,
-    shinythemes,
-    spelling
+    shinyjs
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
@@ -39,10 +29,9 @@ BugReports: https://github.com/BorisDelange/cdwtools/issues
 Suggests:
     rmarkdown,
     knitr,
-    testthat (>= 3.0.0),
     dygraphs,
-    vistime
-Config/testthat/edition: 3
+    vistime,
+    ggplot2
 Language: en-US
 Remotes: 
     Appsilon/shiny.react,
