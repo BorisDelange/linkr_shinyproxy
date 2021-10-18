@@ -7,18 +7,15 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_patient_and_aggregated_data_ui <- function(id, language, page_style, page){
+mod_patient_and_aggregated_data_ui <- function(id, language, page){
   ns <- NS(id)
   result <- ""
   
-  if (page_style == "fluent"){
-    div(class = "main",
-        shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
-        shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")),
-        uiOutput(ns("main"))
-    ) -> result
-  }
-  result
+  div(class = "main",
+    uiOutput(ns("message_bar1")), uiOutput(ns("message_bar2")), uiOutput(ns("message_bar3")), 
+    uiOutput(ns("message_bar4")), uiOutput(ns("message_bar5")),
+    uiOutput(ns("main"))
+  )
 }
 
 #' patient_and_aggregated_data Server Functions

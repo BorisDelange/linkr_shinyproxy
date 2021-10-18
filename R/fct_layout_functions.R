@@ -41,26 +41,13 @@ make_page <- function (title = character(), subtitle = character(), contents = c
 }
 
 #' Make a complete layout with header, sidenav, main & footer
-make_layout <- function(language, page_style, page){
-  if (page_style == "fluent"){
-    div(class = "grid-container",
-      mod_page_header_ui(page, language),
-      mod_page_sidenav_ui(page, language, page_style, page),
-      mod_page_main_ui(page, language, page_style, page),
-      mod_page_footer_ui()
-    ) -> result
-  }
-  
-  if (page_style == "fluid"){
-    shiny::tabPanel(title = translate(language, page), 
-      shiny::sidebarLayout(
-        mod_page_sidenav_ui(page, language, page_style, page),
-        mod_page_main_ui(page, language, page_style, page)
-      )
-    ) -> result
-  }
-  
-  result
+make_layout <- function(language, page){
+  div(class = "grid-container",
+    mod_page_header_ui(page, language),
+    mod_page_sidenav_ui(page, language, page),
+    mod_page_main_ui(page, language, page),
+    mod_page_footer_ui()
+  )
 }
 
 #' Make a shiny.fluent textfield

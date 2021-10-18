@@ -5,16 +5,12 @@
 #' @import shiny
 #' @noRd
 
-app_ui <- function(request, css, page_style, page) {
-  
-  switch(page_style, "fluent" = shiny.fluent::fluentPage(page$ui),
-                     "fluid" = fluidPage(page)) -> page
+app_ui <- function(request, css, page) {
   
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(css),
-
-    page
+    shiny.fluent::fluentPage(page$ui)
   )
 }
 
@@ -26,6 +22,7 @@ app_ui <- function(request, css, page_style, page) {
 #' @import shiny
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
+
 golem_add_external_resources <- function(css){
   
   add_resource_path(
@@ -43,4 +40,3 @@ golem_add_external_resources <- function(css){
     shinybusy::add_busy_bar(timeout = 1000, color = "#0D98FF", height = "3px")
   )
 }
-
