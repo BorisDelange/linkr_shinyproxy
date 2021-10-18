@@ -90,7 +90,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   last_row_subsets <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM subsets") %>% dplyr::pull()
   
   # Add a row in code if table is datamarts, thesaurus
-  if (table %in% c("datamarts", "thesaurus", "plugins")){
+  if (table %in% c("datamarts", "thesaurus")){
     
     DBI::dbAppendTable(r$db, "code",
       tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
@@ -115,8 +115,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     # Add code rows
     DBI::dbAppendTable(r$db, "code",
       tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-        last_row_code + 1, "plugins_ui", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
-        last_row_code + 2, "plugins_server", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
+        last_row_code + 1, "plugin_ui", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_code + 2, "plugin_server", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
     update_r(r = r, table = "code", language = language)
   }
   
@@ -248,14 +248,14 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # Load temp data
   data <- r[[paste0(table, "_temp")]]
   
+  # If no row in dataframe, stop here
+  if (nrow(data) == 0) return(data)
+  
   # If page is plugins, remove column description from datatable (it will be editable from datatable row options edition)
   if (id == "settings_plugins") data <- data %>% dplyr::select(-description)
   
   # Add a column action in the DataTable
   data["action"] <- NA_character_
-
-  # If no row in dataframe, stop here
-  if (nrow(data) == 0) return(data)
 
   # Drop deleted column & modified column : we don't want to show them in the datatable
   if (nrow(data) != 0) data <- data %>% dplyr::select(-deleted, -modified)

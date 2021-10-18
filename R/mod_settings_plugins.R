@@ -195,34 +195,28 @@ mod_settings_plugins_server <- function(id, r, language){
         # Get link_id to show in the card title
         link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
         
+        # Get code from database
+        code <- list()
+        code$ui <- r$code %>% dplyr::filter(category == "plugin_ui" & link_id == !!link_id) %>% dplyr::pull(code)
+        code$server <- r$code %>% dplyr::filter(category == "plugin_server" & link_id == !!link_id) %>% dplyr::pull(code)
+        
         # Render UI of this edit_code card
         output$edit_code_card <- renderUI({
-          render_settings_code_card(ns = ns, r = r, id = id, title = paste0("edit_plugins_code"), code = "", link_id = link_id, language = language)
+          render_settings_code_card(ns = ns, r = r, id = id, title = paste0("edit_plugins_code"), code = code, link_id = link_id, language = language)
         })
         
         # Reset code_result textOutput
-        output$code_result <- renderText("")
-      })
-      
-      # Particularity for plugins : each plugins has two code rows : one for UI & one for server
-      # Update ShinyAce editor depending of the choice of UI/Server toggle
-      observeEvent(input$edit_code_ui_server, {
-        
-        # Get category & link_id variables, to update code table
-        category <- paste0("plugins_", input$edit_code_ui_server)
-        link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
-        
-        # Get code from database
-        code <- r$code %>% dplyr::filter(category == !!category & link_id == !!link_id) %>% dplyr::pull(code)
-        
-        # Update ShinyAce editor
-        shinyAce::updateAceEditor(session = session, editorId = "ace_edit_code", value = code)
+        output$code_result_ui <- renderUI("")
+        output$code_result_server <- renderText("")
       })
       
       # When save button is clicked
-      observeEvent(input$edit_code_save,
-        save_settings_code(output = output, r = r, id = id, category = paste0("plugins_", input$edit_code_ui_server),
-          code_id_input = input$edit_code, edited_code = input$ace_edit_code, language = "EN"))
+      observeEvent(input$edit_code_save, {
+        
+        # There are two shinyAce editors, one for UI & one for server
+        save_settings_code(output = output, r = r, id = id, category = paste0("plugin_", input$edit_code_ui_server),
+          code_id_input = input$edit_code, edited_code = input[[paste0("ace_edit_code_", input$edit_code_ui_server)]], language = "EN")
+      })
       
       # When Execute code button is clicked
       observeEvent(input$execute_code, {
@@ -233,12 +227,12 @@ mod_settings_plugins_server <- function(id, r, language){
         # if current edited code is UI, load UI from shinyAce editor & server from database
         # if current edited code is server, load server ace editor & UI from database
         if (input$edit_code_ui_server == "ui"){
-          ui_code <- isolate(input$ace_edit_code)
-          server_code <- r$code %>% dplyr::filter(category == "plugins_server" & link_id == !!link_id) %>% dplyr::pull(code)
+          ui_code <- isolate(input$ace_edit_code_ui)
+          server_code <- r$code %>% dplyr::filter(category == "plugin_server" & link_id == !!link_id) %>% dplyr::pull(code)
         }
         if (input$edit_code_ui_server == "server"){
-          server_code <- isolate(input$ace_edit_code)
-          ui_code <- r$code %>% dplyr::filter(category == "plugins_ui" & link_id == !!link_id) %>% dplyr::pull(code)
+          server_code <- isolate(input$ace_edit_code_server)
+          ui_code <- r$code %>% dplyr::filter(category == "plugin_ui" & link_id == !!link_id) %>% dplyr::pull(code)
         }
         
         # Render result of executed code

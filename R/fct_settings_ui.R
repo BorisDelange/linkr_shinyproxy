@@ -312,7 +312,7 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
 #' @param r r Shiny reactive value to communicate between modules
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
 #' @param title Title of the card (character)
-#' @param code Code to show in ShinyAce editor (character)
+#' @param code Code to show in ShinyAce editor (list)
 #' @param link_id ID allows to link with code table (integer)
 #' @param language Language used (character)
 #' @examples 
@@ -321,7 +321,7 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
 #'   code = "Enter your code here", link_id = 3, language = "EN")
 #' }
 
-render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValues(), id = character(), title = character(), code = character(), 
+render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValues(), id = character(), title = character(), code = list(), 
   link_id = integer(), language = "EN"){
   
   choice_ui_server <- tagList()
@@ -332,9 +332,14 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
   output_div <- div(shiny::verbatimTextOutput(ns("code_result")), 
       style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
   
+  # Default ace editor
+  div(shinyAce::aceEditor(ns("ace_edit_code"), code$server, mode = "r", 
+    autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;") -> ace_editor
+  
   # For plugin page : 
   # - choose between UI code or Server code
   # - choose a datamart, a study & a subset (for aggregated data plugin) & a patient / a stay (for patient-lvl data)
+  # - two ace editors, one for UI & one for server
   
   if (id == "settings_plugins"){
     
@@ -356,12 +361,22 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
       list(key = "server", text = translate(language, "server"))
     ), className = "inline_choicegroup") -> choice_ui_server
     
+    # Ace editors
+    tagList(
+      conditionalPanel(condition = "input.edit_code_ui_server == 'ui'", ns = ns,
+        div(shinyAce::aceEditor(ns("ace_edit_code_ui"), code$ui, mode = "r", 
+          autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
+      conditionalPanel(condition = "input.edit_code_ui_server == 'server'", ns = ns,
+        div(shinyAce::aceEditor(ns("ace_edit_code_server"), code$server, mode = "r", 
+          autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"))
+    ) -> ace_editor
+    
     # UI output to render UI code of the plugin and text output to render server error messages
     output_div <- tagList(
-      div(shiny::verbatimTextOutput(ns("code_result_server")), 
-          style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"), br(),
       div(shiny::uiOutput(ns("code_result_ui")),
-        style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
+        style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"), br(),
+      div(shiny::verbatimTextOutput(ns("code_result_server")), 
+          style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
   }
   
   div(id = ns("edit_code_card"),
@@ -370,10 +385,7 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
       div(
         choice_data, br(),
         choice_ui_server,
-        div(shinyAce::aceEditor(ns("ace_edit_code"), code, mode = "r", 
-          autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000#, 
-          # hotkeys = list(run_key = list(win = "Ctrl-Enter|Ctrl-Shift-Enter", mac = "CMD-ENTER|CMD-SHIFT-ENTER"))
-        ), style = "width: 100%;"),
+        ace_editor,
         shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), translate(language, "save")), " ",
         shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code")), 
         htmltools::br(), htmltools::br(),

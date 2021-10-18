@@ -363,7 +363,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           } 
           
           # Get code from database
-          code <- r$code %>% dplyr::filter(category == !!category & link_id == !!link_id) %>% dplyr::pull(code)
+          code <- list()
+          code$server <- r$code %>% dplyr::filter(category == !!category & link_id == !!link_id) %>% dplyr::pull(code)
           
           # Render UI
           render_settings_code_card(ns = ns, r = r, id = id, title = paste0("edit_", category, "_code"), code = code, link_id = link_id, language = language)
