@@ -13,9 +13,9 @@ app_database_toggle_card <- function(language, ns, activated = ""){
                                    id = paste0(label, "_toggle"), value = ifelse(label %in% activated, TRUE, FALSE), inline = TRUE))
   })
   make_card("",
-            shiny.fluent::Stack(
-              horizontal = TRUE, tokens = list(childrenGap = 10), toggles
-            )
+    shiny.fluent::Stack(
+      horizontal = TRUE, tokens = list(childrenGap = 10), toggles
+    )
   )
 }
 
@@ -25,9 +25,12 @@ db_create_table <- function(db, table_name, dataframe){
 
 db_create_tables <- function(db){
   # Create tables if not exist
+  
+  # In table users, create an admin user
   db_create_table(db, "users",
     tibble::tibble(id = integer(), username = character(), firstname = character(), lastname = character(), password = character(),
-      user_access_id = integer(), user_status_id = integer(), datetime = character(), deleted = logical()))
+      user_access_id = integer(), user_status_id = integer(), datetime = character(), deleted = logical(),
+      1, "admin", "John", "Doe", "admin", 1, 1, as.character(Sys.time()), FALSE))
   
   db_create_table(db, "users_accesses_statuses",
     tibble::tibble(id = integer(), type = character(), name = character(), description = character(),

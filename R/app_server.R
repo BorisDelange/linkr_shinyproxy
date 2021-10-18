@@ -21,18 +21,14 @@ app_server <- function(page_style, router, language){
     # Load all data from database
     observeEvent(r$db, {
       tables <- c("users", "users_accesses_statuses", "users_accesses_details",
-                  "data_sources", "datamarts", "studies", "subsets", "thesaurus", "thesaurus_items",
-                  "plugins", "patient_lvl_module_families", "patient_lvl_modules", "patient_lvl_module_elements",
-                  "aggregated_module_families", "aggregated_modules", #"aggregated_module_elements",
-                  "code", "options"
-                  )
+        "data_sources", "datamarts", "studies", "subsets", "thesaurus", "thesaurus_items",
+        "plugins", "patient_lvl_module_families", "patient_lvl_modules", "patient_lvl_module_elements",
+        "aggregated_module_families", "aggregated_modules", #"aggregated_module_elements",
+        "code", "options")
+      
       sapply(tables, function(table){
-        # Don't load all table if this is thesaurus_items table
-        # if (table == "thesaurus_items") r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " LIMIT 0"))
-        # if (table != "thesaurus_items") r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
         r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
         r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-        # r[[paste0(table, "_temp")]] <- r[[paste0(table, "_temp")]] %>% dplyr::mutate(modified = FALSE)
       })
       
       # Add a module_types variable, for settings/plugins dropdown
@@ -58,6 +54,5 @@ app_server <- function(page_style, router, language){
     mod_settings_plugins_server("settings_plugins", r, language)
     mod_settings_modules_server("settings_patient_lvl_modules", r, language)
     mod_settings_modules_server("settings_aggregated_modules", r, language)
-    mod_help_server("help_dev_data_management")
   }
 }
