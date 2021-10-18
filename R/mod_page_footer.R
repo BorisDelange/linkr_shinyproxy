@@ -7,31 +7,15 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_page_footer_ui <- function(id, language, page_style, page){
-  ns <- NS(id)
+mod_page_footer_ui <- function(){
   div(class = "footer", 
     shiny.fluent::Stack(
       horizontal = TRUE,
       horizontalAlign = 'space-between',
       tokens = list(childrenGap = 20),
       tags$a(icon("github"), "", href = "https://github.com/BorisDelange/cdwtools", target="_blank"),
-      shiny.fluent::Text(variant = "medium", nowrap = FALSE, "Please cite with ..."),
+      shiny.fluent::Text(variant = "medium", nowrap = FALSE, ""),
       shiny.fluent::Text(variant = "medium", nowrap = FALSE, "Version 0.0.0.900")
     )
   )
 }
-    
-#' page_footer Server Functions
-#'
-#' @noRd 
-mod_page_footer_server <- function(id){
-  moduleServer( id, function(input, output, session){
-    ns <- session$ns
-  })
-}
-    
-## To be copied in the UI
-# mod_page_footer_ui("page_footer_ui_1")
-    
-## To be copied in the server
-# mod_page_footer_server("page_footer_ui_1")

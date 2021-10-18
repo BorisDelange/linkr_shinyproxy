@@ -34,10 +34,8 @@ make_card <- function(title = character(), content = character(), size = 12, sty
 make_page <- function (title = character(), subtitle = character(), contents = character()) {
   tagList(div(
     class = "page-title",
-    htmltools::span(title, class = "ms-fontSize-32 ms-fontWeight-semibold", style =
-           "color: #323130"),
-    htmltools::span(subtitle, class = "ms-fontSize-14 ms-fontWeight-regular", style =
-           "color: #605E5C; margin: 14px;")
+    htmltools::span(title, class = "ms-fontSize-32 ms-fontWeight-semibold", style = "color: #323130"),
+    htmltools::span(subtitle, class = "ms-fontSize-14 ms-fontWeight-regular", style = "color: #605E5C; margin: 14px;")
   ),
   contents)
 }
@@ -46,10 +44,10 @@ make_page <- function (title = character(), subtitle = character(), contents = c
 make_layout <- function(language, page_style, page){
   if (page_style == "fluent"){
     div(class = "grid-container",
-      mod_page_header_ui(page, language, page_style, page),
+      mod_page_header_ui(page, language),
       mod_page_sidenav_ui(page, language, page_style, page),
       mod_page_main_ui(page, language, page_style, page),
-      mod_page_footer_ui(page, language, page_style, page)
+      mod_page_footer_ui()
     ) -> result
   }
   
