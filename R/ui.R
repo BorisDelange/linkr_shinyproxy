@@ -1,14 +1,11 @@
 #' The application User-Interface
 #' 
 #' @param request Internal parameter for `{shiny}`. 
-#'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
 
 app_ui <- function(request, css, page) {
-  
   tagList(
-    # Leave this function for adding external resources
     golem_add_external_resources(css),
     shiny.fluent::fluentPage(page$ui)
   )
@@ -25,9 +22,7 @@ app_ui <- function(request, css, page) {
 
 golem_add_external_resources <- function(css){
   
-  add_resource_path(
-    'www', app_sys('app/www')
-  )
+  add_resource_path('www', app_sys('app/www'))
  
   tags$head(
     # favicon(),
@@ -35,8 +30,13 @@ golem_add_external_resources <- function(css){
       path = app_sys('app/www'),
       app_title = 'cdwtools'
     ),
+    # Link to CSS file
     htmltools::tags$link(href = css, rel = "stylesheet", type = "text/css"),
+    
+    # Shinyjs is used to show and hide message bars
     shinyjs::useShinyjs(),
+    
+    # Shinybusy ise used to add a busy bar on top of the page, when there are loading times
     shinybusy::add_busy_bar(timeout = 1000, color = "#0D98FF", height = "3px")
   )
 }
