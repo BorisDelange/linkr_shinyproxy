@@ -83,13 +83,30 @@ make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(
 }
 
 #' Make a shiny.fluent dropdown
+#' 
+#' @param language Language used (character)
+#' @param ns Shiny namespace
+#' @param id ID used for the input (character)
+#' @param label Label used for the input (character)
+#' @param options Options available for the dropdown (list)
+#' @param value Value of the toggle : TRUE or FALSE (logical)
+#' @param multiSelect Is multiselection of options is possible ? (logical)
+#' @param width Width of the dropdown, CSS code so "300px" or "100\%" are accepted
+#' @examples 
+#' \dontrun{
+#' options <- list(
+#'   list(key = "my_key1", text = "my_text1"),
+#'   list(key = "my_key2", text = "my_text2")
+#' )
+#' make_dropdown(language = "EN", ns = NS("settings_datamarts"), label = "my_dropdown", id = "my_dropdown",
+#'   options = options, multiSelect = FALSE, value = "my_key1", width = "100%")
+#' }
 make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
-  id = NA_character_, value = NULL, width = NULL, min_width = NULL, max_width = NULL, margin_right = NULL){
+  id = NA_character_, value = NULL, width = "300px"){
+  
   if (is.na(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
-  if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0(style, "min-width: ", min_width, "; max-width: ", max_width, ";")
-  if (!is.null(margin_right)) style <- paste0(style, "margin-right:", margin_right, ";")
   div(
     div(class = "input_title", translate(language, label)),
     div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect), style = style)
@@ -109,7 +126,7 @@ make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character()
 #' @param label Label used for the input (character)
 #' @param options Options available for the input (data.frame or tibble)
 #' @param value Options already selected (character)
-#' @param width CSS code for width, could be all CSS forms, as "200px" or "100%" etc (character)
+#' @param width CSS code for width, could be all CSS forms, as "200px" or "100\%" etc (character)
 #' @return HTML / Shiny UI code
 #' @examples
 #' \dontrun{

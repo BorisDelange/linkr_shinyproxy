@@ -27,7 +27,7 @@ make_people_picker(
 
 \item{value}{Options already selected (character)}
 
-\item{width}{CSS code for width, could be all CSS forms, as "200px" or "100%" etc (character)}
+\item{width}{CSS code for width, could be all CSS forms, as "200px" or "100\%" etc (character)}
 }
 \value{
 HTML / Shiny UI code

@@ -666,7 +666,13 @@ get_translations <- function(){
             "EN", "invalid_thesaurus_id_value", "Invalid thesaurus_id value",
             "FR", "invalid_thesaurus_id_value", "Valeur de thesaurus_id non valide",
             "EN", "error_loading_datamart", "Error loading datamart",
-            "FR", "error_loading_datamart", "Erreur lors du chargement du datamart"
+            "FR", "error_loading_datamart", "Erreur lors du chargement du datamart",
+            "EN", "visibility", "Visibility",
+            "FR", "visibility", "Visibilité",
+            "EN", "dev_only", "Developpers only",
+            "FR", "dev_only", "Développeurs uniquemement",
+            "EN", "public_access", "Public access",
+            "FR", "public_access", "Accès public"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

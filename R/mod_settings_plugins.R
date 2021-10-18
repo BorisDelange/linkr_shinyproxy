@@ -176,10 +176,59 @@ mod_settings_plugins_server <- function(id, r, language){
         
         data <- list()
         data$markdown_description <- as.character(input$markdown_description)
+        data$visibility <- as.character(input$visibility)
         
         save_settings_options(output = output, r = r, id = id, category = category,
           code_id_input = input$options, language = language, data = data)
       })
+      
+      ##########################################
+      # Edit code by selecting a row           #
+      ##########################################
+      
+      # Button "Edit code" is clicked on the datatable
+      observeEvent(input$edit_code, {
+        
+        # Display edit_code card
+        shiny.fluent::updateToggle.shinyInput(session, "edit_code_card_toggle", value = TRUE)
+        
+        # Get link_id to show in the card title
+        link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
+        
+        # Render UI of this edit_code card
+        output$edit_code_card <- renderUI({
+          render_settings_code_card(ns = ns, id = id, title = paste0("edit_plugins_code"), code = "", link_id = link_id, language = language)
+        })
+        
+        # Reset code_result textOutput
+        output$code_result <- renderText("")
+      })
+      
+      # Particularity for plugins : each plugins has two code rows : one for UI & one for server
+      # Update ShinyAce editor depending of the choice of UI/Server toggle
+      observeEvent(input$edit_code_ui_server, {
+        
+        # Get category & link_id variables, to update code table
+        category <- paste0("plugins_", input$edit_code_ui_server)
+        link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
+        
+        # Get code from database
+        code <- r$code %>% dplyr::filter(category == !!category & link_id == !!link_id) %>% dplyr::pull(code)
+        
+        # Update ShinyAce editor
+        shinyAce::updateAceEditor(session = session, editorId = "ace_edit_code", value = code)
+      })
+      
+      # When save button is clicked
+      observeEvent(input$edit_code_save,
+        save_settings_code(output = output, r = r, id = id, category = paste0("plugins_", input$edit_code_ui_server),
+          code_id_input = input$edit_code, edited_code = input$ace_edit_code, language = "EN"))
+      
+      # When Execute code button is clicked
+      observeEvent(input$execute_code, (
+        output$code_result <- renderText(
+          execute_settings_code(output = output, r = r, edited_code = isolate(input$ace_edit_code)))))
+      
       
       ##########################################
       # Edit code by selecting a row           #

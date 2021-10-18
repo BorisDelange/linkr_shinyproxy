@@ -89,7 +89,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   last_row_options <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull()
   last_row_subsets <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM subsets") %>% dplyr::pull()
   
-  # Add a row in code if table is datamarts, thesaurus or plugins
+  # Add a row in code if table is datamarts, thesaurus
   if (table %in% c("datamarts", "thesaurus", "plugins")){
     
     DBI::dbAppendTable(r$db, "code",
@@ -98,15 +98,26 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     update_r(r = r, table = "code", language = language)
   }
   
-  # For options of plugins, add one row for long description (Markdown)
+  # For options of plugins, add one row for long description (Markdown) & a toggle for the status / the visibility of the plugin (In dev / Public)
   # The value is default syntax of a plugin description
+  # For code of plugins, add two rows, ony for UI code & one for server code
   if (id == "settings_plugins"){
-    value <- paste0("- Version : 1.0.0\nLibraries : *put libraries needed here*\nData allowed : *put data allowed here*\n",
-      "\n\n*Put full description here*")
+    
+    # Add options rows
+    value <- paste0("- Version : 1.0.0\n- Libraries : *put libraries needed here*\n- Data allowed : *put data allowed here*\n\n",
+      "*Put full description here*")
     DBI::dbAppendTable(r$db, "options",
       tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-        last_row_options + 1, "plugin", last_row + 1, "markdown_description", value, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE))
+        last_row_options + 1, "plugin", last_row + 1, "markdown_description", value, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_options + 2, "plugin", last_row + 1, "visibility", "dev_only", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE))
     update_r(r = r, table = "options", language = language)
+    
+    # Add code rows
+    DBI::dbAppendTable(r$db, "code",
+      tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+        last_row_code + 1, "plugins_ui", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_code + 2, "plugins_server", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
+    update_r(r = r, table = "code", language = language)
   }
   
   # For options of datamarts, need ot add two rows
@@ -655,6 +666,13 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   if ("markdown_description" %in% page_options){
     option_id <- options %>% dplyr::filter(name == "markdown_description") %>% dplyr::pull(id)
     DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", stringr::str_replace_all(data$markdown_description, "'", "''"), "' WHERE id = ", option_id)) -> query
+    DBI::dbClearResult(query)
+    update_r(r = r, table = "options", language = language)
+  }
+  
+  if ("visibility" %in% page_options){
+    option_id <- options %>% dplyr::filter(name == "visibility") %>% dplyr::pull(id)
+    DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", data$visibility, "' WHERE id = ", option_id)) -> query
     DBI::dbClearResult(query)
     update_r(r = r, table = "options", language = language)
   }

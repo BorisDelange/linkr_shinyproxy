@@ -272,14 +272,29 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
   }
   
   ##########################################
+  # Option = visibility                    #
+  ##########################################
+  
+  if ("visibility" %in% page_options){
+    value <- options %>% dplyr::filter(name == "visibility") %>% dplyr::pull(value)
+    dropdowns <- tagList(dropdowns, div(
+      make_dropdown(language = language, ns = ns, label = "visibility", options = list(
+        list(key = "dev_only", text = translate(language, "dev_only")),
+        list(key = "public_access", text = translate(language, "public_access"))
+      ), value = value))
+    )
+  }
+  
+  ##########################################
   # Final UI code                          #
   ##########################################
   
   div(id = ns("options_card"),
     make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
       div(
-        toggles, people_picker, ace_editor, br(),
+        toggles, people_picker,
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), dropdowns),
+        ace_editor,
         shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save"))
       )
     )
@@ -312,7 +327,7 @@ render_settings_code_card <- function(ns = shiny::NS(), id = character(), title 
   choice_ui_server <- tagList()
   
   if (id == "settings_plugins"){
-    shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_choice_ui_server"), value = "ui", options = list(
+    shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
       list(key = "ui", text = translate(language, "ui")),
       list(key = "server", text = translate(language, "server"))
     ), className = "inline_choicegroup") -> choice_ui_server
