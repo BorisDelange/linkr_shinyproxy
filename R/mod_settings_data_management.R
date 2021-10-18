@@ -381,7 +381,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # When Execute code button is clicked
       observeEvent(input$execute_code, (
         output$code_result <- renderText(
-          execute_settings_code(output = output, id = id, ns = ns, r = r, language = language, edited_code = isolate(input$ace_edit_code)))))
+          execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
+            language = language, r = r, edited_code = isolate(input$ace_edit_code)))))
           
       
       ##########################################

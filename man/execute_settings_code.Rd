@@ -8,8 +8,8 @@ execute_settings_code(
   output,
   id = character(),
   ns = shiny::NS(),
-  r = shiny::reactiveValues(),
   language = "EN",
+  r = shiny::reactiveValues(),
   edited_code = character(),
   code_type = ""
 )
@@ -19,11 +19,11 @@ execute_settings_code(
 
 \item{id}{ID of the current page / module}
 
-\item{ns}{Shiny namespace used}
+\item{ns}{Shiny namespace}
+
+\item{language}{language used (character)}
 
 \item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
-
-\item{language}{Language used (character)}
 
 \item{edited_code}{New code, after editing it (character)}
 

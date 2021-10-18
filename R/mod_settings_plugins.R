@@ -242,10 +242,10 @@ mod_settings_plugins_server <- function(id, r, language){
         }
         
         # Render result of executed code
-        output$code_result_ui <- renderUI(execute_settings_code(output = output, id = id, ns = ns, r = r, language = language,
-          edited_code = ui_code, code_type = "ui"))
-        output$code_result_server <- renderText(execute_settings_code(output = output, id = id, ns = ns, r = r, language = language,
-          edited_code = server_code, code_type = "server"))
+        output$code_result_ui <- renderUI(execute_settings_code(input = input, output = output, session = session, 
+          id = id, ns = ns, language = language, r = r, edited_code = ui_code, code_type = "ui"))
+        output$code_result_server <- renderText(execute_settings_code(input = input, output = output, session = session, 
+          id = id, ns= ns, language = language, r = r, edited_code = server_code, code_type = "server"))
       })
   })
 }

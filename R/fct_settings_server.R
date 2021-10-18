@@ -727,11 +727,13 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
 #' 
 #' @description Execute code entered in the ShinyAce editor\cr
 #' For plugins page, UI & server code are displayed in distinct outputs (uiOutput for UI code, textOutput for server code to display error messages)
+#' @param input variable from Shiny, used to execute UI & server code (plugins page)
 #' @param output variable from Shiny, used to render messages on the message bar
-#' @param ns Shiny namespace used
-#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
-#' @param language Language used
+#' @param session variable from Shiny, used to execute UI & server code (plugins page)
 #' @param id ID of the current page / module
+#' @param ns Shiny namespace
+#' @param language language used (character)
+#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param edited_code New code, after editing it (character)
 #' @param code_type For plugins page, code_type could be UI or server (character)
 #' @examples 
@@ -739,7 +741,7 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
 #' execute_settings_code(output = output, r = r, edited_code = "print('test')")
 #' }
 
-execute_settings_code <- function(output, id = character(), ns = shiny::NS(), r = shiny::reactiveValues(), language = "EN",
+execute_settings_code <- function(input, output, session, id = character(), ns = shiny::NS(), language = "EN", r = shiny::reactiveValues(), 
   edited_code = character(), code_type = ""){
 
   result <- ""
@@ -747,12 +749,23 @@ execute_settings_code <- function(output, id = character(), ns = shiny::NS(), r 
   # If code is UI, execute it only
   if (code_type == "ui"){
     
-    tryCatch(eval(parse(text = code)), error = function(e) stop(e), warning = function(w) stop(w))
-    result <- eval(parse(text = code))
+    tryCatch(eval(parse(text = edited_code)), error = function(e) stop(e), warning = function(w) stop(w))
+    result <- eval(parse(text = edited_code))
   }
   
-  # If code is not UI, capture the console output
-  if (code_type != "ui"){
+  # If code is server, capture the console output
+  if (code_type == "server"){
+    
+    # Capture console output of our code
+    captured_output <- capture.output(
+      tryCatch(eval(parse(text = edited_code)), error = function(e) print(e), warning = function(w) print(w)))
+    
+    # Display result
+    paste(captured_output, collapse = "\n") -> result
+  }
+  
+  # If code is not UI or server, capture the console output after replacing %% values
+  if (code_type %not_in% c("ui", "server")){
     
     # Replace %CODE% from code to real values
     code <- edited_code %>%
