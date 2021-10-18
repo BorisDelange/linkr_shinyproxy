@@ -278,7 +278,7 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
   if ("visibility" %in% page_options){
     value <- options %>% dplyr::filter(name == "visibility") %>% dplyr::pull(value)
     dropdowns <- tagList(dropdowns, div(
-      make_dropdown(language = language, ns = ns, label = "visibility", options = list(
+      make_dropdown(language = language, ns = ns, label = "visibility", width = "300px", options = list(
         list(key = "dev_only", text = translate(language, "dev_only")),
         list(key = "public_access", text = translate(language, "public_access"))
       ), value = value))
@@ -374,7 +374,7 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
     # UI output to render UI code of the plugin and text output to render server error messages
     output_div <- tagList(
       div(shiny::uiOutput(ns("code_result_ui")),
-        style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"), br(),
+        style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 10px 8px; margin-right: 5px;"), br(),
       div(shiny::verbatimTextOutput(ns("code_result_server")), 
           style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
   }

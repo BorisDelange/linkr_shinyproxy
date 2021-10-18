@@ -25,7 +25,11 @@ mod_settings_plugins_ui <- function(id, language){
       id = ns("description_card"),
       make_card(
         translate(language, "plugins_description"),
-        "")
+        div(
+          make_dropdown(language = language, ns = ns, label = "plugin", width = "300px"), br(),
+          div(uiOutput(ns("plugin_description"),
+            style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
+        ))
     ),
     render_settings_creation_card(language = language, ns = ns, id = id, title = "plugins_creation",
       textfields = "name", textfields_width = "300px"),
@@ -54,6 +58,22 @@ mod_settings_plugins_server <- function(id, r, language){
     
     sapply(toggles, function(toggle){
       observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
+    })
+    
+    ##########################################
+    # Plugins descriptions                   #
+    ##########################################
+    
+    # When r$plugins changes, update plugin dropdown
+    observeEvent(r$plugins, {
+      shiny.fluent::updateDropdown.shinyInput(session = session, inputId = "plugin", 
+        options = convert_tibble_to_list(data = r$plugins, key_col = "id", text_col = "name"))
+    })
+    
+    # When a plugin is chosen, update description UI output
+    observeEvent(input$plugin, {
+      markdown_code <- r$options %>% dplyr::filter(category == 'plugin' & link_id == input$plugin & name == "markdown_description") %>% dplyr::pull(value)
+      output$plugin_description <- renderUI(markdown(markdown_code))
     })
     
     ##########################################
