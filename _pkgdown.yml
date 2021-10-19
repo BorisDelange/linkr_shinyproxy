@@ -49,6 +49,7 @@ reference:
   - save_settings_options
   - save_settings_code
   - execute_settings_code
+  - create_datatable_cache
 articles:
 - title: FR - Aide
   navbar: FR - Aide

@@ -10,6 +10,7 @@ render_settings_datatable(
   ns = shiny::NS(),
   language = "EN",
   id = character(),
+  output_name = character(),
   col_names = character(),
   table = character(),
   dropdowns = character(),
@@ -33,6 +34,8 @@ render_settings_datatable(
 \item{language}{Language used (charater)}
 
 \item{id}{ID of the current page, format = "settings_[PAGE]" (character)}
+
+\item{output_name}{Name of the datatable output}
 
 \item{col_names}{A character vector containing colnames, already translated (character)}
 
@@ -82,6 +85,7 @@ render_settings_datatable(
   output = output, r = r, 
   ns = NS("settings_datamart"), language = "EN",
   id = "settings_datamart",
+  output_name = "management_datatable"
   col_names = col_names, 
   table = "datamarts", 
   dropdowns = "data_source",

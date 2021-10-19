@@ -7,6 +7,7 @@
 render_settings_datatable_card(
   language = "EN",
   ns = shiny::NS(),
+  div_id = "datatable_card",
   output_id = "management_datatable",
   title = character()
 )
@@ -16,7 +17,9 @@ render_settings_datatable_card(
 
 \item{ns}{Shiny namespace}
 
-\item{output_id}{ID of DTOutput, allows to have multiple management_datatable in one module, default = "management_datatable" (character)}
+\item{div_id}{ID of the div, to show or hide with toggles, default = "datatable_card" (character)}
+
+\item{output_id}{ID of div & DTOutput, allows to have multiple management_datatable in one module, default = "management_datatable" (character)}
 
 \item{title}{Title used to create the card, it will be translated with translate function (character)}
 }

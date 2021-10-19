@@ -9,7 +9,7 @@ render_settings_code_card(
   r = shiny::reactiveValues(),
   id = character(),
   title = character(),
-  code = character(),
+  code = list(),
   link_id = integer(),
   language = "EN"
 )
@@ -23,7 +23,7 @@ render_settings_code_card(
 
 \item{title}{Title of the card (character)}
 
-\item{code}{Code to show in ShinyAce editor (character)}
+\item{code}{Code to show in ShinyAce editor (list)}
 
 \item{link_id}{ID allows to link with code table (integer)}
 

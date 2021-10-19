@@ -9,6 +9,7 @@ save_settings_datatable_updates(
   r = shiny::reactiveValues(),
   ns = shiny::NS(),
   table = character(),
+  duplicates_allowed = FALSE,
   language = "EN"
 )
 }
@@ -20,6 +21,8 @@ save_settings_datatable_updates(
 \item{ns}{Shiny namespace}
 
 \item{table}{Name of the table used (character)}
+
+\item{duplicates_allowed}{Are duplicates in the name column allowed (logical)}
 
 \item{language}{Language used (character)}
 }

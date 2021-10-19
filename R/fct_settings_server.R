@@ -270,7 +270,8 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   if (table == "thesaurus_items") data <- data %>% dplyr::select(-thesaurus_id)
   
   # Add a column action in the DataTable
-  if (length(action_buttons) != 0) data["action"] <- NA_character_
+  # Action column is already loaded for thesaurus_items (cache system)
+  if (table != "thesaurus_items" & length(action_buttons) != 0) data["action"] <- NA_character_
 
   # Drop deleted column & modified column : we don't want to show them in the datatable
   if (nrow(data) != 0) data <- data %>% dplyr::select(-deleted, -modified)
@@ -287,7 +288,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # - show creator name
 
   # Loop over data only if necessary (eg not necessary for thesaurus_items, with a lot of rows...)
-  if (length(dropdowns) != 0 | length(action_buttons) != 0 | "creator_id" %in% names(data)){
+  if (table != "thesaurus_items" & (length(dropdowns) != 0 | length(action_buttons) != 0 | "creator_id" %in% names(data))){
   
     for (i in 1:nrow(data)){
   
@@ -483,6 +484,99 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
 }
 
 ##########################################
+# Create a cache for action buttons col  #
+##########################################
+
+#' Create cache for datatable data
+#' 
+#' @param output Shiny output variable, used to render message bars
+#' @param r Shiny r reactive value, to communicate between modules
+#' @param module_id ID of current page / module (character)
+#' @param thesaurus_id ID of thesaurus, which thesaurus items depend on (integer)
+#' @param category Category of cache, depending of the page of Settings (character)
+
+create_datatable_cache <- function(output, r, module_id = character(), thesaurus_id = integer(), category = character()){
+  
+  # Load original data
+  # data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE ORDER BY id"))
+  
+  # Load join between our data and the cache
+  data <- DBI::dbGetQuery(r$db, paste0(
+  "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value AS action
+   FROM thesaurus_items t
+   LEFT JOIN cache c ON t.id = c.link_id AND c.category = '", category, "'
+   WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE
+   ORDER BY t.id")) %>% tibble::as_tibble()
+  
+  # data %>%
+  #   dplyr::left_join(
+  #     DBI::dbGetQuery(r$db, paste0("SELECT * FROM cache WHERE category = '", category, "'")) %>% 
+  #       dplyr::select(id = link_id, action = value),
+  #     by = "id") -> data
+  
+  # If there are missing data in the cache, reload cache 
+  
+  reload_cache <- FALSE
+  # Join not done
+  # if ("action" %not_in% names(data)) reload_cache <- TRUE
+  # if ("action" %in% names(data)){
+    # Or join done but missing values
+  if (NA_character_ %in% data$action | "" %in% data$action) reload_cache <- TRUE
+  # }
+  
+  # Reload cache if necessary
+  if (reload_cache){
+
+    # Notification to user
+    # show_message_bar(output = output, id = 2, message = "creating_cache", type = "severeWarning", language = language)
+
+    # Reload data
+    data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE ORDER BY id"))
+
+    # Make action column, depending on category
+    # If category is data_management, add a delete button only
+    # If category is modules, add plus and minus buttons
+
+    if (category == "data_management"){
+      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(action = as.character(
+        tagList(
+          shiny::actionButton(paste0("sub_delete_", id), "", icon = icon("trash-alt"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-sub_deleted_pressed', this.id, {priority: 'event'})")))))
+    }
+    if (category == "modules"){
+      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(action = as.character(
+        tagList(
+          shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")),
+          shiny::actionButton(paste0("remove_", id), "", icon = icon("minus"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_removed', this.id, {priority: 'event'})")))))
+    }
+
+    # Delete old cache
+    DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "'")) -> query
+    DBI::dbClearResult(query)
+
+    # Get last row & insert new data
+    last_row <- as.integer(DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM cache") %>% dplyr::pull())
+    data_insert <-
+      data %>%
+      dplyr::transmute(
+        category = !!category,
+        link_id = id,
+        value = action,
+        datetime = as.character(Sys.time()))
+    data_insert$id <- seq.int(nrow(data_insert)) + last_row
+    data_insert <- data_insert %>% dplyr::relocate(id)
+
+    # Add data in cache table
+    DBI::dbAppendTable(r$db, "cache", data_insert)
+  }
+  
+  data
+}
+
+
+##########################################
 # Save updates in datatable              #
 ##########################################
 
@@ -555,7 +649,10 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   ids_to_del <- r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
   DBI::dbSendStatement(r$db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
   DBI::dbClearResult(query)
-  DBI::dbAppendTable(r$db, table, r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
+  
+  # If action in columns, remove before insert into database (for thesaurus_items with cache system)
+  if ("action" %in% names(r[[paste0(table, "_temp")]])) DBI::dbAppendTable(r$db, table, r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified, -action))
+  else DBI::dbAppendTable(r$db, table, r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
   
   # Notification to user
   show_message_bar(output, 2, "modif_saved", "success", language)

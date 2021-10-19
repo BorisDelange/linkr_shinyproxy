@@ -5,7 +5,9 @@
 \title{Execute / test code after edition}
 \usage{
 execute_settings_code(
+  input,
   output,
+  session,
   id = character(),
   ns = shiny::NS(),
   language = "EN",
@@ -15,7 +17,11 @@ execute_settings_code(
 )
 }
 \arguments{
+\item{input}{variable from Shiny, used to execute UI & server code (plugins page)}
+
 \item{output}{variable from Shiny, used to render messages on the message bar}
+
+\item{session}{variable from Shiny, used to execute UI & server code (plugins page)}
 
 \item{id}{ID of the current page / module}
 

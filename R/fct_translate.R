@@ -678,7 +678,9 @@ get_translations <- function(){
             "EN", "deleted_user", "Deleted user",
             "FR", "deleted_user", "Utilisateur supprimé",
             "EN", "r_console", "R console",
-            "FR", "r_console", "Console R"
+            "FR", "r_console", "Console R",
+            "EN", "creating_cache", "First load of thesaurus items : creating cache, may take a few seconds",
+            "FR", "creating_cache", "Premier chargement des items de ce thésaurus : création du cache, peut prendre quelques secondes"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

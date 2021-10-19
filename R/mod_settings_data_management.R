@@ -406,14 +406,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # Get link id
         link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
 
-        r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", link_id, " AND deleted IS FALSE ORDER BY id"))
+        r$thesaurus_items <- create_datatable_cache(output = output, r = r, module_id = id, thesaurus_id = link_id, category = "data_management")
         r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-
-        # If results are not empty
-        # if (nrow(r$thesaurus_items) > 0){
-        #   r$thesaurus_items <- r$thesaurus_items %>% dplyr::select(-thesaurus_id)
-        #   r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-        # }
 
         # Display sub_datatable card
         shiny.fluent::updateToggle.shinyInput(session, "sub_datatable_card_toggle", value = TRUE)
@@ -433,6 +427,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         })
 
         # Parameters for the datatable
+        action_buttons <- "delete"
         editable_cols <- c("display_name", "unit")
         sortable_cols <- c("id", "item_id", "name", "display_name", "category")
         centered_cols <- c("id", "item_id", "unit", "datetime", "action")
@@ -447,7 +442,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
 
             # Render datatable
             render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "sub_datatable",
-              col_names =  get_col_names("thesaurus_items"), table = "thesaurus_items",
+              col_names =  get_col_names("thesaurus_items"), table = "thesaurus_items", action_buttons = action_buttons,
               datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
               editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols)
           })

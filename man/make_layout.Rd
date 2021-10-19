@@ -4,7 +4,7 @@
 \alias{make_layout}
 \title{Make a complete layout with header, sidenav, main & footer}
 \usage{
-make_layout(language, page_style, page)
+make_layout(language, page)
 }
 \description{
 Make a complete layout with header, sidenav, main & footer
