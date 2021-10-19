@@ -265,10 +265,12 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   })
   
   # If page is plugins, remove column description from datatable (it will be editable from datatable row options edition)
-  if (id == "settings_plugins") data <- data %>% dplyr::select(-description)
+  # /!\ Careful : it changes the index of columns, use to update informations directy on datatable
+  if (table == "plugins") data <- data %>% dplyr::select(-description)
+  if (table == "thesaurus_items") data <- data %>% dplyr::select(-thesaurus_id)
   
   # Add a column action in the DataTable
-  data["action"] <- NA_character_
+  if (length(action_buttons) != 0) data["action"] <- NA_character_
 
   # Drop deleted column & modified column : we don't want to show them in the datatable
   if (nrow(data) != 0) data <- data %>% dplyr::select(-deleted, -modified)
@@ -284,127 +286,131 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # - add an Action column with delete action button (+/- options / edit code buttons)
   # - show creator name
 
-  for (i in 1:nrow(data)){
-
-    #############
-    # DROPDOWNS #
-    #############
-
-    if (length(dropdowns) != 0){
-      lapply(names(dropdowns), function(name){
+  # Loop over data only if necessary (eg not necessary for thesaurus_items, with a lot of rows...)
+  if (length(dropdowns) != 0 | length(action_buttons) != 0 | "creator_id" %in% names(data)){
   
-        # Particularity with thesaurus, data_source_id column can contains multiple values (multiSelect = TRUE)
-        # We have to split data_source_id column, to have an integer vector (saved with collapse by commas)
+    for (i in 1:nrow(data)){
   
-        # name here is like "data_source_id"
-        # dropdowns[name] here is like "data_sources"
-        # so r[[dropdowns[[name]]]] is like r$data_sources, var containing data_sources data
+      #############
+      # DROPDOWNS #
+      #############
   
-        if (id == "settings_thesaurus"){
-          value <- NULL
-          if (length(data[i, name] > 0)){
-            if (!TRUE %in% grepl("[a-zA-Z]", stringr::str_split(data[i, name], ", ") %>% unlist())){
-              value <- stringr::str_split(data[i, name], ", ") %>% unlist() %>% as.integer()
+      if (length(dropdowns) != 0){
+        lapply(names(dropdowns), function(name){
+    
+          # Particularity with thesaurus, data_source_id column can contains multiple values (multiSelect = TRUE)
+          # We have to split data_source_id column, to have an integer vector (saved with collapse by commas)
+    
+          # name here is like "data_source_id"
+          # dropdowns[name] here is like "data_sources"
+          # so r[[dropdowns[[name]]]] is like r$data_sources, var containing data_sources data
+    
+          if (id == "settings_thesaurus"){
+            value <- NULL
+            if (length(data[i, name] > 0)){
+              if (!TRUE %in% grepl("[a-zA-Z]", stringr::str_split(data[i, name], ", ") %>% unlist())){
+                value <- stringr::str_split(data[i, name], ", ") %>% unlist() %>% as.integer()
+              }
             }
+            data[i, name] <<- as.character(
+              div(
+                shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+                  options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
+                  value = value,
+                  multiSelect = TRUE),
+                  onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
+                  style = "width:100%")
+            )
           }
-          data[i, name] <<- as.character(
-            div(
+          
+          if (id %in% c("settings_data_sources", "settings_datamarts", "settings_studies", "settings_subsets", "settings_plugins")) {
+            data[i, name] <<- as.character(
+              div(
+                # So ID is like "data_sources13" if ID = 13
               shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+                # To get options, convert data var to tibble (convert r$data_sources to list)
                 options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
-                value = value,
-                multiSelect = TRUE),
+                # value is an integer, the value of the column like "data_source_id"
+                value = as.integer(data[i, name])),
+                # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
                 onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
                 style = "width:100%")
-          )
-        }
-        
-        if (id %in% c("settings_data_sources", "settings_datamarts", "settings_studies", "settings_subsets", "settings_plugins")) {
-          data[i, name] <<- as.character(
-            div(
-              # So ID is like "data_sources13" if ID = 13
-            shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
-              # To get options, convert data var to tibble (convert r$data_sources to list)
-              options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
-              # value is an integer, the value of the column like "data_source_id"
-              value = as.integer(data[i, name])),
-              # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
-              onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
-              style = "width:100%")
-          )
-        }
-        
-      })
-    }
-
-    ##################
-    # ACTION BUTTONS #
-    ##################
-
-    # Action buttons : if in action_buttons vector, add action button
-    actions <- tagList()
-
-    # Add options button
-    if ("options" %in% action_buttons){
-      actions <- tagList(actions,
-        shiny::actionButton(paste0("options_", data[i, 1]), "", icon = icon("cog"),
-          onclick = paste0("Shiny.setInputValue('", id, "-options", "', this.id, {priority: 'event'})")), "")}
-
-    # Add edit code button
-    if ("edit_code" %in% action_buttons){
-      actions <- tagList(actions,
-        shiny::actionButton(paste0("edit_code_", data[i, 1]), "", icon = icon("file-code"),
-          onclick = paste0("Shiny.setInputValue('", id, "-edit_code", "', this.id, {priority: 'event'})")), "")}
-
-    # Add sub datatable button
-    if ("sub_datatable" %in% action_buttons){
-      actions <- tagList(actions,
-        shiny::actionButton(paste0("sub_datatable_", data[i, 1]), "", icon = icon("table"),
-          onclick = paste0("Shiny.setInputValue('", id, "-sub_datatable", "', this.id, {priority: 'event'})")), "")}
-
-    # Add delete button
-    if ("delete" %in% action_buttons){
-
-      # If row is deletable (we havn't made a function argument for deletable or not, only default subsets are not deletable)
-      # Could be changed later
-
-      if (id != "settings_subsets" | data[i, "name"] %not_in% c("All patients", "Included patients", "Excluded patients")){
-        actions <- tagList(actions, shiny::actionButton(paste0("delete_", data[i, 1]), "", icon = icon("trash-alt"),
-          onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))}
-    }
-
-    # Update action column in dataframe
-    data[i, "action"] <- as.character(div(actions))
-
-    ################
-    # CREATOR NAME #
-    ################
-
-    if ("creator_id" %in% names(data)){
-      if (nrow(r$users %>% dplyr::filter(id == data[[i, "creator_id"]])) > 0){
-        data[i, "creator_id"] <-
-          r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>%
-          dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>%
-          dplyr::pull(creator)
+            )
+          }
+          
+        })
       }
-      else data[i, "creator_id"] <- translate(language, "deleted_user")
-    }
-
-    # Get names for other columns if there are not dropdowns
-    # Failed to loop that...
-    if ("data_source_id" %in% names(data) & "data_source_id" %not_in% names(dropdowns)){
-      result <- r$data_sources %>% dplyr::filter(id == data[[i, "data_source_id"]]) %>% dplyr::pull(name)
-      if (length(result) == 0) result <- ""
-      data[[i, "data_source_id"]] <- result
-    }
-    if ("datamart_id" %in% names(data) & "datamart_id" %not_in% names(dropdowns)){
-      result <- r$datamarts %>% dplyr::filter(id == data[[i, "datamart_id"]]) %>% dplyr::pull(name)
-      if (length(result) == 0) result <- ""
-      data[[i, "datamart_id"]] <- result
-    }
-    if ("study_id" %in% names(data) & "study_id" %not_in% names(dropdowns)){
-      result <- r$studies %>% dplyr::filter(id == data[[i, "study_id"]]) %>% dplyr::pull(name)
-      if (length(result) == 0) result <- ""
-      data[[i, "study_id"]] <- result
+  
+      ##################
+      # ACTION BUTTONS #
+      ##################
+  
+      # Action buttons : if in action_buttons vector, add action button
+      actions <- tagList()
+  
+      # Add options button
+      if ("options" %in% action_buttons){
+        actions <- tagList(actions,
+          shiny::actionButton(paste0("options_", data[i, 1]), "", icon = icon("cog"),
+            onclick = paste0("Shiny.setInputValue('", id, "-options", "', this.id, {priority: 'event'})")), "")}
+  
+      # Add edit code button
+      if ("edit_code" %in% action_buttons){
+        actions <- tagList(actions,
+          shiny::actionButton(paste0("edit_code_", data[i, 1]), "", icon = icon("file-code"),
+            onclick = paste0("Shiny.setInputValue('", id, "-edit_code", "', this.id, {priority: 'event'})")), "")}
+  
+      # Add sub datatable button
+      if ("sub_datatable" %in% action_buttons){
+        actions <- tagList(actions,
+          shiny::actionButton(paste0("sub_datatable_", data[i, 1]), "", icon = icon("table"),
+            onclick = paste0("Shiny.setInputValue('", id, "-sub_datatable", "', this.id, {priority: 'event'})")), "")}
+  
+      # Add delete button
+      if ("delete" %in% action_buttons){
+  
+        # If row is deletable (we havn't made a function argument for deletable or not, only default subsets are not deletable)
+        # Could be changed later
+  
+        if (id != "settings_subsets" | data[i, "name"] %not_in% c("All patients", "Included patients", "Excluded patients")){
+          actions <- tagList(actions, shiny::actionButton(paste0("delete_", data[i, 1]), "", icon = icon("trash-alt"),
+            onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))}
+      }
+  
+      # Update action column in dataframe
+      if (length(action_buttons) != 0) data[i, "action"] <- as.character(div(actions))
+  
+      ################
+      # CREATOR NAME #
+      ################
+  
+      if ("creator_id" %in% names(data)){
+        if (nrow(r$users %>% dplyr::filter(id == data[[i, "creator_id"]])) > 0){
+          data[i, "creator_id"] <-
+            r$users %>% dplyr::filter(id == data[[i, "creator_id"]]) %>%
+            dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>%
+            dplyr::pull(creator)
+        }
+        else data[i, "creator_id"] <- translate(language, "deleted_user")
+      }
+  
+      # Get names for other columns if there are not dropdowns
+      # Failed to loop that...
+      if ("data_source_id" %in% names(data) & "data_source_id" %not_in% names(dropdowns)){
+        result <- r$data_sources %>% dplyr::filter(id == data[[i, "data_source_id"]]) %>% dplyr::pull(name)
+        if (length(result) == 0) result <- ""
+        data[[i, "data_source_id"]] <- result
+      }
+      if ("datamart_id" %in% names(data) & "datamart_id" %not_in% names(dropdowns)){
+        result <- r$datamarts %>% dplyr::filter(id == data[[i, "datamart_id"]]) %>% dplyr::pull(name)
+        if (length(result) == 0) result <- ""
+        data[[i, "datamart_id"]] <- result
+      }
+      if ("study_id" %in% names(data) & "study_id" %not_in% names(dropdowns)){
+        result <- r$studies %>% dplyr::filter(id == data[[i, "study_id"]]) %>% dplyr::pull(name)
+        if (length(result) == 0) result <- ""
+        data[[i, "study_id"]] <- result
+      }
     }
   }
   
@@ -523,23 +529,27 @@ update_settings_datatable <- function(input, r = shiny::reactiveValues(), ns = s
 #' @param r Shiny r reactive value to communicate between modules
 #' @param ns Shiny namespace
 #' @param table Name of the table used (character)
+#' @param duplicates_allowed Are duplicates in the name column allowed (logical)
 #' @param language Language used (character)
 #' @examples 
 #' \dontrun{
 #' save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datamarts", language = "EN")
 #' }
 
-save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), language = "EN"){
+save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), table = character(),
+  duplicates_allowed = FALSE, language = "EN"){
   
-  # Make sure there's no duplicate in names
-  duplicates <- 0
-  # Duplicates are allowed in thesaurus_items
-  # if (table != "thesaurus_items"){
-  duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
-    dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-  # }
-  if (duplicates > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
-  req(duplicates == 0)
+  # Make sure there's no duplicate in names, if duplicates_allowed is set to FALSE
+  if (!duplicates_allowed){
+    duplicates <- 0
+    # Duplicates are allowed in thesaurus_items
+    # if (table != "thesaurus_items"){
+    duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+      dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+    # }
+    if (duplicates > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
+    req(duplicates == 0)
+  }
   
   # Save changes in database
   ids_to_del <- r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)

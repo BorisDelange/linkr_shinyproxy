@@ -60,7 +60,7 @@ get_col_names <- function(table_name = character(), language = "EN"){
   if (table_name == "thesaurus_items"){
     result <- c(translate(language, "id"), translate(language, "item_id"), translate(language, "name"),
       translate(language, "display_name"), translate(language, "category"), translate(language, "unit"),
-      translate(language, "datetime"), translate(language, "action"))
+      translate(language, "datetime"))
   }
   
   if (table_name == "plugins"){

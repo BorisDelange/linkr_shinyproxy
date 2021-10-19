@@ -267,6 +267,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
         observeEvent(input$sub_datatable_cell_edit, {
           edit_info <- input$sub_datatable_cell_edit
+          edit_info$col <- edit_info$col + 1 # We have removed thesaurus_id col, so need to add one to col index
           r$thesaurus_items_temp <- DT::editData(r$thesaurus_items_temp, edit_info, rownames = FALSE)
           r$thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
         })
@@ -280,7 +281,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # When save button is clicked
         # Do that for main datatable (management_datatable) & sub_datatable
         observeEvent(input$management_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language))
-        observeEvent(input$sub_datatable, save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", language = language))
+        observeEvent(input$sub_datatable_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", duplicates_allowed = TRUE, language = language))
     
       ##########################################
       # Delete a row in datatable              #
@@ -401,20 +402,22 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # It opens a toggle with a datatable containing items of chosen thesaurus
       
       observeEvent(input$sub_datatable, {
-        
+
         # Get link id
         link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
-        
-        # Remove thesaurus ID column, not useful
+
         r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", link_id, " AND deleted IS FALSE ORDER BY id"))
-        if (nrow(r$thesaurus_items) != 0){
-          r$thesaurus_items <- r$thesaurus_items %>% dplyr::select(-thesaurus_id)
-          r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-        }
-        
+        r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+
+        # If results are not empty
+        # if (nrow(r$thesaurus_items) > 0){
+        #   r$thesaurus_items <- r$thesaurus_items %>% dplyr::select(-thesaurus_id)
+        #   r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+        # }
+
         # Display sub_datatable card
         shiny.fluent::updateToggle.shinyInput(session, "sub_datatable_card_toggle", value = TRUE)
-        
+
         # Render UI of this card
         output$sub_datatable_card <- renderUI({
 
@@ -430,22 +433,25 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         })
 
         # Parameters for the datatable
-        action_buttons <- ""
         editable_cols <- c("display_name", "unit")
-        sortable_cols <- c("id", "item_id", "name", "category")
+        sortable_cols <- c("id", "item_id", "name", "display_name", "category")
         centered_cols <- c("id", "item_id", "unit", "datetime", "action")
 
-        observeEvent(r$thesaurus_items_temp, {
-          # Restore datatable state
-          page_length <- isolate(input$sub_datatable_state$length)
-          start <- isolate(input$sub_datatable_state$start)
-  
-          # Render datatable
-          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "sub_datatable",
-            col_names =  get_col_names("thesaurus_items"), table = "thesaurus_items", action_buttons = action_buttons,
-            datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols)
-        })
+        # If results are not empty
+        # if (nrow(r$thesaurus_items_temp) != 0){
+          observeEvent(r$thesaurus_items_temp, {
+            
+            # Restore datatable state
+            page_length <- isolate(input$sub_datatable_state$length)
+            start <- isolate(input$sub_datatable_state$start)
+
+            # Render datatable
+            render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "sub_datatable",
+              col_names =  get_col_names("thesaurus_items"), table = "thesaurus_items",
+              datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
+              editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols)
+          })
+        # }
       })
      
   })
