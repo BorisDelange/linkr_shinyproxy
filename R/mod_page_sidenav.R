@@ -72,6 +72,7 @@ mod_page_sidenav_ui <- function(id, language, page){
             list(name = translate(language, "general_settings"), key = "general", url = shiny.router::route_link("settings/general")),
             list(name = translate(language, "app_db"), key = "app_db", url = shiny.router::route_link("settings/app_db")),
             list(name = translate(language, "users"), key = "users", url = shiny.router::route_link("settings/users")),
+            list(name = translate(language, "r_console"), key = "r_console", url = shiny.router::route_link("settings/r_console")),
             list(name = translate(language, "data_management"), key = "data", links = list(
               list(name = translate(language, "data_sources"), key = "data_sources", url = shiny.router::route_link("settings/data_sources")),
               list(name = translate(language, "datamarts"), key = "datamarts", url = shiny.router::route_link("settings/datamarts")),

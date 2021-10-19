@@ -35,7 +35,7 @@ mod_settings_plugins_ui <- function(id, language){
       textfields = "name", textfields_width = "300px"),
     uiOutput(ns("edit_code_card")),
     uiOutput(ns("options_card")),
-    render_settings_datatable_card(language = language, ns = ns, output = "management_datatable", title = "plugins_management")
+    render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "plugins_management")
   ) -> result
   
   result
@@ -122,7 +122,7 @@ mod_settings_plugins_server <- function(id, r, language){
         page_length <- isolate(input$management_datatable_state$length)
         start <- isolate(input$management_datatable_state$start)
 
-        render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id,
+        render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
           col_names =  get_col_names("plugins"), table = "plugins", dropdowns = dropdowns, action_buttons = action_buttons,
           datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
           editable_cols = c("name"), sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths)

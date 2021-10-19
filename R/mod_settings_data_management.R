@@ -32,7 +32,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
       render_settings_creation_card(
         language = language, ns = ns, id = id, title = "create_data_source",
         textfields = c("name", "description"), textfields_width = "300px"),
-      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = "data_sources_management")
+      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "data_sources_management")
     ) -> result
   }
   
@@ -54,7 +54,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
       uiOutput(ns("edit_code_card")),
       uiOutput(ns("options_card")),
-      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = "datamarts_management")
+      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "datamarts_management")
     ) -> result
   }
   
@@ -75,7 +75,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
       uiOutput(ns("options_card")),
-      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = "studies_management")
+      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "studies_management")
     ) -> result
   }
   
@@ -96,7 +96,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
       uiOutput(ns("edit_code_card")),
-      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = "subsets_management")
+      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "subsets_management")
     ) -> result
   }
   
@@ -110,20 +110,19 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
       render_settings_toggle_card(language = language, ns = ns, cards = list(
         list(key = "creation_card", label = "create_thesaurus"),
         list(key = "datatable_card", label = "thesaurus_management_card"),
-        list(key = "items_datatable_card", label = "thesaurus_items_management_card"),
+        list(key = "sub_datatable_card", label = "thesaurus_items_management_card"),
         list(key = "edit_code_card", label = "edit_thesaurus_code")
       )),
       render_settings_creation_card(
         language = language, ns = ns, id = id, title = "create_thesaurus",
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
-      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = "thesaurus_management"),
-      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable_bis", title = "thesaurus_items_management"),
       uiOutput(ns("edit_code_card")),
-      uiOutput(ns("options_card"))
+      uiOutput(ns("options_card")),
+      uiOutput(ns("sub_datatable_card")),
+      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "thesaurus_management"),
     ) -> result
   }
-  
   result
 }
     
@@ -139,7 +138,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     ns <- session$ns
     
     # Toggles IDs
-    toggles <- c("creation_card", "datatable_card", "edit_code_card", "options_card")
+    toggles <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card")
 
     # Dropdowns in the management datatable, by page
     dropdowns <- tibble::tribble(~id, ~dropdowns,
@@ -247,7 +246,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           start <- isolate(input$management_datatable_state$start)
           # search_recorded <- ""
           
-          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id,
+          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
             col_names =  get_col_names(table), table = table, dropdowns = dropdowns, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
             editable_cols = c("name", "description"), sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths)
@@ -257,7 +256,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Save changes in datatable              #
       ##########################################
     
-      # Each time a row is updated, modify temp variable
+        # Each time a row is updated, modify temp variable
+        # Do that for main datatable (management_datatable) & sub_datatable
         observeEvent(input$management_datatable_cell_edit, {
           edit_info <- input$management_datatable_cell_edit
           r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
@@ -265,15 +265,22 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
         })
     
-      # Each time a dropdown is updated, modify temp variable
+        observeEvent(input$sub_datatable_cell_edit, {
+          edit_info <- input$sub_datatable_cell_edit
+          r$thesaurus_items_temp <- DT::editData(r$thesaurus_items_temp, edit_info, rownames = FALSE)
+          r$thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
+        })
+      
+        # Each time a dropdown is updated, modify temp variable
         observeEvent(r[[table]], {
           update_settings_datatable(input = input, r = r, ns = ns, table = table, 
             dropdowns = dropdowns %>% dplyr::filter(id == id) %>% dplyr::pull(dropdowns) %>% unlist(), language = language)
         })
       
-        observeEvent(input$management_save, {
-          save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language)
-        })
+        # When save button is clicked
+        # Do that for main datatable (management_datatable) & sub_datatable
+        observeEvent(input$management_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language))
+        observeEvent(input$sub_datatable, save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", language = language))
     
       ##########################################
       # Delete a row in datatable              #
@@ -386,18 +393,60 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             language = language, r = r, edited_code = isolate(input$ace_edit_code)))))
           
       
-      ##########################################
-      # Load sub datatable with action button  #
-      ##########################################
+      ##############################################
+      # Generate sub datatable with action button  #
+      ##############################################
       
-      # observeEvent(input[[paste0(prefix, "_sub_datatable")]], {
-      #   shiny.fluent::updateToggle.shinyInput(session, "items_datatable_card_toggle", value = TRUE)
-      #   link_id_filter <- as.integer(substr(input[[paste0(prefix, "_sub_datatable")]], nchar(paste0(prefix, "_sub_datatable_")) + 1, nchar(input[[paste0(prefix, "_sub_datatable")]])))
-      #   # if (prefix == "thesaurus_items"){
-      #     r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", link_id_filter, " AND deleted IS FALSE ORDER BY id"))
-      #     r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-      #   # }
-      # })
+      # Sub datatable is a datatable in thesaurus page, when we click on the subdatatable button of a thesaurus row
+      # It opens a toggle with a datatable containing items of chosen thesaurus
+      
+      observeEvent(input$sub_datatable, {
+        
+        # Get link id
+        link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
+        
+        # Remove thesaurus ID column, not useful
+        r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", link_id, " AND deleted IS FALSE ORDER BY id"))
+        if (nrow(r$thesaurus_items) != 0){
+          r$thesaurus_items <- r$thesaurus_items %>% dplyr::select(-thesaurus_id)
+          r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+        }
+        
+        # Display sub_datatable card
+        shiny.fluent::updateToggle.shinyInput(session, "sub_datatable_card_toggle", value = TRUE)
+        
+        # Render UI of this card
+        output$sub_datatable_card <- renderUI({
+
+          div(id = ns("sub_datatable_card"),
+            # Show current ID in the title
+            make_card(tagList(translate(language, "thesaurus_items_management"), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
+              div(
+                DT::DTOutput(ns("sub_datatable")),
+                shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), translate(language, "save"))
+              )
+            )
+          )
+        })
+
+        # Parameters for the datatable
+        action_buttons <- ""
+        editable_cols <- c("display_name", "unit")
+        sortable_cols <- c("id", "item_id", "name", "category")
+        centered_cols <- c("id", "item_id", "unit", "datetime", "action")
+
+        observeEvent(r$thesaurus_items_temp, {
+          # Restore datatable state
+          page_length <- isolate(input$sub_datatable_state$length)
+          start <- isolate(input$sub_datatable_state$start)
+  
+          # Render datatable
+          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "sub_datatable",
+            col_names =  get_col_names("thesaurus_items"), table = "thesaurus_items", action_buttons = action_buttons,
+            datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
+            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols)
+        })
+      })
      
   })
 }

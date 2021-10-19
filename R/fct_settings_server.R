@@ -198,6 +198,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' @param ns Shiny namespace
 #' @param language Language used (charater)
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
+#' @param output_name Name of the datatable output
 #' @param col_names A character vector containing colnames, already translated (character)
 #' @param table Name of a table of database (character)
 #' @param dropdowns Character vector with names of the dropdowns available in the datatable (character)
@@ -226,6 +227,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #'   output = output, r = r, 
 #'   ns = NS("settings_datamart"), language = "EN",
 #'   id = "settings_datamart",
+#'   output_name = "management_datatable"
 #'   col_names = col_names, 
 #'   table = "datamarts", 
 #'   dropdowns = "data_source",
@@ -240,7 +242,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' }
 
 render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", id = character(),
-  col_names = character(), table = character(), dropdowns = character(), action_buttons = character(),
+  output_name = character(), col_names = character(), table = character(), dropdowns = character(), action_buttons = character(),
   datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 1,
   editable_cols = integer(), sortable_cols = integer(), centered_cols = character(), column_widths = character()
 ){
@@ -259,7 +261,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   if (nrow(data) == 0) return({
     data <- tibble::tribble(~id, ~name, ~description,  ~datetime)
     names(data) <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"), translate(language, "datetime"))
-    output$management_datatable <- DT::renderDT(data, options = list(dom = 'tp'))
+    output[[output_name]] <- DT::renderDT(data, options = list(dom = 'tp'))
   })
   
   # If page is plugins, remove column description from datatable (it will be editable from datatable row options edition)
@@ -275,7 +277,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # and values corresponding to data_var / data variables names (eg data_sources)
 
   # Transform dropdowns columns in the dataframe to character
-  lapply(names(dropdowns), function(col_name) data %>% dplyr::mutate_at(col_name, as.character) ->> data)
+  if (length(dropdowns) != 0) lapply(names(dropdowns), function(col_name) data %>% dplyr::mutate_at(col_name, as.character) ->> data)
 
   # For each row of the dataframe :
   # - transform dropdowns columns to show dropdowns in Shiny app
@@ -288,49 +290,51 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
     # DROPDOWNS #
     #############
 
-    lapply(names(dropdowns), function(name){
-
-      # Particularity with thesaurus, data_source_id column can contains multiple values (multiSelect = TRUE)
-      # We have to split data_source_id column, to have an integer vector (saved with collapse by commas)
-
-      # name here is like "data_source_id"
-      # dropdowns[name] here is like "data_sources"
-      # so r[[dropdowns[[name]]]] is like r$data_sources, var containing data_sources data
-
-      if (id == "settings_thesaurus"){
-        value <- NULL
-        if (length(data[i, name] > 0)){
-          if (!TRUE %in% grepl("[a-zA-Z]", stringr::str_split(data[i, name], ", ") %>% unlist())){
-            value <- stringr::str_split(data[i, name], ", ") %>% unlist() %>% as.integer()
+    if (length(dropdowns) != 0){
+      lapply(names(dropdowns), function(name){
+  
+        # Particularity with thesaurus, data_source_id column can contains multiple values (multiSelect = TRUE)
+        # We have to split data_source_id column, to have an integer vector (saved with collapse by commas)
+  
+        # name here is like "data_source_id"
+        # dropdowns[name] here is like "data_sources"
+        # so r[[dropdowns[[name]]]] is like r$data_sources, var containing data_sources data
+  
+        if (id == "settings_thesaurus"){
+          value <- NULL
+          if (length(data[i, name] > 0)){
+            if (!TRUE %in% grepl("[a-zA-Z]", stringr::str_split(data[i, name], ", ") %>% unlist())){
+              value <- stringr::str_split(data[i, name], ", ") %>% unlist() %>% as.integer()
+            }
           }
+          data[i, name] <<- as.character(
+            div(
+              shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+                options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
+                value = value,
+                multiSelect = TRUE),
+                onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
+                style = "width:100%")
+          )
         }
-        data[i, name] <<- as.character(
-          div(
+        
+        if (id %in% c("settings_data_sources", "settings_datamarts", "settings_studies", "settings_subsets", "settings_plugins")) {
+          data[i, name] <<- as.character(
+            div(
+              # So ID is like "data_sources13" if ID = 13
             shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+              # To get options, convert data var to tibble (convert r$data_sources to list)
               options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
-              value = value,
-              multiSelect = TRUE),
+              # value is an integer, the value of the column like "data_source_id"
+              value = as.integer(data[i, name])),
+              # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
               onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
               style = "width:100%")
-        )
-      }
-      
-      if (id %in% c("settings_data_sources", "settings_datamarts", "settings_studies", "settings_subsets", "settings_plugins")) {
-        data[i, name] <<- as.character(
-          div(
-            # So ID is like "data_sources13" if ID = 13
-          shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
-            # To get options, convert data var to tibble (convert r$data_sources to list)
-            options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
-            # value is an integer, the value of the column like "data_source_id"
-            value = as.integer(data[i, name])),
-            # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
-            onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
-            style = "width:100%")
-        )
-      }
-      
-    })
+          )
+        }
+        
+      })
+    }
 
     ##################
     # ACTION BUTTONS #
@@ -444,7 +448,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   
   # So data is ready to be rendered in the datatable
 
-  output$management_datatable <- DT::renderDT(
+  output[[output_name]] <- DT::renderDT(
     # Data
     data,
 

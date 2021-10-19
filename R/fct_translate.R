@@ -676,7 +676,9 @@ get_translations <- function(){
             "EN", "public_access", "Public access",
             "FR", "public_access", "Accès public",
             "EN", "deleted_user", "Deleted user",
-            "FR", "deleted_user", "Utilisateur supprimé"
+            "FR", "deleted_user", "Utilisateur supprimé",
+            "EN", "r_console", "R console",
+            "FR", "r_console", "Console R"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

@@ -39,7 +39,7 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
       study_infos <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE id = ", r$chosen_study))
 
       r$patient_lvl_modules <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM patient_lvl_modules WHERE module_family_id = ",
-                                                            study_infos$patient_lvl_module_family_id, " AND deleted IS FALSE"))
+        study_infos$patient_lvl_module_family_id, " AND deleted IS FALSE"))
 
       # Modules without parent are set to level 1
       r$patient_lvl_modules <-
