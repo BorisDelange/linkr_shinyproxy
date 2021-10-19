@@ -261,7 +261,7 @@ mod_settings_app_database_server <- function(id, r, language){
             if (input$connection_type_request == "local") db <- r$local_db
             if (input$connection_type_request == "distant") db <- get_distant_db(r$local_db)
             if (grepl("select", tolower(request))) capture.output(DBI::dbGetQuery(db, request) %>% tibble::as_tibble()) -> result
-            if (grepl("update|delete|insert", tolower(request))) capture.output({
+            if (grepl("^update|delete|insert", tolower(request))) capture.output({
               DBI::dbSendStatement(db, request) -> query
               print(query)
               DBI::dbClearResult(query)

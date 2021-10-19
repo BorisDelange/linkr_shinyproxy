@@ -7,6 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
+
 mod_patient_and_aggregated_data_ui <- function(id, language, page){
   ns <- NS(id)
   result <- ""
@@ -229,9 +230,3 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
 
   })
 }
-
-## To be copied in the UI
-# mod_patient_and_aggregated_data_ui("patient_and_aggregated_data_ui_1")
-
-## To be copied in the server
-# mod_patient_and_aggregated_data_server("patient_and_aggregated_data_ui_1")

@@ -146,9 +146,9 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
         last_row_subsets + 3, translate(language, "subset_excluded_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE))
     
     # Add code for creating subset with all patients
-    code <- paste0("run_datamart_code(output, r, %datamart_id%)\n",
+    code <- paste0("run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n",
                    "patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)\n",
-                   "add_patients_to_subset(output, r, patients, %subset_id%, erase = FALSE)")
+                   "add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%, erase = FALSE)")
     DBI::dbAppendTable(r$db, "code",
       tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
         last_row_code + 1, "subset", last_row_subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
@@ -320,7 +320,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
                   value = value,
                   multiSelect = TRUE),
                   onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
-                  style = "width:100%")
+                  style = "width:200px")
             )
           }
           
@@ -335,7 +335,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
                 value = as.integer(data[i, name])),
                 # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
                 onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
-                style = "width:100%")
+                style = "width:200px")
             )
           }
           
@@ -819,10 +819,13 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
   
   # Reload r$code before querying
   update_r(r = r, table = "options", language = language)
-  code_id <- r$code %>% dplyr::filter(category == !!category, link_id == !!link_id) %>% dplyr::pull(id)
+  code_id <- r$code %>% dplyr::filter(category == !!category, link_id == !!link_id) %>% dplyr::pull(id) %>% as.integer()
   
   # Replace ' with '' and store in the database
+  output$test <- renderText(paste0("code_id = ", code_id, " // link_id = ", link_id, " // edited_code = ", stringr::str_replace_all(edited_code, "'", "''"), 
+                                   " // length = ", length(edited_code)))
   DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(edited_code, "'", "''"), "' WHERE id = ", code_id)) -> query
+  # DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(edited_code, "'", "''"), "' WHERE id = ", code_id)) -> query
   DBI::dbClearResult(query)
   r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
   

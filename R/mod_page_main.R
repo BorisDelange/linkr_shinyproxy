@@ -52,6 +52,7 @@ mod_page_main_ui <- function(id, language, page){
     }
     if (page == "settings/app_db") mod_settings_app_database_ui("settings_app_database", language, page) -> result
     if (page == "settings/users") mod_settings_users_ui("settings_users", language, page) -> result
+    if (page == "settings/r_console") mod_settings_r_console_ui("settings_r_console", language, page) -> result
     
     # Subpages of Settings / data management
     sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page_settings){
