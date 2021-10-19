@@ -489,16 +489,12 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
 
 #' Create cache for datatable data
 #' 
-#' @param output Shiny output variable, used to render message bars
 #' @param r Shiny r reactive value, to communicate between modules
 #' @param module_id ID of current page / module (character)
 #' @param thesaurus_id ID of thesaurus, which thesaurus items depend on (integer)
 #' @param category Category of cache, depending of the page of Settings (character)
 
-create_datatable_cache <- function(output, r, module_id = character(), thesaurus_id = integer(), category = character()){
-  
-  # Load original data
-  # data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE ORDER BY id"))
+create_datatable_cache <- function(r, module_id = character(), thesaurus_id = integer(), category = character()){
   
   # Load join between our data and the cache
   data <- DBI::dbGetQuery(r$db, paste0(
@@ -508,27 +504,13 @@ create_datatable_cache <- function(output, r, module_id = character(), thesaurus
    WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE
    ORDER BY t.id")) %>% tibble::as_tibble()
   
-  # data %>%
-  #   dplyr::left_join(
-  #     DBI::dbGetQuery(r$db, paste0("SELECT * FROM cache WHERE category = '", category, "'")) %>% 
-  #       dplyr::select(id = link_id, action = value),
-  #     by = "id") -> data
-  
   # If there are missing data in the cache, reload cache 
   
   reload_cache <- FALSE
-  # Join not done
-  # if ("action" %not_in% names(data)) reload_cache <- TRUE
-  # if ("action" %in% names(data)){
-    # Or join done but missing values
   if (NA_character_ %in% data$action | "" %in% data$action) reload_cache <- TRUE
-  # }
   
   # Reload cache if necessary
   if (reload_cache){
-
-    # Notification to user
-    # show_message_bar(output = output, id = 2, message = "creating_cache", type = "severeWarning", language = language)
 
     # Reload data
     data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE ORDER BY id"))
@@ -541,7 +523,7 @@ create_datatable_cache <- function(output, r, module_id = character(), thesaurus
       data <- data %>% dplyr::rowwise() %>% dplyr::mutate(action = as.character(
         tagList(
           shiny::actionButton(paste0("sub_delete_", id), "", icon = icon("trash-alt"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-sub_deleted_pressed', this.id, {priority: 'event'})")))))
+            onclick = paste0("Shiny.setInputValue('", module_id, "-thesaurus_items_deleted_pressed', this.id, {priority: 'event'})")))))
     }
     if (category == "modules"){
       data <- data %>% dplyr::rowwise() %>% dplyr::mutate(action = as.character(
@@ -674,6 +656,9 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
 #' }
 
 render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), language = "EN"){
+  prefix <- ""
+  if (table == "thesaurus_items") prefix <- "thesaurus_items_"
+  
   dialogContentProps <- list(
     type = 0,
     title = translate(language, paste0(table, "_delete")),
@@ -682,12 +667,12 @@ render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = shiny
   )
   shiny.fluent::Dialog(
     hidden = !r[[paste0(table, "_delete_dialog")]],
-    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('hide_dialog', Math.random()); }")),
+    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", prefix, "hide_dialog', Math.random()); }")),
     dialogContentProps = dialogContentProps,
     modalProps = list(),
     shiny.fluent::DialogFooter(
-      shiny.fluent::PrimaryButton.shinyInput(ns("delete_confirmed"), text = translate(language, "delete")),
-      shiny.fluent::DefaultButton.shinyInput(ns("delete_canceled"), text = translate(language, "dont_delete"))
+      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "delete_confirmed")), text = translate(language, "delete")),
+      shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "delete_canceled")), text = translate(language, "dont_delete"))
     )
   )
 }
@@ -705,8 +690,8 @@ render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = shiny
 #' delete_settings_datatable_row(output = output, r = r, ns = ns, language = "EN", row_deleted = 13, table = "datamarts")
 #' }
 
-delete_settings_datatable_row <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN",
-  row_deleted = integer(), table = character()){
+delete_settings_datatable_row <- function(output, id = character(), r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN",
+  link_id = integer(), category = character(), row_deleted = integer(), table = character()){
   
   # Close dialog box
   r[[paste0(table, "_delete_dialog")]] <- FALSE
@@ -715,7 +700,11 @@ delete_settings_datatable_row <- function(output, r = shiny::reactiveValues(), n
   DBI::dbSendStatement(r$db, paste0("UPDATE ", table, " SET deleted = TRUE WHERE id = ", row_deleted))
   
   # Update r vars
-  update_r(r = r, table = table, language = language)
+  if (table == "thesaurus_items"){
+    r$thesaurus_items <- create_datatable_cache(r = r, module_id = id, thesaurus_id = link_id, category = category)
+    r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+  }
+  if (table != "thesaurus_items") update_r(r = r, table = table, language = language)
   
   # Notification to user
   show_message_bar(output = output, id = 3, paste0(get_singular(word = table), "_deleted"), type ="severeWarning", language = language)

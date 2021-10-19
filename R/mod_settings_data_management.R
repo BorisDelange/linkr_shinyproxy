@@ -307,6 +307,30 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           delete_settings_datatable_row(output = output, r = r, ns = ns, language = language, row_deleted = row_deleted, table = table)
         })
         
+        # The same for thesaurus_items / sub_datatable
+        if (table == "thesaurus"){
+          observeEvent(r$thesaurus_items_delete_dialog , {
+            output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = "thesaurus_items", language = language))
+          })
+          
+          # Whether to close or not delete dialog box
+          observeEvent(input$thesaurus_items_hide_dialog, r$thesaurus_items_delete_dialog <- FALSE)
+          observeEvent(input$thesaurus_items_delete_canceled, r$thesaurus_items_delete_dialog <- FALSE)
+          observeEvent(input$thesaurus_items_deleted_pressed, r$thesaurus_items_delete_dialog <- TRUE)
+          
+          # When the delete is confirmed...
+          observeEvent(input$thesaurus_items_delete_confirmed, {
+            
+            # Get value of deleted row
+            row_deleted <- as.integer(substr(input$thesaurus_items_deleted_pressed, nchar("sub_delete_") + 1, nchar(input$thesaurus_items_deleted_pressed)))
+            
+            # Delete row in DB table
+            link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
+            delete_settings_datatable_row(output = output, id = id, r = r, ns = ns, language = language, 
+              link_id = link_id, category = "data_management", row_deleted = row_deleted, table = "thesaurus_items")
+          })
+        }
+        
       ##########################################
       # Edit options by selecting a row        #
       ##########################################
@@ -406,7 +430,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # Get link id
         link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
 
-        r$thesaurus_items <- create_datatable_cache(output = output, r = r, module_id = id, thesaurus_id = link_id, category = "data_management")
+        r$thesaurus_items <- create_datatable_cache(r = r, module_id = id, thesaurus_id = link_id, category = "data_management")
         r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
 
         # Display sub_datatable card
