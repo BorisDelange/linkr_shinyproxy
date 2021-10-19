@@ -7,12 +7,13 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
+
 mod_page_sidenav_ui <- function(id, language, page){
   ns <- NS(id)
   result <- ""
   
   ##########################################
-  # Fluent / Home                          #
+  # Home                                   #
   ##########################################
   
   if (grepl("^home", page)){
@@ -21,47 +22,54 @@ mod_page_sidenav_ui <- function(id, language, page){
         groups = list(
           list(links = list(
             list(name = translate(language, "datamarts_studies"), key = "datamarts_studies",
-                 url = shiny.router::route_link("home/datamarts_studies")),
-            list(name = translate(language, "messages"), key = "messages",
-                 url = shiny.router::route_link("home/messages"))
+                 url = shiny.router::route_link("home/datamarts_studies"))
             )
           )
         ),
         initialSelectedKey = "datamarts_studies",
-        selectedKey = substr(page, nchar("home") + 2, 100)
+        selectedKey = substr(page, nchar("home") + 2, 100),
+        styles = list(
+          root = list(
+            height = "100%",
+            boxSizing = "border-box",
+            overflowY = "auto"
+          )
+        )
       )
     ) -> result
   }
   
   ##########################################
-  # Fluent / Patient-level data            #
+  # Patient-level data                     #
   ##########################################
   
   if (page == "patient_level_data"){
     div(class = "sidenav",
-      make_dropdown(language, ns, "datamart"),
-      make_dropdown(language, ns, "study"),
-      make_dropdown(language, ns, "subset"),
-      htmltools::br(), htmltools::hr(),
-      make_dropdown(language, ns, "patient"),
-      make_dropdown(language, ns, "stay")
+      make_dropdown(language = language, ns = ns, label = "datamart"),
+      make_dropdown(language = language, ns = ns, label = "study"),
+      make_dropdown(language = language, ns = ns, label = "subset"),
+      br(), hr(),
+      make_dropdown(language = language, ns = ns, label = "patient"),
+      make_dropdown(language = language, ns = ns, label = "stay"),
+      make_dropdown(language = language, ns = ns, label = "status"), br(), hr(),
+      uiOutput(ns("patient_info"))
     ) -> result
   }
   
   ##########################################
-  # Fluent / Aggregated data               #
+  # Aggregated data                        #
   ##########################################
   
   if (page == "aggregated_data"){
     div(class = "sidenav",
-      make_dropdown(language, ns, "datamart"),
-      make_dropdown(language, ns, "study"),
-      make_dropdown(language, ns, "subset"),
+      make_dropdown(language = language, ns = ns, label = "datamart"),
+      make_dropdown(language = language, ns = ns, label = "study"),
+      make_dropdown(language = language, ns = ns, label = "subset"),
     ) -> result
   }
   
   ##########################################
-  # Fluent / Settings                      #
+  # Settings                               #
   ##########################################
   
   if (grepl("^settings", page)){
@@ -92,7 +100,6 @@ mod_page_sidenav_ui <- function(id, language, page){
               selectedKey = substr(page, nchar("settings") + 2, 100),
               isExpanded = TRUE),
             list(name = translate(language, "log"), key = "log", url = shiny.router::route_link("settings/log"))
-            # list(name = 'Analysis', url = '#!/other', key = 'analysis', icon = 'AnalyticsReport'),
           ))
         ),
         initialSelectedKey = "general",
@@ -105,45 +112,6 @@ mod_page_sidenav_ui <- function(id, language, page){
           )
         )
       )
-    ) -> result
-  }
-  
-  ##########################################
-  # Fluent / Help                          #
-  ##########################################
-  
-  if (grepl("^help", page)){
-    div(class = "sidenav",
-        shiny.fluent::Nav(
-          groups = list(
-            list(links = list(
-              list(name = translate(language, "get_started"), key = "get_started", url = shiny.router::route_link("help/get_started")),
-              list(name = translate(language, "user_side"), key = "user_side", links = list(
-                list(name = translate(language, "data_management"), key = "user_data_management", url = shiny.router::route_link("help/user_data_management")),
-                list(name = translate(language, "modules_plugins"), key = "user_modules_plugins", url = shiny.router::route_link("help/user_modules_plugins")),
-                list(name = translate(language, "patient_level_data"), key = "user_patient_lvl_data", url = shiny.router::route_link("help/user_patient_lvl_data")),
-                list(name = translate(language, "aggregated_data"), key = "user_aggregated_data", url = shiny.router::route_link("help/user_aggregated_data"))
-              ),
-              initialSelectedKey = "data_management", selectedKey = substr(page, nchar("help") + 2, 100), isExpanded = TRUE),
-              list(name = translate(language, "dev_side"), key = "dev_side", links = list(
-                list(name = translate(language, "app_db"), key = "dev_app_db", url = shiny.router::route_link("help/dev_app_db")),
-                list(name = translate(language, "users"), key = "dev_users", url = shiny.router::route_link("help/dev_users")),
-                list(name = translate(language, "data_management"), key = "dev_data_management", url = shiny.router::route_link("help/dev_data_management")),
-                list(name = translate(language, "modules_plugins"), key = "dev_modules_plugins", url = shiny.router::route_link("help/dev_modules_plugins"))
-              ),
-              initialSelectedKey = "data_management", selectedKey = substr(page, nchar("help") + 2, 100), isExpanded = TRUE)
-            ))
-          ),
-          initialSelectedKey = "get_started",
-          selectedKey = substr(page, nchar("help") + 2, 100),
-          styles = list(
-            root = list(
-              height = "100%",
-              boxSizing = "border-box",
-              overflowY = "auto"
-            )
-          )
-        )
     ) -> result
   }
   
@@ -162,19 +130,23 @@ mod_page_sidenav_server <- function(id, r, language){
     ##########################################
     
     observeEvent(r$datamarts, {
+      
       # Datamarts to which the user has access
       datamarts_allowed <- 
         r$options %>% 
         dplyr::filter(category == "datamart" & name == "user_allowed_read" & value_num == r$user_id) %>%
         dplyr::pull(link_id)
       datamarts <- r$datamarts %>% dplyr::filter(id %in% datamarts_allowed)
+      
       # Update dropdown
       shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(datamarts, "id", "name", rm_deleted_rows = TRUE))
     })
     
     observeEvent(input$datamart, {
+      
       # Studies depending on the chosen datamart
       studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
+      
       # Studies to which the user has access
       studies_allowed <-
         r$options %>%
@@ -193,7 +165,7 @@ mod_page_sidenav_server <- function(id, r, language){
       shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
       shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
       
-      # If studies is empty...
+      # If studies is empty
       if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available"))
       
       if (nrow(studies) > 0){
@@ -201,7 +173,7 @@ mod_page_sidenav_server <- function(id, r, language){
         # Update dropdowns
         shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE))
         
-        # Code will be run from mod_patient_and_aggregated_data.R
+        # Code of datamart will be run from mod_patient_and_aggregated_data.R
       }
     })
     
@@ -215,7 +187,7 @@ mod_page_sidenav_server <- function(id, r, language){
       shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
       shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
       
-      # If subsets si empty...
+      # If subsets si empty
       if (nrow(subsets) == 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available"))
       if (nrow(subsets) > 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = tibble_to_list(subsets, "id", "name", rm_deleted_rows = TRUE))
     })
@@ -226,15 +198,47 @@ mod_page_sidenav_server <- function(id, r, language){
       # Update dropdown
       shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
       
-      if (nrow(r$data_patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))
-      if (nrow(r$data_patients) > 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = tibble_to_list(r$data_patients, "subject_id", "subject_id"))
+      if (nrow(r$patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))
+      if (nrow(r$patients) > 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", 
+        options = convert_tibble_to_list(data = r$patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender, " - ", age, " ", translate(language, "years"))), 
+          key_col = "patient_id", text_col = "name_display"))
+      # }
     })
     
     observeEvent(input$patient, {
       r$chosen_patient <- input$patient
       
       # Load stays of the patient & update dropdown
-      shiny.fluent::updateDropdown.shinyInput(session, "stay", options = tibble_to_list(r$data_patients, "subject_id", "subject_id"))
+      shiny.fluent::updateDropdown.shinyInput(session, "stay",
+        options = convert_tibble_to_list(data = r$stays %>% dplyr::mutate(name_display = paste0(unit_name, " - ", 
+          format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", translate(language, "to"), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
+          key_col = "stay_id", text_col = "name_display"))
+      
+      # Update patient informations on sidenav
+      
+      style <- "display:inline-block; width:60px; font-weight:bold;"
+      output$patient_info <- renderUI({
+        tagList(span(translate(language, "age"), style = style), r$chosen_patient %>% dplyr::pull(age), " ", translate(language, "years"), br(),
+        span(translate(language, "gender"), style = style), r$chosen_patient %>% dplyr::pull(gender) , br(), br(),
+        span(translate(language, "unit"), style = style), "", br(),
+        span(translate(language, "from"), style = style), "", br(),
+        span(translate(language, "to"), style = style), "")
+      })
+    })
+    
+    observeEvent(input$stay, {
+      r$chosen_stay <- input$stay
+      
+      # Update patient informations on sidenav
+      
+      style <- "display:inline-block; width:60px; font-weight:bold;"
+      output$patient_info <- renderUI({
+        tagList(span(translate(language, "age"), style = style), r$chosen_patient %>% dplyr::pull(age), " ", translate(language, "years"), br(),
+          span(translate(language, "gender"), style = style), r$chosen_patient %>% dplyr::pull(gender) , br(), br(),
+          span(translate(language, "unit"), style = style),  r$chosen_stay %>% dplyr::pull(unit_name), br(),
+          span(translate(language, "from"), style = style), r$chosen_stay %>% dplyr::pull(admission_datetime), br(),
+          span(translate(language, "to"), style = style), r$chosen_stay %>% dplyr::pull(discharge_datetime))
+      })
     })
     
     
@@ -259,7 +263,7 @@ mod_page_sidenav_server <- function(id, r, language){
         dplyr::pull(link_id)
       studies <- studies %>% dplyr::filter(id %in% studies_allowed)
       shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE),
-                                              value = r$chosen_study)
+        value = r$chosen_study)
     })
     
     observeEvent(r$chosen_subset, {

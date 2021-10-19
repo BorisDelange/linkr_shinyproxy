@@ -680,7 +680,19 @@ get_translations <- function(){
             "EN", "r_console", "R console",
             "FR", "r_console", "Console R",
             "EN", "creating_cache", "First load of thesaurus items : creating cache, may take a few seconds",
-            "FR", "creating_cache", "Premier chargement des items de ce thésaurus : création du cache, peut prendre quelques secondes"
+            "FR", "creating_cache", "Premier chargement des items de ce thésaurus : création du cache, peut prendre quelques secondes",
+            "EN", "age", "Age",
+            "FR", "age", "Age",
+            "EN", "gender", "Gender",
+            "FR", "gender", "Sexe",
+            "EN", "years", "years",
+            "FR", "years", "ans",
+            "EN", "status", "Status",
+            "FR", "status", "Statut",
+            "EN", "from", "From",
+            "FR", "from", "Du",
+            "EN", "to", "To",
+            "FR", "to", "Au"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

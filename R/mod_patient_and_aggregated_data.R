@@ -13,8 +13,7 @@ mod_patient_and_aggregated_data_ui <- function(id, language, page){
   result <- ""
   
   div(class = "main",
-    uiOutput(ns("message_bar1")), uiOutput(ns("message_bar2")), uiOutput(ns("message_bar3")), 
-    uiOutput(ns("message_bar4")), uiOutput(ns("message_bar5")),
+    render_settings_default_elements(ns = ns),
     uiOutput(ns("main"))
   )
 }
@@ -22,8 +21,9 @@ mod_patient_and_aggregated_data_ui <- function(id, language, page){
 #' patient_and_aggregated_data Server Functions
 #'
 #' @noRd 
+
 mod_patient_and_aggregated_data_server <- function(id, r, language){
-  moduleServer( id, function(input, output, session){
+  moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     # Once a datamart is chosen, load its data
@@ -195,37 +195,37 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
 
       module_elements <- r$patient_lvl_module_elements %>% dplyr::filter(module_id == r$selected_key)
 
-      if (nrow(module_elements) != 0){
-
-        # Get module element group_id
-        distinct_groups <- unique(module_elements$group_id)
-
-        # Loop over distinct cards
-        sapply(distinct_groups, function(loop_group_id){
-          # Get thesaurus items with thesaurus own item_id
-          thesaurus_items <- module_elements %>% dplyr::filter(group_id == loop_group_id) %>%
-            dplyr::select(thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit) %>%
-            dplyr::inner_join(r$thesaurus_items %>% dplyr::select(thesaurus_item_id = id, item_id), by = "thesaurus_item_id") %>%
-            dplyr::mutate_at("item_id", as.integer)
-
-          plugin_id <- module_elements %>% dplyr::filter(group_id == loop_group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
-          if (length(plugin_id) != 0) code_server_card <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_server") %>% dplyr::pull(code)
-
-          # Try to run plugin server code
-          # ID of UI element is in the following format : "group_[ID]"
-          tryCatch({
-            code_server_card <- code_server_card %>%
-              stringr::str_replace_all("%group_id%", as.character(loop_group_id)) %>%
-              stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient))
-            eval(parse(text = code_server_card))
-          },
-          error = function(e){
-            plugin_name <- r$plugins %>% dplyr::filter(id == plugin_id) %>% dplyr::pull(name)
-            output$message_bar2 <- show_message_bar(1, paste0(translate(language, "error_run_plugin_server_code"), " (group_id = ", loop_group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, ")"), "severeWarning", language) 
-          }
-          )
-        })
-      }
+      # if (nrow(module_elements) != 0){
+      # 
+      #   # Get module element group_id
+      #   distinct_groups <- unique(module_elements$group_id)
+      # 
+      #   # Loop over distinct cards
+      #   sapply(distinct_groups, function(loop_group_id){
+      #     # Get thesaurus items with thesaurus own item_id
+      #     thesaurus_items <- module_elements %>% dplyr::filter(group_id == loop_group_id) %>%
+      #       dplyr::select(thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit) %>%
+      #       dplyr::inner_join(r$thesaurus_items %>% dplyr::select(thesaurus_item_id = id, item_id), by = "thesaurus_item_id") %>%
+      #       dplyr::mutate_at("item_id", as.integer)
+      # 
+      #     plugin_id <- module_elements %>% dplyr::filter(group_id == loop_group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
+      #     if (length(plugin_id) != 0) code_server_card <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_server") %>% dplyr::pull(code)
+      # 
+      #     # Try to run plugin server code
+      #     # ID of UI element is in the following format : "group_[ID]"
+      #     tryCatch({
+      #       code_server_card <- code_server_card %>%
+      #         stringr::str_replace_all("%group_id%", as.character(loop_group_id)) %>%
+      #         stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient))
+      #       eval(parse(text = code_server_card))
+      #     },
+      #     error = function(e){
+      #       plugin_name <- r$plugins %>% dplyr::filter(id == plugin_id) %>% dplyr::pull(name)
+      #       output$message_bar2 <- show_message_bar(1, paste0(translate(language, "error_run_plugin_server_code"), " (group_id = ", loop_group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, ")"), "severeWarning", language) 
+      #     }
+      #     )
+      #   })
+      # }
     })
 
   })
