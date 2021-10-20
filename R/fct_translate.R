@@ -700,7 +700,11 @@ get_translations <- function(){
             "EN", "num_rows", "Nb of rows",
             "FR", "num_rows", "Nb de lignes",
             "EN", "show_only_used_items", "Show only used items in this datamart",
-            "FR", "show_only_used_items", "N'afficher que les items utilisés dans ce datamart"
+            "FR", "show_only_used_items", "N'afficher que les items utilisés dans ce datamart",
+            "EN", "no_modules_to_show", "There are no modules set for this study. Configure modules in parameters.",
+            "FR", "no_modules_to_show", "Il n'y a pas de module configuré pour cette étude. Configurer les modules dans les paramètres.",
+            "EN", "no_thesaurus_item_to_show", "No thesaurus items to show in this module",
+            "FR", "no_thesaurus_item_to_show", "Pas d'items de thésaurus à afficher pour ce module"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

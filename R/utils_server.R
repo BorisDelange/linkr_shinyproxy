@@ -58,13 +58,13 @@ get_col_names <- function(table_name = character(), language = "EN"){
   }
   
   if (table_name == "thesaurus_items"){
-    result <- c(translate(language, "id"), translate(language, "item_id"), translate(language, "name"),
+    result <- c(translate(language, "item_id"), translate(language, "name"),
       translate(language, "display_name"), translate(language, "category"), translate(language, "unit"),
       translate(language, "datetime"), translate(language, "action"))
   }
   
   if (table_name == "thesaurus_items_with_counts"){
-    result <- c(translate(language, "id"), translate(language, "item_id"), translate(language, "name"),
+    result <- c(translate(language, "item_id"), translate(language, "name"),
       translate(language, "display_name"), translate(language, "category"), translate(language, "unit"),
       translate(language, "datetime"), translate(language, "num_patients"), translate(language, "num_rows"), translate(language, "action"))
   }

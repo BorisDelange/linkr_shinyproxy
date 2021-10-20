@@ -180,6 +180,7 @@ make_toggle <- function(language = "EN", ns = shiny::NS(), label = character(), 
 #' @description Displays an error message on the top of the page
 #' @details Choose different warning IDs on one page, to allows multiple messages to be displayed.
 #' The different possible types are : c("info", "error", "blocked", "severeWarning", "success", "warning")
+#' @param output Shiny output variable
 #' @param id ID of the warning output used (integer)
 #' @param message message that will be displayed, after translation (character)
 #' @param type type of message bar displayed (reference to Microsoft MessageBarType enum) (character)

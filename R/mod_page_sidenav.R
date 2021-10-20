@@ -160,10 +160,11 @@ mod_page_sidenav_server <- function(id, r, language){
       # Save value in r$chosen_dropdown, to update patient-level data dropdowns AND aggregated data dropdowns
       r$chosen_datamart <- input$datamart
       
-      # Update dropdowns
+      # Reset dropdowns & uiOutput
       shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL)
       shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
       shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
+      output$patient_info <- renderUI("")
       
       # If studies is empty
       if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available"))
@@ -183,9 +184,10 @@ mod_page_sidenav_server <- function(id, r, language){
       # Subsets depending on the chosen study
       subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
       
-      # Update dropdowns
+      # Reset dropdowns & uiOutput
       shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
       shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
+      output$patient_info <- renderUI("")
       
       # If subsets si empty
       if (nrow(subsets) == 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available"))
@@ -195,8 +197,9 @@ mod_page_sidenav_server <- function(id, r, language){
     observeEvent(input$subset, {
       r$chosen_subset <- input$subset
       
-      # Update dropdown
+      # Reset dropdown & uiOutput
       shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
+      output$patient_info <- renderUI("")
       
       if (nrow(r$patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))
       if (nrow(r$patients) > 0){
@@ -211,6 +214,7 @@ mod_page_sidenav_server <- function(id, r, language){
     })
     
     observeEvent(input$patient, {
+      
       r$chosen_patient <- input$patient
       
       if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))

@@ -268,7 +268,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # If page is plugins, remove column description from datatable (it will be editable from datatable row options edition)
   # /!\ Careful : it changes the index of columns, use to update informations directy on datatable
   if (table == "plugins") data <- data %>% dplyr::select(-description)
-  if (table == "thesaurus_items") data <- data %>% dplyr::select(-thesaurus_id)
+  if (table == "thesaurus_items") data <- data %>% dplyr::select(-id, -thesaurus_id)
   
   # Add a column action in the DataTable
   # Action column is already loaded for thesaurus_items (cache system)
@@ -745,8 +745,12 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   DBI::dbClearResult(query)
   
   # If action in columns, remove before insert into database (for thesaurus_items with cache system)
-  if ("action" %in% names(r[[paste0(table, "_temp")]])) DBI::dbAppendTable(r$db, table, r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified, -action))
-  else DBI::dbAppendTable(r$db, table, r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
+  # Same with count_items_rows (and count_patients_rows, always with count_items_rows)
+  data <- r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
+  if ("action" %in% names(data)) data <- data %>% dplyr::select(-action)
+  if ("count_items_rows" %in% names(data)) data <- data %>% dplyr::select(-count_items_rows, -count_patients_rows)
+  
+  DBI::dbAppendTable(r$db, table, data)
   
   # Notification to user
   show_message_bar(output, 2, "modif_saved", "success", language)

@@ -268,7 +268,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
         observeEvent(input$sub_datatable_cell_edit, {
           edit_info <- input$sub_datatable_cell_edit
-          edit_info$col <- edit_info$col + 1 # We have removed thesaurus_id col, so need to add one to col index
+          edit_info$col <- edit_info$col + 2 # We have removed id & thesaurus_id cols, so need to add two to col index
           r$thesaurus_items_temp <- DT::editData(r$thesaurus_items_temp, edit_info, rownames = FALSE)
           r$thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
         })
@@ -448,10 +448,12 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             make_card(tagList(translate(language, "thesaurus_items_management"), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
               div(
                 shiny.fluent::Stack(
-                  horizontal = TRUE, #tokens = list(childrenGap = 50),
+                  horizontal = TRUE, tokens = list(childrenGap = 50),
                   make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
                     options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name", null_value = TRUE)),
-                  make_toggle(language = language, ns = ns, label = "show_only_used_items", value = TRUE)#,
+                  div(strong(translate(language, "show_only_used_items"), style = "display:block; padding-bottom:12px;"),
+                    shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")
+                  # make_toggle(language = language, ns = ns, label = "show_only_used_items", value = TRUE)#,
                   # style = "display:inline;"
                 ),
                 DT::DTOutput(ns("sub_datatable")),
@@ -515,7 +517,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # Parameters for the datatable
           action_buttons <- "delete"
           editable_cols <- c("display_name", "unit")
-          searchable_cols <- c("name", "display_name", "category")
+          searchable_cols <- c("name", "display_name", "category", "unit")
           
           # If we have count cols
           if ("count_patients_rows" %in% names(r$thesaurus_items)){
