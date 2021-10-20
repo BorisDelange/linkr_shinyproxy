@@ -79,6 +79,11 @@ body {
   max-width: calc(100% - 40px);
 }
 
+/* Search column in datatable, with type is factor */
+td[data-type="factor"] input {
+  width: 200px !important;
+}
+
 .input_title_first {
   margin: 0px 0px 10px 0px;
   font-weight: bold;

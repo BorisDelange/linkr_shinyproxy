@@ -694,7 +694,13 @@ get_translations <- function(){
             "EN", "from", "From",
             "FR", "from", "Du",
             "EN", "to", "To",
-            "FR", "to", "Au"
+            "FR", "to", "Au",
+            "EN", "num_patients", "Nb of patients",
+            "FR", "num_patients", "Nb de patients",
+            "EN", "num_rows", "Nb of rows",
+            "FR", "num_rows", "Nb de lignes",
+            "EN", "show_only_used_items", "Show only used items in this datamart",
+            "FR", "show_only_used_items", "N'afficher que les items utilisés dans ce datamart"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

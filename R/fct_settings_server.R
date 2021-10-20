@@ -244,7 +244,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", id = character(),
   output_name = character(), col_names = character(), table = character(), dropdowns = character(), action_buttons = character(),
   datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 1,
-  editable_cols = integer(), sortable_cols = integer(), centered_cols = character(), column_widths = character()
+  editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), filter = FALSE,
+  column_widths = character()
 ){
   
   # Translation for datatable
@@ -438,6 +439,17 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   sapply(centered_cols, function(col){
     centered_cols_vec <<- c(centered_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
+  
+  # Which cols are searchable
+  searchable_cols_vec <- integer()
+  sapply(searchable_cols, function(col){
+    searchable_cols_vec <<- c(searchable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  non_searchable_cols_vec <- cols[!cols %in% searchable_cols_vec]
+  
+  # If filter is TRUE
+  if (filter) filter_list <- list(position = "top")
+  if (!filter) filter_list <- list()
 
   column_defs <- list()
   # Add columns_widths to column_defs
@@ -449,6 +461,9 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   
   # Add sortables cols to column_defs
   column_defs <- rlist::list.append(column_defs, list(sortable = FALSE, targets = non_sortable_cols_vec))
+  
+  # Add searchable cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(searchable = FALSE, targets = non_searchable_cols_vec))
 
   # Rename cols if lengths correspond
   if (length(col_names) == length(names(data))) names(data) <- col_names
@@ -468,7 +483,8 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
       language = dt_translation
     ),
     editable = list(target = "cell", disable = list(columns = non_editable_cols_vec)),
-
+    filter = filter_list,
+    
     # Default options
     rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
 
@@ -596,10 +612,19 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
       
       count_patients_rows <- count_patients_rows %>% 
         dplyr::inner_join(r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% 
-          dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name") %>% 
-        dplyr::select(-thesaurus_name, -thesaurus_id)
+          dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
       
-      data <- data %>% dplyr::left_join(count_patients_rows, by = "item_id") %>% dplyr::rename(value = count_patients_rows)
+      if (nrow(count_patients_rows) != 0){
+        count_patients_rows <- count_patients_rows %>% dplyr::select(-thesaurus_name, -thesaurus_id)
+        data <- data %>% dplyr::left_join(count_patients_rows, by = "item_id") %>% dplyr::rename(value = count_patients_rows)
+      }
+      
+      if (nrow(count_patients_rows) == 0) data <- data %>% dplyr::mutate(value = 0)
+      
+      # Set 0 when value is na
+      # Convert value to character
+      data <- data %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", T ~ value))
+      
     }
     
     if (category == "delete"){
