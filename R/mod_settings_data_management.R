@@ -242,6 +242,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # Centered columns
           centered_cols <- c("id", "data_source_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "creator", "datetime", "action")
           
+          # Searchable_cols
+          searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
+          
           # Restore datatable state
           page_length <- isolate(input$management_datatable_state$length)
           start <- isolate(input$management_datatable_state$start)
@@ -250,7 +253,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
             col_names =  get_col_names(table), table = table, dropdowns = dropdowns, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-            editable_cols = c("name", "description"), sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths)
+            editable_cols = c("name", "description"), sortable_cols = sortable_cols, centered_cols = centered_cols,
+            filter = TRUE, searchable_cols = searchable_cols, column_widths = column_widths)
         })
     
       ##########################################

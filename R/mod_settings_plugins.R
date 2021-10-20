@@ -230,6 +230,82 @@ mod_settings_plugins_server <- function(id, r, language){
         output$code_result_server <- renderText("")
       })
       
+      # When a datamart is chosen
+      observeEvent(input$datamart, {
+        
+        # Try to load datamart
+        tryCatch(run_datamart_code(output, r, datamart_id = input$datamart, language = language),
+          error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language), 
+          warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
+        
+        # Update patient dropdown
+        if (nrow(r$patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))
+        
+        if (nrow(r$patients) != 0){
+          shiny.fluent::updateDropdown.shinyInput(session, "patient", 
+            options = convert_tibble_to_list(data = r$patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender, " - ", age, " ", translate(language, "years"))), 
+              key_col = "patient_id", text_col = "name_display"))}
+        
+        # Update also thesaurus dropdown, depending on data source
+        # Reset thesaurus items dropdown
+        data_source <- r$datamarts %>% dplyr::filter(id == input$datamart) %>% dplyr::pull(data_source_id) %>% as.character()
+        thesaurus <- r$thesaurus %>% dplyr::filter(data_source %in% data_source_id)
+        shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name"))
+        shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", options = list())
+      })
+      
+      # When a patient is chosen
+      observeEvent(input$patient, {
+        
+        if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))
+        if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) > 0){
+          
+          # Order stays by admission datetime
+          stays <- r$stays %>% dplyr::filter(patient_id == input$patient) %>% dplyr::arrange(admission_datetime)
+          
+          # Load stays of the patient & update dropdown
+          shiny.fluent::updateDropdown.shinyInput(session, "stay",
+            options = convert_tibble_to_list(data = stays %>% dplyr::mutate(name_display = paste0(unit_name, " - ", 
+              format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", translate(language, "to"), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
+            key_col = "stay_id", text_col = "name_display"))
+        }
+      })
+      
+      # When a thesaurus is chosen
+      observeEvent(input$thesaurus, {
+        # Get thesaurus items of current thesaurus
+        thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", input$thesaurus)) %>%
+          dplyr::mutate(name = paste0(name, " - ", item_id))
+        # Update dropdown
+        shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items",
+          options = convert_tibble_to_list(data = thesaurus_items, key_col = "id", text_col = "name"))
+        
+        # Set to zero r$selected_thesaurus_items
+        r$selected_thesaurus_items <- tibble::tribble(~key, ~text)
+      })
+      
+      # When add button is clicked
+      observeEvent(input$add_thesaurus_item, {
+        if (input$thesaurus_items$text %not_in% r$selected_thesaurus_items$text){
+          r$selected_thesaurus_items <- r$selected_thesaurus_items %>% dplyr::bind_rows(tibble::tribble(~key, ~text, input$thesaurus_items$key, input$thesaurus_items$text))}
+      })
+      
+      # When remove button is clicked
+      observeEvent(input$remove_thesaurus_item, {
+        r$selected_thesaurus_items <- r$selected_thesaurus_items %>% dplyr::filter(key != input$thesaurus_items$key)
+      })
+      
+      # Render result of selected items
+      observeEvent(r$selected_thesaurus_items, {
+        output$thesaurus_items_selected <- renderText(paste0(translate(language, "thesaurus_items_selected"), " : ", toString(r$selected_thesaurus_items$text)))
+      })
+      
+      # When reset button is clicked
+      observeEvent(input$reset_thesaurus_items, {
+        # Reset r$selected_thesaurus_items
+        r$selected_thesaurus_items <- tibble::tribble(~key, ~text)
+      })
+      
       # When save button is clicked
       observeEvent(input$edit_code_save, {
         

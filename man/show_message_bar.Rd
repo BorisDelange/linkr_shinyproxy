@@ -14,6 +14,8 @@ show_message_bar(
 )
 }
 \arguments{
+\item{output}{Shiny output variable}
+
 \item{id}{ID of the warning output used (integer)}
 
 \item{message}{message that will be displayed, after translation (character)}

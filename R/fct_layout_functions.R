@@ -86,6 +86,7 @@ make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(
 #' make_dropdown(language = "EN", ns = NS("settings_datamarts"), label = "my_dropdown", id = "my_dropdown",
 #'   options = options, multiSelect = FALSE, value = "my_key1", width = "100%")
 #' }
+
 make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
   id = NA_character_, value = NULL, width = NULL){
   
@@ -97,6 +98,33 @@ make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character()
     div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect), style = style)
   )
 }
+
+#' Make a shiny.fluent combo box
+#' 
+#' @param language Language used (character)
+#' @param ns Shiny namespace
+#' @param id ID used for the input (character)
+#' @param label Label used for the input (character)
+#' @param options Options available for the dropdown (list)
+#' @param value Value of the toggle : TRUE or FALSE (logical)
+#' @param multiSelect Is multiselection of options is possible ? (logical)
+#' @param width Width of the dropdown, CSS code so "300px" or "100\%" are accepted
+#' @param allowFreeForm Allows user to enter free text, not provided by options (logical)
+
+make_combobox <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = TRUE,
+  allowFreeform = FALSE, autoComplete = "on", id = NA_character_, value = NULL, width = NULL){
+  
+  if (is.na(id)) id <- label
+  style <- ""
+  if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
+  div(
+    div(class = "input_title", translate(language, label)),
+    div(shiny.fluent::ComboBox.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect, 
+      allowFreeform = allowFreeform, autoComplete = autoComplete,
+      multiSelectDelimiter = ","), style = style)
+  )
+}
+
 
 #' Make a shiny.fluent people picker
 #' 

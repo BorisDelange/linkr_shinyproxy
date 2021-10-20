@@ -5,21 +5,27 @@
 \title{Create cache for datatable data}
 \usage{
 create_datatable_cache(
+  output,
   r,
-  table = character(),
+  language = "EN",
+  module_id = character(),
   thesaurus_id = integer(),
-  link_id = integer(),
+  datamart_id = 0,
   category = character()
 )
 }
 \arguments{
+\item{output}{Shiny output value, to show message bars}
+
 \item{r}{Shiny r reactive value, to communicate between modules}
 
-\item{table}{Table name of database (character)}
+\item{language}{Language used (character)}
+
+\item{module_id}{ID of current page / module (character)}
 
 \item{thesaurus_id}{ID of thesaurus, which thesaurus items depend on (integer)}
 
-\item{link_id}{Link ID to merge data from cache to original data (integer)}
+\item{datamart_id}{ID of datamart to count rows by item of the thesaurus (integer)}
 
 \item{category}{Category of cache, depending of the page of Settings (character)}
 }

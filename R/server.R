@@ -23,7 +23,7 @@ app_server <- function(router, language){
     # Don't load thesaurus_items, load it only when a thesaurus is selected
     observeEvent(r$db, {
       tables <- c("users", "users_accesses_statuses", "users_accesses_details",
-        "data_sources", "datamarts", "studies", "subsets", "thesaurus",
+        "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus",
         "plugins", "patient_lvl_module_families", "patient_lvl_modules", "patient_lvl_module_elements",
         "aggregated_module_families", "aggregated_modules", #"aggregated_module_elements",
         "code", "options")

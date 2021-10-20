@@ -18,9 +18,11 @@ render_settings_datatable(
   datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>",
   page_length = 10,
   start = 1,
-  editable_cols = integer(),
-  sortable_cols = integer(),
+  editable_cols = character(),
+  sortable_cols = character(),
   centered_cols = character(),
+  searchable_cols = character(),
+  filter = FALSE,
   column_widths = character()
 )
 }
@@ -57,6 +59,10 @@ render_settings_datatable(
 
 \item{centered_cols}{Which cols are centered (character vector)}
 
+\item{searchable_cols}{If filter is TRUE, choose which columns are searchable (character)}
+
+\item{filter}{If TRUE, we can filter we search box each column (logical)}
+
 \item{column_widths}{Columns widths (named character vector)}
 }
 \description{
@@ -79,6 +85,8 @@ action_buttons <- c("delete", "edit_code")
 editable_cols <- c("id", "name")
 sortable_cols <- "id"
 centered_cols <- "id"
+filter <- TRUE
+searchable_cols <- c("name", "description")
 column_widths <- c("name" = "200px", "description" = "300px")
 
 render_settings_datatable(
@@ -96,6 +104,8 @@ render_settings_datatable(
   editable_cols = editable_cols, 
   sortable_cols = sortable_cols,
   centered_cols = centered_cols, 
+  filter = filter,
+  searchable_cols = searchable_cols,
   column_widths = column_widths)
 }
 }

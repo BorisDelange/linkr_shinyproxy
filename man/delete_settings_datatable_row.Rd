@@ -6,9 +6,12 @@
 \usage{
 delete_settings_datatable_row(
   output,
+  id = character(),
   r = shiny::reactiveValues(),
   ns = shiny::NS(),
   language = "EN",
+  link_id = integer(),
+  category = character(),
   row_deleted = integer(),
   table = character()
 )

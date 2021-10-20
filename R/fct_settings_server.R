@@ -209,6 +209,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' @param editable_cols Which cols are editable (character vector)
 #' @param sortable_cols Which cols are sortable (character vector)
 #' @param centered_cols Which cols are centered (character vector)
+#' @param filter If TRUE, we can filter we search box each column (logical)
+#' @param searchable_cols If filter is TRUE, choose which columns are searchable (character)
 #' @param column_widths Columns widths (named character vector)
 #' @examples 
 #' \dontrun{
@@ -221,6 +223,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' editable_cols <- c("id", "name")
 #' sortable_cols <- "id"
 #' centered_cols <- "id"
+#' filter <- TRUE
+#' searchable_cols <- c("name", "description")
 #' column_widths <- c("name" = "200px", "description" = "300px")
 #'
 #' render_settings_datatable(
@@ -238,6 +242,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #'   editable_cols = editable_cols, 
 #'   sortable_cols = sortable_cols,
 #'   centered_cols = centered_cols, 
+#'   filter = filter,
+#'   searchable_cols = searchable_cols,
 #'   column_widths = column_widths)
 #' }
 
@@ -464,6 +470,13 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   
   # Add searchable cols to column_defs
   column_defs <- rlist::list.append(column_defs, list(searchable = FALSE, targets = non_searchable_cols_vec))
+  
+  # Transform searchable cols to factor
+  # Don't factorize name & description cols, except for subsets (name are usually included / excluded / all patients...)
+  sapply(searchable_cols, function(col){
+    if ((table == "subsets" & col == "name") |
+        (col %in% names(data) & col != "name" & col != "description")) data <<- data %>% dplyr::mutate_at(col, as.factor)
+  })
 
   # Rename cols if lengths correspond
   if (length(col_names) == length(names(data))) names(data) <- col_names

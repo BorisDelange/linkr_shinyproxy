@@ -344,17 +344,34 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
   
   if (id == "settings_plugins"){
     
+    # Get module_type_id of current plugin
+    module_type_id <- r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(module_type_id)
+    
     # Dropdowns for choice of datamart etc
-    tagList(shiny.fluent::Stack(
-      horizontal = TRUE, tokens = list(childrenGap = 50),
-      make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
-        options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")),
-      make_dropdown(language = language, ns = ns, label = "study", width = "300px"),
-      make_dropdown(language = language, ns = ns, label = "subset", width = "300px")),
-      shiny.fluent::Stack(
+    # Depending if module_type is patient_lvl_data or aggregated_data
+    if (module_type_id == 1){
+      tagList(
+        shiny.fluent::Stack(
+          horizontal = TRUE, tokens = list(childrenGap = 30),
+          make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
+            options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")),
+          make_dropdown(language = language, ns = ns, label = "patient", width = "300px"),
+          make_dropdown(language = language, ns = ns, label = "stay", width = "300px")),
+        shiny.fluent::Stack(
+          horizontal = TRUE, tokens = list(childrenGap = 30),
+          make_dropdown(language = language, ns = ns, label = "thesaurus", width = "300px"),
+          make_combobox(language = language, ns = ns, label = "thesaurus_items", multiSelect = TRUE, allowFreeform = TRUE, width = "650px"),
+          div(shiny.fluent::PrimaryButton.shinyInput(ns("add_thesaurus_item"), translate(language, "add")), style = "margin-top:38px;"),
+          div(shiny.fluent::PrimaryButton.shinyInput(ns("remove_thesaurus_item"), translate(language, "remove")), style = "margin-top:38px;"),
+          div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset")), style = "margin-top:38px;")), br(),
+        textOutput(ns("thesaurus_items_selected"))) -> choice_data
+    }
+    if (module_type_id == 2){
+      tagList(shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 50),
-        make_dropdown(language = language, ns = ns, label = "patient", width = "300px"),
-        make_dropdown(language = language, ns = ns, label = "stay", width = "300px"))) -> choice_data
+        make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
+          options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")))) -> choice_data
+    }
     
     # Toggle for choice of UI or server code
     shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
