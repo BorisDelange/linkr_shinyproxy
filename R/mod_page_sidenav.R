@@ -50,8 +50,8 @@ mod_page_sidenav_ui <- function(id, language, page){
       make_dropdown(language = language, ns = ns, label = "subset"),
       br(), hr(),
       make_dropdown(language = language, ns = ns, label = "patient"),
-      make_dropdown(language = language, ns = ns, label = "stay"),
-      make_dropdown(language = language, ns = ns, label = "status"), br(), hr(),
+      make_dropdown(language = language, ns = ns, label = "stay"), br(), hr(),
+      make_dropdown(language = language, ns = ns, label = "patient_status"), br(),
       uiOutput(ns("patient_info"))
     ) -> result
   }

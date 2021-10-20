@@ -110,7 +110,7 @@ db_create_tables <- function(db){
       value_num = numeric(), creator_id = integer(), datetime = character(), deleted = logical()))
   
   db_create_table(db, "cache",
-    tibble::tibble(id = integer(), category = character(), link_id = integer(), value = character(), datetime = character()))
+    tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
 }
 
 get_local_db <- function(){

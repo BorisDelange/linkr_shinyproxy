@@ -121,7 +121,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
       uiOutput(ns("options_card")),
       uiOutput(ns("sub_datatable_card")),
       render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "thesaurus_management"),
-      textOutput(ns("test"))
+      textOutput(ns("test")), tableOutput(ns("test2"))
     ) -> result
   }
   result
@@ -326,9 +326,12 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             row_deleted <- as.integer(substr(input$thesaurus_items_deleted_pressed, nchar("sub_delete_") + 1, nchar(input$thesaurus_items_deleted_pressed)))
             
             # Delete row in DB table
+            # Link_id is ID of thesaurus which sub_datatable depends on
+            # category is used to create the cache
             link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
-            delete_settings_datatable_row(output = output, id = id, r = r, ns = ns, language = language, 
-              link_id = link_id, category = "data_management", row_deleted = row_deleted, table = "thesaurus_items")
+          
+            delete_settings_datatable_row(output = output, id = id, r = r, ns = ns, language = language,
+              link_id = link_id, category = "delete", row_deleted = row_deleted, table = "thesaurus_items")
           })
         }
         
@@ -413,10 +416,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           code_id_input = input$edit_code, edited_code = input$ace_edit_code, language = "EN"))
       
       # When Execute code button is clicked
-      observeEvent(input$execute_code, (
-        output$code_result <- renderText(
-          execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
-            language = language, r = r, edited_code = isolate(input$ace_edit_code)))))
+        observeEvent(input$execute_code, (
+          output$code_result <- renderText(
+            execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
+              language = language, r = r, edited_code = isolate(input$ace_edit_code)))))
           
       
       ##############################################
@@ -431,7 +434,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # Get link id
         link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
 
-        r$thesaurus_items <- create_datatable_cache(r = r, module_id = id, thesaurus_id = link_id, category = "data_management")
+        r$thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = link_id, category = "delete")
         r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
 
         # Display sub_datatable card
@@ -444,11 +447,38 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             # Show current ID in the title
             make_card(tagList(translate(language, "thesaurus_items_management"), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
               div(
+                make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
+                  options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name", null_value = TRUE)),
                 DT::DTOutput(ns("sub_datatable")),
                 shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), translate(language, "save"))
               )
             )
           )
+        })
+        
+        # If we choose a datamart, add count_rows cols
+        observeEvent(input$datamart, {
+          
+          if (input$datamart != ""){
+            
+            # Reload original r variables (to remove previous count_rows cols)
+            r$thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = link_id, category = "delete")
+            r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+            
+            count_items_rows <- tibble::tibble()
+            
+            # Add count_items_rows in the cache & get it if already in the cache
+            count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = link_id,
+             datamart_id = as.integer(input$datamart), category = "count_items_rows")
+            
+            req(nrow(count_items_rows) != 0)
+            
+            r$thesaurus_items <- r$thesaurus_items %>% dplyr::left_join(count_items_rows, by = "item_id") %>% 
+              # dplyr::mutate(count_items_rows = ifelse(count_items_rows == "", "0", count_items_rows)) %>% 
+              dplyr::relocate(count_items_rows, .before = "action")
+            
+            r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+          }
         })
 
         # Parameters for the datatable

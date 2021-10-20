@@ -489,25 +489,42 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
 
 #' Create cache for datatable data
 #' 
+#' @param output Shiny output value, to show message bars
 #' @param r Shiny r reactive value, to communicate between modules
+#' @param language Language used (character)
 #' @param module_id ID of current page / module (character)
 #' @param thesaurus_id ID of thesaurus, which thesaurus items depend on (integer)
+#' @param datamart_id ID of datamart to count rows by item of the thesaurus (integer)
 #' @param category Category of cache, depending of the page of Settings (character)
 
-create_datatable_cache <- function(r, module_id = character(), thesaurus_id = integer(), category = character()){
+create_datatable_cache <- function(output, r, language = "EN", module_id = character(), 
+  thesaurus_id = integer(), datamart_id = 0, category = character()){
   
   # Load join between our data and the cache
-  data <- DBI::dbGetQuery(r$db, paste0(
-  "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value AS action
-   FROM thesaurus_items t
-   LEFT JOIN cache c ON t.id = c.link_id AND c.category = '", category, "'
-   WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE
-   ORDER BY t.id")) %>% tibble::as_tibble()
+  
+  # For action buttons (delete & plus_minus), don't use datamart_id / link_id_bis
+  if (category %in% c("delete", "plus_minus")){
+    data <- DBI::dbGetQuery(r$db, paste0(
+     "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value
+      FROM thesaurus_items t
+      LEFT JOIN cache c ON c.link_id = t.id AND c.category = '", category, "'
+      WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE
+      ORDER BY t.id")) %>% tibble::as_tibble()
+  }
+  # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
+  if (category %in% c("count_patients_rows", "count_items_rows")){
+    data <- DBI::dbGetQuery(r$db, paste0(
+     "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value
+      FROM thesaurus_items t
+      LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = ", datamart_id, " AND c.category = '", category, "'
+      WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE
+      ORDER BY t.id")) %>% tibble::as_tibble()
+  }
   
   # If there are missing data in the cache, reload cache 
   
   reload_cache <- FALSE
-  if (NA_character_ %in% data$action | "" %in% data$action) reload_cache <- TRUE
+  if (NA_character_ %in% data$value | "" %in% data$value) reload_cache <- TRUE
   
   # Reload cache if necessary
   if (reload_cache){
@@ -516,17 +533,83 @@ create_datatable_cache <- function(r, module_id = character(), thesaurus_id = in
     data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE ORDER BY id"))
 
     # Make action column, depending on category
-    # If category is data_management, add a delete button only
-    # If category is modules, add plus and minus buttons
+    # If category is count_items_rows, add a count row column with number of rows by item in the datamart
+    # If category is count_patients_rows, add a count row column with number of patients by item in the datamart
+    # If category is delete, add a delete button only
+    # If category is plus_minus, add plus and minus buttons
 
-    if (category == "data_management"){
-      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(action = as.character(
+    if (category == "count_items_rows"){
+      
+      # Run datamart code
+      # Could interfere with r data variables in patient-lvl & aggregated data, but rare case...
+      # A solution could be adding a global variable indicating that r data variables have changed
+      run_datamart_code(output = output, r = r, language = language, datamart_id = datamart_id)
+      
+      # Initiate variables
+      rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
+      rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
+      rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
+      
+      if (nrow(r$labs_vitals) != 0) rows_labs_vitals <- r$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      if (nrow(r$text) != 0) rows_text <- r$text %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      if (nrow(r$orders) != 0) rows_orders <- r$orders %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      
+      # Merge rows count vars
+      count_items_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
+      
+      # Check if argument thesaurus_id corresponds to thesaurus_name in the data
+      # Select thesaurus from r$thesaurus with thesaurus_id
+      # Inner join with correspondance between thesaurus_name
+
+      count_items_rows <- count_items_rows %>% 
+        dplyr::inner_join(r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% 
+          dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
+      
+      if (nrow(count_items_rows) != 0){
+        count_items_rows <- count_items_rows %>% dplyr::select(-thesaurus_name, -thesaurus_id)
+        data <- data %>% dplyr::left_join(count_items_rows, by = "item_id") %>% dplyr::rename(value = count_items_rows)
+      }
+      if (nrow(count_items_rows) == 0) data <- data %>% dplyr::mutate(value = 0)
+      
+      # Set 0 when value is na
+      # Convert value to character
+      data <- data %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", T ~ value))
+    }
+    
+    if (category == "count_patients_rows"){
+      
+      run_datamart_code(output = output, r = r, language = language, datamart_id = datamart_id)
+      
+      # Initiate variables
+      rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
+      rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
+      rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
+      
+      if (nrow(r$labs_vitals) != 0) rows_labs_vitals <- r$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% 
+        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
+      if (nrow(r$text) != 0) rows_text <- r$text %>% dplyr::group_by(thesaurus_name, item_id) %>% 
+        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
+      if (nrow(r$orders) != 0) rows_orders <- r$orders %>% dplyr::group_by(thesaurus_name, item_id) %>%
+        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
+      
+      count_patients_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
+      
+      count_patients_rows <- count_patients_rows %>% 
+        dplyr::inner_join(r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% 
+          dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name") %>% 
+        dplyr::select(-thesaurus_name, -thesaurus_id)
+      
+      data <- data %>% dplyr::left_join(count_patients_rows, by = "item_id") %>% dplyr::rename(value = count_patients_rows)
+    }
+    
+    if (category == "delete"){
+      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
           shiny::actionButton(paste0("sub_delete_", id), "", icon = icon("trash-alt"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-thesaurus_items_deleted_pressed', this.id, {priority: 'event'})")))))
     }
-    if (category == "modules"){
-      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(action = as.character(
+    if (category == "plus_minus"){
+      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
           shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")),
@@ -535,7 +618,7 @@ create_datatable_cache <- function(r, module_id = character(), thesaurus_id = in
     }
 
     # Delete old cache
-    DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "'")) -> query
+    DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "' AND link_id_bis = ", datamart_id)) -> query
     DBI::dbClearResult(query)
 
     # Get last row & insert new data
@@ -545,7 +628,8 @@ create_datatable_cache <- function(r, module_id = character(), thesaurus_id = in
       dplyr::transmute(
         category = !!category,
         link_id = id,
-        value = action,
+        link_id_bis = datamart_id,
+        value,
         datetime = as.character(Sys.time()))
     data_insert$id <- seq.int(nrow(data_insert)) + last_row
     data_insert <- data_insert %>% dplyr::relocate(id)
@@ -553,6 +637,9 @@ create_datatable_cache <- function(r, module_id = character(), thesaurus_id = in
     # Add data in cache table
     DBI::dbAppendTable(r$db, "cache", data_insert)
   }
+  
+  if (category %in% c("delete", "plus_minus")) data <- data %>% dplyr::rename(action = value)
+  if (category %in% c("count_patients_rows", "count_items_rows")) data <- data %>% dplyr::rename(!!category := value) %>% dplyr::select(item_id, !!category)
   
   data
 }
@@ -868,11 +955,18 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
   }
   
   # If code is server, capture the console output
+  # Server is also used by R_console page
   if (code_type == "server"){
+    
+    # Change this option to display correctly tibble in textbox
+    eval(parse(text = "options('cli.num_colors' = 1)"))
     
     # Capture console output of our code
     captured_output <- capture.output(
       tryCatch(eval(parse(text = edited_code)), error = function(e) print(e), warning = function(w) print(w)))
+    
+    # Restore normal value
+    eval(parse(text = "options('cli.num_colors' = NULL)"))
     
     # Display result
     paste(captured_output, collapse = "\n") -> result
