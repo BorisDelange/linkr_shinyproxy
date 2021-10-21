@@ -92,7 +92,7 @@ mod_settings_plugins_server <- function(id, r, language){
         })
       
       add_settings_new_data(session = session, output = output, r = r, language = language, id = id, data = new_data,
-        dropdowns = "module_type")
+        table = "plugins", required_textfields = "name", req_unique_values = "name", dropdowns = "module_type")
     })
     
     ##########################################

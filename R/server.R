@@ -22,7 +22,7 @@ app_server <- function(router, language){
     # Load all data from database
     # Don't load thesaurus_items, load it only when a thesaurus is selected
     observeEvent(r$db, {
-      tables <- c("users", "users_accesses_statuses", "users_accesses_details",
+      tables <- c("users", "users_accesses", "users_statuses", "users_accesses_details",
         "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus",
         "plugins", "patient_lvl_module_families", "patient_lvl_modules", "patient_lvl_module_elements",
         "aggregated_module_families", "aggregated_modules", #"aggregated_module_elements",
@@ -41,11 +41,12 @@ app_server <- function(router, language){
     
     router$server(input, output, session)
     
-    mod_page_sidenav_server(paste0("patient_level_data"), r, language)
-    mod_page_sidenav_server(paste0("aggregated_data"), r, language)
+    mod_page_sidenav_server("patient_level_data", r, language)
+    mod_page_sidenav_server("aggregated_data", r, language)
     
     mod_patient_and_aggregated_data_server("patient_lvl_data", r, language)
     mod_patient_and_aggregated_data_server("aggregated_data", r, language)
+    mod_settings_general_server("settings_general", r, language)
     mod_settings_app_database_server("settings_app_database", r, language)
     mod_settings_users_server("settings_users", r, language)
     mod_settings_r_console_server("settings_r_console", r, language)
@@ -57,5 +58,6 @@ app_server <- function(router, language){
     mod_settings_plugins_server("settings_plugins", r, language)
     mod_settings_modules_server("settings_patient_lvl_modules", r, language)
     mod_settings_modules_server("settings_aggregated_modules", r, language)
+
   }
 }

@@ -10,6 +10,8 @@
 #' @param language Language used (character)
 #' @param id ID of current module / page (character)
 #' @param data A list with data to add (list)
+#' @param table Name of the corresponding table in database (character)
+#' @param required_textfields Which textfields are required (not empty) before inserting data in database ? (character)
 #' @param dropdowns Tibble with the values of distinct dropdowns names (tibble)
 #' @examples 
 #' \dontrun{
@@ -21,27 +23,30 @@
 #' }
 
 add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), language = "EN", id = character(),
-  data = tibble::tibble(), dropdowns = character()){
-  
-  # Get table name
-  table <- substr(id, nchar("settings_") + 1, nchar(id))
+  data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), dropdowns = character()){
   
   # For textfields, we have the choice if empty data is possible or not
   # For dropdowns, we want all of them filled
   
-  # Check if name field is not empty
-  name_check <- FALSE
-  if (!is.na(data$name)) name_check <- TRUE
-  if (!name_check) shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = translate(language, "provide_valid_name"))
-  if (name_check) shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = NULL)
-  req(name_check)
+  # Check if required textfields are not empty
   
-  # Check, if name is not empty, if it is not already used
-  if (!is.na(data$name)){
-    distinct_names <- DBI::dbGetQuery(r$db, paste0("SELECT DISTINCT(name) FROM ", table, " WHERE deleted IS FALSE")) %>% dplyr::pull()
-    if (data$name %in% distinct_names) show_message_bar(output, 2, "name_already_used", "severeWarning", language)
-    req(data$name %not_in% distinct_names)
-  }
+  sapply(required_textfields, function(textfield){
+    
+    if (is.na(data[[textfield]])){
+      shiny.fluent::updateTextField.shinyInput(session, 
+        textfield, errorMessage = translate(language, paste0("provide_valid_", textfield)))
+    }
+    else shiny.fluent::updateTextField.shinyInput(session, textfield, errorMessage = NULL)
+    
+    req(!is.na(data[[textfield]]))
+  })
+  
+  # Check if values required to be unique are unique
+  sapply(req_unique_values, function(field){
+    distinct_values <- DBI::dbGetQuery(r$db, paste0("SELECT DISTINCT(", field, ") FROM ", table, " WHERE deleted IS FALSE")) %>% dplyr::pull()
+    if (data[[field]] %in% distinct_values) show_message_bar(output, 2, paste0(field, "_already_used"), "severeWarning", language)
+    req(data[[field]] %not_in% distinct_values)
+  })
   
   # Check if dropdowns are not empty
   dropdowns_check <- TRUE

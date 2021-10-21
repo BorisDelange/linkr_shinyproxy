@@ -44,14 +44,10 @@ mod_page_main_ui <- function(id, language, page){
   ##########################################
   
   if (grepl("^settings", page)){
-    if(page == "settings/general"){
-      div(class = "main",
-        # Hidden aceEditor, allows the other to be displayed...
-        div(shinyAce::aceEditor("hidden"), style = "display: none;")
-      ) -> result
-    }
-    if (page == "settings/app_db") mod_settings_app_database_ui("settings_app_database", language, page) -> result
-    if (page == "settings/users") mod_settings_users_ui("settings_users", language, page) -> result
+    
+    if (page == "settings/general") mod_settings_general_ui("settings_general", language) -> result
+    if (page == "settings/app_db") mod_settings_app_database_ui("settings_app_database", language) -> result
+    if (page == "settings/users") mod_settings_users_ui("settings_users", language) -> result
     if (page == "settings/r_console") mod_settings_r_console_ui("settings_r_console", language, page) -> result
     
     # Subpages of Settings / data management

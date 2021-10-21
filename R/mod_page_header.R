@@ -17,13 +17,13 @@ mod_page_header_ui <- function(id, language){
     div(htmltools::img(src = "www/logo.png", style = "height: 25px;"), class = "logo"),
     div(class = "title", shiny.fluent::Text(variant = "xLarge", "CDW Tools")),
     div(class = "header_left_bar", 
-        shiny.fluent::CommandBar(
-          items = list(
-            shiny.fluent::CommandBarItem(translate(language, "home"), "Home", href = shiny.router::route_link("home/datamarts_studies")),
-            shiny.fluent::CommandBarItem(translate(language, "patient_level_data"), "Contact", href = shiny.router::route_link("patient_level_data")),
-            shiny.fluent::CommandBarItem(translate(language, "aggregated_data"), "BIDashboard", href = shiny.router::route_link("aggregated_data"))
-          )
+      shiny.fluent::CommandBar(
+        items = list(
+          shiny.fluent::CommandBarItem(translate(language, "home"), "Home", href = shiny.router::route_link("home/datamarts_studies")),
+          shiny.fluent::CommandBarItem(translate(language, "patient_level_data"), "Contact", href = shiny.router::route_link("patient_level_data")),
+          shiny.fluent::CommandBarItem(translate(language, "aggregated_data"), "BIDashboard", href = shiny.router::route_link("aggregated_data"))
         )
+      )
     ),
     div(class = "header_right_bar",
       shiny.fluent::CommandBar(

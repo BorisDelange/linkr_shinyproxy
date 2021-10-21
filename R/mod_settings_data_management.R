@@ -152,9 +152,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Table name
     table <- substr(id, nchar("settings_") + 1, nchar(id))
     
-    # Init delete_dialog variable
-    # r[[paste0(table, "_delete_dialog")]] <- FALSE
-    
     ##########################################
     # Data management / Show or hide cards   #
     ##########################################
@@ -195,8 +192,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         if (length(new_data$data_source) == 1) new_data$data_source <- coalesce2(type = "char", x = input$data_source)
         else new_data$data_source <- toString(new_data$data_source)
       }
-
-      add_settings_new_data(session = session, output = output, r = r, language = language, id = id, data = new_data,
+      
+      add_settings_new_data(session = session, output = output, r = r, language = language, id = id, 
+        data = new_data,
+        table = substr(id, nchar("settings_") + 1, nchar(id)), 
+        required_textfields = "name", req_unique_values = "name",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist())
     })
     
