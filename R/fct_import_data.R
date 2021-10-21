@@ -16,7 +16,7 @@
 #' \strong{type = "patients"} :\cr
 #' \itemize{
 #' \item{patient_id = integer}
-#' \item{gender = numeric}
+#' \item{gender = character}
 #' \item{age = numeric}
 #' \item{dod = datetime}
 #' }

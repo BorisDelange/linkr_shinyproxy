@@ -1028,7 +1028,7 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
     
     # Capture console output of our code
     captured_output <- capture.output(
-      tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
+      tryCatch(eval(parse(text = as.character(code))), error = function(e) print(e), warning = function(w) print(w)))
     
     # Restore normal value
     eval(parse(text = "options('cli.num_colors' = NULL)"))

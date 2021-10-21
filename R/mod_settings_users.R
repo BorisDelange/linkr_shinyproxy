@@ -7,26 +7,32 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_settings_users_ui <- function(id, language, page){
+mod_settings_users_ui <- function(id, language, page_style, page){
   ns <- NS(id)
   result <- ""
-
-  div(class = "main",
-    shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
-    shiny.fluent::reactOutput(ns("users_users_delete_confirm")), 
-    shiny.fluent::reactOutput(ns("users_statuses_delete_confirm")),
-    users_toggle_card(language, ns, activated = c("")),
-    users_creation_card(language, ns, title = "add_user", card = "add_user", 
-      textfields = c("username", "firstname", "lastname", "password"), textfields_width = "200px", 
-      dropdowns = c("user_access", "user_status"), dropdowns_width = "200px"),
-    users_datatable_card(language, ns, "users_management", "users_management"),
-    users_creation_card(language, ns, title = "add_access", card = "add_access", 
-      textfields = c("name", "description"), textfields_width = "300px"),
-    users_edit_card(language, ns, "accesses_management", "accesses_management"),
-    users_creation_card(language, ns, title = "add_status", card = "add_status", 
-      textfields = c("name", "description"), textfields_width = "300px"),
-    users_datatable_card(language, ns, "statuses_management", "statuses_management")
-    )
+  
+  ##########################################
+  # Fluent                                 #
+  ##########################################
+  
+  if (page_style == "fluent"){
+    div(class = "main",
+      shiny::uiOutput(ns("warnings1")), shiny::uiOutput(ns("warnings2")), shiny::uiOutput(ns("warnings3")),
+      shiny.fluent::reactOutput(ns("users_users_delete_confirm")), 
+      shiny.fluent::reactOutput(ns("users_statuses_delete_confirm")),
+      users_toggle_card(language, ns, activated = c("")),
+      users_creation_card(language, ns, title = "add_user", card = "add_user", 
+        textfields = c("username", "firstname", "lastname", "password"), textfields_width = "200px", 
+        dropdowns = c("user_access", "user_status"), dropdowns_width = "200px"),
+      users_datatable_card(language, ns, "users_management", "users_management"),
+      users_creation_card(language, ns, title = "add_access", card = "add_access", 
+        textfields = c("name", "description"), textfields_width = "300px"),
+      users_edit_card(language, ns, "accesses_management", "accesses_management"),
+      users_creation_card(language, ns, title = "add_status", card = "add_status", 
+        textfields = c("name", "description"), textfields_width = "300px"),
+      users_datatable_card(language, ns, "statuses_management", "statuses_management")
+    ) -> result
+  }
 }
     
 #' settings_users Server Functions
@@ -340,3 +346,9 @@ mod_settings_users_server <- function(id, r, language){
     
   })
 }
+    
+## To be copied in the UI
+# mod_settings_users_ui("settings_users_ui_1")
+    
+## To be copied in the server
+# mod_settings_users_server("settings_users_ui_1")

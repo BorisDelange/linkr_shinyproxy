@@ -286,12 +286,14 @@ mod_settings_plugins_server <- function(id, r, language){
       
       # When add button is clicked
       observeEvent(input$add_thesaurus_item, {
+        req(length(input$thesaurus_items$text) > 0)
         if (input$thesaurus_items$text %not_in% r$selected_thesaurus_items$text){
           r$selected_thesaurus_items <- r$selected_thesaurus_items %>% dplyr::bind_rows(tibble::tribble(~key, ~text, input$thesaurus_items$key, input$thesaurus_items$text))}
       })
       
       # When remove button is clicked
       observeEvent(input$remove_thesaurus_item, {
+        req(length(input$thesaurus_items$text) > 0)
         r$selected_thesaurus_items <- r$selected_thesaurus_items %>% dplyr::filter(key != input$thesaurus_items$key)
       })
       
@@ -317,6 +319,36 @@ mod_settings_plugins_server <- function(id, r, language){
       # When Execute code button is clicked
       observeEvent(input$execute_code, {
         
+        # Create variables that will be available in patient-lvl data & aggregated data pages
+        # For patient-lvl data page, we have these variables : labs_vitals, text & orders (for all stays of the patient)
+        # and also these variables for current stay : labs_vitals_stay, text_stay & orders_stay
+        # Filter on selected thesaurus items
+        # Don't forget to convert item_id & patient_id to integers, may have been transformed to numeric before
+        
+        thesaurus_name <- r$thesaurus %>% dplyr::filter(id == input$thesaurus) %>% dplyr::pull(name)
+        r$selected_thesaurus_items <- r$selected_thesaurus_items %>% 
+          dplyr::select(item_id = as.integer(key)) %>%
+          dplyr::mutate(thesaurus_name = !!thesaurus_name, patient_id = as.integer(input$patient))
+        
+        # Initialize variables
+        
+        data <- list()
+        data$labs_vitals <- tibble::tibble()
+        data$text <- tibble::tibble()
+        data$orders <- tibble::tibble()
+        
+        if (nrow(r$labs_vitals) > 0) data$labs_vitals <- r$labs_vitals %>% 
+            dplyr::inner_join(r$selected_thesaurus_items, by = c("patient_id", "item_id", "thesaurus_name"))
+        if (nrow(r$text) > 0) data$text <- r$text %>%
+          dplyr::inner_join(r$selected_thesaurus_items, by = c("patient_id", "item_id", "thesaurus_name"))
+        if (nrow(r$orders) > 0) data$orders <- r$orders %>%
+            dplyr::filter(patient_id == input$patient, thesaurus_name == !!thesaurus_name, item_id %in% r$selected_thesaurus_items$key)
+        
+        data$stay <- r$stays %>% dplyr::filter(stay_id == input$stay) %>% dplyr::select(admission_datetime, discharge_datetime)
+        if (nrow(data$labs_vitals) > 0) data$labs_vitals_stay <- data$labs_vitals %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
+        if (nrow(data$text) > 0) data$text_stay <- data$text %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
+        if (nrow(data$orders) > 0) data$orders_stay <- data$orders %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
+        
         # Get link_id variable to get the code from database
         link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
         
@@ -332,10 +364,19 @@ mod_settings_plugins_server <- function(id, r, language){
         }
         
         # Render result of executed code
-        output$code_result_ui <- renderUI(execute_settings_code(input = input, output = output, session = session, 
-          id = id, ns = ns, language = language, r = r, edited_code = ui_code, code_type = "ui"))
-        output$code_result_server <- renderText(execute_settings_code(input = input, output = output, session = session, 
-          id = id, ns= ns, language = language, r = r, edited_code = server_code, code_type = "server"))
+        tryCatch(eval(parse(text = ui_code)), error = function(e) stop(e), warning = function(w) stop(w))
+        output$code_result_ui <- renderUI(eval(parse(text = ui_code)))
+      
+        eval(parse(text = "options('cli.num_colors' = 1)"))
+        captured_output <- capture.output(
+          tryCatch(eval(parse(text = server_code)), error = function(e) print(e), warning = function(w) print(w)))
+        eval(parse(text = "options('cli.num_colors' = NULL)"))
+        output$code_result_server <- renderText(paste(captured_output, collapse = "\n"))
+        
+        # output$code_result_ui <- renderUI(execute_settings_code(input = input, output = output, session = session,
+        #   id = id, ns = ns, language = language, r = r, edited_code = ui_code, code_type = "ui"))
+        # output$code_result_server <- renderText(execute_settings_code(input = input, output = output, session = session,
+        #   id = id, ns= ns, language = language, r = r, edited_code = server_code, code_type = "server"))
       })
   })
 }
