@@ -84,7 +84,7 @@ mod_settings_users_server <- function(id, r, language){
     
     toggles <- c(
       "users_creation_card", "users_management_card", 
-      "accesses_creation_card", "accesses_management_card",
+      "accesses_creation_card", "accesses_management_card", "accesses_options_card",
       "statuses_creation_card", "statuses_management_card")
     
     # Current page
@@ -135,8 +135,8 @@ mod_settings_users_server <- function(id, r, language){
     # Add a new element                      #
     ##########################################
     
-    # Only for subpages (not for main users page)
-    if (id != "settings_users"){
+    # Only for creation subpages
+    if (grepl("creation", id)){
       
       # Update dropdowns with reactive data
       sapply(c("users_accesses", "users_statuses"), 
@@ -187,8 +187,8 @@ mod_settings_users_server <- function(id, r, language){
       # Generate datatable                     #
       ##########################################
       
-      # Only for subpages (not for main users page)
-      if (id != "settings_users"){    
+      # Only for data management subpages
+      if (grepl("management", id)){    
       
         # If r$... variable changes
         observeEvent(r[[paste0(table, "_temp")]], {
@@ -232,8 +232,8 @@ mod_settings_users_server <- function(id, r, language){
     # Save changes in datatable              #
     ##########################################
     
-    # Only for subpages (not for main users page)
-    if (id != "settings_users"){
+    # Only for data management subpages
+    if (grepl("management", id)){
       
       # Each time a row is updated, modify temp variable
       observeEvent(input$management_datatable_cell_edit, {
@@ -258,8 +258,8 @@ mod_settings_users_server <- function(id, r, language){
     # Delete a row in datatable              #
     ##########################################
     
-    # Only for subpages (not for main users page)
-    if (id != "settings_users"){
+    # Only for data management subpages
+    if (grepl("management", id)){
     
       # Create & show dialog box
       observeEvent(r[[paste0(table, "_delete_dialog")]] , {
@@ -291,7 +291,6 @@ mod_settings_users_server <- function(id, r, language){
     if (id == "settings_users_accesses_management"){
     
       observeEvent(input$options, {
-        
         # Show options toggle
         r$users_statuses_options <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
 
@@ -301,21 +300,71 @@ mod_settings_users_server <- function(id, r, language){
     if (id == "settings_users_accesses_options"){
       observeEvent(r$users_statuses_options, {
         req(r$users_statuses_options > 0)
-        
+
+        options_toggles <- tibble::tribble(
+          ~name, ~toggles,
+          "app_db", c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card"),
+          "users", c("users_creation_card", "users_management_card",
+             "accesses_creation_card", "accesses_management_card", "accesses_options_card",
+             "statuses_creation_card", "statuses_management_card"),
+          "r_console", "",
+          "data_sources", c("create_data_source", "data_sources_management"),
+          "datamarts", c("create_datamart", "datamarts_management", "datamarts_options", "edit_datamart_code"),
+          "studies", c("create_study", "studies_management", "study_options"),
+          "subsets" = c("create_subset", "subsets_management", "edit_subset_code"),
+          "thesaurus" = c("create_thesaurus", "thesaurus_management_card", "thesaurus_items_management_card", "edit_thesaurus_code")
+        )
+
+        options_toggles_result <- tagList()
+
+        sapply(1:nrow(options_toggles), function(i){
+
+          sub_results <- tagList()
+          # sub_results_stacked <- tagList()
+          
+          if (options_toggles[[i, "toggles"]] != ""){
+            j <<- 0
+            sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
+              sub_results <<- tagList(sub_results, make_toggle(language = language, ns = ns, label = toggle, inline = TRUE))
+              # j <<- j + 1
+              # if (j == 5){
+                # sub_results_stacked <<- tagList(sub_results_stacked, br(), shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), sub_results), br())
+                # sub_results <<- tagList()
+                # j <<- 0
+              # }
+            })
+            # sub_results_stacked <<- tagList(sub_results_stacked, shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), sub_results), br())
+          }
+          
+          label <- options_toggles[[i, "name"]]
+
+          options_toggles_result <<- tagList(options_toggles_result, br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              make_toggle(language = language, ns = ns, label = label, inline = TRUE)),
+            conditionalPanel(condition = paste0("input.", label, " == 1"), ns = ns,
+              br(), shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), sub_results)), hr()
+          )
+        })
+
         # Render UI of options card
         output$options_card <- renderUI({
-          
-          # render_settings_options_card(ns = ns, id = id, r = r, title = paste0(get_singular(id), "_options"),
-          #   category = category, link_id = link_id, language = language)
+
+          make_card(tagList(translate(language, "accesses_options"), span(paste0(" (ID = ", r$users_statuses_options, ")"), style = "font-size: 15px;")),
+            div(
+              # Basically, it's one toggle by page, and one toggle by card inside a page
+              br(), options_toggles_result, br(),
+              shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save"))
+            )
+          )
         })
-        
+
         # observeEvent(input$options_save, {
         #   category <- get_singular(id)
-        # 
+        #
         #   data <- list()
         #   data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
         #   data$users_allowed_read <- input$users_allowed_read
-        # 
+        #
         #   save_settings_options(output = output, r = r, id = id, category = category,
         #                         code_id_input = input$options, language = language, data = data)
         # })

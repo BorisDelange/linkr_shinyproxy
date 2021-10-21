@@ -58,6 +58,7 @@ app_server <- function(router, language){
     sapply(c("users", "statuses", "accesses"), function(page){
       mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language)
       mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language)
+      if (page == "accesses") mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language)
     })
     
     mod_settings_r_console_server("settings_r_console", r, language)

@@ -288,6 +288,14 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
   }
   
   ##########################################
+  # Option = users accesses options        #
+  ##########################################
+  
+  if ("users_accesses_options" %in% page_options){
+    
+  }
+  
+  ##########################################
   # Final UI code                          #
   ##########################################
   
@@ -361,7 +369,7 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 30),
           make_dropdown(language = language, ns = ns, label = "thesaurus", width = "300px"),
-          make_combobox(language = language, ns = ns, label = "thesaurus_items", multiSelect = TRUE, allowFreeform = TRUE, width = "630px"),
+          make_combobox(language = language, ns = ns, label = "thesaurus_items", multiSelect = TRUE, allowFreeform = TRUE, width = "300px"),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("add_thesaurus_item"), translate(language, "add")), style = "margin-top:38px;"),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("remove_thesaurus_item"), translate(language, "remove")), style = "margin-top:38px;"),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset")), style = "margin-top:38px;")), br(),
