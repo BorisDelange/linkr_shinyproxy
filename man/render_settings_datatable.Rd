@@ -23,6 +23,7 @@ render_settings_datatable(
   centered_cols = character(),
   searchable_cols = character(),
   filter = FALSE,
+  factorize_cols = character(),
   column_widths = character()
 )
 }

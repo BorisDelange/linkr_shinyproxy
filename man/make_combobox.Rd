@@ -9,8 +9,9 @@ make_combobox(
   ns = shiny::NS(),
   label = character(),
   options = list(),
-  multiSelect = FALSE,
-  allowFreeForm = FALSE,
+  multiSelect = TRUE,
+  allowFreeform = FALSE,
+  autoComplete = "on",
   id = NA_character_,
   value = NULL,
   width = NULL
@@ -27,13 +28,13 @@ make_combobox(
 
 \item{multiSelect}{Is multiselection of options is possible ? (logical)}
 
-\item{allowFreeForm}{Allows user to enter free text, not provided by options (logical)}
-
 \item{id}{ID used for the input (character)}
 
 \item{value}{Value of the toggle : TRUE or FALSE (logical)}
 
 \item{width}{Width of the dropdown, CSS code so "300px" or "100\%" are accepted}
+
+\item{allowFreeForm}{Allows user to enter free text, not provided by options (logical)}
 }
 \description{
 Make a shiny.fluent combo box

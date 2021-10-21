@@ -11,6 +11,9 @@ add_settings_new_data(
   language = "EN",
   id = character(),
   data = tibble::tibble(),
+  table = character(),
+  required_textfields = character(),
+  req_unique_values = character(),
   dropdowns = character()
 )
 }
@@ -26,6 +29,12 @@ add_settings_new_data(
 \item{id}{ID of current module / page (character)}
 
 \item{data}{A list with data to add (list)}
+
+\item{table}{Name of the corresponding table in database (character)}
+
+\item{required_textfields}{Which textfields are required (not empty) before inserting data in database ? (character)}
+
+\item{req_unique_values}{Which fields require unique values before inserting data in database ? (character)}
 
 \item{dropdowns}{Tibble with the values of distinct dropdowns names (tibble)}
 }

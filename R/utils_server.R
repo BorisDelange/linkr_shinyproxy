@@ -9,7 +9,7 @@
 #' update_r(r = r, table = "subsets")
 #' }
 update_r <- function(r = shiny::reactiveValues(), table = character(), language = "EN"){
-  tables <- c("users", "users_accesses_statuses", "users_accesses_details",
+  tables <- c("users", "users_accesses", "users_statuses", "users_accesses_details",
     "data_sources", "datamarts", "studies", "subsets", "thesaurus", "thesaurus_items",
     "plugins", "patient_lvl_module_families", "patient_lvl_modules", "patient_lvl_module_elements",
     "aggregated_module_families", "aggregated_modules", "code", "options")

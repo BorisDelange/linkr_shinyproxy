@@ -6,7 +6,7 @@
 #' @noRd
 
 app_server <- function(router, language){
-  function( input, output, session ) {
+  function(input, output, session ) {
     
     r <- reactiveValues()
     
@@ -48,7 +48,13 @@ app_server <- function(router, language){
     mod_patient_and_aggregated_data_server("aggregated_data", r, language)
     mod_settings_general_server("settings_general", r, language)
     mod_settings_app_database_server("settings_app_database", r, language)
+    
     mod_settings_users_server("settings_users", r, language)
+    sapply(c("users", "statuses", "accesses"), function(page){
+      mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language)
+      mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language)
+    })
+    
     mod_settings_r_console_server("settings_r_console", r, language)
     mod_settings_data_management_server("settings_data_sources", r, language)
     mod_settings_data_management_server("settings_datamarts", r, language)

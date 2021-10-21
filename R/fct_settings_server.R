@@ -12,6 +12,7 @@
 #' @param data A list with data to add (list)
 #' @param table Name of the corresponding table in database (character)
 #' @param required_textfields Which textfields are required (not empty) before inserting data in database ? (character)
+#' @param req_unique_values Which fields require unique values before inserting data in database ? (character)
 #' @param dropdowns Tibble with the values of distinct dropdowns names (tibble)
 #' @examples 
 #' \dontrun{
@@ -81,6 +82,18 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   if (table == "plugins"){
     new_data <- tibble::tribble(~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
       last_row + 1, as.character(data$name), "", as.integer(data$module_type), as.character(Sys.time()), FALSE)
+  }
+  
+  # Creation of new_data variable for users sub-pages
+  # Password is hashed
+  if (table == "users"){
+    new_data <- tibble::tribble(~id, ~username, ~firstname, ~lastname, ~password, ~user_access_id, ~user_status_id, ~datetime, ~deleted,
+      last_row + 1, as.character(data$username), as.character(data$firstname), as.character(data$lastname),
+      rlang::hash(data$password), as.integer(data$user_access), as.integer(data$user_status), as.character(Sys.time()), FALSE)
+  }
+  if (table %in% c("users_accesses", "users_statuses")){
+    new_data <- tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
+      last_row + 1, as.character(data$name), as.character(data$description), as.character(Sys.time()), FALSE)
   }
   
   # Append data to the table
@@ -176,14 +189,21 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
   
   # Hide creation card & options card, show management card
-  shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = FALSE)
-  shiny.fluent::updateToggle.shinyInput(session, "creation_card_toggle", value = FALSE)
-  shiny.fluent::updateToggle.shinyInput(session, "datatable_card_toggle", value = TRUE)
+  if (table %in% c("users", "users_statuses", "users_accesses")){
+    shiny.fluent::updateToggle.shinyInput(session, paste0(table, "_creation_card_toggle"), value = FALSE)
+    shiny.fluent::updateToggle.shinyInput(session, paste0(table, "_management_card_toggle"), value = TRUE)
+  }
+  else {
+    shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = FALSE)
+    shiny.fluent::updateToggle.shinyInput(session, "creation_card_toggle", value = FALSE)
+    shiny.fluent::updateToggle.shinyInput(session, "datatable_card_toggle", value = TRUE)
+  }
   
   show_message_bar(output = output, id = 1, message = paste0(get_singular(table), "_added"), type = "success", language = language) 
   
   # Reset textfields
-  sapply(c("name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
+  if (table == "users") sapply(c("username", "firstname", "lastname", "password"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
+  else sapply(c("name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
 ##########################################

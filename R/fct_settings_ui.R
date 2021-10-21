@@ -117,7 +117,8 @@ render_settings_creation_card <- function(language = "EN", ns = shiny::NS(), id 
           horizontal = TRUE, tokens = list(childrenGap = 50),
           # For each textfield, use make_textfield function
           lapply(textfields, function(label){
-            make_textfield(language = language, ns = ns, label = label, id = label, width = textfields_width)
+            if (label == "password") make_textfield(language = language, ns = ns, label = label, id = label, width = textfields_width, type = "password", canRevealPassword = TRUE)
+            else make_textfield(language = language, ns = ns, label = label, id = label, width = textfields_width)
           })
         ),
         shiny.fluent::Stack(

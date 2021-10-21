@@ -40,7 +40,6 @@ mod_settings_users_ui <- function(id, language){
 
 mod_settings_sub_users_ui <- function(id, language){
   ns <- NS(id)
-  result <- ""
   
   page <- substr(id, nchar("settings_users_") + 1, nchar(id))
   
@@ -64,7 +63,7 @@ mod_settings_sub_users_ui <- function(id, language){
     render_settings_datatable_card(language = language, ns = ns, output_id = page, title = page) -> result
   }
   
-  result
+  tagList(render_settings_default_elements(ns = ns), result)
 }
     
 #' settings_users Server Functions
@@ -93,16 +92,22 @@ mod_settings_users_server <- function(id, r, language){
     # Show or hide cards                     #
     ##########################################
     
-    sapply(toggles, function(toggle){
-      observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
-    })
+    # Only for main users page (not for sub-pages)
+    if (id == "settings_users"){
+      sapply(toggles, function(toggle){
+        observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
+      })
+    }
     
     ##########################################
     # Add a new element                      #
     ##########################################
     
+    # Only for subpages (not for main users page)
+    if (id != "settings_users")
+    
     # Update dropdowns with reactive data
-    sapply(c("user_accesses", "user_statuses"), 
+    sapply(c("users_accesses", "users_statuses"), 
       function(data_var){
         observeEvent(r[[data_var]], {
           # Convert options to list
@@ -116,7 +121,7 @@ mod_settings_users_server <- function(id, r, language){
       
       new_data <- list()
       
-      new_data_var <- c("username" = "char", "first_name" = "char", "last_name" = "char", "password" = "char",
+      new_data_var <- c("username" = "char", "firstname" = "char", "lastname" = "char", "password" = "char",
         "user_access" = "int", "user_status" = "int", "name" = "char", "description" = "char")
       
       # Transform values of textfields & dropdowns to chosen variable type
@@ -125,8 +130,17 @@ mod_settings_users_server <- function(id, r, language){
           new_data[[input_name]] <<- coalesce2(type = new_data_var[[input_name]], x = input[[input_name]])
         })
       
+      # Required textfields
+      required_textfields <- switch(table, 
+        "users" = c("username", "firstname", "lastname", "password"),
+        "users_accesses" = "name",
+        "users_statuses" = "name")
+      
+      # Fields requiring unique value
+      req_unique_values <- switch(table, "users" = "username", "users_accesses" = "name", "users_statuses" = "name")
+      
       add_settings_new_data(session = session, output = output, r = r, language = language, id = id, 
-        data = new_data, table = table, dropdowns = dropdowns)
+        data = new_data, table = table, required_textfields = required_textfields, req_unique_values = req_unique_values, dropdowns = dropdowns)
     })
     
     # 

@@ -13,7 +13,8 @@ execute_settings_code(
   language = "EN",
   r = shiny::reactiveValues(),
   edited_code = character(),
-  code_type = ""
+  code_type = "",
+  data = list()
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ execute_settings_code(
 \item{edited_code}{New code, after editing it (character)}
 
 \item{code_type}{For plugins page, code_type could be UI or server (character)}
+
+\item{data}{A list containing dataframes / tibbles, if data need to be used in the evaluated code (list)}
 }
 \description{
 Execute code entered in the ShinyAce editor\cr

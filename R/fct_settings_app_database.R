@@ -33,11 +33,11 @@ db_create_tables <- function(db){
       1, "admin", "John", "Doe", "admin", 1, 1, as.character(Sys.time()), FALSE))
   
   db_create_table(db, "users_accesses",
-    tibble::tibble(id = integer(), type = character(), name = character(), description = character(),
+    tibble::tibble(id = integer(), name = character(), description = character(),
       datetime = character(), deleted = logical()))
   
   db_create_table(db, "users_statuses",
-    tibble::tibble(id = integer(), type = character(), name = character(), description = character(),
+    tibble::tibble(id = integer(), name = character(), description = character(),
       datetime = character(), deleted = logical()))
   
   db_create_table(db, "data_sources",
