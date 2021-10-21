@@ -319,9 +319,9 @@ mod_settings_users_server <- function(id, r, language){
           "log", c("all_users", "only_me")
         )
         
-        # Load current data
-        data <- DBI::dbGetQuery(r$db, paste0("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND link_id = ", r$users_statuses_options))
-
+        # Get current data
+        current_data <- DBI::dbGetQuery(r$db, paste0("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND link_id = ", r$users_statuses_options))
+        
         options_toggles_result <- tagList()
 
         sapply(1:nrow(options_toggles), function(i){
@@ -331,17 +331,28 @@ mod_settings_users_server <- function(id, r, language){
           if (options_toggles[[i, "toggles"]] != ""){
             j <<- 0
             sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
-              sub_results <<- tagList(sub_results, make_toggle(language = language, ns = ns, label = toggle, inline = TRUE,
-                value = data %>% dplyr::filter(name == toggle) %>% dplyr::pull(value_num) %>% as.logical()))
+              
+              # Get current value
+              value <- current_data %>% dplyr::filter(name == toggle)
+              if (nrow(value) == 0) value <- FALSE
+              else value <- current_data %>% dplyr::filter(name == toggle) %>% dplyr::pull(value_num) %>% as.logical()
+              
+              # Create toggle
+              sub_results <<- tagList(sub_results, make_toggle(language = language, ns = ns, label = toggle, inline = TRUE, value = value))
             })
           }
           
           label <- options_toggles[[i, "name"]]
+          
+          # Get current value
+          value <- current_data %>% dplyr::filter(name == label)
+          if (nrow(value) == 0) value <- FALSE
+          else value <- current_data %>% dplyr::filter(name == label) %>% dplyr::pull(value_num) %>% as.logical()
 
+          # Create final toggle
           options_toggles_result <<- tagList(options_toggles_result, br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle(language = language, ns = ns, label = label, inline = TRUE, 
-                value = data %>% dplyr::filter(name == label) %>% dplyr::pull(value_num) %>% as.logical())),
+              make_toggle(language = language, ns = ns, label = label, inline = TRUE, value = value)),
             conditionalPanel(condition = paste0("input.", label, " == 1"), ns = ns,
               br(), shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), sub_results)), hr()
           )
@@ -362,6 +373,19 @@ mod_settings_users_server <- function(id, r, language){
             )
           )
         })
+        
+        # # Load current data and update toggles
+        # data <- DBI::dbGetQuery(r$db, paste0("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND link_id = ", r$users_statuses_options))
+        # # output$test <- renderTable(data)
+        # sapply(1:nrow(options_toggles), function(i){
+        #   shiny.fluent::updateToggle.shinyInput(session, options_toggles[[i, "name"]],
+        #     value = data %>% dplyr::filter(name == options_toggles[[i, "name"]]) %>% dplyr::pull(value_num) %>% as.logical())
+        #   if (options_toggles[[i, "toggles"]] != ""){
+        #     sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
+        #       shiny.fluent::updateToggle.shinyInput(session, toggle, value = data %>% dplyr::filter(name == toggle) %>% dplyr::pull(value_num) %>% as.logical())
+        #     })
+        #   }
+        # })
 
         observeEvent(input$select_all,{
           sapply(1:nrow(options_toggles), function(i){
@@ -392,19 +416,20 @@ mod_settings_users_server <- function(id, r, language){
           sapply(1:nrow(options_toggles), function(i){
             data <<- data %>% dplyr::bind_rows(
               tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-                "user_access", r$users_statuses_options, options_toggles[[i, "name"]], "", as.integer(input[[options_toggles[[i, "name"]]]]),
+                "users_accesses", isolate(r$users_statuses_options), options_toggles[[i, "name"]], "", as.integer(isolate(input[[options_toggles[[i, "name"]]]])),
                 r$user_id, as.character(Sys.time()), FALSE)
               )
             if (options_toggles[[i, "toggles"]] != ""){
               sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
-                value_num <- as.integer(input[[toggle]])
+                
+                value_num <- as.integer(isolate(input[[toggle]]))
                 
                 # If category toggle is FALSE, set children to FALSE
-                if (!input[[options_toggles[[i, "name"]]]]) value_num <- 0
+                if (isolate(input[[options_toggles[[i, "name"]]]] == 0)) value_num <- 0
                 
                 data <<- data %>% dplyr::bind_rows(
                   tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-                    "users_accesses", r$users_statuses_options, toggle, "", value_num,
+                    "users_accesses", isolate(r$users_statuses_options), toggle, "", value_num,
                     r$user_id, as.character(Sys.time()), FALSE)
                 )
               })
