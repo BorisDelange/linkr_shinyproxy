@@ -741,7 +741,7 @@ update_settings_datatable <- function(input, r = shiny::reactiveValues(), ns = s
         
         # If thesaurus, data_source_id can accept multiple values (converting to string)
         if (table == "thesaurus") new_value <- toString(input[[paste0("data_sources", id)]])
-        if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins")) new_value <- as.integer(input[[paste0(get_plural(word = dropdown), id)]])
+        if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins", "users")) new_value <- as.integer(input[[paste0(get_plural(word = dropdown), id)]])
         
         if (new_value != old_value){
           r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <- new_value
@@ -770,13 +770,15 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   duplicates_allowed = FALSE, language = "EN"){
   
   # Make sure there's no duplicate in names, if duplicates_allowed is set to FALSE
+  
   if (!duplicates_allowed){
     duplicates <- 0
-    # Duplicates are allowed in thesaurus_items
-    # if (table != "thesaurus_items"){
-    duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+    
+    if (table != "users") duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
       dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-    # }
+    if (table == "users") duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("username", tolower) %>%
+      dplyr::group_by(username) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+    
     if (duplicates > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
     req(duplicates == 0)
   }

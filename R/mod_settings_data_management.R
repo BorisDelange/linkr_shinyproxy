@@ -237,7 +237,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (id != "settings_thesaurus") sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
           
           # Column widths
-          column_widths <- c("datetime" = "130px", "action" = "80px")
+          column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
           
           # Centered columns
           centered_cols <- c("id", "data_source_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "creator", "datetime", "action")

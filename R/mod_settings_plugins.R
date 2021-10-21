@@ -113,7 +113,7 @@ mod_settings_plugins_server <- function(id, r, language){
         sortable_cols <- c("id", "name", "datetime")
 
         # Column widths
-        column_widths <- c("datetime" = "130px", "action" = "80px")
+        column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
 
         # Centered columns
         centered_cols <- c("id", "datetime", "action")
