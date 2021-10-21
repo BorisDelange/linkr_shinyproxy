@@ -250,8 +250,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", id = character(),
   output_name = character(), col_names = character(), table = character(), dropdowns = character(), action_buttons = character(),
   datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 1,
-  editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), filter = FALSE,
-  column_widths = character()
+  editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
+  filter = FALSE, factorize_cols = character(), column_widths = character()
 ){
   
   # Translation for datatable
@@ -473,10 +473,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   
   # Transform searchable cols to factor
   # Don't factorize name & description cols, except for subsets (name are usually included / excluded / all patients...)
-  sapply(searchable_cols, function(col){
-    if ((table == "subsets" & col == "name") |
-        (col %in% names(data) & col != "name" & col != "description")) data <<- data %>% dplyr::mutate_at(col, as.factor)
-  })
+  sapply(factorize_cols, function(col) data <<- data %>% dplyr::mutate_at(col, as.factor))
 
   # Rename cols if lengths correspond
   if (length(col_names) == length(names(data))) names(data) <- col_names

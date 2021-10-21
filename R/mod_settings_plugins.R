@@ -251,7 +251,11 @@ mod_settings_plugins_server <- function(id, r, language){
         data_source <- r$datamarts %>% dplyr::filter(id == input$datamart) %>% dplyr::pull(data_source_id) %>% as.character()
         thesaurus <- r$thesaurus %>% dplyr::filter(data_source %in% data_source_id)
         shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name"))
-        shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", options = list())
+        shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", options = list(), value = NULL)
+        
+        # Reset outputs
+        output$code_result_ui <- renderUI("")
+        output$code_result_server <- renderText("")
       })
       
       # When a patient is chosen
@@ -269,19 +273,29 @@ mod_settings_plugins_server <- function(id, r, language){
               format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", translate(language, "to"), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
             key_col = "stay_id", text_col = "name_display"))
         }
+        
+        # Reset outputs
+        output$code_result_ui <- renderUI("")
+        output$code_result_server <- renderText("")
       })
       
       # When a thesaurus is chosen
       observeEvent(input$thesaurus, {
+        
         # Get thesaurus items of current thesaurus
         thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", input$thesaurus)) %>%
           dplyr::mutate(name = paste0(name, " - ", item_id))
+        
         # Update dropdown
-        shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items",
+        shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", value = NULL,
           options = convert_tibble_to_list(data = thesaurus_items, key_col = "item_id", text_col = "name"))
         
-        # Set to zero r$selected_thesaurus_items
+        # Reset r$selected_thesaurus_items
         r$selected_thesaurus_items <- tibble::tribble(~key, ~text)
+        
+        # Reset outputs
+        output$code_result_ui <- renderUI("")
+        output$code_result_server <- renderText("")
       })
       
       # When add button is clicked
@@ -300,6 +314,10 @@ mod_settings_plugins_server <- function(id, r, language){
       # Render result of selected items
       observeEvent(r$selected_thesaurus_items, {
         output$thesaurus_items_selected <- renderText(paste0(translate(language, "thesaurus_items_selected"), " : ", toString(r$selected_thesaurus_items$text)))
+        
+        # Reset outputs
+        output$code_result_ui <- renderUI("")
+        output$code_result_server <- renderText("")
       })
       
       # When reset button is clicked
@@ -327,7 +345,7 @@ mod_settings_plugins_server <- function(id, r, language){
       observeEvent(input$execute_code, {
         
         req(input$datamart, input$patient, input$stay, input$thesaurus)
-        req(nrow(r$selected_thesaurus_items) > 0)
+        req(nrow(r$selected_thesaurus_items) > 0, input$thesaurus %in% r$thesaurus, input$stay %in% r$stays, input$patient %in% r$patients)
         
         # Create variables that will be available in patient-lvl data & aggregated data pages
         # For patient-lvl data page, we have these variables : labs_vitals, text & orders (for all stays of the patient)
@@ -346,6 +364,7 @@ mod_settings_plugins_server <- function(id, r, language){
         data$text <- tibble::tibble()
         data$orders <- tibble::tibble()
 
+        # Filter r variables with selected thesaurus items
         if (nrow(r$labs_vitals) > 0) data$labs_vitals <- r$labs_vitals %>%
           dplyr::inner_join(r$selected_thesaurus_items %>% dplyr::rename(item_id = key), by = c("patient_id", "item_id", "thesaurus_name"))
         if (nrow(r$text) > 0) data$text <- r$text %>%
@@ -371,11 +390,18 @@ mod_settings_plugins_server <- function(id, r, language){
           server_code <- isolate(input$ace_edit_code_server)
           ui_code <- r$code %>% dplyr::filter(category == "plugin_ui" & link_id == !!link_id) %>% dplyr::pull(code)
         }
+        
+        # Replace %group_id% in ui_code with 1 for our example
+        ui_code <- ui_code %>% stringr::str_replace_all("%group_id%", "1")
+        server_code <- server_code %>% stringr::str_replace_all("%group_id%", "1")
 
+        # Render UI result
         output$code_result_ui <- renderUI(
           make_card("", 
             execute_settings_code(input = input, output = output, session = session,
             id = id, ns = ns, language = language, r = r, edited_code = ui_code, code_type = "ui", data = data)))
+        
+        # Warnings messages (render server result)
         output$code_result_server <- renderText(execute_settings_code(input = input, output = output, session = session,
           id = id, ns= ns, language = language, r = r, edited_code = server_code, code_type = "server", data = data))
       })

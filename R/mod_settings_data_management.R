@@ -243,7 +243,16 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           centered_cols <- c("id", "data_source_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "creator", "datetime", "action")
           
           # Searchable_cols
-          searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
+          if (id != "settings_thesaurus") searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
+          if (id == "settings_thesaurus") searchable_cols <- c("name", "description", "creator_id")
+          
+          # Factorize_cols
+          factorize_cols <- switch(id,
+            "settings_data_sources" = "creator_id",
+            "settings_datamarts" = c("data_source_id", "creator_id"),
+            "settings_studies" = c("datamart_id", "creator_id"),
+            "settings_subsets" = c("study_id", "creator_id"),
+            "settings_thesaurus" = "creator_id")
           
           # Restore datatable state
           page_length <- isolate(input$management_datatable_state$length)
@@ -254,7 +263,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             col_names =  get_col_names(table), table = table, dropdowns = dropdowns, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
             editable_cols = c("name", "description"), sortable_cols = sortable_cols, centered_cols = centered_cols,
-            filter = TRUE, searchable_cols = searchable_cols, column_widths = column_widths)
+            filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
         })
     
       ##########################################
@@ -522,6 +531,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           action_buttons <- "delete"
           editable_cols <- c("display_name", "unit")
           searchable_cols <- c("name", "display_name", "category", "unit")
+          factorize_cols <- c("category", "unit")
           
           # If we have count cols
           if ("count_patients_rows" %in% names(r$thesaurus_items)){
@@ -543,7 +553,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "sub_datatable",
             col_names =  col_names, table = "thesaurus_items", action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, searchable_cols = searchable_cols, filter = TRUE)
+            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, 
+            searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE)
         })
       })
      
