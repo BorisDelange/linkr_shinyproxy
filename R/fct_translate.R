@@ -710,17 +710,7 @@ get_translations <- function(){
             "EN", "no_modules_to_show", "There are no modules set for this study. Configure modules in parameters.",
             "FR", "no_modules_to_show", "Il n'y a pas de module configuré pour cette étude. Configurer les modules dans les paramètres.",
             "EN", "no_thesaurus_item_to_show", "No thesaurus items to show in this module",
-            "FR", "no_thesaurus_item_to_show", "Pas d'items de thésaurus à afficher pour ce module",
-            "EN", "fail_transform_patients_var", "Failed to transform patients columns",
-            "FR", "fail_transform_patients_var", "Echec lors de la transformation des colonnes de la variable patients",
-            "EN", "fail_transform_stays_var", "Failed to transform stays columns",
-            "FR", "fail_transform_stays_var", "Echec lors de la transformation des colonnes de la variable stays",
-            "EN", "fail_transform_labs_vitals_var", "Failed to transform labs_vitals columns",
-            "FR", "fail_transform_labs_vitals_var", "Echec lors de la transformation des colonnes de la variable lab_vitals",
-            "EN", "fail_transform_text_var", "Failed to transform text_var columns",
-            "FR", "fail_transform_text_var", "Echec lors de la transformation des colonnes de la variable text_var",
-            "EN", "fail_transform_orders_var", "Failed to transform orders columns",
-            "FR", "fail_transform_orders_var", "Echec lors de la transformation des colonnes de la variable orders"
+            "FR", "no_thesaurus_item_to_show", "Pas d'items de thésaurus à afficher pour ce module"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

@@ -110,7 +110,15 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
     tryCatch({
       show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", language)
       print(translate(language, "import_datamart_success"))
-      return(r[[type]] <- readr::read_csv(path))
+      return({
+        col_types <- switch(type, 
+          "patients" = "innT",
+          "stays" = "iicTT",
+          "labs_vitals" = "iciTTcncc",
+          "text" = "iciTTcc",
+          "orders" = "iciTTcincncncc")
+        r[[type]] <- readr::read_csv(path, col_types = col_types)
+      })
       }, 
       error = function(e){
         show_message_bar(output, 1, "error_loading_csv", "severeWarning", language)

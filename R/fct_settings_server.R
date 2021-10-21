@@ -979,13 +979,14 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
 #' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param edited_code New code, after editing it (character)
 #' @param code_type For plugins page, code_type could be UI or server (character)
+#' @param data A list containing dataframes / tibbles, if data need to be used in the evaluated code (list)
 #' @examples 
 #' \dontrun{
 #' execute_settings_code(output = output, r = r, edited_code = "print('test')")
 #' }
 
 execute_settings_code <- function(input, output, session, id = character(), ns = shiny::NS(), language = "EN", r = shiny::reactiveValues(), 
-  edited_code = character(), code_type = ""){
+  edited_code = character(), code_type = "", data = list()){
 
   result <- ""
   
