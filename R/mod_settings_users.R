@@ -69,7 +69,7 @@ mod_settings_sub_users_ui <- function(id, language){
   }
   
   if (page == "accesses_options"){
-    uiOutput(ns("options_card")) -> result
+    div(uiOutput(ns("options_card")), br(), tableOutput(ns("test"))) -> result
   }
   
   tagList(render_settings_default_elements(ns = ns), result)
@@ -309,38 +309,39 @@ mod_settings_users_server <- function(id, r, language){
              "statuses_creation_card", "statuses_management_card"),
           "r_console", "",
           "data_sources", c("create_data_source", "data_sources_management"),
-          "datamarts", c("create_datamart", "datamarts_management", "datamarts_options", "edit_datamart_code"),
+          "datamarts", c("create_datamart", "datamarts_management", "datamart_options", "edit_datamart_code"),
           "studies", c("create_study", "studies_management", "study_options"),
-          "subsets" = c("create_subset", "subsets_management", "edit_subset_code"),
-          "thesaurus" = c("create_thesaurus", "thesaurus_management_card", "thesaurus_items_management_card", "edit_thesaurus_code")
+          "subsets", c("create_subset", "subsets_management", "edit_subset_code"),
+          "thesaurus", c("create_thesaurus", "thesaurus_management_card", "thesaurus_items_management_card", "edit_thesaurus_code"),
+          "plugins", c("plugins_description_card", "plugins_creation_card", "plugins_management_card", "plugins_options_card", "plugins_edit_code_card"),
+          "modules_patient_lvl", c("patient_modules_creation_card", "patient_modules_management_card", "patient_modules_options_card"),
+          "modules_aggregated", c("aggregated_modules_creation_card", "aggregated_modules_management_card", "aggregated_modules_options_card"),
+          "log", c("all_users", "only_me")
         )
+        
+        # Load current data
+        data <- DBI::dbGetQuery(r$db, paste0("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND link_id = ", r$users_statuses_options))
 
         options_toggles_result <- tagList()
 
         sapply(1:nrow(options_toggles), function(i){
 
           sub_results <- tagList()
-          # sub_results_stacked <- tagList()
           
           if (options_toggles[[i, "toggles"]] != ""){
             j <<- 0
             sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
-              sub_results <<- tagList(sub_results, make_toggle(language = language, ns = ns, label = toggle, inline = TRUE))
-              # j <<- j + 1
-              # if (j == 5){
-                # sub_results_stacked <<- tagList(sub_results_stacked, br(), shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), sub_results), br())
-                # sub_results <<- tagList()
-                # j <<- 0
-              # }
+              sub_results <<- tagList(sub_results, make_toggle(language = language, ns = ns, label = toggle, inline = TRUE,
+                value = data %>% dplyr::filter(name == toggle) %>% dplyr::pull(value_num) %>% as.logical()))
             })
-            # sub_results_stacked <<- tagList(sub_results_stacked, shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), sub_results), br())
           }
           
           label <- options_toggles[[i, "name"]]
 
           options_toggles_result <<- tagList(options_toggles_result, br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle(language = language, ns = ns, label = label, inline = TRUE)),
+              make_toggle(language = language, ns = ns, label = label, inline = TRUE, 
+                value = data %>% dplyr::filter(name == label) %>% dplyr::pull(value_num) %>% as.logical())),
             conditionalPanel(condition = paste0("input.", label, " == 1"), ns = ns,
               br(), shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), sub_results)), hr()
           )
@@ -350,24 +351,85 @@ mod_settings_users_server <- function(id, r, language){
         output$options_card <- renderUI({
 
           make_card(tagList(translate(language, "accesses_options"), span(paste0(" (ID = ", r$users_statuses_options, ")"), style = "font-size: 15px;")),
-            div(
+            div(br(),
+                
               # Basically, it's one toggle by page, and one toggle by card inside a page
-              br(), options_toggles_result, br(),
-              shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save"))
+              options_toggles_result, br(),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                shiny.fluent::DefaultButton.shinyInput(ns("select_all"), translate(language, "select_all")),
+                shiny.fluent::DefaultButton.shinyInput(ns("unselect_all"), translate(language, "unselect_all")),
+                shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save")))
             )
           )
         })
 
-        # observeEvent(input$options_save, {
-        #   category <- get_singular(id)
-        #
-        #   data <- list()
-        #   data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
-        #   data$users_allowed_read <- input$users_allowed_read
-        #
-        #   save_settings_options(output = output, r = r, id = id, category = category,
-        #                         code_id_input = input$options, language = language, data = data)
-        # })
+        observeEvent(input$select_all,{
+          sapply(1:nrow(options_toggles), function(i){
+            shiny.fluent::updateToggle.shinyInput(session, options_toggles[[i, "name"]], value = TRUE)
+            if (options_toggles[[i, "toggles"]] != ""){
+              sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
+                shiny.fluent::updateToggle.shinyInput(session, toggle, value = TRUE)
+              })
+            }
+          })
+        })
+        
+        observeEvent(input$unselect_all,{
+          sapply(1:nrow(options_toggles), function(i){
+            shiny.fluent::updateToggle.shinyInput(session, options_toggles[[i, "name"]], value = FALSE)
+            if (options_toggles[[i, "toggles"]] != ""){
+              sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
+                shiny.fluent::updateToggle.shinyInput(session, toggle, value = FALSE)
+              })
+            }
+          })
+        })
+
+        observeEvent(input$options_save, {
+          
+          data <- tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted)
+          
+          sapply(1:nrow(options_toggles), function(i){
+            data <<- data %>% dplyr::bind_rows(
+              tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+                "user_access", r$users_statuses_options, options_toggles[[i, "name"]], "", as.integer(input[[options_toggles[[i, "name"]]]]),
+                r$user_id, as.character(Sys.time()), FALSE)
+              )
+            if (options_toggles[[i, "toggles"]] != ""){
+              sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
+                value_num <- as.integer(input[[toggle]])
+                
+                # If category toggle is FALSE, set children to FALSE
+                if (!input[[options_toggles[[i, "name"]]]]) value_num <- 0
+                
+                data <<- data %>% dplyr::bind_rows(
+                  tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+                    "users_accesses", r$users_statuses_options, toggle, "", value_num,
+                    r$user_id, as.character(Sys.time()), FALSE)
+                )
+              })
+            }
+          })
+          
+          # Delete old data from options
+          
+          query <- DBI::dbSendStatement(r$db, paste0("DELETE FROM options WHERE category = 'users_accesses' AND link_id = ", r$users_statuses_options))
+          DBI::dbClearResult(query)
+          
+          # Attribute id values
+          
+          last_row <- as.integer(DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull())
+          data$id <- seq.int(nrow(data)) + last_row
+          
+          # Add new values to database
+          DBI::dbAppendTable(r$db, "options", data)
+          
+          # Notificate the user
+          show_message_bar(output = output, id = 1, message = "modif_saved", type = "success", language = language)
+          
+          output$test <- renderTable(data)
+
+        })
       })
     }
     
