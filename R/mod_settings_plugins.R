@@ -312,8 +312,15 @@ mod_settings_plugins_server <- function(id, r, language){
       observeEvent(input$edit_code_save, {
         
         # There are two shinyAce editors, one for UI & one for server
-        save_settings_code(output = output, r = r, id = id, category = paste0("plugin_", input$edit_code_ui_server),
-          code_id_input = input$edit_code, edited_code = input[[paste0("ace_edit_code_", input$edit_code_ui_server)]], language = "EN")
+        # Save two at once
+        
+        # UI
+        save_settings_code(output = output, r = r, id = id, category = "plugin_ui",
+          code_id_input = input$edit_code, edited_code = input$ace_edit_code_ui, language = "EN")
+        
+        # Server
+        save_settings_code(output = output, r = r, id = id, category = "plugin_server",
+          code_id_input = input$edit_code, edited_code = input$ace_edit_code_server, language = "EN")
       })
       
       # When Execute code button is clicked
@@ -365,18 +372,10 @@ mod_settings_plugins_server <- function(id, r, language){
           ui_code <- r$code %>% dplyr::filter(category == "plugin_ui" & link_id == !!link_id) %>% dplyr::pull(code)
         }
 
-        # Render result of executed code
-        # tryCatch(eval(parse(text = ui_code)), error = function(e) stop(e), warning = function(w) stop(w))
-        # output$code_result_ui <- renderUI(eval(parse(text = ui_code)))
-        # 
-        # eval(parse(text = "options('cli.num_colors' = 1)"))
-        # captured_output <- capture.output(
-        #   tryCatch(eval(parse(text = server_code)), error = function(e) print(e), warning = function(w) print(w)))
-        # eval(parse(text = "options('cli.num_colors' = NULL)"))
-        # output$code_result_server <- renderText(paste(captured_output, collapse = "\n"))
-
-        output$code_result_ui <- renderUI(execute_settings_code(input = input, output = output, session = session,
-          id = id, ns = ns, language = language, r = r, edited_code = ui_code, code_type = "ui", data = data))
+        output$code_result_ui <- renderUI(
+          make_card("", 
+            execute_settings_code(input = input, output = output, session = session,
+            id = id, ns = ns, language = language, r = r, edited_code = ui_code, code_type = "ui", data = data)))
         output$code_result_server <- renderText(execute_settings_code(input = input, output = output, session = session,
           id = id, ns= ns, language = language, r = r, edited_code = server_code, code_type = "server", data = data))
       })

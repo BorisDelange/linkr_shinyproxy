@@ -391,8 +391,7 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
     
     # UI output to render UI code of the plugin and text output to render server error messages
     output_div <- tagList(
-      div(shiny::uiOutput(ns("code_result_ui")),
-        style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 10px 8px; margin-right: 5px;"), br(),
+      shiny::uiOutput(ns("code_result_ui")), br(),
       div(shiny::verbatimTextOutput(ns("code_result_server")), 
           style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
   }
@@ -406,10 +405,9 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
         ace_editor,
         shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), translate(language, "save")), " ",
         shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code")), 
-        #br(), br()#,
-        #output_div
+        br(), br(),
+        output_div
       )
-    ),
-    output_div
+    )
   )
 }
