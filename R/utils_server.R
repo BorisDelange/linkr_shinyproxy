@@ -16,7 +16,13 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
   
   if (table %not_in% tables) stop(paste0(translate(language, "invalid_table_name"), ". ", translate(language, "tables_allowed"), " : ", toString(tables)))
   
-  new_table <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
+  # Don't load password col for table users
+  if (table == "users"){
+    new_table <- DBI::dbGetQuery(r$db, "SELECT id, username, firstname, lastname, user_access_id, user_status_id, datetime, deleted
+      FROM users WHERE deleted IS FALSE ORDER BY id")
+  }
+  else new_table <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
+  
   r[[table]] <- new_table
   r[[paste0(table, "_temp")]] <- new_table %>% dplyr::mutate(modified = FALSE)
 }
@@ -71,6 +77,16 @@ get_col_names <- function(table_name = character(), language = "EN"){
   
   if (table_name == "plugins"){
     result <- c(translate(language, "id"), translate(language, "name"), translate(language, "module_type"), 
+      translate(language, "datetime"), translate(language, "action"))
+  }
+  
+  if (table_name == "users"){
+    result <- c(translate(language, "id"), translate(language, "username"), translate(language, "firstname"), translate(language, "lastname"),
+      translate(language, "user_access"), translate(language, "user_status"), translate(language, "datetime"), translate(language, "action"))
+  }
+  
+  if (table_name %in% c("users_accesses", "users_statuses")){
+    result <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"), 
       translate(language, "datetime"), translate(language, "action"))
   }
   

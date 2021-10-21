@@ -20,8 +20,9 @@ get_singular <- function(word = character(), language = "EN"){
          "aggregated_module_families" = "aggregated_module_family",
          "module_types" = "module_type",
          "plugins" = "plugin",
-         "users_accesses" = "users_access",
-         "users_statuses" = "users_status") -> result
+         "users" = "user",
+         "users_accesses" = "user_access",
+         "users_statuses" = "user_status") -> result
   result  
 }
 
@@ -48,7 +49,8 @@ get_plural <- function(word = character(), language = "EN"){
          "aggregated_module_family" = "aggregated_module_families",
          "module_type" = "module_types",
          "plugin" = "plugins",
-         "users_access" = "users_accesses",
-         "users_status" = "users_statuses") -> result
+         "user" = "users",
+         "user_access" = "users_accesses",
+         "user_status" = "users_statuses") -> result
   result
 }

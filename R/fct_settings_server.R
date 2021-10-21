@@ -320,28 +320,29 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # - show creator name
 
   # Loop over data only if necessary (eg not necessary for thesaurus_items, with a lot of rows...)
+  # Not necessary if no dropdowns, no action_buttons & no creator_id col
   if (table != "thesaurus_items" & (length(dropdowns) != 0 | length(action_buttons) != 0 | "creator_id" %in% names(data))){
   
     for (i in 1:nrow(data)){
-  
+
       #############
       # DROPDOWNS #
       #############
-  
+
       if (length(dropdowns) != 0){
         lapply(names(dropdowns), function(name){
-    
+
           # Particularity with thesaurus, data_source_id column can contains multiple values (multiSelect = TRUE)
           # We have to split data_source_id column, to have an integer vector (saved with collapse by commas)
-    
+
           # name here is like "data_source_id"
           # dropdowns[name] here is like "data_sources"
           # so r[[dropdowns[[name]]]] is like r$data_sources, var containing data_sources data
-    
+
           if (id == "settings_thesaurus"){
             value <- NULL
             if (length(data[i, name] > 0)){
-              if (!TRUE %in% grepl("[a-zA-Z]", stringr::str_split(data[i, name], ", ") %>% unlist())){
+              if (!(TRUE %in% grepl("[a-zA-Z]", stringr::str_split(data[i, name], ", ") %>% unlist()))){
                 value <- stringr::str_split(data[i, name], ", ") %>% unlist() %>% as.integer()
               }
             }
@@ -355,8 +356,8 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
                   style = "width:200px")
             )
           }
-          
-          if (id %in% c("settings_data_sources", "settings_datamarts", "settings_studies", "settings_subsets", "settings_plugins")) {
+
+          else {
             data[i, name] <<- as.character(
               div(
                 # So ID is like "data_sources13" if ID = 13
@@ -370,53 +371,59 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
                 style = "width:200px")
             )
           }
-          
+
         })
       }
-  
+
       ##################
       # ACTION BUTTONS #
       ##################
-  
+
       # Action buttons : if in action_buttons vector, add action button
       actions <- tagList()
-  
+
       # Add options button
       if ("options" %in% action_buttons){
         actions <- tagList(actions,
           shiny::actionButton(paste0("options_", data[i, 1]), "", icon = icon("cog"),
             onclick = paste0("Shiny.setInputValue('", id, "-options", "', this.id, {priority: 'event'})")), "")}
-  
+
       # Add edit code button
       if ("edit_code" %in% action_buttons){
         actions <- tagList(actions,
           shiny::actionButton(paste0("edit_code_", data[i, 1]), "", icon = icon("file-code"),
             onclick = paste0("Shiny.setInputValue('", id, "-edit_code", "', this.id, {priority: 'event'})")), "")}
-  
+
       # Add sub datatable button
       if ("sub_datatable" %in% action_buttons){
         actions <- tagList(actions,
           shiny::actionButton(paste0("sub_datatable_", data[i, 1]), "", icon = icon("table"),
             onclick = paste0("Shiny.setInputValue('", id, "-sub_datatable", "', this.id, {priority: 'event'})")), "")}
-  
+
       # Add delete button
       if ("delete" %in% action_buttons){
-  
+
         # If row is deletable (we havn't made a function argument for deletable or not, only default subsets are not deletable)
         # Could be changed later
-  
-        if (id != "settings_subsets" | data[i, "name"] %not_in% c("All patients", "Included patients", "Excluded patients")){
-          actions <- tagList(actions, shiny::actionButton(paste0("delete_", data[i, 1]), "", icon = icon("trash-alt"),
-            onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})")))}
+        
+        delete <- shiny::actionButton(paste0("delete_", data[i, 1]), "", icon = icon("trash-alt"),
+          onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})"))
+        
+        # Default subsets are not deletable
+        if (id == "settings_subsets"){
+          if (data[i, "name"] %in% c("All patients", "Included patients", "Excluded patients")) delete <- ""
+        }
+
+        actions <- tagList(actions, delete)
       }
-  
+
       # Update action column in dataframe
       if (length(action_buttons) != 0) data[i, "action"] <- as.character(div(actions))
-  
+
       ################
       # CREATOR NAME #
       ################
-  
+
       if ("creator_id" %in% names(data)){
         if (nrow(r$users %>% dplyr::filter(id == data[[i, "creator_id"]])) > 0){
           data[i, "creator_id"] <-
@@ -426,7 +433,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
         }
         else data[i, "creator_id"] <- translate(language, "deleted_user")
       }
-  
+
       # Get names for other columns if there are not dropdowns
       # Failed to loop that...
       if ("data_source_id" %in% names(data) & "data_source_id" %not_in% names(dropdowns)){

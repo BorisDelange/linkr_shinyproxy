@@ -22,7 +22,7 @@ app_server <- function(router, language){
     # Load all data from database
     # Don't load thesaurus_items, load it only when a thesaurus is selected
     observeEvent(r$db, {
-      tables <- c("users", "users_accesses", "users_statuses", "users_accesses_details",
+      tables <- c("users_accesses", "users_statuses", "users_accesses_details",
         "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus",
         "plugins", "patient_lvl_module_families", "patient_lvl_modules", "patient_lvl_module_elements",
         "aggregated_module_families", "aggregated_modules", #"aggregated_module_elements",
@@ -32,6 +32,11 @@ app_server <- function(router, language){
         r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
         r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
       })
+      
+      # For users table, don't load passwords
+      r$users <- DBI::dbGetQuery(r$db, "SELECT id, username, firstname, lastname, user_access_id, user_status_id, datetime, deleted
+        FROM users WHERE deleted IS FALSE ORDER BY id")
+      r$users_temp <- r$users %>% dplyr::mutate(modified = FALSE)
       
       # Add a module_types variable, for settings/plugins dropdown
       r$module_types <- tibble::tribble(~id, ~name, 1, translate(language, "patient_level_data"), 2, translate(language, "aggregated_data"))
