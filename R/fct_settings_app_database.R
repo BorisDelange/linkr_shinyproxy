@@ -44,10 +44,6 @@ db_create_tables <- function(db){
     tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(),
       datetime = character(), deleted = logical()))
   
-  db_create_table(db, "users_accesses_details",
-    tibble::tibble(id = integer(), link_id = integer(), action = character(), value = character(), value_num = numeric(),
-      datetime = character(), deleted = logical()))
-  
   db_create_table(db, "datamarts",
     tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
       datetime = character(), deleted = logical()))

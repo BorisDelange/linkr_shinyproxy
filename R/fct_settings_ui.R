@@ -51,9 +51,11 @@ render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards
         id = paste0(card$key, "_toggle"), value = ifelse(card$key %in% activated, TRUE, FALSE), inline = TRUE))
   })
   # Render card with distinct togglesmo
-  make_card("",
-    shiny.fluent::Stack(
-      horizontal = TRUE, tokens = list(childrenGap = 10), toggles
+  div(id = ns("toggles"),
+    make_card("",
+      shiny.fluent::Stack(
+        horizontal = TRUE, tokens = list(childrenGap = 10), toggles
+      )
     )
   )
 }

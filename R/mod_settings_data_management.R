@@ -24,17 +24,22 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
   ##########################################
   
   if (id == "settings_data_sources"){
-    div(class = "main",
-      render_settings_default_elements(ns = ns),
-      render_settings_toggle_card(language = language, ns = ns, cards = list(
-        list(key = "creation_card", label = "create_data_source"),
-        list(key = "datatable_card", label = "data_sources_management"))),
-      render_settings_creation_card(
-        language = language, ns = ns, id = id, title = "create_data_source",
-        textfields = c("name", "description"), textfields_width = "300px"),
-      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "data_sources_management")
-    ) -> result
-  }
+    # if ("data_sources" %in% user_accesses) {
+      div(class = "main",
+        render_settings_default_elements(ns = ns),
+        render_settings_toggle_card(language = language, ns = ns, cards = list(
+          list(key = "creation_card", label = "create_data_source"),
+          list(key = "datatable_card", label = "data_sources_management"))),
+        # ifelse("create_data_source" %in% user_accesses, 
+          render_settings_creation_card(
+          language = language, ns = ns, id = id, title = "create_data_source",
+          textfields = c("name", "description"), textfields_width = "300px"),# ""),
+        # ifelse("data_sources_management" %in% user_accesses, 
+          render_settings_datatable_card(language = language, ns = ns,
+          div_id = "datatable_card", output_id = "management_datatable", title = "data_sources_management")#, "")
+      ) -> result
+    }
+  # }
   
   ##########################################
   # Data management / Datamarts            #
@@ -156,6 +161,19 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Data management / Show or hide cards   #
     ##########################################
     
+    # Depending on user_accesses
+    observeEvent(r$user_accesses, {
+      
+      # For each page, hide toggles if user has no access
+      
+      if (table %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
+      if (paste0(table, "_creation_card")) shinyjs::hide("creation_card") else shinyjs::show("creation_card") 
+       
+      
+      # if ("create_data_source" %not_in% r$user_accesses) shinyjs::hide("create_data_source")
+    })
+    
+    # Depending on toggles activated
     sapply(toggles, function(toggle){
       observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
     })

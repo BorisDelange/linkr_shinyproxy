@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_main_ui <- function(id, language, page){
+mod_page_main_ui <- function(id, language, page, user_accesses){
   ns <- NS(id)
   result <- ""
   
@@ -52,7 +52,8 @@ mod_page_main_ui <- function(id, language, page){
     
     # Subpages of Settings / data management
     sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page_settings){
-      if (page == paste0("settings/", page_settings)) mod_settings_data_management_ui(id = paste0("settings_", page_settings), language = language) ->> result
+      if (page == paste0("settings/", page_settings)) mod_settings_data_management_ui(id = paste0("settings_", page_settings), 
+        language = language) ->> result
     })
     
     if (page == "settings/plugins") mod_settings_plugins_ui(id = "settings_plugins", language = language) -> result

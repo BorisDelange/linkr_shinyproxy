@@ -69,7 +69,7 @@ mod_settings_sub_users_ui <- function(id, language){
   }
   
   if (page == "accesses_options"){
-    div(uiOutput(ns("options_card")), br(), tableOutput(ns("test"))) -> result
+    uiOutput(ns("options_card")) -> result
   }
   
   tagList(render_settings_default_elements(ns = ns), result)
@@ -308,7 +308,7 @@ mod_settings_users_server <- function(id, r, language){
              "accesses_creation_card", "accesses_management_card", "accesses_options_card",
              "statuses_creation_card", "statuses_management_card"),
           "r_console", "",
-          "data_sources", c("create_data_source", "data_sources_management"),
+          "data_sources", c("data_sources_creation_card", "data_sources_datatable_card"),
           "datamarts", c("create_datamart", "datamarts_management", "datamart_options", "edit_datamart_code"),
           "studies", c("create_study", "studies_management", "study_options"),
           "subsets", c("create_subset", "subsets_management", "edit_subset_code"),
@@ -373,19 +373,6 @@ mod_settings_users_server <- function(id, r, language){
             )
           )
         })
-        
-        # # Load current data and update toggles
-        # data <- DBI::dbGetQuery(r$db, paste0("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND link_id = ", r$users_statuses_options))
-        # # output$test <- renderTable(data)
-        # sapply(1:nrow(options_toggles), function(i){
-        #   shiny.fluent::updateToggle.shinyInput(session, options_toggles[[i, "name"]],
-        #     value = data %>% dplyr::filter(name == options_toggles[[i, "name"]]) %>% dplyr::pull(value_num) %>% as.logical())
-        #   if (options_toggles[[i, "toggles"]] != ""){
-        #     sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
-        #       shiny.fluent::updateToggle.shinyInput(session, toggle, value = data %>% dplyr::filter(name == toggle) %>% dplyr::pull(value_num) %>% as.logical())
-        #     })
-        #   }
-        # })
 
         observeEvent(input$select_all,{
           sapply(1:nrow(options_toggles), function(i){
@@ -451,8 +438,6 @@ mod_settings_users_server <- function(id, r, language){
           
           # Notificate the user
           show_message_bar(output = output, id = 1, message = "modif_saved", type = "success", language = language)
-          
-          output$test <- renderTable(data)
 
         })
       })
