@@ -93,5 +93,22 @@ get_col_names <- function(table_name = character(), language = "EN"){
       translate(language, "datetime"), translate(language, "action"))
   }
   
+  if (table_name %in% c("patient_lvl_modules", "aggregated_modules")){
+    result <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"), translate(language, "module_family"),
+      translate(language, "parent_module"), translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
+  }
+  
+  if (table_name %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
+    result <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"),
+      translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
+  }
+  
+  if (table_name == "patient_lvl_modules_elements"){
+    result <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"), translate(language, "group"),
+      translate(language, "module"), translate(language, "plugin"), translate(language, "thesaurus"), translate(language, "item"), 
+      translate(language, "display_name"), translate(language, "unit"), translate(language, "colour"), translate(language, "display_order"), 
+      translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
+  }
+  
   result
 }

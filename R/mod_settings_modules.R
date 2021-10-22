@@ -245,6 +245,57 @@ mod_settings_modules_server <- function(id, r, language){
       }
       
       
+      ##########################################
+      # Management datatable                   #
+      ##########################################
+      
+      ##########################################
+      # Generate datatable                     #
+      ##########################################
+      
+      # Only for data management subpages
+      if (grepl("management", id)){
+        
+        # If r$... variable changes
+        observeEvent(r[[paste0(table, "_temp")]], {
+          
+          # If user has access
+          # req(paste0(table, "_management_card") %in% r$user_accesses)
+          
+          # Dropdowns for each module / page
+          dropdowns_datatable <- ""
+          if (page == "modules_creation") dropdowns_datatable <- c("module_family_id" = paste0(prefix, "modules_familes"), "parent_module_id" = paste0(prefix, "modules"))
+          
+          # Action buttons for each module / page
+          if (grepl("modules$", table) | grepl("modules_elements", table)) action_buttons <- "delete"
+          if (grepl("modules_families", table)) action_buttons <- c("options", "delete")
+          
+          # Sortable cols
+          sortable_cols <- c("id", "name", "description", "datetime")
+          
+          # Column widths
+          column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
+          
+          # Editable cols
+          editable_cols <- c("name", "description")
+          
+          # Centered columns
+          centered_cols <- c("id", "module_family_id", "parent_module_id", "datetime", "action")
+          
+          # Searchable_cols
+          searchable_cols <- c("name", "description")
+          
+          # Restore datatable state
+          page_length <- isolate(input$management_datatable_state$length)
+          start <- isolate(input$management_datatable_state$start)
+          
+          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
+            col_names =  get_col_names(table), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
+            datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
+            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
+            filter = TRUE, searchable_cols = searchable_cols, column_widths = column_widths)
+        })
+      }
       
     
  

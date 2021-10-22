@@ -419,7 +419,7 @@ mod_settings_plugins_server <- function(id, r, language){
         # Choose unit, priority to data, then thesaurus
         if (nrow(r$labs_vitals) > 0) data$labs_vitals <- r$labs_vitals %>%
           dplyr::inner_join(selected_thesaurus_items, by = c("patient_id", "item_id", "thesaurus_name")) %>%
-          dplyr::mutate(unit = dplyr::case_when(unit != "" ~ unit, TRUE ~ unit_thesaurus))
+          dplyr::mutate(unit = dplyr::case_when(unit != "" ~ unit, TRUE ~ unit_thesaurus)) %>% dplyr::select(-unit_thesaurus)
         if (nrow(r$text) > 0) data$text <- r$text %>%
           dplyr::inner_join(selected_thesaurus_items, by = c("patient_id", "item_id", "thesaurus_name"))
         if (nrow(r$orders) > 0) data$orders <- r$orders %>%

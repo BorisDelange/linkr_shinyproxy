@@ -31,7 +31,7 @@ app_server <- function(router, language){
         "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus",
         "plugins", 
         "patient_lvl_modules", "patient_lvl_modules_families", "patient_lvl_modules_elements",
-        "aggregated_modules_families", "aggregated_modules",
+        "aggregated_modules", "aggregated_modules_families",
         "code", "options")
       
       sapply(tables, function(table){
@@ -76,21 +76,21 @@ app_server <- function(router, language){
     mod_settings_app_database_server("settings_app_db", r, language)
     mod_page_sidenav_server("settings_app_db", r, language)
 
-    mod_settings_users_server("settings_users", r, language)
-    mod_page_sidenav_server("settings_users", r, language)
-    sapply(c("users", "users_statuses", "users_accesses"), function(page){
-      mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language)
-      mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language)
-      if (page == "users_accesses") mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language)
-    })
+    # mod_settings_users_server("settings_users", r, language)
+    # mod_page_sidenav_server("settings_users", r, language)
+    # sapply(c("users", "users_statuses", "users_accesses"), function(page){
+    #   mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language)
+    #   mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language)
+    #   if (page == "users_accesses") mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language)
+    # })
 
     mod_settings_r_console_server("settings_r_console", r, language)
     mod_page_sidenav_server("settings_r_console", r, language)
-
-    sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
-      mod_settings_data_management_server(paste0("settings_", page), r, language)
-      mod_page_sidenav_server(paste0("settings_", page), r, language)
-    })
+# 
+#     sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
+#       mod_settings_data_management_server(paste0("settings_", page), r, language)
+#       mod_page_sidenav_server(paste0("settings_", page), r, language)
+#     })
 
     mod_settings_plugins_server("settings_plugins", r, language)
     mod_page_sidenav_server("settings_plugins", r, language)
