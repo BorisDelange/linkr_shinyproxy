@@ -10,7 +10,7 @@ app_server <- function(router, language){
     
     r <- reactiveValues()
     
-    r$user_id <- 4
+    r$user_id <- 1
     r$local_db <- get_local_db()
     r$db <- get_db()
     
@@ -75,14 +75,31 @@ app_server <- function(router, language){
     })
     
     mod_settings_r_console_server("settings_r_console", r, language)
+    mod_page_sidenav_server("settings_r_console", r, language)
+    
     mod_settings_data_management_server("settings_data_sources", r, language)
+    mod_page_sidenav_server("settings_data_sources", r, language)
+    
     mod_settings_data_management_server("settings_datamarts", r, language)
+    mod_page_sidenav_server("settings_datamarts", r, language)
+    
     mod_settings_data_management_server("settings_studies", r, language)
+    mod_page_sidenav_server("settings_studies", r, language)
+    
     mod_settings_data_management_server("settings_subsets", r, language)
+    mod_page_sidenav_server("settings_subsets", r, language)
+    
     mod_settings_data_management_server("settings_thesaurus", r, language)
+    mod_page_sidenav_server("settings_thesaurus", r, language)
+    
     mod_settings_plugins_server("settings_plugins", r, language)
+    mod_page_sidenav_server("settings_plugins", r, language)
+    
     mod_settings_modules_server("settings_patient_lvl_modules", r, language)
+    mod_page_sidenav_server("settings_patient_lvl_modules", r, language)
+    
     mod_settings_modules_server("settings_aggregated_modules", r, language)
+    mod_page_sidenav_server("settings_aggregated_modules", r, language)
 
   }
 }

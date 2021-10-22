@@ -50,7 +50,6 @@ mod_settings_plugins_server <- function(id, r, language){
     ns <- session$ns
  
     toggles <- c("description_card", "creation_card", "datatable_card", "options_card", "edit_code_card")
-    prefix <- "plugins"
     
     ##########################################
     # Show or hide cards   #

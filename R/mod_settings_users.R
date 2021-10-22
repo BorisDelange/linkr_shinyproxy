@@ -93,6 +93,7 @@ mod_settings_users_server <- function(id, r, language){
     # Corresponding table in the database
     if (grepl("creation", page)) table <- substr(page, 1, nchar(page) - nchar("_creation"))
     if (grepl("management", page)) table <- substr(page, 1, nchar(page) - nchar("_management"))
+    if (grepl("options", page)) table <- substr(page, 1, nchar(page) - nchar("_options"))
     
     # Dropdowns used for creation card
     dropdowns <- ""
@@ -116,33 +117,24 @@ mod_settings_users_server <- function(id, r, language){
     if (id == "settings_users"){
       
       # Depending on user_accesses
-      # observeEvent(r$user_accesses, {
-      #   # Hide toggles if user has no access
-      #   if ("users" %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
-      # })
-      # 
-      # # Depending on toggles activated
-      # sapply(toggles, function(toggle){
-      # 
-      #   # If user has no access, hide card
-      #   observeEvent(r$user_accesses, if (toggle %not_in% r$user_accesses) shinyjs::hide(toggle))
-      # 
-      #   # If user has access, show or hide card when toggle is clicked
-      #   observeEvent(input[[paste0(toggle, "_toggle")]], {
-      #     if (toggle %in% r$user_accesses){
-      #       if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
-      #       else shinyjs::hide(toggle)
-      #     }
-      #   })
-      # })
-      
-      
-      
-      
-      
-      
+      observeEvent(r$user_accesses, {
+        # Hide toggles if user has no access
+        if ("users" %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
+      })
+
+      # Depending on toggles activated
       sapply(toggles, function(toggle){
-        observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
+
+        # If user has no access, hide card
+        observeEvent(r$user_accesses, if (toggle %not_in% r$user_accesses) shinyjs::hide(toggle))
+
+        # If user has access, show or hide card when toggle is clicked
+        observeEvent(input[[paste0(toggle, "_toggle")]], {
+          if (toggle %in% r$user_accesses){
+            if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
+            else shinyjs::hide(toggle)
+          }
+        })
       })
       
       # When a new user, a user status or a user access is added, close add card & show data management card
@@ -180,6 +172,9 @@ mod_settings_users_server <- function(id, r, language){
       
       # When add button is clicked
       observeEvent(input$add, {
+        
+        # If user has access
+        req(paste0(table, "_creation_card") %in% r$user_accesses)
         
         new_data <- list()
         
@@ -221,6 +216,9 @@ mod_settings_users_server <- function(id, r, language){
       
         # If r$... variable changes
         observeEvent(r[[paste0(table, "_temp")]], {
+          
+          # If user has access
+          req(paste0(table, "_management_card") %in% r$usemodr_accesses)
   
           # Dropdowns for each module / page
           dropdowns_datatable <- switch(table, "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
@@ -302,6 +300,9 @@ mod_settings_users_server <- function(id, r, language){
 
       # When the delete is confirmed...
       observeEvent(input$delete_confirmed, {
+        
+        # If user has access
+        req(paste0(table, "_management_card") %in% r$user_accesses)
 
         # Get value of deleted row
         row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
@@ -330,13 +331,17 @@ mod_settings_users_server <- function(id, r, language){
       
       observeEvent(r$users_statuses_options, {
         req(r$users_statuses_options > 0)
+        
+        # If user has access
+        req(paste0(table, "_options_card") %in% r$user_accesses)
 
+        # All toggles displayed
         options_toggles <- tibble::tribble(
           ~name, ~toggles,
           "app_db", c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card"),
           "users", c("users_creation_card", "users_management_card",
-             "accesses_creation_card", "accesses_management_card", "accesses_options_card",
-             "statuses_creation_card", "statuses_management_card"),
+             "users_accesses_creation_card", "users_accesses_management_card", "users_accesses_options_card",
+             "users_statuses_creation_card", "users_statuses_management_card"),
           "r_console", "r_console_edit_code_card",
           "data_sources", c("data_sources_creation_card", "data_sources_datatable_card"),
           "datamarts", c("datamarts_creation_card", "datamarts_datatable_card", "datamarts_options_card", "datamarts_edit_code_card"),
@@ -430,6 +435,9 @@ mod_settings_users_server <- function(id, r, language){
 
         # When save button is clicked
         observeEvent(input$options_save, {
+          
+          # If user has access
+          req(paste0(table, "_options_card") %in% r$user_accesses)
           
           # Create a data variable to insert data in database
           data <- tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted)

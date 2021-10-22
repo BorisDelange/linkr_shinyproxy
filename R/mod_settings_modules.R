@@ -8,63 +8,63 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_settings_modules_ui <- function(id, language, page){
+mod_settings_modules_ui <- function(id, language){
   ns <- NS(id)
   result <- ""
-  if (page == "settings/modules_patient_lvl") prefix <- "patient_lvl"
-  if (page == "settings/modules_aggregated") prefix <- "aggregated"
-  
-  div(class = "main",
-    settings_default_elements(ns, prefix),
-    settings_toggle_card(language, ns, cards = list(
-      list(key = paste0(prefix, "_creation_card"), label = "modules_creation_card"),
-      list(key = paste0(prefix, "_datatable_card"), label = "modules_management_card"),
-      list(key = paste0(prefix, "_options_card"), label = "modules_options_card")
-    )),
-    # Don't use settings_creation_card because of the conditionnal panel
-    div(
-      id = ns(paste0(prefix, "_creation_card")),
-      make_card(
-        translate(language, "modules_creation"),
-        div(
-          shiny.fluent::ChoiceGroup.shinyInput(ns(paste0(prefix, "_creation_module_type")), value = "module", options = list(
-            list(key = "module", text = translate(language, "module")),
-            list(key = "family", text = translate(language, "module_family"))
-          ), className = "inline_choicegroup"),
-          shiny.fluent::Stack(
-            horizontal = TRUE, tokens = list(childrenGap = 20),
-            make_textfield(language, ns, id = paste0(prefix, "_name"), label = "name", width = "300px"),
-            make_textfield(language, ns, id = paste0(prefix, "_description"), label = "description", width = "300px")
-          ),
-          shiny::conditionalPanel(
-            condition = paste0("input.", prefix, "_creation_module_type == 'module'"), ns = ns,
-            shiny.fluent::Stack(
-              horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_dropdown(language, ns, id = paste0(prefix, "_module_family"), label = "module_family", width = "300px"),
-              make_dropdown(language, ns, id = paste0(prefix, "_module_parent"), label = "module_parent", width = "300px")
-            )
-          ),
-          htmltools::br(),
-          shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_add")), translate(language, "add"))
-        )
-      )
-    ),
-    shiny::uiOutput(ns(paste0(prefix, "_options_card"))),
-    div(
-      id = ns(paste0(prefix, "_datatable_card")),
-      make_card(
-        translate(language, "modules_management"),
-        div(
-          shiny.fluent::ChoiceGroup.shinyInput(ns(paste0(prefix, "_management_module_type")), value = "module", options = list(
-            list(key = "module", text = translate(language, "modules")),
-            list(key = "family", text = translate(language, "module_families"))
-          ), className = "inline_choicegroup"),
-          DT::DTOutput(ns(paste0(prefix, "_management_datatable"))),
-          shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_management_save")), translate(language, "save"), style = "top:-30px;")
-        )
-      )
-    )
-  )
+  # if (id == "settings_modules_patient_lvl") prefix <- "patient_lvl"
+  # if (id == "settings_modules_aggregated") prefix <- "aggregated"
+  # 
+  # div(class = "main",
+  #   settings_default_elements(ns, prefix),
+  #   settings_toggle_card(language, ns, cards = list(
+  #     list(key = paste0(prefix, "_creation_card"), label = "modules_creation_card"),
+  #     list(key = paste0(prefix, "_datatable_card"), label = "modules_management_card"),
+  #     list(key = paste0(prefix, "_options_card"), label = "modules_options_card")
+  #   )),
+  #   # Don't use settings_creation_card because of the conditionnal panel
+  #   div(
+  #     id = ns(paste0(prefix, "_creation_card")),
+  #     make_card(
+  #       translate(language, "modules_creation"),
+  #       div(
+  #         shiny.fluent::ChoiceGroup.shinyInput(ns(paste0(prefix, "_creation_module_type")), value = "module", options = list(
+  #           list(key = "module", text = translate(language, "module")),
+  #           list(key = "family", text = translate(language, "module_family"))
+  #         ), className = "inline_choicegroup"),
+  #         shiny.fluent::Stack(
+  #           horizontal = TRUE, tokens = list(childrenGap = 20),
+  #           make_textfield(language, ns, id = paste0(prefix, "_name"), label = "name", width = "300px"),
+  #           make_textfield(language, ns, id = paste0(prefix, "_description"), label = "description", width = "300px")
+  #         ),
+  #         shiny::conditionalPanel(
+  #           condition = paste0("input.", prefix, "_creation_module_type == 'module'"), ns = ns,
+  #           shiny.fluent::Stack(
+  #             horizontal = TRUE, tokens = list(childrenGap = 20),
+  #             make_dropdown(language, ns, id = paste0(prefix, "_module_family"), label = "module_family", width = "300px"),
+  #             make_dropdown(language, ns, id = paste0(prefix, "_module_parent"), label = "module_parent", width = "300px")
+  #           )
+  #         ),
+  #         htmltools::br(),
+  #         shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_add")), translate(language, "add"))
+  #       )
+  #     )
+  #   ),
+  #   shiny::uiOutput(ns(paste0(prefix, "_options_card"))),
+  #   div(
+  #     id = ns(paste0(prefix, "_datatable_card")),
+  #     make_card(
+  #       translate(language, "modules_management"),
+  #       div(
+  #         shiny.fluent::ChoiceGroup.shinyInput(ns(paste0(prefix, "_management_module_type")), value = "module", options = list(
+  #           list(key = "module", text = translate(language, "modules")),
+  #           list(key = "family", text = translate(language, "module_families"))
+  #         ), className = "inline_choicegroup"),
+  #         DT::DTOutput(ns(paste0(prefix, "_management_datatable"))),
+  #         shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_management_save")), translate(language, "save"), style = "top:-30px;")
+  #       )
+  #     )
+  #   )
+  # )
 }
     
 #' settings_modules Server Functions

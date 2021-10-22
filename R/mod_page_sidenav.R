@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_sidenav_ui <- function(id, language, page){
+mod_page_sidenav_ui <- function(id, language){
   ns <- NS(id)
   result <- ""
   
@@ -16,7 +16,7 @@ mod_page_sidenav_ui <- function(id, language, page){
   # Home                                   #
   ##########################################
   
-  if (grepl("^home", page)){
+  if (grepl("^home", id)){
     div(class = "sidenav",
       shiny.fluent::Nav(
         groups = list(
@@ -27,7 +27,7 @@ mod_page_sidenav_ui <- function(id, language, page){
           )
         ),
         initialSelectedKey = "datamarts_studies",
-        selectedKey = substr(page, nchar("home") + 2, 100),
+        selectedKey = substr(id, nchar("home") + 2, 100),
         styles = list(
           root = list(
             height = "100%",
@@ -43,7 +43,7 @@ mod_page_sidenav_ui <- function(id, language, page){
   # Patient-level data                     #
   ##########################################
   
-  if (page == "patient_level_data"){
+  if (id == "patient_level_data"){
     div(class = "sidenav",
       make_dropdown(language = language, ns = ns, label = "datamart"),
       make_dropdown(language = language, ns = ns, label = "study"),
@@ -60,7 +60,7 @@ mod_page_sidenav_ui <- function(id, language, page){
   # Aggregated data                        #
   ##########################################
   
-  if (page == "aggregated_data"){
+  if (id == "aggregated_data"){
     div(class = "sidenav",
       make_dropdown(language = language, ns = ns, label = "datamart"),
       make_dropdown(language = language, ns = ns, label = "study"),
@@ -72,8 +72,9 @@ mod_page_sidenav_ui <- function(id, language, page){
   # Settings                               #
   ##########################################
   
-  if (grepl("^settings", page)){
-    div(class = "sidenav",
+  if (grepl("^settings", id)){
+    div(class = "sidenav", 
+      # uiOutput(ns("sidenav"))
       shiny.fluent::Nav(
         groups = list(
           list(links = list(
@@ -87,23 +88,23 @@ mod_page_sidenav_ui <- function(id, language, page){
               list(name = translate(language, "studies"), key = "studies", url = shiny.router::route_link("settings/studies")),
               list(name = translate(language, "subsets"), key = "subsets", url = shiny.router::route_link("settings/subsets")),
               list(name = translate(language, "thesaurus"), key = "thesaurus", url = shiny.router::route_link("settings/thesaurus"))
-              ),
-              initialSelectedKey = "data_source",
-              selectedKey = substr(page, nchar("settings") + 2, 100),
-              isExpanded = TRUE),
+            ),
+            initialSelectedKey = "data_source",
+            selectedKey = substr(page, nchar("settings") + 2, 100),
+            isExpanded = TRUE),
             list(name = translate(language, "modules_plugins"), key = "modules", links = list(
               list(name = translate(language, "plugins"), key = "plugins", url = shiny.router::route_link("settings/plugins")),
               list(name = translate(language, "modules_patient_lvl"), key = "modules_patient_lvl", url = shiny.router::route_link("settings/modules_patient_lvl")),
               list(name = translate(language, "modules_aggregated"), key = "modules_aggregated", url = shiny.router::route_link("settings/modules_aggregated"))
-              ),
-              initialSelectedKey = "data_source",
-              selectedKey = substr(page, nchar("settings") + 2, 100),
-              isExpanded = TRUE),
+            ),
+            initialSelectedKey = "data_source",
+            selectedKey = substr(page, nchar("settings") + 2, 100),
+            isExpanded = TRUE),
             list(name = translate(language, "log"), key = "log", url = shiny.router::route_link("settings/log"))
           ))
         ),
-        initialSelectedKey = "general",
-        selectedKey = substr(page, nchar("settings") + 2, 100),
+        initialSelectedKey = "general_settings",
+        selectedKey = substr(id, nchar("settings") + 2, 100),
         styles = list(
           root = list(
             height = "100%",
@@ -122,11 +123,11 @@ mod_page_sidenav_ui <- function(id, language, page){
 #'
 #' @noRd 
 mod_page_sidenav_server <- function(id, r, language){
-  moduleServer( id, function(input, output, session){
+  moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     ##########################################
-    # Fluent / Patient-level data            #
+    # Patient-level data                     #
     ##########################################
     
     observeEvent(r$datamarts, {
@@ -299,6 +300,122 @@ mod_page_sidenav_server <- function(id, r, language){
       shiny.fluent::updateDropdown.shinyInput(session, "subset", options = tibble_to_list(subsets, "id", "name", rm_deleted_rows = TRUE),
         value = r$chosen_subset)
     })
+    
+    observeEvent(r$users, output$test <- renderText(print(paste0("ID is ", id))))
+    
+    
+    ##########################################
+    # Settings                               #
+    ##########################################
+    
+    # if (grepl("^settings", id)){
+    #   
+    #   observeEvent(r$user_accesses, {
+    #     
+    #     output$sidenav <- renderUI({
+    #       
+    #       settings <- tagList()
+    #       
+    #       # For first links, before data management
+    #       sapply(c("app_db", "users", "r_console"), function(page){
+    #         disabled <- FALSE
+    #         if (page %not_in% r$user_accesses) disabled <- TRUE
+    #         settings <<- tagList(settings,
+    #           list(name = translate(language, page), key = page, url = shiny.router::route_link(paste0("settings/", page)), disabled = disabled))
+    #       })
+    #       
+    #       # For data management link & sub-links
+    # 
+    #       sub_settings <- tagList()
+    #       sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
+    #         if (page %in% r$user_accesses){
+    #           disabled <- FALSE
+    #           if (page %not_in% r$user_accesses) disabled <- TRUE
+    #           sub_settings <<- tagList(sub_settings,
+    #             list(name = translate(language, page), key = page, url = shiny.router::route_link(paste0("settings/", page)), disabled = disabled))
+    #         }
+    #       })
+    # 
+    #       settings <- tagList(settings,
+    #         list(name = translate(language, "data_management"), key = "data_management", links = list(sub_settings),
+    #           selectedKey = substr(page, nchar("settings") + 2, 100), isExpanded = TRUE))
+    #       
+    #       # For modules & plugins link & sublinks
+    #       
+    #       sub_settings <- tagList()
+    #       sapply(c("plugins", "modules_patient_lvl", "modules_aggregated"), function(page){
+    #         if (page %in% r$user_accesses){
+    #           disabled <- FALSE
+    #           if (page %not_in% r$user_accesses) disabled <- TRUE
+    #           sub_settings <<- tagList(sub_settings,
+    #             list(name = translate(language, page), key = page, url = shiny.router::route_link(paste0("settings/", page)), disabled = disabled))
+    #         }
+    #       })
+    # 
+    #       settings <- tagList(settings,
+    #         list(name = translate(language, "modules_plugins"), key = "modules_plugins", links = list(sub_settings),
+    #           selectedKey = substr(page, nchar("settings") + 2, 100), isExpanded = TRUE))
+    #       # 
+    #       # if ("log" %in% r$user_accesses) settings <- tagList(settings,
+    #       #                                                     list(name = translate(language, "log"), key = "log", url = shiny.router::route_link("settings/log")))
+    #       
+    #       
+    #       
+    #       shiny.fluent::Nav(
+    #         groups = list(
+    #           list(links = list(
+    #             list(name = translate(language, "general_settings"), key = "general", url = shiny.router::route_link("settings/general")),
+    #             settings
+    #       #       list(name = translate(language, "app_db"), key = "app_db", url = shiny.router::route_link("settings/app_db"), disabled = TRUE),
+    #       #       list(name = translate(language, "users"), key = "users", url = shiny.router::route_link("settings/users")),
+    #       #       list(name = translate(language, "r_console"), key = "r_console", url = shiny.router::route_link("settings/r_console")),
+    #       #       list(name = translate(language, "data_management"), key = "data", links = list(
+    #       #         list(name = translate(language, "data_sources"), key = "data_sources", url = shiny.router::route_link("settings/data_sources")),
+    #       #         list(name = translate(language, "datamarts"), key = "datamarts", url = shiny.router::route_link("settings/datamarts")),
+    #       #         list(name = translate(language, "studies"), key = "studies", url = shiny.router::route_link("settings/studies")),
+    #       #         list(name = translate(language, "subsets"), key = "subsets", url = shiny.router::route_link("settings/subsets")),
+    #       #         list(name = translate(language, "thesaurus"), key = "thesaurus", url = shiny.router::route_link("settings/thesaurus"))
+    #       #       ),
+    #       #       initialSelectedKey = "data_source",
+    #       #       selectedKey = substr(page, nchar("settings") + 2, 100),
+    #       #       isExpanded = TRUE),
+    #       #       list(name = translate(language, "modules_plugins"), key = "modules", links = list(
+    #       #         list(name = translate(language, "plugins"), key = "plugins", url = shiny.router::route_link("settings/plugins")),
+    #       #         list(name = translate(language, "modules_patient_lvl"), key = "modules_patient_lvl", url = shiny.router::route_link("settings/modules_patient_lvl")),
+    #       #         list(name = translate(language, "modules_aggregated"), key = "modules_aggregated", url = shiny.router::route_link("settings/modules_aggregated"))
+    #       #       ),
+    #       #       initialSelectedKey = "data_source",
+    #       #       selectedKey = substr(page, nchar("settings") + 2, 100),
+    #       #       isExpanded = TRUE),
+    #       #       list(name = translate(language, "log"), key = "log", url = shiny.router::route_link("settings/log"))
+    #           ))
+    #         ),
+    #         initialSelectedKey = "general_settings",
+    #         selectedKey = substr(id, nchar("settings") + 2, 100),
+    #       #   # selectedKey = "general",
+    #         styles = list(
+    #           root = list(
+    #             height = "100%",
+    #             boxSizing = "border-box",
+    #             overflowY = "auto"
+    #           )
+    #         )
+    #       )
+    #     })
+    #     
+    #   })
+    #   #   
+    # 
+    #     
+    #     # output$test <- renderText(print(paste0("ID is ", id)))
+    #     
+    #     # output$sidenav <- renderUI("This is a")
+    #     
+    #     # output$sidenav <- renderUI({
+    #     #   
+    #     # })
+    #   # })
+    # }
  
   })
 }
