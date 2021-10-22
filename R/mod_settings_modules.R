@@ -16,7 +16,10 @@ mod_settings_modules_ui <- function(id, language){
   # Patient-lvl modules                    #
   ##########################################
   
-  if (id == "settings_modules_patient_lvl"){
+  # if (id == "settings_modules_patient_lvl"){
+  
+    if (grepl("patient_lvl", id)) prefix <- "patient_lvl"
+    if (grepl("aggregated", id)) prefix <- "aggregated"
 
     # Three distinct pages in the settings/modules page : module family, module & module element
     # For each "sub page", create a creation & a management cards
@@ -30,11 +33,11 @@ mod_settings_modules_ui <- function(id, language){
     sapply(pages, function(page){
 
       cards <<- tagList(cards,
-        div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_patient_lvl_", page, "_creation"), language = language)),
-        div(id = ns(paste0(page, "_management_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_patient_lvl_", page, "_management"), language = language)))
+        div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_", prefix, "_", page, "_creation"), language = language)),
+        div(id = ns(paste0(page, "_management_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_", prefix, "_", page, "_management"), language = language)))
 
       if (page == "modules_families") cards <<- tagList(cards,
-        div(id = ns(paste0(page, "_options_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_patient_lvl_", page, "_options"), language = language)))
+        div(id = ns(paste0(page, "_options_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_", prefix, "_", page, "_options"), language = language)))
     })
 
     div(class = "main",
@@ -50,7 +53,7 @@ mod_settings_modules_ui <- function(id, language){
       )),
       cards
     ) -> result
-  }
+  # }
   
   
   result
@@ -62,16 +65,16 @@ mod_settings_sub_modules_ui <- function(id, language){
   result <- ""
   
   ##########################################
-  # Patient-lvl sub modules                #
+  # Patient-lvl & aggregated sub modules   #
   ##########################################
     
-    page <- substr(id, nchar("settings_modules_patient_lvl_") + 1, nchar(id))
+    if (grepl("patient_lvl", id)) page <- substr(id, nchar("settings_modules_patient_lvl_") + 1, nchar(id))
+    if (grepl("aggregated", id)) page <- substr(id, nchar("settings_modules_aggregated_") + 1, nchar(id))
     
     if (page == "modules_creation"){
-      tagList(render_settings_creation_card(language = language, ns = ns, id = id, title = "add_module",
+      render_settings_creation_card(language = language, ns = ns, id = id, title = "add_module",
         textfields = c("name", "description"), textfields_width = "300px",
-        dropdowns = c("module_family", "parent_module"), dropdowns_width = "300px"),
-        br(), textOutput(ns("test1")), textOutput(ns("test2"))) -> result
+        dropdowns = c("module_family", "parent_module"), dropdowns_width = "300px") -> result
     }
 
     if (page == "modules_families_creation"){
@@ -105,6 +108,9 @@ mod_settings_modules_server <- function(id, r, language){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
+    if (grepl("patient_lvl", id)) prefix <- "patient_lvl"
+    if (grepl("aggregated", id)) prefix <- "aggregated"
+    
     # if (id == "settings_modules_patient_lvl"){
       
       toggles <- c(
@@ -113,13 +119,13 @@ mod_settings_modules_server <- function(id, r, language){
         "modules_elements_creation_card", "modules_elements_management_card")
       
       # Current page
-      page <- substr(id, nchar("settings_modules_patient_lvl_") + 1, nchar(id))
+      page <- substr(id, nchar(paste0("settings_modules_", prefix, "_")) + 1, nchar(id))
       
       # Corresponding table
       # Corresponding table in the database
-      if (grepl("creation", page)) table <- paste0("patient_lvl_", substr(page, 1, nchar(page) - nchar("_creation")))
-      if (grepl("management", page)) table <- paste0("patient_lvl_", substr(page, 1, nchar(page) - nchar("_management")))
-      if (grepl("options", page)) table <- paste0("patient_lvl_", substr(page, 1, nchar(page) - nchar("_options")))
+      if (grepl("creation", page)) table <- paste0(prefix, "_", substr(page, 1, nchar(page) - nchar("_creation")))
+      if (grepl("management", page)) table <- paste0(prefix, "_", substr(page, 1, nchar(page) - nchar("_management")))
+      if (grepl("options", page)) table <- paste0(prefix, "_", substr(page, 1, nchar(page) - nchar("_options")))
       
       # Corresponding table in the database
       # if (grepl("creation", page)) table <- substr(page, 1, nchar(page) - nchar("_creation"))
@@ -137,15 +143,15 @@ mod_settings_modules_server <- function(id, r, language){
       # Initiate vars
       
       # Used to communicate between modules and to show / hide cards
-      r$patient_lvl_modules_toggle <- 0L
-      r$patient_lvl_modules_families_toggle <- 0L
-      r$patient_lvl_modules_elements_toggle <- 0L
+      r[[paste0(prefix, "_modules_toggle")]] <- 0L
+      r[[paste0(prefix, "_modules_families_toggle")]] <- 0L
+      r[[paste0(prefix, "_modules_elements_toggle")]] <- 0L
       
       # Used to send option link_id from one module to another
-      r$patient_lvl_modules_families_options <- 0L
+      r[[paste0(prefix, "_modules_families_options")]] <- 0L
       
       # Only for main users page (not for sub-pages)
-      if (id == "settings_modules_patient_lvl"){ # Or for aggregated page ?
+      if (id == "settings_modules_patient_lvl" | id == "settings_modules_aggregated"){ 
         
         # Depending on user_accesses
         # observeEvent(r$user_accesses, {
@@ -170,8 +176,8 @@ mod_settings_modules_server <- function(id, r, language){
         
         # When a new user, a user status or a user access is added, close add card & show data management card
         sapply(c("modules", "modules_families", "modules_elements"), function(page){
-          observeEvent(r[[paste0("patient_lvl_", page, "_toggle")]], {
-            if (r[[paste0("patient_lvl_", page, "_toggle")]] != 0){
+          observeEvent(r[[paste0(prefix, "_", page, "_toggle")]], {
+            if (r[[paste0(prefix, "_", page, "_toggle")]] != 0){
               shiny.fluent::updateToggle.shinyInput(session, paste0(page, "_creation_card_toggle"), value = FALSE)
               shiny.fluent::updateToggle.shinyInput(session, paste0(page, "_management_card_toggle"), value = TRUE)}
           })
@@ -193,13 +199,13 @@ mod_settings_modules_server <- function(id, r, language){
 
         # Update dropdowns with reactive data (module_family & parent_module dropdowns)
         
-        observeEvent(r$patient_lvl_modules_families, {
-          options <- convert_tibble_to_list(data = r$patient_lvl_modules_families, key_col = "id", text_col = "name")
+        observeEvent(r[[paste0(prefix, "_modules_families")]], {
+          options <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules_families")]], key_col = "id", text_col = "name")
           shiny.fluent::updateDropdown.shinyInput(session, "module_family", options = options)
         })
         
-        observeEvent(r$patient_lvl_modules, {
-          options <- convert_tibble_to_list(data = r$patient_lvl_modules, key_col = "id", text_col = "name")
+        observeEvent(r[[paste0(prefix, "_modules")]], {
+          options <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]], key_col = "id", text_col = "name")
           shiny.fluent::updateDropdown.shinyInput(session, "parent_module", options = options)
         })
 

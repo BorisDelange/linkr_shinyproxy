@@ -100,11 +100,14 @@ app_server <- function(router, language){
       mod_page_sidenav_server(paste0("settings_", page), r, language)
     })
     
-    # Patient-lvl modules page sub modules
-    sapply(c("modules", "modules_families", "modules_elements"), function(page){
-      mod_settings_modules_server(paste0("settings_modules_patient_lvl_", page, "_creation"), r, language)
-      mod_settings_modules_server(paste0("settings_modules_patient_lvl_", page, "_management"), r, language)
-      if (page == "modules_families") mod_settings_modules_server(paste0("settings_modules_patient_lvl_", page, "_options"), r, language)
+    # Patient-lvl & aggregated modules page sub modules
+    sapply(c("patient_lvl", "aggregated"), function(prefix){
+      sapply(c("modules", "modules_families", "modules_elements"), function(page){
+        mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_creation"), r, language)
+        mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_management"), r, language)
+        if (page == "modules_families") mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_options"), r, language)
+      })
     })
+    
   }
 }
