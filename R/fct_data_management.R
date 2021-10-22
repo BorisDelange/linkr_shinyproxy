@@ -117,23 +117,27 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), patients
   
   patients <- patients %>% dplyr::anti_join(actual_patients, by = "patient_id")
   
-  # Add new patient(s) in the subset
-  tryCatch({
-    last_id <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM subset_patients") %>% dplyr::pull()
-    other_cols <- tibble::tibble(
-      id = 1:nrow(patients) + last_id, subset_id = subset_id, creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE
+  # If there are patients to add
+  if (nrow(patients) > 0){
+    
+    # Add new patient(s) in the subset
+    tryCatch({
+      last_id <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM subset_patients") %>% dplyr::pull()
+      other_cols <- tibble::tibble(
+        id = 1:nrow(patients) + last_id, subset_id = subset_id, creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE
+      )
+      patients <- patients %>% dplyr::bind_cols(other_cols) %>% dplyr::relocate(patient_id, .after = "subset_id")
+      DBI::dbAppendTable(r$db, "subset_patients", patients)
+      },
+      error = function(e){
+        show_message_bar(output, 1, "error_inserting_data", "severeWarning", language)
+        stop(translate(language, "error_inserting_data"))
+      }, warning = function(w){
+        show_message_bar(output, 1, "error_inserting_data", "severeWarning", language)
+        stop(translate(language, "error_inserting_data"))
+      }
     )
-    patients <- patients %>% dplyr::bind_cols(other_cols) %>% dplyr::relocate(patient_id, .after = "subset_id")
-    DBI::dbAppendTable(r$db, "subset_patients", patients)
-    },
-    error = function(e){
-      show_message_bar(output, 1, "error_inserting_data", "severeWarning", language)
-      stop(translate(language, "error_inserting_data"))
-    }, warning = function(w){
-      show_message_bar(output, 1, "error_inserting_data", "severeWarning", language)
-      stop(translate(language, "error_inserting_data"))
-    }
-  )
+  }
   
   show_message_bar(output, 1, "add_patients_subset_success", "success", language)
   print(translate(language, "add_patients_subset_success"))

@@ -271,6 +271,8 @@ get_translations <- function(){
             "FR", "thesaurus_edit_code_card", "Editer le code",
             "EN", "thesaurus_items", "Items",
             "FR", "thesaurus_items", "Items",
+            "EN", "item_colour", "Item colour",
+            "FR", "item_colour", "Couleur de l'item",
             "EN", "thesaurus_items_selected", "Items selected",
             "FR", "thesaurus_items_selected", "Items sélectionnés",
             "EN", "thesaurus_items_management_card", "Items management",
@@ -786,7 +788,9 @@ get_translations <- function(){
             "EN", "patient_already_in_subset", "Patient already in this subset",
             "FR", "patient_already_in_subset", "Patient déjà dans ce subset",
             "EN", "error_removing_patients_from_subset", "Error removing patients from subset",
-            "FR", "error_removing_patients_from_subset", "Erreur lors de la suppression des patients du subset"
+            "FR", "error_removing_patients_from_subset", "Erreur lors de la suppression des patients du subset",
+            "EN", "thesaurus_items_empty", "Choose at least one thesaurus item",
+            "FR", "thesaurus_items_empty", "Choisir au moins un item du thésaurus"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

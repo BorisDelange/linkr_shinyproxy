@@ -36,7 +36,7 @@ mod_page_main_ui <- function(id, language){
   # Patient-lvl & aggregated data pages    #
   ##########################################
   
-  if (id == "patient_level_data") mod_patient_and_aggregated_data_ui("patient_lvl_data", language, id) -> result
+  if (id == "patient_level_data") mod_patient_and_aggregated_data_ui("patient_level_data", language, id) -> result
   if (id == "aggregated_data") mod_patient_and_aggregated_data_ui("aggregated_data", language, id) -> result
   
   ##########################################

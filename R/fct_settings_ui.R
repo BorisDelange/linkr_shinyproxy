@@ -350,20 +350,32 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
     # Get module_type_id of current plugin
     module_type_id <- r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(module_type_id)
     
+    # Colours choices
+    colorCells <- list(
+      list(id = "#ca5010", color = "#ca5010"),
+      list(id = "#038387", color = "#038387"),
+      list(id = "#8764b8", color = "#8764b8"),
+      list(id = "#881798", color = "#881798"),
+      list(id = "#ffffff", color = "#ffffff")
+    )
+    
     # Dropdowns for choice of datamart etc
     # Depending if module_type is patient_lvl_data or aggregated_data
     if (module_type_id == 1){
       tagList(
-        shiny.fluent::Stack(
-          horizontal = TRUE, tokens = list(childrenGap = 30),
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
           make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
             options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")),
           make_dropdown(language = language, ns = ns, label = "patient", width = "300px"),
           make_dropdown(language = language, ns = ns, label = "stay", width = "300px")),
-        shiny.fluent::Stack(
-          horizontal = TRUE, tokens = list(childrenGap = 30),
-          make_dropdown(language = language, ns = ns, label = "thesaurus", width = "300px"),
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
+          make_dropdown(language = language, ns = ns, label = "thesaurus", width = "300px")),
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
           make_combobox(language = language, ns = ns, label = "thesaurus_items", multiSelect = TRUE, allowFreeform = TRUE, width = "300px"),
+          div(
+            div(class = "input_title", translate(language, "item_colour")),
+            div(shiny.fluent::SwatchColorPicker.shinyInput(ns("colour"), value = "#038387", colorCells = colorCells, columnCount = length(colorCells))),
+            style = "margin-top:5px;"),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("add_thesaurus_item"), translate(language, "add")), style = "margin-top:38px;"),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("remove_thesaurus_item"), translate(language, "remove")), style = "margin-top:38px;"),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset")), style = "margin-top:38px;")), br(),

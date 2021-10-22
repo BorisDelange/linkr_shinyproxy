@@ -11,6 +11,9 @@
 mod_settings_modules_ui <- function(id, language){
   ns <- NS(id)
   result <- ""
+  
+  
+  
   # if (id == "settings_modules_patient_lvl") prefix <- "patient_lvl"
   # if (id == "settings_modules_aggregated") prefix <- "aggregated"
   # 

@@ -14,8 +14,7 @@ mod_patient_and_aggregated_data_ui <- function(id, language, page){
   
   div(class = "main",
     render_settings_default_elements(ns = ns),
-    uiOutput(ns("main")),
-    tableOutput(ns("test1")), tableOutput(ns("test2")), tableOutput(ns("test3"))
+    uiOutput(ns("main"))
   )
 }
 

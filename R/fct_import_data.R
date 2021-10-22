@@ -112,7 +112,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
       print(translate(language, "import_datamart_success"))
       return({
         col_types <- switch(type, 
-          "patients" = "innT",
+          "patients" = "icnT",
           "stays" = "iicTT",
           "labs_vitals" = "iciTTcncc",
           "text" = "iciTTcc",

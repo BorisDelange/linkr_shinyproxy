@@ -85,8 +85,7 @@ mod_settings_plugins_server <- function(id, r, language){
       # If user has access
       req("plugins_description_card" %in% r$user_accesses)
       
-      shiny.fluent::updateDropdown.shinyInput(session = session, inputId = "plugin", 
-        options = convert_tibble_to_list(data = r$plugins, key_col = "id", text_col = "name"))
+      shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = convert_tibble_to_list(data = r$plugins, key_col = "id", text_col = "name"))
     })
     
     # When a plugin is chosen, update description UI output
@@ -279,16 +278,16 @@ mod_settings_plugins_server <- function(id, r, language){
         # Update patient dropdown
         if (nrow(r$patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))
         
-        if (nrow(r$patients) != 0){
+        if (nrow(r$patients) > 0){
           shiny.fluent::updateDropdown.shinyInput(session, "patient", 
             options = convert_tibble_to_list(data = r$patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender, " - ", age, " ", translate(language, "years"))), 
-              key_col = "patient_id", text_col = "name_display"))}
+              key_col = "patient_id", text_col = "name_display"), value = NULL)}
         
         # Update also thesaurus dropdown, depending on data source
         # Reset thesaurus items dropdown
         data_source <- r$datamarts %>% dplyr::filter(id == input$datamart) %>% dplyr::pull(data_source_id) %>% as.character()
         thesaurus <- r$thesaurus %>% dplyr::filter(data_source %in% data_source_id)
-        shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name"))
+        shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name"), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", options = list(), value = NULL)
         
         # Reset outputs
@@ -299,7 +298,7 @@ mod_settings_plugins_server <- function(id, r, language){
       # When a patient is chosen
       observeEvent(input$patient, {
         
-        if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))
+        if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) == 0) shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL, errorMessage = translate(language, "no_stay_available"))
         if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) > 0){
           
           # Order stays by admission datetime
@@ -309,7 +308,7 @@ mod_settings_plugins_server <- function(id, r, language){
           shiny.fluent::updateDropdown.shinyInput(session, "stay",
             options = convert_tibble_to_list(data = stays %>% dplyr::mutate(name_display = paste0(unit_name, " - ", 
               format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", translate(language, "to"), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
-            key_col = "stay_id", text_col = "name_display"))
+            key_col = "stay_id", text_col = "name_display"), value = NULL)
         }
         
         # Reset outputs
@@ -385,8 +384,12 @@ mod_settings_plugins_server <- function(id, r, language){
         # If user has access
         req("plugins_edit_code_card" %in% r$user_accesses)
         
+        if (length(input$datamart) == 0 | length(input$patient) == 0 | length(input$stay) == 0 | 
+            length(input$thesaurus) == 0) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language)
+        else if (nrow(r$selected_thesaurus_items) == 0) show_message_bar(output, 3, "thesaurus_items_empty", "severeWarning", language)
+
         req(input$datamart, input$patient, input$stay, input$thesaurus)
-        req(nrow(r$selected_thesaurus_items) > 0, input$thesaurus %in% r$thesaurus, input$stay %in% r$stays, input$patient %in% r$patients)
+        req(nrow(r$selected_thesaurus_items) > 0)
         
         # Create variables that will be available in patient-lvl data & aggregated data pages
         # For patient-lvl data page, we have these variables : labs_vitals, text & orders (for all stays of the patient)
@@ -394,9 +397,15 @@ mod_settings_plugins_server <- function(id, r, language){
         # Filter on selected thesaurus items
         # Don't forget to convert item_id & patient_id to integers, may have been transformed to numeric before
         
+        # Join with thesaurus items to get items names
         thesaurus_name <- r$thesaurus %>% dplyr::filter(id == input$thesaurus) %>% dplyr::pull(name)
-        r$selected_thesaurus_items <- r$selected_thesaurus_items %>%
-          dplyr::mutate(key = as.integer(key), thesaurus_name = !!thesaurus_name, patient_id = as.integer(input$patient))
+        r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT item_id, name, display_name, unit AS unit_thesaurus FROM thesaurus_items WHERE thesaurus_id = ",
+          input$thesaurus, " AND deleted IS FALSE"))
+        
+        # No join on thesaurus_id, unique and already filtered
+        selected_thesaurus_items <- r$selected_thesaurus_items %>%
+          dplyr::mutate(item_id = as.integer(key), thesaurus_id = input$thesaurus, thesaurus_name = !!thesaurus_name, patient_id = as.integer(input$patient)) %>%
+          dplyr::left_join(r$thesaurus_items, by = "item_id")
         
         # Initialize variables
 
@@ -406,13 +415,15 @@ mod_settings_plugins_server <- function(id, r, language){
         data$orders <- tibble::tibble()
 
         # Filter r variables with selected thesaurus items
+        # Choose unit, priority to data, then thesaurus
         if (nrow(r$labs_vitals) > 0) data$labs_vitals <- r$labs_vitals %>%
-          dplyr::inner_join(r$selected_thesaurus_items %>% dplyr::rename(item_id = key), by = c("patient_id", "item_id", "thesaurus_name"))
+          dplyr::inner_join(selected_thesaurus_items, by = c("patient_id", "item_id", "thesaurus_name")) %>%
+          dplyr::mutate(unit = dplyr::case_when(unit != "" ~ unit, TRUE ~ unit_thesaurus))
         if (nrow(r$text) > 0) data$text <- r$text %>%
-          dplyr::inner_join(r$selected_thesaurus_items %>% dplyr::rename(item_id = key), by = c("patient_id", "item_id", "thesaurus_name"))
+          dplyr::inner_join(selected_thesaurus_items, by = c("patient_id", "item_id", "thesaurus_name"))
         if (nrow(r$orders) > 0) data$orders <- r$orders %>%
-          dplyr::inner_join(r$selected_thesaurus_items %>% dplyr::rename(item_id = key), by = c("patient_id", "item_id", "thesaurus_name"))
-
+          dplyr::inner_join(selected_thesaurus_items, by = c("patient_id", "item_id", "thesaurus_name"))
+        
         data$stay <- r$stays %>% dplyr::filter(stay_id == input$stay) %>% dplyr::select(admission_datetime, discharge_datetime)
         if (nrow(data$labs_vitals) > 0) data$labs_vitals_stay <- data$labs_vitals %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
         if (nrow(data$text) > 0) data$text_stay <- data$text %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
