@@ -166,7 +166,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     # Add code for creating subset with all patients
     code <- paste0("run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n",
                    "patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)\n",
-                   "add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%, erase = FALSE)")
+                   "add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)")
     DBI::dbAppendTable(r$db, "code",
       tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
         last_row_code + 1, "subset", last_row_subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
@@ -184,7 +184,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     if (nrow(r$patients) == 0) show_message_bar(output = output, id = 2, message = "error_loading_datamart", type = "severeWarning", language = language)
     if (nrow(r$patients) != 0){
       patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
-      add_patients_to_subset(output, r, patients, last_row_subsets + 1, erase = FALSE)
+      add_patients_to_subset(output, r, patients, last_row_subsets + 1)
     }
   }
   

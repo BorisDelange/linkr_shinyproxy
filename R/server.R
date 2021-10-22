@@ -11,6 +11,8 @@ app_server <- function(router, language){
     r <- reactiveValues()
     
     r$user_id <- 1
+    
+    # Connection to database
     r$local_db <- get_local_db()
     r$db <- get_db()
     
@@ -59,7 +61,7 @@ app_server <- function(router, language){
     
     router$server(input, output, session)
     
-    sapply(c("patient_lvl_data", "aggregated_data"), function(page){
+    sapply(c("patient_level_data", "aggregated_data"), function(page){
       mod_patient_and_aggregated_data_server(page, r, language)
       mod_page_sidenav_server(page, r, language)
     })
@@ -67,8 +69,8 @@ app_server <- function(router, language){
     mod_settings_general_server("settings_general_settings", r, language)
     mod_page_sidenav_server("settings_general_settings", r, language)
     
-    mod_settings_app_database_server("settings_app_database", r, language)
-    mod_page_sidenav_server("settings_app_database", r, language)
+    mod_settings_app_database_server("settings_app_db", r, language)
+    mod_page_sidenav_server("settings_app_db", r, language)
     
     mod_settings_users_server("settings_users", r, language)
     mod_page_sidenav_server("settings_users", r, language)

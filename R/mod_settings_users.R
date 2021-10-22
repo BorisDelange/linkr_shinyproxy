@@ -218,7 +218,7 @@ mod_settings_users_server <- function(id, r, language){
         observeEvent(r[[paste0(table, "_temp")]], {
           
           # If user has access
-          req(paste0(table, "_management_card") %in% r$usemodr_accesses)
+          req(paste0(table, "_management_card") %in% r$user_accesses)
   
           # Dropdowns for each module / page
           dropdowns_datatable <- switch(table, "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),

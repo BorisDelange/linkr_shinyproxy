@@ -45,8 +45,8 @@ mod_page_main_ui <- function(id, language){
   
   if (grepl("^settings", id)){
     
-    if (id == "settings_general") mod_settings_general_ui("settings_general", language) -> result
-    if (id == "settings_app_db") mod_settings_app_database_ui("settings_app_database", language) -> result
+    if (id == "settings_general_settings") mod_settings_general_ui("settings_general_settings", language) -> result
+    if (id == "settings_app_db") mod_settings_app_database_ui("settings_app_db", language) -> result
     if (id == "settings_users") mod_settings_users_ui("settings_users", language) -> result
     if (id == "settings_r_console") mod_settings_r_console_ui("settings_r_console", language, id) -> result
     

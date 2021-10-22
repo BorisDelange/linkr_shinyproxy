@@ -697,6 +697,12 @@ get_translations <- function(){
             "FR", "subset_excluded_patients", "Patients exclus",
             "EN", "subset_excluded_patients_long", "Subset containing only excluded patients",
             "FR", "subset_excluded_patients_long", "Subset comprenant seulement les patients exclus",
+            "EN", "undefined_status", "Undefined",
+            "FR", "undefined_status", "Non défini",
+            "EN", "included_status", "Included",
+            "FR", "included_status", "Inclus",
+            "EN", "excluded_status", "Excluded",
+            "FR", "excluded_status", "Exclus",
             "EN", "invalid_table_name", "Invalid table name",
             "FR", "invalid_table_name", "Nom de table non valide",
             "EN", "tables_allowed", "Tables allowed",
@@ -753,7 +759,7 @@ get_translations <- function(){
             "FR", "gender", "Sexe",
             "EN", "years", "years",
             "FR", "years", "ans",
-            "EN", "patient_status", "Patient's status",
+            "EN", "patient_status", "Patient status",
             "FR", "patientstatus", "Statut du patient",
             "EN", "from", "From",
             "FR", "from", "Du",
@@ -776,7 +782,11 @@ get_translations <- function(){
             "EN", "all_users", "All users",
             "FR", "all_users", "Tous les utilisateurs",
             "EN", "only_me", "Only me",
-            "FR", "only_me", "Uniquement moi"
+            "FR", "only_me", "Uniquement moi",
+            "EN", "patient_already_in_subset", "Patient already in this subset",
+            "FR", "patient_already_in_subset", "Patient déjà dans ce subset",
+            "EN", "error_removing_patients_from_subset", "Error removing patients from subset",
+            "FR", "error_removing_patients_from_subset", "Erreur lors de la suppression des patients du subset"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

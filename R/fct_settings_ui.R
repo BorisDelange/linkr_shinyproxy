@@ -245,9 +245,9 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
         by = "key"
       ) %>%
       dplyr::pull(key)
-    people_picker <- make_people_picker(
+    people_picker <- tagList(make_people_picker(
       language = language, ns = ns, id = "users_allowed_read", label = paste0(get_singular(id), "_users_allowed_read"),
-      options = picker_options, value = value, width = "100%")
+      options = picker_options, value = value, width = "100%"), br())
   }
   
   ##########################################
