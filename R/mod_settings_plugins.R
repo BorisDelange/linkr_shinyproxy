@@ -56,8 +56,25 @@ mod_settings_plugins_server <- function(id, r, language){
     # Show or hide cards   #
     ##########################################
     
+    # Depending on user_accesses
+    observeEvent(r$user_accesses, {
+      # Hide toggles if user has no access
+      if ("plugins" %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
+    })
+    
+    # Depending on toggles activated
     sapply(toggles, function(toggle){
-      observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
+      
+      # If user has no access, hide card
+      observeEvent(r$user_accesses, if (paste0("plugins_", toggle) %not_in% r$user_accesses) shinyjs::hide(toggle)) 
+      
+      # If user has access, show or hide card when toggle is clicked
+      observeEvent(input[[paste0(toggle, "_toggle")]], {
+        if (paste0("plugins_", toggle) %in% r$user_accesses){
+          if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) 
+          else shinyjs::hide(toggle)
+        }
+      })
     })
     
     ##########################################
@@ -66,6 +83,9 @@ mod_settings_plugins_server <- function(id, r, language){
     
     # When r$plugins changes, update plugin dropdown
     observeEvent(r$plugins, {
+      # If user has access
+      req("plugins_description_card" %in% r$user_accesses)
+      
       shiny.fluent::updateDropdown.shinyInput(session = session, inputId = "plugin", 
         options = convert_tibble_to_list(data = r$plugins, key_col = "id", text_col = "name"))
     })
@@ -82,6 +102,9 @@ mod_settings_plugins_server <- function(id, r, language){
     
     # When add button is clicked
     observeEvent(input$add, {
+      
+      # If user has access
+      req("plugins_creation_card" %in% r$user_accesses)
       
       # Create a list with new data
       new_data <- list()
@@ -105,8 +128,11 @@ mod_settings_plugins_server <- function(id, r, language){
       
       # If r$... variable changes
       observeEvent(r$plugins_temp, {
+        
+        # If user has access
+        req("plugins_datatable_card" %in% r$user_accesses)
 
-        dropdowns <- c("module_type_id" = "module_types")
+        dropdowns_datatable <- c("module_type_id" = "module_types")
 
         action_buttons <- c("delete", "edit_code", "options")
 
@@ -123,7 +149,7 @@ mod_settings_plugins_server <- function(id, r, language){
         start <- isolate(input$management_datatable_state$start)
 
         render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-          col_names =  get_col_names("plugins"), table = "plugins", dropdowns = dropdowns, action_buttons = action_buttons,
+          col_names =  get_col_names("plugins"), table = "plugins", dropdowns = dropdowns_datatable, action_buttons = action_buttons,
           datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
           editable_cols = c("name"), sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths)
       })
@@ -165,6 +191,9 @@ mod_settings_plugins_server <- function(id, r, language){
       # When the delete is confirmed...
       observeEvent(input$delete_confirmed, {
         
+        # If user has access
+        req("plugins_datatable_card" %in% r$user_accesses)
+        
         # Get value of deleted row
         row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
         
@@ -177,6 +206,10 @@ mod_settings_plugins_server <- function(id, r, language){
       ##########################################
       
       observeEvent(input$options, {
+        
+        # If user has access
+        req("plugins_options_card" %in% r$user_accesses)
+        
         # Show options toggle
         shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = TRUE)
         
@@ -209,6 +242,9 @@ mod_settings_plugins_server <- function(id, r, language){
       # Button "Edit code" is clicked on the datatable
       observeEvent(input$edit_code, {
         
+        # If user has access
+        req("plugins_edit_code_card" %in% r$user_accesses)
+        
         # Display edit_code card
         shiny.fluent::updateToggle.shinyInput(session, "edit_code_card_toggle", value = TRUE)
         
@@ -232,6 +268,9 @@ mod_settings_plugins_server <- function(id, r, language){
       
       # When a datamart is chosen
       observeEvent(input$datamart, {
+        
+        # If user has access
+        req("plugins_edit_code_card" %in% r$user_accesses)
         
         # Try to load datamart
         tryCatch(run_datamart_code(output, r, datamart_id = input$datamart, language = language),
@@ -343,6 +382,9 @@ mod_settings_plugins_server <- function(id, r, language){
       
       # When Execute code button is clicked
       observeEvent(input$execute_code, {
+        
+        # If user has access
+        req("plugins_edit_code_card" %in% r$user_accesses)
         
         req(input$datamart, input$patient, input$stay, input$thesaurus)
         req(nrow(r$selected_thesaurus_items) > 0, input$thesaurus %in% r$thesaurus, input$stay %in% r$stays, input$patient %in% r$patients)

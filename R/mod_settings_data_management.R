@@ -24,17 +24,14 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
   ##########################################
   
   if (id == "settings_data_sources"){
-    # if ("data_sources" %in% user_accesses) {
       div(class = "main",
         render_settings_default_elements(ns = ns),
         render_settings_toggle_card(language = language, ns = ns, cards = list(
           list(key = "creation_card", label = "create_data_source"),
           list(key = "datatable_card", label = "data_sources_management"))),
-        # ifelse("create_data_source" %in% user_accesses, 
           render_settings_creation_card(
           language = language, ns = ns, id = id, title = "create_data_source",
-          textfields = c("name", "description"), textfields_width = "300px"),# ""),
-        # ifelse("data_sources_management" %in% user_accesses, 
+          textfields = c("name", "description"), textfields_width = "300px"),
           render_settings_datatable_card(language = language, ns = ns,
           div_id = "datatable_card", output_id = "management_datatable", title = "data_sources_management")#, "")
       ) -> result
@@ -163,19 +160,23 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
     # Depending on user_accesses
     observeEvent(r$user_accesses, {
-      
       # For each page, hide toggles if user has no access
-      
       if (table %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
-      if (paste0(table, "_creation_card")) shinyjs::hide("creation_card") else shinyjs::show("creation_card") 
-       
-      
-      # if ("create_data_source" %not_in% r$user_accesses) shinyjs::hide("create_data_source")
     })
     
     # Depending on toggles activated
     sapply(toggles, function(toggle){
-      observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
+      
+      # If user has no access, hide card
+      observeEvent(r$user_accesses, if (paste0(table, "_", toggle) %not_in% r$user_accesses) shinyjs::hide(toggle)) 
+      
+      # If user has access, show or hide card when toggle is clicked
+      observeEvent(input[[paste0(toggle, "_toggle")]], {
+        if (paste0(table, "_", toggle) %in% r$user_accesses){
+          if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) 
+          else shinyjs::hide(toggle)
+        }
+      })
     })
     
     ##########################################
@@ -194,6 +195,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
     # When add button is clicked
     observeEvent(input$add, {
+      
+      # If user has access
+      req(paste0(table, "_creation_card") %in% r$user_accesses)
       
       # Create a list with new data
       # If page = thesaurus, data_source is character, not integer (multiple choices)
@@ -229,9 +233,12 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # If r$... variable changes
         observeEvent(r[[paste0(substr(id, nchar("settings_") + 1, nchar(id)), "_temp")]], {
           
+          # If user has access
+          req(paste0(table, "_datatable_card") %in% r$user_accesses)
+          
           # Dropdowns for each module / page
           # Finally, some columns are not editable (commented lines below)
-          dropdowns <- switch(id,
+          dropdowns_datatable <- switch(id,
             "settings_data_sources" = "",
             "settings_datamarts" = "",
             # "settings_datamarts" = c("data_source_id" = "data_sources"),
@@ -278,7 +285,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # search_recorded <- ""
           
           render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-            col_names =  get_col_names(table), table = table, dropdowns = dropdowns, action_buttons = action_buttons,
+            col_names =  get_col_names(table), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
             editable_cols = c("name", "description"), sortable_cols = sortable_cols, centered_cols = centered_cols,
             filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
@@ -332,6 +339,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # When the delete is confirmed...
         observeEvent(input$delete_confirmed, {
 
+          # If user has access
+          req(paste0(table, "_datatable_card") %in% r$user_accesses)
+          
           # Get value of deleted row
           row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
 
@@ -371,6 +381,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       ##########################################
       
       observeEvent(input$options, {
+        # If user has access
+        req(paste0(table, "_options_card") %in% r$user_accesses)
+        
         # Show options toggle
         shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = TRUE)
         
@@ -386,6 +399,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       })
       
       observeEvent(input$options_save, {
+        # If user has access
+        req(paste0(table, "_options_card") %in% r$user_accesses)
+        
         category <- get_singular(id)
         
         data <- list()
@@ -402,6 +418,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       
       # Button "Edit code" is clicked on the datatable
       observeEvent(input$edit_code, {
+        
+        # If user has access
+        req(paste0(table, "_edit_code_card") %in% r$user_accesses)
         
         # Display edit_code card
         shiny.fluent::updateToggle.shinyInput(session, "edit_code_card_toggle", value = TRUE)
@@ -462,6 +481,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       
       observeEvent(input$sub_datatable, {
 
+        # If user has access
+        req(paste0(table, "_sub_datatable_card") %in% r$user_accesses)
+        
         # Get link id
         link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
 

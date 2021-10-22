@@ -13,7 +13,7 @@ mod_settings_users_ui <- function(id, language){
   # Three distinct pages in the settings/users page : users, accesses & statuses
   # For each "sub page", create a creation & a management cards
   
-  pages <- c("users", "accesses", "statuses")
+  pages <- c("users", "users_accesses", "users_statuses")
   cards <- tagList()
   
   # We create one module by "sub page"
@@ -24,7 +24,7 @@ mod_settings_users_ui <- function(id, language){
       div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_creation"), language = language)),
       div(id = ns(paste0(page, "_management_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_management"), language = language)))
     
-    if (page == "accesses") cards <<- tagList(cards,
+    if (page == "users_accesses") cards <<- tagList(cards,
       div(id = ns(paste0(page, "_options_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_options"), language = language)))
   })
   
@@ -33,11 +33,11 @@ mod_settings_users_ui <- function(id, language){
     render_settings_toggle_card(language = language, ns = ns, cards = list(
       list(key = "users_creation_card", label = "users_creation_card"),
       list(key = "users_management_card", label = "users_management_card"),
-      list(key = "accesses_creation_card", label = "accesses_creation_card"),
-      list(key = "accesses_management_card", label = "accesses_management_card"),
-      list(key = "accesses_options_card", label = "accesses_options_card"),
-      list(key = "statuses_creation_card", label = "statuses_creation_card"),
-      list(key = "statuses_management_card", label = "statuses_management_card")
+      list(key = "users_accesses_creation_card", label = "users_accesses_creation_card"),
+      list(key = "users_accesses_management_card", label = "users_accesses_management_card"),
+      list(key = "users_accesses_options_card", label = "users_accesses_options_card"),
+      list(key = "users_statuses_creation_card", label = "users_statuses_creation_card"),
+      list(key = "users_statuses_management_card", label = "users_statuses_management_card")
     )),
     cards
   )
@@ -54,12 +54,12 @@ mod_settings_sub_users_ui <- function(id, language){
       dropdowns = c("user_access", "user_status"), dropdowns_width = "200px") -> result
   }
   
-  if (page == "accesses_creation"){
+  if (page == "users_accesses_creation"){
     render_settings_creation_card(language = language, ns = ns, id = id, title = "add_access",
       textfields = c("name", "description"), textfields_width = "300px") -> result
   }
   
-  if (page == "statuses_creation"){
+  if (page == "users_statuses_creation"){
     render_settings_creation_card(language = language, ns = ns, id = id, title = "add_status",
       textfields = c("name", "description"), textfields_width = "300px") -> result
   }
@@ -68,7 +68,7 @@ mod_settings_sub_users_ui <- function(id, language){
     render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = page) -> result
   }
   
-  if (page == "accesses_options"){
+  if (page == "users_accesses_options"){
     uiOutput(ns("options_card")) -> result
   }
   
@@ -84,39 +84,69 @@ mod_settings_users_server <- function(id, r, language){
     
     toggles <- c(
       "users_creation_card", "users_management_card", 
-      "accesses_creation_card", "accesses_management_card", "accesses_options_card",
-      "statuses_creation_card", "statuses_management_card")
+      "users_accesses_creation_card", "users_accesses_management_card", "users_accesses_options_card",
+      "users_statuses_creation_card", "users_statuses_management_card")
     
     # Current page
     page <- substr(id, nchar("settings_users_") + 1, nchar(id))
     
     # Corresponding table in the database
-    table <- switch(page, "users_creation" = "users", "users_management" = "users",
-      "accesses_creation" = "users_accesses", "accesses_management" = "users_accesses",
-      "statuses_creation" = "users_statuses", "statuses_management" = "users_statuses")
+    if (grepl("creation", page)) table <- substr(page, 1, nchar(page) - nchar("_creation"))
+    if (grepl("management", page)) table <- substr(page, 1, nchar(page) - nchar("_management"))
     
     # Dropdowns used for creation card
     dropdowns <- ""
-    if (page == "users_creation") dropdowns <- c("user_access", "user_status")
+    if (page %in% c("users_creation", "users_management")) dropdowns <- c("user_access", "user_status")
     
     ##########################################
     # Show or hide cards                     #
     ##########################################
     
-    # Initiate var
-    r$users_statuses_options <- 0L
+    # Initiate vars
+    
+    # Used to communicate between modules and to show / hide cards
     r$users_toggle <- 0L
-    r$accesses_toggle <- 0L
-    r$statuses_toggle <- 0L
+    r$users_accesses_toggle <- 0L
+    r$users_statuses_toggle <- 0L
+    
+    # Used to send option link_id from one module to another
+    r$users_statuses_options <- 0L
     
     # Only for main users page (not for sub-pages)
     if (id == "settings_users"){
+      
+      # Depending on user_accesses
+      # observeEvent(r$user_accesses, {
+      #   # Hide toggles if user has no access
+      #   if ("users" %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
+      # })
+      # 
+      # # Depending on toggles activated
+      # sapply(toggles, function(toggle){
+      # 
+      #   # If user has no access, hide card
+      #   observeEvent(r$user_accesses, if (toggle %not_in% r$user_accesses) shinyjs::hide(toggle))
+      # 
+      #   # If user has access, show or hide card when toggle is clicked
+      #   observeEvent(input[[paste0(toggle, "_toggle")]], {
+      #     if (toggle %in% r$user_accesses){
+      #       if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
+      #       else shinyjs::hide(toggle)
+      #     }
+      #   })
+      # })
+      
+      
+      
+      
+      
+      
       sapply(toggles, function(toggle){
         observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
       })
       
       # When a new user, a user status or a user access is added, close add card & show data management card
-      sapply(c("users", "accesses", "statuses"), function(page){
+      sapply(c("users", "users_accesses", "users_statuses"), function(page){
         observeEvent(r[[paste0(page, "_toggle")]], {
           if (r[[paste0(page, "_toggle")]] != 0){
             shiny.fluent::updateToggle.shinyInput(session, paste0(page, "_creation_card_toggle"), value = FALSE)
@@ -126,7 +156,7 @@ mod_settings_users_server <- function(id, r, language){
       
       observeEvent(r$users_statuses_options, {
         if (r$users_statuses_options > 0){
-          shiny.fluent::updateToggle.shinyInput(session, "accesses_options_card_toggle", value = TRUE)
+          shiny.fluent::updateToggle.shinyInput(session, "users_accesses_options_card_toggle", value = TRUE)
         }
       })
     }
@@ -174,8 +204,7 @@ mod_settings_users_server <- function(id, r, language){
         add_settings_new_data(session = session, output = output, r = r, language = language, id = id, 
           data = new_data, table = table, required_textfields = required_textfields, req_unique_values = req_unique_values, dropdowns = dropdowns)
         
-        r_toggle <- switch(table, "users" = "users_toggle", "users_accesses" = "accesses_toggle", "users_statuses" = "statuses_toggle")
-        r[[r_toggle]] <- r[[r_toggle]] + 1
+        r[[paste0(table, "_toggle")]] <- r[[paste0(table, "_toggle")]] + 1
       })
     }
     
@@ -188,13 +217,13 @@ mod_settings_users_server <- function(id, r, language){
       ##########################################
       
       # Only for data management subpages
-      if (grepl("management", id)){    
+      if (grepl("management", id)){
       
         # If r$... variable changes
         observeEvent(r[[paste0(table, "_temp")]], {
   
           # Dropdowns for each module / page
-          dropdowns <- switch(table, "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
+          dropdowns_datatable <- switch(table, "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
             "users_accesses" = "", "users_statuses" = "")
   
           # Action buttons for each module / page
@@ -221,7 +250,7 @@ mod_settings_users_server <- function(id, r, language){
           start <- isolate(input$management_datatable_state$start)
   
           render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-            col_names =  get_col_names(table), table = table, dropdowns = dropdowns, action_buttons = action_buttons,
+            col_names =  get_col_names(table), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
             editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
             filter = TRUE, searchable_cols = searchable_cols, column_widths = column_widths)
@@ -245,7 +274,7 @@ mod_settings_users_server <- function(id, r, language){
       
       # Each time a dropdown is updated, modify temp variable
       if (table == "users"){
-        observeEvent(r[[table]], {
+        observeEvent(r$users, {
           update_settings_datatable(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns, language = language)
         })
       }
@@ -288,7 +317,7 @@ mod_settings_users_server <- function(id, r, language){
 
     # Only for accesses sub-page
     # We have to use same module than management, to get input from datatable
-    if (id == "settings_users_accesses_management"){
+    if (page == "users_accesses_management"){
     
       observeEvent(input$options, {
         # Show options toggle
@@ -297,7 +326,8 @@ mod_settings_users_server <- function(id, r, language){
       })
     }
     
-    if (id == "settings_users_accesses_options"){
+    if (page == "users_accesses_options"){
+      
       observeEvent(r$users_statuses_options, {
         req(r$users_statuses_options > 0)
 
@@ -307,13 +337,13 @@ mod_settings_users_server <- function(id, r, language){
           "users", c("users_creation_card", "users_management_card",
              "accesses_creation_card", "accesses_management_card", "accesses_options_card",
              "statuses_creation_card", "statuses_management_card"),
-          "r_console", "",
+          "r_console", "r_console_edit_code_card",
           "data_sources", c("data_sources_creation_card", "data_sources_datatable_card"),
-          "datamarts", c("create_datamart", "datamarts_management", "datamart_options", "edit_datamart_code"),
-          "studies", c("create_study", "studies_management", "study_options"),
-          "subsets", c("create_subset", "subsets_management", "edit_subset_code"),
-          "thesaurus", c("create_thesaurus", "thesaurus_management_card", "thesaurus_items_management_card", "edit_thesaurus_code"),
-          "plugins", c("plugins_description_card", "plugins_creation_card", "plugins_management_card", "plugins_options_card", "plugins_edit_code_card"),
+          "datamarts", c("datamarts_creation_card", "datamarts_datatable_card", "datamarts_options_card", "datamarts_edit_code_card"),
+          "studies", c("studies_creation_card", "studies_datatable_card", "studies_options_card"),
+          "subsets", c("subsets_creation_card", "subsets_datatable_card", "subsets_edit_code_card"),
+          "thesaurus", c("thesaurus_creation_card", "thesaurus_datatable_card", "thesaurus_sub_datatable_card", "thesaurus_edit_code_card"),
+          "plugins", c("plugins_description_card", "plugins_creation_card", "plugins_datatable_card", "plugins_options_card", "plugins_edit_code_card"),
           "modules_patient_lvl", c("patient_modules_creation_card", "patient_modules_management_card", "patient_modules_options_card"),
           "modules_aggregated", c("aggregated_modules_creation_card", "aggregated_modules_management_card", "aggregated_modules_options_card"),
           "log", c("all_users", "only_me")
@@ -374,6 +404,7 @@ mod_settings_users_server <- function(id, r, language){
           )
         })
 
+        # When select all button is clicked, put all toggles to TRUE
         observeEvent(input$select_all,{
           sapply(1:nrow(options_toggles), function(i){
             shiny.fluent::updateToggle.shinyInput(session, options_toggles[[i, "name"]], value = TRUE)
@@ -385,6 +416,7 @@ mod_settings_users_server <- function(id, r, language){
           })
         })
         
+        # When unselect all button is clicked, put all toggles to FALSE
         observeEvent(input$unselect_all,{
           sapply(1:nrow(options_toggles), function(i){
             shiny.fluent::updateToggle.shinyInput(session, options_toggles[[i, "name"]], value = FALSE)
@@ -396,10 +428,13 @@ mod_settings_users_server <- function(id, r, language){
           })
         })
 
+        # When save button is clicked
         observeEvent(input$options_save, {
           
+          # Create a data variable to insert data in database
           data <- tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted)
           
+          # Loop over all toggles, set 0 to value_num is toggle is FALSE, 1 else
           sapply(1:nrow(options_toggles), function(i){
             data <<- data %>% dplyr::bind_rows(
               tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
