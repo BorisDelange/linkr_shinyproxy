@@ -13,6 +13,7 @@
 #' @param table Name of the corresponding table in database (character)
 #' @param required_textfields Which textfields are required (not empty) before inserting data in database ? (character)
 #' @param req_unique_values Which fields require unique values before inserting data in database ? (character)
+#' @param required_dropdowns Which dropdowns are required (not empty) before insert data in database ? Default to "all" (character)
 #' @param dropdowns Tibble with the values of distinct dropdowns names (tibble)
 #' @examples 
 #' \dontrun{
@@ -24,7 +25,8 @@
 #' }
 
 add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), language = "EN", id = character(),
-  data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), dropdowns = character()){
+  data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), 
+  required_dropdowns = "all", dropdowns = character()){
   
   # For textfields, we have the choice if empty data is possible or not
   # For dropdowns, we want all of them filled
@@ -45,45 +47,62 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # Check if values required to be unique are unique
   sapply(req_unique_values, function(field){
     distinct_values <- DBI::dbGetQuery(r$db, paste0("SELECT DISTINCT(", field, ") FROM ", table, " WHERE deleted IS FALSE")) %>% dplyr::pull()
-    if (data[[field]] %in% distinct_values) show_message_bar(output, 2, paste0(field, "_already_used"), "severeWarning", language)
-    req(data[[field]] %not_in% distinct_values)
+      if (data[[field]] %in% distinct_values) show_message_bar(output, 2, paste0(field, "_already_used"), "severeWarning", language)
+      req(data[[field]] %not_in% distinct_values)
   })
   
-  # Check if dropdowns are not empty
+  # Check if dropdowns are not empty (if all are required)
   dropdowns_check <- TRUE
-  sapply(dropdowns, function(dropdown){
-    if (dropdown != "") if(is.na(data[[dropdown]])) dropdowns_check <<- FALSE
-  })
+  
+  if (required_dropdowns == "all"){
+    sapply(dropdowns, function(dropdown){
+      if (dropdown != ""){
+        if (is.null(data[[dropdown]])) dropdowns_check <<- FALSE
+        else if (is.na(data[[dropdown]])) dropdowns_check <<- FALSE
+      }
+    })
+  }
+
+  else {
+    sapply(required_dropdowns, function(dropdown){
+      if (dropdown != ""){
+        if (is.null(data[[dropdown]])) dropdowns_check <<- FALSE
+        else if (is.na(data[[dropdown]])) dropdowns_check <<- FALSE
+      }
+    })
+  }
+  
   if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language)
   req(dropdowns_check)
-  
+
+
   # Get last_row nb
   last_row <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(id), 0) FROM ", table)) %>% dplyr::pull()
-  
+
   # Creation of new_data variable for data_management pages
   if (table %in% c("data_sources", "datamarts", "studies", "subsets", "thesaurus")){
-    
+
     # These columns are found in all of these tables
     new_data <- tibble::tribble(~id, ~name, ~description, last_row + 1, as.character(data$name), as.character(data$description))
-    
+
     if (id == "settings_datamarts") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.integer(data$data_source)))
     if (id == "settings_studies") new_data <- new_data %>% dplyr::bind_cols(
       tibble::tribble(~datamart_id,  ~patient_lvl_module_family_id, ~aggregated_module_family_id,
         as.integer(data$datamart), as.integer(data$patient_lvl_module_family), as.integer(data$aggregated_module_family)))
     if (id == "settings_subsets") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~study_id, as.integer(data$study)))
     if (id == "settings_thesaurus") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.character(data$data_source)))
-    
+
     # These columns are also found in all of these tables
     # Add them at last to respect the order of cols
     new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~creator_id, ~datetime, ~deleted, r$user_id, as.character(Sys.time()), FALSE))
   }
-  
+
   # Creation of new_data variable for plugins page
   if (table == "plugins"){
     new_data <- tibble::tribble(~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
       last_row + 1, as.character(data$name), "", as.integer(data$module_type), as.character(Sys.time()), FALSE)
   }
-  
+
   # Creation of new_data variable for users sub-pages
   # Password is hashed
   if (table == "users"){
@@ -91,36 +110,48 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row + 1, as.character(data$username), as.character(data$firstname), as.character(data$lastname),
       rlang::hash(data$password), as.integer(data$user_access), as.integer(data$user_status), as.character(Sys.time()), FALSE)
   }
+
   if (table %in% c("users_accesses", "users_statuses")){
     new_data <- tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
       last_row + 1, as.character(data$name), as.character(data$description), as.character(Sys.time()), FALSE)
   }
-  
+
+  if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+    new_data <- tibble::tribble(~id, ~name,  ~description, ~module_family_id, ~parent_module_id, ~creator_id, ~datetime, ~deleted,
+      last_row + 1, as.character(data$name), as.character(data$description), as.integer(data$module_family), as.integer(data$parent_module),
+      r$user_id, as.character(Sys.time()), FALSE)
+  }
+
+  if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
+    new_data <- tibble::tribble(~id, ~name,  ~description, ~creator_id, ~datetime, ~deleted,
+      last_row + 1, as.character(data$name), as.character(data$description), r$user_id, as.character(Sys.time()), FALSE)
+  }
+
   # Append data to the table
   DBI::dbAppendTable(r$db, table, new_data)
   # Refresh r variables
   update_r(r = r, table = table, language = language)
-  
+
   # Add new rows in code table & options table
   # Add default subsets when creating a new study
   last_row_code <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM code") %>% dplyr::pull()
   last_row_options <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull()
   last_row_subsets <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM subsets") %>% dplyr::pull()
-  
+
   # Add a row in code if table is datamarts, thesaurus
   if (table %in% c("datamarts", "thesaurus")){
-    
+
     DBI::dbAppendTable(r$db, "code",
       tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
         last_row_code + 1, get_singular(word = table), last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
     update_r(r = r, table = "code", language = language)
   }
-  
+
   # For options of plugins, add one row for long description (Markdown) & a toggle for the status / the visibility of the plugin (In dev / Public)
   # The value is default syntax of a plugin description
   # For code of plugins, add two rows, ony for UI code & one for server code
   if (id == "settings_plugins"){
-    
+
     # Add options rows
     value <- paste0("- Version : 1.0.0\n- Libraries : *put libraries needed here*\n- Data allowed : *put data allowed here*\n",
       "- Previous plugin needed first : *put previous plugins needed here*\n\n*Put full description here*")
@@ -129,7 +160,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
         last_row_options + 1, "plugin", last_row + 1, "markdown_description", value, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
         last_row_options + 2, "plugin", last_row + 1, "visibility", "dev_only", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE))
     update_r(r = r, table = "options", language = language)
-    
+
     # Add code rows
     DBI::dbAppendTable(r$db, "code",
       tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
@@ -137,24 +168,24 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
         last_row_code + 2, "plugin_server", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
     update_r(r = r, table = "code", language = language)
   }
-  
+
   # For options of datamarts, need ot add two rows
   if (id == "settings_datamarts"){
-    
+
     DBI::dbAppendTable(r$db, "options",
       tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
         last_row_options + 1, "datamart", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
         last_row_options + 2, "datamart", last_row + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE))
     update_r(r = r, table = "options", language = language)
   }
-  
+
   # For studies, need to add one row in options and add rows of code for subsets, with default value
   if (id == "settings_studies"){
-    
+
     DBI::dbAppendTable(r$db, "options",
       tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
         last_row_options + 1, "study", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
-    
+
     # Add rows in subsets table, for inclusion / exclusion subsets
     # Add also code corresponding to each subset
     DBI::dbAppendTable(r$db, "subsets",
@@ -162,7 +193,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
         last_row_subsets + 1, translate(language, "subset_all_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
         last_row_subsets + 2, translate(language, "subset_included_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
         last_row_subsets + 3, translate(language, "subset_excluded_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE))
-    
+
     # Add code for creating subset with all patients
     code <- paste0("run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n",
                    "patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)\n",
@@ -172,12 +203,12 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
         last_row_code + 1, "subset", last_row_subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
         last_row_code + 2, "subset", last_row_subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
         last_row_code + 3, "subset", last_row_subsets + 3, "", as.integer(r$user_id), as.character(Sys.time()), FALSE))
-    
+
     # Update r$options, r$code & r$subsets
     update_r(r, "options", language)
     update_r(r, "subsets", language)
     update_r(r, "code", language)
-    
+
     # Run code to add patients in the subset. Get datamart_id first.
     datamart_id <- r$studies %>% dplyr::filter(id == last_row) %>% dplyr::pull(datamart_id)
     run_datamart_code(output, r,datamart_id)
@@ -187,20 +218,14 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       add_patients_to_subset(output, r, patients, last_row_subsets + 1)
     }
   }
-  
+
   # Hide creation card & options card, show management card
-  if (table %in% c("users", "users_statuses", "users_accesses")){
-    shiny.fluent::updateToggle.shinyInput(session, paste0(table, "_creation_card_toggle"), value = FALSE)
-    shiny.fluent::updateToggle.shinyInput(session, paste0(table, "_management_card_toggle"), value = TRUE)
-  }
-  else {
-    shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = FALSE)
-    shiny.fluent::updateToggle.shinyInput(session, "creation_card_toggle", value = FALSE)
-    shiny.fluent::updateToggle.shinyInput(session, "datatable_card_toggle", value = TRUE)
-  }
-  
-  show_message_bar(output = output, id = 1, message = paste0(get_singular(table), "_added"), type = "success", language = language) 
-  
+  shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = FALSE)
+  shiny.fluent::updateToggle.shinyInput(session, "creation_card_toggle", value = FALSE)
+  shiny.fluent::updateToggle.shinyInput(session, "datatable_card_toggle", value = TRUE)
+
+  show_message_bar(output = output, id = 1, message = paste0(get_singular(table), "_added"), type = "success", language = language)
+
   # Reset textfields
   if (table == "users") sapply(c("username", "firstname", "lastname", "password"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
   else sapply(c("name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))

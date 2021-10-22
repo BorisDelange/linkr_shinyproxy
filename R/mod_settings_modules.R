@@ -68,9 +68,10 @@ mod_settings_sub_modules_ui <- function(id, language){
     page <- substr(id, nchar("settings_modules_patient_lvl_") + 1, nchar(id))
     
     if (page == "modules_creation"){
-      render_settings_creation_card(language = language, ns = ns, id = id, title = "add_module",
+      tagList(render_settings_creation_card(language = language, ns = ns, id = id, title = "add_module",
         textfields = c("name", "description"), textfields_width = "300px",
-        dropdowns = c("module_family", "parent_module"), dropdowns_width = "300px") -> result
+        dropdowns = c("module_family", "parent_module"), dropdowns_width = "300px"),
+        br(), textOutput(ns("test1")), textOutput(ns("test2"))) -> result
     }
 
     if (page == "modules_families_creation"){
@@ -114,14 +115,20 @@ mod_settings_modules_server <- function(id, r, language){
       # Current page
       page <- substr(id, nchar("settings_modules_patient_lvl_") + 1, nchar(id))
       
+      # Corresponding table
+      # Corresponding table in the database
+      if (grepl("creation", page)) table <- paste0("patient_lvl_", substr(page, 1, nchar(page) - nchar("_creation")))
+      if (grepl("management", page)) table <- paste0("patient_lvl_", substr(page, 1, nchar(page) - nchar("_management")))
+      if (grepl("options", page)) table <- paste0("patient_lvl_", substr(page, 1, nchar(page) - nchar("_options")))
+      
       # Corresponding table in the database
       # if (grepl("creation", page)) table <- substr(page, 1, nchar(page) - nchar("_creation"))
       # if (grepl("management", page)) table <- substr(page, 1, nchar(page) - nchar("_management"))
       # if (grepl("options", page)) table <- substr(page, 1, nchar(page) - nchar("_options"))
       
       # Dropdowns used for creation card
-      # dropdowns <- ""
-      # if (page %in% c("users_creation", "users_management")) dropdowns <- c("user_access", "user_status")
+      dropdowns <- ""
+      if (page %in% c("modules_creation", "modules_management")) dropdowns <- c("module_family", "parent_module")
       
       ##########################################
       # Show or hide cards                     #
@@ -130,12 +137,12 @@ mod_settings_modules_server <- function(id, r, language){
       # Initiate vars
       
       # Used to communicate between modules and to show / hide cards
-      r$modules_toggle <- 0L
-      r$modules_families_toggle <- 0L
-      r$modules_elements_toggle <- 0L
+      r$patient_lvl_modules_toggle <- 0L
+      r$patient_lvl_modules_families_toggle <- 0L
+      r$patient_lvl_modules_elements_toggle <- 0L
       
       # Used to send option link_id from one module to another
-      r$modules_families_options <- 0L
+      r$patient_lvl_modules_families_options <- 0L
       
       # Only for main users page (not for sub-pages)
       if (id == "settings_modules_patient_lvl"){ # Or for aggregated page ?
@@ -162,13 +169,13 @@ mod_settings_modules_server <- function(id, r, language){
         })
         
         # When a new user, a user status or a user access is added, close add card & show data management card
-        # sapply(c("users", "users_accesses", "users_statuses"), function(page){
-        #   observeEvent(r[[paste0(page, "_toggle")]], {
-        #     if (r[[paste0(page, "_toggle")]] != 0){
-        #       shiny.fluent::updateToggle.shinyInput(session, paste0(page, "_creation_card_toggle"), value = FALSE)
-        #       shiny.fluent::updateToggle.shinyInput(session, paste0(page, "_management_card_toggle"), value = TRUE)}
-        #   })
-        # })
+        sapply(c("modules", "modules_families", "modules_elements"), function(page){
+          observeEvent(r[[paste0("patient_lvl_", page, "_toggle")]], {
+            if (r[[paste0("patient_lvl_", page, "_toggle")]] != 0){
+              shiny.fluent::updateToggle.shinyInput(session, paste0(page, "_creation_card_toggle"), value = FALSE)
+              shiny.fluent::updateToggle.shinyInput(session, paste0(page, "_management_card_toggle"), value = TRUE)}
+          })
+        })
         
         # observeEvent(r$users_statuses_options, {
         #   if (r$users_statuses_options > 0){
@@ -182,50 +189,54 @@ mod_settings_modules_server <- function(id, r, language){
       ##########################################
       
       # Only for creation subpages
-      # if (grepl("creation", id)){
-      #   
-      #   # Update dropdowns with reactive data
-      #   sapply(c("users_accesses", "users_statuses"), 
-      #     function(data_var){
-      #       observeEvent(r[[data_var]], {
-      #         # Convert options to list
-      #         options <- convert_tibble_to_list(data = r[[data_var]], key_col = "id", text_col = "name")
-      #         shiny.fluent::updateDropdown.shinyInput(session, get_singular(word = data_var), options = options)
-      #       })
-      #     })
-      #   
-      #   # When add button is clicked
-      #   observeEvent(input$add, {
-      #     
-      #     # If user has access
-      #     req(paste0(table, "_creation_card") %in% r$user_accesses)
-      #     
-      #     new_data <- list()
-      #     
-      #     new_data_var <- c("username" = "char", "firstname" = "char", "lastname" = "char", "password" = "char",
-      #                       "user_access" = "int", "user_status" = "int", "name" = "char", "description" = "char")
-      #     
-      #     # Transform values of textfields & dropdowns to chosen variable type
-      #     sapply(names(new_data_var),
-      #            function(input_name){
-      #              new_data[[input_name]] <<- coalesce2(type = new_data_var[[input_name]], x = input[[input_name]])
-      #            })
-      #     
-      #     # Required textfields
-      #     required_textfields <- switch(table, 
-      #                                   "users" = c("username", "firstname", "lastname", "password"),
-      #                                   "users_accesses" = "name",
-      #                                   "users_statuses" = "name")
-      #     
-      #     # Fields requiring unique value
-      #     req_unique_values <- switch(table, "users" = "username", "users_accesses" = "name", "users_statuses" = "name")
-      #     
-      #     add_settings_new_data(session = session, output = output, r = r, language = language, id = id, 
-      #                           data = new_data, table = table, required_textfields = required_textfields, req_unique_values = req_unique_values, dropdowns = dropdowns)
-      #     
-      #     r[[paste0(table, "_toggle")]] <- r[[paste0(table, "_toggle")]] + 1
-      #   })
-      # }
+      if (grepl("creation", id)){
+
+        # Update dropdowns with reactive data (module_family & parent_module dropdowns)
+        
+        observeEvent(r$patient_lvl_modules_families, {
+          options <- convert_tibble_to_list(data = r$patient_lvl_modules_families, key_col = "id", text_col = "name")
+          shiny.fluent::updateDropdown.shinyInput(session, "module_family", options = options)
+        })
+        
+        observeEvent(r$patient_lvl_modules, {
+          options <- convert_tibble_to_list(data = r$patient_lvl_modules, key_col = "id", text_col = "name")
+          shiny.fluent::updateDropdown.shinyInput(session, "parent_module", options = options)
+        })
+
+        # When add button is clicked
+        observeEvent(input$add, {
+
+          # If user has access
+          # req(paste0(table, "_creation_card") %in% r$user_accesses)
+
+          new_data <- list()
+
+          new_data_var <- c("name" = "char", "description" = "char", "module_family" = "int", "parent_module" = "int")
+
+          # Transform values of textfields & dropdowns to chosen variable type
+          sapply(names(new_data_var),
+            function(input_name){
+              new_data[[input_name]] <<- coalesce2(type = new_data_var[[input_name]], x = input[[input_name]])
+            })
+
+          # Required textfields
+          required_textfields <- "name"
+
+          # Fields requiring unique value
+          req_unique_values <- "name"
+          
+          # Required dropdowns
+          required_dropdowns <- "all"
+          if (page == "modules_creation") required_dropdowns <- "module_family"
+          
+          add_settings_new_data(session = session, output = output, r = r, language = language, id = id,
+            data = new_data, table = table, required_textfields = required_textfields, req_unique_values = req_unique_values,
+            required_dropdowns = required_dropdowns,
+            dropdowns = dropdowns)
+
+          r[[paste0(table, "_toggle")]] <- r[[paste0(table, "_toggle")]] + 1
+        })
+      }
       
       
       
