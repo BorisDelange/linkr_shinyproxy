@@ -166,7 +166,7 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
         sapply(1:nrow(shown_modules), function(i){
           # Get module UI code
   
-          module_elements <- r$patient_lvl_module_elements %>% dplyr::filter(module_id == shown_modules[[i, "id"]])
+          module_elements <- r$patient_lvl_modules_elements %>% dplyr::filter(module_id == shown_modules[[i, "id"]])
           code_ui <- tagList()
   
           if (nrow(module_elements) != 0){

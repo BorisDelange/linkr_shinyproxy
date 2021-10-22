@@ -82,7 +82,7 @@ db_create_tables <- function(db){
       category = character(), link_id = integer(), name = character(), value = character(), value_num = numeric(), 
       creator_id = integer(), datetime = character(), deleted = logical()))
   
-  db_create_table(db, "patient_lvl_module_families",
+  db_create_table(db, "patient_lvl_modules_families",
     tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
       deleted = logical()))
   
@@ -90,7 +90,7 @@ db_create_tables <- function(db){
     tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
       creator_id = integer(), datetime = character(), deleted = logical()))
   
-  db_create_table(db, "patient_lvl_module_elements",
+  db_create_table(db, "patient_lvl_modules_elements",
     tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
       thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
       colour = character(), display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
@@ -98,7 +98,7 @@ db_create_tables <- function(db){
   # db_create_table(db, "patient_lvl_modules_options",
   #   tibble::tibble(id = integer(), module_id = integer(), plugin_id = integer(), option_id = integer(), value = character(), valuenum = numeric())
   
-  db_create_table(db, "aggregated_module_families",
+  db_create_table(db, "aggregated_modules_families",
     tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
       deleted = logical()))
   
@@ -149,7 +149,7 @@ test_distant_db <- function(local_db){
   db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
   try({
     if (db_info$sql_lib == "postgres") DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$dbname, host = db_info$host,
-                                                            port = db_info$port, user = db_info$user, password = db_info$password)
+      port = db_info$port, user = db_info$user, password = db_info$password)
     result <- "success"
   })
   result
@@ -165,7 +165,7 @@ get_distant_db <- function(local_db){
   
   try(
     if (db_info$sql_lib == "postgres") db <- DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$dbname, host = db_info$host,
-                                                            port = db_info$port, user = db_info$user, password = db_info$password)
+      port = db_info$port, user = db_info$user, password = db_info$password)
   )
   
   db_create_tables(db)

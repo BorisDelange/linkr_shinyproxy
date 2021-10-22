@@ -184,7 +184,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     ##########################################
     
     # Update dropdowns with reactive data
-    sapply(c("data_sources", "datamarts", "studies", "subsets", "patient_lvl_module_families", "aggregated_module_families"), 
+    sapply(c("data_sources", "datamarts", "studies", "subsets", "patient_lvl_modules_families", "aggregated_modules_families"), 
       function(data_var){
         observeEvent(r[[data_var]], {
           # Convert options to list
@@ -242,8 +242,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             "settings_data_sources" = "",
             "settings_datamarts" = "",
             # "settings_datamarts" = c("data_source_id" = "data_sources"),
-            # "settings_studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
-            "settings_studies" = c("patient_lvl_module_family_id" = "patient_lvl_module_families", "aggregated_module_family_id" = "aggregated_module_families"),
+            # "settings_studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_modules_families", "aggregated_module_family_id" = "aggregated_modules_families"),
+            "settings_studies" = c("patient_lvl_module_family_id" = "patient_lvl_modules_families", "aggregated_module_family_id" = "aggregated_modules_families"),
             "settings_subsets" = "",
             # "settings_subsets" = c("study_id" = "studies"),
             "settings_thesaurus" = c("data_source_id" = "data_sources"))

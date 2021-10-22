@@ -23,11 +23,15 @@ app_server <- function(router, language){
     
     # Load all data from database
     # Don't load thesaurus_items, load it only when a thesaurus is selected
+    # Don't load cache table neither
+    
     observeEvent(r$db, {
-      tables <- c("users_accesses", "users_statuses",
+      tables <- c(
+        "users_accesses", "users_statuses",
         "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus",
-        "plugins", "patient_lvl_module_families", "patient_lvl_modules", "patient_lvl_module_elements",
-        "aggregated_module_families", "aggregated_modules", #"aggregated_module_elements",
+        "plugins", 
+        "patient_lvl_modules", "patient_lvl_modules_families", "patient_lvl_modules_elements",
+        "aggregated_modules_families", "aggregated_modules",
         "code", "options")
       
       sapply(tables, function(table){
@@ -68,10 +72,10 @@ app_server <- function(router, language){
     
     mod_settings_general_server("settings_general_settings", r, language)
     mod_page_sidenav_server("settings_general_settings", r, language)
-    
+
     mod_settings_app_database_server("settings_app_db", r, language)
     mod_page_sidenav_server("settings_app_db", r, language)
-    
+
     mod_settings_users_server("settings_users", r, language)
     mod_page_sidenav_server("settings_users", r, language)
     sapply(c("users", "users_statuses", "users_accesses"), function(page){
@@ -79,21 +83,28 @@ app_server <- function(router, language){
       mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language)
       if (page == "users_accesses") mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language)
     })
-    
+
     mod_settings_r_console_server("settings_r_console", r, language)
     mod_page_sidenav_server("settings_r_console", r, language)
-    
+
     sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
       mod_settings_data_management_server(paste0("settings_", page), r, language)
       mod_page_sidenav_server(paste0("settings_", page), r, language)
     })
-    
+
     mod_settings_plugins_server("settings_plugins", r, language)
     mod_page_sidenav_server("settings_plugins", r, language)
-    
-    sapply(c("patient_lvl_modules", "aggregated_modules"), function(page){
+
+    sapply(c("modules_patient_lvl", "modules_aggregated"), function(page){
       mod_settings_modules_server(paste0("settings_", page), r, language)
       mod_page_sidenav_server(paste0("settings_", page), r, language)
+    })
+    
+    # Patient-lvl modules page sub modules
+    sapply(c("modules", "modules_families", "modules_elements"), function(page){
+      mod_settings_modules_server(paste0("settings_modules_patient_lvl_", page, "_creation"), r, language)
+      mod_settings_modules_server(paste0("settings_modules_patient_lvl_", page, "_management"), r, language)
+      if (page == "modules_families") mod_settings_modules_server(paste0("settings_modules_patient_lvl_", page, "_options"), r, language)
     })
   }
 }

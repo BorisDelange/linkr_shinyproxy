@@ -328,7 +328,7 @@ mod_settings_plugins_server <- function(id, r, language){
           options = convert_tibble_to_list(data = thesaurus_items, key_col = "item_id", text_col = "name"))
         
         # Reset r$selected_thesaurus_items
-        r$selected_thesaurus_items <- tibble::tribble(~key, ~text)
+        r$selected_thesaurus_items <- tibble::tribble(~key, ~text, ~colour)
         
         # Reset outputs
         output$code_result_ui <- renderUI("")
@@ -339,7 +339,8 @@ mod_settings_plugins_server <- function(id, r, language){
       observeEvent(input$add_thesaurus_item, {
         req(length(input$thesaurus_items$text) > 0)
         if (input$thesaurus_items$text %not_in% r$selected_thesaurus_items$text){
-          r$selected_thesaurus_items <- r$selected_thesaurus_items %>% dplyr::bind_rows(tibble::tribble(~key, ~text, input$thesaurus_items$key, input$thesaurus_items$text))}
+          r$selected_thesaurus_items <- r$selected_thesaurus_items %>% dplyr::bind_rows(
+            tibble::tribble(~key, ~text, ~colour, input$thesaurus_items$key, input$thesaurus_items$text, input$colour))}
       })
       
       # When remove button is clicked
@@ -360,7 +361,7 @@ mod_settings_plugins_server <- function(id, r, language){
       # When reset button is clicked
       observeEvent(input$reset_thesaurus_items, {
         # Reset r$selected_thesaurus_items
-        r$selected_thesaurus_items <- tibble::tribble(~key, ~text)
+        r$selected_thesaurus_items <- tibble::tribble(~key, ~text, ~colour)
       })
       
       # When save button is clicked
