@@ -29,7 +29,7 @@ mod_page_header_ui <- function(id, language){
       shiny.fluent::CommandBar(
         items = list(
           shiny.fluent::CommandBarItem(translate(language, "settings"), "Settings", iconOnly = TRUE, 
-            href = shiny.router::route_link("settings/general")),
+            href = shiny.router::route_link("settings/general_settings")),
           shiny.fluent::CommandBarItem(translate(language, "help"), "Info", iconOnly = TRUE,
             href = "https://borisdelange.github.io/cdwtools/articles/", target = "_blank"),
           shiny.fluent::CommandBarItem(translate(language, "messages"), "Message", iconOnly = TRUE,

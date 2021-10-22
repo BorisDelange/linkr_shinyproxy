@@ -217,7 +217,7 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
     # List of users in the database, with status as secondaryText
     picker_options <-
       r$users %>%
-      dplyr::left_join(r$users_accesses_statuses %>% dplyr::select(user_status_id = id, user_status = name), by = "user_status_id") %>%
+      dplyr::left_join(r$users_statuses %>% dplyr::select(user_status_id = id, user_status = name), by = "user_status_id") %>%
       dplyr::transmute(
         key = id, 
         imageInitials = paste0(substr(firstname, 0, 1), substr(lastname, 0, 1)),
@@ -287,14 +287,6 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
         list(key = "public_access", text = translate(language, "public_access"))
       ), value = value))
     )
-  }
-  
-  ##########################################
-  # Option = users accesses options        #
-  ##########################################
-  
-  if ("users_accesses_options" %in% page_options){
-    
   }
   
   ##########################################

@@ -59,15 +59,19 @@ app_server <- function(router, language){
     
     router$server(input, output, session)
     
-    mod_page_sidenav_server("patient_level_data", r, language)
-    mod_page_sidenav_server("aggregated_data", r, language)
+    sapply(c("patient_lvl_data", "aggregated_data"), function(page){
+      mod_patient_and_aggregated_data_server(page, r, language)
+      mod_page_sidenav_server(page, r, language)
+    })
     
-    mod_patient_and_aggregated_data_server("patient_lvl_data", r, language)
-    mod_patient_and_aggregated_data_server("aggregated_data", r, language)
-    mod_settings_general_server("settings_general", r, language)
+    mod_settings_general_server("settings_general_settings", r, language)
+    mod_page_sidenav_server("settings_general_settings", r, language)
+    
     mod_settings_app_database_server("settings_app_database", r, language)
+    mod_page_sidenav_server("settings_app_database", r, language)
     
     mod_settings_users_server("settings_users", r, language)
+    mod_page_sidenav_server("settings_users", r, language)
     sapply(c("users", "users_statuses", "users_accesses"), function(page){
       mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language)
       mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language)
@@ -77,29 +81,17 @@ app_server <- function(router, language){
     mod_settings_r_console_server("settings_r_console", r, language)
     mod_page_sidenav_server("settings_r_console", r, language)
     
-    mod_settings_data_management_server("settings_data_sources", r, language)
-    mod_page_sidenav_server("settings_data_sources", r, language)
-    
-    mod_settings_data_management_server("settings_datamarts", r, language)
-    mod_page_sidenav_server("settings_datamarts", r, language)
-    
-    mod_settings_data_management_server("settings_studies", r, language)
-    mod_page_sidenav_server("settings_studies", r, language)
-    
-    mod_settings_data_management_server("settings_subsets", r, language)
-    mod_page_sidenav_server("settings_subsets", r, language)
-    
-    mod_settings_data_management_server("settings_thesaurus", r, language)
-    mod_page_sidenav_server("settings_thesaurus", r, language)
+    sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
+      mod_settings_data_management_server(paste0("settings_", page), r, language)
+      mod_page_sidenav_server(paste0("settings_", page), r, language)
+    })
     
     mod_settings_plugins_server("settings_plugins", r, language)
     mod_page_sidenav_server("settings_plugins", r, language)
     
-    mod_settings_modules_server("settings_patient_lvl_modules", r, language)
-    mod_page_sidenav_server("settings_patient_lvl_modules", r, language)
-    
-    mod_settings_modules_server("settings_aggregated_modules", r, language)
-    mod_page_sidenav_server("settings_aggregated_modules", r, language)
-
+    sapply(c("patient_lvl_modules", "aggregated_modules"), function(page){
+      mod_settings_modules_server(paste0("settings_", page), r, language)
+      mod_page_sidenav_server(paste0("settings_", page), r, language)
+    })
   }
 }

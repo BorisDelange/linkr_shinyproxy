@@ -338,6 +338,7 @@ mod_settings_users_server <- function(id, r, language){
         # All toggles displayed
         options_toggles <- tibble::tribble(
           ~name, ~toggles,
+          "general_settings", "",
           "app_db", c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card"),
           "users", c("users_creation_card", "users_management_card",
              "users_accesses_creation_card", "users_accesses_management_card", "users_accesses_options_card",
