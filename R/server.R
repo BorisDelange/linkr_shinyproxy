@@ -32,7 +32,8 @@ app_server <- function(router, language){
         "plugins", 
         "patient_lvl_modules", "patient_lvl_modules_families", "patient_lvl_modules_elements",
         "aggregated_modules", "aggregated_modules_families",
-        "code", "options")
+        "code", 
+        "options", "plugins_options", "patients_options")
       
       sapply(tables, function(table){
         r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))

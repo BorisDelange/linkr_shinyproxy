@@ -264,7 +264,7 @@ mod_settings_modules_server <- function(id, r, language){
           
           # Dropdowns for each module / page
           dropdowns_datatable <- ""
-          if (page == "modules_creation") dropdowns_datatable <- c("module_family_id" = paste0(prefix, "modules_familes"), "parent_module_id" = paste0(prefix, "modules"))
+          if (page == "modules_creation") dropdowns_datatable <- c("module_family_id" = paste0(prefix, "_modules_families"), "parent_module_id" = paste0(prefix, "_modules"))
           
           # Action buttons for each module / page
           if (grepl("modules$", table) | grepl("modules_elements", table)) action_buttons <- "delete"

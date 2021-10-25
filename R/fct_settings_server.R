@@ -366,18 +366,18 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
 
           if (id == "settings_thesaurus"){
             value <- NULL
-            if (length(data[i, name] > 0)){
-              if (!(TRUE %in% grepl("[a-zA-Z]", stringr::str_split(data[i, name], ", ") %>% unlist()))){
-                value <- stringr::str_split(data[i, name], ", ") %>% unlist() %>% as.integer()
+            if (length(data[[i, name]] > 0)){
+              if (!(TRUE %in% grepl("[a-zA-Z]", stringr::str_split(data[[i, name]], ", ") %>% unlist()))){
+                value <- stringr::str_split(data[[i, name]], ", ") %>% unlist() %>% as.integer()
               }
             }
-            data[i, name] <<- as.character(
+            data[[i, name]] <<- as.character(
               div(
-                shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+                shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[[name]], data[[i, "id"]])),
                   options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
                   value = value,
                   multiSelect = TRUE),
-                  onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
+                  onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[[name]], data[[i, "id"]]), "', {priority: 'event'})"),
                   style = "width:200px")
             )
           }
@@ -386,13 +386,13 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
             data[i, name] <<- as.character(
               div(
                 # So ID is like "data_sources13" if ID = 13
-              shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[name], data[i, "id"])),
+              shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[[name]], data[[i, "id"]])),
                 # To get options, convert data var to tibble (convert r$data_sources to list)
                 options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
                 # value is an integer, the value of the column like "data_source_id"
-                value = as.integer(data[i, name])),
+                value = as.integer(data[[i, name]])),
                 # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
-                onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[name], data[i, "id"]), "', {priority: 'event'})"),
+                onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[[name]], data[[i, "id"]]), "', {priority: 'event'})"),
                 style = "width:200px")
             )
           }

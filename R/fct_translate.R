@@ -814,7 +814,9 @@ get_translations <- function(){
             "EN", "error_removing_patients_from_subset", "Error removing patients from subset",
             "FR", "error_removing_patients_from_subset", "Erreur lors de la suppression des patients du subset",
             "EN", "thesaurus_items_empty", "Choose at least one thesaurus item",
-            "FR", "thesaurus_items_empty", "Choisir au moins un item du thésaurus"
+            "FR", "thesaurus_items_empty", "Choisir au moins un item du thésaurus",
+            "EN", "exclusion_reason", "Exclusion reason",
+            "FR", "exclusion_reason", "Motif d'exclusion"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

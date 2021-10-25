@@ -14,7 +14,9 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
     "plugins", 
     "patient_lvl_modules_families", "patient_lvl_modules", "patient_lvl_modules_elements",
     "aggregated_modules_families", "aggregated_modules",
-    "code", "options")
+    "code", 
+    "options",
+    "plugins_options", "patients_options")
   
   if (table %not_in% tables) stop(paste0(translate(language, "invalid_table_name"), ". ", translate(language, "tables_allowed"), " : ", toString(tables)))
   

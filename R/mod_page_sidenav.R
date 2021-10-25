@@ -52,6 +52,10 @@ mod_page_sidenav_ui <- function(id, language){
       make_dropdown(language = language, ns = ns, label = "patient"),
       make_dropdown(language = language, ns = ns, label = "stay"), br(), hr(),
       make_dropdown(language = language, ns = ns, label = "patient_status"), br(),
+      div(id = "exclusion_reason_div",
+        div(class = "input_title", translate(language, "exclusion_reason")),
+        div(shiny.fluent::Dropdown.shinyInput(ns("exclusion_reason"), value = NULL, options = list()))), br(),
+      # make_dropdown(language = language, ns = ns, label = "exclusion_reason"), br(),
       uiOutput(ns("patient_info")),
       textOutput(ns("test"))
     ) -> result
@@ -146,6 +150,7 @@ mod_page_sidenav_server <- function(id, r, language){
         
         # Update dropdown
         shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(datamarts, "id", "name", rm_deleted_rows = TRUE), value = NULL)
+        shinyjs::hide("exclusion_reason_div")
       })
       
       observeEvent(input$datamart, {
@@ -167,10 +172,14 @@ mod_page_sidenav_server <- function(id, r, language){
         r$chosen_datamart <- input$datamart
         
         # Reset dropdowns & uiOutput
+        # Hide exclusion_reason dropdown
+        
         shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL)
         shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
         shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
         shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(), value = NULL)
+        shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
+        shinyjs::hide("exclusion_reason_div")
         output$patient_info <- renderUI("")
         
         # If studies is empty
@@ -195,6 +204,8 @@ mod_page_sidenav_server <- function(id, r, language){
         shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
         shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
         shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(), value = NULL)
+        shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
+        shinyjs::hide("exclusion_reason_div")
         output$patient_info <- renderUI("")
         
         # If subsets si empty
@@ -208,6 +219,8 @@ mod_page_sidenav_server <- function(id, r, language){
         # Reset dropdown & uiOutput
         shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
         shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(), value = NULL)
+        shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
+        shinyjs::hide("exclusion_reason_div")
         output$patient_info <- renderUI("")
         
         # Select patients who belong to this subset
@@ -269,11 +282,17 @@ mod_page_sidenav_server <- function(id, r, language){
         if (translate("FR", "subset_included_patients") %in% subsets_names | translate("EN", "subset_included_patients") %in% subsets_names) value <- "included"
         if (translate("FR", "subset_excluded_patients") %in% subsets_names | translate("EN", "subset_excluded_patients") %in% subsets_names) value <- "excluded"
         
+        # Set to null to reload input$patient_status if the value is the same between to patients, to load exclusion_reason input
+        shiny.fluent::updateDropdown.shinyInput(session, "patient_status", value = NULL)
         shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(
           list(key = "undefined", text = translate(language, "undefined_status")),
           list(key = "included", text = translate(language, "included_status")),
           list(key = "excluded", text = translate(language, "excluded_status"))),
           value = value)
+        
+        # Reset exclusion_reason dropdown & hide it
+        shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
+        shinyjs::hide("exclusion_reason_div")
       })
       
       observeEvent(input$stay, {
@@ -310,6 +329,11 @@ mod_page_sidenav_server <- function(id, r, language){
         if (input$patient_status == "included"){
           add_patients_subset_id <- included_patients_subset
           remove_patients_subset_id <- excluded_patients_subset
+          
+          # Remove exclusion_reason from database
+          query <- DBI::dbSendStatement(r$db, paste0("DELETE FROM patients_options WHERE study_id = ", r$chosen_study,
+            " AND patient_id = ", r$chosen_patient, " AND category = 'exclusion_reason'"))
+          DBI::dbClearResult(query)
         }
         
         # Put patient to excluded subset
@@ -321,6 +345,10 @@ mod_page_sidenav_server <- function(id, r, language){
         # Remove patient from both subsets (status undefined)
         if (input$patient_status == "undefined"){
           remove_patients_subset_id <- c(included_patients_subset, excluded_patients_subset)
+          # Remove exclusion_reason from database
+          query <- DBI::dbSendStatement(r$db, paste0("DELETE FROM patients_options WHERE study_id = ", r$chosen_study,
+            " AND patient_id = ", r$chosen_patient, " AND category = 'exclusion_reason'"))
+          DBI::dbClearResult(query)
         }
         
         # Add patients to chosen subset
@@ -337,8 +365,41 @@ mod_page_sidenav_server <- function(id, r, language){
         
         # Reload r$subset_patients
         update_r(r = r, table = "subset_patients", language = language)
+        
+        # If choice is excluded, update exclusion reason dropdown & show dropdown
+        if (input$patient_status == "excluded"){
+          exclusion_reasons <- r$patients_options %>% dplyr::filter(study_id == r$chosen_study & category == "exclusion_reasons")
+          options <- list()
+          if (nrow(exclusion_reasons) > 0) options <- convert_tibble_to_list(data = exclusion_reasons, key_col = "value_num", text_col = "value")
+          
+          value <- r$patients_options %>% dplyr::filter(study_id == r$chosen_study & category == "exclusion_reason" & patient_id == r$chosen_patient)
+          if (nrow(value) == 0) value <- NULL
+          shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = options, value = value)
+          shinyjs::show("exclusion_reason_div")
+        }
+        else shinyjs::hide("exclusion_reason_div")
+        
       })
       
+      observeEvent(input$exclusion_reason, {
+        
+        if (length(input$exclusion_reason) != 0){
+          
+          # If already a row, get its ID
+          id <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM patients_options
+          WHERE category = 'exclusion_reason' AND study_id = ", r$chosen_study, " AND patient_id = ", r$chosen_patient))
+          last_row <- as.integer(DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM patients_options") %>% dplyr::pull())
+          
+          if (nrow(id) > 0) query <- DBI::dbSendStatement(r$db, paste0("UPDATE patients_options SET value_num = ", as.integer(input$exclusion_reason),
+            " WHERE id = ", id))
+          else query <- DBI::dbSendStatement(r$db, paste0("INSERT INTO patients_options(id, study_id, patient_id, category, value_num)
+            SELECT ", last_row, ", ", r$chosen_study, ", ", r$chosen_patient, ", 'exclusion_reason', ", as.integer(input$exclusion_reason)))
+          
+          DBI::dbClearResult(query)
+        }
+        
+        update_r(r = r, table = "patients_options", language = language)
+      })
       
   
       # Update the two pages dropdowns (patient-level data page & aggregated data page)
