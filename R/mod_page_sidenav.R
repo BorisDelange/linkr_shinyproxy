@@ -143,14 +143,32 @@ mod_page_sidenav_server <- function(id, r, language){
         
         # If users_allowed_read_group is set to everybody, everybody has access. Else, filter on people who has access.
         
-        datamarts <- tibble::tibble()
-        users_allowed_read_group <- r$options %>% dplyr::filter(category == "datamart" & name == "users_allowed_read_group")
-        if (nrow(users_allowed_read_group) > 0){
-          if (users_allowed_read_group%>% dplyr::pull(value) == "everybody") datamarts <- r$datamarts
-          else {
-            datamarts_allowed <- r$options %>% dplyr::filter(category == "datamart" & name == "user_allowed_read" & value_num == r$user_id)
-            if (nrow(datamarts_allowed) > 0) datamarts <- r$datamarts %>% dplyr::filter(id %in% datamarts_allowed %>% dplyr::pull(link_id))
-          }
+        datamarts <- r$datamarts
+        if (nrow(datamarts) > 0) {
+          
+          # Merge with options
+          datamarts_options <- datamarts %>% dplyr::inner_join(r$options %>% 
+            dplyr::filter(category == "datamart") %>% dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
+          
+          # Vector of authorized datamarts
+          datamarts_allowed <- integer()
+          
+          # For each datamart, select those the user has access
+          sapply(unique(datamarts_options$id), function(datamart_id){
+            
+            # Loop over each datamart ID
+            
+            users_allowed_read_group <- datamarts_options %>% dplyr::filter(id == datamart_id, option_name == "users_allowed_read_group")
+            users_allowed_read <- datamarts_options %>% dplyr::filter(id == datamart_id, option_name == "user_allowed_read")
+            
+            if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") datamarts_allowed <<- c(datamarts_allowed, datamart_id)
+            else {
+              if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) datamarts_allowed <<- c(datamarts_allowed, datamart_id)
+            }
+          })
+          
+          # Select authorized datamarts
+          datamarts <- datamarts %>% dplyr::filter(id %in% datamarts_allowed)
         }
         
         # Update dropdown
@@ -163,11 +181,31 @@ mod_page_sidenav_server <- function(id, r, language){
         # Studies depending on the chosen datamart
         
         studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
-        users_allowed_read_group <- r$options %>% dplyr::filter(category == "study" & name == "users_allowed_read_group")
-        
-        if (users_allowed_read_group %>% dplyr::pull(value) != "everybody") {
-          studies_allowed <- r$options %>% dplyr::filter(category == "study" & link_id %in% studies$id & name == "user_allowed_read" & value_num == r$user_id)
-          if (nrow(studies_allowed) > 0) studies <- studies %>% dplyr::filter(id %in% studies_allowed %>% dplyr::pull(link_id))
+        if (nrow(studies) > 0) {
+          
+          # Merge with options
+          studies_options <- studies %>% dplyr::inner_join(r$options %>% 
+            dplyr::filter(category == "study") %>% dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
+          
+          # Vector of authorized studies
+          studies_allowed <- integer()
+          
+          # For each study, select those the user has access
+          sapply(unique(studies_options$id), function(study_id){
+            
+            # Loop over each study ID
+            
+            users_allowed_read_group <- studies_options %>% dplyr::filter(id == study_id, option_name == "users_allowed_read_group")
+            users_allowed_read <- studies_options %>% dplyr::filter(id == study_id, option_name == "user_allowed_read")
+            
+            if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") studies_allowed <<- c(studies_allowed, study_id)
+            else {
+              if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) studies_allowed <<- c(studies_allowed, study_id)
+            }
+          })
+          
+          # Select authorized studies
+          studies <- studies %>% dplyr::filter(id %in% studies_allowed)
         }
         
         # Reset r$chosen_study (to reset main display)
@@ -274,12 +312,16 @@ mod_page_sidenav_server <- function(id, r, language){
         
         # Update patient status dropdown
         
-        r$subset_patients %>% 
-          # Filter on patient_id
-          dplyr::filter(patient_id == input$patient) %>%
-          # Subsets from chosen study
-          dplyr::inner_join(r$subsets %>% dplyr::filter(study_id == r$chosen_study) %>% dplyr::select(subset_id = id, name), by = "subset_id") %>%
-          dplyr::pull(name) -> subsets_names
+        subset_names <- ""
+        if (nrow(r$subset_patients) > 0){
+          r$subset_patients %>% 
+            # Filter on patient_id
+            dplyr::filter(patient_id == input$patient) %>%
+            # Subsets from chosen study
+            dplyr::inner_join(r$subsets %>% dplyr::filter(study_id == r$chosen_study) %>% dplyr::select(subset_id = id, name), by = "subset_id") -> subsets
+          
+          if (nrow(subsets) > 0) subsets %>% dplyr::pull(name) -> subsets_names
+        }
         
         # subset_names = names of subsets from which patient belongs to
         
@@ -408,14 +450,32 @@ mod_page_sidenav_server <- function(id, r, language){
       
         # If users_allowed_read_group is set to everybody, everybody has access. Else, filter on people who has access.
         
-        datamarts <- tibble::tibble()
-        users_allowed_read_group <- r$options %>% dplyr::filter(category == "datamart" & name == "users_allowed_read_group")
-        if (nrow(users_allowed_read_group) > 0){
-          if (users_allowed_read_group%>% dplyr::pull(value) == "everybody") datamarts <- r$datamarts
-          else {
-            datamarts_allowed <- r$options %>% dplyr::filter(category == "datamart" & name == "user_allowed_read" & value_num == r$user_id)
-            if (nrow(datamarts_allowed) > 0) datamarts <- r$datamarts %>% dplyr::filter(id %in% datamarts_allowed %>% dplyr::pull(link_id))
-          }
+        datamarts <- r$datamarts
+        if (nrow(datamarts) > 0) {
+          
+          # Merge with options
+          datamarts_options <- datamarts %>% dplyr::inner_join(r$options %>% 
+            dplyr::filter(category == "datamart") %>% dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
+          
+          # Vector of authorized datamarts
+          datamarts_allowed <- integer()
+          
+          # For each datamart, select those the user has access
+          sapply(unique(datamarts_options$id), function(datamart_id){
+            
+            # Loop over each datamart ID
+            
+            users_allowed_read_group <- datamarts_options %>% dplyr::filter(id == datamart_id, option_name == "users_allowed_read_group")
+            users_allowed_read <- datamarts_options %>% dplyr::filter(id == datamart_id, option_name == "user_allowed_read")
+            
+            if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") datamarts_allowed <<- c(datamarts_allowed, datamart_id)
+            else {
+              if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) datamarts_allowed <<- c(datamarts_allowed, datamart_id)
+            }
+          })
+          
+          # Select authorized datamarts
+          datamarts <- datamarts %>% dplyr::filter(id %in% datamarts_allowed)
         }
         
       shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(datamarts, "id", "name", rm_deleted_rows = TRUE), value = r$chosen_datamart)
@@ -425,11 +485,31 @@ mod_page_sidenav_server <- function(id, r, language){
         req(input$datamart & !is.na(r$chosen_study))
         
         studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
-        users_allowed_read_group <- r$options %>% dplyr::filter(category == "study" & name == "users_allowed_read_group")
-        
-        if (users_allowed_read_group %>% dplyr::pull(value) != "everybody") {
-          studies_allowed <- r$options %>% dplyr::filter(category == "study" & link_id %in% studies$id & name == "user_allowed_read" & value_num == r$user_id)
-          if (nrow(studies_allowed) > 0) studies <- studies %>% dplyr::filter(id %in% studies_allowed %>% dplyr::pull(link_id))
+        if (nrow(studies) > 0) {
+          
+          # Merge with options
+          studies_options <- studies %>% dplyr::inner_join(r$options %>% 
+            dplyr::filter(category == "study") %>% dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
+          
+          # Vector of authorized studies
+          studies_allowed <- integer()
+          
+          # For each study, select those the user has access
+          sapply(unique(studies_options$id), function(study_id){
+            
+            # Loop over each study ID
+            
+            users_allowed_read_group <- studies_options %>% dplyr::filter(id == study_id, option_name == "users_allowed_read_group")
+            users_allowed_read <- studies_options %>% dplyr::filter(id == study_id, option_name == "user_allowed_read")
+            
+            if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") studies_allowed <<- c(studies_allowed, study_id)
+            else {
+              if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) studies_allowed <<- c(studies_allowed, study_id)
+            }
+          })
+          
+          # Select authorized studies
+          studies <- studies %>% dplyr::filter(id %in% studies_allowed)
         }
         
         shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE), value = r$chosen_study)

@@ -221,7 +221,7 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
         observeEvent(r$selected_key, {
           req(!is.na(r$selected_key))
     
-          module_elements <- r$patient_lvl_module_elements %>% dplyr::filter(module_id == r$selected_key)
+          module_elements <- r$patient_lvl_modules_elements %>% dplyr::filter(module_id == r$selected_key)
           
           # If no thesaurus elements to show in this module, notificate user
           if (nrow(module_elements) == 0) show_message_bar(output = output, id = 2, message = "no_thesaurus_item_to_show", type = "severeWarning")
