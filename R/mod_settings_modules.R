@@ -205,7 +205,7 @@ mod_settings_modules_server <- function(id, r, language){
         })
         
         observeEvent(r[[paste0(prefix, "_modules")]], {
-          options <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]], key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]], key_col = "id", text_col = "name", null_value = TRUE)
           shiny.fluent::updateDropdown.shinyInput(session, "parent_module", options = options)
         })
 
@@ -224,6 +224,18 @@ mod_settings_modules_server <- function(id, r, language){
             function(input_name){
               new_data[[input_name]] <<- coalesce2(type = new_data_var[[input_name]], x = input[[input_name]])
             })
+          
+          # Add a display order, depending on last display order from the module family
+          if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+            
+            if (is.na(new_data$parent_module)) last_display <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM ", table,
+              " WHERE module_family_id = ", new_data$module_family, " AND parent_module_id IS NULL")) %>% dplyr::pull()
+            
+            else last_display <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM ", table,
+              " WHERE module_family_id = ", new_data$module_family, " AND parent_module_id = ", new_data$parent_module)) %>% dplyr::pull()
+            
+            new_data$display_order <- last_display + 1
+          }
 
           # Required textfields
           required_textfields <- "name"
@@ -263,24 +275,25 @@ mod_settings_modules_server <- function(id, r, language){
           # req(paste0(table, "_management_card") %in% r$user_accesses)
           
           # Dropdowns for each module / page
-          dropdowns_datatable <- ""
-          if (page == "modules_creation") dropdowns_datatable <- c("module_family_id" = paste0(prefix, "_modules_families"), "parent_module_id" = paste0(prefix, "_modules"))
+          dropdowns_datatable <- switch(table,
+            "patient_lvl_modules" = c("module_family_id" = "patient_lvl_modules_families", "parent_module_id" = "patient_lvl_modules"),
+            "aggregated_modules" = c("module_family_id" = "aggregated_modules_families", "parent_module_id" = "aggregated_modules"))
           
           # Action buttons for each module / page
           if (grepl("modules$", table) | grepl("modules_elements", table)) action_buttons <- "delete"
           if (grepl("modules_families", table)) action_buttons <- c("options", "delete")
           
           # Sortable cols
-          sortable_cols <- c("id", "name", "description", "datetime")
+          sortable_cols <- c("id", "name", "description", "display_order", "datetime")
           
           # Column widths
-          column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
+          column_widths <- c("id" = "80px", "display_order" = "80px", "datetime" = "130px", "action" = "80px")
           
           # Editable cols
-          editable_cols <- c("name", "description")
+          editable_cols <- c("name", "description", "display_order")
           
           # Centered columns
-          centered_cols <- c("id", "module_family_id", "parent_module_id", "datetime", "action")
+          centered_cols <- c("id", "module_family_id", "parent_module_id", "display_order", "datetime", "action")
           
           # Searchable_cols
           searchable_cols <- c("name", "description")

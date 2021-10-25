@@ -117,9 +117,9 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
 
   if (table %in% c("patient_lvl_modules", "aggregated_modules")){
-    new_data <- tibble::tribble(~id, ~name,  ~description, ~module_family_id, ~parent_module_id, ~creator_id, ~datetime, ~deleted,
+    new_data <- tibble::tribble(~id, ~name,  ~description, ~module_family_id, ~parent_module_id,  ~display_order, ~creator_id, ~datetime, ~deleted,
       last_row + 1, as.character(data$name), as.character(data$description), as.integer(data$module_family), as.integer(data$parent_module),
-      r$user_id, as.character(Sys.time()), FALSE)
+      as.integer(data$display_order), r$user_id, as.character(Sys.time()), FALSE)
   }
 
   if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
@@ -383,12 +383,15 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
           }
 
           else {
+            null_value <- FALSE
+            if (name == "parent_module_id") null_value <- TRUE
+            
             data[i, name] <<- as.character(
               div(
                 # So ID is like "data_sources13" if ID = 13
               shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[[name]], data[[i, "id"]])),
                 # To get options, convert data var to tibble (convert r$data_sources to list)
-                options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = FALSE),
+                options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = null_value),
                 # value is an integer, the value of the column like "data_source_id"
                 value = as.integer(data[[i, name]])),
                 # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)

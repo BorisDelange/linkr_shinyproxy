@@ -640,7 +640,7 @@ get_translations <- function(){
             "EN", "thesaurus_item_unit", "Item unit",
             "FR", "thesaurus_item_unit", "Unité de l'item",
             "EN", "display_order", "Display order",
-            "FR", "display_order", "Order d'affichage",
+            "FR", "display_order", "Ordre d'affichage",
             "EN", "module_element", "Module element",
             "FR", "module_element", "Nom de la figure",
             "EN", "error_run_plugin_ui_code", "Error when running plugin's UI code",
