@@ -479,6 +479,12 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
         if (length(result) == 0) result <- ""
         data[[i, "study_id"]] <- result
       }
+      if ("module_family_id" %in% names(data) & "module_family_id" %not_in% names(dropdowns)){
+        if (grepl("patient_lvl", table)) result <- r$patient_lvl_modules_families %>% dplyr::filter(id == data[[i, "module_family_id"]]) %>% dplyr::pull(name)
+        if (grepl("aggregated", table)) result <- r$aggregated_modules_families %>% dplyr::filter(id == data[[i, "module_family_id"]]) %>% dplyr::pull(name)
+        if (length(result) == 0) result <- ""
+        data[[i, "module_family_id"]] <- result
+      }
     }
   }
   
@@ -813,15 +819,38 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   # Make sure there's no duplicate in names, if duplicates_allowed is set to FALSE
   
   if (!duplicates_allowed){
-    duplicates <- 0
+
+    duplicates_name <- 0
+    duplicates_display_order <- 0
     
-    if (table != "users") duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
-      dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-    if (table == "users") duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("username", tolower) %>%
-      dplyr::group_by(username) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+    # For modules tables (patient_lvl & aggregated, modules / modules_families / modules_elements)
+    if (grepl("modules", table)){
+      if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+        
+        duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+          dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+        
+        duplicates_display_order <- r[[paste0(table, "_temp")]] %>%
+          dplyr::group_by(module_family_id, parent_module_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+      }
+      
+      if (duplicates_name > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
+      if (duplicates_display_order > 0) show_message_bar(output, 1, "modif_display_order_duplicates", "severeWarning", language)
+    }
     
-    if (duplicates > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
-    req(duplicates == 0)
+    # For other tables
+    if (!grepl("modules", table)){
+      
+      if (table != "users") duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+          dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+      
+      if (table == "users") duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("username", tolower) %>%
+          dplyr::group_by(username) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+      
+      if (duplicates_name > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
+    }
+
+    req(duplicates_name == 0, duplicates_display_order == 0)
   }
   
   # Save changes in database

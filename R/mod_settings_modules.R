@@ -226,13 +226,19 @@ mod_settings_modules_server <- function(id, r, language){
             })
           
           # Add a display order, depending on last display order from the module family
-          if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+          if (table %in% c("patient_lvl_modules", "aggregated_modules") & length(input$module_family) > 0){
             
-            if (is.na(new_data$parent_module)) last_display <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM ", table,
-              " WHERE module_family_id = ", new_data$module_family, " AND parent_module_id IS NULL")) %>% dplyr::pull()
-            
-            else last_display <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM ", table,
-              " WHERE module_family_id = ", new_data$module_family, " AND parent_module_id = ", new_data$parent_module)) %>% dplyr::pull()
+            if (length(input$parent_module) == 0){
+              last_display <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM ", table,
+                " WHERE module_family_id = ", new_data$module_family, " AND parent_module_id IS NULL")) %>% dplyr::pull()
+            }
+            else {
+              if (is.na(new_data$parent_module)) last_display <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM ", table,
+                " WHERE module_family_id = ", new_data$module_family, " AND parent_module_id IS NULL")) %>% dplyr::pull()
+              
+              else last_display <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM ", table,
+                " WHERE module_family_id = ", new_data$module_family, " AND parent_module_id = ", new_data$parent_module)) %>% dplyr::pull()
+            }
             
             new_data$display_order <- last_display + 1
           }
@@ -276,15 +282,15 @@ mod_settings_modules_server <- function(id, r, language){
           
           # Dropdowns for each module / page
           dropdowns_datatable <- switch(table,
-            "patient_lvl_modules" = c("module_family_id" = "patient_lvl_modules_families", "parent_module_id" = "patient_lvl_modules"),
-            "aggregated_modules" = c("module_family_id" = "aggregated_modules_families", "parent_module_id" = "aggregated_modules"))
+            "patient_lvl_modules" = c("parent_module_id" = "patient_lvl_modules"),
+            "aggregated_modules" = c("parent_module_id" = "aggregated_modules"))
           
           # Action buttons for each module / page
           if (grepl("modules$", table) | grepl("modules_elements", table)) action_buttons <- "delete"
           if (grepl("modules_families", table)) action_buttons <- c("options", "delete")
           
           # Sortable cols
-          sortable_cols <- c("id", "name", "description", "display_order", "datetime")
+          sortable_cols <- c("id", "name", "description", "display_order", "datetime", "module_family_id")
           
           # Column widths
           column_widths <- c("id" = "80px", "display_order" = "80px", "datetime" = "130px", "action" = "80px")
@@ -296,7 +302,11 @@ mod_settings_modules_server <- function(id, r, language){
           centered_cols <- c("id", "module_family_id", "parent_module_id", "display_order", "datetime", "action")
           
           # Searchable_cols
-          searchable_cols <- c("name", "description")
+          searchable_cols <- c("name", "description", "module_family_id")
+          
+          # Factorized cols
+          factorize_cols <- character()
+          if (table %in% c("patient_lvl_modules", "aggregated_modules")) factorize_cols <- c("module_family_id")
           
           # Restore datatable state
           page_length <- isolate(input$management_datatable_state$length)
@@ -306,7 +316,7 @@ mod_settings_modules_server <- function(id, r, language){
             col_names =  get_col_names(table), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
             editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
-            filter = TRUE, searchable_cols = searchable_cols, column_widths = column_widths)
+            filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
         })
       }
       
@@ -326,8 +336,8 @@ mod_settings_modules_server <- function(id, r, language){
         })
         
         dropdowns_update <- switch(table,
-          "patient_lvl_modules" = c("patient_lvl_module_family", "patient_lvl_module"),
-          "aggregated_modules" = c("aggregated_module_family", "aggregated_module"))
+          "patient_lvl_modules" = "patient_lvl_module",
+          "aggregated_modules" = "aggregated_module")
         
         # Each time a dropdown is updated, modify temp variable
         if (table %in% c("patient_lvl_modules", "aggregated_modules")){
@@ -371,293 +381,8 @@ mod_settings_modules_server <- function(id, r, language){
         })
       }
     
- 
-    # toggles <- c("creation_card", "datatable_card", "options_card")
-    # 
-    # if (id == "settings_patient_lvl_modules") prefix <- "patient_lvl"
-    # if (id == "settings_aggregated_modules") prefix <- "aggregated"
-    # 
-    # ##########################################
-    # # Show or hide cards   #
-    # ##########################################
-    # 
-    # sapply(toggles, function(toggle){
-    #   observeEvent(input[[paste0(prefix, "_", toggle, "_toggle")]], if(input[[paste0(prefix, "_", toggle, "_toggle")]]) shinyjs::show(paste0(prefix, "_", toggle)) else shinyjs::hide(paste0(prefix, "_", toggle)))
-    # })
-    # 
-    # ##########################################
-    # # Add a new module                       #
-    # ##########################################
-    # 
-    # # Update dropdowns with reactive data
-    # data_var_families <- switch(id,
-    #   "settings_patient_lvl_modules" = "patient_lvl_module_families",
-    #   "settings_aggregated_modules" = "aggregated_module_families")
-    # data_var_modules <- switch(id,
-    #   "settings_patient_lvl_modules" = "patient_lvl_modules",
-    #   "settings_aggregated_modules" = "aggregated_modules")
-    # 
-    # observeEvent(r[[data_var_families]], {
-    #   options <- tibble_to_list(r[[data_var_families]], "id", "name", rm_deleted_rows = TRUE)
-    #   shiny.fluent::updateDropdown.shinyInput(session, paste0(prefix, "_module_family"),
-    #     options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
-    # })
-    # 
-    # observeEvent(c(input[[paste0(prefix, "_module_family")]], r$patient_lvl_modules, r$aggregated_modules), {
-    #   # Prevent bug if input is empty
-    #   req(input[[paste0(prefix, "_module_family")]])
-    #   module_parents <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var_modules, " WHERE module_family_id = ", input[[paste0(prefix, "_module_family")]], " ORDER BY id"))
-    #   options <- tibble_to_list(module_parents, "id", "name", rm_deleted_rows = TRUE, null_value = TRUE, language = language)
-    #   shiny.fluent::updateDropdown.shinyInput(session, paste0(prefix, "_module_parent"),
-    #     options = options, value = ifelse(length(options) > 0, options[[1]][["key"]], ""))
-    # })
-    # 
-    # observeEvent(input[[paste0(prefix, "_add")]], {
-    #   new_name <- input[[paste0(prefix, "_name")]]
-    #   name_check <- FALSE
-    # 
-    #   if (!is.null(new_name)){
-    #     if (new_name != "") name_check <- TRUE
-    #   }
-    #   if (!name_check) shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_name"), errorMessage = translate(language, "provide_valid_name"))
-    #   if (name_check) shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_name"), errorMessage = NULL)
-    # 
-    #   req(name_check)
-    # 
-    #   # Check if chosen name is already used
-    #   if (input[[paste0(prefix, "_creation_module_type")]] == "module") table <- switch(id, "settings_patient_lvl_modules" = "patient_lvl_modules", "settings_aggregated_modules" = "aggregated_modules")
-    #   if (input[[paste0(prefix, "_creation_module_type")]] == "family") table <- switch(id, "settings_patient_lvl_modules" = "patient_lvl_module_families", "settings_aggregated_modules" = "aggregated_module_families")
-    # 
-    #   distinct_names <- DBI::dbGetQuery(r$db, paste0("SELECT DISTINCT(name) FROM ", table, " WHERE deleted IS FALSE")) %>% dplyr::pull()
-    # 
-    #   if (new_name %in% distinct_names) show_message_bar(output, 2, "name_already_used", "severeWarning", language)
-    #   req(new_name %not_in% distinct_names)
-    # 
-    #   # Check if module family is not empty
-    #   module_family_check <- TRUE
-    #   if (input[[paste0(prefix, "_creation_module_type")]] == "module" & input[[paste0(prefix, "_module_family")]] == "") module_family_check <- FALSE
-    #   
-    #   if (!module_family_check) show_message_bar(output, 2, "req_module_family", "severeWarning", language)
-    #   req(module_family_check)
-    #   
-    #   last_row <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(id), 0) FROM ", table)) %>% dplyr::pull()
-    # 
-    #   new_data <- switch(input[[paste0(prefix, "_creation_module_type")]],
-    #     "module" = tibble::tribble(~id, ~name, ~description, ~module_family_id, ~parent_module_id, ~creator_id, ~datetime, ~deleted,
-    #       last_row + 1,
-    #       as.character(new_name),
-    #       coalesce2("char", input[[paste0(prefix, "_description")]]),
-    #       coalesce2("int", input[[paste0(prefix, "_module_family")]]),
-    #       coalesce2("int", input[[paste0(prefix, "_module_parent")]]),
-    #       r$user_id,
-    #       as.character(Sys.time()),
-    #       FALSE),
-    #     "family" = tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
-    #       last_row + 1,
-    #       as.character(new_name),
-    #       coalesce2("char", input[[paste0(prefix, "_description")]]),
-    #       r$user_id,
-    #       as.character(Sys.time()),
-    #       FALSE))
-    # 
-    #   DBI::dbAppendTable(r$db, table, new_data)
-    # 
-    #   r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
-    #   r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-    # 
-    #   # Add a row in options table
-    #   # last_row_options <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull()
-    #   # DBI::dbAppendTable(r$db, "options",
-    #   #   tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-    #   #     last_row_options + 1, table, last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
-    # 
-    #   show_message_bar(output, 3, "new_module_added", "success", language)
-    #   
-    #   # Show management card
-    #   shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_datatable_card_toggle"), value = TRUE)
-    # 
-    #   # Reset textfields
-    #   shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_name"), value = "")
-    #   shiny.fluent::updateTextField.shinyInput(session, paste0(prefix, "_description"), value = "")
-    # })
-    # 
-    # ##########################################
-    # # Modules management                     #
-    # ##########################################
-    # 
-    #   ##########################################
-    #   # Generate datatable                     #
-    #   ##########################################
-    # 
-    #   observeEvent(input[[paste0(prefix, "_management_module_type")]], {
-    # 
-    #     # Get data
-    #     req(input[[paste0(prefix, "_management_module_type")]])
-    #     module_type <- input[[paste0(prefix, "_management_module_type")]]
-    #     if (module_type == "module") data_var <- data_var_modules
-    #     if (module_type == "family") data_var <- data_var_families
-    #     
-    #     observeEvent(r[[paste0(data_var, "_temp")]], {
-    #       
-    #       # Datatable state
-    #       page_length <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$length)
-    #       start <- isolate(input[[paste0(prefix, "_management_datatable_state")]]$start)
-    #       
-    #       # Render datatable
-    #       output[[paste0(prefix, "_management_datatable")]] <- DT::renderDT(
-    #         # data,
-    #         settings_datatable(
-    #           ns = ns, r = r, id = id, prefix = prefix,
-    #           data = settings_datatable_data(data_var, r),
-    #           data_variables = c("patient_lvl_modules", "patient_lvl_module_families", "aggregated_modules", "aggregated_module_families"),
-    #           dropdowns = settings_modules_get_dropdowns(prefix, module_type),
-    #           action_buttons = switch(module_type, "module" =  c("delete", "options"), "family" = "delete"),
-    #           new_colnames =
-    #             switch(prefix,
-    #               "patient_lvl" =
-    #                 switch(module_type,
-    #                 "module" = c(translate(language, "id"), translate(language, "name"), translate(language, "description"), translate(language, "module_family"), 
-    #                   translate(language, "module_parent"), translate(language, "creator"), translate(language, "datetime"), translate(language, "action")),
-    #                 "family" = c(translate(language, "id"), translate(language, "name"), translate(language, "description"),
-    #                   translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))),
-    #               "aggregated" =
-    #                 switch(module_type,
-    #                   "module" = c(translate(language, "id"), translate(language, "name"), translate(language, "description"), translate(language, "module_family"), 
-    #                     translate(language, "module_parent"), translate(language, "creator"), translate(language, "datetime"), translate(language, "action")),
-    #                   "family" = c(translate(language, "id"), translate(language, "name"), translate(language, "description"),
-    #                     translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))))
-    #         ),
-    #         options = list(dom = "<'datatable_length'l><'top'ft><'bottom'p>",
-    #           stateSave = TRUE, stateDuration = 30, autoFill = list(enable = FALSE),
-    #           pageLength = page_length, displayStart = start,
-    #           columnDefs = list(list(className = "dt-center", targets = switch(module_type, "module" = c(0, 3, 4, 5, 6, 7), "family" = c(0, 3, 4, 5))),
-    #             list(sortable = FALSE, targets = switch(module_type, "module" = c(3, 4, 7), "family" = ""))),
-    #           language = list(
-    #             paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
-    #             search = translate(language, "DT_search"),
-    #             lengthMenu = translate(language, "DT_length"))),
-    #         rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
-    #         editable = list(target = "cell", disable = list(columns = switch(module_type, "module" = c(0, 3, 4, 5, 6, 7), "family" = c(0, 3, 4, 5)))),
-    #         callback = datatable_callback()
-    #       )
-    #     })
-    #   })
-    #   
-    #   ##########################################
-    #   # Save changes in datatable              #
-    #   ##########################################
-    # 
-    #   # Each time a row is updated, modify temp variable
-    #   observeEvent(input[[paste0(prefix, "_management_datatable_cell_edit")]], {
-    #     edit_info <- input[[paste0(prefix, "_management_datatable_cell_edit")]]
-    # 
-    #     table <- settings_modules_get_table(prefix, input[[paste0(prefix, "_management_module_type")]])
-    # 
-    #     r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
-    #     # Store that this row has been modified
-    #     r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
-    #   })
-    # 
-    #   # Each time a dropdown is updated, modify temp variable
-    #   observeEvent(c(input[[paste0(prefix, "_management_module_type")]], 
-    #     r$patient_lvl_module_families, r$patient_lvl_modules, r$aggregated_module_families, r$aggregated_modules), {
-    #       
-    #     req(input[[paste0(prefix, "_management_module_type")]])
-    #     
-    #     table <- settings_modules_get_table(prefix, input[[paste0(prefix, "_management_module_type")]])
-    #     dropdowns <- settings_modules_get_dropdowns(prefix, input[[paste0(prefix, "_management_module_type")]])
-    # 
-    #     sapply(r[[table]] %>% dplyr::filter(!deleted) %>% dplyr::pull(id), function(id){
-    #       sapply(names(dropdowns), function(name){
-    #         observeEvent(input[[paste0(dropdowns[[name]], id)]], {
-    #           r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), name]] <-
-    #             coalesce2("int", input[[paste0(dropdowns[[name]], id)]])
-    #           # Store that this row has been modified
-    #           r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
-    #         })
-    #       })
-    #     })
-    #   })
-    # 
-    #   observeEvent(input[[paste0(prefix, "_management_save")]], {
-    # 
-    #     # Make sure there's no duplicate in names
-    #     duplicates <- 0
-    # 
-    #     module_type <- input[[paste0(prefix, "_management_module_type")]]
-    #     table <- settings_modules_get_table(prefix, module_type)
-    # 
-    #     duplicates <- r[[paste0(table, "_temp")]] %>% dplyr::filter(!deleted) %>% dplyr::mutate_at("name", tolower) %>%
-    #       dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-    # 
-    #     if (duplicates > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
-    #     req(duplicates == 0)
-    # 
-    #     # Make sure parent module is not the module itself
-    #     parent_is_itself <- FALSE
-    #     if (module_type == "module"){
-    #       if (nrow(r[[paste0(table, "_temp")]] %>%
-    #           dplyr::select(name, parent_module_id) %>%
-    #           dplyr::left_join(r[[paste0(table, "_temp")]] %>% dplyr::select(parent_module_id = id, parent_name = name), by = "parent_module_id") %>%
-    #           dplyr::filter(!is.na(parent_name)) %>% dplyr::filter(name == parent_name)) != 0) parent_is_itself <- TRUE
-    #     }
-    #     if (parent_is_itself) show_message_bar(output, 2, "parent_module_is_itself", "severeWarning", language)
-    #     req(!parent_is_itself)
-    # 
-    #     # Save changes in database
-    #     ids_to_del <- r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
-    #     DBI::dbSendStatement(r$db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
-    #     DBI::dbClearResult(query)
-    #     DBI::dbAppendTable(r$db, table, r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified))
-    # 
-    #     # Notification to user
-    #     show_message_bar(output, 2, "modif_saved", "success", language)
-    #   })
-    #   
-    #   ##########################################
-    #   # Delete a row in datatable              #
-    #   ##########################################
-    # 
-    #   # Indicate whether to close or not delete dialog box
-    #   r[[paste0(prefix, "_delete_dialog")]] <<- FALSE
-    # 
-    #   # Create & show dialog box
-    #   output[[paste0(prefix, "_delete_confirm")]] <- shiny.fluent::renderReact({
-    #     settings_delete_react(paste0("modules_", input[[paste0(prefix, "_management_module_type")]]), ns, language, r[[paste0(prefix, "_delete_dialog")]])})
-    # 
-    #   # Whether to close or not delete dialog box
-    #   observeEvent(input[[paste0(paste0("modules_", input[[paste0(prefix, "_management_module_type")]]), "_hide_dialog")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
-    #   observeEvent(input[[paste0(paste0("modules_", input[[paste0(prefix, "_management_module_type")]]), "_delete_canceled")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
-    #   observeEvent(input[[paste0(prefix, "_deleted_pressed")]], r[[paste0(prefix, "_delete_dialog")]] <<- TRUE)
-    # 
-    #   # When the delete is confirmed...
-    #   observeEvent(input[[paste0(prefix, "_management_module_type")]], {
-    #     module_type <- input[[paste0(prefix, "_management_module_type")]]
-    #     observeEvent(input[[paste0(paste0("modules_", module_type), "_delete_confirmed")]], {
-    # 
-    #       # Close dialog box
-    #       r[[paste0(prefix, "_delete_dialog")]] <<- FALSE
-    # 
-    #       table <- settings_modules_get_table(prefix, module_type)
-    # 
-    #       # Get the ID of row deleted
-    #       deleted_pressed_value <- input[[paste0(prefix, "_deleted_pressed")]]
-    #       row_deleted <- as.integer(substr(deleted_pressed_value, nchar(paste0(prefix, "_delete_")) + 1, nchar(deleted_pressed_value)))
-    #       
-    #       # Prevent bug when changing module_type
-    #       req(nrow(r[[table]] %>% dplyr::filter(!deleted & id == row_deleted)) > 0)
-    #       
-    #       # Delete row in database
-    #       DBI::dbSendStatement(r$db, paste0("UPDATE ", table, " SET deleted = TRUE WHERE id = ", row_deleted))
-    #       # Update r vars (including temp variable, used in management datatables)
-    #       r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
-    #       r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
-    # 
-    #       # Notification to user
-    #       show_message_bar(output, 3, paste0("modules_", module_type, "_deleted"), "severeWarning", language)
-    #     })
-    #   })
-    #   
+      
+  
     #   ##########################################
     #   # Edit options by selecting a row        #
     #   ##########################################

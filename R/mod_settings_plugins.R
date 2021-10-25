@@ -140,7 +140,7 @@ mod_settings_plugins_server <- function(id, r, language){
         column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
 
         # Centered columns
-        centered_cols <- c("id", "datetime", "action")
+        centered_cols <- c("id", "module_type", "datetime", "action")
 
         # Restore datatable state
         page_length <- isolate(input$management_datatable_state$length)
