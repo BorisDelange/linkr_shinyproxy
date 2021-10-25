@@ -92,7 +92,7 @@ db_create_tables <- function(db){
   db_create_table(db, "patient_lvl_modules_elements",
     tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
       thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
-      colour = character(), display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+      thesaurus_item_colour = character(), display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
 
   db_create_table(db, "aggregated_modules_families",
     tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
@@ -100,6 +100,10 @@ db_create_tables <- function(db){
   
   db_create_table(db, "aggregated_modules",
     tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
+      display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+  
+  db_create_table(db, "aggregated_modules_elements",
+    tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
       display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
   
   db_create_table(db, "code",

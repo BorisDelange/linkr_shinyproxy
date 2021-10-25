@@ -94,10 +94,10 @@ app_server <- function(router, language){
     mod_settings_r_console_server("settings_r_console", r, language)
     mod_page_sidenav_server("settings_r_console", r, language)
 
-    sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
-      mod_settings_data_management_server(paste0("settings_", page), r, language)
-      mod_page_sidenav_server(paste0("settings_", page), r, language)
-    })
+    # sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
+    #   mod_settings_data_management_server(paste0("settings_", page), r, language)
+    #   mod_page_sidenav_server(paste0("settings_", page), r, language)
+    # })
 
     mod_settings_plugins_server("settings_plugins", r, language)
     mod_page_sidenav_server("settings_plugins", r, language)

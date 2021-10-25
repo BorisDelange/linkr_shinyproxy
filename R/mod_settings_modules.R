@@ -83,9 +83,41 @@ mod_settings_sub_modules_ui <- function(id, language){
     }
 
     if (page == "modules_elements_creation"){
-      render_settings_creation_card(language = language, ns = ns, id = id, title = "add_module_element",
-        textfields = c("name", "description"), textfields_width = "300px",
-        dropdowns = c(), dropdowns_width = "300px") -> result
+      if (grepl("patient_lvl", id)){
+        div(id = ns("creation_card"),
+          make_card(
+            title = translate(language, "add_module_element"),
+            content = div(
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+                make_textfield(language = language, ns = ns, label = "name", id = "name", width = "300px"),
+                make_textfield(language = language, ns = ns, label = "description", id = "description", width = "300px")
+              ),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+                make_dropdown(language = language, ns = ns, label = "module", id = "module", width = "300px"),
+                make_dropdown(language = language, ns = ns, label = "plugin", id = "plugin", width = "300px")
+              ), 
+              shiny.fluent::Stack(
+                horizontal = TRUE, tokens = list(childrenGap = 50),
+                make_dropdown(language = language, ns = ns, label = "datamart", width = "300px"),
+                div(strong(translate(language, "show_only_used_items"), style = "display:block; padding-bottom:12px;"),
+                  shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")
+              ),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+                make_dropdown(language = language, ns = ns, label = "thesaurus", id = "thesaurus", width = "300px"),
+                make_dropdown(language = language, ns = ns, label = "thesaurus_items_selected", id = "thesaurus_items_selected",
+                  multiSelect = TRUE, width = "600px")
+              ), br(),
+              DT::DTOutput(ns("thesaurus_items")), br(),
+              shiny.fluent::PrimaryButton.shinyInput(ns("add"), translate(language, "add"))
+            )
+          )
+        ) -> result
+      }
+      if (grepl("aggregated", id)) {
+        render_settings_creation_card(language = language, ns = ns, id = id, title = "add_module_element",
+          textfields = c("name", "description"), textfields_width = "300px",
+          dropdowns = c("module", "plugin"), dropdowns_width = "300px") -> result
+      }
     }
 
     if (grepl("management", page)){
@@ -126,11 +158,6 @@ mod_settings_modules_server <- function(id, r, language){
       if (grepl("creation", page)) table <- paste0(prefix, "_", substr(page, 1, nchar(page) - nchar("_creation")))
       if (grepl("management", page)) table <- paste0(prefix, "_", substr(page, 1, nchar(page) - nchar("_management")))
       if (grepl("options", page)) table <- paste0(prefix, "_", substr(page, 1, nchar(page) - nchar("_options")))
-      
-      # Corresponding table in the database
-      # if (grepl("creation", page)) table <- substr(page, 1, nchar(page) - nchar("_creation"))
-      # if (grepl("management", page)) table <- substr(page, 1, nchar(page) - nchar("_management"))
-      # if (grepl("options", page)) table <- substr(page, 1, nchar(page) - nchar("_options"))
       
       # Dropdowns used for creation card
       dropdowns <- ""
@@ -205,9 +232,124 @@ mod_settings_modules_server <- function(id, r, language){
         })
         
         observeEvent(r[[paste0(prefix, "_modules")]], {
-          options <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]], key_col = "id", text_col = "name", null_value = TRUE)
-          shiny.fluent::updateDropdown.shinyInput(session, "parent_module", options = options)
+          options_parent_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]], key_col = "id", text_col = "name", null_value = TRUE)
+          options_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]], key_col = "id", text_col = "name", null_value = TRUE)
+          shiny.fluent::updateDropdown.shinyInput(session, "parent_module", options = options_parent_module)
+          shiny.fluent::updateDropdown.shinyInput(session, "module", options = options_module)
         })
+        
+        observeEvent(r$plugins, {
+          module_type_id <- switch(prefix, "patient_lvl" = 1, "aggregated" = 2)
+          options <- convert_tibble_to_list(data = r$plugins %>% dplyr::filter(module_type_id == !!module_type_id), 
+            key_col = "id", text_col = "name", null_value = TRUE)
+          shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options)
+        })
+        
+        observeEvent(r$datamarts, {
+          options <- convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name", null_value = TRUE)
+          shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = options)
+        })
+        
+        observeEvent(r$thesaurus, {
+          options <- convert_tibble_to_list(data = r$thesaurus, key_col = "id", text_col = "name")
+          shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = options)
+        })
+        
+        
+        # For "Add module element", update thesaurus items datatable when a thesaurus item is chosen
+        
+        observeEvent(input$thesaurus, {
+          
+          # Load thesaurus items depending on chosen thesaurus
+          r$thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus, category = "plus_minus")
+          r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+          
+          # Update datamart dropdown
+          shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name", null_value = TRUE))
+          
+          # If we choose a datamart, add count_rows cols
+          # If we change value of show_only_used_items, reload r value
+          
+          observeEvent(input$show_only_used_items, {
+            
+            observeEvent(input$datamart, {
+              
+              # Reload original r variables (to remove previous count_rows cols)
+              r$thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus, category = "plus_minus")
+              r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+              
+              if (input$datamart != ""){
+                
+                count_items_rows <- tibble::tibble()
+                count_patients_rows <- tibble::tibble()
+                
+                # Add count_items_rows in the cache & get it if already in the cache
+                tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus,
+                  datamart_id = as.integer(input$datamart), category = "count_items_rows"), 
+                    error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language), 
+                    warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
+                
+                # Add count_items_rows in the cache & get it if already in the cache
+                tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus,
+                  datamart_id = as.integer(input$datamart), category = "count_patients_rows"), 
+                    error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language), 
+                    warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
+                
+                if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language)
+                req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
+                
+                # Transform count_rows cols to integer, to be sortable
+                r$thesaurus_items <- r$thesaurus_items %>% 
+                  dplyr::left_join(count_items_rows, by = "item_id") %>% 
+                  dplyr::left_join(count_patients_rows, by = "item_id") %>%
+                  dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
+                  dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
+                
+                # If show_only_used_items is TRUE, filter on count_items_rows > 0
+                if (input$show_only_used_items) r$thesaurus_items <- r$thesaurus_items %>% dplyr::filter(count_items_rows > 0)
+                
+                r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+              }
+            })
+          })
+          
+          observeEvent(r$thesaurus_items_temp, {
+            
+            # Transform category to factor, to be filtering in datatable
+            r$thesaurus_items_temp <- r$thesaurus_items_temp %>% dplyr::mutate_at("category", as.factor)
+            
+            # Parameters for the datatable
+            action_buttons <- "delete"
+            editable_cols <- c("display_name", "unit")
+            searchable_cols <- c("name", "display_name", "category", "unit")
+            factorize_cols <- c("category", "unit")
+            
+            # If we have count cols
+            if ("count_patients_rows" %in% names(r$thesaurus_items)){
+              sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+              centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
+              col_names <- get_col_names("thesaurus_items_with_counts")
+            }
+            else {
+              sortable_cols <- c("id", "item_id", "name", "display_name", "category")
+              centered_cols <- c("id", "item_id", "unit", "datetime", "action")
+              col_names <- get_col_names("thesaurus_items")
+            }
+            
+            # Restore datatable state
+            page_length <- isolate(input$thesaurus_items_state$length)
+            start <- isolate(input$thesaurus_items_state$start)
+            
+            # Render datatable
+            render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "thesaurus_items",
+              col_names =  col_names, table = "thesaurus_items", action_buttons = action_buttons,
+              datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
+              editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, 
+              searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE)
+          })
+          
+        })
+        
 
         # When add button is clicked
         observeEvent(input$add, {

@@ -509,8 +509,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
                     options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name", null_value = TRUE)),
                   div(strong(translate(language, "show_only_used_items"), style = "display:block; padding-bottom:12px;"),
                     shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")
-                  # make_toggle(language = language, ns = ns, label = "show_only_used_items", value = TRUE)#,
-                  # style = "display:inline;"
                 ),
                 DT::DTOutput(ns("sub_datatable")),
                 shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), translate(language, "save"))

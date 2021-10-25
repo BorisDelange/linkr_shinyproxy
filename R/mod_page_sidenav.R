@@ -312,7 +312,7 @@ mod_page_sidenav_server <- function(id, r, language){
         
         # Update patient status dropdown
         
-        subset_names <- ""
+        subsets_names <- ""
         if (nrow(r$subset_patients) > 0){
           r$subset_patients %>% 
             # Filter on patient_id
