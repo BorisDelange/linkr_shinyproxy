@@ -606,8 +606,8 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
   
   # Load join between our data and the cache
   
-  # For action buttons (delete & plus_minus), don't use datamart_id / link_id_bis
-  if (category %in% c("delete", "plus_minus")){
+  # For action buttons (delete & plus_minus) & colours, don't use datamart_id / link_id_bis
+  if (category %in% c("delete", "plus_minus", "colours")){
     data <- DBI::dbGetQuery(r$db, paste0(
      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value
       FROM thesaurus_items t
@@ -729,6 +729,20 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
           shiny::actionButton(paste0("remove_", id), "", icon = icon("minus"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-item_removed', this.id, {priority: 'event'})")))))
     }
+    if (category == "colours"){
+      
+      colorCells <- list(
+        list(id = "#EF3B2C", color = "#EF3B2C"),
+        list(id = "#CB181D", color = "#CB181D"),
+        list(id = "#7BCCC4", color = "#7BCCC4"),
+        list(id = "#2B8CBE", color = "#2B8CBE"),
+        list(id = "#5AAE61", color = "#5AAE61"),
+        list(id = "#FFD92F", color = "#FFD92F"),
+        list(id = "#000000", color = "#000000"))
+      
+     data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+        shiny.fluent::SwatchColorPicker.shinyInput(paste0("colour_", id), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells))))
+    }
 
     # Delete old cache
     DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "' AND link_id_bis = ", datamart_id)) -> query
@@ -752,6 +766,7 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
   }
   
   if (category %in% c("delete", "plus_minus")) data <- data %>% dplyr::rename(action = value)
+  if (category == "colours") data <- data %>% dplyr::rename(colour = value)
   if (category %in% c("count_patients_rows", "count_items_rows")) data <- data %>% dplyr::rename(!!category := value) %>% dplyr::select(item_id, !!category)
   
   data

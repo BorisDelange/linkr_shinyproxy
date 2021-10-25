@@ -364,12 +364,13 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
     
     # Colours choices
     colorCells <- list(
-      list(id = "#ca5010", color = "#ca5010"),
-      list(id = "#038387", color = "#038387"),
-      list(id = "#8764b8", color = "#8764b8"),
-      list(id = "#881798", color = "#881798"),
-      list(id = "#ffffff", color = "#ffffff")
-    )
+      list(id = "#EF3B2C", color = "#EF3B2C"),
+      list(id = "#CB181D", color = "#CB181D"),
+      list(id = "#7BCCC4", color = "#7BCCC4"),
+      list(id = "#2B8CBE", color = "#2B8CBE"),
+      list(id = "#5AAE61", color = "#5AAE61"),
+      list(id = "#FFD92F", color = "#FFD92F"),
+      list(id = "#000000", color = "#000000"))
     
     # Dropdowns for choice of datamart etc
     # Depending if module_type is patient_lvl_data or aggregated_data

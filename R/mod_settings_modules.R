@@ -281,6 +281,9 @@ mod_settings_modules_server <- function(id, r, language){
               
               # Reload original r variables (to remove previous count_rows cols)
               r$thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus, category = "plus_minus")
+              colours <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus, category = "colours")
+              r$thesaurus_items <- r$thesaurus_items %>% dplyr::left_join(colours %>% dplyr::select(id, colour), by = "id") %>% dplyr::relocate(colour, .before = "datetime")
+              
               r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
               
               if (input$datamart != ""){
@@ -328,17 +331,19 @@ mod_settings_modules_server <- function(id, r, language){
             editable_cols <- c("display_name", "unit")
             searchable_cols <- c("name", "display_name", "category", "unit")
             factorize_cols <- c("category", "unit")
+            column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "name" = "300px", "display_name" = "150px",
+              "unit" = "100px")
             
             # If we have count cols
             if ("count_patients_rows" %in% names(r$thesaurus_items)){
               sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
               centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-              col_names <- get_col_names("thesaurus_items_with_counts")
+              col_names <- get_col_names("modules_thesaurus_items_with_counts")
             }
             else {
               sortable_cols <- c("id", "item_id", "name", "display_name", "category")
               centered_cols <- c("id", "item_id", "unit", "datetime", "action")
-              col_names <- get_col_names("thesaurus_items")
+              col_names <- get_col_names("modules_thesaurus_items")
             }
             
             # Restore datatable state
