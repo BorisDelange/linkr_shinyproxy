@@ -255,62 +255,62 @@ mod_settings_users_server <- function(id, r, language){
         })
       }
       
-    ##########################################
-    # Save changes in datatable              #
-    ##########################################
+      ##########################################
+      # Save changes in datatable              #
+      ##########################################
+      
+      # Only for data management subpages
+      if (grepl("management", id)){
+        
+        # Each time a row is updated, modify temp variable
+        observeEvent(input$management_datatable_cell_edit, {
+          edit_info <- input$management_datatable_cell_edit
+          r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
+          # Store that this row has been modified
+          r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
+        })
+        
+        # Each time a dropdown is updated, modify temp variable
+        if (table == "users"){
+          observeEvent(r$users, {
+            update_settings_datatable(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns, language = language)
+          })
+        }
     
-    # Only for data management subpages
-    if (grepl("management", id)){
+        # When save button is clicked
+        observeEvent(input$management_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language))
+      }
+        
+      ##########################################
+      # Delete a row in datatable              #
+      ##########################################
       
-      # Each time a row is updated, modify temp variable
-      observeEvent(input$management_datatable_cell_edit, {
-        edit_info <- input$management_datatable_cell_edit
-        r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
-        # Store that this row has been modified
-        r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
-      })
+      # Only for data management subpages
+      if (grepl("management", id)){
       
-      # Each time a dropdown is updated, modify temp variable
-      if (table == "users"){
-        observeEvent(r$users, {
-          update_settings_datatable(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns, language = language)
+        # Create & show dialog box
+        observeEvent(r[[paste0(table, "_delete_dialog")]] , {
+          output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = table, language = language))
+        })
+  
+        # Whether to close or not delete dialog box
+        observeEvent(input$hide_dialog, r[[paste0(table, "_delete_dialog")]] <- FALSE)
+        observeEvent(input$delete_canceled, r[[paste0(table, "_delete_dialog")]] <- FALSE)
+        observeEvent(input$deleted_pressed, r[[paste0(table, "_delete_dialog")]] <- TRUE)
+  
+        # When the delete is confirmed...
+        observeEvent(input$delete_confirmed, {
+          
+          # If user has access
+          req(paste0(table, "_management_card") %in% r$user_accesses)
+  
+          # Get value of deleted row
+          row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
+  
+          # Delete row in DB table
+          delete_settings_datatable_row(output = output, r = r, ns = ns, language = language, row_deleted = row_deleted, table = table)
         })
       }
-  
-      # When save button is clicked
-      observeEvent(input$management_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language))
-    }
-      
-    ##########################################
-    # Delete a row in datatable              #
-    ##########################################
-    
-    # Only for data management subpages
-    if (grepl("management", id)){
-    
-      # Create & show dialog box
-      observeEvent(r[[paste0(table, "_delete_dialog")]] , {
-        output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = table, language = language))
-      })
-
-      # Whether to close or not delete dialog box
-      observeEvent(input$hide_dialog, r[[paste0(table, "_delete_dialog")]] <- FALSE)
-      observeEvent(input$delete_canceled, r[[paste0(table, "_delete_dialog")]] <- FALSE)
-      observeEvent(input$deleted_pressed, r[[paste0(table, "_delete_dialog")]] <- TRUE)
-
-      # When the delete is confirmed...
-      observeEvent(input$delete_confirmed, {
-        
-        # If user has access
-        req(paste0(table, "_management_card") %in% r$user_accesses)
-
-        # Get value of deleted row
-        row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
-
-        # Delete row in DB table
-        delete_settings_datatable_row(output = output, r = r, ns = ns, language = language, row_deleted = row_deleted, table = table)
-      })
-    }
     
     ##########################################
     # Edit options by selecting a row        #

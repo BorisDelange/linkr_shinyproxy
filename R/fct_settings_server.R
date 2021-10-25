@@ -763,18 +763,31 @@ update_settings_datatable <- function(input, r = shiny::reactiveValues(), ns = s
     sapply(dropdowns, function(dropdown){
       observeEvent(input[[paste0(get_plural(word = dropdown), id)]], {
         
+        dropdown_table <- dropdown
+        dropdown_input <- dropdown
+        
+        # If table is a module table, dropdown name is different
+        if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+          dropdown_table <- switch(dropdown, 
+            "patient_lvl_module_family" = "module_family", "aggregated_module_family" = "module_family",
+            "patient_lvl_module" = "parent_module", "aggregated_module" = "parent_module")
+        }
+        
         # When we load a page, every dropdown triggers the event
         # Change temp variable only if new value is different than old value
-        old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]]
+        old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]]
         
         # If thesaurus, data_source_id can accept multiple values (converting to string)
         if (table == "thesaurus") new_value <- toString(input[[paste0("data_sources", id)]])
-        if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins", "users")) new_value <- as.integer(input[[paste0(get_plural(word = dropdown), id)]])
+        if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins", "users", "patient_lvl_modules", "aggregated_modules")){
+          new_value <- as.integer(input[[paste0(get_plural(word = dropdown_input), id)]])}
         
-        if (new_value != old_value){
-          r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown, "_id")]] <- new_value
-          # Store that this row has been modified
-          r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
+        if (length(new_value) != 0){
+          if (new_value != old_value){
+            r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]] <- new_value
+            # Store that this row has been modified
+            r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
+          }
         }
       })
     })
