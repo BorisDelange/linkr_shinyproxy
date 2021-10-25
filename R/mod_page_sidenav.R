@@ -52,7 +52,7 @@ mod_page_sidenav_ui <- function(id, language){
       make_dropdown(language = language, ns = ns, label = "patient"),
       make_dropdown(language = language, ns = ns, label = "stay"), br(), hr(),
       make_dropdown(language = language, ns = ns, label = "patient_status"), br(),
-      div(id = "exclusion_reason_div",
+      div(id = ns("exclusion_reason_div"),
         div(class = "input_title", translate(language, "exclusion_reason")),
         div(shiny.fluent::Dropdown.shinyInput(ns("exclusion_reason"), value = NULL, options = list()))), br(),
       # make_dropdown(language = language, ns = ns, label = "exclusion_reason"), br(),
@@ -329,11 +329,6 @@ mod_page_sidenav_server <- function(id, r, language){
         if (input$patient_status == "included"){
           add_patients_subset_id <- included_patients_subset
           remove_patients_subset_id <- excluded_patients_subset
-          
-          # Remove exclusion_reason from database
-          query <- DBI::dbSendStatement(r$db, paste0("DELETE FROM patients_options WHERE study_id = ", r$chosen_study,
-            " AND patient_id = ", r$chosen_patient, " AND category = 'exclusion_reason'"))
-          DBI::dbClearResult(query)
         }
         
         # Put patient to excluded subset
@@ -345,16 +340,12 @@ mod_page_sidenav_server <- function(id, r, language){
         # Remove patient from both subsets (status undefined)
         if (input$patient_status == "undefined"){
           remove_patients_subset_id <- c(included_patients_subset, excluded_patients_subset)
-          # Remove exclusion_reason from database
-          query <- DBI::dbSendStatement(r$db, paste0("DELETE FROM patients_options WHERE study_id = ", r$chosen_study,
-            " AND patient_id = ", r$chosen_patient, " AND category = 'exclusion_reason'"))
-          DBI::dbClearResult(query)
         }
         
         # Add patients to chosen subset
         if (!is.na(add_patients_subset_id)){
           add_patients_to_subset(output = output, r = r, patients = tibble::tribble(~patient_id, as.integer(r$chosen_patient)),
-            subset_id = add_patients_subset_id, language = language)
+            subset_id = add_patients_subset_id, success_notification = FALSE, language = language)
         }
   
         # Remove patients from chosen subset
@@ -368,12 +359,14 @@ mod_page_sidenav_server <- function(id, r, language){
         
         # If choice is excluded, update exclusion reason dropdown & show dropdown
         if (input$patient_status == "excluded"){
-          exclusion_reasons <- r$patients_options %>% dplyr::filter(study_id == r$chosen_study & category == "exclusion_reasons")
+          exclusion_reasons <- r$patients_options %>% dplyr::filter(category == "exclusion_reasons" & study_id == r$chosen_study)
           options <- list()
           if (nrow(exclusion_reasons) > 0) options <- convert_tibble_to_list(data = exclusion_reasons, key_col = "value_num", text_col = "value")
           
-          value <- r$patients_options %>% dplyr::filter(study_id == r$chosen_study & category == "exclusion_reason" & patient_id == r$chosen_patient)
+          value <- r$patients_options %>% dplyr::filter(category == "exclusion_reason" & study_id == r$chosen_study & patient_id == r$chosen_patient)
           if (nrow(value) == 0) value <- NULL
+          else value <- value %>% dplyr::pull(value_num)
+          
           shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = options, value = value)
           shinyjs::show("exclusion_reason_div")
         }
@@ -388,12 +381,15 @@ mod_page_sidenav_server <- function(id, r, language){
           # If already a row, get its ID
           id <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM patients_options
           WHERE category = 'exclusion_reason' AND study_id = ", r$chosen_study, " AND patient_id = ", r$chosen_patient))
+          
           last_row <- as.integer(DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM patients_options") %>% dplyr::pull())
           
           if (nrow(id) > 0) query <- DBI::dbSendStatement(r$db, paste0("UPDATE patients_options SET value_num = ", as.integer(input$exclusion_reason),
-            " WHERE id = ", id))
-          else query <- DBI::dbSendStatement(r$db, paste0("INSERT INTO patients_options(id, study_id, patient_id, category, value_num)
-            SELECT ", last_row, ", ", r$chosen_study, ", ", r$chosen_patient, ", 'exclusion_reason', ", as.integer(input$exclusion_reason)))
+            ", creator_id = ", r$user_id, ", datetime = '", as.character(Sys.time()), "' WHERE id = ", id))
+          
+          else query <- DBI::dbSendStatement(r$db, paste0("INSERT INTO patients_options(id, study_id, patient_id, category, value_num, creator_id, datetime, deleted)
+            SELECT ", last_row + 1, ", ", r$chosen_study, ", ", r$chosen_patient, ", 'exclusion_reason', ", as.integer(input$exclusion_reason),
+            ", ", r$user_id, ", '", as.character(Sys.time()), "', FALSE"))
           
           DBI::dbClearResult(query)
         }

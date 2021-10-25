@@ -61,13 +61,15 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
 #' @param r The r reactive variable, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param patients data variable containing patients (data.frame / tibble)
 #' @param subset_id ID of subset (integer)
+#' @param success_notification Should a message bar be displayed if insertion of patient(s) is a success ? Default to TRUE
 #' @param language language used for error / warning messages (character, default = "EN")
 #' @examples 
 #' \dontrun{
 #' patients <- tibble::tribble(~patient_id, 123L, 456L, 789L)
 #' subset_add_patients(output = output, r = r, patients = patients, subset_id = 3, language = "EN")
 #' }
-add_patients_to_subset <- function(output, r = shiny::reactiveValues(), patients = tibble::tibble(), subset_id = integer(), language = "EN"){
+add_patients_to_subset <- function(output, r = shiny::reactiveValues(), patients = tibble::tibble(), subset_id = integer(),
+  success_notification = TRUE, language = "EN"){
   
   # Check subset_id
   tryCatch(subset_id <- as.integer(subset_id), 
@@ -139,8 +141,10 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), patients
     )
   }
   
-  show_message_bar(output, 1, "add_patients_subset_success", "success", language)
-  print(translate(language, "add_patients_subset_success"))
+  if (success_notification){
+    show_message_bar(output, 1, "add_patients_subset_success", "success", language)
+    print(translate(language, "add_patients_subset_success"))
+  }
 }
 
 #' Remove patients from a subset
