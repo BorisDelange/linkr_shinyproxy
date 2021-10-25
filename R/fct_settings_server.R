@@ -169,13 +169,14 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     update_r(r = r, table = "code", language = language)
   }
 
-  # For options of datamarts, need ot add two rows
+  # For options of datamarts, need to add two rows
   if (id == "settings_datamarts"){
 
     DBI::dbAppendTable(r$db, "options",
       tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-        last_row_options + 1, "datamart", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-        last_row_options + 2, "datamart", last_row + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE))
+        last_row_options + 1, "datamart", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_options + 2, "datamart", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_options + 3, "datamart", last_row + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE))
     update_r(r = r, table = "options", language = language)
   }
 
@@ -184,7 +185,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 
     DBI::dbAppendTable(r$db, "options",
       tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-        last_row_options + 1, "study", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
+        last_row_options + 1, "study", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_options + 2, "study", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
 
     # Add rows in subsets table, for inclusion / exclusion subsets
     # Add also code corresponding to each subset
@@ -217,6 +219,16 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
       add_patients_to_subset(output, r, patients, last_row_subsets + 1)
     }
+  }
+  
+  # For options of patient_lvl & aggregated modules families, need to add two rows, for users accesses
+  if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
+    
+    DBI::dbAppendTable(r$db, "options",
+    tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+      last_row_options + 1, get_singular(word = table), last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row_options + 2, get_singular(word = table), last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
+    update_r(r = r, table = "options", language = language)
   }
 
   # Hide creation card & options card, show management card
@@ -982,6 +994,13 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   }
   
   if ("users_allowed_read" %in% page_options){
+    
+    # Save users_allowed_read_group value (everybody or people_picker)
+    # Don't need to delete each users allowed if you change from "choose people" to "everybody"
+    option_id <- options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(id)
+    query <- DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", data$users_allowed_read_group,
+      "' WHERE id = ", option_id))
+    DBI::dbClearResult(query)
     
     # The idea is to delete every rows of options for this module, and then reinsert one row per user
     # Get unique ID (peoplePicker can select twice a user, if he's already checked at the initiation of the input)

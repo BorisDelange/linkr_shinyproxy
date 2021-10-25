@@ -35,6 +35,8 @@ get_translations <- function(){
   needed_file <- "./data/translations.csv"
   # if (!file.exists(needed_file)){
     dplyr::tribble(~language, ~reference_word, ~translated_word,
+            "EN", "blank", "",
+            "FR", "blank", "",
             "EN", "home", "Home",
             "FR", "home", "Accueil",
             "EN", "patient_level_data", "Patient-level data",
@@ -621,6 +623,14 @@ get_translations <- function(){
             "FR", "aggregated_modules_elements_delete_subtext", "Confirmez-vous la suppression de la figure ?",
             "EN", "aggregated_module_element_deleted", "Module element deleted",
             "FR", "aggregated_module_element_deleted", "Figure supprimée",
+            "EN", "patient_lvl_module_family_options", "Module family options",
+            "FR", "patient_lvl_modules_family_options", "Options du groupe de modules",
+            "EN", "aggregated_module_family_options", "Module family options",
+            "FR", "aggregated_modules_family_options", "Options du groupe de modules",
+            "EN", "settings_modules_patient_lvl_module_family_options_users_allowed_read", "Grant access to",
+            "FR", "settings_modules_patient_lvl_module_family_options_users_allowed_read", "Donner l'accès à",
+            "EN", "settings_modules_aggregated_module_family_options_users_allowed_read", "Grant access to",
+            "FR", "settings_modules_aggregated_module_family_options_users_allowed_read", "Donner l'accès à",
             "EN", "none", "None",
             "FR", "none", "Aucun",
             "EN", "thesaurus_id", "Thesaurus ID",
@@ -846,7 +856,11 @@ get_translations <- function(){
             "EN", "thesaurus_items_empty", "Choose at least one thesaurus item",
             "FR", "thesaurus_items_empty", "Choisir au moins un item du thésaurus",
             "EN", "exclusion_reason", "Exclusion reason",
-            "FR", "exclusion_reason", "Motif d'exclusion"
+            "FR", "exclusion_reason", "Motif d'exclusion",
+            "EN", "everybody", "Everybody",
+            "FR", "everybody", "Tout le monde",
+            "EN", "people_picker", "Choose users",
+            "FR", "people_picker", "Choisir les utilisateurs"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

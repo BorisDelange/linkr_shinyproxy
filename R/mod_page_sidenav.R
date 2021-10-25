@@ -141,12 +141,17 @@ mod_page_sidenav_server <- function(id, r, language){
       
       observeEvent(r$datamarts, {
         
-        # Datamarts to which the user has access
-        datamarts_allowed <- 
-          r$options %>% 
-          dplyr::filter(category == "datamart" & name == "user_allowed_read" & value_num == r$user_id) %>%
-          dplyr::pull(link_id)
-        datamarts <- r$datamarts %>% dplyr::filter(id %in% datamarts_allowed)
+        # If users_allowed_read_group is set to everybody, everybody has access. Else, filter on people who has access.
+        
+        datamarts <- tibble::tibble()
+        users_allowed_read_group <- r$options %>% dplyr::filter(category == "datamart" & name == "users_allowed_read_group")
+        if (nrow(users_allowed_read_group) > 0){
+          if (users_allowed_read_group%>% dplyr::pull(value) == "everybody") datamarts <- r$datamarts
+          else {
+            datamarts_allowed <- r$options %>% dplyr::filter(category == "datamart" & name == "user_allowed_read" & value_num == r$user_id)
+            if (nrow(datamarts_allowed) > 0) datamarts <- r$datamarts %>% dplyr::filter(id %in% datamarts_allowed %>% dplyr::pull(link_id))
+          }
+        }
         
         # Update dropdown
         shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(datamarts, "id", "name", rm_deleted_rows = TRUE), value = NULL)
@@ -156,14 +161,14 @@ mod_page_sidenav_server <- function(id, r, language){
       observeEvent(input$datamart, {
         
         # Studies depending on the chosen datamart
-        studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
         
-        # Studies to which the user has access
-        studies_allowed <-
-          r$options %>%
-          dplyr::filter(category == "study" & link_id %in% studies$id & name == "user_allowed_read" & value_num == r$user_id) %>%
-          dplyr::pull(link_id)
-        studies <- studies %>% dplyr::filter(id %in% studies_allowed)
+        studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
+        users_allowed_read_group <- r$options %>% dplyr::filter(category == "study" & name == "users_allowed_read_group")
+        
+        if (users_allowed_read_group %>% dplyr::pull(value) != "everybody") {
+          studies_allowed <- r$options %>% dplyr::filter(category == "study" & link_id %in% studies$id & name == "user_allowed_read" & value_num == r$user_id)
+          if (nrow(studies_allowed) > 0) studies <- studies %>% dplyr::filter(id %in% studies_allowed %>% dplyr::pull(link_id))
+        }
         
         # Reset r$chosen_study (to reset main display)
         r$chosen_study <- NA_integer_
@@ -400,25 +405,34 @@ mod_page_sidenav_server <- function(id, r, language){
   
       # Update the two pages dropdowns (patient-level data page & aggregated data page)
       observeEvent(r$chosen_datamart, {
-        datamarts_allowed <- 
-          r$options %>% 
-          dplyr::filter(category == "datamart" & name == "user_allowed_read" & value_num == r$user_id) %>%
-          dplyr::pull(link_id)
-        datamarts <- r$datamarts %>% dplyr::filter(id %in% datamarts_allowed)
-        shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(datamarts, "id", "name", rm_deleted_rows = TRUE),
-          value = r$chosen_datamart)
+      
+        # If users_allowed_read_group is set to everybody, everybody has access. Else, filter on people who has access.
+        
+        datamarts <- tibble::tibble()
+        users_allowed_read_group <- r$options %>% dplyr::filter(category == "datamart" & name == "users_allowed_read_group")
+        if (nrow(users_allowed_read_group) > 0){
+          if (users_allowed_read_group%>% dplyr::pull(value) == "everybody") datamarts <- r$datamarts
+          else {
+            datamarts_allowed <- r$options %>% dplyr::filter(category == "datamart" & name == "user_allowed_read" & value_num == r$user_id)
+            if (nrow(datamarts_allowed) > 0) datamarts <- r$datamarts %>% dplyr::filter(id %in% datamarts_allowed %>% dplyr::pull(link_id))
+          }
+        }
+        
+      shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(datamarts, "id", "name", rm_deleted_rows = TRUE), value = r$chosen_datamart)
       })
       
       observeEvent(r$chosen_study, {
         req(input$datamart & !is.na(r$chosen_study))
+        
         studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
-        studies_allowed <-
-          r$options %>%
-          dplyr::filter(category == "study" & link_id %in% studies$id & name == "user_allowed_read" & value_num == r$user_id) %>%
-          dplyr::pull(link_id)
-        studies <- studies %>% dplyr::filter(id %in% studies_allowed)
-        shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE),
-          value = r$chosen_study)
+        users_allowed_read_group <- r$options %>% dplyr::filter(category == "study" & name == "users_allowed_read_group")
+        
+        if (users_allowed_read_group %>% dplyr::pull(value) != "everybody") {
+          studies_allowed <- r$options %>% dplyr::filter(category == "study" & link_id %in% studies$id & name == "user_allowed_read" & value_num == r$user_id)
+          if (nrow(studies_allowed) > 0) studies <- studies %>% dplyr::filter(id %in% studies_allowed %>% dplyr::pull(link_id))
+        }
+        
+        shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE), value = r$chosen_study)
       })
       
       observeEvent(r$chosen_subset, {

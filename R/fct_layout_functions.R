@@ -150,10 +150,10 @@ make_combobox <- function(language = "EN", ns = shiny::NS(), label = character()
 #' }
 
 make_people_picker <- function(language = "EN", ns = shiny::NS(), id = NA_character_, label = character(), 
-  options = tibble::tibble(), value = NULL, width = NULL){
+  options = tibble::tibble(), value = NULL, width = NULL, style = character()){
   
   style <- ""
-  if (!is.null(width)) style <- paste0("width: ", width)
+  if (!is.null(width)) style <- paste0(style, "width: ", width)
   if (is.na(id)) id <- label
   div(
     div(class = "input_title", translate(language, label)),

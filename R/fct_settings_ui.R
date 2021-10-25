@@ -245,9 +245,21 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
         by = "key"
       ) %>%
       dplyr::pull(key)
-    people_picker <- tagList(make_people_picker(
-      language = language, ns = ns, id = "users_allowed_read", label = paste0(get_singular(id), "_users_allowed_read"),
-      options = picker_options, value = value, width = "100%"), br())
+    
+    # Users allowed read group
+    value_group <- options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value)
+    
+    people_picker <- div(
+      div(class = "input_title", paste0(translate(language, paste0(get_singular(id), "_users_allowed_read")), " :")),
+      shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), value = value_group, options = list(
+        list(key = "everybody", text = translate(language, "everybody")),
+        list(key = "people_picker", text = translate(language, "people_picker"))
+      ), className = "inline_choicegroup"),
+      conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
+        make_people_picker(
+          language = language, ns = ns, id = "users_allowed_read", label = "blank",
+          options = picker_options, value = value, width = "100%", style = "padding-bottom:10px;")
+      ), br())
   }
   
   ##########################################

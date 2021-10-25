@@ -8,8 +8,10 @@
 app_server <- function(router, language){
   function(input, output, session ) {
     
+    # Create r reactive value
     r <- reactiveValues()
     
+    # Get user ID
     r$user_id <- 1
     
     # Connection to database
@@ -20,6 +22,9 @@ app_server <- function(router, language){
     session$onSessionEnded(function() {
       observe(on.exit(DBI::dbDisconnect(r$db)))
     })
+    
+    # Add default values in database, if it is empty
+    insert_default_values(r = r)
     
     # Load all data from database
     # Don't load thesaurus_items, load it only when a thesaurus is selected
@@ -58,14 +63,13 @@ app_server <- function(router, language){
       
       # Get user accesses
       r$user_accesses <- r$options %>% dplyr::filter(category == "users_accesses" & link_id == user_access_id & value_num == 1) %>% dplyr::pull(name)
-      
-      # if (nrow(user_accesses) == 0){
-      #   # ...
-      # }
+
     })
     
+    # Route pages
     router$server(input, output, session)
     
+    # Load modules
     sapply(c("patient_level_data", "aggregated_data"), function(page){
       mod_patient_and_aggregated_data_server(page, r, language)
       mod_page_sidenav_server(page, r, language)
@@ -87,11 +91,11 @@ app_server <- function(router, language){
 
     mod_settings_r_console_server("settings_r_console", r, language)
     mod_page_sidenav_server("settings_r_console", r, language)
-# 
-#     sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
-#       mod_settings_data_management_server(paste0("settings_", page), r, language)
-#       mod_page_sidenav_server(paste0("settings_", page), r, language)
-#     })
+
+    sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
+      mod_settings_data_management_server(paste0("settings_", page), r, language)
+      mod_page_sidenav_server(paste0("settings_", page), r, language)
+    })
 
     mod_settings_plugins_server("settings_plugins", r, language)
     mod_page_sidenav_server("settings_plugins", r, language)

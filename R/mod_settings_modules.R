@@ -183,11 +183,11 @@ mod_settings_modules_server <- function(id, r, language){
           })
         })
         
-        # observeEvent(r$users_statuses_options, {
-        #   if (r$users_statuses_options > 0){
-        #     shiny.fluent::updateToggle.shinyInput(session, "users_accesses_options_card_toggle", value = TRUE)
-        #   }
-        # })
+        observeEvent(r[[paste0(prefix, "_modules_families_options")]], {
+          if (r[[paste0(prefix, "_modules_families_options")]] > 0){
+            shiny.fluent::updateToggle.shinyInput(session, "modules_families_options_card_toggle", value = TRUE)
+          }
+        })
       }
       
       ##########################################
@@ -266,121 +266,179 @@ mod_settings_modules_server <- function(id, r, language){
       ##########################################
       # Management datatable                   #
       ##########################################
-      
-      ##########################################
-      # Generate datatable                     #
-      ##########################################
-      
-      # Only for data management subpages
-      if (grepl("management", id)){
         
-        # If r$... variable changes
-        observeEvent(r[[paste0(table, "_temp")]], {
-          
-          # If user has access
-          # req(paste0(table, "_management_card") %in% r$user_accesses)
-          
-          # Dropdowns for each module / page
-          dropdowns_datatable <- switch(table,
-            "patient_lvl_modules" = c("parent_module_id" = "patient_lvl_modules"),
-            "aggregated_modules" = c("parent_module_id" = "aggregated_modules"))
-          
-          # Action buttons for each module / page
-          if (grepl("modules$", table) | grepl("modules_elements", table)) action_buttons <- "delete"
-          if (grepl("modules_families", table)) action_buttons <- c("options", "delete")
-          
-          # Sortable cols
-          sortable_cols <- c("id", "name", "description", "display_order", "datetime", "module_family_id")
-          
-          # Column widths
-          column_widths <- c("id" = "80px", "display_order" = "80px", "datetime" = "130px", "action" = "80px")
-          
-          # Editable cols
-          editable_cols <- c("name", "description", "display_order")
-          
-          # Centered columns
-          centered_cols <- c("id", "module_family_id", "parent_module_id", "display_order", "datetime", "action")
-          
-          # Searchable_cols
-          searchable_cols <- c("name", "description", "module_family_id")
-          
-          # Factorized cols
-          factorize_cols <- character()
-          if (table %in% c("patient_lvl_modules", "aggregated_modules")) factorize_cols <- c("module_family_id")
-          
-          # Restore datatable state
-          page_length <- isolate(input$management_datatable_state$length)
-          start <- isolate(input$management_datatable_state$start)
-          
-          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-            col_names =  get_col_names(table), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
-            datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
-            filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
-        })
-      }
-      
-      ##########################################
-      # Save changes in datatable              #
-      ##########################################
-      
-      # Only for data management subpages
-      if (grepl("management", id)){
+        ##########################################
+        # Generate datatable                     #
+        ##########################################
         
-        # Each time a row is updated, modify temp variable
-        observeEvent(input$management_datatable_cell_edit, {
-          edit_info <- input$management_datatable_cell_edit
-          r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
-          # Store that this row has been modified
-          r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
-        })
-        
-        dropdowns_update <- switch(table,
-          "patient_lvl_modules" = "patient_lvl_module",
-          "aggregated_modules" = "aggregated_module")
-        
-        # Each time a dropdown is updated, modify temp variable
-        if (table %in% c("patient_lvl_modules", "aggregated_modules")){
-          observeEvent(r[[table]], {
-            update_settings_datatable(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns_update, language = language)
+        # Only for data management subpages
+        if (grepl("management", id)){
+          
+          # If r$... variable changes
+          observeEvent(r[[paste0(table, "_temp")]], {
+            
+            # If user has access
+            # req(paste0(table, "_management_card") %in% r$user_accesses)
+            
+            # Dropdowns for each module / page
+            dropdowns_datatable <- switch(table,
+              "patient_lvl_modules" = c("parent_module_id" = "patient_lvl_modules"),
+              "aggregated_modules" = c("parent_module_id" = "aggregated_modules"))
+            
+            # Action buttons for each module / page
+            if (grepl("modules$", table) | grepl("modules_elements", table)) action_buttons <- "delete"
+            if (grepl("modules_families", table)) action_buttons <- c("options", "delete")
+            
+            # Sortable cols
+            sortable_cols <- c("id", "name", "description", "display_order", "datetime", "module_family_id")
+            
+            # Column widths
+            column_widths <- c("id" = "80px", "display_order" = "80px", "datetime" = "130px", "action" = "80px")
+            
+            # Editable cols
+            editable_cols <- c("name", "description", "display_order")
+            
+            # Centered columns
+            centered_cols <- c("id", "module_family_id", "parent_module_id", "display_order", "datetime", "action")
+            
+            # Searchable_cols
+            searchable_cols <- c("name", "description", "module_family_id")
+            
+            # Factorized cols
+            factorize_cols <- character()
+            if (table %in% c("patient_lvl_modules", "aggregated_modules")) factorize_cols <- c("module_family_id")
+            
+            # Restore datatable state
+            page_length <- isolate(input$management_datatable_state$length)
+            start <- isolate(input$management_datatable_state$start)
+            
+            render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
+              col_names =  get_col_names(table), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
+              datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
+              editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
+              filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
           })
         }
         
-        # When save button is clicked
-        observeEvent(input$management_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language))
+        ##########################################
+        # Save changes in datatable              #
+        ##########################################
+        
+        # Only for data management subpages
+        if (grepl("management", id)){
+          
+          # Each time a row is updated, modify temp variable
+          observeEvent(input$management_datatable_cell_edit, {
+            edit_info <- input$management_datatable_cell_edit
+            r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
+            # Store that this row has been modified
+            r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
+          })
+          
+          dropdowns_update <- switch(table,
+            "patient_lvl_modules" = "patient_lvl_module",
+            "aggregated_modules" = "aggregated_module")
+          
+          # Each time a dropdown is updated, modify temp variable
+          if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+            observeEvent(r[[table]], {
+              update_settings_datatable(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns_update, language = language)
+            })
+          }
+          
+          # When save button is clicked
+          observeEvent(input$management_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language))
+        }
+        
+        ##########################################
+        # Delete a row in datatable              #
+        ##########################################
+        
+        # Only for data management subpages
+        if (grepl("management", id)){
+          
+          # Create & show dialog box
+          observeEvent(r[[paste0(table, "_delete_dialog")]] , {
+            output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = table, language = language))
+          })
+          
+          # Whether to close or not delete dialog box
+          observeEvent(input$hide_dialog, r[[paste0(table, "_delete_dialog")]] <- FALSE)
+          observeEvent(input$delete_canceled, r[[paste0(table, "_delete_dialog")]] <- FALSE)
+          observeEvent(input$deleted_pressed, r[[paste0(table, "_delete_dialog")]] <- TRUE)
+          
+          # When the delete is confirmed...
+          observeEvent(input$delete_confirmed, {
+            
+            # If user has access
+            # req(paste0(table, "_management_card") %in% r$user_accesses)
+            
+            # Get value of deleted row
+            row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
+            
+            # Delete row in DB table
+            delete_settings_datatable_row(output = output, r = r, ns = ns, language = language, row_deleted = row_deleted, table = table)
+          })
+        }
+    
+      
+      ##########################################
+      # Edit options by selecting a row        #
+      ##########################################
+      
+      # Only for accesses sub-page
+      # We have to use same module than management, to get input from datatable
+      if (grepl("modules_families", id)){
+        
+        observeEvent(input$options, {
+          # Show options toggle
+          r[[paste0(prefix, "_modules_families_options")]] <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
+          
+        })
       }
       
-      ##########################################
-      # Delete a row in datatable              #
-      ##########################################
-      
-      # Only for data management subpages
-      if (grepl("management", id)){
+      if (grepl("options", id)){
         
-        # Create & show dialog box
-        observeEvent(r[[paste0(table, "_delete_dialog")]] , {
-          output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = table, language = language))
-        })
-        
-        # Whether to close or not delete dialog box
-        observeEvent(input$hide_dialog, r[[paste0(table, "_delete_dialog")]] <- FALSE)
-        observeEvent(input$delete_canceled, r[[paste0(table, "_delete_dialog")]] <- FALSE)
-        observeEvent(input$deleted_pressed, r[[paste0(table, "_delete_dialog")]] <- TRUE)
-        
-        # When the delete is confirmed...
-        observeEvent(input$delete_confirmed, {
+        observeEvent(r[[paste0(prefix, "_modules_families_options")]], {
+          req(r[[paste0(prefix, "_modules_families_options")]] > 0)
           
           # If user has access
-          # req(paste0(table, "_management_card") %in% r$user_accesses)
+          # req(paste0(table, "_options_card") %in% r$user_accesses)
           
-          # Get value of deleted row
-          row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
           
-          # Delete row in DB table
-          delete_settings_datatable_row(output = output, r = r, ns = ns, language = language, row_deleted = row_deleted, table = table)
+          # Render UI of options card
+          output$options_card <- renderUI({
+            
+            # Get category & link_id to get informations in options table
+            
+            make_card("title", "content")
+            
+            category <- get_singular(word = table)
+            link_id <- r[[paste0(prefix, "_modules_families_options")]]
+
+            render_settings_options_card(ns = ns, id = id, r = r, title = paste0(get_singular(table), "_options"),
+              category = category, link_id = link_id, language = language)
+          })
+          
+          
+          # When save button is clicked
+          observeEvent(input$options_save, {
+            
+            # If user has access
+            # req(paste0(table, "_options_card") %in% r$user_accesses)
+            
+            category <- get_singular(word = table)
+            
+            data <- list()
+            data$users_allowed_read_group <- input$users_allowed_read_group
+            data$users_allowed_read <- input$users_allowed_read
+            
+            save_settings_options(output = output, r = r, id = id, category = category,
+              code_id_input = paste0("options_", r[[paste0(prefix, "_modules_families_options")]]), language = language, data = data)
+            
+          })
         })
       }
-    
       
   
     #   ##########################################

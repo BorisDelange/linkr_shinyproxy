@@ -23,6 +23,8 @@ get_singular <- function(word = character(), language = "EN"){
          "aggregated_modules" = "aggregated_module",
          "aggregated_parent_modules" = "aggregated_parent_module",
          "aggregated_modules_families" = "aggregated_module_family",
+         "modules_patient_lvl_modules_families_options" = "settings_modules_patient_lvl_module_family_options",
+         "modules_aggregated_modules_families_options" = "settings_modules_aggregated_module_family_options",
          "module_types" = "module_type",
          "plugins" = "plugin",
          "users" = "user",

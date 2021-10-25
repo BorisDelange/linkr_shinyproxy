@@ -408,8 +408,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
         data$users_allowed_read <- input$users_allowed_read
 
-        save_settings_options(output = output, r = r, id = id, category = category,
-          code_id_input = input$options, language = language, data = data)
+        save_settings_options(output = output, r = r, id = id, category = category, code_id_input = input$options, language = language, data = data)
       })
       
       ##########################################
