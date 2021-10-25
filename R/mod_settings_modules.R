@@ -98,13 +98,15 @@ mod_settings_sub_modules_ui <- function(id, language){
               ), 
               shiny.fluent::Stack(
                 horizontal = TRUE, tokens = list(childrenGap = 50),
-                make_dropdown(language = language, ns = ns, label = "datamart", width = "300px"),
-                div(strong(translate(language, "show_only_used_items"), style = "display:block; padding-bottom:12px;"),
-                  shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")
+                make_dropdown(language = language, ns = ns, label = "datamart", 
+                  options = list(list(key = "", text = translate(language, "none"))), value = "", width = "300px"),
+                shiny::conditionalPanel(condition = "input.datamart != ''", ns = ns,
+                  div(strong(translate(language, "show_only_used_items"), style = "display:block; padding-bottom:12px;"),
+                    shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
               ),
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
                 make_dropdown(language = language, ns = ns, label = "thesaurus", id = "thesaurus", width = "300px"),
-                make_dropdown(language = language, ns = ns, label = "thesaurus_items_selected", id = "thesaurus_items_selected",
+                make_dropdown(language = language, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
                   multiSelect = TRUE, width = "600px")
               ), br(),
               DT::DTOutput(ns("thesaurus_items")), br(),
@@ -255,6 +257,9 @@ mod_settings_modules_server <- function(id, r, language){
           shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = options)
         })
         
+        ##########################################
+        # Add a module element                   #
+        ##########################################
         
         # For "Add module element", update thesaurus items datatable when a thesaurus item is chosen
         
@@ -348,9 +353,40 @@ mod_settings_modules_server <- function(id, r, language){
               searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE)
           })
           
+          # When thesaurus item add action button is clicked
+          observeEvent(input$item_selected, {
+            
+            link_id <- as.integer(substr(input$item_selected, nchar("select_") + 1, nchar(input$item_selected)))
+
+            # If this thesaurus item is not already chosen, add it to the "thesaurus selected items" dropdown
+            value <- input$thesaurus_selected_items
+            if (link_id %not_in% value) value <- c(value, link_id)
+            options <- tibble_to_list(r$thesaurus_items %>% dplyr::filter(id %in% value), "id", "name", rm_deleted_rows = TRUE)
+
+            shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", 
+              options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+          })
+
+          # When thesaurus item remove action button is clicked
+          observeEvent(input$item_removed, {
+            
+            link_id <- as.integer(substr(input$item_removed, nchar("select_") + 1, nchar(input$item_removed)))
+
+            value <- value <- input$thesaurus_selected_items
+            value <- value[!value %in% link_id]
+            options <- tibble_to_list(r$thesaurus_items %>% dplyr::filter(id %in% value), "id", "name", rm_deleted_rows = TRUE)
+
+            shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
+              options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+          })
+          
         })
         
 
+        ##########################################
+        # When add button is clicked             #
+        ##########################################
+        
         # When add button is clicked
         observeEvent(input$add, {
 
