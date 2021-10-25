@@ -988,7 +988,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   
   if("show_only_aggregated_data" %in% page_options){
     option_id <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(id)
-    DBI::dbSendStatement(r$db, paste0("UPDATE options SET value_num = ", data$show_only_aggregated_data, " WHERE id = ", option_id)) -> query
+    DBI::dbSendStatement(r$db, paste0("UPDATE options SET value_num = ", as.numeric(data$show_only_aggregated_data), " WHERE id = ", option_id)) -> query
     DBI::dbClearResult(query)
     update_r(r = r, table = "options", language = language)
   }
@@ -1017,7 +1017,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
       last_row <- max(r$options["id"])
       DBI::dbAppendTable(r$db, "options",
         tibble::tibble(id = (last_row + (1:length(data$users_allowed_read))), category = category, link_id = link_id,
-          name = "user_allowed_read", value = "", value_num = data$users_allowed_read, creator_id = as.integer(r$user_id),
+          name = "user_allowed_read", value = "", value_num = as.numeric(data$users_allowed_read), creator_id = as.integer(r$user_id),
           datetime = as.character(Sys.time()), deleted = FALSE))
       update_r(r = r, table = "options", language = language)
     }

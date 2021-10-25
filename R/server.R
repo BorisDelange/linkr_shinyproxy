@@ -12,7 +12,7 @@ app_server <- function(router, language){
     r <- reactiveValues()
     
     # Get user ID
-    r$user_id <- 2
+    r$user_id <- 1
     
     # Connection to database
     r$local_db <- get_local_db()

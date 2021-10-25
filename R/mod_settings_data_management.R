@@ -466,10 +466,13 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           code_id_input = input$edit_code, edited_code = input$ace_edit_code, language = "EN"))
       
       # When Execute code button is clicked
-        observeEvent(input$execute_code, (
+        observeEvent(input$execute_code, {
+          edited_code <- isolate(input$ace_edit_code) %>% stringr::str_replace_all("\r", "\n")
+          
           output$code_result <- renderText(
             execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
-              language = language, r = r, edited_code = isolate(input$ace_edit_code)))))
+              language = language, r = r, edited_code = edited_code))
+        })
           
       
       ##############################################

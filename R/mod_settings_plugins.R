@@ -445,8 +445,8 @@ mod_settings_plugins_server <- function(id, r, language){
         }
         
         # Replace %group_id% in ui_code with 1 for our example
-        ui_code <- ui_code %>% stringr::str_replace_all("%group_id%", "1")
-        server_code <- server_code %>% stringr::str_replace_all("%group_id%", "1")
+        ui_code <- ui_code %>% stringr::str_replace_all("%group_id%", "1") %>% stringr::str_replace_all("\r", "\n")
+        server_code <- server_code %>% stringr::str_replace_all("%group_id%", "1") %>% stringr::str_replace_all("\r", "\n")
 
         # Render UI result
         output$code_result_ui <- renderUI(

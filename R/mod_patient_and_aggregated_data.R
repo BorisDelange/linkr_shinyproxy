@@ -42,7 +42,7 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
     # Patient-lvl data                       #
     ##########################################
 
-    if (id == "patient_lvl_data"){
+    if (id == "patient_level_data"){
       
       # Once a study is chosen, load its tabs
       observeEvent(r$chosen_study, {
@@ -183,7 +183,8 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
               # ID of UI element is in the following format : "group_[ID]"
               tryCatch({
                 code_ui_card <- code_ui_card %>%
-                  stringr::str_replace_all("%group_id%", as.character(loop_group_id))
+                  stringr::str_replace_all("%group_id%", as.character(loop_group_id)) %>%
+                  stringr::str_replace_all("\r", "\n")
                 code_ui <<- tagList(code_ui, make_card("", eval(parse(text = code_ui_card))))
               },
               error = function(e){
@@ -272,7 +273,8 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
               
               # Get plugin code
               plugin_id <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
-              code_server_card <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_server") %>% dplyr::pull(code)
+              code_server_card <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_server") %>% 
+                dplyr::pull(code) %>% stringr::str_replace_all("\r", "\n")
 
               # Try to run plugin server code
               # ID of UI element is in the following format : "group_[ID]"

@@ -128,11 +128,11 @@ get_local_db <- function(){
     query <- paste0("INSERT INTO options(id, category, name, value, deleted)
                      SELECT ", last_row + 1, ", 'distant_db', 'connection_type', 'local', FALSE 
                UNION SELECT ", last_row + 2, ", 'distant_db', 'sql_lib', 'postgres', FALSE
-               UNION SELECT ", last_row + 3, ", 'distant_db', 'dbname', NULL, FALSE
-               UNION SELECT ", last_row + 4, ", 'distant_db', 'host', NULL, FALSE
-               UNION SELECT ", last_row + 5, ", 'distant_db', 'port', NULL, FALSE
-               UNION SELECT ", last_row + 6, ", 'distant_db', 'user', NULL, FALSE
-               UNION SELECT ", last_row + 7, ", 'distant_db', 'password', NULL, FALSE")
+               UNION SELECT ", last_row + 3, ", 'distant_db', 'dbname', '', FALSE
+               UNION SELECT ", last_row + 4, ", 'distant_db', 'host', '', FALSE
+               UNION SELECT ", last_row + 5, ", 'distant_db', 'port', '', FALSE
+               UNION SELECT ", last_row + 6, ", 'distant_db', 'user', '', FALSE
+               UNION SELECT ", last_row + 7, ", 'distant_db', 'password', '', FALSE")
     DBI::dbSendStatement(db, query)
   }
   

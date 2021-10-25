@@ -25,7 +25,10 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
   code <- r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code)
   
   # Replace %datamart_id% with real datamart_id
-  code <- code %>% stringr::str_replace_all("%datamart_id%", as.character(datamart_id))
+  # Replace \r by \n to prevent bug
+  code <- code %>% 
+    stringr::str_replace_all("%datamart_id%", as.character(datamart_id)) %>%
+    stringr::str_replace_all("\r", "\n")
   
   # Reset r variables
   r$patients <- tibble::tibble()
