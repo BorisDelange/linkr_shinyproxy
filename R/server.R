@@ -12,7 +12,7 @@ app_server <- function(router, language){
     r <- reactiveValues()
     
     # Get user ID
-    r$user_id <- 1
+    r$user_id <- 2
     
     # Connection to database
     r$local_db <- get_local_db()
@@ -22,15 +22,17 @@ app_server <- function(router, language){
     session$onSessionEnded(function() {
       observe(on.exit(DBI::dbDisconnect(r$db)))
     })
-    
-    # Add default values in database, if it is empty
-    insert_default_values(r = r)
-    
+
+    # Add default values in database if database is empty
     # Load all data from database
     # Don't load thesaurus_items, load it only when a thesaurus is selected
     # Don't load cache table neither
     
     observeEvent(r$db, {
+      
+      # Add default values in database, if it is empty
+      insert_default_values(r = r)
+      
       tables <- c(
         "users_accesses", "users_statuses",
         "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus",
@@ -81,13 +83,13 @@ app_server <- function(router, language){
     mod_settings_app_database_server("settings_app_db", r, language)
     mod_page_sidenav_server("settings_app_db", r, language)
 
-    # mod_settings_users_server("settings_users", r, language)
-    # mod_page_sidenav_server("settings_users", r, language)
-    # sapply(c("users", "users_statuses", "users_accesses"), function(page){
-    #   mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language)
-    #   mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language)
-    #   if (page == "users_accesses") mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language)
-    # })
+    mod_settings_users_server("settings_users", r, language)
+    mod_page_sidenav_server("settings_users", r, language)
+    sapply(c("users", "users_statuses", "users_accesses"), function(page){
+      mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language)
+      mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language)
+      if (page == "users_accesses") mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language)
+    })
 
     mod_settings_r_console_server("settings_r_console", r, language)
     mod_page_sidenav_server("settings_r_console", r, language)

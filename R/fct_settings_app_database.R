@@ -29,8 +29,7 @@ db_create_tables <- function(db){
   # In table users, create an admin user
   db_create_table(db, "users",
     tibble::tibble(id = integer(), username = character(), firstname = character(), lastname = character(), password = character(),
-      user_access_id = integer(), user_status_id = integer(), datetime = character(), deleted = logical(),
-      1, "admin", "John", "Doe", "admin", 1, 1, as.character(Sys.time()), FALSE))
+      user_access_id = integer(), user_status_id = integer(), datetime = character(), deleted = logical()))
   
   db_create_table(db, "users_accesses",
     tibble::tibble(id = integer(), name = character(), description = character(),
@@ -272,25 +271,18 @@ insert_default_values <- function(r){
       4, "Guidelines", "A module made to show EQUATOR guidelines", 1, NA_integer_, 2, 1, as.character(Sys.time()), FALSE))
   }
   
-  code_subsets <- paste0("run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n",
-    "patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)\n",
-    "add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)")
-  
   # Add default options
-  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM options")) == 0){
+  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category != 'distant_db'")) == 0){
     DBI::dbAppendTable(r$db, "options", tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       1, "datamart", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
       2, "datamart", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
       3, "datamart", 1, "show_only_aggregated_data", "", 0, 1, as.character(Sys.time()), FALSE,
       4, "study", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
       5, "study", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
-      6, "subset", 1, code, 1, as.character(Sys.time()), FALSE,
-      7, "subset", 2, "", 1, as.character(Sys.time()), FALSE,
-      8, "subset", 3, "", 1, as.character(Sys.time()), FALSE,
-      9, "patient_lvl_module_family", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
-      10, "patient_lvl_module_family", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
-      11, "aggregated_module_family", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
-      12, "aggregated_module_family", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE))
+      6, "patient_lvl_module_family", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
+      7, "patient_lvl_module_family", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
+      8, "aggregated_module_family", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
+      9, "aggregated_module_family", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE))
   }
   
   options_toggles <- tibble::tribble(
@@ -312,7 +304,9 @@ insert_default_values <- function(r){
     "log", c("all_users", "only_me")
   )
   
-  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM options")) == 12){
+  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category != 'distant_db'")) == 9){
+
+    data <- tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted)
     
     # Loop over all toggles, set 0 to value_num is toggle is FALSE, 1 else
     sapply(1:nrow(options_toggles), function(i){
@@ -322,7 +316,7 @@ insert_default_values <- function(r){
       )
       if (options_toggles[[i, "toggles"]] != ""){
         sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
-          
+
           data <<- data %>% dplyr::bind_rows(
             tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
               "users_accesses", 1, toggle, "", 1, 1, as.character(Sys.time()), FALSE)
@@ -330,18 +324,32 @@ insert_default_values <- function(r){
         })
       }
     })
-    
+
     # Delete old data from options
-    
+
     query <- DBI::dbSendStatement(r$db, paste0("DELETE FROM options WHERE category = 'users_accesses' AND link_id = 1"))
     DBI::dbClearResult(query)
-    
+
     # Attribute id values
-    
+
     last_row <- as.integer(DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull())
     data$id <- seq.int(nrow(data)) + last_row
-    
+
     # Add new values to database
     DBI::dbAppendTable(r$db, "options", data)
+  }
+  
+  code_subsets <- paste0("run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n",
+                         "patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)\n",
+                         "add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)")
+  
+  # # Add default code
+  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM code")) == 0){
+    DBI::dbAppendTable(r$db, "code", tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+      1, "datamart", 1, "", 1, as.character(Sys.time()), FALSE,
+      2, "thesaurus", 1, "", 1, as.character(Sys.time()), FALSE,
+      3, "subset", 1, code_subsets, 1, as.character(Sys.time()), FALSE,
+      4, "subset", 2, "", 1, as.character(Sys.time()), FALSE,
+      5, "subset", 3, "", 1, as.character(Sys.time()), FALSE))
   }
 }
