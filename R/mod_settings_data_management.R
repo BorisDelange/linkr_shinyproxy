@@ -250,13 +250,18 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             "settings_thesaurus" = c("data_source_id" = "data_sources"))
           
           # Action buttons for each module / page
+          if (paste0(table, "_delete_data") %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
           action_buttons = switch(table,
-            "data_sources" = "delete",
-            "datamarts" = c("delete", "edit_code", "options"),
-            "studies" = c("delete", "options"),
-            "subsets" = c("delete", "edit_code"),
-            "thesaurus" = c("delete", "edit_code", "sub_datatable")
+            "data_sources" = action_buttons,
+            "datamarts" = c(action_buttons, "edit_code", "options"),
+            "studies" = c(action_buttons, "options"),
+            "subsets" = c(action_buttons, "edit_code"),
+            "thesaurus" = c(action_buttons, "edit_code", "sub_datatable")
           )
+          
+          # Editable cols
+          if (id != "settings_subsets") editable_cols <- c("name", "description")
+          if (id == "settings_subsets") editable_cols <- "description"
           
           # Sortable cols
           if (id == "settings_thesaurus") sortable_cols <- c("id", "name", "description", "creator_id", "datetime")
@@ -288,7 +293,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
             col_names =  get_col_names(table), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-            editable_cols = c("name", "description"), sortable_cols = sortable_cols, centered_cols = centered_cols,
+            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
             filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
         })
     
@@ -571,7 +576,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           r$thesaurus_items_temp <- r$thesaurus_items_temp %>% dplyr::mutate_at("item_id", as.character)
           
           # Parameters for the datatable
-          action_buttons <- "delete"
+          if ("thesaurus_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
           editable_cols <- c("display_name", "unit")
           searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
           factorize_cols <- c("category", "unit")

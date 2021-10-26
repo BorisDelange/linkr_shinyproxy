@@ -182,24 +182,24 @@ mod_settings_modules_server <- function(id, r, language){
       # Only for main users page (not for sub-pages)
       if (id == "settings_modules_patient_lvl" | id == "settings_modules_aggregated"){ 
         
-        # Depending on user_accesses
-        # observeEvent(r$user_accesses, {
-        #   # Hide toggles if user has no access
-        #   if ("users" %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
-        # })
-        
         # Depending on toggles activated
         sapply(toggles, function(toggle){
           
           # If user has no access, hide card
-          # observeEvent(r$user_accesses, if (toggle %not_in% r$user_accesses) shinyjs::hide(toggle))
+          observeEvent(r$user_accesses,
+            if ((paste0(prefix, "_modules_creation_card") %not_in% r$user_accesses & grepl("creation_card", toggle))
+               | (paste0(prefix, "_modules_management_card") %not_in% r$user_accesses & grepl("management_card", toggle))
+               | (paste0(prefix, "_modules_options_card") %not_in% r$user_accesses & grepl("options_card", toggle))) shinyjs::hide(toggle))
           
           # If user has access, show or hide card when toggle is clicked
           observeEvent(input[[paste0(toggle, "_toggle")]], {
             # if (toggle %in% r$user_accesses){
-              if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
-              else shinyjs::hide(toggle)
-            # }
+              if ((paste0(prefix, "_modules_creation_card") %in% r$user_accesses & grepl("creation_card", toggle))
+                | (paste0(prefix, "_modules_management_card") %in% r$user_accesses & grepl("management_card", toggle))
+                | (paste0(prefix, "_modules_options_card") %in% r$user_accesses & grepl("options_card", toggle))) {
+                if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
+                else shinyjs::hide(toggle)
+              }
           })
         })
         
@@ -327,7 +327,10 @@ mod_settings_modules_server <- function(id, r, language){
             r$thesaurus_items_temp <- r$thesaurus_items_temp %>% dplyr::mutate_at("category", as.factor)
             
             # Parameters for the datatable
-            action_buttons <- "delete"
+            action_buttons <- ""
+            if (paste0(prefix, "modules_delete_data") %in% r$user_accesses) action_buttons <- "delete"
+            
+            
             editable_cols <- c("display_name", "unit")
             searchable_cols <- c("name", "display_name", "category", "unit")
             factorize_cols <- c("category", "unit")
@@ -396,7 +399,7 @@ mod_settings_modules_server <- function(id, r, language){
         observeEvent(input$add, {
 
           # If user has access
-          # req(paste0(table, "_creation_card") %in% r$user_accesses)
+          req(paste0(prefix, "modules_creation_card") %in% r$user_accesses)
 
           new_data <- list()
 
@@ -461,7 +464,7 @@ mod_settings_modules_server <- function(id, r, language){
           observeEvent(r[[paste0(table, "_temp")]], {
             
             # If user has access
-            # req(paste0(table, "_management_card") %in% r$user_accesses)
+            req(paste0(prefix, "_modules_management_card") %in% r$user_accesses)
             
             # Dropdowns for each module / page
             dropdowns_datatable <- switch(table,
@@ -469,8 +472,11 @@ mod_settings_modules_server <- function(id, r, language){
               "aggregated_modules" = c("parent_module_id" = "aggregated_modules"))
             
             # Action buttons for each module / page
-            if (grepl("modules$", table) | grepl("modules_elements", table)) action_buttons <- "delete"
-            if (grepl("modules_families", table)) action_buttons <- c("options", "delete")
+            action_buttons <- ""
+            if (paste0(prefix, "_modules_delete_data") %in% r$user_accesses) action_buttons <- "delete"
+            
+            # if (grepl("modules$", table) | grepl("modules_elements", table)) action_buttons <- "delete"
+            if (grepl("modules_families", table)) action_buttons <- c("options", action_buttons)
             
             # Sortable cols
             sortable_cols <- c("id", "name", "description", "display_order", "datetime", "module_family_id")
@@ -554,7 +560,7 @@ mod_settings_modules_server <- function(id, r, language){
           observeEvent(input$delete_confirmed, {
             
             # If user has access
-            # req(paste0(table, "_management_card") %in% r$user_accesses)
+            req(paste0(prefix, "_modules_management_card") %in% r$user_accesses)
             
             # Get value of deleted row
             row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
@@ -586,7 +592,7 @@ mod_settings_modules_server <- function(id, r, language){
           req(r[[paste0(prefix, "_modules_families_options")]] > 0)
           
           # If user has access
-          # req(paste0(table, "_options_card") %in% r$user_accesses)
+          req(paste0(prefix, "_modules_options_card") %in% r$user_accesses)
           
           
           # Render UI of options card
@@ -608,7 +614,7 @@ mod_settings_modules_server <- function(id, r, language){
           observeEvent(input$options_save, {
             
             # If user has access
-            # req(paste0(table, "_options_card") %in% r$user_accesses)
+            req(paste0(prefix, "_modules_options_card") %in% r$user_accesses)
             
             category <- get_singular(word = table)
             

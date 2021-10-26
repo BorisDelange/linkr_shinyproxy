@@ -225,7 +225,8 @@ mod_settings_users_server <- function(id, r, language){
             "users_accesses" = "", "users_statuses" = "")
   
           # Action buttons for each module / page
-          action_buttons = switch(table, "users" = "delete", "users_accesses" = c("options", "delete"), "users_statuses" = "delete")
+          if ("users_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
+          action_buttons = switch(table, "users" = action_buttons, "users_accesses" = c("options", action_buttons), "users_statuses" =action_buttons)
   
           # Sortable cols
           sortable_cols <- c("id", "name", "description", "username", "firstname", "lastname", "datetime")
@@ -350,8 +351,8 @@ mod_settings_users_server <- function(id, r, language){
           "subsets", c("subsets_see_all_data", "subsets_delete_data", "subsets_creation_card", "subsets_datatable_card", "subsets_edit_code_card"),
           "thesaurus", c("thesaurus_see_all_data", "thesaurus_delete_data", "thesaurus_creation_card", "thesaurus_datatable_card", "thesaurus_sub_datatable_card", "thesaurus_edit_code_card"),
           "plugins", c("plugins_see_all_data", "plugins_delete_data", "plugins_description_card", "plugins_creation_card", "plugins_datatable_card", "plugins_options_card", "plugins_edit_code_card"),
-          "modules_patient_lvl", c("patient_modules_see_all_data", "patient_modules_delete_data", "patient_modules_creation_card", "patient_modules_management_card", "patient_modules_options_card"),
-          "modules_aggregated", c("aggregated_modules_see_all_data", "aggregated_modules_delete_data", "aggregated_modules_creation_card", "aggregated_modules_management_card", "aggregated_modules_options_card"),
+          "patient_lvl_modules", c("patient_lvl_modules_see_all_data", "patient_lvl_modules_delete_data", "patient_lvl_modules_creation_card", "patient_lvl_modules_management_card", "patient_lvl_modules_options_card"),
+          "aggregated_modules", c("aggregated_modules_see_all_data", "aggregated_modules_delete_data", "aggregated_modules_creation_card", "aggregated_modules_management_card", "aggregated_modules_options_card"),
           "log", c("all_users", "only_me")
         )
         

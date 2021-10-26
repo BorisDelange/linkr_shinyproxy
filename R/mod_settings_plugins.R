@@ -133,7 +133,8 @@ mod_settings_plugins_server <- function(id, r, language){
 
         dropdowns_datatable <- c("module_type_id" = "module_types")
 
-        action_buttons <- c("delete", "edit_code", "options")
+        if ("plugins_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
+        action_buttons <- c(action_buttons, "edit_code", "options")
 
         sortable_cols <- c("id", "name", "datetime")
 
@@ -410,7 +411,7 @@ mod_settings_plugins_server <- function(id, r, language){
         
         thesaurus_selected_items_text <- r$thesaurus_selected_items %>% dplyr::mutate(display_text = paste0(thesaurus_name, " - ", text)) %>% dplyr::pull(display_text)
         
-        output$thesaurus_selected_items <- renderText(paste0(translate(language, "thesaurus_selected_items"), " : ", toString(thesaurus_selected_items_text)))
+        output$thesaurus_selected_items <- renderText(paste0(strong(translate(language, "thesaurus_selected_items")), " : ", toString(thesaurus_selected_items_text)))
         
         # Reset outputs
         output$code_result_ui <- renderUI("")

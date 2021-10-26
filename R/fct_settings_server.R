@@ -327,6 +327,46 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # Load temp data
   data <- r[[paste0(table, "_temp")]]
   
+  # If user is not allowed to see all data, filter
+  if (paste0(table, "_see_all_data") %not_in% r$user_accesses) {
+    
+    # If on these tables, show only data who the user is the creator
+    if (table %in% c("data_sources", "subsets", "thesaurus")){
+      if (nrow(data) > 0) data <- data %>% dplyr::filter(creator_id == r$user_id)
+    }
+    
+    # For these tables, show data with options parameters
+    if (table %in% c("studies", "datamarts", "plugins")){
+      
+      if (nrow(data) > 0) {
+        
+        # Merge with options
+        options <- data %>% dplyr::inner_join(r$options %>% dplyr::filter(category == get_singular(word = table)) %>% 
+          dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
+        
+        # Vector of authorized data
+        data_allowed <- integer()
+        
+        # For each data row, select those the user has access
+        sapply(unique(options$id), function(data_id){
+          
+          # Loop over each data ID
+          
+          users_allowed_read_group <- options %>% dplyr::filter(id == data_id, option_name == "users_allowed_read_group")
+          users_allowed_read <- options %>% dplyr::filter(id == data_id, option_name == "user_allowed_read")
+          
+          if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") data_allowed <<- c(data_allowed, data_id)
+          else {
+            if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) data_allowed <<- c(data_allowed, data_id)
+          }
+        })
+        
+        # Select authorized data
+        data <- data %>% dplyr::filter(id %in% data_allowed)
+      }
+    }
+  }
+  
   # If no row in dataframe, stop here
   if (nrow(data) == 0) return({
     data <- tibble::tribble(~id, ~name, ~description,  ~datetime)
@@ -452,7 +492,8 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
         
         # Default subsets are not deletable
         if (id == "settings_subsets"){
-          if (data[i, "name"] %in% c("All patients", "Included patients", "Excluded patients")) delete <- ""
+          if (data[i, "name"] %in% c(translate("EN", "subset_all_patients"), translate("EN", "subset_included_patients"), translate("EN", "subset_excluded_patients"),
+                                     translate("FR", "subset_all_patients"), translate("FR", "subset_included_patients"), translate("FR", "subset_excluded_patients"))) delete <- ""
         }
 
         actions <- tagList(actions, delete)

@@ -132,13 +132,13 @@ app_server <- function(router, language, db_info){
       if ("plugins" %in% r$user_accesses) mod_settings_plugins_server("settings_plugins", r, language)
       mod_page_sidenav_server("settings_plugins", r, language)
   
-      sapply(c("modules_patient_lvl", "modules_aggregated"), function(page){
+      sapply(c("patient_lvl_modules", "aggregated_modules"), function(page){
         if (page %in% r$user_accesses) mod_settings_modules_server(paste0("settings_", page), r, language)
         mod_page_sidenav_server(paste0("settings_", page), r, language)
       })
       
       # Patient-lvl & aggregated modules page sub modules
-      if ("modules_patient_lvl" %in% r$user_accesses | "modules_aggregated" %in% r$user_accesses){
+      if ("patient_lvl_modules" %in% r$user_accesses | "aggregated_modules" %in% r$user_accesses){
         sapply(c("patient_lvl", "aggregated"), function(prefix){
           sapply(c("modules", "modules_families", "modules_elements"), function(page){
             mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_creation"), r, language)
