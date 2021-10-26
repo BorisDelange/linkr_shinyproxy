@@ -217,6 +217,10 @@ get_translations <- function(){
             "FR", "user", "Utilisateur",
             "EN", "password", "Password",
             "FR", "password", "Password",
+            "EN", "export_db", "Export database",
+            "FR", "export_db", "Exporter la base de données",
+            "EN", "restore_db", "Restore database",
+            "FR", "restore_db", "Restaurer la base de données",
             "EN", "change_password_card", "Change password",
             "FR", "change_password_card", "Changer mdp",
             "EN", "change_password", "Change password",
@@ -473,6 +477,10 @@ get_translations <- function(){
             "FR", "db_restore_card", "Restaurer la BDD",
             "EN", "db_save", "Save database",
             "FR", "db_save", "Faire une sauvegarde la BDD",
+            "EN", "last_db_save", "Last export",
+            "FR", "last_db_save", "Dernière sauvegarde",
+            "EN", "last_db_restore", "Last import",
+            "FR", "last_db_restore", "Dernière restauration",
             "EN", "db_restore", "Restore database",
             "FR", "db_restore", "Restaurer la BDD",
             "EN", "add_user", "Add a new user",
@@ -900,7 +908,9 @@ get_translations <- function(){
             "EN", "plugins_see_all_data", "See all data",
             "FR", "plugins_see_all_data", "Accès à toutes les données",
             "EN", "plugins_delete_data", "Delete data",
-            "FR", "plugins_delete_data", "Supprimer des données"
+            "FR", "plugins_delete_data", "Supprimer des données",
+            "EN", "never", "Never",
+            "FR", "never", "Jamais"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

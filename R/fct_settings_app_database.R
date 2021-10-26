@@ -235,7 +235,7 @@ get_distant_db <- function(local_db, db_info = list(), language = "EN"){
 #' @param db_info DB informations given in cdwtools function
 #' @param language Language used to display messages (character)
 
-get_db <- function(db_info, language = "EN"){
+get_db <- function(db_info = list(), language = "EN"){
   
   # First, get local database connection
   

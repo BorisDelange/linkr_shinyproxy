@@ -44,6 +44,11 @@ cdwtools <- function(
   ...
 ) {
   
+  # Maximum size for uploaded data (500 MB)
+  # Used to restore database
+  
+  options(shiny.maxRequestSize = 500*1024^2)
+  
   # Load translations
   
   translations <- get_translations()

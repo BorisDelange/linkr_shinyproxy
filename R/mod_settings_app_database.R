@@ -66,7 +66,7 @@ mod_settings_app_database_ui <- function(id, language){
       make_card(
         translate(language, "app_db_tables"),
         div(
-          shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type_datatable"), value = "local", options = list(
+          br(), shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type"), value = "local", options = list(
             list(key = "local", text = translate(language, "local")),
             list(key = "distant", text = translate(language, "distant"))
           ), className = "inline_choicegroup"),
@@ -83,7 +83,8 @@ mod_settings_app_database_ui <- function(id, language){
             list(key = "local", text = translate(language, "local")),
             list(key = "distant", text = translate(language, "distant"))
           ), className = "inline_choicegroup"),
-          div(shinyAce::aceEditor(ns("app_db_request"), "", "sql", height = "200px"), style = "width: 100%;"),
+          div(shinyAce::aceEditor(ns("app_db_request"), "", "sql",
+            autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
           div(shiny::verbatimTextOutput(ns("request_result")), 
             style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
           htmltools::br(),
@@ -95,14 +96,22 @@ mod_settings_app_database_ui <- function(id, language){
       id = ns("db_save_card"),
       make_card(
         translate(language, "db_save"),
-        div()
+        div(
+          br(), uiOutput(ns("last_db_save")), br(),
+          shiny.fluent::PrimaryButton.shinyInput(ns("db_save_button"), translate(language, "export_db"), iconProps = list(iconName = "Download")),
+          div(style = "visibility:hidden;", downloadButton(ns("db_save"), label = ""))
+        )
       )
     ),
     div(
       id = ns("db_restore_card"),
       make_card(
         translate(language, "db_restore"),
-        div()
+        div(
+          br(), uiOutput(ns("last_db_restore")), br(),
+          shiny.fluent::PrimaryButton.shinyInput(ns("db_restore_button"), translate(language, "restore_db"), iconProps = list(iconName = "Upload")),
+          div(style = "visibility:hidden;", fileInput(ns("db_restore"), label = "", multiple = FALSE, accept = ".tar"))
+        )
       )
     )
   )
@@ -131,8 +140,12 @@ mod_settings_app_database_server <- function(id, r, language){
     ##########################################
     
     observeEvent(r$local_db, {
+      
+      # Get distant db informations
       db_info <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'distant_db'") %>% tibble::as_tibble()
       db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
+      
+      # Fill textfields & choicegroup with recorded informations in local database
       sapply(names(db_info), function(name){
         if (name == "connection_type") shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type", value = db_info[[name]])
         if (name != "connection_type") shiny.fluent::updateTextField.shinyInput(session, name, value = db_info[[name]])
@@ -142,16 +155,23 @@ mod_settings_app_database_server <- function(id, r, language){
       ##########################################
       # Save modif on connection infos         #
       ##########################################
+    
+      # When save button is clicked
       
       observeEvent(input$db_connection_save, {
+        
+        # If connection_type is local, save only connection_type but do not erase other informations (distant DB informations)
         if (input$connection_type == "local"){
           query <- "UPDATE options SET value = 'local' WHERE category = 'distant_db' AND name = 'connection_type'"
           DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
         }
         
+        # If connection_type is distant, save connection_type and other distant DB informations
         if (input$connection_type == "distant"){
+          
           # Checks inputs
           db_checks <- c("dbname" = FALSE, "host" = FALSE, "port" = FALSE, "user" = FALSE, "password" = FALSE)
+          
           sapply(names(db_checks), function(name){
             shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = NULL)
             if (!is.null(input[[name]])){
@@ -166,24 +186,24 @@ mod_settings_app_database_server <- function(id, r, language){
           # If checks OK, insert data in database
           sapply(c("connection_type", "sql_lib", "dbname", "host", "port", "user", "password"), function(name){
             query <- paste0("UPDATE options
-                         SET value = '", input[[name]], "', creator_id = ", r$user_id, ", datetime = '", as.character(Sys.time()), "'
-                         WHERE category = 'distant_db' AND name = '", name, "'")
+              SET value = '", input[[name]], "', creator_id = ", r$user_id, ", datetime = '", as.character(Sys.time()), "'
+              WHERE category = 'distant_db' AND name = '", name, "'")
             DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
           })
         }
         
         # Reload r$db variable
-        r$db <- get_db()
+        r$db <- get_db(db_info = list(), language = language)
         
-        output$warnings1 <- renderUI(div(shiny.fluent::MessageBar(translate(language, "modif_saved"), messageBarType = 4), style = "margin-top:10px;"))
-        shinyjs::show("warnings1")
-        shinyjs::delay(3000, shinyjs::hide("warnings1"))
+        show_message_bar(output, 1, "modif_saved", "success", language)
       })
       
       ##########################################
       # Test connection                        #
       ##########################################
       
+      # When test connection button is clicked
+    
       observeEvent(input$test_connection, {
         
         # Before testing connection, make sure fields are filled
@@ -195,6 +215,8 @@ mod_settings_app_database_server <- function(id, r, language){
             if (name == "port" & input[[name]] != "" & grepl("^[0-9]+$", input[[name]])) db_checks[[name]] <<- TRUE
           }
         })
+        
+        # Reset output textfields
         output$test_connection_success <- renderText("")
         output$test_connection_failure <- renderText("")
         
@@ -204,15 +226,17 @@ mod_settings_app_database_server <- function(id, r, language){
         
         # If checks are OK, test connection
         code <- paste0("DBI::dbConnect(RPostgres::Postgres(),
-                       dbname = '", input$dbname, "', host = '", input$host, "', port = ", input$port,
-                       ", user = '", input$user, "', password = '", input$password, "')")
+          dbname = '", input$dbname, "', host = '", input$host, "', port = ", input$port,
+          ", user = '", input$user, "', password = '", input$password, "')")
         result_success <- ""
         result_failure <- ""
         result <- capture.output(
           tryCatch(eval(parse(text = isolate(code))), error = function(e) print(e), warning = function(w) print(w))
         )
+        
         if (!grepl("exception|error|warning|fatal", tolower(result))) result_success <- paste0(translate(language, "success"), " !")
         if (grepl("exception|error|warning|fatal", tolower(result))) result_failure <- result
+        
         output$test_connection_success <- renderText(result_success)
         output$test_connection_failure <- renderText(result_failure)
       })
@@ -221,30 +245,38 @@ mod_settings_app_database_server <- function(id, r, language){
     # Database tables datatable              #
     ##########################################
     
-    observeEvent(input$connection_type_datatable, {
-      if (input$connection_type_datatable == "local"){
+    observeEvent(input$connection_type, {
+      
+      # Local database tables
+      
+      if (input$connection_type == "local"){
         tibble::tibble(name = DBI::dbListTables(r$local_db),
           row_number = sapply(DBI::dbListTables(r$local_db), 
             function(table) DBI::dbGetQuery(r$local_db, paste0("SELECT COUNT(*) FROM ", table)) %>% 
               dplyr::pull() %>% as.integer())) -> data
       } 
-      if (input$connection_type_datatable == "distant"){
+      
+      # Distant database tables
+      
+      if (input$connection_type == "distant"){
         data <- tibble::tibble(name = character(), row_number = integer())
         if (test_distant_db(local_db = r$local_db, language = language) == "success"){
           distant_db <- get_distant_db(r$local_db)
           tibble::tibble(name = DBI::dbListTables(distant_db),
-                         row_number = sapply(DBI::dbListTables(distant_db),
-                                             function(table) DBI::dbGetQuery(distant_db, paste0("SELECT COUNT(*) FROM ", table)) %>% 
-                                               dplyr::pull() %>% as.integer())) -> data
+            row_number = sapply(DBI::dbListTables(distant_db),
+              function(table) DBI::dbGetQuery(distant_db, paste0("SELECT COUNT(*) FROM ", table)) %>% 
+                dplyr::pull() %>% as.integer())) -> data
         }
       }
+      
       colnames(data) <- c(translate(language, "table_name"), translate(language, "row_number"))
+      
       output$app_db_tables <- DT::renderDT(
         data,
         options = list(dom = "t<'bottom'p>",
-                       columnDefs = list(
-                         list(className = "dt-left", targets = "_all")
-                       )),
+          columnDefs = list(
+            list(className = "dt-left", targets = "_all")
+          )),
         rownames = FALSE, selection = "none")
     })
     
@@ -253,27 +285,41 @@ mod_settings_app_database_server <- function(id, r, language){
     ##########################################
     
     observeEvent(input$request, {
+      
       output$request_result <- renderText({
+        
         # Change this option to display correctly tibble in textbox
         eval(parse(text = "options('cli.num_colors' = 1)"))
         
         # Capture console output of our code
         captured_output <-
           tryCatch({
-            request <- isolate(input$app_db_request)
+            
+            # Replace \r with \n to prevent bugs
+            request <- isolate(input$app_db_request %>% stringr::str_replace_all("\r", "\n"))
+            
+            # Get local or distant db DBI object
             if (input$connection_type_request == "local") db <- r$local_db
             if (input$connection_type_request == "distant") db <- get_distant_db(r$local_db)
-            if (grepl("^update|delete|insert", tolower(request))) capture.output({
+            
+            # dbSendStatement if it is not a select
+            if (!grepl("^select", tolower(request))) capture.output({
               DBI::dbSendStatement(db, request) -> query
               print(query)
               DBI::dbClearResult(query)
             }) -> result
+            
+            # Else, a dbGetQuery
             else capture.output(DBI::dbGetQuery(db, request) %>% tibble::as_tibble()) -> result
+            
+            # Render result
             result
+            
           }, error = function(e) print(e), warning = function(w) print(w))
         
         # Restore normal value
         eval(parse(text = "options('cli.num_colors' = NULL)"))
+        
         # Display result
         paste(captured_output, collapse = "\n")
       })
@@ -283,13 +329,116 @@ mod_settings_app_database_server <- function(id, r, language){
     # Save database                          #
     ##########################################
     
-    # TO DO
+    # Last time the db was saved
+    
+    observeEvent(r$options, {
+      
+      last_save <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_save' AND name = 'last_db_save'")
+      
+      if (nrow(last_save) > 0) last_save <- last_save %>% dplyr::pull(value)
+      else last_save <- translate(language, "never")
+      
+      output$last_db_save <- renderUI(tagList(strong(translate(language, "last_db_save")), " : ", last_save))
+    })
+    
+    # Overcome absence of downloadButton in shiny.fluent
+    # And save that the database has been saved
+    
+    observeEvent(input$db_save_button, {
+      
+      shinyjs::click("db_save")
+      
+      last_save <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_save' AND name = 'last_db_save'")
+      
+      if (nrow(last_save) == 0) {
+        
+        # Insert last time row
+        last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull()
+        query <- DBI::dbSendStatement(r$db, paste0("INSERT INTO options(id, category, name, value, creator_id, datetime, deleted) ",
+          "SELECT ", last_row + 1, ", 'last_db_save', 'last_db_save', '", as.character(Sys.time()), "', ", r$user_id, ", ",
+          "'", as.character(Sys.time()), "', FALSE"))
+        DBI::dbClearResult(query)
+      }
+      
+      else {
+        query <- DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", as.character(Sys.time()), "', datetime = '", as.character(Sys.time()), "'",
+          " WHERE category = 'last_db_save' AND name = 'last_db_save'"))
+        DBI::dbClearResult(query)
+      }
+      
+      update_r(r = r, table = "options", language = language)
+      
+    })
+    
+    # Download all tables in one tar file
+    
+    output$db_save <- downloadHandler(
+      
+      filename = function() { paste0("cdwtools_svg_", as.character(Sys.Date()), ".tar") },
+      
+      content = function(file){
+        
+        owd <- setwd(tempdir())
+        on.exit(setwd(owd))
+        
+        files <- NULL
+        
+        tables <- DBI::dbListTables(r$db)
+
+        for (table in tables){
+          file_name <- paste0(table, ".csv")
+          readr::write_csv(DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table)), file_name)
+          files <- c(file_name, files)
+        }
+        
+        tar(file, files)
+      }
+    )
     
     ##########################################
     # Restore database                       #
     ##########################################
     
-    # TO DO
+    # Last time the db was restored
+    
+    observeEvent(r$options, {
+      
+      last_restore <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_restore' AND name = 'last_db_restore'")
+      
+      if (nrow(last_restore) > 0) last_restore <- last_restore %>% dplyr::pull(value)
+      else last_restore <- translate(language, "never")
+      
+      output$last_db_restore <- renderUI(tagList(strong(translate(language, "last_db_restore")), " : ", last_restore))
+    })
+    
+    # Overcome absence of downloadButton in shiny.fluent
+    # And save that the database has been restored
+    
+    observeEvent(input$db_restore_button, {
+      
+      shinyjs::click("db_restore")
+      
+      last_restore <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_restore' AND name = 'last_db_restore'")
+      
+      if (nrow(last_restore) == 0) {
+        
+        # Insert last time row
+        last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull()
+        query <- DBI::dbSendStatement(r$db, paste0("INSERT INTO options(id, category, name, value, creator_id, datetime, deleted) ",
+          "SELECT ", last_row + 1, ", 'last_db_restore', 'last_db_restore', '", as.character(Sys.time()), "', ", r$user_id, ", ",
+          "'", as.character(Sys.time()), "', FALSE"))
+        DBI::dbClearResult(query)
+      }
+      
+      else {
+        query <- DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", as.character(Sys.time()), "', datetime = '", as.character(Sys.time()), "'",
+          " WHERE category = 'last_db_restore' AND name = 'last_db_restore'"))
+        DBI::dbClearResult(query)
+      }
+      
+      update_r(r = r, table = "options", language = language)
+      
+    })
     
   })
 }

@@ -12,7 +12,7 @@ app_server <- function(router, language, db_info){
     r <- reactiveValues()
     
     # Get user ID
-    r$user_id <- 1
+    r$user_id <- 2
     
     # Connection to database
     # If connection informations have been given in cdwtools() function, use these informations
