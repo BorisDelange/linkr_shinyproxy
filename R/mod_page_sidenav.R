@@ -533,7 +533,9 @@ mod_page_sidenav_server <- function(id, r, language){
       observeEvent(r$user_accesses, {
         
         # Hide links to pages that user doesn't have access
-        pages <- c("general_settings", "app_db", "users", "r_console", "data_sources", "datamarts", "studies", "subsets", "thesaurus",
+        # Never hide General settings page (default when you click on settings on header page)
+        
+        pages <- c("app_db", "users", "r_console", "data_sources", "datamarts", "studies", "subsets", "thesaurus",
           "plugins", "patient_lvl_modules", "aggregated_modules", "log")
         
         sapply(pages, function(page) if (page %not_in% r$user_accesses) shinyjs::hide(page))

@@ -40,10 +40,11 @@ mod_settings_r_console_server <- function(id, r, language){
     ##########################################
     
     # Depending on user_accesses
-    observeEvent(r$user_accesses, {
+    # observeEvent(r$user_accesses, {
       # Hide toggles if user has no access
-      if ("r_console" %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
-    })
+      # (Doesn't work anymore : we had a condition in server.R to not load server data if user has no access)
+      # if ("r_console" %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
+    # })
     
     # Depending on toggles activated
     sapply(toggles, function(toggle){

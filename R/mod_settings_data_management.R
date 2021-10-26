@@ -159,10 +159,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     ##########################################
     
     # Depending on user_accesses
-    observeEvent(r$user_accesses, {
+    # observeEvent(r$user_accesses, {
       # For each page, hide toggles if user has no access
-      if (table %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
-    })
+      # (Doesn't work anymore : we had a condition in server.R to not load server data if user has no access)
+      # if (table %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
+    # })
     
     # Depending on toggles activated
     sapply(toggles, function(toggle){
