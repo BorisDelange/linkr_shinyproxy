@@ -18,6 +18,17 @@ reference:
   - translate
   - convert_tibble_to_list
   - coalesce2
+- title: "App database functions"
+  desc: >
+    *Use these functions from inside the App indevelopper mode.*
+  contents:
+  - get_local_db
+  - get_distant_db
+  - test_distant_db
+  - get_db
+  - db_create_table
+  - db_create_tables
+  - insert_default_values
 - title: "Layout functions"
   desc: >
     *Use these functions from inside the App in developper mode.*

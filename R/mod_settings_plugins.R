@@ -13,7 +13,6 @@ mod_settings_plugins_ui <- function(id, language){
   ns <- NS(id)
   
   div(class = "main",
-    render_settings_default_elements(ns = ns),
     render_settings_toggle_card(language = language, ns = ns, cards = list(
       list(key = "description_card", label = "plugins_description_card"),
       list(key = "creation_card", label = "plugins_creation_card"),
@@ -21,6 +20,7 @@ mod_settings_plugins_ui <- function(id, language){
       list(key = "options_card", label = "plugins_options_card"),
       list(key = "edit_code_card", label = "plugins_edit_code_card")
     )),
+    render_settings_default_elements(ns = ns),
     div(
       id = ns("description_card"),
       make_card(
@@ -228,10 +228,10 @@ mod_settings_plugins_server <- function(id, r, language){
         
         data <- list()
         data$markdown_description <- as.character(input$markdown_description)
-        data$visibility <- as.character(input$visibility)
+        data$users_allowed_read <- input$users_allowed_read
+        data$users_allowed_read_group <- input$users_allowed_read_group
         
-        save_settings_options(output = output, r = r, id = id, category = category,
-          code_id_input = input$options, language = language, data = data)
+        save_settings_options(output = output, r = r, id = id, category = category, code_id_input = input$options, language = language, data = data)
       })
       
       ##########################################
@@ -287,13 +287,23 @@ mod_settings_plugins_server <- function(id, r, language){
         # Update also thesaurus dropdown, depending on data source
         # Reset thesaurus items dropdown
         data_source <- r$datamarts %>% dplyr::filter(id == input$datamart) %>% dplyr::pull(data_source_id) %>% as.character()
-        thesaurus <- r$thesaurus %>% dplyr::filter(data_source %in% data_source_id)
+        
+        # Multiple cases
+        # Only one ID, so it's the beginning and the end
+        # Last ID, so it's the end
+        # ID between begin and last, so separated by commas
+        thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
+          grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id))
         shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name"), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", options = list(), value = NULL)
         
         # Reset outputs
         output$code_result_ui <- renderUI("")
         output$code_result_server <- renderText("")
+        
+        # Reset r$thesaurus_selected_items
+        r$thesaurus_selected_items <- tibble::tribble(~thesaurus_id, ~thesaurus_name, ~item_id, ~text, ~colour)
+        
       })
       
       # When a patient is chosen
@@ -320,39 +330,87 @@ mod_settings_plugins_server <- function(id, r, language){
       # When a thesaurus is chosen
       observeEvent(input$thesaurus, {
         
-        # Get thesaurus items of current thesaurus
-        thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", input$thesaurus)) %>%
-          dplyr::mutate(name = paste0(name, " - ", item_id))
-        
-        # Update dropdown
-        shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", value = NULL,
-          options = convert_tibble_to_list(data = thesaurus_items, key_col = "item_id", text_col = "name"))
-        
-        # Reset r$selected_thesaurus_items
-        r$selected_thesaurus_items <- tibble::tribble(~key, ~text, ~colour)
-        
-        # Reset outputs
-        output$code_result_ui <- renderUI("")
-        output$code_result_server <- renderText("")
+        observeEvent(input$show_only_used_items, {
+          
+          # Get thesaurus items of current thesaurus
+          thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", input$thesaurus)) %>%
+            dplyr::mutate(name = paste0(name, " - ", item_id)) %>%
+            dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_id")
+          
+          # Show only items used by selected patient
+          if (input$show_only_used_items){
+            
+            observeEvent(input$patient, {
+              req(length(input$patient) > 0)
+              
+              # Create a variable with all items used by this patient
+              patient_items <- tibble::tribble(~thesaurus_name, ~item_id)
+              sapply(c("labs_vitals", "text", "orders"), function(data_var){
+                data_patient <- tibble::tibble()
+                if (nrow(r[[data_var]] > 0)) data_patient <- r[[data_var]] %>% dplyr::filter(patient_id == input$patient)
+                if (nrow(data_patient) > 0){
+                  patient_items <<- patient_items %>% dplyr::bind_rows(
+                    data_patient %>% dplyr::group_by(thesaurus_name, item_id) %>%
+                      dplyr::slice(1) %>% dplyr::ungroup() %>% dplyr::select(thesaurus_name, item_id)
+                  )
+                }
+              })
+            
+              # Inner join between thesaurus_items & patient_items
+              thesaurus_items <- thesaurus_items %>% dplyr::inner_join(patient_items, by = c("thesaurus_name", "item_id"))
+              
+              # Update dropdown with only selected thesaurus items
+              shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", value = NULL,
+                options = convert_tibble_to_list(data = thesaurus_items, key_col = "item_id", text_col = "name"))
+            })
+          }
+          
+          else {
+            
+            # Update dropdown with all thesaurus items
+            shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", value = NULL,
+              options = convert_tibble_to_list(data = thesaurus_items, key_col = "item_id", text_col = "name"))
+          }
+          
+         
+          # Reset r$thesaurus_selected_items
+          # r$thesaurus_selected_items <- tibble::tibble(key = integer(), text = character(), colour = character())
+          
+          # Reset outputs
+          output$code_result_ui <- renderUI("")
+          output$code_result_server <- renderText("")
+        })
       })
       
       # When add button is clicked
       observeEvent(input$add_thesaurus_item, {
-        req(length(input$thesaurus_items$text) > 0)
-        if (input$thesaurus_items$text %not_in% r$selected_thesaurus_items$text){
-          r$selected_thesaurus_items <- r$selected_thesaurus_items %>% dplyr::bind_rows(
-            tibble::tribble(~key, ~text, ~colour, input$thesaurus_items$key, input$thesaurus_items$text, input$colour))}
+        req(length(input$thesaurus_items$key) > 0)
+        if (input$thesaurus_items$text %not_in% r$thesaurus_selected_items$text){
+          
+          # Get thesaurus name
+          thesaurus_name <- r$thesaurus %>% dplyr::filter(id == input$thesaurus) %>% dplyr::pull(name)
+          
+          # Add item to selected items
+          r$thesaurus_selected_items <- r$thesaurus_selected_items %>% dplyr::bind_rows(
+            tibble::tribble(~thesaurus_id, ~thesaurus_name, ~item_id, ~text, ~colour, 
+              input$thesaurus, thesaurus_name, input$thesaurus_items$key, input$thesaurus_items$text, input$colour))}
       })
       
       # When remove button is clicked
       observeEvent(input$remove_thesaurus_item, {
-        req(length(input$thesaurus_items$text) > 0)
-        r$selected_thesaurus_items <- r$selected_thesaurus_items %>% dplyr::filter(key != input$thesaurus_items$key)
+        req(length(input$thesaurus_items$key) > 0)
+        
+        deleted_item <- tibble::tribble(~thesaurus_id, ~item_id, input$thesaurus, input$thesaurus_items$key)
+        
+        r$thesaurus_selected_items <- r$thesaurus_selected_items %>% dplyr::anti_join(deleted_item, by = c("thesaurus_id", "item_id"))
       })
       
       # Render result of selected items
-      observeEvent(r$selected_thesaurus_items, {
-        output$thesaurus_items_selected <- renderText(paste0(translate(language, "thesaurus_items_selected"), " : ", toString(r$selected_thesaurus_items$text)))
+      observeEvent(r$thesaurus_selected_items, {
+        
+        thesaurus_selected_items_text <- r$thesaurus_selected_items %>% dplyr::mutate(display_text = paste0(thesaurus_name, " - ", text)) %>% dplyr::pull(display_text)
+        
+        output$thesaurus_selected_items <- renderText(paste0(translate(language, "thesaurus_selected_items"), " : ", toString(thesaurus_selected_items_text)))
         
         # Reset outputs
         output$code_result_ui <- renderUI("")
@@ -361,8 +419,8 @@ mod_settings_plugins_server <- function(id, r, language){
       
       # When reset button is clicked
       observeEvent(input$reset_thesaurus_items, {
-        # Reset r$selected_thesaurus_items
-        r$selected_thesaurus_items <- tibble::tribble(~key, ~text, ~colour)
+        # Reset r$thesaurus_selected_items
+        r$thesaurus_selected_items <- tibble::tribble(~thesaurus_id, ~thesaurus_name, ~item_id, ~text, ~colour)
       })
       
       # When save button is clicked
@@ -388,10 +446,10 @@ mod_settings_plugins_server <- function(id, r, language){
         
         if (length(input$datamart) == 0 | length(input$patient) == 0 | length(input$stay) == 0 | 
             length(input$thesaurus) == 0) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language)
-        else if (nrow(r$selected_thesaurus_items) == 0) show_message_bar(output, 3, "thesaurus_items_empty", "severeWarning", language)
+        else if (nrow(r$thesaurus_selected_items) == 0) show_message_bar(output, 3, "thesaurus_items_empty", "severeWarning", language)
 
         req(input$datamart, input$patient, input$stay, input$thesaurus)
-        req(nrow(r$selected_thesaurus_items) > 0)
+        req(nrow(r$thesaurus_selected_items) > 0)
         
         # Create variables that will be available in patient-lvl data & aggregated data pages
         # For patient-lvl data page, we have these variables : labs_vitals, text & orders (for all stays of the patient)
@@ -400,14 +458,16 @@ mod_settings_plugins_server <- function(id, r, language){
         # Don't forget to convert item_id & patient_id to integers, may have been transformed to numeric before
         
         # Join with thesaurus items to get items names
-        thesaurus_name <- r$thesaurus %>% dplyr::filter(id == input$thesaurus) %>% dplyr::pull(name)
-        r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT item_id, name, display_name, unit AS unit_thesaurus FROM thesaurus_items WHERE thesaurus_id = ",
-          input$thesaurus, " AND deleted IS FALSE"))
+        # First, get thesaurus attached to this datamart
+        data_source <- r$datamarts %>% dplyr::filter(id == input$datamart) %>% dplyr::pull(data_source_id) %>% as.character()
+        thesaurus_ids <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
+          grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>%
+          dplyr::pull(id)
         
-        # No join on thesaurus_id, unique and already filtered
-        selected_thesaurus_items <- r$selected_thesaurus_items %>%
-          dplyr::mutate(item_id = as.integer(key), thesaurus_id = input$thesaurus, thesaurus_name = !!thesaurus_name, patient_id = as.integer(input$patient)) %>%
-          dplyr::left_join(r$thesaurus_items, by = "item_id")
+        r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT thesaurus_id, item_id, display_name, unit AS unit_thesaurus FROM thesaurus_items ",
+        "WHERE thesaurus_id IN ( ", paste(thesaurus_ids, collapse = ","), ") AND deleted IS FALSE"))
+        
+        thesaurus_selected_items <- r$thesaurus_selected_items %>% dplyr::left_join(r$thesaurus_items, by = c("thesaurus_id", "item_id"))
         
         # Initialize variables
 
@@ -416,17 +476,30 @@ mod_settings_plugins_server <- function(id, r, language){
         data$text <- tibble::tibble()
         data$orders <- tibble::tibble()
 
-        # Filter r variables with selected thesaurus items
+        # Filter r variables with selected thesaurus items and with patient_id
         # Choose unit, priority to data, then thesaurus
-        if (nrow(r$labs_vitals) > 0) data$labs_vitals <- r$labs_vitals %>%
-          dplyr::inner_join(selected_thesaurus_items, by = c("patient_id", "item_id", "thesaurus_name")) %>%
-          dplyr::mutate(unit = dplyr::case_when(unit != "" ~ unit, TRUE ~ unit_thesaurus)) %>% dplyr::select(-unit_thesaurus)
-        if (nrow(r$text) > 0) data$text <- r$text %>%
-          dplyr::inner_join(selected_thesaurus_items, by = c("patient_id", "item_id", "thesaurus_name"))
-        if (nrow(r$orders) > 0) data$orders <- r$orders %>%
-          dplyr::inner_join(selected_thesaurus_items, by = c("patient_id", "item_id", "thesaurus_name"))
-        
+        if (nrow(r$labs_vitals) > 0){
+          data$labs_vitals <-
+            r$labs_vitals %>%
+            dplyr::filter(patient_id == input$patient) %>%
+            dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id")) #%>%
+            #dplyr::mutate(unit = dplyr::case_when(unit != "" ~ unit, TRUE ~ unit_thesaurus)) %>% dplyr::select(-unit_thesaurus)
+        }
+        if (nrow(r$text) > 0){
+          data$text <-
+            r$text %>%
+            dplyr::filter(patient_id == input$patient) %>%
+            dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
+        }
+        if (nrow(r$orders) > 0){
+          data$orders <-
+            r$orders %>%
+            dplyr::filter(patient_id == input$patient) %>%
+            dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
+        }
+
         data$stay <- r$stays %>% dplyr::filter(stay_id == input$stay) %>% dplyr::select(admission_datetime, discharge_datetime)
+
         if (nrow(data$labs_vitals) > 0) data$labs_vitals_stay <- data$labs_vitals %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
         if (nrow(data$text) > 0) data$text_stay <- data$text %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
         if (nrow(data$orders) > 0) data$orders_stay <- data$orders %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)

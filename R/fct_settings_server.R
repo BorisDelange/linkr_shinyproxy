@@ -147,9 +147,9 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     update_r(r = r, table = "code", language = language)
   }
 
-  # For options of plugins, add one row for long description (Markdown) & a toggle for the status / the visibility of the plugin (In dev / Public)
-  # The value is default syntax of a plugin description
-  # For code of plugins, add two rows, ony for UI code & one for server code
+  # For options of plugins, add one row for long description (Markdown) & 2 rows for users allowed to use this plugin
+  # The value is the default syntax of a plugin description
+  # For code of plugins, add two rows, one for UI code & one for server code
   if (id == "settings_plugins"){
 
     # Add options rows
@@ -158,7 +158,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     DBI::dbAppendTable(r$db, "options",
       tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
         last_row_options + 1, "plugin", last_row + 1, "markdown_description", value, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-        last_row_options + 2, "plugin", last_row + 1, "visibility", "dev_only", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE))
+        last_row_options + 2, "plugin", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+        last_row_options + 3, "plugin", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE))
     update_r(r = r, table = "options", language = language)
 
     # Add code rows
@@ -169,7 +170,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     update_r(r = r, table = "code", language = language)
   }
 
-  # For options of datamarts, need to add two rows
+  # For options of datamarts, need to add 3 rows in options
   if (id == "settings_datamarts"){
 
     DBI::dbAppendTable(r$db, "options",
@@ -811,7 +812,7 @@ update_settings_datatable <- function(input, r = shiny::reactiveValues(), ns = s
         old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]]
         
         # If thesaurus, data_source_id can accept multiple values (converting to string)
-        if (table == "thesaurus") new_value <- toString(input[[paste0("data_sources", id)]])
+        if (table == "thesaurus") new_value <- toString(as.integer(input[[paste0("data_sources", id)]]))
         if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins", "users", "patient_lvl_modules", "aggregated_modules")){
           new_value <- as.integer(input[[paste0(get_plural(word = dropdown_input), id)]])}
         
@@ -892,6 +893,9 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   if ("count_items_rows" %in% names(data)) data <- data %>% dplyr::select(-count_items_rows, -count_patients_rows)
   
   DBI::dbAppendTable(r$db, table, data)
+  
+  # Reload r variable
+  update_r(r = r, table = table, language = language)
   
   # Notification to user
   show_message_bar(output, 2, "modif_saved", "success", language)
@@ -1041,13 +1045,6 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   if ("markdown_description" %in% page_options){
     option_id <- options %>% dplyr::filter(name == "markdown_description") %>% dplyr::pull(id)
     DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", stringr::str_replace_all(data$markdown_description, "'", "''"), "' WHERE id = ", option_id)) -> query
-    DBI::dbClearResult(query)
-    update_r(r = r, table = "options", language = language)
-  }
-  
-  if ("visibility" %in% page_options){
-    option_id <- options %>% dplyr::filter(name == "visibility") %>% dplyr::pull(id)
-    DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", data$visibility, "' WHERE id = ", option_id)) -> query
     DBI::dbClearResult(query)
     update_r(r = r, table = "options", language = language)
   }

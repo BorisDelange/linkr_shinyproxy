@@ -99,7 +99,7 @@ mod_settings_app_database_ui <- function(id, language){
         div(
           br(), uiOutput(ns("last_db_save")), br(),
           shiny.fluent::PrimaryButton.shinyInput(ns("db_save_button"), translate(language, "export_db"), iconProps = list(iconName = "Download")),
-          div(style = "visibility:hidden;", downloadButton(ns("db_save"), label = ""))
+          div(style = "display:none;", downloadButton(ns("db_save"), label = ""))
         )
       )
     ),
@@ -110,7 +110,7 @@ mod_settings_app_database_ui <- function(id, language){
         div(
           br(), uiOutput(ns("last_db_restore")), br(),
           shiny.fluent::PrimaryButton.shinyInput(ns("db_restore_button"), translate(language, "restore_db"), iconProps = list(iconName = "Upload")),
-          div(style = "visibility:hidden;", fileInput(ns("db_restore"), label = "", multiple = FALSE, accept = ".tar"))
+          div(style = "display:none;", fileInput(ns("db_restore"), label = "", multiple = FALSE, accept = ".tar"))
         )
       )
     )
@@ -439,6 +439,8 @@ mod_settings_app_database_server <- function(id, r, language){
       update_r(r = r, table = "options", language = language)
       
     })
+    
+    # How to do is here : https://techinplanet.com/read-zip-file-containing-multiple-csv-tables-in-r-shiny-app/
     
   })
 }

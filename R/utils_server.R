@@ -43,7 +43,7 @@ get_page_options <- function(id = character()){
   switch(id,
     "settings_datamarts" = c("show_only_aggregated_data", "users_allowed_read"),
     "settings_studies" = "users_allowed_read",
-    "settings_plugins" = c("markdown_description", "visibility"),
+    "settings_plugins" = c("markdown_description", "users_allowed_read"),
     "settings_users_accesses_options" = "users_accesses_options",
     "settings_modules_patient_lvl_modules_families_options" = "users_allowed_read",
     "settings_modules_aggregated_modules_families_options" = "users_allowed_read") -> result

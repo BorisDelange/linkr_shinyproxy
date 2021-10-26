@@ -288,20 +288,6 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
   }
   
   ##########################################
-  # Option = visibility                    #
-  ##########################################
-  
-  if ("visibility" %in% page_options){
-    value <- options %>% dplyr::filter(name == "visibility") %>% dplyr::pull(value)
-    dropdowns <- tagList(dropdowns, div(
-      make_dropdown(language = language, ns = ns, label = "visibility", width = "300px", options = list(
-        list(key = "dev_only", text = translate(language, "dev_only")),
-        list(key = "public_access", text = translate(language, "public_access"))
-      ), value = value))
-    )
-  }
-  
-  ##########################################
   # Final UI code                          #
   ##########################################
   
@@ -382,17 +368,19 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
           make_dropdown(language = language, ns = ns, label = "patient", width = "300px"),
           make_dropdown(language = language, ns = ns, label = "stay", width = "300px")),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
-          make_dropdown(language = language, ns = ns, label = "thesaurus", width = "300px")),
+          make_dropdown(language = language, ns = ns, label = "thesaurus", width = "300px"),
+          div(strong(translate(language, "show_only_used_items_patient"), style = "display:block; padding-bottom:12px;"),
+            shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
           make_combobox(language = language, ns = ns, label = "thesaurus_items", multiSelect = TRUE, allowFreeform = TRUE, width = "300px"),
           div(
             div(class = "input_title", translate(language, "item_colour")),
-            div(shiny.fluent::SwatchColorPicker.shinyInput(ns("colour"), value = "#038387", colorCells = colorCells, columnCount = length(colorCells))),
+            div(shiny.fluent::SwatchColorPicker.shinyInput(ns("colour"), value = "#000000", colorCells = colorCells, columnCount = length(colorCells))),
             style = "margin-top:5px;"),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("add_thesaurus_item"), translate(language, "add")), style = "margin-top:38px;"),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("remove_thesaurus_item"), translate(language, "remove")), style = "margin-top:38px;"),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset")), style = "margin-top:38px;")), br(),
-        textOutput(ns("thesaurus_items_selected"))) -> choice_data
+        textOutput(ns("thesaurus_selected_items"))) -> choice_data
     }
     if (module_type_id == 2){
       tagList(shiny.fluent::Stack(
