@@ -432,3 +432,21 @@ insert_default_values <- function(r){
       5, "subset", 3, "", 1, as.character(Sys.time()), FALSE))
   }
 }
+
+#' Check user authentification
+#' 
+#' @param r shiny r reactive value
+
+check_authentification <- function(db){
+  
+  function(user, password) {
+    
+    password <- rlang::hash(password)
+    
+    res <- DBI::dbGetQuery(db, paste0("SELECT * FROM users WHERE username = '", user, "' AND password = '", password, "'"))
+    
+    if (nrow(res) > 0) list(result = TRUE, user_info = list(user = user))
+    else list(result = FALSE)
+
+  }
+}

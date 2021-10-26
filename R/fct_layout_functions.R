@@ -43,7 +43,7 @@ make_page <- function (title = character(), subtitle = character(), contents = c
 #' Make a complete layout with header, sidenav, main & footer
 make_layout <- function(language, page){
   div(class = "grid-container",
-    mod_page_header_ui(id = stringr::str_replace(page, "/", "_"), language = language),
+    mod_page_header_ui(language = language),
     mod_page_sidenav_ui(id = stringr::str_replace(page, "/", "_"), language = language),
     mod_page_main_ui(id = stringr::str_replace(page, "/", "_"), language = language),
     mod_page_footer_ui()

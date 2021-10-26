@@ -4,11 +4,16 @@
 #' @import shiny
 #' @noRd
 
-app_ui <- function(request, css, page) {
-  tagList(
-    golem_add_external_resources(css),
-    shiny.fluent::fluentPage(page$ui)
-  )
+app_ui <- function(request, css, page, language) {
+  
+  # Secure page with ShinyManager
+  # shinymanager::secure_app(
+    tagList(
+      golem_add_external_resources(css),
+      shiny.fluent::fluentPage(page$ui)
+    )#,
+    # enable_admin = FALSE, language = tolower(language)
+  # )
 }
 
 #' Add external Resources to the Application

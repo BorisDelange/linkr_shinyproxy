@@ -11,9 +11,6 @@ app_server <- function(router, language, db_info){
     # Create r reactive value
     r <- reactiveValues()
     
-    # Get user ID
-    r$user_id <- 1
-    
     # Connection to database
     # If connection informations have been given in cdwtools() function, use these informations
     
@@ -47,7 +44,7 @@ app_server <- function(router, language, db_info){
     session$onSessionEnded(function() {
       observe(on.exit(DBI::dbDisconnect(r$db)))
     })
-
+    
     # Add default values in database if database is empty
     # Load all data from database
     # Don't load thesaurus_items, load it only when a thesaurus is selected
@@ -82,6 +79,15 @@ app_server <- function(router, language, db_info){
       
       # r$result <- list()
     })
+
+    
+    # Secure the app with ShinyManager
+    
+    # res_auth <- shinymanager::secure_server(check_credentials = check_authentification(r$db))
+    
+    # Get user ID
+    r$user_id <- 1
+    
     
     # When r$user_id loaded, load user_accesses
     
@@ -100,6 +106,8 @@ app_server <- function(router, language, db_info){
     # Don't load modules user has no access to
     
     observeEvent(r$user_accesses, {
+      
+      mod_page_header_server(input, output, session)
       
       sapply(c("patient_level_data", "aggregated_data"), function(page){
         mod_patient_and_aggregated_data_server(page, r, language)

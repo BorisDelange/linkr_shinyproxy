@@ -53,31 +53,33 @@ cdwtools <- function(
   
   translations <- get_translations()
   
-    css <- "fluent_style.css"
-     
-    shiny.router::make_router(
-      shiny.router::route("home/datamarts_studies", make_layout(language = language, page = "home/datamarts_studies")),
-      shiny.router::route("patient_level_data", make_layout(language = language, page = "patient_level_data")),
-      shiny.router::route("aggregated_data", make_layout(language = language, page = "aggregated_data")),
-      shiny.router::route("settings/general_settings", make_layout(language = language, page = "settings/general_settings")),
-      shiny.router::route("settings/app_db", make_layout(language = language, page = "settings/app_db")),
-      shiny.router::route("settings/users", make_layout(language = language, page = "settings/users")),
-      shiny.router::route("settings/r_console", make_layout(language = language, page = "settings/r_console")),
-      shiny.router::route("settings/data_sources", make_layout(language = language, page = "settings/data_sources")),
-      shiny.router::route("settings/datamarts", make_layout(language = language, page = "settings/datamarts")),
-      shiny.router::route("settings/studies", make_layout(language = language, page = "settings/studies")),
-      shiny.router::route("settings/subsets", make_layout(language = language, page = "settings/subsets")),
-      shiny.router::route("settings/thesaurus", make_layout(language = language, page = "settings/thesaurus")),
-      shiny.router::route("settings/plugins", make_layout(language = language, page = "settings/plugins")),
-      shiny.router::route("settings/patient_lvl_modules", make_layout(language = language, page = "settings/patient_lvl_modules")),
-      shiny.router::route("settings/aggregated_modules", make_layout(language = language, page = "settings/aggregated_modules"))
-    ) -> page
+
+
+  css <- "fluent_style.css"
+   
+  shiny.router::make_router(
+    shiny.router::route("home/datamarts_studies", make_layout(language = language, page = "home/datamarts_studies")),
+    shiny.router::route("patient_level_data", make_layout(language = language, page = "patient_level_data")),
+    shiny.router::route("aggregated_data", make_layout(language = language, page = "aggregated_data")),
+    shiny.router::route("settings/general_settings", make_layout(language = language, page = "settings/general_settings")),
+    shiny.router::route("settings/app_db", make_layout(language = language, page = "settings/app_db")),
+    shiny.router::route("settings/users", make_layout(language = language, page = "settings/users")),
+    shiny.router::route("settings/r_console", make_layout(language = language, page = "settings/r_console")),
+    shiny.router::route("settings/data_sources", make_layout(language = language, page = "settings/data_sources")),
+    shiny.router::route("settings/datamarts", make_layout(language = language, page = "settings/datamarts")),
+    shiny.router::route("settings/studies", make_layout(language = language, page = "settings/studies")),
+    shiny.router::route("settings/subsets", make_layout(language = language, page = "settings/subsets")),
+    shiny.router::route("settings/thesaurus", make_layout(language = language, page = "settings/thesaurus")),
+    shiny.router::route("settings/plugins", make_layout(language = language, page = "settings/plugins")),
+    shiny.router::route("settings/patient_lvl_modules", make_layout(language = language, page = "settings/patient_lvl_modules")),
+    shiny.router::route("settings/aggregated_modules", make_layout(language = language, page = "settings/aggregated_modules"))
+  ) -> page
   
   # Load UI & server
     
   with_golem_options(
     app = shinyApp(
-      ui = app_ui(css = css, page = page),
+      ui = app_ui(css = css, page = page, language = language),
       server = app_server(router = page, language = language, db_info = db_info),
       options = options
     ), 
