@@ -301,6 +301,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Save changes in datatable              #
       ##########################################
     
+        # Hide save button if user has no access
+        observeEvent(r$user_accesses, if (paste0(table, "_edit_data") %not_in% r$user_accesses) shinyjs::hide("management_save"))
+    
         # Each time a row is updated, modify temp variable
         # Do that for main datatable (management_datatable) & sub_datatable
         observeEvent(input$management_datatable_cell_edit, {
@@ -504,6 +507,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
 
         # Render UI of this card
         output$sub_datatable_card <- renderUI({
+          
+          # Hide save button if user has no access
+          save_button <- shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), translate(language, "save"))
+          if ("thesaurus_edit_data" %not_in% r$user_accesses) save_button <- ""
 
           div(id = ns("sub_datatable_card"),
             # Show current ID in the title
@@ -518,7 +525,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
                       shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
                 ),
                 DT::DTOutput(ns("sub_datatable")),
-                shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), translate(language, "save"))
+                save_button
               )
             )
           )

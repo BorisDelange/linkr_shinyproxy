@@ -158,6 +158,10 @@ mod_settings_plugins_server <- function(id, r, language){
       # Save changes in datatable              #
       #########################################
 
+      # Hide save button if user has no access
+      observeEvent(r$user_accesses, if ("plugins_edit_data" %not_in% r$user_accesses) shinyjs::hide("management_save"))
+    
+    
       # Each time a row is updated, modify temp variable
       observeEvent(input$management_datatable_cell_edit, {
         edit_info <- input$management_datatable_cell_edit

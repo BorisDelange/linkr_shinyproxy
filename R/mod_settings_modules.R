@@ -68,8 +68,8 @@ mod_settings_sub_modules_ui <- function(id, language){
   # Patient-lvl & aggregated sub modules   #
   ##########################################
     
-    if (grepl("patient_lvl", id)) page <- substr(id, nchar("settings_modules_patient_lvl_") + 1, nchar(id))
-    if (grepl("aggregated", id)) page <- substr(id, nchar("settings_modules_aggregated_") + 1, nchar(id))
+    if (grepl("patient_lvl", id)) page <- substr(id, nchar("settings_patient_lvl_modules_") + 1, nchar(id))
+    if (grepl("aggregated", id)) page <- substr(id, nchar("settings_aggregated_modules_") + 1, nchar(id))
     
     if (page == "modules_creation"){
       render_settings_creation_card(language = language, ns = ns, id = id, title = "add_module",
@@ -180,7 +180,7 @@ mod_settings_modules_server <- function(id, r, language){
       r[[paste0(prefix, "_modules_families_options")]] <- 0L
       
       # Only for main users page (not for sub-pages)
-      if (id == "settings_modules_patient_lvl" | id == "settings_modules_aggregated"){ 
+      if (id == "settings_patient_lvl_modules" | id == "settings_aggregated_modules"){ 
         
         # Depending on toggles activated
         sapply(toggles, function(toggle){
@@ -515,6 +515,9 @@ mod_settings_modules_server <- function(id, r, language){
         
         # Only for data management subpages
         if (grepl("management", id)){
+          
+          # Hide save button if user has no access
+          observeEvent(r$user_accesses, if (paste0(prefix, "_modules_edit_data") %not_in% r$user_accesses) shinyjs::hide("management_save"))
           
           # Each time a row is updated, modify temp variable
           observeEvent(input$management_datatable_cell_edit, {

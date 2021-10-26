@@ -57,8 +57,8 @@ mod_page_main_ui <- function(id, language){
     })
     
     if (id == "settings_plugins") mod_settings_plugins_ui(id = "settings_plugins", language = language) -> result
-    if (id == "settings_modules_patient_lvl") mod_settings_modules_ui("settings_modules_patient_lvl", language) -> result
-    if (id == "settings_modules_aggregated") mod_settings_modules_ui("settings_modules_aggregated", language) -> result
+    if (id == "settings_patient_lvl_modules") mod_settings_modules_ui("settings_patient_lvl_modules", language) -> result
+    if (id == "settings_aggregated_modules") mod_settings_modules_ui("settings_aggregated_modules", language) -> result
     if (id == "settings_log") result
   }
 

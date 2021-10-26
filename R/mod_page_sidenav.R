@@ -86,7 +86,7 @@ mod_page_sidenav_ui <- function(id, language){
     })
     
     links_plugins_modules <- list()
-    sapply(c("plugins", "modules_patient_lvl", "modules_aggregated"), function(page){
+    sapply(c("plugins", "patient_lvl_modules", "aggregated_modules"), function(page){
       links_plugins_modules <<- rlist::list.append(links_plugins_modules, list(name = translate(language, page),
         id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
     })
