@@ -7,11 +7,18 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
+
 mod_settings_app_database_ui <- function(id, language){
   ns <- NS(id)
+  
   div(class = "main",
-    shiny::uiOutput(ns("warnings1")),
-    app_database_toggle_card(language, ns, activated = "db_connection_infos_card"),
+    render_settings_default_elements(ns = ns),
+    render_settings_toggle_card(language = language, ns = ns, cards = list(
+      list(key = "db_connection_infos_card", label = "db_connection_infos_card"),
+      list(key = "db_datatable_card", label = "db_datatable_card"),
+      list(key = "db_request_card", label = "db_request_card"),
+      list(key = "db_save_card", label = "db_save_card"),
+      list(key = "db_restore_card", label = "db_restore_card"))),
     div(
       id = ns("db_connection_infos_card"),
       make_card(
@@ -104,6 +111,7 @@ mod_settings_app_database_ui <- function(id, language){
 #' settings_app_database Server Functions
 #'
 #' @noRd 
+
 mod_settings_app_database_server <- function(id, r, language){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -222,7 +230,7 @@ mod_settings_app_database_server <- function(id, r, language){
       } 
       if (input$connection_type_datatable == "distant"){
         data <- tibble::tibble(name = character(), row_number = integer())
-        if (test_distant_db(r$local_db) == "success"){
+        if (test_distant_db(local_db = r$local_db, language = language) == "success"){
           distant_db <- get_distant_db(r$local_db)
           tibble::tibble(name = DBI::dbListTables(distant_db),
                          row_number = sapply(DBI::dbListTables(distant_db),
@@ -285,9 +293,3 @@ mod_settings_app_database_server <- function(id, r, language){
     
   })
 }
-    
-## To be copied in the UI
-# mod_settings_app_database_ui("settings_app_database_ui_1")
-    
-## To be copied in the server
-# mod_settings_app_database_server("settings_app_database_ui_1")

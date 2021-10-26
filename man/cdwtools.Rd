@@ -4,19 +4,30 @@
 \alias{cdwtools}
 \title{Run the Shiny Application}
 \usage{
-cdwtools(options = list(), language = "EN", ...)
+cdwtools(language = "EN", db_info = list(), options = list(), ...)
 }
 \arguments{
-\item{options}{A list of options that could be passed to shiny::shinyApp() function (list)}
-
 \item{language}{Default language to use in the App (character)}
+
+\item{db_info}{Database connection informations, if it is needed to connect a distant db (list).}
+
+\item{options}{A list of options that could be passed to shiny::shinyApp() function (list)}
 
 \item{...}{arguments to pass to golem_opts.}
 }
 \description{
 Runs the cdwtools Shiny Application.\cr
 Use language argument to choose default language to use ("EN" or "FR").\cr
-Use options to set options to shiny::shinyApp() function, see documentation of shinyApp for more informations.
+Use options to set options to shiny::shinyApp() function, see documentation of shinyApp for more informations.\cr\cr
+To connect to distant database, use db_info argument. db_info is a list, containing these parameters :\cr
+\itemize{
+\item{\strong{sql_lib} : SQL library used, "postgres" or "sqlite" available for now}
+\item{\strong{dbname} : database name (character)}
+\item{\strong{host} : host connection name (character)}
+\item{\strong{port} : connection port (integer)}
+\item{\strong{user} : user name (character)}
+\item{\strong{password} : password in clear (character)}
+}
 }
 \examples{
 \dontrun{

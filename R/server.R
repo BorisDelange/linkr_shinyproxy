@@ -5,18 +5,43 @@
 #' @import shiny
 #' @noRd
 
-app_server <- function(router, language){
+app_server <- function(router, language, db_info){
   function(input, output, session ) {
     
     # Create r reactive value
     r <- reactiveValues()
     
     # Get user ID
-    r$user_id <- 2
+    r$user_id <- 1
     
     # Connection to database
+    # If connection informations have been given in cdwtools() function, use these informations
+    
     r$local_db <- get_local_db()
-    r$db <- get_db()
+    
+    # Add distant db informations in local database
+    
+    observeEvent(r$local_db, {
+      
+      if (length(db_info) > 0){
+        tryCatch({
+          
+          query <- DBI::dbSendStatement(r$local_db, "UPDATE options SET value = 'distant' WHERE category = 'distant_db' AND name = 'connection_type'")
+          DBI::dbClearResult(query)
+          
+          # Insert each parameter of db_info
+          sapply(names(db_info), function(name){
+            query <- DBI::dbSendStatement(r$local_db, paste0("UPDATE options SET value = '", db_info[[name]], "' WHERE category = 'distant_db' AND name = '", name, "'"))
+            DBI::dbClearResult(query)
+          })
+        },
+        error = function(e) print(translate(language, "error_insert_distant_db_info")),
+        warning = function(w) print(translate(language, "error_insert_distant_db_info")))
+      }
+    })
+    
+    r$db <- get_db(db_info = db_info, language = language)
+    
     
     # Close DB connection on exit
     session$onSessionEnded(function() {

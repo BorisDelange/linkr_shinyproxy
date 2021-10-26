@@ -14,6 +14,7 @@ add_settings_new_data(
   table = character(),
   required_textfields = character(),
   req_unique_values = character(),
+  required_dropdowns = "all",
   dropdowns = character()
 )
 }
@@ -35,6 +36,8 @@ add_settings_new_data(
 \item{required_textfields}{Which textfields are required (not empty) before inserting data in database ? (character)}
 
 \item{req_unique_values}{Which fields require unique values before inserting data in database ? (character)}
+
+\item{required_dropdowns}{Which dropdowns are required (not empty) before insert data in database ? Default to "all" (character)}
 
 \item{dropdowns}{Tibble with the values of distinct dropdowns names (tibble)}
 }

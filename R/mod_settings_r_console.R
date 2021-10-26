@@ -65,9 +65,11 @@ mod_settings_r_console_server <- function(id, r, language){
       # If user has access
       req("r_console_edit_code_card" %in% r$user_accesses)
       
+      edited_code <- isolate(input$ace_code %>% stringr::str_replace_all("\r", "\n"))
+      
       output$code_result <- renderText(
         execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
-          language = language, r = r, edited_code = isolate(input$ace_code), code_type = "server"))
+          language = language, r = r, edited_code = edited_code, code_type = "server"))
       })
   })
 }

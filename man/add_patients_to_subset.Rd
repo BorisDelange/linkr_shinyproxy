@@ -9,7 +9,7 @@ add_patients_to_subset(
   r = shiny::reactiveValues(),
   patients = tibble::tibble(),
   subset_id = integer(),
-  erase = FALSE,
+  success_notification = TRUE,
   language = "EN"
 )
 }
@@ -22,12 +22,12 @@ add_patients_to_subset(
 
 \item{subset_id}{ID of subset (integer)}
 
-\item{erase}{if TRUE, erase patients contained in selected subset (logical)}
+\item{success_notification}{Should a message bar be displayed if insertion of patient(s) is a success ? Default to TRUE}
 
 \item{language}{language used for error / warning messages (character, default = "EN")}
 }
 \description{
-Add patients to a subset
+Add patients to a subset, only if not already in the subset
 }
 \details{
 ...
@@ -35,6 +35,6 @@ Add patients to a subset
 \examples{
 \dontrun{
 patients <- tibble::tribble(~patient_id, 123L, 456L, 789L)
-subset_add_patients(output = output, r = r, patients = patients, subset_id = 3, erase = FALSE, language = "EN")
+subset_add_patients(output = output, r = r, patients = patients, subset_id = 3, language = "EN")
 }
 }

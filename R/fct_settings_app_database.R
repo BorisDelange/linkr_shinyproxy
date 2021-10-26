@@ -1,29 +1,26 @@
-#' settings_app_database 
-#'
-#' @description A fct function
-#'
-#' @return The return value, if any, from executing the function.
-#'
-#' @noRd
-
-app_database_toggle_card <- function(language, ns, activated = ""){
-  toggles <- tagList()
-  sapply(c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card"), function(label){
-    toggles <<- tagList(toggles, make_toggle(language, ns, label = label,
-                                   id = paste0(label, "_toggle"), value = ifelse(label %in% activated, TRUE, FALSE), inline = TRUE))
-  })
-  make_card("",
-    shiny.fluent::Stack(
-      horizontal = TRUE, tokens = list(childrenGap = 10), toggles
-    )
-  )
-}
+#' Create a new table
+#' 
+#' @description Create a new table in the database
+#' 
+#' @param db Database connection object (DBI)
+#' @param table_name Name of the new table (character)
+#' @param dataframe Dataframe with table informations (columns names & type of value) (dataframe / tibble)
+#' @examples 
+#' \dontrun{
+#'   db_create_table(db, "my_new_table", tibble::tibble(id = integer(), name = character()))
+#' }
 
 db_create_table <- function(db, table_name, dataframe){
   if (table_name %not_in% DBI::dbListTables(db)) DBI::dbWriteTable(db, table_name, dataframe)
 }
 
+#' Create tables
+#' 
+#' @description Create all application database required tables. It creates the tables if they do not already exist.
+#' @param db Database connection object (DBI)
+
 db_create_tables <- function(db){
+  
   # Create tables if not exist
   
   # In table users, create an admin user
@@ -118,6 +115,12 @@ db_create_tables <- function(db){
     tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
 }
 
+#' Connection to local database
+#' 
+#' @description Get a connection to local application database. If tables do not already exist, there are created
+#' (with db_create_tables function). It uses RSQLite library.
+#' It also adds distant database connection informations in the options table, if they do not already exist.
+
 get_local_db <- function(){
   
   # Connect to local database
@@ -125,10 +128,13 @@ get_local_db <- function(){
   
   db_create_tables(db)
   
-  # Add distant db rows if not exist
+  # Add distant db rows if they do not already exist
   if (DBI::dbGetQuery(db, "SELECT COUNT(id) FROM options WHERE category = 'distant_db'") != 7){
+    
     DBI::dbSendStatement(db, "DELETE FROM options WHERE category = 'distant_db'")
+    
     last_row <- DBI::dbGetQuery(db, "SELECT COALESCE(MAX(id), 0) FROM options")
+    
     query <- paste0("INSERT INTO options(id, category, name, value, deleted)
                      SELECT ", last_row + 1, ", 'distant_db', 'connection_type', 'local', FALSE 
                UNION SELECT ", last_row + 2, ", 'distant_db', 'sql_lib', 'postgres', FALSE
@@ -138,50 +144,119 @@ get_local_db <- function(){
                UNION SELECT ", last_row + 6, ", 'distant_db', 'user', '', FALSE
                UNION SELECT ", last_row + 7, ", 'distant_db', 'password', '', FALSE")
     DBI::dbSendStatement(db, query)
+    DBI::dbClearResult(query)
   }
   
+  # Return DBI db object
   db
 }
 
-test_distant_db <- function(local_db){
+#' Test connection to distant database
+#'
+#' @description Test the connection to a distant database. If gets the distant db informations in local database
+#' and then tries to connect to this distant database.
+#' @param local_db DBI db object of local database
+#' @param language Language used to display messages (character)
+
+test_distant_db <- function(local_db, language = "EN"){
+  
   result <- "fail"
+  
+  # Get distant db informations in local database
   db_info <- DBI::dbGetQuery(local_db, "SELECT * FROM options WHERE category = 'distant_db'") %>% tibble::as_tibble()
   db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
-  try({
+  
+  # Try the connection
+  tryCatch({
+    
+    # Postgres
     if (db_info$sql_lib == "postgres") DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$dbname, host = db_info$host,
       port = db_info$port, user = db_info$user, password = db_info$password)
+    
+    # SQLite
+    if (db_info$sql_lib == "postgres") DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$dbname, host = db_info$host,
+      port = db_info$port, user = db_info$user, password = db_info$password)
     result <- "success"
-  })
+  },
+  error = function(e) print(translate(language, "failed_connect_distant_db")),
+  warning = function(w) print(translate(language, "failed_connect_distant_db")))
+  
+  # Result is fail or success
   result
 }
 
-get_distant_db <- function(local_db){
-  # If we fail to connect to distant db, the return is the local db
+#' Connection to distant database
+#' 
+#' @description Get a connection to a distant database. If the distant connection fails, returns local DBI connection object.
+#' @param local_db DBI db object of local database
+#' @param language Language used to display messages (character)
+
+get_distant_db <- function(local_db, db_info = list(), language = "EN"){
+  
+  # If we fail to connect to distant db, the result is the local db
   db <- local_db
   
-  # Get db connection infos
-  db_info <- DBI::dbGetQuery(db, "SELECT * FROM options WHERE category = 'distant_db'") %>% tibble::as_tibble()
-  db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
+  # If db_info is not empty, use these informations
+  # Else, use distant db informations saved in local db
   
-  try(
+  if (length(db_info) == 0){
+    # Get db connection infos
+    db_info <- DBI::dbGetQuery(db, "SELECT * FROM options WHERE category = 'distant_db'") %>% tibble::as_tibble()
+    db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
+  }
+  
+  # Try distant connection
+  tryCatch({
+    
+    # Postgres
     if (db_info$sql_lib == "postgres") db <- DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$dbname, host = db_info$host,
       port = db_info$port, user = db_info$user, password = db_info$password)
-  )
+    
+    # SQLite
+    if (db_info$sql_lib == "sqlite") db <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$dbname, host = db_info$host,
+      port = db_info$port, user = db_info$user, password = db_info$password)
+  }, 
+  error = function(e) print(translate(language, "failed_connect_distant_db")),
+  warning = function(w) print(translate(language, "failed_connect_distant_db")))
   
+  # Create tables if they do not already exist
   db_create_tables(db)
   
+  # Returns distant db DBI object is connection is a success, local db DBI object else
   db
 }
 
-get_db <- function(){
+#' Get database DBI object
+#'
+#' @description Get final database connection DBI object.
+#' First, get local database connection. 
+#' Second, if db_info argument is not empty, try a connection with these informations.
+#' Third, if db_info argument is empty or connection fails and if the choice recorded in local database is distant db, try distant db connection.
+#' @param db_info DB informations given in cdwtools function
+#' @param language Language used to display messages (character)
+
+get_db <- function(db_info, language = "EN"){
+  
+  # First, get local database connection
+  
   db <- get_local_db()
   
-  # If the choice is set to distant db, return distant db
-  # Else, return local db
-  DBI::dbGetQuery(db, "SELECT value FROM options WHERE category = 'distant_db' AND name = 'connection_type'") %>%
-    dplyr::pull() -> choice_distant_db
-  if (choice_distant_db == "distant") db <- get_distant_db(db)
+  # Second, if db_info is not empty, try this connection
   
+  if (length(db_info) > 0){
+    get_distant_db(local_db = db, db_info = db_info, language = language)
+  }
+  
+  # Third, if db_info is empty, get distant db if parameters in local db are set to distant connection
+  # If connection fails, returns local db
+  
+  if (length(db_info) == 0){
+    DBI::dbGetQuery(db, "SELECT value FROM options WHERE category = 'distant_db' AND name = 'connection_type'") %>%
+      dplyr::pull() -> choice_distant_db
+    if (choice_distant_db == "distant") db <- get_distant_db(local_db = db, language = language)
+  }
+  
+  # Returns distant db connection if succesfully loaded, returns local db connection else
   db
 }
 
