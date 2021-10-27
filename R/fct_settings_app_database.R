@@ -113,6 +113,9 @@ db_create_tables <- function(db){
   
   db_create_table(db, "cache",
     tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
+  
+  db_create_table(db, "log",
+    tibble::tibble(id = integer(), category = character(), name = character(), value = character(), creator_id = integer(), datetime = character()))
 }
 
 #' Connection to local database
@@ -449,4 +452,14 @@ check_authentification <- function(db){
     else list(result = FALSE)
 
   }
+}
+
+#' Get last row ID of a table
+#'
+#' @param con DBI connection object to the database
+#' @param table Name of the table
+
+get_last_row <- function(con, table){
+  glue::glue_sql("SELECT COALESCE(MAX(id), 0) FROM {`table`}", .con = con) -> sql
+  DBI::dbGetQuery(con, sql) %>% dplyr::pull() %>% as.integer()
 }

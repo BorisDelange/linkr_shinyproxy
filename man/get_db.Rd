@@ -4,9 +4,16 @@
 \alias{get_db}
 \title{Get database DBI object}
 \usage{
-get_db()
+get_db(db_info = list(), language = "EN")
+}
+\arguments{
+\item{db_info}{DB informations given in cdwtools function}
+
+\item{language}{Language used to display messages (character)}
 }
 \description{
 Get final database connection DBI object.
-First, get local database connection. Second, if the choice recorded in local database is distant db, try distant db connection.
+First, get local database connection. 
+Second, if db_info argument is not empty, try a connection with these informations.
+Third, if db_info argument is empty or connection fails and if the choice recorded in local database is distant db, try distant db connection.
 }

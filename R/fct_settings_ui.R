@@ -380,7 +380,7 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
           div(shiny.fluent::PrimaryButton.shinyInput(ns("add_thesaurus_item"), translate(language, "add")), style = "margin-top:38px;"),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("remove_thesaurus_item"), translate(language, "remove")), style = "margin-top:38px;"),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset")), style = "margin-top:38px;")), br(),
-        textOutput(ns("thesaurus_selected_items"))) -> choice_data
+        uiOutput(ns("thesaurus_selected_items"))) -> choice_data
     }
     if (module_type_id == 2){
       tagList(shiny.fluent::Stack(

@@ -46,12 +46,13 @@ mod_page_header_ui <- function(language){
           shiny.fluent::CommandBarItem(translate(language, "settings"), "Settings", iconOnly = TRUE,
                                        href = shiny.router::route_link("settings/general_settings")),
           shiny.fluent::CommandBarItem(translate(language, "help"), "Info", iconOnly = TRUE,
-                                       href = "https://borisdelange.github.io/cdwtools/articles/", target = "_blank"),
+                                       href = "https://borisdelange.github.io/cdwtools/articles/", target = "_blank")#,
           # shiny.fluent::ActionButton.shinyInput("disconnect", "Disconnect")
           # shiny.fluent::CommandBarItem(translate(language, "disconnect"), "PowerButton", iconOnly = TRUE)
-          shiny.fluent::CommandBarItem(list(id = "disconnect", key = "disconnect", iconProps = list(iconName = "PowerButton")))
+         
+          # shiny.fluent::CommandBarItem(list(id = "disconnect", key = "disconnect", iconProps = list(iconName = "PowerButton")))
         )
-      )#,
+      )#, shinymanager::fab_button(position = "top-right", animation = "zoomin", toggle = "click")#,
       # textOutput("test")
     )
   )

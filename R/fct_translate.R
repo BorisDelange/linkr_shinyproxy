@@ -942,7 +942,11 @@ get_translations <- function(){
             "EN", "plugins_edit_data", "Edit data",
             "FR", "plugins_edit_data", "Modifier des données",
             "EN", "never", "Never",
-            "FR", "never", "Jamais"
+            "FR", "never", "Jamais",
+            "EN", "insert_new_data", "Insert new data",
+            "FR", "insert_new_data", "Ajout nouvelles données",
+            "EN", "sql_query", "SQL query",
+            "FR", "sql_query", "Requête SQL"
             ) -> data
     # readr::write_csv(data, needed_file)
   # }

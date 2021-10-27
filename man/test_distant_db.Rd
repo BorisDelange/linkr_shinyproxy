@@ -4,10 +4,12 @@
 \alias{test_distant_db}
 \title{Test connection to distant database}
 \usage{
-test_distant_db(local_db)
+test_distant_db(local_db, language = "EN")
 }
 \arguments{
 \item{local_db}{DBI db object of local database}
+
+\item{language}{Language used to display messages (character)}
 }
 \description{
 Test the connection to a distant database. If gets the distant db informations in local database

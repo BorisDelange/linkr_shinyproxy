@@ -66,7 +66,7 @@ mod_settings_app_database_ui <- function(id, language){
       make_card(
         translate(language, "app_db_tables"),
         div(
-          br(), shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type"), value = "local", options = list(
+          br(), shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type_tables"), value = "local", options = list(
             list(key = "local", text = translate(language, "local")),
             list(key = "distant", text = translate(language, "distant"))
           ), className = "inline_choicegroup"),
@@ -147,7 +147,11 @@ mod_settings_app_database_server <- function(id, r, language){
       
       # Fill textfields & choicegroup with recorded informations in local database
       sapply(names(db_info), function(name){
-        if (name == "connection_type") shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type", value = db_info[[name]])
+        if (name == "connection_type"){
+          shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type", value = db_info[[name]])
+          shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type_tables", value = db_info[[name]])
+          shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type_request", value = db_info[[name]])
+        }
         if (name != "connection_type") shiny.fluent::updateTextField.shinyInput(session, name, value = db_info[[name]])
       })
     })

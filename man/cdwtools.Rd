@@ -17,8 +17,8 @@ cdwtools(language = "EN", db_info = list(), options = list(), ...)
 }
 \description{
 Runs the cdwtools Shiny Application.\cr
-Use language argument to choose default language to use ("EN" or "FR").\cr
-Use options to set options to shiny::shinyApp() function, see documentation of shinyApp for more informations.\cr\cr
+Use language argument to choose language to use ("EN" or "FR" available).\cr
+Use options to set options to shiny::shinyApp() function, see documentation of shiny::shinyApp for more informations.\cr\cr
 To connect to distant database, use db_info argument. db_info is a list, containing these parameters :\cr
 \itemize{
 \item{\strong{sql_lib} : SQL library used, "postgres" or "sqlite" available for now}
@@ -31,7 +31,15 @@ To connect to distant database, use db_info argument. db_info is a list, contain
 }
 \examples{
 \dontrun{
-cdwtools(language = "EN")
+db_info <- list(
+  sql_lib = "postgres",
+  dbname = "cdwtools",
+  host = "localhost",
+  port = 5432,
+  user = "admin",
+  passord = "admin"
+)
+cdwtools(language = "EN", db_info = db_info)
 }
 See `?golem::get_golem_options` for more details.
 }
