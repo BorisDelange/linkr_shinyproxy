@@ -55,7 +55,7 @@ get_page_options <- function(id = character()){
 #' @param table_name Name of the table (character)
 #' @param language Language used (charater)
 #' @examples 
-#' get_col_names(table_name == "datamarts", language = "EN")
+#' get_col_names(table_name = "datamarts", language = "EN")
 get_col_names <- function(table_name = character(), language = "EN"){
   result <- ""
   

@@ -149,7 +149,7 @@ mod_settings_plugins_server <- function(id, r, language){
         start <- isolate(input$management_datatable_state$start)
 
         render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-          col_names =  get_col_names("plugins"), table = "plugins", dropdowns = dropdowns_datatable, action_buttons = action_buttons,
+          col_names =  get_col_names(table_name = "plugins", language = language), table = "plugins", dropdowns = dropdowns_datatable, action_buttons = action_buttons,
           datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
           editable_cols = c("name"), sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths)
       })
@@ -479,10 +479,10 @@ mod_settings_plugins_server <- function(id, r, language){
             grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>%
             dplyr::pull(id)
           
-          r$thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT thesaurus_id, item_id, display_name, unit AS unit_thesaurus FROM thesaurus_items ",
+          r$plugins_thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT thesaurus_id, item_id, display_name, unit AS unit_thesaurus FROM thesaurus_items ",
           "WHERE thesaurus_id IN ( ", paste(thesaurus_ids, collapse = ","), ") AND deleted IS FALSE"))
           
-          thesaurus_selected_items <- r$thesaurus_selected_items %>% dplyr::left_join(r$thesaurus_items, by = c("thesaurus_id", "item_id"))
+          thesaurus_selected_items <- r$thesaurus_selected_items %>% dplyr::left_join(r$plugins_thesaurus_items, by = c("thesaurus_id", "item_id"))
           
           # Initialize variables
   

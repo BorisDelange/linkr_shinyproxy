@@ -291,7 +291,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # search_recorded <- ""
           
           render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-            col_names =  get_col_names(table), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
+            col_names =  get_col_names(table_name = table, language = language), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
             editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
             filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
@@ -316,8 +316,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         observeEvent(input$sub_datatable_cell_edit, {
           edit_info <- input$sub_datatable_cell_edit
           edit_info$col <- edit_info$col + 2 # We have removed id & thesaurus_id cols, so need to add two to col index
-          r$thesaurus_items_temp <- DT::editData(r$thesaurus_items_temp, edit_info, rownames = FALSE)
-          r$thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
+          r$sub_thesaurus_items_temp <- DT::editData(r$sub_thesaurus_items_temp, edit_info, rownames = FALSE)
+          r$sub_thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
         })
       
         # Each time a dropdown is updated, modify temp variable
@@ -548,7 +548,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       observeEvent(input$datamart, {
         if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- paste0(input$datamart, "only_used_items")
         else r$thesaurus_refresh_thesaurus_items <- r$thesaurus_refresh_thesaurus_items <- paste0(input$datamart, "all_items")
-        showNotification(r$thesaurus_refresh_thesaurus_items)
       })
       
       observeEvent(r$thesaurus_refresh_thesaurus_items, {
@@ -557,7 +556,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         
         # Get all items from the chosen thesaurus
         
-        r$thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
+        r$sub_thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
         
         if (length(input$datamart) > 0){
           if (input$datamart != ""){
@@ -581,54 +580,54 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
             
             # Transform count_rows cols to integer, to be sortable
-            r$thesaurus_items <- r$thesaurus_items %>%
+            r$sub_thesaurus_items <- r$sub_thesaurus_items %>%
               dplyr::left_join(count_items_rows, by = "item_id") %>%
               dplyr::left_join(count_patients_rows, by = "item_id") %>%
               dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
               dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
             
             # If r$thesaurus_refresh_thesaurus_items is set to "only_used_items", filter on count_items_rows > 0
-            if (grepl("only_used_items", r$thesaurus_refresh_thesaurus_items)) r$thesaurus_items <- r$thesaurus_items %>% dplyr::filter(count_items_rows > 0)
+            if (grepl("only_used_items", r$thesaurus_refresh_thesaurus_items)) r$sub_thesaurus_items <- r$sub_thesaurus_items %>% dplyr::filter(count_items_rows > 0)
             
-            r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+            r$sub_thesaurus_items_temp <- r$sub_thesaurus_items %>% dplyr::mutate(modified = FALSE)
           }
         }
         
-        r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+        r$sub_thesaurus_items_temp <- r$sub_thesaurus_items %>% dplyr::mutate(modified = FALSE)
       })
 
-      observeEvent(r$thesaurus_items_temp, {
-        
+      observeEvent(r$sub_thesaurus_items_temp, {
+
         # Transform item_id to character, to be filterable in datatable
-        r$thesaurus_items_temp <- r$thesaurus_items_temp %>% dplyr::mutate_at("item_id", as.character)
-        
+        r$sub_thesaurus_items_temp <- r$sub_thesaurus_items_temp %>% dplyr::mutate_at("item_id", as.character)
+
         # Parameters for the datatable
         if ("thesaurus_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
         editable_cols <- c("display_name", "unit")
         searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
         factorize_cols <- c("category", "unit")
-        
+
         # If we have count cols
-        if ("count_patients_rows" %in% names(r$thesaurus_items)){
+        if ("count_patients_rows" %in% names(r$sub_thesaurus_items)){
           sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
           centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-          col_names <- get_col_names("thesaurus_items_with_counts")
+          col_names <- get_col_names("thesaurus_items_with_counts", language = language)
         }
         else {
           sortable_cols <- c("id", "item_id", "name", "display_name", "category")
           centered_cols <- c("id", "item_id", "unit", "datetime", "action")
-          col_names <- get_col_names("thesaurus_items")
+          col_names <- get_col_names("thesaurus_items", language = language)
         }
-        
+
         # Restore datatable state
         page_length <- isolate(input$sub_datatable_state$length)
         start <- isolate(input$sub_datatable_state$start)
 
         # Render datatable
         render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "sub_datatable",
-          col_names =  col_names, table = "thesaurus_items", action_buttons = action_buttons,
+          col_names =  col_names, table = "sub_thesaurus_items", action_buttons = action_buttons,
           datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, 
+          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
           searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE)
       })
      

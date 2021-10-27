@@ -370,11 +370,11 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # If page is plugins, remove column description from datatable (it will be editable from datatable row options edition)
   # /!\ Careful : it changes the index of columns, use to update informations directy on datatable
   if (table == "plugins") data <- data %>% dplyr::select(-description)
-  if (table == "thesaurus_items") data <- data %>% dplyr::select(-id, -thesaurus_id)
+  if (grepl("thesaurus_items", table)) data <- data %>% dplyr::select(-id, -thesaurus_id)
   
   # Add a column action in the DataTable
   # Action column is already loaded for thesaurus_items (cache system)
-  if (table != "thesaurus_items" & length(action_buttons) != 0) data["action"] <- NA_character_
+  if (!grepl("thesaurus_items", table) & length(action_buttons) != 0) data["action"] <- NA_character_
 
   # Drop deleted column & modified column : we don't want to show them in the datatable
   if (nrow(data) != 0) data <- data %>% dplyr::select(-deleted, -modified)
@@ -392,7 +392,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
 
   # Loop over data only if necessary (eg not necessary for thesaurus_items, with a lot of rows...)
   # Not necessary if no dropdowns, no action_buttons & no creator_id col
-  if (table != "thesaurus_items" & (length(dropdowns) != 0 | length(action_buttons) != 0 | "creator_id" %in% names(data))){
+  if (!grepl("thesaurus_items", table) & (length(dropdowns) != 0 | length(action_buttons) != 0 | "creator_id" %in% names(data))){
   
     for (i in 1:nrow(data)){
 
@@ -844,16 +844,26 @@ update_settings_datatable <- function(input, r = shiny::reactiveValues(), ns = s
         # When we load a page, every dropdown triggers the event
         # Change temp variable only if new value is different than old value
         old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]]
+        new_value <- NA_integer_
         
         # If thesaurus, data_source_id can accept multiple values (converting to string)
         if (table == "thesaurus") new_value <- toString(as.integer(input[[paste0("data_sources", id)]]))
         if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins", "users", "patient_lvl_modules", "aggregated_modules")){
-          new_value <- as.integer(input[[paste0(get_plural(word = dropdown_input), id)]])}
+          # if (!is.null(input[[paste0(get_plural(word = dropdown_input), id)]])) {
+          #   if (length(input[[paste0(get_plural(word = dropdown_input), id)]]) == 0) new_value <- NA_integer_
+            new_value <- coalesce2("int", input[[paste0(get_plural(word = dropdown_input), id)]])
+          # }
+        }
         
-        if (length(new_value) != 0){
-          if (new_value != old_value){
+        # showNotification(new_value)
+
+        if (length(new_value) > 0 & length(old_value) > 0){
+          if (new_value == "" | is.na(new_value)){
+            r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]] <- NA_integer_
+            r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
+          }
+          else if (old_value == "" | is.na(old_value) | new_value != old_value){
             r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]] <- new_value
-            # Store that this row has been modified
             r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
           }
         }
@@ -916,20 +926,25 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   }
   
   # Save changes in database
-  ids_to_del <- r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+  
+  if (table == "thesaurus_items") r_table <- "sub_thesaurus_items"
+  else r_table <- table
+  
+  ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
   DBI::dbSendStatement(r$db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
   DBI::dbClearResult(query)
   
   # If action in columns, remove before insert into database (for thesaurus_items with cache system)
   # Same with count_items_rows (and count_patients_rows, always with count_items_rows)
-  data <- r[[paste0(table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
+  data <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
   if ("action" %in% names(data)) data <- data %>% dplyr::select(-action)
   if ("count_items_rows" %in% names(data)) data <- data %>% dplyr::select(-count_items_rows, -count_patients_rows)
   
   DBI::dbAppendTable(r$db, table, data)
   
   # Reload r variable
-  update_r(r = r, table = table, language = language)
+  if (table == "thesaurus_items") r$thesaurus_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
+  else update_r(r = r, table = table, language = language)
   
   # Notification to user
   show_message_bar(output, 2, "modif_saved", "success", language)
@@ -995,10 +1010,12 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
   DBI::dbSendStatement(r$db, paste0("UPDATE ", table, " SET deleted = TRUE WHERE id = ", row_deleted))
   
   # Update r vars
-  if (table == "thesaurus_items"){
-    r$thesaurus_items <- create_datatable_cache(r = r, module_id = id, thesaurus_id = link_id, category = category)
-    r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-  }
+  # For thesaurus_items : the r variable is r$sub_thesaurus_items (from page settings / data management / thesaurus)
+  # This page is the only place from where we can delete a thesaurus item
+  # Distinct r$ names are to avoid conflict with other pages (settings / plugins & settings / modules)
+  
+  if (table == "thesaurus_items") r$thesaurus_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_delete")
+  
   if (table != "thesaurus_items") update_r(r = r, table = table, language = language)
   
   # Notification to user
