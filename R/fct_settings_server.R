@@ -372,7 +372,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # If page is plugins, remove column description from datatable (it will be editable from datatable row options edition)
   # /!\ Careful : it changes the index of columns, use to update informations directy on datatable
   if (table == "plugins") data <- data %>% dplyr::select(-description)
-  if (grepl("thesaurus_items", table)) data <- data %>% dplyr::select(-id, -thesaurus_id)
+  if (grepl("thesaurus_items", table)) data <- data %>% dplyr::select(-id, -thesaurus_id, -datetime)
   
   # Add a column action in the DataTable
   # Action column is already loaded for thesaurus_items (cache system)

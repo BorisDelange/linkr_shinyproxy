@@ -117,7 +117,7 @@ mod_settings_sub_modules_ui <- function(id, language){
               ),
               br(),
               DT::DTOutput(ns("thesaurus_items")), br(),
-              shiny.fluent::PrimaryButton.shinyInput(ns("add"), translate(language, "add"))
+              shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element"), translate(language, "add"))
             )
           )
         ) -> result
@@ -364,18 +364,17 @@ mod_settings_modules_server <- function(id, r, language){
                 # If r$modules_refresh_thesaurus_items is set to "only_used_items", filter on count_items_rows > 0
                 if (grepl("only_used_items", r$modules_refresh_thesaurus_items)) r$modules_thesaurus_items <- r$modules_thesaurus_items %>% dplyr::filter(count_items_rows > 0)
                 
-                # r$modules_thesaurus_items <- r$modules_thesaurus_items %>% dplyr::mutate(modified = FALSE)
+                r$modules_thesaurus_items_temp <- r$modules_thesaurus_items %>% dplyr::mutate(modified = FALSE)
               }
             }
             
-            # r$modules_thesaurus_items_temp <- r$modules_thesaurus_items %>% dplyr::mutate(modified = FALSE)
+            r$modules_thesaurus_items_temp <- r$modules_thesaurus_items %>% dplyr::mutate(modified = FALSE)
           })
             
-          observeEvent(r$modules_thesaurus_items, {
+          observeEvent(r$modules_thesaurus_items_temp, {
             
-            # Transform category to factor, to be filtered in datatable
-            # Transform item_id col to be filtered also
-            r$modules_thesaurus_items <- r$modules_thesaurus_items %>% 
+            # Transform category to factor, to be filtering in datatable
+            r$modules_thesaurus_items_temp <- r$modules_thesaurus_items_temp %>% 
               dplyr::mutate_at("category", as.factor) %>%
               dplyr::mutate_at("item_id", as.character)
             
@@ -424,7 +423,9 @@ mod_settings_modules_server <- function(id, r, language){
               
             observeEvent(input$thesaurus_items_cell_edit, {
               edit_info <- input$thesaurus_items_cell_edit
-              r$modules_thesaurus_items <- DT::editData(r$modules_thesaurus_items, edit_info, rownames = FALSE)
+              edit_info$col <- edit_info$col + 2 # Cause id & thesaurus_id cols removed
+              r$modules_thesaurus_items_temp <- DT::editData(r$modules_thesaurus_items, edit_info, rownames = FALSE)
+              r$modules_thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
             })
           
             ##########################################
@@ -456,7 +457,7 @@ mod_settings_modules_server <- function(id, r, language){
   
                 # Get item informations from datatable / r$modules_thesaurus_items
                 # NB : the thesaurus_item_id saved in the database is the thesaurus ITEM_ID, no its ID in the database (in case thesaurus is deleted or re-uploaded)
-                item <- r$modules_thesaurus_items %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", name))
+                item <- r$modules_thesaurus_items_temp %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", name))
                 
                 # Add item to selected items
                 r$modules_thesaurus_selected_items <- r$modules_thesaurus_selected_items %>% dplyr::bind_rows(
@@ -507,12 +508,10 @@ mod_settings_modules_server <- function(id, r, language){
                 ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text) 
             })
         }
-          
-          
-        
 
         ##########################################
         # When add button is clicked             #
+        # For modules & modules families         #
         ##########################################
         
         # When add button is clicked
@@ -566,8 +565,83 @@ mod_settings_modules_server <- function(id, r, language){
 
           r[[paste0(table, "_toggle")]] <- r[[paste0(table, "_toggle")]] + 1
         })
+        
+        ##########################################
+        # When add button is clicked             #
+        # For modules elements                   #
+        ##########################################
+        
+        observeEvent(input$add_module_element, {
+          
+          new_data <- list()
+          
+          new_data_var <- c("name" = "char", "description" = "char", "module_family" = "int", "module_new_element" = "int", "plugin" = "int")
+          
+          # Transform values of textfields & dropdowns to chosen variable type
+          sapply(names(new_data_var),
+            function(input_name){
+              new_data[[input_name]] <<- coalesce2(type = new_data_var[[input_name]], x = input[[input_name]])
+            })
+          
+          # Check if name is not empty
+          if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = translate(language, paste0("provide_valid_name")))
+          else shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = NULL)
+          req(!is.na(new_data$name))
+
+          # Check if values required to be unique are unique
+          # sapply(req_unique_values, function(field){
+
+          sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {new_data$module_new_element}", .con = r$db)
+          distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
+          if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", language)
+          req(new_data$name %not_in% distinct_values)
+
+          # Check if dropdowns are not empty (if all are required)
+          dropdowns_check <- TRUE
+
+          required_dropdowns <- c("module_family", "module_new_element", "plugin")
+
+          sapply(required_dropdowns, function(dropdown){
+            if (is.null(new_data[[dropdown]])) dropdowns_check <<- FALSE
+            else if (is.na(new_data[[dropdown]])) dropdowns_check <<- FALSE
+          })
+
+          if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language)
+          req(dropdowns_check)
+
+          # Check if list of items is not empty
+          if (length(r$modules_thesaurus_selected_items) == 0) show_message_bar(output, 2, "thesaurus_items_empty", "severeWarning", language)
+          req(length(r$modules_thesaurus_selected_items) > 0)
+          if (nrow(r$modules_thesaurus_selected_items) == 0) show_message_bar(output, 2, "thesaurus_items_empty", "severeWarning", language)
+          req(nrow(r$modules_thesaurus_selected_items) > 0)
+
+          # Get last_row nb
+          last_row <- get_last_row(r$db, table)
+          last_row_group <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table)) %>% dplyr::pull() %>% as.integer()
+          last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table, " WHERE module_id = ", new_data$module_new_element)) %>% dplyr::pull() %>% as.integer()
+
+          new_data <- r$modules_thesaurus_selected_items %>%
+            dplyr::transmute(
+              id = 1:dplyr::n() + last_row + 1,
+              name = new_data$name,
+              group_id = last_row_group + 1,
+              module_id = new_data$module_new_element,
+              plugin_id = new_data$plugin,
+              thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour,
+              display_order = last_display_order + 1,
+              creator_id = r$user_id,
+              datetime = as.character(Sys.time()),
+              deleted = FALSE
+              )
+          
+          DBI::dbAppendTable(r$db, table, new_data)
+          add_log_entry(r = r, category = paste0(table, " - ", translate(language, "insert_new_data")), name = translate(language, "sql_query"), value = toString(new_data))
+          
+          show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language)
+          
+        })
+        
       }
-      
       
       ##########################################
       # Management datatable                   #
