@@ -351,40 +351,13 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   if (paste0(table, "_see_all_data") %not_in% r$user_accesses) {
     
     # If on these tables, show only data who the user is the creator
-    if (table %in% c("data_sources", "subsets", "thesaurus")){
+    if (table %in% c("data_sources", "subsets", "thesaurus") | grepl("patient_lvl_modules", table) | grepl("aggregated_modules", table)){
       if (nrow(data) > 0) data <- data %>% dplyr::filter(creator_id == r$user_id)
     }
     
     # For these tables, show data with options parameters
-    if (table %in% c("studies", "datamarts", "plugins")){
-      
-      if (nrow(data) > 0) {
-        
-        # Merge with options
-        options <- data %>% dplyr::inner_join(r$options %>% dplyr::filter(category == get_singular(word = table)) %>% 
-          dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
-        
-        # Vector of authorized data
-        data_allowed <- integer()
-        
-        # For each data row, select those the user has access
-        sapply(unique(options$id), function(data_id){
-          
-          # Loop over each data ID
-          
-          users_allowed_read_group <- options %>% dplyr::filter(id == data_id, option_name == "users_allowed_read_group")
-          users_allowed_read <- options %>% dplyr::filter(id == data_id, option_name == "user_allowed_read")
-          
-          if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") data_allowed <<- c(data_allowed, data_id)
-          else {
-            if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) data_allowed <<- c(data_allowed, data_id)
-          }
-        })
-        
-        # Select authorized data
-        data <- data %>% dplyr::filter(id %in% data_allowed)
-      }
-    }
+    if (table %in% c("studies", "datamarts", "plugins") & nrow(data) > 0) data <- get_authorized_data(r = r, table = table, data = data)
+
   }
   
   # If no row in dataframe, stop here
@@ -1234,66 +1207,36 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
   result
 }
 
+#' Get authorized data for a user
+#'
+#' @param r Shiny r reactive value, used to communicate between modules
+#' @param table Name of the table the data comes from (character)
+#' @param data If data is not r[[table]] (tibble / dataframe)
 
-
-
-##########################################
-# TO DELETE                              #
-########################################## 
-
-
-# delete asap
-settings_delete_row <- function(input, output, r, ns, language, prefix, data_var, message){
+get_authorized_data <- function(r, table, data = tibble::tibble()){
   
-  # Create & show dialog box 
-  output[[paste0(prefix, "_delete_confirm")]] <- shiny.fluent::renderReact(settings_delete_react(prefix, ns, language, r[[paste0(prefix, "_delete_dialog")]]))
+  if (nrow(data) == 0) data <- r[[table]]
   
-  # Whether to close or not delete dialog box
-  observeEvent(input[[paste0(prefix, "_hide_dialog")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
-  observeEvent(input[[paste0(prefix, "_delete_canceled")]], r[[paste0(prefix, "_delete_dialog")]] <<- FALSE)
-  observeEvent(input[[paste0(prefix, "_deleted_pressed")]], r[[paste0(prefix, "_delete_dialog")]] <<- TRUE)
+  # Merge with options
+  options <- data %>% dplyr::inner_join(r$options %>% dplyr::filter(category == get_singular(table)) %>% 
+    dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
   
-  # When the delete is confirmed...
-  observeEvent(input[[paste0(prefix, "_delete_confirmed")]], {
+  # Vector of authorized data
+  data_allowed <- integer()
+  
+  # For each data row, select those the user has access
+  sapply(unique(options$id), function(data_id){
     
-    # Close dialog box
-    r[[paste0(prefix, "_delete_dialog")]] <- FALSE
+    # Loop over each data ID
     
-    # Get the ID of row deleted
-    deleted_pressed_value <- isolate(input[[paste0(prefix, "_deleted_pressed")]])
-    row_deleted <- as.integer(substr(deleted_pressed_value, nchar(paste0(prefix, "_delete_")) + 1, nchar(deleted_pressed_value)))
-    # Delete row in database
-    DBI::dbSendStatement(r$db, paste0("UPDATE ", data_var, " SET deleted = TRUE WHERE id = ", row_deleted))
-    # Update r vars (including temp variable, used in management datatables)
-    r[[data_var]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", data_var))
-    r[[paste0(data_var, "_temp")]] <- r[[data_var]] %>% dplyr::filter(!deleted) %>% dplyr::mutate(modified = FALSE)
+    users_allowed_read_group <- options %>% dplyr::filter(id == data_id, option_name == "users_allowed_read_group")
+    users_allowed_read <- options %>% dplyr::filter(id == data_id, option_name == "user_allowed_read")
     
-    # Notification to user
-    output$warnings3 <- renderUI({
-      div(shiny.fluent::MessageBar(translate(language, message), messageBarType = 3), style = "margin-top:10px;")
-    })
-    shinyjs::show("warnings3")
-    shinyjs::delay(3000, shinyjs::hide("warnings3"))
-  }) 
-}
-
-
-# delete asap
-settings_delete_react <- function(name, ns, language, delete_dialog){
-  dialogContentProps <- list(
-    type = 0,
-    title = translate(language, paste0(name, "_delete")),
-    closeButtonAriaLabel = "Close",
-    subText = translate(language, paste0(name, "_delete_subtext"))
-  )
-  shiny.fluent::Dialog(
-    hidden = !delete_dialog,
-    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", name, "_hide_dialog', Math.random()); }")),
-    dialogContentProps = dialogContentProps,
-    modalProps = list(),
-    shiny.fluent::DialogFooter(
-      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(name, "_delete_confirmed")), text = translate(language, "delete")),
-      shiny.fluent::DefaultButton.shinyInput(ns(paste0(name, "_delete_canceled")), text = translate(language, "dont_delete"))
-    )
-  )
+    if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") data_allowed <<- c(data_allowed, data_id)
+    else if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) data_allowed <<- c(data_allowed, data_id)
+    
+  })
+  
+  # Select authorized data
+  data %>% dplyr::filter(id %in% data_allowed)
 }

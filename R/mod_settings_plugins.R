@@ -142,7 +142,7 @@ mod_settings_plugins_server <- function(id, r, language){
         column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
 
         # Centered columns
-        centered_cols <- c("id", "module_type", "datetime", "action")
+        centered_cols <- c("id", "module_type_id", "datetime", "action")
 
         # Restore datatable state
         page_length <- isolate(input$management_datatable_state$length)
@@ -337,7 +337,7 @@ mod_settings_plugins_server <- function(id, r, language){
         })
         
         # When a thesaurus is chosen
-        # Define r$refresh_thesaurus_items, to update ComboBox
+        # Define r$plugins_refresh_thesaurus_items, to update ComboBox
         # Reset outputs
         
         ##########################################
@@ -347,9 +347,9 @@ mod_settings_plugins_server <- function(id, r, language){
         observeEvent(input$thesaurus, {
 
           if (input$show_only_used_items){
-            if (length(input$patient) > 0) r$refresh_thesaurus_items <- "only_used_items"
+            if (length(input$patient) > 0) r$plugins_refresh_thesaurus_items <- "only_used_items"
           }
-          else r$refresh_thesaurus_items <- "all_items"
+          else r$plugins_refresh_thesaurus_items <- paste0(input$thesaurus, "all_items")
 
           # Reset outputs
           output$code_result_ui <- renderUI("")
@@ -357,19 +357,22 @@ mod_settings_plugins_server <- function(id, r, language){
 
         })
 
-        # When value of show_only_used_items changes, change value or r$refresh_thesaurus_items
+        # When value of show_only_used_items changes, change value or r$plugins_refresh_thesaurus_items
         observeEvent(input$show_only_used_items, {
-          if (input$show_only_used_items) r$refresh_thesaurus_items <- "only_used_items"
-          else r$refresh_thesaurus_items <- "all_items"
+          if (input$show_only_used_items) r$plugins_refresh_thesaurus_items <- "only_used_items"
+          else r$plugins_refresh_thesaurus_items <- "all_items"
         })
 
-        # # When value of patient changes, change value or r$refresh_thesaurus_items, depending on show_only_used_items
+        # When value of patient changes, change value or r$plugins_refresh_thesaurus_items, depending on show_only_used_items
+        # Add input$patient in the value, to refresh even if the value doesn't change 
+        # (if I change patient and keep "all_items"), it won't active observer cause value hasn't changed...
+        
         observeEvent(input$patient, {
-          if (input$show_only_used_items) r$refresh_thesaurus_items <- "only_used_items"
-          else r$refresh_thesaurus_items <- "all_items"
+          if (input$show_only_used_items) r$plugins_refresh_thesaurus_items <- paste0(input$patient, "only_used_items")
+          else r$plugins_refresh_thesaurus_items <- paste0(input$patient, "all_items")
         })
 
-        observeEvent(r$refresh_thesaurus_items, {
+        observeEvent(r$plugins_refresh_thesaurus_items, {
 
           req(input$thesaurus)
           
@@ -379,7 +382,7 @@ mod_settings_plugins_server <- function(id, r, language){
             dplyr::mutate(name = paste0(name, " - ", item_id)) %>%
             dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_id")
 
-          if (r$refresh_thesaurus_items == "only_used_items"){
+          if (grepl("only_used_items", r$plugins_refresh_thesaurus_items)){
             if (length(input$patient) > 0){
 
               patient_items <- tibble::tribble(~thesaurus_name, ~item_id)

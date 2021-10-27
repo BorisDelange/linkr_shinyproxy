@@ -498,9 +498,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         
         # Get link id
         link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
-
-        r$thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = link_id, category = "delete")
-        r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+        
+        # Create a r var to export value to other observers
+        r$thesaurus_link_id <- link_id
 
         # Display sub_datatable card
         shiny.fluent::updateToggle.shinyInput(session, "sub_datatable_card_toggle", value = TRUE)
@@ -531,86 +531,105 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           )
         })
         
-        # If we choose a datamart, add count_rows cols
-        # If we change value of show_only_used_items, reload r value
+        # Set r$thesaurus_refresh_thesaurus_items to "all_items", cause we havn't chosen yet the thesaurus or the datamart
+        r$thesaurus_refresh_thesaurus_items <- paste0(link_id, "all_items")
         
-        observeEvent(input$show_only_used_items, {
-          
-          observeEvent(input$datamart, {
-            
-            # Reload original r variables (to remove previous count_rows cols)
-            r$thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = link_id, category = "delete")
-            r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-            
-            if (input$datamart != ""){
+      })
         
-              count_items_rows <- tibble::tibble()
-              count_patients_rows <- tibble::tibble()
-              
-              # Add count_items_rows in the cache & get it if already in the cache
-              tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = link_id,
-               datamart_id = as.integer(input$datamart), category = "count_items_rows"), 
-               error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language), 
-               warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
-              
-              # Add count_items_rows in the cache & get it if already in the cache
-              tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = link_id,
-                datamart_id = as.integer(input$datamart), category = "count_patients_rows"), 
-                error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language), 
+      observeEvent(input$show_only_used_items, {
+        if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- "only_used_items"
+        else r$thesaurus_refresh_thesaurus_items <- "all_items"
+      })
+      
+      # When value of datamart changes, change value or r$thesaurus_refresh_thesaurus_items, depending on show_only_used_items
+      # Add input$datamart in the value, to refresh even if the value doesn't change 
+      # (if I change datamart and keep "all_items"), it won't active observer cause value hasn't changed...
+      
+      observeEvent(input$datamart, {
+        if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- paste0(input$datamart, "only_used_items")
+        else r$thesaurus_refresh_thesaurus_items <- r$thesaurus_refresh_thesaurus_items <- paste0(input$datamart, "all_items")
+        showNotification(r$thesaurus_refresh_thesaurus_items)
+      })
+      
+      observeEvent(r$thesaurus_refresh_thesaurus_items, {
+        
+        req(r$thesaurus_link_id)
+        
+        # Get all items from the chosen thesaurus
+        
+        r$thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
+        
+        if (length(input$datamart) > 0){
+          if (input$datamart != ""){
+            
+            count_items_rows <- tibble::tibble()
+            count_patients_rows <- tibble::tibble()
+            
+            # Add count_items_rows in the cache & get it if already in the cache
+            tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = r$thesaurus_link_id,
+              datamart_id = as.integer(input$datamart), category = "count_items_rows"),
+                error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language),
                 warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
-              
-              if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language)
-              req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
-              
-              # Transform count_rows cols to integer, to be sortable
-              r$thesaurus_items <- r$thesaurus_items %>% 
-                dplyr::left_join(count_items_rows, by = "item_id") %>% 
-                dplyr::left_join(count_patients_rows, by = "item_id") %>%
-                dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
-                dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
-              
-              # If show_only_used_items is TRUE, filter on count_items_rows > 0
-              if (input$show_only_used_items) r$thesaurus_items <- r$thesaurus_items %>% dplyr::filter(count_items_rows > 0)
-              
-              r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-            }
-          })
-        })
-
-        observeEvent(r$thesaurus_items_temp, {
-          
-          # Transform item_id to character, to be filterable in datatable
-          r$thesaurus_items_temp <- r$thesaurus_items_temp %>% dplyr::mutate_at("item_id", as.character)
-          
-          # Parameters for the datatable
-          if ("thesaurus_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
-          editable_cols <- c("display_name", "unit")
-          searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
-          factorize_cols <- c("category", "unit")
-          
-          # If we have count cols
-          if ("count_patients_rows" %in% names(r$thesaurus_items)){
-            sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
-            centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-            col_names <- get_col_names("thesaurus_items_with_counts")
+            
+            # Add count_items_rows in the cache & get it if already in the cache
+            tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = r$thesaurus_link_id,
+              datamart_id = as.integer(input$datamart), category = "count_patients_rows"),
+                error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language),
+                warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
+            
+            if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language)
+            req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
+            
+            # Transform count_rows cols to integer, to be sortable
+            r$thesaurus_items <- r$thesaurus_items %>%
+              dplyr::left_join(count_items_rows, by = "item_id") %>%
+              dplyr::left_join(count_patients_rows, by = "item_id") %>%
+              dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
+              dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
+            
+            # If r$thesaurus_refresh_thesaurus_items is set to "only_used_items", filter on count_items_rows > 0
+            if (grepl("only_used_items", r$thesaurus_refresh_thesaurus_items)) r$thesaurus_items <- r$thesaurus_items %>% dplyr::filter(count_items_rows > 0)
+            
+            r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
           }
-          else {
-            sortable_cols <- c("id", "item_id", "name", "display_name", "category")
-            centered_cols <- c("id", "item_id", "unit", "datetime", "action")
-            col_names <- get_col_names("thesaurus_items")
-          }
-          
-          # Restore datatable state
-          page_length <- isolate(input$sub_datatable_state$length)
-          start <- isolate(input$sub_datatable_state$start)
+        }
+        
+        r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+      })
 
-          # Render datatable
-          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "sub_datatable",
-            col_names =  col_names, table = "thesaurus_items", action_buttons = action_buttons,
-            datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, 
-            searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE)
-        })
+      observeEvent(r$thesaurus_items_temp, {
+        
+        # Transform item_id to character, to be filterable in datatable
+        r$thesaurus_items_temp <- r$thesaurus_items_temp %>% dplyr::mutate_at("item_id", as.character)
+        
+        # Parameters for the datatable
+        if ("thesaurus_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
+        editable_cols <- c("display_name", "unit")
+        searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
+        factorize_cols <- c("category", "unit")
+        
+        # If we have count cols
+        if ("count_patients_rows" %in% names(r$thesaurus_items)){
+          sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+          centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
+          col_names <- get_col_names("thesaurus_items_with_counts")
+        }
+        else {
+          sortable_cols <- c("id", "item_id", "name", "display_name", "category")
+          centered_cols <- c("id", "item_id", "unit", "datetime", "action")
+          col_names <- get_col_names("thesaurus_items")
+        }
+        
+        # Restore datatable state
+        page_length <- isolate(input$sub_datatable_state$length)
+        start <- isolate(input$sub_datatable_state$start)
+
+        # Render datatable
+        render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "sub_datatable",
+          col_names =  col_names, table = "thesaurus_items", action_buttons = action_buttons,
+          datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
+          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, 
+          searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE)
       })
      
   })

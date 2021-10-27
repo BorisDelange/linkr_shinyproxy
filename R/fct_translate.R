@@ -598,7 +598,7 @@ get_translations <- function(){
             "EN", "patient_lvl_modules_management_card", "Modules management",
             "FR", "patient_lvl_modules_management_card", "Gestion des modules",
             "EN", "aggregated_modules_management_card", "Modules management",
-            "FR", "aggregated_modules_management_card", "Gemostion des modules",
+            "FR", "aggregated_modules_management_card", "Gestion des modules",
             "EN", "modules_management", "Modules management",
             "FR", "modules_management", "Gestion des modules",
             "EN", "modules_options_card", "Module options",
