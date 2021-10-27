@@ -389,247 +389,258 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Edit options by selecting a row        #
       ##########################################
       
-      observeEvent(input$options, {
-        # If user has access
-        req(paste0(table, "_options_card") %in% r$user_accesses)
-        
-        # Show options toggle
-        shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = TRUE)
-        
-        # Render UI of options card
-        output$options_card <- renderUI({
-          # Get category & link_id to get informations in options table
-          category <- get_singular(word = id)
-          link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
+      if (table %in% c("studies", "datamarts")){
           
-          render_settings_options_card(ns = ns, id = id, r = r, title = paste0(get_singular(id), "_options"), 
-            category = category, link_id = link_id, language = language)
+        observeEvent(input$options, {
+          # If user has access
+          req(paste0(table, "_options_card") %in% r$user_accesses)
+          
+          # Show options toggle
+          shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = TRUE)
+          
+          # Render UI of options card
+          output$options_card <- renderUI({
+            # Get category & link_id to get informations in options table
+            category <- get_singular(word = id)
+            link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
+            
+            render_settings_options_card(ns = ns, id = id, r = r, title = paste0(get_singular(id), "_options"), 
+              category = category, link_id = link_id, language = language)
+          })
         })
-      })
-      
-      observeEvent(input$options_save, {
-        # If user has access
-        req(paste0(table, "_options_card") %in% r$user_accesses)
         
-        category <- get_singular(id)
-        
-        data <- list()
-        data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
-        data$users_allowed_read <- input$users_allowed_read
-        data$users_allowed_read_group <- input$users_allowed_read_group
-
-        save_settings_options(output = output, r = r, id = id, category = category, code_id_input = input$options, language = language, data = data)
-      })
+        observeEvent(input$options_save, {
+          # If user has access
+          req(paste0(table, "_options_card") %in% r$user_accesses)
+          
+          category <- get_singular(id)
+          
+          data <- list()
+          data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
+          data$users_allowed_read <- input$users_allowed_read
+          data$users_allowed_read_group <- input$users_allowed_read_group
+  
+          save_settings_options(output = output, r = r, id = id, category = category, code_id_input = input$options, language = language, data = data)
+        })
+      }
       
       ##########################################
       # Edit code by selecting a row           #
       ##########################################
       
-      # Button "Edit code" is clicked on the datatable
-      observeEvent(input$edit_code, {
+      if (table %in% c("datamarts", "subsets", "thesaurus")){
         
-        # If user has access
-        req(paste0(table, "_edit_code_card") %in% r$user_accesses)
-        
-        # Display edit_code card
-        shiny.fluent::updateToggle.shinyInput(session, "edit_code_card_toggle", value = TRUE)
-        
-        # Render UI of this edit_code card
-        output$edit_code_card <- renderUI({
+        # Button "Edit code" is clicked on the datatable
+        observeEvent(input$edit_code, {
           
-          # Get category & link_id variables, to update code table
-          category <- get_singular(id, language)
-          link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
+          # If user has access
+          req(paste0(table, "_edit_code_card") %in% r$user_accesses)
           
-          # Save ID value in r variable, to get this during code execution
-          # Before, restart these variables
-          r$datamart_id <- NA_integer_
-          r$subset_id <- NA_integer_
-          r$thesaurus_id <- NA_integer_
+          # Display edit_code card
+          shiny.fluent::updateToggle.shinyInput(session, "edit_code_card_toggle", value = TRUE)
           
-          if (id == "settings_datamarts") r$datamart_id <- link_id
-          if (id == "settings_thesaurus") r$thesaurus_id <- link_id
-          if (id == "settings_subsets"){
-            r$datamart_id <- 
-              r$studies %>% 
-              dplyr::filter(id == (r$subsets %>% dplyr::filter(id == !!link_id) %>% dplyr::pull(study_id))) %>%
-              dplyr::pull(datamart_id)
-            r$subset_id <- link_id
-          } 
+          # Render UI of this edit_code card
+          output$edit_code_card <- renderUI({
+            
+            # Get category & link_id variables, to update code table
+            category <- get_singular(id, language)
+            link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
+            
+            # Save ID value in r variable, to get this during code execution
+            # Before, restart these variables
+            r$datamart_id <- NA_integer_
+            r$subset_id <- NA_integer_
+            r$thesaurus_id <- NA_integer_
+            
+            if (id == "settings_datamarts") r$datamart_id <- link_id
+            if (id == "settings_thesaurus") r$thesaurus_id <- link_id
+            if (id == "settings_subsets"){
+              r$datamart_id <- 
+                r$studies %>% 
+                dplyr::filter(id == (r$subsets %>% dplyr::filter(id == !!link_id) %>% dplyr::pull(study_id))) %>%
+                dplyr::pull(datamart_id)
+              r$subset_id <- link_id
+            } 
+            
+            # Get code from database
+            code <- list()
+            code$server <- r$code %>% dplyr::filter(category == !!category & link_id == !!link_id) %>% dplyr::pull(code)
+            
+            # Render UI
+            render_settings_code_card(ns = ns, r = r, id = id, title = paste0("edit_", category, "_code"), code = code, link_id = link_id, language = language)
+          })
           
-          # Get code from database
-          code <- list()
-          code$server <- r$code %>% dplyr::filter(category == !!category & link_id == !!link_id) %>% dplyr::pull(code)
-          
-          # Render UI
-          render_settings_code_card(ns = ns, r = r, id = id, title = paste0("edit_", category, "_code"), code = code, link_id = link_id, language = language)
+          # Reset code_result textOutput
+          output$code_result <- renderText("")
         })
         
-        # Reset code_result textOutput
-        output$code_result <- renderText("")
-      })
-      
-      # When save button is clicked
-      observeEvent(input$edit_code_save,
-        save_settings_code(output = output, r = r, id = id, category = get_singular(id, language),
-          code_id_input = input$edit_code, edited_code = input$ace_edit_code, language = "EN"))
-      
-      # When Execute code button is clicked
-        observeEvent(input$execute_code, {
-          edited_code <- isolate(input$ace_edit_code) %>% stringr::str_replace_all("\r", "\n")
-          
-          output$code_result <- renderText(
-            execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
-              language = language, r = r, edited_code = edited_code))
-        })
-          
+        # When save button is clicked
+        observeEvent(input$edit_code_save,
+          save_settings_code(output = output, r = r, id = id, category = get_singular(id, language),
+            code_id_input = input$edit_code, edited_code = input$ace_edit_code, language = "EN"))
+        
+        # When Execute code button is clicked
+          observeEvent(input$execute_code, {
+            edited_code <- isolate(input$ace_edit_code) %>% stringr::str_replace_all("\r", "\n")
+            
+            output$code_result <- renderText(
+              execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
+                language = language, r = r, edited_code = edited_code))
+          })
+      }
       
       ##############################################
       # Generate sub datatable with action button  #
       ##############################################
       
-      # Sub datatable is a datatable in thesaurus page, when we click on the subdatatable button of a thesaurus row
-      # It opens a toggle with a datatable containing items of chosen thesaurus
-      
-      observeEvent(input$sub_datatable, {
-
-        # If user has access
-        req(paste0(table, "_sub_datatable_card") %in% r$user_accesses)
-        
-        # Get link id
-        link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
-        
-        # Create a r var to export value to other observers
-        r$thesaurus_link_id <- link_id
-
-        # Display sub_datatable card
-        shiny.fluent::updateToggle.shinyInput(session, "sub_datatable_card_toggle", value = TRUE)
-
-        # Render UI of this card
-        output$sub_datatable_card <- renderUI({
+      if (table == "thesaurus"){
           
-          # Hide save button if user has no access
-          save_button <- shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), translate(language, "save"))
-          if ("thesaurus_edit_data" %not_in% r$user_accesses) save_button <- ""
-
-          div(id = ns("sub_datatable_card"),
-            # Show current ID in the title
-            make_card(tagList(translate(language, "thesaurus_items_management"), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
-              div(
-                shiny.fluent::Stack(
-                  horizontal = TRUE, tokens = list(childrenGap = 50),
-                  make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
-                    options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name", null_value = TRUE), value = ""),
-                  conditionalPanel(condition = "input.datamart != ''", ns = ns,
-                    div(strong(translate(language, "show_only_used_items"), style = "display:block; padding-bottom:12px;"),
-                      shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
-                ),
-                DT::DTOutput(ns("sub_datatable")),
-                save_button
+        # Sub datatable is a datatable in thesaurus page, when we click on the subdatatable button of a thesaurus row
+        # It opens a toggle with a datatable containing items of chosen thesaurus
+        
+        observeEvent(input$sub_datatable, {
+  
+          # If user has access
+          req(paste0(table, "_sub_datatable_card") %in% r$user_accesses)
+          
+          # Get link id
+          link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
+          
+          # Create a r var to export value to other observers
+          r$thesaurus_link_id <- link_id
+          
+          # Get datamarts linked to this thesaurus
+          data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
+          datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
+          
+          # Display sub_datatable card
+          shiny.fluent::updateToggle.shinyInput(session, "sub_datatable_card_toggle", value = TRUE)
+  
+          # Render UI of this card
+          output$sub_datatable_card <- renderUI({
+            
+            # Hide save button if user has no access
+            save_button <- shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), translate(language, "save"))
+            if ("thesaurus_edit_data" %not_in% r$user_accesses) save_button <- ""
+  
+            div(id = ns("sub_datatable_card"),
+              # Show current ID in the title
+              make_card(tagList(translate(language, "thesaurus_items_management"), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
+                div(
+                  shiny.fluent::Stack(
+                    horizontal = TRUE, tokens = list(childrenGap = 50),
+                    make_dropdown(language = language, ns = ns, label = "datamart", id = "thesaurus_datamart", width = "300px",
+                      options = convert_tibble_to_list(data = datamarts, key_col = "id", text_col = "name", null_value = TRUE), value = ""),
+                    conditionalPanel(condition = "input.datamart != ''", ns = ns,
+                      div(strong(translate(language, "show_only_used_items"), style = "display:block; padding-bottom:12px;"),
+                        shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
+                  ),
+                  DT::DTOutput(ns("sub_datatable")),
+                  save_button
+                )
               )
             )
-          )
+          })
+          
+          # Set r$thesaurus_refresh_thesaurus_items to "all_items", cause we havn't chosen yet the thesaurus or the datamart
+          r$thesaurus_refresh_thesaurus_items <- paste0(link_id, "all_items")
+          
+        })
+          
+        observeEvent(input$show_only_used_items, {
+          if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- "only_used_items"
+          else r$thesaurus_refresh_thesaurus_items <- "all_items"
         })
         
-        # Set r$thesaurus_refresh_thesaurus_items to "all_items", cause we havn't chosen yet the thesaurus or the datamart
-        r$thesaurus_refresh_thesaurus_items <- paste0(link_id, "all_items")
+        # When value of datamart changes, change value or r$thesaurus_refresh_thesaurus_items, depending on show_only_used_items
+        # Add input$thesaurus_datamart in the value, to refresh even if the value doesn't change 
+        # (if I change datamart and keep "all_items"), it won't active observer cause value hasn't changed...
         
-      })
+        observeEvent(input$thesaurus_datamart, {
+          if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- paste0(input$thesaurus_datamart, "only_used_items")
+          else r$thesaurus_refresh_thesaurus_items <- r$thesaurus_refresh_thesaurus_items <- paste0(input$thesaurus_datamart, "all_items")
+        })
         
-      observeEvent(input$show_only_used_items, {
-        if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- "only_used_items"
-        else r$thesaurus_refresh_thesaurus_items <- "all_items"
-      })
-      
-      # When value of datamart changes, change value or r$thesaurus_refresh_thesaurus_items, depending on show_only_used_items
-      # Add input$datamart in the value, to refresh even if the value doesn't change 
-      # (if I change datamart and keep "all_items"), it won't active observer cause value hasn't changed...
-      
-      observeEvent(input$datamart, {
-        if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- paste0(input$datamart, "only_used_items")
-        else r$thesaurus_refresh_thesaurus_items <- r$thesaurus_refresh_thesaurus_items <- paste0(input$datamart, "all_items")
-      })
-      
-      observeEvent(r$thesaurus_refresh_thesaurus_items, {
-        
-        req(r$thesaurus_link_id)
-        
-        # Get all items from the chosen thesaurus
-        
-        r$sub_thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
-        
-        if (length(input$datamart) > 0){
-          if (input$datamart != ""){
-            
-            count_items_rows <- tibble::tibble()
-            count_patients_rows <- tibble::tibble()
-            
-            # Add count_items_rows in the cache & get it if already in the cache
-            tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = r$thesaurus_link_id,
-              datamart_id = as.integer(input$datamart), category = "count_items_rows"),
-                error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language),
-                warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
-            
-            # Add count_items_rows in the cache & get it if already in the cache
-            tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = r$thesaurus_link_id,
-              datamart_id = as.integer(input$datamart), category = "count_patients_rows"),
-                error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language),
-                warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
-            
-            if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language)
-            req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
-            
-            # Transform count_rows cols to integer, to be sortable
-            r$sub_thesaurus_items <- r$sub_thesaurus_items %>%
-              dplyr::left_join(count_items_rows, by = "item_id") %>%
-              dplyr::left_join(count_patients_rows, by = "item_id") %>%
-              dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
-              dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
-            
-            # If r$thesaurus_refresh_thesaurus_items is set to "only_used_items", filter on count_items_rows > 0
-            if (grepl("only_used_items", r$thesaurus_refresh_thesaurus_items)) r$sub_thesaurus_items <- r$sub_thesaurus_items %>% dplyr::filter(count_items_rows > 0)
-            
-            r$sub_thesaurus_items_temp <- r$sub_thesaurus_items %>% dplyr::mutate(modified = FALSE)
+        observeEvent(r$thesaurus_refresh_thesaurus_items, {
+          
+          req(r$thesaurus_link_id)
+          
+          # Get all items from the chosen thesaurus
+          
+          r$sub_thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
+          
+          if (length(input$thesaurus_datamart) > 0){
+            if (input$thesaurus_datamart != ""){
+              
+              count_items_rows <- tibble::tibble()
+              count_patients_rows <- tibble::tibble()
+              
+              # Add count_items_rows in the cache & get it if already in the cache
+              tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = r$thesaurus_link_id,
+                datamart_id = as.integer(input$thesaurus_datamart), category = "count_items_rows"),
+                  error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language),
+                  warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
+              
+              # Add count_items_rows in the cache & get it if already in the cache
+              tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = r$thesaurus_link_id,
+                datamart_id = as.integer(input$thesaurus_datamart), category = "count_patients_rows"),
+                  error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language),
+                  warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
+              
+              if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language)
+              req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
+              
+              # Transform count_rows cols to integer, to be sortable
+              r$sub_thesaurus_items <- r$sub_thesaurus_items %>%
+                dplyr::left_join(count_items_rows, by = "item_id") %>%
+                dplyr::left_join(count_patients_rows, by = "item_id") %>%
+                dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
+                dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
+              
+              # If r$thesaurus_refresh_thesaurus_items is set to "only_used_items", filter on count_items_rows > 0
+              if (grepl("only_used_items", r$thesaurus_refresh_thesaurus_items)) r$sub_thesaurus_items <- r$sub_thesaurus_items %>% dplyr::filter(count_items_rows > 0)
+              
+              r$sub_thesaurus_items_temp <- r$sub_thesaurus_items %>% dplyr::mutate(modified = FALSE)
+            }
           }
-        }
-        
-        r$sub_thesaurus_items_temp <- r$sub_thesaurus_items %>% dplyr::mutate(modified = FALSE)
-      })
-
-      observeEvent(r$sub_thesaurus_items_temp, {
-
-        # Transform item_id to character, to be filterable in datatable
-        r$sub_thesaurus_items_temp <- r$sub_thesaurus_items_temp %>% dplyr::mutate_at("item_id", as.character)
-
-        # Parameters for the datatable
-        if ("thesaurus_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
-        editable_cols <- c("display_name", "unit")
-        searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
-        factorize_cols <- c("category", "unit")
-
-        # If we have count cols
-        if ("count_patients_rows" %in% names(r$sub_thesaurus_items)){
-          sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
-          centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-          col_names <- get_col_names("thesaurus_items_with_counts", language = language)
-        }
-        else {
-          sortable_cols <- c("id", "item_id", "name", "display_name", "category")
-          centered_cols <- c("id", "item_id", "unit", "datetime", "action")
-          col_names <- get_col_names("thesaurus_items", language = language)
-        }
-
-        # Restore datatable state
-        page_length <- isolate(input$sub_datatable_state$length)
-        start <- isolate(input$sub_datatable_state$start)
-
-        # Render datatable
-        render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "sub_datatable",
-          col_names =  col_names, table = "sub_thesaurus_items", action_buttons = action_buttons,
-          datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
-          searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE)
-      })
-     
+          
+          r$sub_thesaurus_items_temp <- r$sub_thesaurus_items %>% dplyr::mutate(modified = FALSE)
+        })
+  
+        observeEvent(r$sub_thesaurus_items_temp, {
+  
+          # Transform item_id to character, to be filterable in datatable
+          r$sub_thesaurus_items_temp <- r$sub_thesaurus_items_temp %>% dplyr::mutate_at("item_id", as.character)
+  
+          # Parameters for the datatable
+          if ("thesaurus_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
+          editable_cols <- c("display_name", "unit")
+          searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
+          factorize_cols <- c("category", "unit")
+  
+          # If we have count cols
+          if ("count_patients_rows" %in% names(r$sub_thesaurus_items)){
+            sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+            centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
+            col_names <- get_col_names("thesaurus_items_with_counts", language = language)
+          }
+          else {
+            sortable_cols <- c("id", "item_id", "name", "display_name", "category")
+            centered_cols <- c("id", "item_id", "unit", "datetime", "action")
+            col_names <- get_col_names("thesaurus_items", language = language)
+          }
+  
+          # Restore datatable state
+          page_length <- isolate(input$sub_datatable_state$length)
+          start <- isolate(input$sub_datatable_state$start)
+  
+          # Render datatable
+          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "sub_datatable",
+            col_names =  col_names, table = "sub_thesaurus_items", action_buttons = action_buttons,
+            datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
+            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
+            searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE)
+        })
+      }
   })
 }

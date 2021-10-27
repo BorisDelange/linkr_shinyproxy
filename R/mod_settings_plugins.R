@@ -310,8 +310,8 @@ mod_settings_plugins_server <- function(id, r, language){
           output$code_result_ui <- renderUI("")
           output$code_result_server <- renderText("")
           
-          # Reset r$thesaurus_selected_items
-          r$thesaurus_selected_items <- tibble::tribble(~thesaurus_id, ~thesaurus_name, ~item_id, ~text, ~colour)
+          # Reset r$plugins_thesaurus_selected_items
+          r$plugins_thesaurus_selected_items <- tibble::tribble(~thesaurus_id, ~thesaurus_name, ~item_id, ~text, ~colour)
           
         })
         
@@ -411,13 +411,13 @@ mod_settings_plugins_server <- function(id, r, language){
         # When add button is clicked
         observeEvent(input$add_thesaurus_item, {
           req(length(input$thesaurus_items$key) > 0)
-          if (input$thesaurus_items$text %not_in% r$thesaurus_selected_items$text){
+          if (input$thesaurus_items$text %not_in% r$plugins_thesaurus_selected_items$text){
 
             # Get thesaurus name
             thesaurus_name <- r$thesaurus %>% dplyr::filter(id == input$thesaurus) %>% dplyr::pull(name)
 
             # Add item to selected items
-            r$thesaurus_selected_items <- r$thesaurus_selected_items %>% dplyr::bind_rows(
+            r$plugins_thesaurus_selected_items <- r$plugins_thesaurus_selected_items %>% dplyr::bind_rows(
               tibble::tribble(~thesaurus_id, ~thesaurus_name, ~item_id, ~text, ~colour,
                 input$thesaurus, thesaurus_name, input$thesaurus_items$key, input$thesaurus_items$text, input$colour))}
         })
@@ -428,13 +428,13 @@ mod_settings_plugins_server <- function(id, r, language){
 
           deleted_item <- tibble::tribble(~thesaurus_id, ~item_id, input$thesaurus, input$thesaurus_items$key)
 
-          r$thesaurus_selected_items <- r$thesaurus_selected_items %>% dplyr::anti_join(deleted_item, by = c("thesaurus_id", "item_id"))
+          r$plugins_thesaurus_selected_items <- r$plugins_thesaurus_selected_items %>% dplyr::anti_join(deleted_item, by = c("thesaurus_id", "item_id"))
         })
 
         # Render result of selected items
-        observeEvent(r$thesaurus_selected_items, {
+        observeEvent(r$plugins_thesaurus_selected_items, {
 
-          thesaurus_selected_items_text <- r$thesaurus_selected_items %>% dplyr::mutate(display_text = paste0(thesaurus_name, " - ", text)) %>% dplyr::pull(display_text)
+          thesaurus_selected_items_text <- r$plugins_thesaurus_selected_items %>% dplyr::mutate(display_text = paste0(thesaurus_name, " - ", text)) %>% dplyr::pull(display_text)
 
           output$thesaurus_selected_items <- renderText(paste0(strong(translate(language, "thesaurus_selected_items")), " : ", toString(thesaurus_selected_items_text)))
 
@@ -445,8 +445,8 @@ mod_settings_plugins_server <- function(id, r, language){
 
         # When reset button is clicked
         observeEvent(input$reset_thesaurus_items, {
-          # Reset r$thesaurus_selected_items
-          r$thesaurus_selected_items <- tibble::tribble(~thesaurus_id, ~thesaurus_name, ~item_id, ~text, ~colour)
+          # Reset r$plugins_thesaurus_selected_items
+          r$plugins_thesaurus_selected_items <- tibble::tribble(~thesaurus_id, ~thesaurus_name, ~item_id, ~text, ~colour)
         })
 
         ##########################################
@@ -461,10 +461,10 @@ mod_settings_plugins_server <- function(id, r, language){
           
           if (length(input$datamart) == 0 | length(input$patient) == 0 | length(input$stay) == 0 | 
               length(input$thesaurus) == 0) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language)
-          else if (nrow(r$thesaurus_selected_items) == 0) show_message_bar(output, 3, "thesaurus_items_empty", "severeWarning", language)
+          else if (nrow(r$plugins_thesaurus_selected_items) == 0) show_message_bar(output, 3, "thesaurus_items_empty", "severeWarning", language)
   
           req(input$datamart, input$patient, input$stay, input$thesaurus)
-          req(nrow(r$thesaurus_selected_items) > 0)
+          req(nrow(r$plugins_thesaurus_selected_items) > 0)
           
           # Create variables that will be available in patient-lvl data & aggregated data pages
           # For patient-lvl data page, we have these variables : labs_vitals, text & orders (for all stays of the patient)
@@ -482,7 +482,7 @@ mod_settings_plugins_server <- function(id, r, language){
           r$plugins_thesaurus_items <- DBI::dbGetQuery(r$db, paste0("SELECT thesaurus_id, item_id, display_name, unit AS unit_thesaurus FROM thesaurus_items ",
           "WHERE thesaurus_id IN ( ", paste(thesaurus_ids, collapse = ","), ") AND deleted IS FALSE"))
           
-          thesaurus_selected_items <- r$thesaurus_selected_items %>% dplyr::left_join(r$plugins_thesaurus_items, by = c("thesaurus_id", "item_id"))
+          thesaurus_selected_items <- r$plugins_thesaurus_selected_items %>% dplyr::left_join(r$plugins_thesaurus_items, by = c("thesaurus_id", "item_id"))
           
           # Initialize variables
   

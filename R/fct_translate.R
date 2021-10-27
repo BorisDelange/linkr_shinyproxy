@@ -323,6 +323,8 @@ get_translations <- function(){
             "FR", "parent_module", "Est sous le module",
             "EN", "module_family", "Module family",
             "FR", "module_family", "Appartient au groupe de modules",
+            "EN", "module_family_new_element", "Module family",
+            "FR", "module_family_new_element", "Groupe de modules",
             "EN", "module_families", "Module families",
             "FR", "module_families", "Familles de modules",
             "EN", "module_access_type", "Grant access",

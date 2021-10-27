@@ -351,12 +351,14 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   if (paste0(table, "_see_all_data") %not_in% r$user_accesses) {
     
     # If on these tables, show only data who the user is the creator
-    if (table %in% c("data_sources", "subsets", "thesaurus") | grepl("patient_lvl_modules", table) | grepl("aggregated_modules", table)){
-      if (nrow(data) > 0) data <- data %>% dplyr::filter(creator_id == r$user_id)
+    if (table %in% c("data_sources", "subsets", "thesaurus") | grepl("patient_lvl_modules", table) | grepl("aggregated_modules", table) & nrow(data) > 0){
+      data <- data %>% dplyr::filter(creator_id == r$user_id)
     }
     
     # For these tables, show data with options parameters
-    if (table %in% c("studies", "datamarts", "plugins") & nrow(data) > 0) data <- get_authorized_data(r = r, table = table, data = data)
+    if (table %in% c("studies", "datamarts", "plugins", "patient_lvl_modules_families", "aggregated_modules_families") & nrow(data) > 0){
+      data <- get_authorized_data(r = r, table = table, data = data)
+    } 
 
   }
   
@@ -775,8 +777,9 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
         list(id = "#FFD92F", color = "#FFD92F"),
         list(id = "#000000", color = "#000000"))
       
-     data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-        shiny.fluent::SwatchColorPicker.shinyInput(paste0("colour_", id), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells))))
+      ns <- NS(module_id)
+      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+        shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0("colour_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells))))
     }
 
     # Delete old cache
