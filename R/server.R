@@ -106,6 +106,67 @@ app_server <- function(router, language, db_info){
     
     observeEvent(r$user_accesses, {
       
+      ##########################################
+      # Keep data user has access to          #
+      ##########################################
+      
+      # Thesaurus & data_sources tables are visible for everybody
+      
+      # Access by options => user access list
+      sapply(c("studies", "datamarts", "plugins"), function(table){
+        if (paste0(table, "_see_all_data") %not_in% r$user_accesses){
+          if (nrow(r[[table]] > 0)){
+            r[[table]] <- get_authorized_data(r = r, table = table)
+            r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
+          }
+        }
+      })
+      sapply(c("patient_lvl_modules_families", "aggregated_modules_families"), function(table){
+        
+        if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
+        if (grepl("aggregated", table)) prefix <- "aggregated_"
+        
+        if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
+          if (nrow(r[[table]] > 0)){
+            r[[table]] <- get_authorized_data(r = r, table = table)
+            r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
+          }
+        }
+      })
+      
+      # Access by parent
+      
+      if ("subsets_see_all_data" %not_in% r$user_accesses){
+        if (nrow(r$subsets > 0)){
+          studies_ids <- r$studies %>% dplyr::pull(id)
+          r$subsets <- r$subsets %>% dplyr::filter(study_id %in% studies_ids)
+          r$studies_temp <- r$studies %>% dplyr::mutate(modified = FALSE)
+        }
+      }
+      
+      sapply(c("patient_lvl_modules", "aggregated_modules", "patient_lvl_modules_elements", "aggregated_modules_elements"), function(table){
+        
+        if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
+        if (grepl("aggregated", table)) prefix <- "aggregated_"
+        
+        if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
+          modules_families_ids <- get_authorized_data(r = r, table = paste0(prefix, "modules_families")) %>% dplyr::pull(id)
+          if (nrow(r[[paste0(prefix, "modules")]]) > 0) modules_ids <- r[[paste0(prefix, "modules")]] %>%
+            dplyr::filter(module_family_id %in% modules_families_ids) %>% dplyr::pull(id)
+          
+          if (nrow(r[[table]] > 0)){
+            if (grepl("modules$", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_family_id %in% modules_families_ids)
+            if (grepl("modules_elements", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_id %in% modules_ids)
+          }
+          
+          r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
+        }
+      })
+      
+      ##########################################
+      # Load server modules                    #
+      ##########################################
+      
       mod_page_header_server(input, output, session)
       
       sapply(c("patient_level_data", "aggregated_data"), function(page){

@@ -246,10 +246,8 @@ mod_settings_modules_server <- function(id, r, language){
         
         observeEvent(r[[paste0(prefix, "_modules_families")]], {
           table <- paste0(prefix, "_modules_families")
-          if (paste0(prefix, "_modules_see_all_data") %in% r$user_accesses) data <- r[[table]]
-          else data <- get_authorized_data(r = r, table = table)
           
-          options <- convert_tibble_to_list(data = data, key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = r[[table]], key_col = "id", text_col = "name")
           shiny.fluent::updateDropdown.shinyInput(session, "module_family", options = options)
         })
         
@@ -267,20 +265,13 @@ mod_settings_modules_server <- function(id, r, language){
           # Filter on plugins user has access to
           plugins <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)
           
-          if ("plugins_see_all_data" %not_in% r$user_accesses & nrow(plugins) > 0) plugins <- get_authorized_data(r = r, table = "plugins", data = plugins)
-          
           options <- convert_tibble_to_list(data = plugins, key_col = "id", text_col = "name")
           shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options)
         })
         
         observeEvent(r$datamarts, {
           
-          # Filter on datamarts user has access to
-          datamarts <- r$datamarts
-          
-          if ("datamarts_see_all_data" %not_in% r$user_accesses & nrow(datamarts) > 0) datamarts <- get_authorized_data(r = r, table = "datamarts")
-          
-          options <- convert_tibble_to_list(data = datamarts, key_col = "id", text_col = "name", null_value = TRUE)
+          options <- convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name", null_value = TRUE)
           shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = options)
         })
         
@@ -313,8 +304,7 @@ mod_settings_modules_server <- function(id, r, language){
             # Update thesaurus items datatable when a thesaurus item is chosen
             observeEvent(input$thesaurus, {
               
-              if ("datamarts_see_all_data" %in% r$user_accesses) datamarts <- r$datamarts
-              else datamarts <- get_authorized_data(r = r, table = "datamarts")
+              datamarts <- r$datamarts
               
               # Get datamarts linked to this thesaurus
               data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == input$thesaurus) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()

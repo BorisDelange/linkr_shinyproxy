@@ -188,23 +188,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     sapply(c("data_sources", "datamarts", "studies", "subsets", "patient_lvl_modules_families", "aggregated_modules_families"), 
       function(data_var){
         observeEvent(r[[data_var]], {
-          
-          data <- r[[data_var]]
-          
-          # Check if user has access, for datamarts & modules
-          if (data_var %in% c("datamarts", "patient_lvl_modules_families", "aggregated_modules_families")){
-            
-            data <- r[[data_var]]
-            
-            if (data_var == "datamarts" & "datamarts_see_all_data" %not_in% r$user_accesses & nrow(data) > 0) data <- get_authorized_data(r = r, table = "datamarts")
-            if (data_var == "patient_lvl_modules_families" & "patient_lvl_modules_see_all_data" %not_in% r$user_accesses & nrow(data) > 0){
-              data <- get_authorized_data(r = r, table = "patient_lvl_modules_families") }
-            if (data_var == "aggregated_modules_families" & "aggregated_modules_see_all_data" %not_in% r$user_accesses & nrow(data) > 0){
-              data <- get_authorized_data(r = r, table = "aggregated_modules_families") }
-          }
-          
           # Convert options to list
-          options <- convert_tibble_to_list(data = data, key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = r[[data_var]], key_col = "id", text_col = "name")
           shiny.fluent::updateDropdown.shinyInput(session, get_singular(word = data_var), options = options)
         })
       })

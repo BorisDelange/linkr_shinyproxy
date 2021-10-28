@@ -347,36 +347,6 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # Load temp data
   data <- r[[paste0(table, "_temp")]]
   
-  # If user is not allowed to see all data, filter
-  if ((!grepl("modules", table) & paste0(table, "_see_all_data") %not_in% r$user_accesses) |
-      (grepl("patient_lvl_modules", table) & "patient_lvl_modules_see_all_data" %not_in% r$user_accesses) |
-      (grepl("aggregated_modules", table) & "aggregated_modules_see_all_data" %not_in% r$user_accesses)) {
-    
-    # If on these tables, show only data who the user is the creator
-    if (table %in% c("data_sources", "subsets", "thesaurus") & nrow(data) > 0){
-      data <- data %>% dplyr::filter(creator_id == r$user_id)
-    }
-    
-    # For these tables, show data with options parameters
-    if (table %in% c("studies", "datamarts", "plugins", "patient_lvl_modules_families", "aggregated_modules_families") & nrow(data) > 0){
-      data <- get_authorized_data(r = r, table = table, data = data)
-    }
-    
-    # For these tables, it depends on its parent
-    if (table %in% c("patient_lvl_modules", "aggregated_modules", "patient_lvl_modules_elements", "aggregated_modules_elements")){
-      
-      if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
-      if (grepl("aggregated", table)) prefix <- "aggregated_"
-      
-      modules_families_ids <- get_authorized_data(r = r, table = paste0(prefix, "modules_families")) %>% dplyr::pull(id)
-      modules_ids <- r[[paste0(prefix, "modules")]] %>% dplyr::filter(module_family_id %in% modules_families_ids) %>% dplyr::pull(id)
-      
-      if (grepl("modules$", table)) data <- data %>% dplyr::filter(module_family_id %in% modules_families_ids)
-      if (grepl("modules_elements", table)) data <- data %>% dplyr::filter(module_id %in% modules_ids)
-    }
-
-  }
-  
   # If no row in dataframe, stop here
   if (nrow(data) == 0) return({
     data <- tibble::tribble(~id, ~name, ~description,  ~datetime)

@@ -519,6 +519,7 @@ mod_settings_plugins_server <- function(id, r, language){
             # Initialize variables
     
             data <- list()
+            data$stays <- tibble::tibble()
             data$labs_vitals <- tibble::tibble()
             data$text <- tibble::tibble()
             data$orders <- tibble::tibble()
@@ -528,12 +529,20 @@ mod_settings_plugins_server <- function(id, r, language){
     
             # Filter r variables with selected thesaurus items and with patient_id
             # Choose unit, priority to data, then thesaurus
+            
+            # There's a difference here : item_id IS NOT thesaurus own item_id, but our database table ID
+            # This is different with patient_lvl page, where we choose item_id of the thesaurus
+            # It's OK here, cause this is a test area where the thesaurus will not change during our test
+            # For patient_lvl page, thesaurus can change between two sessions, so taking thesaurus own item_id is more reliable
+            
+            if (nrow(r$stays) > 0) data$stays <- r$stays %>% dplyr::filter(patient_id == input$patient)
             if (nrow(r$labs_vitals) > 0){
               data$labs_vitals <-
                 r$labs_vitals %>%
                 dplyr::filter(patient_id == input$patient) %>%
-                dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id")) #%>%
-                #dplyr::mutate(unit = dplyr::case_when(unit != "" ~ unit, TRUE ~ unit_thesaurus)) %>% dplyr::select(-unit_thesaurus)
+                dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id")) %>%
+                dplyr::mutate(unit = dplyr::case_when((unit_thesaurus != "" & !is.na(unit_thesaurus)) ~ unit_thesaurus, TRUE ~ unit)) %>%
+                dplyr::select(-unit_thesaurus)
             }
             if (nrow(r$text) > 0){
               data$text <-
@@ -569,13 +578,19 @@ mod_settings_plugins_server <- function(id, r, language){
             
             # Initiate data variables
             data <- list()
+            data$patients <- tibble::tibble()
+            data$stays <- tibble::tibble()
             data$labs_vitals <- tibble::tibble()
             data$text <- tibble::tibble()
             data$orders <- tibble::tibble()
+            data$patients_subset <- tibble::tibble()
+            data$stays_subset <- tibble::tibble()
             data$labs_vitals_subset <- tibble::tibble()
             data$text_subset <- tibble::tibble()
             data$orders_subset <- tibble::tibble()
             
+            if (nrow(r$patients) > 0) data$patients <- r$patients
+            if (nrow(r$stays) > 0) data$stays <- r$stays
             if (nrow(r$labs_vitals) > 0) data$labs_vitals <- r$labs_vitals
             if (nrow(r$text) > 0) data$text <- r$text
             if (nrow(r$orders) > 0) data$orders <- r$orders
@@ -584,6 +599,8 @@ mod_settings_plugins_server <- function(id, r, language){
             
             if (nrow(patients) > 0){
               patients <- patients %>% dplyr::select(patient_id)
+              if (nrow(r$patients) > 0) data$patients_subset <- r$patients %>% dplyr::inner_join(patients, by = "patient_id")
+              if (nrow(r$stays) > 0) data$stays_subset <- r$stays %>% dplyr::inner_join(patients, by = "patient_id")
               if (nrow(r$labs_vitals) > 0) data$labs_vitals_subset <- r$labs_vitals %>% dplyr::inner_join(patients, by = "patient_id")
               if (nrow(r$text) > 0) data$text_subset <- r$text %>% dplyr::inner_join(patients, by = "patient_id")
               if (nrow(r$orders) > 0) data$orders_subset <- r$orders %>% dplyr::inner_join(patients, by = "patient_id")

@@ -141,13 +141,8 @@ mod_page_sidenav_server <- function(id, r, language){
       
       observeEvent(r$datamarts, {
         
-        # If users_allowed_read_group is set to everybody, everybody has access. Else, filter on people who has access.
-        
-        datamarts <- r$datamarts
-        if (nrow(datamarts) > 0 & "datamarts_see_all_data" %not_in% r$user_accesses) datamarts <- get_authorized_data(r = r, table = "datamarts")
-        
         # Update dropdown
-        shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(datamarts, "id", "name", rm_deleted_rows = TRUE), value = NULL)
+        shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(r$datamarts, "id", "name", rm_deleted_rows = TRUE), value = NULL)
         shinyjs::hide("exclusion_reason_div")
       })
       
@@ -156,7 +151,6 @@ mod_page_sidenav_server <- function(id, r, language){
         # Studies depending on the chosen datamart
         
         studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
-        if (nrow(studies) > 0 & "studies_see_all_data" %not_in% r$user_accesses) studies <- get_authorized_data(r = r, table = "studies")
         
         # Reset r$chosen_study (to reset main display)
         r$chosen_study <- NA_integer_
