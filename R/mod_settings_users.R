@@ -357,7 +357,8 @@ mod_settings_users_server <- function(id, r, language){
         )
         
         # Get current data
-        current_data <- DBI::dbGetQuery(r$db, paste0("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND link_id = ", r$users_statuses_options))
+        sql <- glue::glue_sql("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND link_id = {r$users_statuses_options}", .con = r$db)
+        current_data <- DBI::dbGetQuery(r$db, sql)
         
         options_toggles_result <- tagList()
 
@@ -470,12 +471,14 @@ mod_settings_users_server <- function(id, r, language){
           
           # Delete old data from options
           
-          query <- DBI::dbSendStatement(r$db, paste0("DELETE FROM options WHERE category = 'users_accesses' AND link_id = ", r$users_statuses_options))
+          sql <- glue::glue_sql("DELETE FROM options WHERE category = 'users_accesses' AND link_id = {r$users_statuses_options}", .con = r$db)
+          query <- DBI::dbSendStatement(r$db, sql)
           DBI::dbClearResult(query)
+          add_log_entry(r = r, category = "SQL query", "Update users accesses", value = sql)
           
           # Attribute id values
           
-          last_row <- as.integer(DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull())
+          last_row <- get_last_row(con = r$db, table = "options")
           data$id <- seq.int(nrow(data)) + last_row
           
           # Add new values to database

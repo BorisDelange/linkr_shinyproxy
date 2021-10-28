@@ -97,7 +97,7 @@ mod_settings_general_server <- function(id, r, language){
         shiny.fluent::updateTextField.shinyInput(session, "new_password_bis", errorMessage = NULL)
       }
       
-      req(input$new_password != input$new_password_bis)
+      req(input$new_password == input$new_password_bis)
       
       # Check if the old password is OK
       
@@ -110,7 +110,9 @@ mod_settings_general_server <- function(id, r, language){
         
         # Everything is OK, change password
         
-        query <- DBI::dbSendStatement(r$db, paste0("UPDATE users SET password = ", as.character(rlang::hash(input$new_password)), " WHERE id = ", r$user_id))
+        new_password <- as.character(rlang::hash(input$new_password))
+        sql <- glue::glue_sql("UPDATE users SET password = {new_password} WHERE id = {r$user_id}", .con = r$db)
+        query <- DBI::dbSendStatement(r$db, sql)
         DBI::dbClearResult(query)
         
         # Notificate the user

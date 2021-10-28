@@ -42,7 +42,10 @@ app_server <- function(router, language, db_info){
     
     # Close DB connection on exit
     session$onSessionEnded(function() {
-      observe(on.exit(DBI::dbDisconnect(r$db)))
+      observe(on.exit({
+        add_log_entry(r = r, category = "Conncetion end", name = "Connection end", value = "")
+        DBI::dbDisconnect(r$db)
+      }))
     })
     
     # Add default values in database if database is empty
@@ -86,7 +89,10 @@ app_server <- function(router, language, db_info){
     
     # Get user ID
     r$user_id <- 1
-    # observeEvent(r$res_auth, r$user_id <- reactiveValuesToList(r$res_auth)$id)
+    # observeEvent(r$res_auth, {
+    #   r$user_id <- reactiveValuesToList(r$res_auth)$id
+    #   add_log_entry(r = r, category = "Connection start", name = "Connection start", value = "")
+    # })
     
     
     # When r$user_id loaded, load user_accesses

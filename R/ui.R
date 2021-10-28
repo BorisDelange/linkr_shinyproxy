@@ -11,7 +11,7 @@ app_ui <- function(request, css, page, language) {
     tagList(
       golem_add_external_resources(css),
       shiny.fluent::fluentPage(page$ui)
-    )"",
+    )#,
     # enable_admin = FALSE, language = tolower(language)
   # )
 }
