@@ -357,8 +357,7 @@ mod_settings_users_server <- function(id, r, language){
         )
         
         # Get current data
-        sql <- glue::glue_sql("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND link_id = {r$users_statuses_options}", .con = r$db)
-        current_data <- DBI::dbGetQuery(r$db, sql)
+        current_data <- DBI::dbGetQuery(r$db, paste0("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND link_id = ", r$users_statuses_options))
         
         options_toggles_result <- tagList()
 
@@ -471,10 +470,10 @@ mod_settings_users_server <- function(id, r, language){
           
           # Delete old data from options
           
-          sql <- glue::glue_sql("DELETE FROM options WHERE category = 'users_accesses' AND link_id = {r$users_statuses_options}", .con = r$db)
+          sql <- paste0("DELETE FROM options WHERE category = 'users_accesses' AND link_id = ", r$users_statuses_options)
           query <- DBI::dbSendStatement(r$db, sql)
           DBI::dbClearResult(query)
-          add_log_entry(r = r, category = "SQL query", "Update users accesses", value = sql)
+          add_log_entry(r = r, category = "SQL query", name = "Update users accesses", value = sql)
           
           # Attribute id values
           
@@ -483,6 +482,7 @@ mod_settings_users_server <- function(id, r, language){
           
           # Add new values to database
           DBI::dbAppendTable(r$db, "options", data)
+          add_log_entry(r = r, category = "SQL query", name = "Update users accesses", value = toString(data))
           
           # Notificate the user
           show_message_bar(output = output, id = 1, message = "modif_saved", type = "success", language = language)

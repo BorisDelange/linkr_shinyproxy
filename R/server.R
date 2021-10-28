@@ -88,7 +88,7 @@ app_server <- function(router, language, db_info){
     # r$res_auth <- shinymanager::secure_server(check_credentials = check_authentification(r$db))
     
     # Get user ID
-    r$user_id <- 1
+    r$user_id <- 2
     # observeEvent(r$res_auth, {
     #   r$user_id <- reactiveValuesToList(r$res_auth)$id
     #   add_log_entry(r = r, category = "Connection start", name = "Connection start", value = "")

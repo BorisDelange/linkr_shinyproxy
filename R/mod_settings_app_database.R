@@ -169,6 +169,7 @@ mod_settings_app_database_server <- function(id, r, language){
         if (input$connection_type == "local"){
           query <- "UPDATE options SET value = 'local' WHERE category = 'distant_db' AND name = 'connection_type'"
           DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
+          add_log_entry(r = r, category = "SQL query", name = "Update SQL connection infos", value = query)
         }
         
         # If connection_type is distant, save connection_type and other distant DB informations
@@ -194,6 +195,7 @@ mod_settings_app_database_server <- function(id, r, language){
               SET value = '", input[[name]], "', creator_id = ", r$user_id, ", datetime = '", as.character(Sys.time()), "'
               WHERE category = 'distant_db' AND name = '", name, "'")
             DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
+            add_log_entry(r = r, category = "SQL query", name = "Update SQL connection infos", value = query)
           })
         }
         

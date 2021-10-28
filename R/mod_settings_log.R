@@ -125,7 +125,8 @@ mod_settings_log_server <- function(id, r, language){
           r$users %>% dplyr::mutate(display_name = paste0(firstname, " ", lastname)) %>% dplyr::select(creator_id = id, display_name),
           by = "creator_id") %>% dplyr::relocate(display_name, .before = "datetime") %>%
           dplyr::select(-creator_id, creator_id = display_name) %>%
-          dplyr::mutate(value = substr(value, 1, 100))
+          dplyr::mutate(value = substr(value, 1, 100)) %>%
+          dplyr::arrange(desc(datetime))
       }
       
       dt_translation <- list(
@@ -142,10 +143,10 @@ mod_settings_log_server <- function(id, r, language){
           dom = "<'datatable_length'l><'top'ft><'bottom'p>",
           pageLength = 100,
           columnDefs = list(
-            list(className = "dt-body-center", targets = c(0, 2, 4)),
+            list(className = "dt-body-center", targets = c(0, 2, 4, 5)),
             list(sortable = FALSE, targets = 3),
             list(width = "100px", targets = c(1, 2)),
-            list(width = "180px", targets = 4),
+            list(width = "180px", targets = 5),
             list(searchable = FALSE, targets = c(0, 3))
           ),
           language = dt_translation
