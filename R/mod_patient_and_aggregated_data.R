@@ -33,8 +33,9 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
     # Once a datamart is chosen, load its data
     
     observeEvent(r$chosen_datamart, {
-      # Initiate r$selected_key
-      r$selected_key <- NA_integer_
+      # Initiate selected_key
+      r$patient_lvl_selected_key <- NA_integer_
+      r$aggregated_selected_key <- NA_integer_
       
       # Try to load datamart 
       tryCatch(run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language),
@@ -129,9 +130,9 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
       }
 
       # Currently selected tab
-      r$selected_key <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
+      r[[paste0(prefix, "_selected_key")]] <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
       if (!is.null(input$current_tab)){
-        if (input$current_tab %in% shown_modules$id) r$selected_key <- input$current_tab
+        if (input$current_tab %in% shown_modules$id) r[[paste0(prefix, "_selected_key")]] <- input$current_tab
       }
 
       nb_levels <- max(shown_modules$level)
@@ -174,6 +175,8 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
 
         module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == shown_modules[[i, "id"]])
         code_ui <- tagList()
+        cards <- list()
+        activated_cards <- ""
 
         if (nrow(module_elements) != 0){
 
@@ -183,15 +186,24 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
           # Loop over distinct cards
           sapply(distinct_groups, function(group_id){
             plugin_id <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
-            if (length(plugin_id) != 0) code_ui_card <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_ui") %>% dplyr::pull(code)
+            if (length(plugin_id) != 0){
+              code_ui_card <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_ui") %>% dplyr::pull(code)
+            }
+            
+            # Get name of module element
+            module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
 
+            # Append a toggle to our cards list
+            cards <<- rlist::list.append(cards, list(key = paste0(module_element_name, group_id), label = module_element_name))
+            activated_cards <<- c(activated_cards, paste0(module_element_name, group_id))
+            
             # Try to run plugin UI code
             # ID of UI element is in the following format : "group_[ID]"
             tryCatch({
               code_ui_card <- code_ui_card %>%
                 stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
                 stringr::str_replace_all("\r", "\n")
-              code_ui <<- tagList(code_ui, make_card("", eval(parse(text = code_ui_card))))
+              code_ui <<- tagList(code_ui, div(id = ns(paste0(module_element_name, group_id)), make_card(module_element_name, eval(parse(text = code_ui_card)))))
             },
             error = function(e){
               # Libraries needed
@@ -202,6 +214,10 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
             })
           })
         }
+        
+        code_ui <- tagList(
+          render_settings_toggle_card(language = language, ns = ns, cards = cards, activated = activated_cards, translate = FALSE),
+          code_ui)
 
         shown_tabs <<- tagList(shown_tabs, shiny.fluent::PivotItem(id = shown_modules[[i, "id"]], itemKey = shown_modules[[i, "id"]], headerText = shown_modules[[i, "name"]], code_ui))
       })
@@ -210,7 +226,7 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
         shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          selectedKey = r$selected_key, shown_tabs
+          selectedKey = r[[paste0(prefix, "_selected_key")]], shown_tabs
         )
       )
     })
@@ -223,30 +239,49 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
       # Patient-lvl data                       #
       ##########################################
     
+      # Once a study is chosen, load code for toggles
+      observeEvent(r$chosen_study, r$reload_patient_lvl_code <- "load_toggles")
+    
+      # Once a patient is chosen, render its tabs (without data for current stay)
       # Once a stay is chosen, render patient's tabs
-      observeEvent(r$chosen_stay, {
+    
+      observeEvent(r$chosen_patient, r$reload_patient_lvl_code <- as.character(r$chosen_patient))
+      observeEvent(r$chosen_stay, r$reload_patient_lvl_code <- as.character(r$chosen_stay))
+      observeEvent(r$patient_lvl_selected_key, r$reload_patient_lvl_code <- paste0("selected_key", r$patient_lvl_selected_key))
+    
+      observeEvent(r$reload_patient_lvl_code, {
   
         # Update module when selected key changed
         # One module is composed by multiple groups
         # One group corresponds to one plugin and one or multiple thesaurus items
-  
-        observeEvent(r$selected_key, {
-          req(!is.na(r$selected_key))
-  
-          # Get modules elements, arrange them by display_order
+
+        # Get modules elements, arrange them by display_order
+        
+        module_elements <- r$patient_lvl_modules_elements %>% dplyr::filter(module_id == r$patient_lvl_selected_key) %>% dplyr::arrange(display_order)
+
+        # If no thesaurus elements to show in this module, notificate user
+        if (nrow(module_elements) == 0 & !grepl("selected_key", r$reload_patient_lvl_code) &
+            r$reload_patient_lvl_code != "load_toggles") show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning")
+
+        if (nrow(module_elements) > 0){
+
+          # Get module element group_id
+          distinct_groups <- unique(module_elements$group_id)
+
+          toggles <- c()
           
-          module_elements <- r$patient_lvl_modules_elements %>% dplyr::filter(module_id == r$selected_key) %>% dplyr::arrange(display_order)
-  
-          # If no thesaurus elements to show in this module, notificate user
-          if (nrow(module_elements) == 0) show_message_bar(output = output, id = 2, message = "no_thesaurus_item_to_show", type = "severeWarning")
-  
-          if (nrow(module_elements) > 0){
-  
-            # Get module element group_id
-            distinct_groups <- unique(module_elements$group_id)
-  
-            # Loop over distinct cards
-            sapply(distinct_groups, function(group_id){
+          # Loop over distinct cards
+          sapply(distinct_groups, function(group_id){
+            
+            if (r$reload_patient_lvl_code == "load_toggles"){
+              
+              # Get name of module element
+              module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
+              
+              toggles <<- c(toggles, paste0(module_element_name, group_id))
+            }
+            
+            else {
   
               # Get thesaurus items with thesaurus own item_id
               thesaurus_selected_items <- module_elements %>% dplyr::filter(group_id == !!group_id) %>%
@@ -270,35 +305,45 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
               # Filter r variables with selected thesaurus items and with patient_id
               # Choose unit, priority to thesaurus (user choice), then data
               
-              if (nrow(r$stays) > 0) data$stays <- r$stays %>% dplyr::filter(patient_id == r$chosen_patient)
-              if (nrow(r$labs_vitals) > 0){
-                data$labs_vitals <-
-                  r$labs_vitals %>%
-                  dplyr::filter(patient_id == r$chosen_patient) %>%
-                  dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id")) %>%
-                  dplyr::mutate(unit = dplyr::case_when((thesaurus_item_unit != "" & !is.na(thesaurus_item_unit)) ~ thesaurus_item_unit, TRUE ~ unit)) %>% 
-                  dplyr::select(-thesaurus_item_unit)
+              if (length(r$chosen_patient) > 0){
+                if (!is.na(r$chosen_patient) & r$chosen_patient != ""){
+                
+                  if (nrow(r$stays) > 0) data$stays <- r$stays %>% dplyr::filter(patient_id == r$chosen_patient)
+                  if (nrow(r$labs_vitals) > 0){
+                    data$labs_vitals <-
+                      r$labs_vitals %>%
+                      dplyr::filter(patient_id == r$chosen_patient) %>%
+                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id")) %>%
+                      dplyr::mutate(unit = dplyr::case_when((thesaurus_item_unit != "" & !is.na(thesaurus_item_unit)) ~ thesaurus_item_unit, TRUE ~ unit)) %>% 
+                      dplyr::select(-thesaurus_item_unit)
+                  }
+                  if (nrow(r$text) > 0){
+                    data$text <-
+                      r$text %>%
+                      dplyr::filter(patient_id == r$chosen_patient) %>%
+                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
+                  }
+                  if (nrow(r$orders) > 0){
+                    data$orders <-
+                      r$orders %>%
+                      dplyr::filter(patient_id == r$chosen_patient) %>%
+                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
+                  }
+                }
               }
-              if (nrow(r$text) > 0){
-                data$text <-
-                  r$text %>%
-                  dplyr::filter(patient_id == r$chosen_patient) %>%
-                  dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
+              
+              # If a stay is selected
+              if (length(r$chosen_stay) > 0){
+                if (!is.na(r$chosen_stay) & r$chosen_stay != ""){
+                  
+                  data$stay <- r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
+                  
+                  if (nrow(data$labs_vitals) > 0) data$labs_vitals_stay <- data$labs_vitals %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
+                  if (nrow(data$text) > 0) data$text_stay <- data$text %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
+                  if (nrow(data$orders) > 0) data$orders_stay <- data$orders %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
+                }
               }
-              if (nrow(r$orders) > 0){
-                data$orders <-
-                  r$orders %>%
-                  dplyr::filter(patient_id == r$chosen_patient) %>%
-                  dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
-              }
-              
-              data$stay <- r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
-              
-              if (nrow(data$labs_vitals) > 0) data$labs_vitals_stay <- data$labs_vitals %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
-              if (nrow(data$text) > 0) data$text_stay <- data$text %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
-              if (nrow(data$orders) > 0) data$orders_stay <- data$orders %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
-              
-              
+            
               # Get plugin code
               
               plugin_id <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
@@ -314,14 +359,105 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
                 error = function(e) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language),
                 warning = function(w) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language)
               )
+            }
+          })
+          
+          # Load toggles server code
+          sapply(toggles, function(toggle){
+            observeEvent(input[[paste0(toggle, "_toggle")]], {
+              if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) 
+              else shinyjs::hide(toggle)
             })
-          }
-        })
+          })
+        }
       })
     
       ##########################################
       # Aggregated data                        #
       ##########################################
+      
+      
+      # Once a subset is chosen, render its data
+      
+      observeEvent(r$chosen_subset, r$reload_aggregated_code <- r$chosen_subset)
+      
+      observeEvent(r$reload_aggregated_code, {
+        
+        # Update module when selected key changed
+        # One module is composed by multiple groups
+        # One group corresponds to one plugin and one or multiple thesaurus items
+        
+        observeEvent(r$aggregated_selected_key, {
+          req(!is.na(r$aggregated_selected_key))
+          
+          # Get modules elements, arrange them by display_order
+          
+          module_elements <- r$aggregated_modules_elements %>% dplyr::filter(module_id == r$aggregated_selected_key) %>% dplyr::arrange(display_order)
+          
+          # If no thesaurus elements to show in this module, notificate user
+          if (nrow(module_elements) == 0) show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning")
+          
+          if (nrow(module_elements) > 0){
+            
+            # Get module element group_id
+            distinct_groups <- unique(module_elements$group_id)
+            
+            # Loop over distinct cards
+            sapply(distinct_groups, function(group_id){
+              
+              # Initialize variables
+              
+              data <- list()
+              data$patients <- tibble::tibble()
+              data$stays <- tibble::tibble()
+              data$labs_vitals <- tibble::tibble()
+              data$text <- tibble::tibble()
+              data$orders <- tibble::tibble()
+              data$patients_subset <- tibble::tibble()
+              data$stays_subset <- tibble::tibble()
+              data$labs_vitals_subset <- tibble::tibble()
+              data$text_subset <- tibble::tibble()
+              data$orders_subset <- tibble::tibble()
+              
+              if (nrow(r$patients) > 0) data$patients <- r$patients
+              if (nrow(r$stays) > 0) data$stays <- r$stays
+              if (nrow(r$labs_vitals) > 0) data$labs_vitals <- r$labs_vitals
+              if (nrow(r$text) > 0) data$text <- r$text
+              if (nrow(r$orders) > 0) data$orders <- r$orders
+              
+              patients <- tibble::tibble()
+              if (length(r$chosen_subset) > 0){
+                if (!is.na(r$chosen_subset) & r$chosen_subset != "") patients <- r$subset_patients %>% dplyr::filter(subset_id == r$chosen_subset)
+              }
+              
+              if (nrow(patients) > 0){
+                patients <- patients %>% dplyr::select(patient_id)
+                if (nrow(r$patients) > 0) data$patients_subset <- r$patients %>% dplyr::inner_join(patients, by = "patient_id")
+                if (nrow(r$stays) > 0) data$stays_subset <- r$stays %>% dplyr::inner_join(patients, by = "patient_id")
+                if (nrow(r$labs_vitals) > 0) data$labs_vitals_subset <- r$labs_vitals %>% dplyr::inner_join(patients, by = "patient_id")
+                if (nrow(r$text) > 0) data$text_subset <- r$text %>% dplyr::inner_join(patients, by = "patient_id")
+                if (nrow(r$orders) > 0) data$orders_subset <- r$orders %>% dplyr::inner_join(patients, by = "patient_id")
+              }
+              
+              # Get plugin code
+              
+              plugin_id <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
+              code_server_card <- r$code %>% 
+                dplyr::filter(link_id == plugin_id, category == "plugin_server") %>%
+                dplyr::pull(code) %>% 
+                stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+                stringr::str_replace_all("\r", "\n")
+              
+              # Try to run plugin server code
+              
+              tryCatch(eval(parse(text = code_server_card)),
+                error = function(e) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language),
+                warning = function(w) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language)
+              )
+            })
+          }
+        })
+      })
 
   })
 }

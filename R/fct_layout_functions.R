@@ -186,17 +186,18 @@ make_people_picker <- function(language = "EN", ns = shiny::NS(), id = NA_charac
 #' make_toggle(language = "EN", ns = ns, label = "My toggle", id = "my_toggle", value = TRUE, inline = FALSE)
 #' }
 
-make_toggle <- function(language = "EN", ns = shiny::NS(), label = character(), id = NULL, value = FALSE, inline = FALSE){
+make_toggle <- function(language = "EN", ns = shiny::NS(), label = character(), id = NULL, value = FALSE, inline = FALSE, translate = TRUE){
   if (is.null(id)) id <- label
+  if (translate) label <- translate(language, label)
   if (inline){
     tagList(
       shiny.fluent::Toggle.shinyInput(ns(id), value = value),
-      div(class = "toggle_title", translate(language, label))
+      div(class = "toggle_title", label)
     ) -> result
   }
   if (!inline){
     tagList(
-      div(class = "input_title", translate(language, label)),
+      div(class = "input_title", label),
       shiny.fluent::Toggle.shinyInput(ns(id), value = value)
     )  -> result
   }

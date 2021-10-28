@@ -41,14 +41,14 @@ settings_default_elements <- function(ns = shiny::NS(), prefix = ""){
 #'   list(key = "edit_code_card", label = "edit_datamart_code"))
 #' settings_toggle_card(ns = NS("settings_datamart"), cards = cards, activated = c("creation_card", "datatable_card"), language = "EN")
 
-render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list(), activated = ""){
+render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list(), activated = "", translate = TRUE){
   
   toggles <- tagList()
   # For each card, create a toggle
   sapply(cards, function(card){
     if (card$label != "") toggles <<- tagList(toggles, 
       make_toggle(language, ns, label = card$label, 
-        id = paste0(card$key, "_toggle"), value = ifelse(card$key %in% activated, TRUE, FALSE), inline = TRUE))
+        id = paste0(card$key, "_toggle"), value = ifelse(card$key %in% activated, TRUE, FALSE), inline = TRUE, translate = translate))
   })
   # Render card with distinct togglesmo
   div(id = ns("toggles"),

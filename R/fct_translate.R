@@ -887,6 +887,8 @@ get_translations <- function(){
             "FR", "no_modules_to_show", "Il n'y a pas de module configuré pour cette étude. Configurer les modules dans les paramètres.",
             "EN", "no_thesaurus_item_to_show", "No thesaurus items to show in this module",
             "FR", "no_thesaurus_item_to_show", "Pas d'items de thésaurus à afficher pour ce module",
+            "EN", "no_module_element_to_show", "No module element to show",
+            "FR", "no_module_element_to_show", "Pas de figure à afficher",
             "EN", "select_all", "Select all",
             "FR", "select_all", "Tout sélectionner",
             "EN", "unselect_all", "Unselect all",
