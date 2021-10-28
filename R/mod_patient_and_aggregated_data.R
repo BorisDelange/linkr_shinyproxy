@@ -252,6 +252,8 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
     observeEvent(r[[paste0(prefix, "_selected_key")]], r[[paste0("reload_", prefix, "_code")]] <- paste0("selected_key", r[[paste0(prefix, "_selected_key")]]))
   
     observeEvent(r[[paste0("reload_", prefix, "_code")]], {
+      
+      req(!is.na(r$chosen_study))
 
       # Update module when selected key changed
       # One module is composed by multiple groups
