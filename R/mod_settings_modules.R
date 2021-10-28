@@ -253,16 +253,22 @@ mod_settings_modules_server <- function(id, r, language){
           module_type_id <- switch(prefix, "patient_lvl" = 1, "aggregated" = 2)
           
           # Filter on plugins user has access to
-          data <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)
+          plugins <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)
           
-          if ("plugins_see_all_data" %not_in% r$user_accesses & nrow(data) > 0) data <- get_authorized_data(r = r, table = "plugins", data = data)
+          if ("plugins_see_all_data" %not_in% r$user_accesses & nrow(plugins) > 0) plugins <- get_authorized_data(r = r, table = "plugins", data = plugins)
           
-          options <- convert_tibble_to_list(data = data, key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = plugins, key_col = "id", text_col = "name")
           shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options)
         })
         
         observeEvent(r$datamarts, {
-          options <- convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name", null_value = TRUE)
+          
+          # Filter on datamarts user has access to
+          datamarts <- r$datamarts
+          
+          if ("datamarts_see_all_data" %not_in% r$user_accesses & nrow(datamarts) > 0) datamarts <- get_authorized_data(r = r, table = "datamarts")
+          
+          options <- convert_tibble_to_list(data = datamarts, key_col = "id", text_col = "name", null_value = TRUE)
           shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = options)
         })
         
@@ -423,7 +429,7 @@ mod_settings_modules_server <- function(id, r, language){
               
             observeEvent(input$thesaurus_items_cell_edit, {
               edit_info <- input$thesaurus_items_cell_edit
-              edit_info$col <- edit_info$col + 4 # Cause some cols removed
+              edit_info$col <- edit_info$col + 2 # Cause id & thesaurus_id cols removed
               r$modules_thesaurus_items_temp <- DT::editData(r$modules_thesaurus_items, edit_info, rownames = FALSE)
               r$modules_thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
             })
@@ -723,6 +729,7 @@ mod_settings_modules_server <- function(id, r, language){
           # Each time a row is updated, modify temp variable
           observeEvent(input$management_datatable_cell_edit, {
             edit_info <- input$management_datatable_cell_edit
+            if (grepl("modules_elements", table)) edit_info$col <- edit_info$col + 2 # Cause some cols have been removed in datatable
             r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
             # Store that this row has been modified
             r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
@@ -764,7 +771,7 @@ mod_settings_modules_server <- function(id, r, language){
           observeEvent(input$delete_confirmed, {
             
             # If user has access
-            req(paste0(prefix, "_modules_management_card") %in% r$user_accesses)
+            req(paste0(prefix, "_modules_delete_data") %in% r$user_accesses)
             
             # Get value of deleted row
             row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))

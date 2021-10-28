@@ -348,17 +348,32 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   data <- r[[paste0(table, "_temp")]]
   
   # If user is not allowed to see all data, filter
-  if (paste0(table, "_see_all_data") %not_in% r$user_accesses) {
+  if ((!grepl("modules", table) & paste0(table, "_see_all_data") %not_in% r$user_accesses) |
+      (grepl("patient_lvl_modules", table) & "patient_lvl_modules_see_all_data" %not_in% r$user_accesses) |
+      (grepl("aggregated_modules", table) & "aggregated_modules_see_all_data" %not_in% r$user_accesses)) {
     
     # If on these tables, show only data who the user is the creator
-    if (table %in% c("data_sources", "subsets", "thesaurus") | grepl("patient_lvl_modules", table) | grepl("aggregated_modules", table) & nrow(data) > 0){
+    if (table %in% c("data_sources", "subsets", "thesaurus") & nrow(data) > 0){
       data <- data %>% dplyr::filter(creator_id == r$user_id)
     }
     
     # For these tables, show data with options parameters
     if (table %in% c("studies", "datamarts", "plugins", "patient_lvl_modules_families", "aggregated_modules_families") & nrow(data) > 0){
       data <- get_authorized_data(r = r, table = table, data = data)
-    } 
+    }
+    
+    # For these tables, it depends on its parent
+    if (table %in% c("patient_lvl_modules", "aggregated_modules", "patient_lvl_modules_elements", "aggregated_modules_elements")){
+      
+      if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
+      if (grepl("aggregated", table)) prefix <- "aggregated_"
+      
+      modules_families_ids <- get_authorized_data(r = r, table = paste0(prefix, "modules_families")) %>% dplyr::pull(id)
+      modules_ids <- r[[paste0(prefix, "modules")]] %>% dplyr::filter(module_family_id %in% modules_families_ids) %>% dplyr::pull(id)
+      
+      if (grepl("modules$", table)) data <- data %>% dplyr::filter(module_family_id %in% modules_families_ids)
+      if (grepl("modules_elements", table)) data <- data %>% dplyr::filter(module_id %in% modules_ids)
+    }
 
   }
   
@@ -369,27 +384,14 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
     output[[output_name]] <- DT::renderDT(data, options = list(dom = 'tp'))
   })
   
-  # If page is plugins, remove column description from datatable (it will be editable from datatable row options edition)
-  # /!\ Careful : it changes the index of columns, use to update informations directy on datatable
-  if (table == "plugins") data <- data %>% dplyr::select(-description)
-  if (grepl("thesaurus_items", table)) data <- data %>% dplyr::select(-id, -thesaurus_id, -datetime)
+  # Add module family column for modules elements
   if (grepl("modules_elements", table)){
-    
-    # Also add module_family col
-    if (grepl("patient_lvl", table)){
-      prefix <- "patient_lvl"
-      data <- data %>% dplyr::select(-id, -group_id, -thesaurus_item_id, -thesaurus_item_colour, -display_order, -creator_id, -datetime)
-    }
-    if (grepl("aggregated", table)){
-      prefix <- "aggregated"
-      data <- data %>% dplyr::select(-id, -group_id, -display_order, -creator_id, -datetime)
-    }
-    
-    # Add module family column
+    if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
+    if (grepl("aggregated", table)) prefix <- "aggregated"
     data <- data %>% dplyr::left_join(r[[paste0(prefix, "_modules")]] %>% 
       dplyr::select(module_id = id, module_family_id), by = "module_id") %>% dplyr::relocate(module_family_id, .after = name)
-    
   }
+  
   
   # Add a column action in the DataTable
   # Action column is already loaded for thesaurus_items (cache system)
@@ -478,19 +480,19 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
       # Add options button
       if ("options" %in% action_buttons){
         actions <- tagList(actions,
-          shiny::actionButton(paste0("options_", data[i, 1]), "", icon = icon("cog"),
+          shiny::actionButton(paste0("options_", data[i, "id"]), "", icon = icon("cog"),
             onclick = paste0("Shiny.setInputValue('", id, "-options", "', this.id, {priority: 'event'})")), "")}
 
       # Add edit code button
       if ("edit_code" %in% action_buttons){
         actions <- tagList(actions,
-          shiny::actionButton(paste0("edit_code_", data[i, 1]), "", icon = icon("file-code"),
+          shiny::actionButton(paste0("edit_code_", data[i, "id"]), "", icon = icon("file-code"),
             onclick = paste0("Shiny.setInputValue('", id, "-edit_code", "', this.id, {priority: 'event'})")), "")}
 
       # Add sub datatable button
       if ("sub_datatable" %in% action_buttons){
         actions <- tagList(actions,
-          shiny::actionButton(paste0("sub_datatable_", data[i, 1]), "", icon = icon("table"),
+          shiny::actionButton(paste0("sub_datatable_", data[i, "id"]), "", icon = icon("table"),
             onclick = paste0("Shiny.setInputValue('", id, "-sub_datatable", "', this.id, {priority: 'event'})")), "")}
 
       # Add delete button
@@ -499,7 +501,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
         # If row is deletable (we havn't made a function argument for deletable or not, only default subsets are not deletable)
         # Could be changed later
         
-        delete <- shiny::actionButton(paste0("delete_", data[i, 1]), "", icon = icon("trash-alt"),
+        delete <- shiny::actionButton(paste0("delete_", data[i, "id"]), "", icon = icon("trash-alt"),
           onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})"))
         
         # Default subsets are not deletable
@@ -555,6 +557,26 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
       })
     }
   }
+  
+  
+  # Remove some cols
+  
+  # If page is plugins, remove column description from datatable (it will be editable from datatable row options edition)
+  # /!\ Careful : it changes the index of columns, use to update informations directy on datatable
+  if (table == "plugins") data <- data %>% dplyr::select(-description)
+  if (grepl("thesaurus_items", table)) data <- data %>% dplyr::select(-id, -thesaurus_id, -datetime)
+  if (grepl("modules_elements", table)){
+    
+    if (grepl("patient_lvl", table)){
+      prefix <- "patient_lvl"
+      data <- data %>% dplyr::select(-id, -group_id, -thesaurus_item_id, -thesaurus_item_colour, -display_order, -creator_id, -datetime)
+    }
+    if (grepl("aggregated", table)){
+      prefix <- "aggregated"
+      data <- data %>% dplyr::select(-id, -group_id, -display_order, -creator_id, -datetime)
+    }
+  }
+  
   
   # Which columns are non editable
   # Test with :
