@@ -373,6 +373,23 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # /!\ Careful : it changes the index of columns, use to update informations directy on datatable
   if (table == "plugins") data <- data %>% dplyr::select(-description)
   if (grepl("thesaurus_items", table)) data <- data %>% dplyr::select(-id, -thesaurus_id, -datetime)
+  if (grepl("modules_elements", table)){
+    
+    # Also add module_family col
+    if (grepl("patient_lvl", table)){
+      prefix <- "patient_lvl"
+      data <- data %>% dplyr::select(-id, -group_id, -thesaurus_item_id, -thesaurus_item_colour, -display_order, -creator_id, -datetime)
+    }
+    if (grepl("aggregated", table)){
+      prefix <- "aggregated"
+      data <- data %>% dplyr::select(-id, -group_id, -display_order, -creator_id, -datetime)
+    }
+    
+    # Add module family column
+    data <- data %>% dplyr::left_join(r[[paste0(prefix, "_modules")]] %>% 
+      dplyr::select(module_id = id, module_family_id), by = "module_id") %>% dplyr::relocate(module_family_id, .after = name)
+    
+  }
   
   # Add a column action in the DataTable
   # Action column is already loaded for thesaurus_items (cache system)
@@ -512,28 +529,30 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
       }
 
       # Get names for other columns if there are not dropdowns
-      # Failed to loop that...
-      if ("data_source_id" %in% names(data) & "data_source_id" %not_in% names(dropdowns)){
-        result <- r$data_sources %>% dplyr::filter(id == data[[i, "data_source_id"]]) %>% dplyr::pull(name)
-        if (length(result) == 0) result <- ""
-        data[[i, "data_source_id"]] <- result
-      }
-      if ("datamart_id" %in% names(data) & "datamart_id" %not_in% names(dropdowns)){
-        result <- r$datamarts %>% dplyr::filter(id == data[[i, "datamart_id"]]) %>% dplyr::pull(name)
-        if (length(result) == 0) result <- ""
-        data[[i, "datamart_id"]] <- result
-      }
-      if ("study_id" %in% names(data) & "study_id" %not_in% names(dropdowns)){
-        result <- r$studies %>% dplyr::filter(id == data[[i, "study_id"]]) %>% dplyr::pull(name)
-        if (length(result) == 0) result <- ""
-        data[[i, "study_id"]] <- result
-      }
-      if ("module_family_id" %in% names(data) & "module_family_id" %not_in% names(dropdowns)){
-        if (grepl("patient_lvl", table)) result <- r$patient_lvl_modules_families %>% dplyr::filter(id == data[[i, "module_family_id"]]) %>% dplyr::pull(name)
-        if (grepl("aggregated", table)) result <- r$aggregated_modules_families %>% dplyr::filter(id == data[[i, "module_family_id"]]) %>% dplyr::pull(name)
-        if (length(result) == 0) result <- ""
-        data[[i, "module_family_id"]] <- result
-      }
+
+      cols <- c("data_source_id" = "data_sources", "datamart_id" = "datamarts", "study_id" = "studies")
+      sapply(names(cols), function(name){
+        if (name %in% names(data) & name %not_in% names(dropdowns)){
+          row_id <- data[[i, name]]
+          if (length(row_id) > 0) result <- r[[cols[[name]]]] %>% dplyr::filter(id == as.integer(row_id)) %>% dplyr::pull(name)
+          if (length(result) == 0) result <- ""
+          data[[i, name]] <<- result
+        }
+      })
+      
+      cols <- c("module_family_id" = "modules_families", "module_id" = "modules", "plugin_id" = "plugins")
+      sapply(names(cols), function(name){
+        if (name %in% names(data) & name %not_in% names(dropdowns)){
+          if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
+          if (grepl("aggregated", table)) prefix <- "aggregated_"
+          if (name == "plugin_id") prefix <- ""
+
+          row_id <- data[[i, name]]
+          if (length(row_id) > 0) result <- r[[paste0(prefix, cols[[name]])]] %>% dplyr::filter(id == as.integer(row_id)) %>% dplyr::pull(name)
+          if (length(result) == 0) result <- ""
+          data[[i, name]] <<- result
+        }
+      })
     }
   }
   
@@ -779,7 +798,9 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
       
       ns <- NS(module_id)
       data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-        shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0("colour_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells))))
+        shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0("colour_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells), 
+          cellHeight = 25, cellWidth = 25#, cellMargin = 10
+        )))
     }
 
     # Delete old cache
@@ -899,11 +920,14 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
     duplicates_display_order <- 0
     
     # For modules tables (patient_lvl & aggregated, modules / modules_families / modules_elements)
+    # Duplicates names are grouped (by family for modules, by module for modules elements)
+    # It's the same with the display order
+    
     if (grepl("modules", table)){
       if (table %in% c("patient_lvl_modules", "aggregated_modules")){
         
         duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
-          dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+          dplyr::group_by(module_family_id, name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
         
         duplicates_display_order <- r[[paste0(table, "_temp")]] %>%
           dplyr::group_by(module_family_id, parent_module_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()

@@ -340,7 +340,7 @@ mod_settings_users_server <- function(id, r, language){
         options_toggles <- tibble::tribble(
           ~name, ~toggles,
           "general_settings", "change_password_card",
-          "app_db", c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card"),
+          "app_db", c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card"),#, "db_restore_card"),
           "users", c("users_delete_data", "users_creation_card", "users_management_card",
              "users_accesses_creation_card", "users_accesses_management_card", "users_accesses_options_card",
              "users_statuses_creation_card", "users_statuses_management_card"),

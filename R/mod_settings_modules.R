@@ -97,7 +97,7 @@ mod_settings_sub_modules_ui <- function(id, language){
                 make_textfield(language = language, ns = ns, label = "description", id = "description", width = "300px")
               ),
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-                make_dropdown(language = language, ns = ns, label = "module_family_new_element", id = "module_family", width = "300px"),
+                make_dropdown(language = language, ns = ns, label = "module_family", id = "module_family", width = "300px"),
                 make_dropdown(language = language, ns = ns, label = "module", id = "module_new_element", width = "300px"),
                 make_dropdown(language = language, ns = ns, label = "plugin", id = "plugin", width = "300px")
               ), 
@@ -413,23 +413,23 @@ mod_settings_modules_server <- function(id, r, language){
               searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE)
           })
             
-          ##########################################
-          # Thesaurus items selection              #
-          ########################################## 
+          ##############################################
+          # Module element / Thesaurus items selection #
+          ############################################## 
           
-            ##########################################
-            # Save changes in datatable              #
-            ##########################################
+            ##############################################
+            # Module element / Save changes in datatable #
+            ##############################################
               
             observeEvent(input$thesaurus_items_cell_edit, {
               edit_info <- input$thesaurus_items_cell_edit
-              edit_info$col <- edit_info$col + 2 # Cause id & thesaurus_id cols removed
+              edit_info$col <- edit_info$col + 4 # Cause some cols removed
               r$modules_thesaurus_items_temp <- DT::editData(r$modules_thesaurus_items, edit_info, rownames = FALSE)
               r$modules_thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
             })
           
             ##########################################
-            # Add & remove items                     #
+            # Module element / Add & remove items    #
             ##########################################
             
             # When add button is clicked
@@ -459,10 +459,12 @@ mod_settings_modules_server <- function(id, r, language){
                 # NB : the thesaurus_item_id saved in the database is the thesaurus ITEM_ID, no its ID in the database (in case thesaurus is deleted or re-uploaded)
                 item <- r$modules_thesaurus_items_temp %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", name))
                 
+                display_name <- ifelse(item$display_name == "", item$name, item$display_name)
+                
                 # Add item to selected items
                 r$modules_thesaurus_selected_items <- r$modules_thesaurus_selected_items %>% dplyr::bind_rows(
                   tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text,
-                    link_id, input$thesaurus, thesaurus_name, item$item_id, item$display_name, item$unit, input[[paste0("colour_", link_id)]], item$input_text))
+                    link_id, input$thesaurus, thesaurus_name, item$item_id, display_name, item$unit, input[[paste0("colour_", link_id)]], item$input_text))
   
                 # Update dropdown of selected items
                 options <- tibble_to_list(r$modules_thesaurus_selected_items, "id", "input_text")
@@ -506,6 +508,8 @@ mod_settings_modules_server <- function(id, r, language){
               # Reset r$modules_thesaurus_selected_items
               r$modules_thesaurus_selected_items <- tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, 
                 ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text) 
+              
+              shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
             })
         }
 
@@ -639,6 +643,7 @@ mod_settings_modules_server <- function(id, r, language){
           
           show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language)
           
+          update_r(r = r, table = table, language = language)
         })
         
       }
@@ -673,23 +678,25 @@ mod_settings_modules_server <- function(id, r, language){
             if (grepl("modules_families", table)) action_buttons <- c("options", action_buttons)
             
             # Sortable cols
-            sortable_cols <- c("id", "name", "description", "display_order", "datetime", "module_family_id")
+            sortable_cols <- c("id", "name", "description", "display_order", "datetime", "module_family_id", "module_id", "plugin_id", "thesaurus_name")
             
             # Column widths
             column_widths <- c("id" = "80px", "display_order" = "80px", "datetime" = "130px", "action" = "80px")
             
             # Editable cols
-            editable_cols <- c("name", "description", "display_order")
+            if (grepl("modules_elements", table)) editable_cols <- c("thesaurus_item_display_name", "thesaurus_item_unit", "display_order")
+            else editable_cols <- c("name", "description", "display_order")
             
             # Centered columns
             centered_cols <- c("id", "parent_module_id", "display_order", "datetime", "action")
             
             # Searchable_cols
-            searchable_cols <- c("name", "description", "module_family_id")
+            searchable_cols <- c("name", "description", "module_family_id", "module_id", "plugin_id", "thesaurus_name")
             
             # Factorized cols
             factorize_cols <- character()
             if (table %in% c("patient_lvl_modules", "aggregated_modules")) factorize_cols <- c("module_family_id")
+            if (grepl("modules_elements", table)) factorize_cols <- c("module_family_id", "module_id", "plugin_id", "thesaurus_name")
             
             # Restore datatable state
             page_length <- isolate(input$management_datatable_state$length)

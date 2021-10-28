@@ -119,10 +119,8 @@ get_col_names <- function(table_name = character(), language = "EN"){
   }
   
   if (table_name == "patient_lvl_modules_elements"){
-    result <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"), translate(language, "group"),
-      translate(language, "module"), translate(language, "plugin"), translate(language, "thesaurus"), translate(language, "item"), 
-      translate(language, "display_name"), translate(language, "unit"), translate(language, "colour"), translate(language, "display_order"), 
-      translate(language, "creator"), translate(language, "datetime"), translate(language, "action"))
+    result <- c(translate(language, "name"), translate(language, "module_family"), translate(language, "module"), translate(language, "plugin"), 
+      translate(language, "thesaurus"), translate(language, "display_name"), translate(language, "unit"), translate(language, "action"))
   }
   
   result

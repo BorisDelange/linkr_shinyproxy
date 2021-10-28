@@ -17,8 +17,9 @@ mod_settings_app_database_ui <- function(id, language){
       list(key = "db_connection_infos_card", label = "db_connection_infos_card"),
       list(key = "db_datatable_card", label = "db_datatable_card"),
       list(key = "db_request_card", label = "db_request_card"),
-      list(key = "db_save_card", label = "db_save_card"),
-      list(key = "db_restore_card", label = "db_restore_card"))),
+      list(key = "db_save_card", label = "db_save_card")#,
+      # list(key = "db_restore_card", label = "db_restore_card")
+      )),
     div(
       id = ns("db_connection_infos_card"),
       make_card(
@@ -102,18 +103,18 @@ mod_settings_app_database_ui <- function(id, language){
           div(style = "display:none;", downloadButton(ns("db_save"), label = ""))
         )
       )
-    ),
-    div(
-      id = ns("db_restore_card"),
-      make_card(
-        translate(language, "db_restore"),
-        div(
-          br(), uiOutput(ns("last_db_restore")), br(),
-          shiny.fluent::PrimaryButton.shinyInput(ns("db_restore_button"), translate(language, "restore_db"), iconProps = list(iconName = "Upload")),
-          div(style = "display:none;", fileInput(ns("db_restore"), label = "", multiple = FALSE, accept = ".tar"))
-        )
-      )
-    )
+    )#,
+    # div(
+    #   id = ns("db_restore_card"),
+    #   make_card(
+    #     translate(language, "db_restore"),
+    #     div(
+    #       br(), uiOutput(ns("last_db_restore")), br(),
+    #       shiny.fluent::PrimaryButton.shinyInput(ns("db_restore_button"), translate(language, "restore_db"), iconProps = list(iconName = "Upload")),
+    #       div(style = "display:none;", fileInput(ns("db_restore"), label = "", multiple = FALSE, accept = ".tar"))
+    #     )
+    #   )
+    # )
   )
 }
     
@@ -125,7 +126,7 @@ mod_settings_app_database_server <- function(id, r, language){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    toggles <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card")
+    toggles <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card")#, "db_restore_card")
     
     ##########################################
     # Show or hide cards   #
