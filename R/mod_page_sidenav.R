@@ -427,38 +427,38 @@ mod_page_sidenav_server <- function(id, r, language){
       
       observeEvent(r$chosen_study, {
         req(input$datamart & !is.na(r$chosen_study))
-        
+
         studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
         if (nrow(studies) > 0) {
-          
+
           # Merge with options
-          studies_options <- studies %>% dplyr::inner_join(r$options %>% 
+          studies_options <- studies %>% dplyr::inner_join(r$options %>%
             dplyr::filter(category == "study") %>% dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
-          
+
           # Vector of authorized studies
           studies_allowed <- integer()
-          
+
           # For each study, select those the user has access
           sapply(unique(studies_options$id), function(study_id){
-            
+
             # Loop over each study ID
-            
+
             users_allowed_read_group <- studies_options %>% dplyr::filter(id == study_id, option_name == "users_allowed_read_group")
             users_allowed_read <- studies_options %>% dplyr::filter(id == study_id, option_name == "user_allowed_read")
-            
+
             if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") studies_allowed <<- c(studies_allowed, study_id)
             else {
               if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) studies_allowed <<- c(studies_allowed, study_id)
             }
           })
-          
+
           # Select authorized studies
           studies <- studies %>% dplyr::filter(id %in% studies_allowed)
         }
-        
+
         shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE), value = r$chosen_study)
       })
-      
+
       observeEvent(r$chosen_subset, {
         req(input$study)
         subsets <- r$subsets %>% dplyr::filter(study_id == input$study)

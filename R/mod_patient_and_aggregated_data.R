@@ -82,7 +82,7 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
     # Render modules in UI
     output$main <- renderUI({
 
-      req(r$chosen_study)
+      req(!is.na(r$chosen_study))
       
       # If no module to show, notificate user
       if (nrow(r[[paste0(prefix, "_modules")]]) == 0 | "level" %not_in% names(r[[paste0(prefix, "_modules")]])){
@@ -234,54 +234,55 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
     ##########################################
     # Run server code                        #
     ##########################################
-    
-      ##########################################
-      # Patient-lvl data                       #
-      ##########################################
-    
-      # Once a study is chosen, load code for toggles
-      observeEvent(r$chosen_study, r$reload_patient_lvl_code <- "load_toggles")
-    
-      # Once a patient is chosen, render its tabs (without data for current stay)
-      # Once a stay is chosen, render patient's tabs
-    
-      observeEvent(r$chosen_patient, r$reload_patient_lvl_code <- as.character(r$chosen_patient))
-      observeEvent(r$chosen_stay, r$reload_patient_lvl_code <- as.character(r$chosen_stay))
-      observeEvent(r$patient_lvl_selected_key, r$reload_patient_lvl_code <- paste0("selected_key", r$patient_lvl_selected_key))
-    
-      observeEvent(r$reload_patient_lvl_code, {
   
-        # Update module when selected key changed
-        # One module is composed by multiple groups
-        # One group corresponds to one plugin and one or multiple thesaurus items
+    # Once a study is chosen, load code for toggles
+    observeEvent(r$chosen_study, r[[paste0("reload_", prefix, "_code")]] <- paste0(r$chosen_study, "load_toggles"))
+  
+    # Once a patient is chosen, render its tabs (without data for current stay)
+    # Once a stay is chosen, render patient's tabs
+  
+    if (prefix == "patient_lvl"){
+      observeEvent(r$chosen_patient, r$reload_patient_lvl_code <- as.character(r$chosen_patient))
+      observeEvent(r$chosen_stay, r$reload_patient_lvl_code <- as.character(r$chosen_stay)) 
+    }
+    if (prefix == "aggregated"){
+      observeEvent(r$chosen_subset, r$reload_aggregated_code <- r$chosen_subset)
+    }
+    
+    observeEvent(r[[paste0(prefix, "_selected_key")]], r[[paste0("reload_", prefix, "_code")]] <- paste0("selected_key", r[[paste0(prefix, "_selected_key")]]))
+  
+    observeEvent(r[[paste0("reload_", prefix, "_code")]], {
 
-        # Get modules elements, arrange them by display_order
+      # Update module when selected key changed
+      # One module is composed by multiple groups
+      # One group corresponds to one plugin and one or multiple thesaurus items
+
+      # Get modules elements, arrange them by display_order
+      
+      module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_key")]]) %>% dplyr::arrange(display_order)
+
+      # If no thesaurus elements to show in this module, notificate user
+      if (nrow(module_elements) == 0 & !grepl("selected_key", r[[paste0("reload_", prefix, "_code")]]) &
+          r[[paste0("reload_", prefix, "_code")]] != "load_toggles") show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning")
+
+      if (nrow(module_elements) > 0){
+
+        # Get module element group_id
+        distinct_groups <- unique(module_elements$group_id)
+
+        toggles <- c()
         
-        module_elements <- r$patient_lvl_modules_elements %>% dplyr::filter(module_id == r$patient_lvl_selected_key) %>% dplyr::arrange(display_order)
+        # Loop over distinct cards
+        sapply(distinct_groups, function(group_id){
 
-        # If no thesaurus elements to show in this module, notificate user
-        if (nrow(module_elements) == 0 & !grepl("selected_key", r$reload_patient_lvl_code) &
-            r$reload_patient_lvl_code != "load_toggles") show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning")
-
-        if (nrow(module_elements) > 0){
-
-          # Get module element group_id
-          distinct_groups <- unique(module_elements$group_id)
-
-          toggles <- c()
+            # Get name of module element
+            module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
+            
+            toggles <<- c(toggles, paste0(module_element_name, group_id))
           
-          # Loop over distinct cards
-          sapply(distinct_groups, function(group_id){
+          if (!grepl("load_toggles", r[[paste0("reload_", prefix, "_code")]])){
             
-            if (r$reload_patient_lvl_code == "load_toggles"){
-              
-              # Get name of module element
-              module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
-              
-              toggles <<- c(toggles, paste0(module_element_name, group_id))
-            }
-            
-            else {
+            if (prefix == "patient_lvl"){
   
               # Get thesaurus items with thesaurus own item_id
               thesaurus_selected_items <- module_elements %>% dplyr::filter(group_id == !!group_id) %>%
@@ -343,67 +344,9 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
                   if (nrow(data$orders) > 0) data$orders_stay <- data$orders %>% dplyr::filter(datetime_start >= data$stay$admission_datetime & datetime_start <= data$stay$discharge_datetime)
                 }
               }
-            
-              # Get plugin code
-              
-              plugin_id <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
-              code_server_card <- r$code %>% 
-                dplyr::filter(link_id == plugin_id, category == "plugin_server") %>%
-                dplyr::pull(code) %>% 
-                stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-                stringr::str_replace_all("\r", "\n")
-  
-              # Try to run plugin server code
-              
-              tryCatch(eval(parse(text = code_server_card)),
-                error = function(e) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language),
-                warning = function(w) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language)
-              )
             }
-          })
-          
-          # Load toggles server code
-          sapply(toggles, function(toggle){
-            observeEvent(input[[paste0(toggle, "_toggle")]], {
-              if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) 
-              else shinyjs::hide(toggle)
-            })
-          })
-        }
-      })
-    
-      ##########################################
-      # Aggregated data                        #
-      ##########################################
-      
-      
-      # Once a subset is chosen, render its data
-      
-      observeEvent(r$chosen_subset, r$reload_aggregated_code <- r$chosen_subset)
-      
-      observeEvent(r$reload_aggregated_code, {
-        
-        # Update module when selected key changed
-        # One module is composed by multiple groups
-        # One group corresponds to one plugin and one or multiple thesaurus items
-        
-        observeEvent(r$aggregated_selected_key, {
-          req(!is.na(r$aggregated_selected_key))
-          
-          # Get modules elements, arrange them by display_order
-          
-          module_elements <- r$aggregated_modules_elements %>% dplyr::filter(module_id == r$aggregated_selected_key) %>% dplyr::arrange(display_order)
-          
-          # If no thesaurus elements to show in this module, notificate user
-          if (nrow(module_elements) == 0) show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning")
-          
-          if (nrow(module_elements) > 0){
             
-            # Get module element group_id
-            distinct_groups <- unique(module_elements$group_id)
-            
-            # Loop over distinct cards
-            sapply(distinct_groups, function(group_id){
+            if (prefix == "aggregated"){
               
               # Initialize variables
               
@@ -438,26 +381,37 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
                 if (nrow(r$text) > 0) data$text_subset <- r$text %>% dplyr::inner_join(patients, by = "patient_id")
                 if (nrow(r$orders) > 0) data$orders_subset <- r$orders %>% dplyr::inner_join(patients, by = "patient_id")
               }
-              
-              # Get plugin code
-              
-              plugin_id <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
-              code_server_card <- r$code %>% 
-                dplyr::filter(link_id == plugin_id, category == "plugin_server") %>%
-                dplyr::pull(code) %>% 
-                stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-                stringr::str_replace_all("\r", "\n")
-              
-              # Try to run plugin server code
-              
-              tryCatch(eval(parse(text = code_server_card)),
-                error = function(e) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language),
-                warning = function(w) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language)
-              )
-            })
+            }
+          
+            # Get plugin code
+            
+            plugin_id <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
+            code_server_card <- r$code %>% 
+              dplyr::filter(link_id == plugin_id, category == "plugin_server") %>%
+              dplyr::pull(code) %>% 
+              stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+              stringr::str_replace_all("\r", "\n")
+
+            # Try to run plugin server code
+            
+            tryCatch(eval(parse(text = code_server_card)),
+              error = function(e) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language),
+              warning = function(w) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language)
+            )
           }
         })
-      })
+        
+        if (length(toggles) > 0){
+          # Load toggles server code
+          sapply(toggles, function(toggle){
+            observeEvent(input[[paste0(toggle, "_toggle")]], {
+              if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) 
+              else shinyjs::hide(toggle)
+            })
+          })
+        }
+      }
+    })
 
   })
 }
