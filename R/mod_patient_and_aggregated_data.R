@@ -84,6 +84,13 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
 
       req(!is.na(r$chosen_study))
       
+      # Check if users has access only to aggregated data
+      r$options %>% dplyr::filter(category == "datamart" & link_id == r$chosen_datamart & name == "show_only_aggregated_data") %>%
+        dplyr::pull(value_num) -> show_only_aggregated_data
+      
+      if (prefix == "patient_lvl" & show_only_aggregated_data == 1) show_message_bar(output, 1, "only_aggregated_data_authorized", "severeWarning", language)
+      req((prefix == "patient_lvl" & show_only_aggregated_data != 1) | prefix == "aggregated")
+      
       # If no module to show, notificate user
       if (nrow(r[[paste0(prefix, "_modules")]]) == 0 | "level" %not_in% names(r[[paste0(prefix, "_modules")]])){
         return(div(shiny.fluent::MessageBar(translate(language, "no_modules_to_show"), messageBarType = 3), style = "margin-top:10px;"))
@@ -265,7 +272,8 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
 
       # If no thesaurus elements to show in this module, notificate user
       if (nrow(module_elements) == 0 & !grepl("selected_key", r[[paste0("reload_", prefix, "_code")]]) &
-          r[[paste0("reload_", prefix, "_code")]] != "load_toggles") show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning")
+          r[[paste0("reload_", prefix, "_code")]] != "load_toggles") show_message_bar(output = output, id = 2, 
+            message = "no_module_element_to_show", type = "severeWarning", language = language)
 
       if (nrow(module_elements) > 0){
 

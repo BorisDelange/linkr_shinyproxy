@@ -327,7 +327,7 @@ import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id =
   
   # Check if there are no duplicates in items_id
   items_duplicates <- thesaurus %>% dplyr::group_by(item_id) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-  if (nrow(items_duplicates) > 0){
+  if (items_duplicates > 0){
     show_message_bar(output, 1, "error_multiple_item_id", "severeWarning", language)
     stop(translate(language, "error_multiple_item_id"))
   }

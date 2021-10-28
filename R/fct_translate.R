@@ -952,7 +952,9 @@ get_translations <- function(){
     "EN", "sql_query", "SQL query",
     "FR", "sql_query", "Requête SQL",
     "EN", "error_multiple_item_id", "Some item IDs are duplicated. Remove duplicates before insert thesaurus.",
-    "FR", "error_multiple_item_id", "Certains item IDs sont dupliqués. Retirer les duplicats avant d'importer le thesaurus."
+    "FR", "error_multiple_item_id", "Certains item IDs sont dupliqués. Retirer les duplicats avant d'importer le thesaurus.",
+    "EN", "only_aggregated_data_authorized", "For this datamart, only aggregated data are available",
+    "FR", "only_aggregated_data_authorized", "Seules les données agrégées sont autorisées pour ce datamart"
     ) -> data
   data
 }
