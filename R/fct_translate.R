@@ -103,6 +103,8 @@ get_translations <- function(){
             "FR", "aggregated_module_added", "Module ajouté",
             "EN", "aggregated_module_family_added", "Module family added",
             "FR", "aggregated_module_family_added", "Groupe de modules ajouté",
+            "EN", "aggregated_module_element_added", "Module element added",
+            "FR", "aggregated_module_element_added", "Figure ajoutée",
             "EN", "study", "Study",
             "FR", "study", "Etude",
             "EN", "studies", "Studies",
