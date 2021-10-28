@@ -573,7 +573,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
     }
     if (grepl("aggregated", table)){
       prefix <- "aggregated"
-      data <- data %>% dplyr::select(-id, -group_id, -display_order, -creator_id, -datetime)
+      data <- data %>% dplyr::select(-id, -group_id, -creator_id, -datetime)
     }
   }
   
@@ -953,6 +953,14 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
         
         duplicates_display_order <- r[[paste0(table, "_temp")]] %>%
           dplyr::group_by(module_family_id, parent_module_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+      }
+      
+      if (table == "aggregated_modules_elements"){
+        duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+          dplyr::group_by(module_id, name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+        
+        duplicates_display_order <- r[[paste0(table, "_temp")]] %>%
+          dplyr::group_by(module_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
       }
       
       if (duplicates_name > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)

@@ -125,7 +125,7 @@ get_col_names <- function(table_name = character(), language = "EN"){
   
   if (table_name == "aggregated_modules_elements"){
     result <- c(translate(language, "name"), translate(language, "module_family"), translate(language, "module"), 
-      translate(language, "plugin"), translate(language, "action"))
+      translate(language, "plugin"), translate(language, "display_order"), translate(language, "action"))
   }
   
   result

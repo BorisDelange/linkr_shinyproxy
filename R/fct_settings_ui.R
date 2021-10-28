@@ -386,7 +386,10 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
       tagList(shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 50),
         make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
-          options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")))) -> choice_data
+          options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")),
+        make_dropdown(language = language, ns = ns, label = "study", width = "300px"),
+        make_dropdown(language = language, ns = ns, label = "subset", width = "300px")
+        )) -> choice_data
     }
     
     # Toggle for choice of UI or server code

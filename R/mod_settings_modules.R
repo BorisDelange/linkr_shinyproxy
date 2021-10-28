@@ -717,7 +717,8 @@ mod_settings_modules_server <- function(id, r, language){
             column_widths <- c("id" = "80px", "display_order" = "80px", "datetime" = "130px", "action" = "80px")
             
             # Editable cols
-            if (grepl("modules_elements", table)) editable_cols <- c("thesaurus_item_display_name", "thesaurus_item_unit", "display_order")
+            if (table == "patient_lvl_modules_elements") editable_cols <- c("thesaurus_item_display_name", "thesaurus_item_unit", "display_order")
+            else if (table == "aggregated_modules_elements") editable_cols <- c("name", "display_order")
             else editable_cols <- c("name", "description", "display_order")
             
             # Centered columns
@@ -757,7 +758,10 @@ mod_settings_modules_server <- function(id, r, language){
           # Each time a row is updated, modify temp variable
           observeEvent(input$management_datatable_cell_edit, {
             edit_info <- input$management_datatable_cell_edit
-            if (grepl("modules_elements", table)) edit_info$col <- edit_info$col + 2 # Cause some cols have been removed in datatable
+            
+            if (table == "patient_lvl_modules_elements") edit_info$col <- edit_info$col + 2 # Cause some cols have been removed in datatable
+            if (table == "aggregated_modules_elements") edit_info$col <- edit_info$col + 1
+            
             r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
             # Store that this row has been modified
             r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
