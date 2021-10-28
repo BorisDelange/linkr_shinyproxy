@@ -448,7 +448,8 @@ check_authentification <- function(db){
     
     res <- DBI::dbGetQuery(db, paste0("SELECT * FROM users WHERE username = '", user, "' AND password = '", password, "'"))
     
-    if (nrow(res) > 0) list(result = TRUE, user_info = list(user = user))
+    
+    if (nrow(res) > 0) list(result = TRUE, user_info = list(user = user, id = res$id))
     else list(result = FALSE)
 
   }

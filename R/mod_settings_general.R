@@ -103,14 +103,14 @@ mod_settings_general_server <- function(id, r, language){
       
       old_password <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM users WHERE id = ", r$user_id)) %>% dplyr::pull(password)
       
-      if (rlang::hash(input$old_password) != old_password) shiny.fluent::updateTextField.shinyInput(session, "old_password", 
+      if (as.character(rlang::hash(input$old_password)) != old_password) shiny.fluent::updateTextField.shinyInput(session, "old_password", 
         errorMessage = translate(language, "invalid_old_password"))
       
-      else {
+      if (as.character(rlang::hash(input$old_password)) == old_password) {
         
         # Everything is OK, change password
         
-        query <- DBI::dbSendStatement(r$db, paste0("UPDATE users SET password = ", rlang::hash(input$new_password), " WHERE id = ", r$user_id))
+        query <- DBI::dbSendStatement(r$db, paste0("UPDATE users SET password = ", as.character(rlang::hash(input$new_password)), " WHERE id = ", r$user_id))
         DBI::dbClearResult(query)
         
         # Notificate the user

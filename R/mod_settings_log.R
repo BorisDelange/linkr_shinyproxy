@@ -77,7 +77,7 @@ mod_settings_log_server <- function(id, r, language){
             ), className = "inline_choicegroup"),
             conditionalPanel(condition = "input.see_log_of == 'people_picker'", ns = ns,
               make_people_picker(language = language, ns = ns, label = "users", options = options)
-            ),
+            ), br(),
             DT::DTOutput(ns("datatable"))
           ) -> result
         }
@@ -126,16 +126,15 @@ mod_settings_log_server <- function(id, r, language){
           by = "creator_id") %>% dplyr::relocate(display_name, .before = "datetime") %>%
           dplyr::select(-creator_id, creator_id = display_name) %>%
           dplyr::mutate(value = substr(value, 1, 100))
-        
-        names(log) <- get_col_names("log")
-        
-        dt_translation <- list(
-          paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
-          search = translate(language, "DT_search"),
-          lengthMenu = translate(language, "DT_length"),
-          emptyTable = translate(language, "DT_empty"))
-        
       }
+      
+      dt_translation <- list(
+        paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
+        search = translate(language, "DT_search"),
+        lengthMenu = translate(language, "DT_length"),
+        emptyTable = translate(language, "DT_empty"))
+      
+      names(log) <- get_col_names("log")
       
       output$datatable <- DT::renderDT(
         log,

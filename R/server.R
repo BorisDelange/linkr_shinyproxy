@@ -82,10 +82,11 @@ app_server <- function(router, language, db_info){
     
     # Secure the app with ShinyManager
     
-    # res_auth <- shinymanager::secure_server(check_credentials = check_authentification(r$db))
+    # r$res_auth <- shinymanager::secure_server(check_credentials = check_authentification(r$db))
     
     # Get user ID
     r$user_id <- 1
+    # observeEvent(r$res_auth, r$user_id <- reactiveValuesToList(r$res_auth)$id)
     
     
     # When r$user_id loaded, load user_accesses

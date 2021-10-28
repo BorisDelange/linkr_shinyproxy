@@ -14,8 +14,6 @@ mod_page_header_ui <- function(language){
   result <- div()
   
   div(class = "header",
-    # ShinyManager logout button, hidden
-    div(shinymanager::fab_button(inputId = "logout"), style = "display:none;"),
     
     div(htmltools::img(src = "www/logo.png", style = "height: 25px;"), class = "logo"),
     div(class = "title", shiny.fluent::Text(variant = "xLarge", "CDW Tools")),
@@ -26,46 +24,26 @@ mod_page_header_ui <- function(language){
           shiny.fluent::CommandBarItem(translate(language, "patient_level_data"), "Contact", href = shiny.router::route_link("patient_level_data")),
           shiny.fluent::CommandBarItem(translate(language, "aggregated_data"), "BIDashboard", href = shiny.router::route_link("aggregated_data"))
         )
-      )
+      ),
     ),
     div(class = "header_right_bar",
-      shiny.fluent::CommandBar(
-        # farItems = list(
-        #   list(key = "disconnect", text = translate(language, "disconnect"), iconOnly = TRUE)
-            # onClick = paste0("Shiny.setInputValue('disconnect', 1, {priority: 'event'})"))
-          # list(id = "settigns", key = "settings", text = translate(language, "settings"), ),
-          # shiny.fluent::CommandBarItem(translate(language, "settings"), "Settings", iconOnly = TRUE, 
-          #   href = shiny.router::route_link("settings/general_settings")),
-          # shiny.fluent::CommandBarItem(translate(language, "help"), "Info", iconOnly = TRUE,
-          #   href = "https://borisdelange.github.io/cdwtools/articles/", target = "_blank"),
-          # shiny.fluent::ActionButton.shinyInput("disconnect", "Disconnect")
-          # shiny.fluent::CommandBarItem(translate(language, "disconnect"), "PowerButton", iconOnly = TRUE)
-          # shiny.fluent::CommandBarItem(list(id = "disconnect", key = "disconnect", iconProps = list(iconName = "PowerButton")))
-        # )
-        items = list(
-          shiny.fluent::CommandBarItem(translate(language, "settings"), "Settings", iconOnly = TRUE,
-                                       href = shiny.router::route_link("settings/general_settings")),
-          shiny.fluent::CommandBarItem(translate(language, "help"), "Info", iconOnly = TRUE,
-                                       href = "https://borisdelange.github.io/cdwtools/articles/", target = "_blank")#,
-          # shiny.fluent::ActionButton.shinyInput("disconnect", "Disconnect")
-          # shiny.fluent::CommandBarItem(translate(language, "disconnect"), "PowerButton", iconOnly = TRUE)
-         
-          # shiny.fluent::CommandBarItem(list(id = "disconnect", key = "disconnect", iconProps = list(iconName = "PowerButton")))
-        )
-      )#, shinymanager::fab_button(position = "top-right", animation = "zoomin", toggle = "click")#,
-      # textOutput("test")
+      shiny.fluent::Stack(horizontal = TRUE, tokens = (childrenGap = 0),
+        shiny.fluent::CommandBar(),
+        shiny.fluent::CommandBarButton.shinyInput("settings", iconProps = list("iconName" = "Settings"), 
+          href = shiny.router::route_link("settings/general_settings")),
+        shiny.fluent::CommandBarButton.shinyInput("settings", iconProps = list("iconName" = "Info"), 
+          href = "https://borisdelange.github.io/cdwtools/articles/", target = "_blank"),
+        shiny.fluent::CommandBarButton.shinyInput("disconnect", iconProps = list("iconName" = "PowerButton")),
+        
+      )
     )
   )
 }
 
 mod_page_header_server <- function(input, output, session){
-  # moduleServer(id, function(input, output, session){
-    # ns <- session$ns
-    
-    # observeEvent(input$disconnect, {
-    #   output$test <- renderText("TEST")
-    #   shinyjs::click("logout")
-    # })
-    
-  # })     
+  
+  # When disconnect button is clicked, click on shinymanager logout button
+  observeEvent(input$disconnect, {
+    shinyjs::click(".shinymanager_logout")
+  }) 
 }
