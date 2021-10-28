@@ -182,5 +182,10 @@ get_col_names <- function(table_name = character(), language = "EN"){
       translate(language, "plugin"), translate(language, "display_order"), translate(language, "action"))
   }
   
+  if (table_name == "log"){
+    result <- c(translate(language, "id"), translate(language, "category"), translate(language, "name"),
+      translate(language, "value"), translate(language, "user"), translate(language, "datetime"))
+  }
+  
   result
 }

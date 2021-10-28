@@ -72,7 +72,8 @@ cdwtools <- function(
     shiny.router::route("settings/thesaurus", make_layout(language = language, page = "settings/thesaurus")),
     shiny.router::route("settings/plugins", make_layout(language = language, page = "settings/plugins")),
     shiny.router::route("settings/patient_lvl_modules", make_layout(language = language, page = "settings/patient_lvl_modules")),
-    shiny.router::route("settings/aggregated_modules", make_layout(language = language, page = "settings/aggregated_modules"))
+    shiny.router::route("settings/aggregated_modules", make_layout(language = language, page = "settings/aggregated_modules")),
+    shiny.router::route("settings/log", make_layout(language = language, page = "settings/log"))
   ) -> page
   
   # Load UI & server

@@ -215,6 +215,9 @@ app_server <- function(router, language, db_info){
           })
         })
       }
+      
+      if ("log" %in% r$user_accesses) mod_settings_log_server("settings_log", r, language)
+      mod_page_sidenav_server("settings_log", r, language)
     })
     
   }

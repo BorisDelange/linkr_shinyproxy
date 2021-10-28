@@ -23,9 +23,7 @@ mod_page_main_ui <- function(id, language){
           class = glue::glue("card ms-depth-8 ms-sm{8} ms-xl{8}"),
           shiny.fluent::Stack(
             tokens = list(childrenGap = 5),
-            shiny.fluent::Text(variant = "large", "Datamarts", block = TRUE),
-            # shiny.fluent::Text(paste0("id = ", id)),
-            shiny.fluent::Text(shiny::textOutput(ns("test2")))
+            shiny.fluent::Text(variant = "large", "Datamarts", block = TRUE)
           )
         )
       )
@@ -59,7 +57,7 @@ mod_page_main_ui <- function(id, language){
     if (id == "settings_plugins") mod_settings_plugins_ui(id = "settings_plugins", language = language) -> result
     if (id == "settings_patient_lvl_modules") mod_settings_modules_ui("settings_patient_lvl_modules", language) -> result
     if (id == "settings_aggregated_modules") mod_settings_modules_ui("settings_aggregated_modules", language) -> result
-    if (id == "settings_log") result
+    if (id == "settings_log") mod_settings_log_ui("settings_log", language) -> result
   }
 
   result

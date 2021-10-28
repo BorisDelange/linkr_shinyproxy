@@ -909,6 +909,8 @@ get_translations <- function(){
             "FR", "everybody", "Tout le monde",
             "EN", "people_picker", "Choose users",
             "FR", "people_picker", "Choisir les utilisateurs",
+            "EN", "choose_user", "Choose user",
+            "FR", "choose_user", "Choisir l'utilisateur",
             "EN", "data_sources_see_all_data", "See all data",
             "FR", "data_sources_see_all_data", "Accès à toutes les données",
             "EN", "data_sources_edit_data", "Edit data",

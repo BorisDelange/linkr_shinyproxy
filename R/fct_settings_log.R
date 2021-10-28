@@ -11,7 +11,7 @@ add_log_entry <- function(r, category, name, value){
   datetime <- as.character(Sys.time())
   
   sql <- glue::glue_sql("INSERT INTO log(id, category, name, value, creator_id, datetime)
-    SELECT {id_row}, {category}, {name}, {value}, {r$creator_id}, {datetime}", 
+    SELECT {id_row}, {category}, {name}, {value}, {r$user_id}, {datetime}", 
     .con = r$db)
   
   query <- DBI::dbSendStatement(r$db, sql)

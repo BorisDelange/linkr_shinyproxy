@@ -39,13 +39,6 @@ mod_settings_r_console_server <- function(id, r, language){
     # R console / Show or hide cards         #
     ##########################################
     
-    # Depending on user_accesses
-    # observeEvent(r$user_accesses, {
-      # Hide toggles if user has no access
-      # (Doesn't work anymore : we had a condition in server.R to not load server data if user has no access)
-      # if ("r_console" %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
-    # })
-    
     # Depending on toggles activated
     sapply(toggles, function(toggle){
       
@@ -60,6 +53,10 @@ mod_settings_r_console_server <- function(id, r, language){
         }
       })
     })
+    
+    ##########################################
+    # R console / Execute code               #
+    ##########################################
     
     observeEvent(input$execute_code, {
       # If user has access
