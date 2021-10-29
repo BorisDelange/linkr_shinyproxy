@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_patient_and_aggregated_data_ui <- function(id, language, page){
+mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   result <- ""
   
@@ -22,7 +22,7 @@ mod_patient_and_aggregated_data_ui <- function(id, language, page){
 #'
 #' @noRd 
 
-mod_patient_and_aggregated_data_server <- function(id, r, language){
+mod_patient_and_aggregated_data_server <- function(id = character(), r, language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -36,6 +36,13 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
       # Initiate selected_key
       r$patient_lvl_selected_key <- NA_integer_
       r$aggregated_selected_key <- NA_integer_
+      
+      # Reset r variables (prevent bug later if datamart code doesn't work)
+      r$patients <- tibble::tibble()
+      r$stays <- tibble::tibble()
+      r$labs_vitals <- tibble::tibble()
+      r$text <- tibble::tibble()
+      r$orders <- tibble::tibble()
       
       # Try to load datamart 
       tryCatch(run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language),
@@ -93,7 +100,7 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
       
       # If no module to show, notificate user
       if (nrow(r[[paste0(prefix, "_modules")]]) == 0 | "level" %not_in% names(r[[paste0(prefix, "_modules")]])){
-        return(div(shiny.fluent::MessageBar(translate(language, "no_modules_to_show"), messageBarType = 3), style = "margin-top:10px;"))
+        return(div(shiny.fluent::MessageBar(translate(language, "no_modules_to_show", words), messageBarType = 3), style = "margin-top:10px;"))
       }
       
       req(nrow(r[[paste0(prefix, "_modules")]] > 0) & "level" %in% names(r[[paste0(prefix, "_modules")]]) & !is.na(r$chosen_study))
@@ -148,7 +155,7 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
       is_current_item <- FALSE
       if (nb_levels == 1) is_current_item <- TRUE
       items <- list(
-        list(key = "main", text = translate(language, id), href = paste0("#!/", id), isCurrentItem = is_current_item,
+        list(key = "main", text = translate(language, id, words), href = paste0("#!/", id), isCurrentItem = is_current_item,
              onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', ", first_module_shown$id, ")"))))
 
       # Other levels
@@ -214,10 +221,10 @@ mod_patient_and_aggregated_data_server <- function(id, r, language){
             },
             error = function(e){
               # Libraries needed
-              libraries_needed <- paste0(translate(language, "libraries_needed_plugin"), " : ",
+              libraries_needed <- paste0(translate(language, "libraries_needed_plugin", words), " : ",
                 strsplit(code_ui_card, " ") %>% unlist() %>% grep("::", ., value = TRUE) %>% sub("::.*", "", .) %>% sub("\n", "", .) %>% toString(), ".")
               plugin_name <- r$plugins %>% dplyr::filter(id == plugin_id) %>% dplyr::pull(name)
-              output$message_bar1 <- show_message_bar(1, paste0(translate(language, "error_run_plugin_ui_code"), " (group_id = ", group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, "). ", libraries_needed), "severeWarning", language)
+              output$message_bar1 <- show_message_bar(1, paste0(translate(language, "error_run_plugin_ui_code", words), " (group_id = ", group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, "). ", libraries_needed), "severeWarning", language)
             })
           })
         }

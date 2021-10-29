@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_settings_users_ui <- function(id, language){
+mod_settings_users_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   
   # Three distinct pages in the settings/users page : users, accesses & statuses
@@ -21,11 +21,11 @@ mod_settings_users_ui <- function(id, language){
   sapply(pages, function(page){
     
     cards <<- tagList(cards,
-      div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_creation"), language = language)),
-      div(id = ns(paste0(page, "_management_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_management"), language = language)))
+      div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_creation"), language = language, words = words)),
+      div(id = ns(paste0(page, "_management_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_management"), language = language, words = words)))
     
     if (page == "users_accesses") cards <<- tagList(cards,
-      div(id = ns(paste0(page, "_options_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_options"), language = language)))
+      div(id = ns(paste0(page, "_options_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_options"), language = language, words = words)))
   })
   
   div(class = "main",
@@ -38,12 +38,12 @@ mod_settings_users_ui <- function(id, language){
       list(key = "users_accesses_options_card", label = "users_accesses_options_card"),
       list(key = "users_statuses_creation_card", label = "users_statuses_creation_card"),
       list(key = "users_statuses_management_card", label = "users_statuses_management_card")
-    )),
+    ), words = words),
     cards
   )
 }
 
-mod_settings_sub_users_ui <- function(id, language){
+mod_settings_sub_users_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   
   page <- substr(id, nchar("settings_users_") + 1, nchar(id))
@@ -51,21 +51,21 @@ mod_settings_sub_users_ui <- function(id, language){
   if (page == "users_creation"){
     render_settings_creation_card(language = language, ns = ns, id = id, title = "add_user",
       textfields = c("username", "firstname", "lastname", "password"), textfields_width = "200px",
-      dropdowns = c("user_access", "user_status"), dropdowns_width = "200px") -> result
+      dropdowns = c("user_access", "user_status"), dropdowns_width = "200px", words = words) -> result
   }
   
   if (page == "users_accesses_creation"){
     render_settings_creation_card(language = language, ns = ns, id = id, title = "add_access",
-      textfields = c("name", "description"), textfields_width = "300px") -> result
+      textfields = c("name", "description"), textfields_width = "300px", words = words) -> result
   }
   
   if (page == "users_statuses_creation"){
     render_settings_creation_card(language = language, ns = ns, id = id, title = "add_status",
-      textfields = c("name", "description"), textfields_width = "300px") -> result
+      textfields = c("name", "description"), textfields_width = "300px", words = words) -> result
   }
   
   if (grepl("management", page)){
-    render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = page) -> result
+    render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = page, words = words) -> result
   }
   
   if (page == "users_accesses_options"){
@@ -78,7 +78,7 @@ mod_settings_sub_users_ui <- function(id, language){
 #' settings_users Server Functions
 #'
 #' @noRd 
-mod_settings_users_server <- function(id, r, language){
+mod_settings_users_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -375,7 +375,7 @@ mod_settings_users_server <- function(id, r, language){
               else value <- current_data %>% dplyr::filter(name == toggle) %>% dplyr::pull(value_num) %>% as.logical()
               
               # Create toggle
-              sub_results <<- tagList(sub_results, make_toggle(language = language, ns = ns, label = toggle, inline = TRUE, value = value))
+              sub_results <<- tagList(sub_results, make_toggle(language = language, ns = ns, label = toggle, inline = TRUE, value = value, words = words))
             })
           }
           
@@ -389,7 +389,7 @@ mod_settings_users_server <- function(id, r, language){
           # Create final toggle
           options_toggles_result <<- tagList(options_toggles_result, br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle(language = language, ns = ns, label = label, inline = TRUE, value = value)),
+              make_toggle(language = language, ns = ns, label = label, inline = TRUE, value = value, words = words)),
             conditionalPanel(condition = paste0("input.", label, " == 1"), ns = ns,
               br(), shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), sub_results)), hr()
           )
@@ -398,15 +398,15 @@ mod_settings_users_server <- function(id, r, language){
         # Render UI of options card
         output$options_card <- renderUI({
 
-          make_card(tagList(translate(language, "accesses_options"), span(paste0(" (ID = ", r$users_statuses_options, ")"), style = "font-size: 15px;")),
+          make_card(tagList(translate(language, "accesses_options", words), span(paste0(" (ID = ", r$users_statuses_options, ")"), style = "font-size: 15px;")),
             div(br(),
                 
               # Basically, it's one toggle by page, and one toggle by card inside a page
               options_toggles_result, br(),
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-                shiny.fluent::DefaultButton.shinyInput(ns("select_all"), translate(language, "select_all")),
-                shiny.fluent::DefaultButton.shinyInput(ns("unselect_all"), translate(language, "unselect_all")),
-                shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save")))
+                shiny.fluent::DefaultButton.shinyInput(ns("select_all"), translate(language, "select_all", words)),
+                shiny.fluent::DefaultButton.shinyInput(ns("unselect_all"), translate(language, "unselect_all", words)),
+                shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save", words)))
             )
           )
         })

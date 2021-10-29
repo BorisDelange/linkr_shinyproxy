@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_sidenav_ui <- function(id, language){
+mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   result <- ""
   
@@ -21,7 +21,7 @@ mod_page_sidenav_ui <- function(id, language){
       shiny.fluent::Nav(
         groups = list(
           list(links = list(
-            list(name = translate(language, "datamarts_studies"), key = "datamarts_studies",
+            list(name = translate(language, "datamarts_studies", words), key = "datamarts_studies",
                  url = shiny.router::route_link("home/datamarts_studies"))
             )
           )
@@ -53,7 +53,7 @@ mod_page_sidenav_ui <- function(id, language){
       make_dropdown(language = language, ns = ns, label = "stay"), br(), hr(),
       make_dropdown(language = language, ns = ns, label = "patient_status"), br(),
       div(id = ns("exclusion_reason_div"),
-        div(class = "input_title", translate(language, "exclusion_reason")),
+        div(class = "input_title", translate(language, "exclusion_reason", words)),
         div(shiny.fluent::Dropdown.shinyInput(ns("exclusion_reason"), value = NULL, options = list()))), br(),
       # make_dropdown(language = language, ns = ns, label = "exclusion_reason"), br(),
       uiOutput(ns("patient_info")),
@@ -81,28 +81,28 @@ mod_page_sidenav_ui <- function(id, language){
     
     links_data_management <- list()
     lapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
-      links_data_management <<- rlist::list.append(links_data_management, list(name = translate(language, page),
+      links_data_management <<- rlist::list.append(links_data_management, list(name = translate(language, page, words),
         id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
     })
     
     links_plugins_modules <- list()
     sapply(c("plugins", "patient_lvl_modules", "aggregated_modules"), function(page){
-      links_plugins_modules <<- rlist::list.append(links_plugins_modules, list(name = translate(language, page),
+      links_plugins_modules <<- rlist::list.append(links_plugins_modules, list(name = translate(language, page, words),
         id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
     })
     
     links <- list()
     sapply(c("general_settings", "app_db", "users", "r_console", "data_management", "plugins_modules", "log"), function(page){
       # Sub links for data management
-      if (page == "data_management") links <<- rlist::list.append(links, list(name = translate(language, page),
+      if (page == "data_management") links <<- rlist::list.append(links, list(name = translate(language, page, words),
         id = ns(page), key = page, links = links_data_management, selectedKey = substr(id, nchar("settings") + 2, 100), isExpanded = TRUE))
       
       # # Sub links for plugins & modules
-      else if (page == "plugins_modules") links <<- rlist::list.append(links, list(name = translate(language, page),
+      else if (page == "plugins_modules") links <<- rlist::list.append(links, list(name = translate(language, page, words),
         id = ns(page), key = page, links = links_plugins_modules, selectedKey = substr(id, nchar("settings") + 2, 100), isExpanded = TRUE))
       # 
       # No sub links
-      else links <<- rlist::list.append(links, list(name = translate(language, page),
+      else links <<- rlist::list.append(links, list(name = translate(language, page, words),
         id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
     })
     
@@ -129,7 +129,7 @@ mod_page_sidenav_ui <- function(id, language){
 #' page_sidenav Server Functions
 #'
 #' @noRd 
-mod_page_sidenav_server <- function(id, r, language){
+mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -170,7 +170,7 @@ mod_page_sidenav_server <- function(id, r, language){
         output$patient_info <- renderUI("")
         
         # If studies is empty
-        if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available"))
+        if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", words))
         
         if (nrow(studies) > 0){
           
@@ -196,7 +196,7 @@ mod_page_sidenav_server <- function(id, r, language){
         output$patient_info <- renderUI("")
         
         # If subsets si empty
-        if (nrow(subsets) == 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available"))
+        if (nrow(subsets) == 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available", words))
         if (nrow(subsets) > 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = tibble_to_list(subsets, "id", "name", rm_deleted_rows = TRUE), value = NULL)
       })
       
@@ -213,18 +213,18 @@ mod_page_sidenav_server <- function(id, r, language){
         # Select patients who belong to this subset
         subset_patients <- r$subset_patients %>% dplyr::filter(subset_id == input$subset)
         patients <- tibble::tribble()
-        if (nrow(subset_patients) > 0){
+        if (nrow(subset_patients) > 0 & nrow(r$patients) > 0){
           patients <- r$patients %>% dplyr::inner_join(subset_patients %>% dplyr::select(patient_id), by = "patient_id")
         }
         
-        if (nrow(patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))
+        if (nrow(patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available", words))
         if (nrow(patients) > 0){
           # Order patients by patient_id
           patients <- patients %>% dplyr::arrange(patient_id)
           
           # Update patients dropdown
           shiny.fluent::updateDropdown.shinyInput(session, "patient", 
-          options = convert_tibble_to_list(data = patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender, " - ", age, " ", translate(language, "years"))), 
+          options = convert_tibble_to_list(data = patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender, " - ", age, " ", translate(language, "years", words))), 
             key_col = "patient_id", text_col = "name_display"))
         }
       })
@@ -233,7 +233,7 @@ mod_page_sidenav_server <- function(id, r, language){
         
         r$chosen_patient <- input$patient
         
-        if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))
+        if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available", words))
         if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) > 0){
           
           # Order stays by admission datetime
@@ -242,7 +242,7 @@ mod_page_sidenav_server <- function(id, r, language){
           # Load stays of the patient & update dropdown
           shiny.fluent::updateDropdown.shinyInput(session, "stay",
             options = convert_tibble_to_list(data = stays %>% dplyr::mutate(name_display = paste0(unit_name, " - ", 
-              format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", translate(language, "to"), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
+              format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", translate(language, "to", words), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
               key_col = "stay_id", text_col = "name_display"), value = NULL)
         }
         
@@ -250,8 +250,8 @@ mod_page_sidenav_server <- function(id, r, language){
         
         style <- "display:inline-block; width:60px; font-weight:bold;"
         output$patient_info <- renderUI({
-          tagList(span(translate(language, "age"), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(age), " ", translate(language, "years"), br(),
-          span(translate(language, "gender"), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(gender))
+          tagList(span(translate(language, "age", words), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(age), " ", translate(language, "years", words), br(),
+          span(translate(language, "gender", words), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(gender))
         })
         
         # Update patient status dropdown
@@ -270,15 +270,15 @@ mod_page_sidenav_server <- function(id, r, language){
         # subset_names = names of subsets from which patient belongs to
         
         value <- "undefined"
-        if (translate("FR", "subset_included_patients") %in% subsets_names | translate("EN", "subset_included_patients") %in% subsets_names) value <- "included"
-        if (translate("FR", "subset_excluded_patients") %in% subsets_names | translate("EN", "subset_excluded_patients") %in% subsets_names) value <- "excluded"
+        if (translate("FR", "subset_included_patients", words) %in% subsets_names | translate("EN", "subset_included_patients", words) %in% subsets_names) value <- "included"
+        if (translate("FR", "subset_excluded_patients", words) %in% subsets_names | translate("EN", "subset_excluded_patients", words) %in% subsets_names) value <- "excluded"
         
         # Set to null to reload input$patient_status if the value is the same between to patients, to load exclusion_reason input
         shiny.fluent::updateDropdown.shinyInput(session, "patient_status", value = NULL)
         shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(
-          list(key = "undefined", text = translate(language, "undefined_status")),
-          list(key = "included", text = translate(language, "included_status")),
-          list(key = "excluded", text = translate(language, "excluded_status"))),
+          list(key = "undefined", text = translate(language, "undefined_status", words)),
+          list(key = "included", text = translate(language, "included_status", words)),
+          list(key = "excluded", text = translate(language, "excluded_status", words))),
           value = value)
         
         # Reset exclusion_reason dropdown & hide it
@@ -293,11 +293,11 @@ mod_page_sidenav_server <- function(id, r, language){
         
         style <- "display:inline-block; width:60px; font-weight:bold;"
         output$patient_info <- renderUI({
-          tagList(span(translate(language, "age"), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(age), " ", translate(language, "years"), br(),
-            span(translate(language, "gender"), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(gender) , br(), br(),
-            span(translate(language, "unit"), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(unit_name), br(),
-            span(translate(language, "from"), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(admission_datetime), br(),
-            span(translate(language, "to"), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(discharge_datetime))
+          tagList(span(translate(language, "age", words), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(age), " ", translate(language, "years"), br(),
+            span(translate(language, "gender", words), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(gender) , br(), br(),
+            span(translate(language, "unit", words), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(unit_name), br(),
+            span(translate(language, "from", words), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(admission_datetime), br(),
+            span(translate(language, "to", words), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(discharge_datetime))
         })
       })
       
@@ -309,9 +309,9 @@ mod_page_sidenav_server <- function(id, r, language){
         subsets <- r$subsets %>% dplyr::filter(study_id == r$chosen_study)
         
         included_patients_subset <- subsets %>% 
-          dplyr::filter(name %in% c(translate("FR", "subset_included_patients"), translate("EN", "subset_included_patients"))) %>% dplyr::pull(id)
+          dplyr::filter(name %in% c(translate("FR", "subset_included_patients", words), translate("EN", "subset_included_patients", words))) %>% dplyr::pull(id)
         excluded_patients_subset <- subsets %>% 
-          dplyr::filter(name %in% c(translate("FR", "subset_excluded_patients"), translate("EN", "subset_excluded_patients"))) %>% dplyr::pull(id)
+          dplyr::filter(name %in% c(translate("FR", "subset_excluded_patients", words), translate("EN", "subset_excluded_patients", words))) %>% dplyr::pull(id)
         
         add_patients_subset_id <- NA_integer_
         remove_patients_subset_id <- NA_integer_

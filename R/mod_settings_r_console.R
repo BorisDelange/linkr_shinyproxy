@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_settings_r_console_ui <- function(id, language, page){
+mod_settings_r_console_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   div(class = "main",
     render_settings_toggle_card(language = language, ns = ns, cards = list(
@@ -18,7 +18,7 @@ mod_settings_r_console_ui <- function(id, language, page){
       div(shinyAce::aceEditor(ns("ace_code"), "", mode = "r", 
         autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
      
-      shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code")), br(),
+      shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code", words)), br(),
       div(shiny::verbatimTextOutput(ns("code_result")), 
         style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
     )
@@ -29,7 +29,7 @@ mod_settings_r_console_ui <- function(id, language, page){
 #'
 #' @noRd 
 
-mod_settings_r_console_server <- function(id, r, language){
+mod_settings_r_console_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

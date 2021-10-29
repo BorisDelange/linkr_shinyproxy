@@ -37,7 +37,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     
     if (is.na(data[[textfield]])){
       shiny.fluent::updateTextField.shinyInput(session, 
-        textfield, errorMessage = translate(language, paste0("provide_valid_", textfield)))
+        textfield, errorMessage = translate(language, paste0("provide_valid_", textfield), r$words))
     }
     else shiny.fluent::updateTextField.shinyInput(session, textfield, errorMessage = NULL)
     
@@ -132,7 +132,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 
   # Append data to the table
   DBI::dbAppendTable(r$db, table, new_data)
-  add_log_entry(r = r, category = paste0(table, " - ", translate(language, "insert_new_data")), name = translate(language, "sql_query"), value = toString(new_data))
+  add_log_entry(r = r, category = paste0(table, " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_data))
   
   # Refresh r variables
   update_r(r = r, table = table, language = language)
@@ -151,7 +151,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     DBI::dbAppendTable(r$db, "code", new_code)
     update_r(r = r, table = "code", language = language)
     
-    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data")), name = translate(language, "sql_query"), value = toString(new_code))
+    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_code))
   }
 
   # For options of plugins, add one row for long description (Markdown) & 2 rows for users allowed to use this plugin
@@ -170,7 +170,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     DBI::dbAppendTable(r$db, "options", new_options)
     update_r(r = r, table = "options", language = language)
     
-    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data")), name = translate(language, "sql_query"), value = toString(new_options))
+    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_options))
 
     # Add code rows
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
@@ -179,7 +179,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     DBI::dbAppendTable(r$db, "code", new_code)
     update_r(r = r, table = "code", language = language)
     
-    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data")), name = translate(language, "sql_query"), value = toString(new_code))
+    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_code))
   }
 
   # For options of datamarts, need to add 3 rows in options
@@ -192,7 +192,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     DBI::dbAppendTable(r$db, "options", new_options)
     update_r(r = r, table = "options", language = language)
     
-    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data")), name = translate(language, "sql_query"), value = toString(new_options))
+    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_options))
   }
 
   # For studies, need to add one row in options and add rows of code for subsets, with default value
@@ -202,17 +202,17 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row_options + 1, "study", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_options + 2, "study", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "options", new_options)
-    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data")), name = translate(language, "sql_query"), value = toString(new_options))
+    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_options))
     
     
     # Add rows in subsets table, for inclusion / exclusion subsets
     # Add also code corresponding to each subset
     new_subsets <- tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id,  ~datetime, ~deleted,
-      last_row_subsets + 1, translate(language, "subset_all_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_subsets + 2, translate(language, "subset_included_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_subsets + 3, translate(language, "subset_excluded_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row_subsets + 1, translate(language, "subset_all_patients", r$words), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row_subsets + 2, translate(language, "subset_included_patients", r$words), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row_subsets + 3, translate(language, "subset_excluded_patients", r$words), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "subsets", new_subsets)
-    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data")), name = translate(language, "sql_query"), value = toString(new_subsets))
+    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_subsets))
 
     # Add code for creating subset with all patients
     code <- paste0("run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n",
@@ -223,7 +223,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row_code + 2, "subset", last_row_subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_code + 3, "subset", last_row_subsets + 3, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "code", new_code)
-    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data")), name = translate(language, "sql_query"), value = toString(new_code))
+    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_code))
 
     # Update r$options, r$code & r$subsets
     update_r(r, "options", language)
@@ -249,7 +249,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     DBI::dbAppendTable(r$db, "options", new_options)
     update_r(r = r, table = "options", language = language)
     
-    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data")), name = translate(language, "sql_query"), value = toString(new_options))
+    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_options))
   }
 
   # Hide creation card & options card, show management card
@@ -339,10 +339,10 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   
   # Translation for datatable
   dt_translation <- list(
-    paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
-    search = translate(language, "DT_search"),
-    lengthMenu = translate(language, "DT_length"),
-    emptyTable = translate(language, "DT_empty"))
+    paginate = list(previous = translate(language, "DT_previous_page", r$words), `next` = translate(language, "DT_next_page", r$words)),
+    search = translate(language, "DT_search", r$words),
+    lengthMenu = translate(language, "DT_length", r$words),
+    emptyTable = translate(language, "DT_empty", r$words))
   
   # Load temp data
   data <- r[[paste0(table, "_temp")]]
@@ -350,7 +350,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   # If no row in dataframe, stop here
   if (nrow(data) == 0) return({
     data <- tibble::tribble(~id, ~name, ~description,  ~datetime)
-    names(data) <- c(translate(language, "id"), translate(language, "name"), translate(language, "description"), translate(language, "datetime"))
+    names(data) <- c(translate(language, "id", r$words), translate(language, "name", r$words), translate(language, "description", r$words), translate(language, "datetime", r$words))
     output[[output_name]] <- DT::renderDT(data, options = list(dom = 'tp'))
   })
   
@@ -476,8 +476,8 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
         
         # Default subsets are not deletable
         if (id == "settings_subsets"){
-          if (data[i, "name"] %in% c(translate("EN", "subset_all_patients"), translate("EN", "subset_included_patients"), translate("EN", "subset_excluded_patients"),
-                                     translate("FR", "subset_all_patients"), translate("FR", "subset_included_patients"), translate("FR", "subset_excluded_patients"))) delete <- ""
+          if (data[i, "name"] %in% c(translate("EN", "subset_all_patients", r$words), translate("EN", "subset_included_patients", r$words), translate("EN", "subset_excluded_patients", r$words),
+                                     translate("FR", "subset_all_patients", r$words), translate("FR", "subset_included_patients", r$words), translate("FR", "subset_excluded_patients", r$words))) delete <- ""
         }
 
         actions <- tagList(actions, delete)
@@ -497,7 +497,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
             dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>%
             dplyr::pull(creator)
         }
-        else data[i, "creator_id"] <- translate(language, "deleted_user")
+        else data[i, "creator_id"] <- translate(language, "deleted_user", r$words)
       }
 
       # Get names for other columns if there are not dropdowns
@@ -998,9 +998,9 @@ render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = shiny
   
   dialogContentProps <- list(
     type = 0,
-    title = translate(language, paste0(table, "_delete")),
+    title = translate(language, paste0(table, "_delete"), r$words),
     closeButtonAriaLabel = "Close",
-    subText = translate(language, paste0(table, "_delete_subtext"))
+    subText = translate(language, paste0(table, "_delete_subtext"), r$words)
   )
   shiny.fluent::Dialog(
     hidden = !r[[paste0(table, "_delete_dialog")]],
@@ -1008,8 +1008,8 @@ render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = shiny
     dialogContentProps = dialogContentProps,
     modalProps = list(),
     shiny.fluent::DialogFooter(
-      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "delete_confirmed")), text = translate(language, "delete")),
-      shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "delete_canceled")), text = translate(language, "dont_delete"))
+      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "delete_confirmed")), text = translate(language, "delete", r$words)),
+      shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "delete_canceled")), text = translate(language, "dont_delete", r$words))
     )
   )
 }

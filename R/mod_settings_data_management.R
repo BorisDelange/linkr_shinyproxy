@@ -7,7 +7,7 @@
 #' @noRd 
 #' @importFrom shiny NS tagList 
 
-mod_settings_data_management_ui <- function(id = character(), language = "EN"){
+mod_settings_data_management_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   result <- div()
  
@@ -27,16 +27,15 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
       div(class = "main",
         render_settings_toggle_card(language = language, ns = ns, cards = list(
           list(key = "creation_card", label = "create_data_source"),
-          list(key = "datatable_card", label = "data_sources_management"))),
+          list(key = "datatable_card", label = "data_sources_management")), words = words),
         render_settings_default_elements(ns = ns),
         render_settings_creation_card(
         language = language, ns = ns, id = id, title = "create_data_source",
-        textfields = c("name", "description"), textfields_width = "300px"),
+        textfields = c("name", "description"), textfields_width = "300px", words = words),
         render_settings_datatable_card(language = language, ns = ns,
-        div_id = "datatable_card", output_id = "management_datatable", title = "data_sources_management")#, "")
+        div_id = "datatable_card", output_id = "management_datatable", title = "data_sources_management", words = words)
       ) -> result
     }
-  # }
   
   ##########################################
   # Data management / Datamarts            #
@@ -48,15 +47,16 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         list(key = "creation_card", label = "create_datamart"),
         list(key = "datatable_card", label = "datamarts_management"),
         list(key = "edit_code_card", label = "edit_datamart_code"),
-        list(key = "options_card", label = "datamart_options"))),
+        list(key = "options_card", label = "datamart_options")), words = words),
       render_settings_default_elements(ns = ns),
       render_settings_creation_card(
         language = language, ns = ns, id = id, title = "create_datamart",
         textfields = c("name", "description"), textfields_width = "300px",
-        dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
+        dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px", words = words),
       uiOutput(ns("edit_code_card")),
       uiOutput(ns("options_card")),
-      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "datamarts_management")
+      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", 
+        output_id = "management_datatable", title = "datamarts_management", words = words)
     ) -> result
   }
   
@@ -70,14 +70,15 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         list(key = "creation_card", label = "create_study"),
         list(key = "datatable_card", label = "studies_management"),
         list(key = "options_card", label = "study_options")
-      )),
+      ), words = words),
       render_settings_default_elements(ns = ns),
       render_settings_creation_card(
         language = language, ns = ns, id = id, title = "create_study",
         textfields = c("name", "description"), textfields_width = "300px",
-        dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
+        dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px", words = words),
       uiOutput(ns("options_card")),
-      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "studies_management")
+      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", 
+        output_id = "management_datatable", title = "studies_management", words = words)
     ) -> result
   }
   
@@ -91,14 +92,15 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         list(key = "creation_card", label = "create_subset"),
         list(key = "datatable_card", label = "subsets_management"),
         list(key = "edit_code_card", label = "edit_subset_code")
-      )),
+      ), words = words),
       render_settings_default_elements(ns = ns),
       render_settings_creation_card(
         language = language, ns = ns, id = id, title = "create_subset",
         textfields = c("name", "description"), textfields_width = "300px",
-        dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
+        dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px", words = words),
       uiOutput(ns("edit_code_card")),
-      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "subsets_management")
+      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", 
+        output_id = "management_datatable", title = "subsets_management", words = words)
     ) -> result
   }
   
@@ -113,16 +115,17 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
         list(key = "datatable_card", label = "thesaurus_management_card"),
         list(key = "sub_datatable_card", label = "thesaurus_items_management_card"),
         list(key = "edit_code_card", label = "edit_thesaurus_code")
-      )),
+      ), words = words),
       render_settings_default_elements(ns = ns),
       render_settings_creation_card(
         language = language, ns = ns, id = id, title = "create_thesaurus",
         textfields = c("name", "description"), textfields_width = "300px",
-        dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px"),
+        dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px", words = words),
       uiOutput(ns("edit_code_card")),
       uiOutput(ns("options_card")),
       uiOutput(ns("sub_datatable_card")),
-      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "thesaurus_management"),
+      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card",
+        output_id = "management_datatable", title = "thesaurus_management", words = words),
       textOutput(ns("test")), tableOutput(ns("test2"))
     ) -> result
   }
@@ -136,7 +139,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN"){
 #' @param language Language used (character)
 #' @noRd 
 
-mod_settings_data_management_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN"){
+mod_settings_data_management_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -520,19 +523,19 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           output$sub_datatable_card <- renderUI({
             
             # Hide save button if user has no access
-            save_button <- shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), translate(language, "save"))
+            save_button <- shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), translate(language, "save", words))
             if ("thesaurus_edit_data" %not_in% r$user_accesses) save_button <- ""
   
             div(id = ns("sub_datatable_card"),
               # Show current ID in the title
-              make_card(tagList(translate(language, "thesaurus_items_management"), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
+              make_card(tagList(translate(language, "thesaurus_items_management", words), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
                 div(
                   shiny.fluent::Stack(
                     horizontal = TRUE, tokens = list(childrenGap = 50),
                     make_dropdown(language = language, ns = ns, label = "datamart", id = "thesaurus_datamart", width = "300px",
-                      options = convert_tibble_to_list(data = datamarts, key_col = "id", text_col = "name", null_value = TRUE), value = ""),
+                      options = convert_tibble_to_list(data = datamarts, key_col = "id", text_col = "name", null_value = TRUE), value = "", words = words),
                     conditionalPanel(condition = "input.datamart != ''", ns = ns,
-                      div(strong(translate(language, "show_only_used_items"), style = "display:block; padding-bottom:12px;"),
+                      div(strong(translate(language, "show_only_used_items", words), style = "display:block; padding-bottom:12px;"),
                         shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
                   ),
                   DT::DTOutput(ns("sub_datatable")),

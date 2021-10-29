@@ -9,8 +9,8 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_header_ui <- function(language){
-  # ns <- NS(id)
+mod_page_header_ui <- function(language = "EN", words = tibble::tibble()){
+  
   result <- div()
   
   div(class = "header",
@@ -20,9 +20,9 @@ mod_page_header_ui <- function(language){
     div(class = "header_left_bar", 
       shiny.fluent::CommandBar(
         items = list(
-          shiny.fluent::CommandBarItem(translate(language, "home"), "Home", href = shiny.router::route_link("home/datamarts_studies")),
-          shiny.fluent::CommandBarItem(translate(language, "patient_level_data"), "Contact", href = shiny.router::route_link("patient_level_data")),
-          shiny.fluent::CommandBarItem(translate(language, "aggregated_data"), "BIDashboard", href = shiny.router::route_link("aggregated_data"))
+          shiny.fluent::CommandBarItem(translate(language, "home", words), "Home", href = shiny.router::route_link("home/datamarts_studies")),
+          shiny.fluent::CommandBarItem(translate(language, "patient_level_data", words), "Contact", href = shiny.router::route_link("patient_level_data")),
+          shiny.fluent::CommandBarItem(translate(language, "aggregated_data", words), "BIDashboard", href = shiny.router::route_link("aggregated_data"))
         )
       ),
     ),

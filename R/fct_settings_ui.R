@@ -16,12 +16,6 @@ render_settings_default_elements <- function(ns = shiny::NS()){
     shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")), shiny.fluent::reactOutput(ns("delete_confirm")))
 }
 
-# Delete asap
-settings_default_elements <- function(ns = shiny::NS(), prefix = ""){
-  tagList(shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
-    shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")), shiny.fluent::reactOutput(ns("delete_confirm")))
-}
-
 ##########################################
 # Toggle card                            #
 ##########################################
@@ -41,14 +35,14 @@ settings_default_elements <- function(ns = shiny::NS(), prefix = ""){
 #'   list(key = "edit_code_card", label = "edit_datamart_code"))
 #' settings_toggle_card(ns = NS("settings_datamart"), cards = cards, activated = c("creation_card", "datatable_card"), language = "EN")
 
-render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list(), activated = "", translate = TRUE){
+render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list(), activated = "", translate = TRUE, words = tibble::tibble()){
   
   toggles <- tagList()
   # For each card, create a toggle
   sapply(cards, function(card){
     if (card$label != "") toggles <<- tagList(toggles, 
       make_toggle(language, ns, label = card$label, 
-        id = paste0(card$key, "_toggle"), value = ifelse(card$key %in% activated, TRUE, FALSE), inline = TRUE, translate = translate))
+        id = paste0(card$key, "_toggle"), value = ifelse(card$key %in% activated, TRUE, FALSE), inline = TRUE, translate = translate, words = words))
   })
   # Render card with distinct togglesmo
   div(id = ns("toggles"),
@@ -56,24 +50,6 @@ render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards
       shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 10), toggles
       )
-    )
-  )
-}
-
-# Delete asap
-settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list(), activated = ""){
-  
-  toggles <- tagList()
-  # For each card, create a toggle
-  sapply(cards, function(card){
-    if (card$label != "") toggles <<- tagList(toggles, 
-      make_toggle(language, ns, label = card$label, 
-        id = paste0(card$key, "_toggle"), value = ifelse(card$key %in% activated, TRUE, FALSE), inline = TRUE))
-  })
-  # Render card with distinct toggles
-  make_card("",
-    shiny.fluent::Stack(
-      horizontal = TRUE, tokens = list(childrenGap = 10), toggles
     )
   )
 }
@@ -98,29 +74,29 @@ settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list
 #' textfields = c("name", "description"), dropdowns = "data_source")
 
 render_settings_creation_card <- function(language = "EN", ns = shiny::NS(), id = character(), title = character(), 
-  textfields = character(), textfields_width = "200px", dropdowns = character(), dropdowns_width = "200px"){
+  textfields = character(), textfields_width = "200px", dropdowns = character(), dropdowns_width = "200px", words = tibble::tibble()){
   
   # For plugins dropdown, add a dropdown with module choice
   plugins_dropdown <- ""
   if (id == "settings_plugins"){
     plugins_dropdown <- make_dropdown(language = language, ns = ns, label = "module_type", id = "module_type", width = "300px", 
       options = list(
-        list(key = 1, text = translate(language, "patient_level_data")),
-        list(key = 2, text = translate(language, "aggregated_data"))
-    ), value = 1)
+        list(key = 1, text = translate(language, "patient_level_data", words)),
+        list(key = 2, text = translate(language, "aggregated_data", words))
+    ), value = 1, words = words)
   }
   
   div(id = ns("creation_card"),
     make_card(
-      title = translate(language, title),
+      title = translate(language, title, words),
       content = div(
         shiny.fluent::Stack(
           # Horizontal alignment, with gap of 50 px between elements
           horizontal = TRUE, tokens = list(childrenGap = 50),
           # For each textfield, use make_textfield function
           lapply(textfields, function(label){
-            if (label == "password") make_textfield(language = language, ns = ns, label = label, id = label, width = textfields_width, type = "password", canRevealPassword = TRUE)
-            else make_textfield(language = language, ns = ns, label = label, id = label, width = textfields_width)
+            if (label == "password") make_textfield(language = language, ns = ns, label = label, id = label, width = textfields_width, type = "password", canRevealPassword = TRUE, words = words)
+            else make_textfield(language = language, ns = ns, label = label, id = label, width = textfields_width, words = words)
           })
         ),
         shiny.fluent::Stack(
@@ -129,11 +105,11 @@ render_settings_creation_card <- function(language = "EN", ns = shiny::NS(), id 
             # Allow multiSelect for thesaurus, column data source
             multiSelect <- FALSE
             if (id == "settings_thesaurus") multiSelect <- TRUE
-            make_dropdown(language = language, ns = ns, label = label, id = label, multiSelect = multiSelect, width = dropdowns_width)
+            make_dropdown(language = language, ns = ns, label = label, id = label, multiSelect = multiSelect, width = dropdowns_width, words = words)
           })
         ), 
         plugins_dropdown, br(),
-        shiny.fluent::PrimaryButton.shinyInput(ns("add"), translate(language, "add"))
+        shiny.fluent::PrimaryButton.shinyInput(ns("add"), translate(language, "add", words))
       )
     )
   )
@@ -154,30 +130,17 @@ render_settings_creation_card <- function(language = "EN", ns = shiny::NS(), id 
 #' \dontrun{
 #' render_settings_datatable_card(language = "EN", ns = ns, output_id = "management_datatable", title = "datamarts_management")
 #' }
-render_settings_datatable_card <- function(language = "EN", ns = shiny::NS(), div_id = "datatable_card", output_id = "management_datatable", title = character()){
+render_settings_datatable_card <- function(language = "EN", ns = shiny::NS(), div_id = "datatable_card", 
+  output_id = "management_datatable", title = character(), words = tibble::tibble()){
   div(id = ns(div_id),
-    make_card(translate(language, title),
+    make_card(translate(language, title, words),
       div(
         DT::DTOutput(ns(output_id)),
-        shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save"))
+        shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save", words))
       )
     )
   )
 }
-
-# Delete asasp
-settings_datatable_card <- function(language, ns, title, prefix){
-  div(id = ns("datatable_card"),
-      make_card(translate(language, title),
-        div(
-          DT::DTOutput(ns(paste0(prefix, "_management_datatable"))),
-          shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_management_save")), translate(language, "save"), style = "top:-20px;")
-        )
-      )
-  ) -> result
-  result
-}
-
 
 ##########################################
 # Options card                           #
@@ -195,7 +158,7 @@ settings_datatable_card <- function(language, ns, title, prefix){
 #' @param language Language used (character)
 
 render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character(), title = character(), code = character(), 
-  category = character(), link_id = integer(), language = "EN"){
+  category = character(), link_id = integer(), language = "EN", words = tibble::tibble()){
   
   # Get options with category & link_id
   options <- r$options %>% dplyr::filter(category == !!category, link_id == !!link_id)
@@ -250,15 +213,15 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
     value_group <- options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value)
     
     people_picker <- div(
-      div(class = "input_title", paste0(translate(language, paste0(get_singular(id), "_users_allowed_read")), " :")),
+      div(class = "input_title", paste0(translate(language, paste0(get_singular(id), "_users_allowed_read"), words), " :")),
       shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), value = value_group, options = list(
-        list(key = "everybody", text = translate(language, "everybody")),
-        list(key = "people_picker", text = translate(language, "people_picker"))
+        list(key = "everybody", text = translate(language, "everybody", words)),
+        list(key = "people_picker", text = translate(language, "people_picker", words))
       ), className = "inline_choicegroup"),
       conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
         make_people_picker(
           language = language, ns = ns, id = "users_allowed_read", label = "blank",
-          options = picker_options, value = value, width = "100%", style = "padding-bottom:10px;")
+          options = picker_options, value = value, width = "100%", style = "padding-bottom:10px;", words = words)
       ), br())
   }
   
@@ -271,7 +234,7 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
     toggles <- tagList(br(), 
       shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 10),
-        make_toggle(language = language, ns = ns, label = "show_only_aggregated_data", value = value, inline = TRUE)
+        make_toggle(language = language, ns = ns, label = "show_only_aggregated_data", value = value, inline = TRUE, words = words)
       )
     )
   }
@@ -292,12 +255,12 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
   ##########################################
   
   div(id = ns("options_card"),
-    make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
+    make_card(tagList(translate(language, title, words), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
       div(
         toggles, people_picker,
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), dropdowns),
         ace_editor,
-        shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save"))
+        shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save", words))
       )
     )
   )
@@ -324,7 +287,7 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
 #' }
 
 render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValues(), id = character(), title = character(), code = list(), 
-  link_id = integer(), language = "EN"){
+  link_id = integer(), language = "EN", words = tibble::tibble()){
   
   choice_ui_server <- tagList()
   choice_data <- tagList()
@@ -364,38 +327,38 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
       tagList(
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
           make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
-            options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")),
-          make_dropdown(language = language, ns = ns, label = "patient", width = "300px"),
-          make_dropdown(language = language, ns = ns, label = "stay", width = "300px")),
+            options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name"), words = words),
+          make_dropdown(language = language, ns = ns, label = "patient", width = "300px", words = words),
+          make_dropdown(language = language, ns = ns, label = "stay", width = "300px", words = words)),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
-          make_dropdown(language = language, ns = ns, label = "thesaurus", width = "300px"),
-          div(strong(translate(language, "show_only_used_items_patient"), style = "display:block; padding-bottom:12px;"),
+          make_dropdown(language = language, ns = ns, label = "thesaurus", width = "300px", words = words),
+          div(strong(translate(language, "show_only_used_items_patient", words), style = "display:block; padding-bottom:12px;"),
             shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
-          make_combobox(language = language, ns = ns, label = "thesaurus_items", multiSelect = TRUE, allowFreeform = TRUE, width = "300px"),
+          make_combobox(language = language, ns = ns, label = "thesaurus_items", multiSelect = TRUE, allowFreeform = TRUE, width = "300px", words = words),
           div(
-            div(class = "input_title", translate(language, "item_colour")),
+            div(class = "input_title", translate(language, "item_colour", words)),
             div(shiny.fluent::SwatchColorPicker.shinyInput(ns("colour"), value = "#000000", colorCells = colorCells, columnCount = length(colorCells))),
             style = "margin-top:5px;"),
-          div(shiny.fluent::PrimaryButton.shinyInput(ns("add_thesaurus_item"), translate(language, "add")), style = "margin-top:38px;"),
-          div(shiny.fluent::PrimaryButton.shinyInput(ns("remove_thesaurus_item"), translate(language, "remove")), style = "margin-top:38px;"),
-          div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset")), style = "margin-top:38px;")), br(),
+          div(shiny.fluent::PrimaryButton.shinyInput(ns("add_thesaurus_item"), translate(language, "add", words)), style = "margin-top:38px;"),
+          div(shiny.fluent::PrimaryButton.shinyInput(ns("remove_thesaurus_item"), translate(language, "remove", words)), style = "margin-top:38px;"),
+          div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset", words)), style = "margin-top:38px;")), br(),
         uiOutput(ns("thesaurus_selected_items"))) -> choice_data
     }
     if (module_type_id == 2){
       tagList(shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 50),
         make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
-          options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")),
-        make_dropdown(language = language, ns = ns, label = "study", width = "300px"),
-        make_dropdown(language = language, ns = ns, label = "subset", width = "300px")
+          options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name"), words = words),
+        make_dropdown(language = language, ns = ns, label = "study", width = "300px", words = words),
+        make_dropdown(language = language, ns = ns, label = "subset", width = "300px", words = words)
         )) -> choice_data
     }
     
     # Toggle for choice of UI or server code
     shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
-      list(key = "ui", text = translate(language, "ui")),
-      list(key = "server", text = translate(language, "server"))
+      list(key = "ui", text = translate(language, "ui", words)),
+      list(key = "server", text = translate(language, "server", words))
     ), className = "inline_choicegroup") -> choice_ui_server
     
     # Ace editors
@@ -417,13 +380,13 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
   
   div(id = ns("edit_code_card"),
     # Show current ID in the title
-    make_card(tagList(translate(language, title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
+    make_card(tagList(translate(language, title, words), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
       div(
         choice_data, br(),
         choice_ui_server,
         ace_editor,
-        shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), translate(language, "save")), " ",
-        shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code")), 
+        shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), translate(language, "save", words)), " ",
+        shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code", words)), 
         br(), br(),
         output_div
       )

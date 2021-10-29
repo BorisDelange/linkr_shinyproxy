@@ -16,11 +16,11 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
   # Get code from datamart
   tryCatch(r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code),
     error = function(e){
-      show_message_bar(output, 1, "fail_load_code", "severeWarning", language)
-      stop(translate(language, "fail_load_code"))
+      show_message_bar(output, 1, "fail_load_code", "severeWarning", language, r$words)
+      stop(translate(language, "fail_load_code", r$words))
     }, warning = function(w){
-      show_message_bar(output, 1, "fail_load_code", "severeWarning", language)
-      stop(translate(language, "fail_load_code"))
+      show_message_bar(output, 1, "fail_load_code", "severeWarning", language, r$words)
+      stop(translate(language, "fail_load_code", r$words))
     })
   code <- r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code)
   
@@ -41,19 +41,19 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
   
   tryCatch(eval(parse(text = code)), 
     error = function(e){
-      show_message_bar(output, 1, "fail_execute_code", "severeWarning", language)
-      stop(translate(language, "fail_execute_code"))
+      show_message_bar(output, 1, "fail_execute_code", "severeWarning", language, r$words)
+      stop(translate(language, "fail_execute_code", r$words))
     }, warning = function(w){
-      show_message_bar(output, 1, "fail_execute_code", "severeWarning", language)
-      stop(translate(language, "fail_execute_code"))
+      show_message_bar(output, 1, "fail_execute_code", "severeWarning", language, r$words)
+      stop(translate(language, "fail_execute_code", r$words))
     })
   
   # If data is loaded, nb of rows of r variable > 0
-  if (nrow(r$patients) != 0) show_message_bar(output, 1, "success_load_patients", "success", language)
-  if (nrow(r$stays) != 0) show_message_bar(output, 2, "success_load_stays", "success", language)
-  if (nrow(r$labs_vitals) != 0) show_message_bar(output, 3, "success_load_labs_vitals", "success", language)
-  if (nrow(r$text) != 0) show_message_bar(output, 4, "success_load_text", "success", language)
-  if (nrow(r$orders) != 0) show_message_bar(output, 5, "success_load_orders", "success", language)
+  if (nrow(r$patients) != 0) show_message_bar(output, 1, "success_load_patients", "success", language, r$words)
+  if (nrow(r$stays) != 0) show_message_bar(output, 2, "success_load_stays", "success", language, r$words)
+  if (nrow(r$labs_vitals) != 0) show_message_bar(output, 3, "success_load_labs_vitals", "success", language, r$words)
+  if (nrow(r$text) != 0) show_message_bar(output, 4, "success_load_text", "success", language, r$words)
+  if (nrow(r$orders) != 0) show_message_bar(output, 5, "success_load_orders", "success", language, r$words)
 }
 
 #' Add patients to a subset
@@ -77,15 +77,15 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), patients
   # Check subset_id
   tryCatch(subset_id <- as.integer(subset_id), 
   error = function(e){
-    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language)
-    stop(translate(language, "invalid_subset_id_value"))
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
+    stop(translate(language, "invalid_subset_id_value", r$words))
   }, warning = function(w){
-    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language)
-    stop(translate(language, "invalid_subset_id_value")) 
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
+    stop(translate(language, "invalid_subset_id_value", r$words)) 
   })
   if (is.na(subset_id) | length(subset_id) == 0){
-    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language)
-    stop(translate(language, "invalid_subset_id_value"))
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
+    stop(translate(language, "invalid_subset_id_value", r$words))
   }
   
   var_cols <- tibble::tribble(
@@ -94,27 +94,27 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), patients
   
   # Check col names
   if (!identical(names(patients), "patient_id")){
-    show_message_bar(output, 1, "invalid_col_names", "severeWarning", language)
-    stop(translate(language, "valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
+    show_message_bar(output, 1, "invalid_col_names", "severeWarning", language, r$words)
+    stop(translate(language, "valid_col_names_are", r$words), toString(var_cols %>% dplyr::pull(name)))
   }
   
   # Check col types
   sapply(1:nrow(var_cols), function(i){
     var_name <- var_cols[[i, "name"]]
     if (var_cols[[i, "type"]] == "integer" & !is.integer(patients[[var_name]])){
-      show_message_bar(output, 1, "invalid_col_types", "severeWarning", language)
-      stop(paste0(translate(language, "column"), " ", var_name, " ", translate(language, "type_must_be_integer")))
+      show_message_bar(output, 1, "invalid_col_types", "severeWarning", language, r$words)
+      stop(paste0(translate(language, "column", r$words), " ", var_name, " ", translate(language, "type_must_be_integer", r$words)))
     }
   })
   
   # Transform as tibble
   tryCatch(patients <- tibble::as_tibble(patients), 
     error = function(e){
-      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language)
-      stop(translate(language, "error_transforming_tibble"))
+      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language, r$words)
+      stop(translate(language, "error_transforming_tibble", r$words))
     }, warning = function(w){
-      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language)
-      stop(translate(language, "error_transforming_tibble")) 
+      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language, r$words)
+      stop(translate(language, "error_transforming_tibble", r$words)) 
     })
   
   # Keep only patients not already in the subset
@@ -135,18 +135,18 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), patients
       DBI::dbAppendTable(r$db, "subset_patients", patients)
       },
       error = function(e){
-        show_message_bar(output, 1, "error_inserting_data", "severeWarning", language)
-        stop(translate(language, "error_inserting_data"))
+        show_message_bar(output, 1, "error_inserting_data", "severeWarning", language, r$words)
+        stop(translate(language, "error_inserting_data", r$words))
       }, warning = function(w){
-        show_message_bar(output, 1, "error_inserting_data", "severeWarning", language)
-        stop(translate(language, "error_inserting_data"))
+        show_message_bar(output, 1, "error_inserting_data", "severeWarning", language, r$words)
+        stop(translate(language, "error_inserting_data", r$words))
       }
     )
   }
   
   if (success_notification){
-    show_message_bar(output, 1, "add_patients_subset_success", "success", language)
-    print(translate(language, "add_patients_subset_success"))
+    show_message_bar(output, 1, "add_patients_subset_success", "success", language, r$words)
+    print(translate(language, "add_patients_subset_success", r$words))
   }
 }
 
@@ -160,20 +160,21 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), patients
 #' @param subset_id ID of subset (integer)
 #' @param language language used for error / warning messages (character, default = "EN")
 
-remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), patients = tibble::tibble(), subset_id = integer(), language = "EN"){
+remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), patients = tibble::tibble(), 
+  subset_id = integer(), language = "EN"){
   
   # Check subset_id
   tryCatch(subset_id <- as.integer(subset_id), 
     error = function(e){
-      show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language)
-      stop(translate(language, "invalid_subset_id_value"))
+      show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
+      stop(translate(language, "invalid_subset_id_value", r$words))
     }, warning = function(w){
-      show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language)
-      stop(translate(language, "invalid_subset_id_value")) 
+      show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
+      stop(translate(language, "invalid_subset_id_value", r$words)) 
     })
   if (is.na(subset_id) | length(subset_id) == 0){
-    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language)
-    stop(translate(language, "invalid_subset_id_value"))
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
+    stop(translate(language, "invalid_subset_id_value", r$words))
   }
   
   var_cols <- tibble::tribble(
@@ -182,37 +183,37 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), pat
   
   # Check col names
   if (!identical(names(patients), "patient_id")){
-    show_message_bar(output, 1, "invalid_col_names", "severeWarning", language)
-    stop(translate(language, "valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
+    show_message_bar(output, 1, "invalid_col_names", "severeWarning", language, r$words)
+    stop(translate(language, "valid_col_names_are", r$words), toString(var_cols %>% dplyr::pull(name)))
   }
   
   # Check col types
   sapply(1:nrow(var_cols), function(i){
     var_name <- var_cols[[i, "name"]]
     if (var_cols[[i, "type"]] == "integer" & !is.integer(patients[[var_name]])){
-      show_message_bar(output, 1, "invalid_col_types", "severeWarning", language)
-      stop(paste0(translate(language, "column"), " ", var_name, " ", translate(language, "type_must_be_integer")))
+      show_message_bar(output, 1, "invalid_col_types", "severeWarning", language, r$words)
+      stop(paste0(translate(language, "column", r$words), " ", var_name, " ", translate(language, "type_must_be_integer", r$words)))
     }
   })
   
   # Transform as tibble
   tryCatch(patients <- tibble::as_tibble(patients), 
     error = function(e){
-      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language)
-      stop(translate(language, "error_transforming_tibble"))
+      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language, r$words)
+      stop(translate(language, "error_transforming_tibble", r$words))
     }, warning = function(w){
-      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language)
-      stop(translate(language, "error_transforming_tibble")) 
+      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language, r$words)
+      stop(translate(language, "error_transforming_tibble", r$words)) 
     })
   
   tryCatch({ query <- DBI::dbSendStatement(r$db, paste0("DELETE FROM subset_patients WHERE subset_id = ", subset_id, " AND
     patient_id IN (", paste(patients %>% dplyr::pull(patient_id), collapse = ",") , ")"))
     DBI::dbClearResult(query)
   }, error = function(e){
-    show_message_bar(output, 1, "error_removing_patients_from_subset", "severeWarning", language)
-    stop(translate(language, "error_removing_patients_from_subset"))
+    show_message_bar(output, 1, "error_removing_patients_from_subset", "severeWarning", language, r$words)
+    stop(translate(language, "error_removing_patients_from_subset", r$words))
   }, warning = function(w){
-    show_message_bar(output, 1, "error_removing_patients_from_subset", "severeWarning", language)
-    stop(translate(language, "error_removing_patients_from_subset"))
+    show_message_bar(output, 1, "error_removing_patients_from_subset", "severeWarning", language, r$words)
+    stop(translate(language, "error_removing_patients_from_subset", r$words))
   })
 }

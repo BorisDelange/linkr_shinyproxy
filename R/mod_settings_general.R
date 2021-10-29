@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_settings_general_ui <- function(id, language){
+mod_settings_general_ui <- function(id = character(), language = character(), words = tibble::tibble){
   ns <- NS(id)
   div(class = "main",
       
@@ -18,15 +18,15 @@ mod_settings_general_ui <- function(id, language){
     render_settings_toggle_card(language = language, ns = ns, cards = list(
       list(key = "change_password_card", label = "change_password"))),
     div(id = ns("change_password_card"),
-      make_card(translate(language, "change_password"),
+      make_card(translate(language, "change_password", words),
         div(
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-            make_textfield(language = language, ns = ns, label = "old_password", type = "password", canRevealPassword = TRUE, width = "300px"),
-            make_textfield(language = language, ns = ns, label = "new_password", type = "password", canRevealPassword = TRUE, width = "300px"),
+            make_textfield(language = language, ns = ns, label = "old_password", type = "password", canRevealPassword = TRUE, width = "300px", words = words),
+            make_textfield(language = language, ns = ns, label = "new_password", type = "password", canRevealPassword = TRUE, width = "300px", words = words),
             make_textfield(language = language, ns = ns, label = "new_password", id = "new_password_bis",
-              type = "password", canRevealPassword = TRUE, width = "300px")
+              type = "password", canRevealPassword = TRUE, width = "300px", words = words)
           ), br(),
-          shiny.fluent::PrimaryButton.shinyInput(ns("save"), translate(language, "save"))
+          shiny.fluent::PrimaryButton.shinyInput(ns("save"), translate(language, "save", words))
         )
       )
     )
@@ -37,7 +37,7 @@ mod_settings_general_ui <- function(id, language){
 #'
 #' @noRd 
 
-mod_settings_general_server <- function(id, r, language){
+mod_settings_general_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -75,10 +75,10 @@ mod_settings_general_server <- function(id, r, language){
       
       sapply(required_textfields, function(textfield){
         
-        if (length(input[[textfield]]) == 0) shiny.fluent::updateTextField.shinyInput(session, textfield, errorMessage = translate(language, "provide_valid_password"))
+        if (length(input[[textfield]]) == 0) shiny.fluent::updateTextField.shinyInput(session, textfield, errorMessage = translate(language, "provide_valid_password", words))
         
         else {
-          if (is.na(input[[textfield]])) shiny.fluent::updateTextField.shinyInput(session, textfield, errorMessage = translate(language, "provide_valid_password"))
+          if (is.na(input[[textfield]])) shiny.fluent::updateTextField.shinyInput(session, textfield, errorMessage = translate(language, "provide_valid_password", words))
           else shiny.fluent::updateTextField.shinyInput(session, textfield, errorMessage = NULL)
         }
           
@@ -89,8 +89,8 @@ mod_settings_general_server <- function(id, r, language){
       # Check if the two new password fields contains the same value
       
       if (input$new_password != input$new_password_bis){
-        shiny.fluent::updateTextField.shinyInput(session, "new_password", errorMessage = translate(language, "passwords_are_different"))
-        shiny.fluent::updateTextField.shinyInput(session, "new_password_bis", errorMessage = translate(language, "passwords_are_different"))
+        shiny.fluent::updateTextField.shinyInput(session, "new_password", errorMessage = translate(language, "passwords_are_different", words))
+        shiny.fluent::updateTextField.shinyInput(session, "new_password_bis", errorMessage = translate(language, "passwords_are_different", words))
       }
       else {
         shiny.fluent::updateTextField.shinyInput(session, "new_password", errorMessage = NULL)
@@ -104,7 +104,7 @@ mod_settings_general_server <- function(id, r, language){
       old_password <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM users WHERE id = ", r$user_id)) %>% dplyr::pull(password)
       
       if (as.character(rlang::hash(input$old_password)) != old_password) shiny.fluent::updateTextField.shinyInput(session, "old_password", 
-        errorMessage = translate(language, "invalid_old_password"))
+        errorMessage = translate(language, "invalid_old_password", words))
       
       if (as.character(rlang::hash(input$old_password)) == old_password) {
         

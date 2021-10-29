@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_settings_log_ui <- function(id, language){
+mod_settings_log_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   
   div(class = "main",
@@ -28,7 +28,7 @@ mod_settings_log_ui <- function(id, language){
 #'
 #' @noRd 
 
-mod_settings_log_server <- function(id, r, language){
+mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess(), language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -72,11 +72,11 @@ mod_settings_log_server <- function(id, r, language){
           
           div(
             shiny.fluent::ChoiceGroup.shinyInput(ns("see_log_of"), value = "only_me", options = list(
-              list(key = "only_me", text = translate(language, "only_me")),
-              list(key = "people_picker", text = translate(language, "people_picker"))
+              list(key = "only_me", text = translate(language, "only_me", words)),
+              list(key = "people_picker", text = translate(language, "people_picker", words))
             ), className = "inline_choicegroup"),
             conditionalPanel(condition = "input.see_log_of == 'people_picker'", ns = ns,
-              make_people_picker(language = language, ns = ns, label = "users", options = options)
+              make_people_picker(language = language, ns = ns, label = "users", options = options, words = words)
             ), br(),
             DT::DTOutput(ns("datatable"))
           ) -> result
@@ -85,7 +85,7 @@ mod_settings_log_server <- function(id, r, language){
         if ("all_users" %not_in% r$user_accesses & "only_me" %in% r$user_accesses){
           div(
             shiny.fluent::ChoiceGroup.shinyInput(ns("see_log_of"), value = "only_me", options = list(
-              list(key = "only_me", text = translate(language, "only_me"))
+              list(key = "only_me", text = translate(language, "only_me", words))
             ), className = "inline_choicegroup"),
             DT::DTOutput(ns("datatable"))
           )
@@ -130,10 +130,10 @@ mod_settings_log_server <- function(id, r, language){
       }
       
       dt_translation <- list(
-        paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
-        search = translate(language, "DT_search"),
-        lengthMenu = translate(language, "DT_length"),
-        emptyTable = translate(language, "DT_empty"))
+        paginate = list(previous = translate(language, "DT_previous_page", words), `next` = translate(language, "DT_next_page", words)),
+        search = translate(language, "DT_search", words),
+        lengthMenu = translate(language, "DT_length", words),
+        emptyTable = translate(language, "DT_empty", words))
       
       names(log) <- get_col_names("log")
       

@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_main_ui <- function(id, language){
+mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   result <- ""
   
@@ -34,8 +34,8 @@ mod_page_main_ui <- function(id, language){
   # Patient-lvl & aggregated data pages    #
   ##########################################
   
-  if (id == "patient_level_data") mod_patient_and_aggregated_data_ui("patient_level_data", language, id) -> result
-  if (id == "aggregated_data") mod_patient_and_aggregated_data_ui("aggregated_data", language, id) -> result
+  if (id == "patient_level_data") mod_patient_and_aggregated_data_ui(id = "patient_level_data", language = language, words = words) -> result
+  if (id == "aggregated_data") mod_patient_and_aggregated_data_ui(id = "aggregated_data", language = language, words = words) -> result
   
   ##########################################
   # Settings pages                         #
@@ -43,32 +43,22 @@ mod_page_main_ui <- function(id, language){
   
   if (grepl("^settings", id)){
     
-    if (id == "settings_general_settings") mod_settings_general_ui("settings_general_settings", language) -> result
-    if (id == "settings_app_db") mod_settings_app_database_ui("settings_app_db", language) -> result
-    if (id == "settings_users") mod_settings_users_ui("settings_users", language) -> result
-    if (id == "settings_r_console") mod_settings_r_console_ui("settings_r_console", language, id) -> result
+    if (id == "settings_general_settings") mod_settings_general_ui(id = "settings_general_settings", language = language, words = words) -> result
+    if (id == "settings_app_db") mod_settings_app_database_ui(id = "settings_app_db", language = language, words = words) -> result
+    if (id == "settings_users") mod_settings_users_ui(id = "settings_users", language = language, words = words) -> result
+    if (id == "settings_r_console") mod_settings_r_console_ui(id = "settings_r_console", language = language, words = words) -> result
     
     # Subpages of Settings / data management
     sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page_settings){
       if (id == paste0("settings_", page_settings)) mod_settings_data_management_ui(id = paste0("settings_", page_settings), 
-        language = language) ->> result
+        language = language, words = words) ->> result
     })
     
-    if (id == "settings_plugins") mod_settings_plugins_ui(id = "settings_plugins", language = language) -> result
-    if (id == "settings_patient_lvl_modules") mod_settings_modules_ui("settings_patient_lvl_modules", language) -> result
-    if (id == "settings_aggregated_modules") mod_settings_modules_ui("settings_aggregated_modules", language) -> result
-    if (id == "settings_log") mod_settings_log_ui("settings_log", language) -> result
+    if (id == "settings_plugins") mod_settings_plugins_ui(id = "settings_plugins", language = language, words = words) -> result
+    if (id == "settings_patient_lvl_modules") mod_settings_modules_ui(id = "settings_patient_lvl_modules", language = language, words = words) -> result
+    if (id == "settings_aggregated_modules") mod_settings_modules_ui(id = "settings_aggregated_modules", language = language, words = words) -> result
+    if (id == "settings_log") mod_settings_log_ui(id = "settings_log", language = language, words = words) -> result
   }
 
   result
-}
-
-#' page_main Server Functions
-#'
-#' @noRd 
-
-mod_page_main_server <- function(id){
-  moduleServer(id, function(input, output, session){
-    ns <- session$ns
-  })
 }

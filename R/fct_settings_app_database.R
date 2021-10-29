@@ -161,7 +161,7 @@ get_local_db <- function(){
 #' @param local_db DBI db object of local database
 #' @param language Language used to display messages (character)
 
-test_distant_db <- function(local_db, language = "EN"){
+test_distant_db <- function(local_db, language = "EN", words = tibble::tibble()){
   
   result <- "fail"
   
@@ -181,8 +181,8 @@ test_distant_db <- function(local_db, language = "EN"){
       port = db_info$port, user = db_info$user, password = db_info$password)
     result <- "success"
   },
-  error = function(e) print(translate(language, "failed_connect_distant_db")),
-  warning = function(w) print(translate(language, "failed_connect_distant_db")))
+  error = function(e) print(translate(language, "failed_connect_distant_db", words)),
+  warning = function(w) print(translate(language, "failed_connect_distant_db", words)))
   
   # Result is fail or success
   result
@@ -194,7 +194,7 @@ test_distant_db <- function(local_db, language = "EN"){
 #' @param local_db DBI db object of local database
 #' @param language Language used to display messages (character)
 
-get_distant_db <- function(local_db, db_info = list(), language = "EN"){
+get_distant_db <- function(local_db, db_info = list(), language = "EN", words = tibble::tibble()){
   
   # If we fail to connect to distant db, the result is the local db
   db <- local_db
@@ -219,8 +219,8 @@ get_distant_db <- function(local_db, db_info = list(), language = "EN"){
     if (db_info$sql_lib == "sqlite") db <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$dbname, host = db_info$host,
       port = db_info$port, user = db_info$user, password = db_info$password)
   }, 
-  error = function(e) print(translate(language, "failed_connect_distant_db")),
-  warning = function(w) print(translate(language, "failed_connect_distant_db")))
+  error = function(e) print(translate(language, "failed_connect_distant_db", words)),
+  warning = function(w) print(translate(language, "failed_connect_distant_db", words)))
   
   # Create tables if they do not already exist
   db_create_tables(db)
@@ -247,7 +247,7 @@ get_db <- function(db_info = list(), language = "EN"){
   # Second, if db_info is not empty, try this connection
   
   if (length(db_info) > 0){
-    get_distant_db(local_db = db, db_info = db_info, language = language)
+    get_distant_db(local_db = db, db_info = db_info, language = language, words = words)
   }
   
   # Third, if db_info is empty, get distant db if parameters in local db are set to distant connection
@@ -256,7 +256,7 @@ get_db <- function(db_info = list(), language = "EN"){
   if (length(db_info) == 0){
     DBI::dbGetQuery(db, "SELECT value FROM options WHERE category = 'distant_db' AND name = 'connection_type'") %>%
       dplyr::pull() -> choice_distant_db
-    if (choice_distant_db == "distant") db <- get_distant_db(local_db = db, language = language)
+    if (choice_distant_db == "distant") db <- get_distant_db(local_db = db, language = language, words = words)
   }
   
   # Returns distant db connection if succesfully loaded, returns local db connection else

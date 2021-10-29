@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_settings_modules_ui <- function(id, language){
+mod_settings_modules_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   result <- ""
   
@@ -33,11 +33,11 @@ mod_settings_modules_ui <- function(id, language){
     sapply(pages, function(page){
 
       cards <<- tagList(cards,
-        div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_", prefix, "_", page, "_creation"), language = language)),
-        div(id = ns(paste0(page, "_management_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_", prefix, "_", page, "_management"), language = language)))
+        div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_", prefix, "_", page, "_creation"), language = language, words = words)),
+        div(id = ns(paste0(page, "_management_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_", prefix, "_", page, "_management"), language = language, words = words)))
 
       if (page == "modules_families") cards <<- tagList(cards,
-        div(id = ns(paste0(page, "_options_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_", prefix, "_", page, "_options"), language = language)))
+        div(id = ns(paste0(page, "_options_card")), mod_settings_sub_modules_ui(id = paste0("settings_modules_", prefix, "_", page, "_options"), language = language, words = words)))
     })
 
     div(class = "main",
@@ -50,7 +50,7 @@ mod_settings_modules_ui <- function(id, language){
         list(key = "modules_management_card", label = "modules_management_card"),
         list(key = "modules_elements_creation_card", label = "modules_elements_creation_card"),
         list(key = "modules_elements_management_card", label = "modules_elements_management_card")
-      )),
+      ), words = words),
       cards
     ) -> result
   # }
@@ -59,7 +59,7 @@ mod_settings_modules_ui <- function(id, language){
   result
 }
 
-mod_settings_sub_modules_ui <- function(id, language){
+mod_settings_sub_modules_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   
   result <- ""
@@ -77,46 +77,46 @@ mod_settings_sub_modules_ui <- function(id, language){
 
     if (page == "modules_families_creation"){
       render_settings_creation_card(language = language, ns = ns, id = id, title = "add_module_family",
-        textfields = c("name", "description"), textfields_width = "300px") -> result
+        textfields = c("name", "description"), textfields_width = "300px", words = words) -> result
     }
   
     if (page == "modules_creation"){
       render_settings_creation_card(language = language, ns = ns, id = id, title = "add_module",
         textfields = c("name", "description"), textfields_width = "300px",
-        dropdowns = c("module_family", "parent_module"), dropdowns_width = "300px") -> result
+        dropdowns = c("module_family", "parent_module"), dropdowns_width = "300px", words = words) -> result
     }
 
     if (page == "modules_elements_creation"){
       if (grepl("patient_lvl", id)){
         div(id = ns("creation_card"),
           make_card(
-            title = translate(language, "add_module_element"),
+            title = translate(language, "add_module_element", words),
             content = div(
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-                make_textfield(language = language, ns = ns, label = "name", id = "name", width = "300px")
+                make_textfield(language = language, ns = ns, label = "name", id = "name", width = "300px", words = words)
               ),
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-                make_dropdown(language = language, ns = ns, label = "module_family", id = "module_family", width = "300px"),
-                make_dropdown(language = language, ns = ns, label = "module", id = "module_new_element", width = "300px"),
-                make_dropdown(language = language, ns = ns, label = "plugin", id = "plugin", width = "300px")
+                make_dropdown(language = language, ns = ns, label = "module_family", id = "module_family", width = "300px", words = words),
+                make_dropdown(language = language, ns = ns, label = "module", id = "module_new_element", width = "300px", words = words),
+                make_dropdown(language = language, ns = ns, label = "plugin", id = "plugin", width = "300px", words = words)
               ), 
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-                make_dropdown(language = language, ns = ns, label = "thesaurus", id = "thesaurus", width = "300px"),
+                make_dropdown(language = language, ns = ns, label = "thesaurus", id = "thesaurus", width = "300px", words = words),
                 make_dropdown(language = language, ns = ns, label = "datamart", 
-                  options = list(list(key = "", text = translate(language, "none"))), value = "", width = "300px"),
+                  options = list(list(key = "", text = translate(language, "none", words))), value = "", width = "300px", words = words),
                 shiny::conditionalPanel(condition = "input.datamart != ''", ns = ns,
-                  div(strong(translate(language, "show_only_used_items"), style = "display:block; padding-bottom:12px;"),
+                  div(strong(translate(language, "show_only_used_items", words), style = "display:block; padding-bottom:12px;"),
                     shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
               ), 
               shiny.fluent::Stack(
                 horizontal = TRUE, tokens = list(childrenGap = 50),
                 make_dropdown(language = language, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
-                  multiSelect = TRUE, width = "650px"),
-                div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset")), style = "margin-top:38px;")
+                  multiSelect = TRUE, width = "650px", words = words),
+                div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset", words)), style = "margin-top:38px;")
               ),
               br(),
               DT::DTOutput(ns("thesaurus_items")), br(),
-              shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element"), translate(language, "add"))
+              shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element"), translate(language, "add", words))
             )
           )
         ) -> result
@@ -124,17 +124,17 @@ mod_settings_sub_modules_ui <- function(id, language){
       if (grepl("aggregated", id)) {
         div(id = ns("creation_card"),
             make_card(
-              title = translate(language, "add_module_element"),
+              title = translate(language, "add_module_element", words),
               content = div(
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-                  make_textfield(language = language, ns = ns, label = "name", id = "name", width = "300px")
+                  make_textfield(language = language, ns = ns, label = "name", id = "name", width = "300px", words = words)
                 ),
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-                  make_dropdown(language = language, ns = ns, label = "module_family", id = "module_family", width = "300px"),
-                  make_dropdown(language = language, ns = ns, label = "module", id = "module_new_element", width = "300px"),
-                  make_dropdown(language = language, ns = ns, label = "plugin", id = "plugin", width = "300px")
+                  make_dropdown(language = language, ns = ns, label = "module_family", id = "module_family", width = "300px", words = words),
+                  make_dropdown(language = language, ns = ns, label = "module", id = "module_new_element", width = "300px", words = words),
+                  make_dropdown(language = language, ns = ns, label = "plugin", id = "plugin", width = "300px", words = words)
                 ), br(),
-                shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element"), translate(language, "add"))
+                shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element"), translate(language, "add", words))
               )
             )
         ) -> result
@@ -153,7 +153,7 @@ mod_settings_sub_modules_ui <- function(id, language){
 #'
 #' @noRd 
 
-mod_settings_modules_server <- function(id, r, language){
+mod_settings_modules_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -604,7 +604,7 @@ mod_settings_modules_server <- function(id, r, language){
             })
           
           # Check if name is not empty
-          if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = translate(language, paste0("provide_valid_name")))
+          if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = translate(language, "provide_valid_name", words))
           else shiny.fluent::updateTextField.shinyInput(session, "name", errorMessage = NULL)
           req(!is.na(new_data$name))
 
@@ -662,7 +662,7 @@ mod_settings_modules_server <- function(id, r, language){
             as.integer(new_data$plugin), last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
           
           DBI::dbAppendTable(r$db, table, new_data)
-          add_log_entry(r = r, category = paste0(table, " - ", translate(language, "insert_new_data")), name = translate(language, "sql_query"), value = toString(new_data))
+          add_log_entry(r = r, category = paste0(table, " - ", translate(language, "insert_new_data", words)), name = translate(language, "sql_query", words), value = toString(new_data))
           
           show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language)
           

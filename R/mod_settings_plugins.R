@@ -9,7 +9,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_settings_plugins_ui <- function(id, language){
+mod_settings_plugins_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   
   div(class = "main",
@@ -24,9 +24,9 @@ mod_settings_plugins_ui <- function(id, language){
     div(
       id = ns("description_card"),
       make_card(
-        translate(language, "plugins_description"),
+        translate(language, "plugins_description", words),
         div(
-          make_dropdown(language = language, ns = ns, label = "plugin", width = "300px"), br(),
+          make_dropdown(language = language, ns = ns, label = "plugin", width = "300px", words = words), br(),
           div(uiOutput(ns("plugin_description"),
             style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
         ))
@@ -45,7 +45,7 @@ mod_settings_plugins_ui <- function(id, language){
 #'
 #' @noRd 
 
-mod_settings_plugins_server <- function(id, r, language){
+mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
  
@@ -294,15 +294,15 @@ mod_settings_plugins_server <- function(id, r, language){
           
           # Update study dropdown
           studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
-          if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available"))
+          if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", words))
           if (nrow(studies) > 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = convert_tibble_to_list(data = studies, key_col = "id", text_col = "name"), value = NULL)
           
           # Update patient dropdown
-          if (nrow(r$patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available"))
+          if (nrow(r$patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available", words))
           
           if (nrow(r$patients) > 0){
             shiny.fluent::updateDropdown.shinyInput(session, "patient", 
-              options = convert_tibble_to_list(data = r$patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender, " - ", age, " ", translate(language, "years"))), 
+              options = convert_tibble_to_list(data = r$patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender, " - ", age, " ", translate(language, "years", words))), 
                 key_col = "patient_id", text_col = "name_display"), value = NULL)}
           
           # Update also thesaurus dropdown, depending on data source
@@ -333,7 +333,7 @@ mod_settings_plugins_server <- function(id, r, language){
           req(input$study)
           
           subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
-          if (nrow(subsets) == 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available"))
+          if (nrow(subsets) == 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available", words))
           if (nrow(subsets) > 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = convert_tibble_to_list(data = subsets, key_col = "id", text_col = "name"), value = NULL)
         })
         
@@ -342,7 +342,7 @@ mod_settings_plugins_server <- function(id, r, language){
           
           req(input$patient)
           
-          if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) == 0) shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL, errorMessage = translate(language, "no_stay_available"))
+          if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) == 0) shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL, errorMessage = translate(language, "no_stay_available", words))
           if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) > 0){
             
             # Order stays by admission datetime
@@ -351,7 +351,7 @@ mod_settings_plugins_server <- function(id, r, language){
             # Load stays of the patient & update dropdown
             shiny.fluent::updateDropdown.shinyInput(session, "stay",
               options = convert_tibble_to_list(data = stays %>% dplyr::mutate(name_display = paste0(unit_name, " - ", 
-                format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", translate(language, "to"), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
+                format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", translate(language, "to", words), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
               key_col = "stay_id", text_col = "name_display"), value = NULL)
           }
           
@@ -462,7 +462,7 @@ mod_settings_plugins_server <- function(id, r, language){
 
           thesaurus_selected_items_text <- r$plugins_thesaurus_selected_items %>% dplyr::mutate(display_text = paste0(thesaurus_name, " - ", text)) %>% dplyr::pull(display_text)
 
-          output$thesaurus_selected_items <- renderText(paste0(strong(translate(language, "thesaurus_selected_items")), " : ", toString(thesaurus_selected_items_text)))
+          output$thesaurus_selected_items <- renderText(paste0(strong(translate(language, "thesaurus_selected_items", words)), " : ", toString(thesaurus_selected_items_text)))
 
           # Reset outputs
           output$code_result_ui <- renderUI("")

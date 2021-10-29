@@ -41,12 +41,12 @@ make_page <- function (title = character(), subtitle = character(), contents = c
 }
 
 #' Make a complete layout with header, sidenav, main & footer
-make_layout <- function(language, page){
+make_layout <- function(language = "EN", page = character(), words = tibble::tibble()){
   div(class = "grid-container",
-    mod_page_header_ui(language = language),
-    mod_page_sidenav_ui(id = stringr::str_replace(page, "/", "_"), language = language),
-    mod_page_main_ui(id = stringr::str_replace(page, "/", "_"), language = language),
-    mod_page_footer_ui()
+    mod_page_header_ui(language = language, words = words),
+    mod_page_sidenav_ui(id = stringr::str_replace(page, "/", "_"), language = language, words = words),
+    mod_page_main_ui(id = stringr::str_replace(page, "/", "_"), language = language, words = words),
+    mod_page_footer_ui(words = words)
   )
 }
 
@@ -55,14 +55,15 @@ make_layout <- function(language, page){
 #' @return Shiny UI elements / HTML code
 #' @examples
 make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(), id = NA_character_, 
-  value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, margin_right = NULL){
+  value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, 
+  margin_right = NULL, words = tibble::tibble()){
   if (is.na(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
   if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0(style, "min-width: ", min_width, "; max-width: ", max_width, ";")
   if (!is.null(margin_right)) style <- paste0(style, "margin-right:", margin_right, ";")
   div(
-    div(class = "input_title", translate(language, label)),
+    div(class = "input_title", translate(language, label, words)),
     div(shiny.fluent::TextField.shinyInput(ns(id), value = value, type = type, canRevealPassword = canRevealPassword), style = style)
   )
 }
@@ -88,13 +89,13 @@ make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(
 #' }
 
 make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
-  id = NA_character_, value = NULL, width = NULL){
+  id = NA_character_, value = NULL, width = NULL, words = tibble::tibble()){
   
   if (is.na(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
   div(
-    div(class = "input_title", translate(language, label)),
+    div(class = "input_title", translate(language, label, words)),
     div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect), style = style)
   )
 }
@@ -112,13 +113,13 @@ make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character()
 #' @param allowFreeForm Allows user to enter free text, not provided by options (logical)
 
 make_combobox <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = TRUE,
-  allowFreeform = FALSE, autoComplete = "on", id = NA_character_, value = NULL, width = NULL){
+  allowFreeform = FALSE, autoComplete = "on", id = NA_character_, value = NULL, width = NULL, words = tibble::tibble()){
   
   if (is.na(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
   div(
-    div(class = "input_title", translate(language, label)),
+    div(class = "input_title", translate(language, label, words)),
     div(shiny.fluent::ComboBox.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect, 
       allowFreeform = allowFreeform, autoComplete = autoComplete,
       multiSelectDelimiter = ","), style = style)
@@ -150,19 +151,19 @@ make_combobox <- function(language = "EN", ns = shiny::NS(), label = character()
 #' }
 
 make_people_picker <- function(language = "EN", ns = shiny::NS(), id = NA_character_, label = character(), 
-  options = tibble::tibble(), value = NULL, width = NULL, style = character()){
+  options = tibble::tibble(), value = NULL, width = NULL, style = character(), words = tibble::tibble()){
   
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width)
   if (is.na(id)) id <- label
   div(
-    div(class = "input_title", translate(language, label)),
+    div(class = "input_title", translate(language, label, words)),
     div(shiny.fluent::NormalPeoplePicker.shinyInput(
       ns(id),
       options = options,
       pickerSuggestionsProps = list(
-        suggestionsHeaderText = translate(language, "matching_people"),
-        noResultsFoundText = translate(language, "no_results_found"),
+        suggestionsHeaderText = translate(language, "matching_people", words),
+        noResultsFoundText = translate(language, "no_results_found", words),
         showRemoveButtons = TRUE
       ),
       defaultSelectedItems = options %>% dplyr::filter(key %in% value),
@@ -186,9 +187,10 @@ make_people_picker <- function(language = "EN", ns = shiny::NS(), id = NA_charac
 #' make_toggle(language = "EN", ns = ns, label = "My toggle", id = "my_toggle", value = TRUE, inline = FALSE)
 #' }
 
-make_toggle <- function(language = "EN", ns = shiny::NS(), label = character(), id = NULL, value = FALSE, inline = FALSE, translate = TRUE){
+make_toggle <- function(language = "EN", ns = shiny::NS(), label = character(), id = NULL, value = FALSE, 
+  inline = FALSE, translate = TRUE, words = tibble::tibble()){
   if (is.null(id)) id <- label
-  if (translate) label <- translate(language, label)
+  if (translate) label <- translate(language, label, words)
   if (inline){
     tagList(
       shiny.fluent::Toggle.shinyInput(ns(id), value = value),
@@ -220,9 +222,9 @@ make_toggle <- function(language = "EN", ns = shiny::NS(), label = character(), 
 #' message_bar(id = 2, message = "name_already_used", type = "severeWarning", language = language, time = 5000)
 #' }
 
-show_message_bar <- function(output, id = integer(), message = character(), type = "severeWarning", language = "EN", time = 7000){
+show_message_bar <- function(output, id = integer(), message = character(), type = "severeWarning", language = "EN", words = tibble::tibble(), time = 7000){
   type <- switch(type, "info" = 0, "error" = 1, "blocked" = 2, "severeWarning" = 3, "success" = 4, "warning" = 5)
   shinyjs::show(paste0("message_bar", id))
   shinyjs::delay(time, shinyjs::hide(paste0("message_bar", id)))
-  output[[paste0("message_bar", id)]] <- renderUI(div(shiny.fluent::MessageBar(translate(language, message), messageBarType = type), style = "margin-top:10px;"))
+  output[[paste0("message_bar", id)]] <- renderUI(div(shiny.fluent::MessageBar(translate(language, message, words), messageBarType = type), style = "margin-top:10px;"))
 }
