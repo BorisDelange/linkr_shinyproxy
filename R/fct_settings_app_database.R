@@ -317,7 +317,7 @@ insert_default_values <- function(r){
   # Add default thesaurus
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM thesaurus")) == 0){
     DBI::dbAppendTable(r$db, "thesaurus", tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
-      1, "My datawarehouse thesaurus", "", 1, 1, as.character(Sys.time()), FALSE))
+      1, "My datawarehouse thesaurus", "", 1L, 1, as.character(Sys.time()), FALSE))
   }
   
   # Add default patient_lvl_modules_families

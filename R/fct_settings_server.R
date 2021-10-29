@@ -790,7 +790,7 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
       ns <- NS(module_id)
       data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0("colour_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells), 
-          cellHeight = 25, cellWidth = 25#, cellMargin = 10
+          cellHeight = 18, cellWidth = 18#, cellMargin = 10
         )))
     }
 
@@ -1172,8 +1172,6 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
   code_id <- r$code %>% dplyr::filter(category == !!category, link_id == !!link_id) %>% dplyr::pull(id) %>% as.integer()
   
   # Replace ' with '' and store in the database
-  output$test <- renderText(paste0("code_id = ", code_id, " // link_id = ", link_id, " // edited_code = ", stringr::str_replace_all(edited_code, "'", "''"), 
-                                   " // length = ", length(edited_code)))
   DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(edited_code, "'", "''"), "' WHERE id = ", code_id)) -> query
   # DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(edited_code, "'", "''"), "' WHERE id = ", code_id)) -> query
   DBI::dbClearResult(query)

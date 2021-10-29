@@ -365,9 +365,9 @@ import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id =
       thesaurus_id = !!thesaurus_id, 
       item_id, 
       name, 
-      display_name = "", 
-      category = category,
-      unit = unit,
+      display_name, 
+      category,
+      unit,
       datetime = as.character(Sys.time()), 
       deleted = FALSE)
   

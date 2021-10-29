@@ -125,8 +125,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
       uiOutput(ns("options_card")),
       uiOutput(ns("sub_datatable_card")),
       render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card",
-        output_id = "management_datatable", title = "thesaurus_management", words = words),
-      textOutput(ns("test")), tableOutput(ns("test2"))
+        output_id = "management_datatable", title = "thesaurus_management", words = words)
     ) -> result
   }
   result

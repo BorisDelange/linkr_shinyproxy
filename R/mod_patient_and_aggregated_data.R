@@ -296,13 +296,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             
             toggles <<- c(toggles, paste0(module_element_name, group_id))
           
-          if (!grepl("load_toggles", r[[paste0("reload_", prefix, "_code")]])){
+          if (!grepl("load_toggles|selected_key", r[[paste0("reload_", prefix, "_code")]])){
             
             if (prefix == "patient_lvl"){
   
               # Get thesaurus items with thesaurus own item_id
               thesaurus_selected_items <- module_elements %>% dplyr::filter(group_id == !!group_id) %>%
-                dplyr::select(thesaurus_name, item_id = thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour)
+                dplyr::select(thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour)
   
               # Need to have thesaurus_name & thesaurus_item_id (of the thesaurus, not of r$thesaurus table) to merge with r data variables
   
@@ -330,21 +330,24 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                     data$labs_vitals <-
                       r$labs_vitals %>%
                       dplyr::filter(patient_id == r$chosen_patient) %>%
-                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id")) %>%
-                      dplyr::mutate(unit = dplyr::case_when((thesaurus_item_unit != "" & !is.na(thesaurus_item_unit)) ~ thesaurus_item_unit, TRUE ~ unit)) %>% 
-                      dplyr::select(-thesaurus_item_unit)
+                      dplyr::rename(thesaurus_item_id = item_id) %>%
+                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "thesaurus_item_id")) %>%
+                      dplyr::mutate(thesaurus_item_unit = dplyr::case_when((thesaurus_item_unit != "" & !is.na(thesaurus_item_unit)) ~ thesaurus_item_unit, TRUE ~ unit)) %>% 
+                      dplyr::select(-unit)
                   }
                   if (nrow(r$text) > 0){
                     data$text <-
                       r$text %>%
                       dplyr::filter(patient_id == r$chosen_patient) %>%
-                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
+                      dplyr::rename(thesaurus_item_id = item_id) %>%
+                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "thesaurus_item_id"))
                   }
                   if (nrow(r$orders) > 0){
                     data$orders <-
                       r$orders %>%
                       dplyr::filter(patient_id == r$chosen_patient) %>%
-                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
+                      dplyr::rename(thesaurus_item_id = item_id) %>%
+                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "thesaurus_item_id"))
                   }
                 }
               }

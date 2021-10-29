@@ -455,7 +455,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             observeEvent(input$thesaurus_items_cell_edit, {
               edit_info <- input$thesaurus_items_cell_edit
               edit_info$col <- edit_info$col + 2 # Cause id & thesaurus_id cols removed
-              r$modules_thesaurus_items_temp <- DT::editData(r$modules_thesaurus_items, edit_info, rownames = FALSE)
+              r$modules_thesaurus_items_temp <- DT::editData(r$modules_thesaurus_items_temp, edit_info, rownames = FALSE)
               r$modules_thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
             })
           
