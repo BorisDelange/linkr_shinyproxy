@@ -15,5 +15,5 @@ get_col_names(table_name = character(), language = "EN")
 Get column names
 }
 \examples{
-get_col_names(table_name == "datamarts", language = "EN")
+get_col_names(table_name = "datamarts", language = "EN")
 }

@@ -4,12 +4,14 @@
 \alias{get_authorized_data}
 \title{Get authorized data for a user}
 \usage{
-get_authorized_data(r, table)
+get_authorized_data(r, table, data = tibble::tibble())
 }
 \arguments{
 \item{r}{Shiny r reactive value, used to communicate between modules}
 
-\item{table}{Name of the table the data comes from}
+\item{table}{Name of the table the data comes from (character)}
+
+\item{data}{If data is not r[[table]] (tibble / dataframe)}
 }
 \description{
 Get authorized data for a user

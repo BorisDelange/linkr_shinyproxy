@@ -4,12 +4,20 @@
 \alias{cdwtools}
 \title{Run the Shiny Application}
 \usage{
-cdwtools(language = "EN", db_info = list(), options = list(), ...)
+cdwtools(
+  language = "EN",
+  db_info = list(),
+  default_folder = character(),
+  options = list(),
+  ...
+)
 }
 \arguments{
 \item{language}{Default language to use in the App (character)}
 
 \item{db_info}{Database connection informations, if it is needed to connect a distant db (list).}
+
+\item{default_folder}{Default folder where to save datamarts CSV files (character)}
 
 \item{options}{A list of options that could be passed to shiny::shinyApp() function (list)}
 

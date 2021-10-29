@@ -75,7 +75,7 @@ make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(
 #' @param id ID used for the input (character)
 #' @param label Label used for the input (character)
 #' @param options Options available for the dropdown (list)
-#' @param value Value of the toggle : TRUE or FALSE (logical)
+#' @param value Value of the dropdown (character)
 #' @param multiSelect Is multiselection of options is possible ? (logical)
 #' @param width Width of the dropdown, CSS code so "300px" or "100\%" are accepted
 #' @examples 
@@ -227,4 +227,139 @@ show_message_bar <- function(output, id = integer(), message = character(), type
   shinyjs::show(paste0("message_bar", id))
   shinyjs::delay(time, shinyjs::hide(paste0("message_bar", id)))
   output[[paste0("message_bar", id)]] <- renderUI(div(shiny.fluent::MessageBar(translate(language, message, words), messageBarType = type), style = "margin-top:10px;"))
+}
+
+#' Make a shiny.fluent choiceGroup
+#'
+#' @param language Language used (character)
+#' @param ns Shiny namespace
+#' @param id ID used for the input (character)
+#' @param label Label used for the input (character)
+#' @param options Options available for the choiceGroup (list)
+#' @param value Value of the choiceGroup (character)
+#' @param inline Is the choiceGroup displayed inline ? (logical)
+
+make_choicegroup <- function(language = "EN", ns = shiny::NS(), label = character(), id = NA_character_, options = list(), value = character(), inline = FALSE){
+  
+  if (is.na(id)) id <- label
+  if (inline) shiny.fluent::ChoiceGroup.shinyInput(ns(id), options = options, value = value, className = "inline_choicegroup")
+  else shiny.fluent::ChoiceGroup.shinyInput(ns(id), options = options, value = value)
+}
+
+#' Render a DT datatable
+#' 
+#' @description Renders a datatable (from library DT)
+#' 
+#' @param output variable from Shiny, used to render messages on the message bar
+#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param ns Shiny namespace
+#' @param language Language used (charater)
+#' @param data data used in the datatable (tibble or dataframe)
+#' @param output_name Name of the datatable output
+#' @param col_names A character vector containing colnames, already translated (character)
+#' @param datatable_dom Character containing DOM code for the datatable (character)
+#' @param page_length Page length of the datatable, default to 10 rows (integer)
+#' @param start Which page display (used when we save datatable state), default to 1 (integer)
+#' @param editable_cols Which cols are editable (character vector)
+#' @param sortable_cols Which cols are sortable (character vector)
+#' @param centered_cols Which cols are centered (character vector)
+#' @param filter If TRUE, we can filter we search box each column (logical)
+#' @param searchable_cols If filter is TRUE, choose which columns are searchable (character)
+#' @param factorize_cols Which columns are factorized (to be filtered with a dropdown) (character)
+#' @param column_widths Columns widths (named character vector)
+
+render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", data = tibble::tibble(),
+  output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 1,
+  editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
+  filter = FALSE, factorize_cols = character(), column_widths = character()
+){
+  
+  # Translation for datatable
+  dt_translation <- list(
+    paginate = list(previous = translate(language, "DT_previous_page", r$words), `next` = translate(language, "DT_next_page", r$words)),
+    search = translate(language, "DT_search", r$words),
+    lengthMenu = translate(language, "DT_length", r$words),
+    emptyTable = translate(language, "DT_empty", r$words))
+  
+  # If no row in dataframe, stop here
+  if (nrow(data) == 0) return({
+    data <- tibble::tribble(~id, ~datetime)
+    names(data) <- c(translate(language, "id", r$words), translate(language, "datetime", r$words))
+    output[[output_name]] <- DT::renderDT(data, options = list(dom = 'tp'))
+  })
+
+  
+  # Which columns are non editable
+  
+  cols <- c(1:length(names(data))) - 1
+  editable_cols_vec <- integer()
+  sapply(editable_cols, function(col){
+    editable_cols_vec <<- c(editable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  non_editable_cols_vec <- cols[!cols %in% editable_cols_vec]
+  
+  # Which columns are non sortable
+  sortable_cols_vec <- integer()
+  sapply(sortable_cols, function(col){
+    sortable_cols_vec <<- c(sortable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  non_sortable_cols_vec <- cols[!cols %in% sortable_cols_vec]
+  
+  # Which cols are centered
+  centered_cols_vec <- integer()
+  sapply(centered_cols, function(col){
+    centered_cols_vec <<- c(centered_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  
+  # Which cols are searchable
+  searchable_cols_vec <- integer()
+  sapply(searchable_cols, function(col){
+    searchable_cols_vec <<- c(searchable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  non_searchable_cols_vec <- cols[!cols %in% searchable_cols_vec]
+  
+  # If filter is TRUE
+  if (filter) filter_list <- list(position = "top")
+  if (!filter) filter_list <- list()
+  
+  column_defs <- list()
+  # Add columns_widths to column_defs
+  sapply(names(column_widths), function(name){
+    column_defs <<- rlist::list.append(column_defs, list(width = column_widths[[name]], targets = which(grepl(paste0("^", name, "$"), names(data))) - 1))})
+  
+  # Add centered_cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(className = "dt-body-center", targets = centered_cols_vec))
+  
+  # Add sortables cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(sortable = FALSE, targets = non_sortable_cols_vec))
+  
+  # Add searchable cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(searchable = FALSE, targets = non_searchable_cols_vec))
+  
+  # Transform searchable cols to factor
+  sapply(factorize_cols, function(col) data <<- data %>% dplyr::mutate_at(col, as.factor))
+  
+  # Rename cols if lengths correspond
+  if (length(col_names) == length(names(data))) names(data) <- col_names
+  
+  # So data is ready to be rendered in the datatable
+  
+  output[[output_name]] <- DT::renderDT(
+    # Data
+    data,
+    
+    # Options of the datatable
+    options = list(
+      dom = datatable_dom,
+      stateSave = TRUE, stateDuration = 30,
+      pageLength = page_length, displayStart = start,
+      columnDefs = column_defs,
+      language = dt_translation
+    ),
+    editable = list(target = "cell", disable = list(columns = non_editable_cols_vec)),
+    filter = filter_list,
+    
+    # Default options
+    rownames = FALSE, selection = "single", escape = FALSE, server = TRUE
+  )
 }

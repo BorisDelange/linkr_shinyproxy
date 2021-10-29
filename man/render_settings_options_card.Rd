@@ -12,7 +12,8 @@ render_settings_options_card(
   code = character(),
   category = character(),
   link_id = integer(),
-  language = "EN"
+  language = "EN",
+  words = tibble::tibble()
 )
 }
 \arguments{

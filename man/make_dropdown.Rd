@@ -12,7 +12,8 @@ make_dropdown(
   multiSelect = FALSE,
   id = NA_character_,
   value = NULL,
-  width = NULL
+  width = NULL,
+  words = tibble::tibble()
 )
 }
 \arguments{
@@ -28,7 +29,7 @@ make_dropdown(
 
 \item{id}{ID used for the input (character)}
 
-\item{value}{Value of the toggle : TRUE or FALSE (logical)}
+\item{value}{Value of the dropdown (character)}
 
 \item{width}{Width of the dropdown, CSS code so "300px" or "100\%" are accepted}
 }

@@ -12,7 +12,8 @@ render_settings_creation_card(
   textfields = character(),
   textfields_width = "200px",
   dropdowns = character(),
-  dropdowns_width = "200px"
+  dropdowns_width = "200px",
+  words = tibble::tibble()
 )
 }
 \arguments{

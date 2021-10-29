@@ -14,7 +14,8 @@ make_combobox(
   autoComplete = "on",
   id = NA_character_,
   value = NULL,
-  width = NULL
+  width = NULL,
+  words = tibble::tibble()
 )
 }
 \arguments{

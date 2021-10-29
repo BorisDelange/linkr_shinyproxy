@@ -15,7 +15,8 @@ make_textfield(
   width = NULL,
   min_width = NULL,
   max_width = NULL,
-  margin_right = NULL
+  margin_right = NULL,
+  words = tibble::tibble()
 )
 }
 \value{

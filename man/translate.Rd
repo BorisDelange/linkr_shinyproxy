@@ -4,7 +4,11 @@
 \alias{translate}
 \title{Translate a word}
 \usage{
-translate(language, reference_word)
+translate(
+  language = "EN",
+  reference_word = character(),
+  words = tibble::tibble()
+)
 }
 \arguments{
 \item{language}{A two-letters or three-letters character indicating the requested language}

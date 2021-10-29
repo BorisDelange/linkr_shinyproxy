@@ -121,9 +121,10 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
       
       if (nrow(log) > 0){
         
-        log <- log %>% dplyr::mutate_at(c("name", "category"), as.factor) %>% dplyr::left_join(
+        log <- log %>% dplyr::left_join(
           r$users %>% dplyr::mutate(display_name = paste0(firstname, " ", lastname)) %>% dplyr::select(creator_id = id, display_name),
-          by = "creator_id") %>% dplyr::relocate(display_name, .before = "datetime") %>%
+          by = "creator_id") %>% 
+          dplyr::relocate(display_name, .before = "datetime") %>%
           dplyr::select(-creator_id, creator_id = display_name) %>%
           dplyr::mutate(value = substr(value, 1, 100)) %>%
           dplyr::arrange(desc(datetime))
@@ -135,24 +136,17 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
         lengthMenu = translate(language, "DT_length", words),
         emptyTable = translate(language, "DT_empty", words))
       
-      names(log) <- get_col_names("log")
+      col_names <- get_col_names("log")
+      page_length <- 100
+      centered_cols <- c("id", "name", "creator_id", "datetime")
+      sortable_cols <- c("id", "category", "name", "creator_id", "datetime")
+      column_widths <- c("category" = "100px", "name" = "100px", "datetime" = "180px")
+      searchable_cols <- c("category", "name", "creator_id", "datetime")
+      factorize_cols <- c("name", "category")
       
-      output$datatable <- DT::renderDT(
-        log,
-        options = list(
-          dom = "<'datatable_length'l><'top'ft><'bottom'p>",
-          pageLength = 100,
-          columnDefs = list(
-            list(className = "dt-body-center", targets = c(0, 2, 4, 5)),
-            list(sortable = FALSE, targets = 3),
-            list(width = "100px", targets = c(1, 2)),
-            list(width = "180px", targets = 5),
-            list(searchable = FALSE, targets = c(0, 3))
-          ),
-          language = dt_translation
-        ),
-        rownames = FALSE, selection = "single", escape = FALSE, server = TRUE, filter = list(position = "top"),
-      )
+      render_datatable(output = output, r = r, ns = ns, data = log, output_name = "datatable", col_names = col_names,
+        page_length = page_length, centered_cols = centered_cols, sortable_cols = sortable_cols, column_widths = column_widths,
+        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols)
     })
     
   })

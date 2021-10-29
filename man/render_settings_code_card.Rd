@@ -11,7 +11,8 @@ render_settings_code_card(
   title = character(),
   code = list(),
   link_id = integer(),
-  language = "EN"
+  language = "EN",
+  words = tibble::tibble()
 )
 }
 \arguments{

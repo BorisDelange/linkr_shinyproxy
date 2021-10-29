@@ -10,6 +10,7 @@ show_message_bar(
   message = character(),
   type = "severeWarning",
   language = "EN",
+  words = tibble::tibble(),
   time = 7000
 )
 }

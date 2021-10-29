@@ -12,7 +12,8 @@ make_people_picker(
   options = tibble::tibble(),
   value = NULL,
   width = NULL,
-  style = character()
+  style = character(),
+  words = tibble::tibble()
 )
 }
 \arguments{

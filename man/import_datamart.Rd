@@ -101,7 +101,7 @@ Columns needed for each data type :\cr\cr
 patients <- tibble::tribble(~patient_id, ~gender, ~age, ~dod, 44565L, "F", 45, "2021-05-01 00:00:00") \%>\%
   dplyr::mutate_at("dod", lubridate::ymd_hms)
     
-create_datamart(output = output, r = r, datamart_id = 5, data = patients, type = "patients", 
+import_datamart(output = output, r = r, datamart_id = 5, data = patients, type = "patients", 
   save_as_csv = FALSE, rewrite = FALSE, language = language)
 }
 }

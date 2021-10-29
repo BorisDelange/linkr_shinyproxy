@@ -64,6 +64,8 @@ render_settings_datatable(
 
 \item{filter}{If TRUE, we can filter we search box each column (logical)}
 
+\item{factorize_cols}{Which columns are factorized (to be filtered with a dropdown) (character)}
+
 \item{column_widths}{Columns widths (named character vector)}
 }
 \description{

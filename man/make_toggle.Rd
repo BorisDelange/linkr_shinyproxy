@@ -10,7 +10,9 @@ make_toggle(
   label = character(),
   id = NULL,
   value = FALSE,
-  inline = FALSE
+  inline = FALSE,
+  translate = TRUE,
+  words = tibble::tibble()
 )
 }
 \arguments{

@@ -8,7 +8,9 @@ render_settings_toggle_card(
   language = "EN",
   ns = shiny::NS(),
   cards = list(),
-  activated = ""
+  activated = "",
+  translate = TRUE,
+  words = tibble::tibble()
 )
 }
 \arguments{

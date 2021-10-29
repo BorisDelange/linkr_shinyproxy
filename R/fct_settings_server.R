@@ -293,6 +293,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' @param sortable_cols Which cols are sortable (character vector)
 #' @param centered_cols Which cols are centered (character vector)
 #' @param filter If TRUE, we can filter we search box each column (logical)
+#' @param factorize_cols Which columns are factorized (to be filtered with a dropdown) (character)
 #' @param searchable_cols If filter is TRUE, choose which columns are searchable (character)
 #' @param column_widths Columns widths (named character vector)
 #' @examples 
@@ -549,8 +550,6 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   
   
   # Which columns are non editable
-  # Test with :
-  # data <- tibble::tribble(~id, ~name, ~description, ~action, 1, "name1", "description1", "my_action")
 
   cols <- c(1:length(names(data))) - 1
   editable_cols_vec <- integer()

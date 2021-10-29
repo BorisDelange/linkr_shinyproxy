@@ -4,7 +4,7 @@
 \alias{test_distant_db}
 \title{Test connection to distant database}
 \usage{
-test_distant_db(local_db, language = "EN")
+test_distant_db(local_db, language = "EN", words = tibble::tibble())
 }
 \arguments{
 \item{local_db}{DBI db object of local database}

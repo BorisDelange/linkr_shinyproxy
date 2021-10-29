@@ -9,7 +9,8 @@ render_settings_datatable_card(
   ns = shiny::NS(),
   div_id = "datatable_card",
   output_id = "management_datatable",
-  title = character()
+  title = character(),
+  words = tibble::tibble()
 )
 }
 \arguments{
