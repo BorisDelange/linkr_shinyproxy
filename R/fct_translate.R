@@ -969,7 +969,9 @@ get_translations <- function(){
     "EN", "module_loop_between_modules", "There are loops between modules (a child is also a parent)",
     "FR", "module_loop_between_modules", "Il y a des croisements dans les modules : une sous-catégorie est également catégorie de son parent",
     "EN", "cdwtools", "CDW Tools",
-    "FR", "cdwtools", "CDW Tools"
+    "FR", "cdwtools", "CDW Tools",
+    "EN", "emergency_unit", "Emergency room",
+    "FR", "emergency_unit", "Urgences médico-chir"
     ) -> data
   data
 }

@@ -94,14 +94,14 @@ app_server <- function(router, language = "EN", db_info = list(), default_folder
     
     # Secure the app with ShinyManager
     
-    # r$res_auth <- shinymanager::secure_server(check_credentials = check_authentification(r$db))
+    r$res_auth <- shinymanager::secure_server(check_credentials = check_authentification(r$db))
     
     # Get user ID
-    r$user_id <- 1
-    # observeEvent(r$res_auth, {
-    #   r$user_id <- reactiveValuesToList(r$res_auth)$id
-    #   add_log_entry(r = r, category = "Connection start", name = "Connection start", value = "")
-    # })
+    
+    observeEvent(r$res_auth, {
+      r$user_id <- reactiveValuesToList(r$res_auth)$id
+      add_log_entry(r = r, category = "Connection start", name = "Connection start", value = "")
+    })
     
     
     # When r$user_id loaded, load user_accesses
