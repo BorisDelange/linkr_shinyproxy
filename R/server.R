@@ -11,6 +11,9 @@ app_server <- function(router, language, db_info){
     # Create r reactive value
     r <- reactiveValues()
     
+    # Create an agg reactive value, to communicate between aggregated plugins
+    agg <- reactiveValues()
+    
     # Connection to database
     # If connection informations have been given in cdwtools() function, use these informations
     
@@ -85,7 +88,7 @@ app_server <- function(router, language, db_info){
     
     # Secure the app with ShinyManager
     
-    # r$res_auth <- shinymanager::secure_server(check_credentials = check_authentification(r$db))
+    r$res_auth <- shinymanager::secure_server(check_credentials = check_authentification(r$db))
     
     # Get user ID
     r$user_id <- 2

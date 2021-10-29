@@ -7,13 +7,13 @@
 app_ui <- function(request, css, page, language) {
   
   # Secure page with ShinyManager
-  # shinymanager::secure_app(
+  shinymanager::secure_app(
     tagList(
       golem_add_external_resources(css),
       shiny.fluent::fluentPage(page$ui)
-    )#,
-    # enable_admin = FALSE, language = tolower(language)
-  # )
+    ),
+    enable_admin = FALSE, language = tolower(language)
+  )
 }
 
 #' Add external Resources to the Application
@@ -30,7 +30,7 @@ golem_add_external_resources <- function(css){
   add_resource_path('www', app_sys('app/www'))
  
   tags$head(
-    # favicon(),
+    # favicon(ext = "png"),
     bundle_resources(
       path = app_sys('app/www'),
       app_title = 'cdwtools'
