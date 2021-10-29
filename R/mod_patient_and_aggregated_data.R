@@ -64,18 +64,18 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       study_infos <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE id = ", r$chosen_study))
 
       # Load modules belonging to this module family
-      r[[paste0(prefix, "_modules")]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, "_modules WHERE module_family_id = ",
+      r[[paste0(prefix, "_display_modules")]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, "_modules WHERE module_family_id = ",
         study_infos[[paste0(prefix, "_module_family_id")]], " AND deleted IS FALSE"))
 
       # Modules without parent are set to level 1
-      r[[paste0(prefix, "_modules")]] <- r[[paste0(prefix, "_modules")]] %>% 
+      r[[paste0(prefix, "_display_modules")]] <- r[[paste0(prefix, "_display_modules")]] %>% 
         dplyr::mutate(level = dplyr::case_when(is.na(parent_module_id) ~ 1L, TRUE ~ NA_integer_))
 
       # Creating levels for distinct modules
-      while(nrow(r[[paste0(prefix, "_modules")]] %>% dplyr::filter(is.na(level))) > 0){
-        r[[paste0(prefix, "_modules")]] <-
-          r[[paste0(prefix, "_modules")]] %>%
-          dplyr::left_join(r[[paste0(prefix, "_modules")]] %>%
+      while(nrow(r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(is.na(level))) > 0){
+        r[[paste0(prefix, "_display_modules")]] <-
+          r[[paste0(prefix, "_display_modules")]] %>%
+          dplyr::left_join(r[[paste0(prefix, "_display_modules")]] %>%
             dplyr::filter(!is.na(level)) %>%
             dplyr::transmute(parent_module_id = id, parent_level = level), by = "parent_module_id") %>%
           dplyr::mutate(level = dplyr::case_when(!is.na(parent_level) ~ parent_level + 1L, TRUE ~ level)) %>%
@@ -83,7 +83,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       }
       
       # Now we have a level for each module, order them by display order
-      r[[paste0(prefix, "_modules")]] <- r[[paste0(prefix, "_modules")]] %>% dplyr::arrange(level, display_order)
+      r[[paste0(prefix, "_display_modules")]] <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::arrange(level, display_order)
     })
 
     # Render modules in UI
@@ -99,46 +99,45 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       req((prefix == "patient_lvl" & show_only_aggregated_data != 1) | prefix == "aggregated")
       
       # If no module to show, notificate user
-      if (nrow(r[[paste0(prefix, "_modules")]]) == 0 | "level" %not_in% names(r[[paste0(prefix, "_modules")]])){
+      if (nrow(r[[paste0(prefix, "_display_modules")]]) == 0 | "level" %not_in% names(r[[paste0(prefix, "_display_modules")]])){
         return(div(shiny.fluent::MessageBar(translate(language, "no_modules_to_show", words), messageBarType = 3), style = "margin-top:10px;"))
       }
       
-      req(nrow(r[[paste0(prefix, "_modules")]] > 0) & "level" %in% names(r[[paste0(prefix, "_modules")]]) & !is.na(r$chosen_study))
+      req(nrow(r[[paste0(prefix, "_display_modules")]] > 0) & "level" %in% names(r[[paste0(prefix, "_display_modules")]]) & !is.na(r$chosen_study))
 
       # First module shown
-      first_module_shown <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(level == 1) %>% dplyr::slice(1)
-      if (max(r[[paste0(prefix, "_modules")]]$level) >= 2){
-        sapply(2:max(r[[paste0(prefix, "_modules")]]$level), function(current_level){
-          children <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(level == current_level, parent_module_id == first_module_shown$id) %>% dplyr::slice(1)
+      first_module_shown <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(level == 1) %>% dplyr::slice(1)
+      if (max(r[[paste0(prefix, "_display_modules")]]$level) >= 2){
+        sapply(2:max(r[[paste0(prefix, "_display_modules")]]$level), function(current_level){
+          children <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(level == current_level, parent_module_id == first_module_shown$id) %>% dplyr::slice(1)
           if (nrow(children) > 0) first_module_shown <<- children
         })
       }
 
       # If we are at level one, show all levels one
       if (first_module_shown$level == 1){
-        shown_modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(level == 1)
+        shown_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(level == 1)
       }
 
       # Else, show only current & those who has same level & same parent
       if (first_module_shown$level > 1){
-        shown_modules_temp <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(level == first_module_shown$level & parent_module_id == first_module_shown$parent_module_id)
+        shown_modules_temp <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(level == first_module_shown$level & parent_module_id == first_module_shown$parent_module_id)
         if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
         if (nrow(shown_modules_temp) == 0) shown_modules <- first_module_shown
       }
-      # }
 
       if (!is.null(input$current_tab)){
         # If value = 0, go back to first level
         # if (input$current_tab == 0)
 
-        shown_modules_temp <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == input$current_tab)
+        shown_modules_temp <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(parent_module_id == input$current_tab)
         if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
         if (nrow(shown_modules_temp) == 0){
-          current_module <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == input$current_tab)
-          shown_modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == current_module$parent_module_id & level == current_module$level)
+          current_module <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(id == input$current_tab)
+          shown_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(parent_module_id == current_module$parent_module_id & level == current_module$level)
           # If not any "brother", we are at level one
           if (nrow(shown_modules) == 0){
-            shown_modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(level == 1)
+            shown_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(level == 1)
           }
         }
       }
@@ -162,13 +161,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       if (nb_levels >= 2){
         
         # Remove last level
-        modules_tree <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(level < nb_levels)
+        modules_tree <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(level < nb_levels)
         
         current_parent <- NA_integer_
         sapply(nb_levels:1, function(current_level){
           if (!is.na(current_parent)){
             modules_tree <<- modules_tree %>% dplyr::filter(level != current_level | id == current_parent)
-            current_parent <<- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == current_parent) %>% dplyr::pull(parent_module_id)
+            current_parent <<- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(id == current_parent) %>% dplyr::pull(parent_module_id)
           }
           if (is.na(current_parent)) current_parent <<- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(parent_module_id)
         })
@@ -224,7 +223,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               libraries_needed <- paste0(translate(language, "libraries_needed_plugin", words), " : ",
                 strsplit(code_ui_card, " ") %>% unlist() %>% grep("::", ., value = TRUE) %>% sub("::.*", "", .) %>% sub("\n", "", .) %>% toString(), ".")
               plugin_name <- r$plugins %>% dplyr::filter(id == plugin_id) %>% dplyr::pull(name)
-              output$message_bar1 <- show_message_bar(1, paste0(translate(language, "error_run_plugin_ui_code", words), " (group_id = ", group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, "). ", libraries_needed), "severeWarning", language)
+              show_message_bar(1, paste0(translate(language, "error_run_plugin_ui_code", words), " (group_id = ", group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, "). ", libraries_needed), "severeWarning", language)
             })
           })
         }

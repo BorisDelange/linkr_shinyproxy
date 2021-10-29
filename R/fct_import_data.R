@@ -72,7 +72,7 @@
 #' patients <- tibble::tribble(~patient_id, ~gender, ~age, ~dod, 44565L, "F", 45, "2021-05-01 00:00:00") %>%
 #'   dplyr::mutate_at("dod", lubridate::ymd_hms)
 #'     
-#' create_datamart(output = output, r = r, datamart_id = 5, data = patients, type = "patients", 
+#' import_datamart(output = output, r = r, datamart_id = 5, data = patients, type = "patients", 
 #'   save_as_csv = FALSE, rewrite = FALSE, language = language)
 #' }
 import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = integer(), data = tibble::tibble(), 
@@ -103,7 +103,10 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   }
   id_message_bar <- switch(type, "patients" = 1, "stays" = 2, "labs_vitals" = 3, "text" = 4, "orders" = 5)
   
-  folder <- paste0(golem::get_golem_wd(), "/data/datamart_", datamart_id)
+  # If a default_folder is provided, take this value
+  # Take package working directory else
+  if (length(r$default_folder) > 0) folder <- paste0(r$default_folder, "/datamart_", datamart_id)
+  else folder <- paste0(golem::get_golem_wd(), "/data/datamart_", datamart_id)
   path <- paste0(folder, "/", type, ".csv")
   
   # If files already exists and we do not want to rewrite it
