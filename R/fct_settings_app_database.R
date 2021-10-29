@@ -138,7 +138,7 @@ get_local_db <- function(){
     
     last_row <- DBI::dbGetQuery(db, "SELECT COALESCE(MAX(id), 0) FROM options")
     
-    query <- paste0("INSERT INTO options(id, category, name, value, deleted)
+    sql <- paste0("INSERT INTO options(id, category, name, value, deleted)
                      SELECT ", last_row + 1, ", 'distant_db', 'connection_type', 'local', FALSE 
                UNION SELECT ", last_row + 2, ", 'distant_db', 'sql_lib', 'postgres', FALSE
                UNION SELECT ", last_row + 3, ", 'distant_db', 'dbname', '', FALSE
@@ -146,7 +146,7 @@ get_local_db <- function(){
                UNION SELECT ", last_row + 5, ", 'distant_db', 'port', '', FALSE
                UNION SELECT ", last_row + 6, ", 'distant_db', 'user', '', FALSE
                UNION SELECT ", last_row + 7, ", 'distant_db', 'password', '', FALSE")
-    DBI::dbSendStatement(db, query)
+    query <- DBI::dbSendStatement(db, sql)
     DBI::dbClearResult(query)
   }
   
