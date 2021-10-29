@@ -142,7 +142,23 @@ mod_settings_sub_modules_ui <- function(id = character(), language = "EN", words
     }
 
     if (grepl("management", page)){
-      render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = page) -> result
+      if (grepl("aggregated", id)) render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = page) -> result
+      if (grepl("patient_lvl", id)) {
+        div(
+          div(id = ns("datatable_card"),
+            make_card(translate(language, page, words),
+              div(
+                DT::DTOutput(ns("management_datatable")),
+                shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save", words)), br(), br(),
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
+                  div(make_dropdown(language = language, ns = ns, label = "module_element", width = "300px", words = words)),
+                  div(shiny.fluent::PrimaryButton.shinyInput(ns("delete_module_element"), translate(language, "delete", words)), style = "margin-top:38px;")
+                )
+              )
+            )
+          )
+        ) -> result
+      }
     }
   
   tagList(render_settings_default_elements(ns = ns), result) 
@@ -800,6 +816,72 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             
             # Delete row in DB table
             delete_settings_datatable_row(output = output, r = r, ns = ns, language = language, row_deleted = row_deleted, table = table)
+          })
+        }
+      
+        #################################################
+        # Patient-lvl modules elements / delete a group #
+        #################################################
+      
+        if (grepl("management", id) & grepl("patient_lvl", id)){
+      
+          observeEvent(r$patient_lvl_modules_elements_temp, {
+
+            elements_groups <- r$patient_lvl_modules_elements_temp %>% dplyr::group_by(group_id) %>% dplyr::slice(1) %>% dplyr::ungroup()
+            options <- list()
+            if (nrow(elements_groups) > 0) options <- convert_tibble_to_list(data = elements_groups, key_col = "group_id", text_col = "name")
+
+            shiny.fluent::updateDropdown.shinyInput(session, "module_element", options = options)
+          })
+          
+          # Create & show dialog box
+          observeEvent(r$patient_lvl_modules_elements_group_delete_dialog, {
+            
+            dialogContentProps <- list(
+              type = 0,
+              title = translate(language, paste0(table, "_group_delete"), r$words),
+              closeButtonAriaLabel = "Close",
+              subText = translate(language, paste0(table, "_group_delete_subtext"), r$words)
+            )
+            
+            shiny.fluent::Dialog(
+              hidden = !r$patient_lvl_modules_elements_group_delete_dialog,
+              onDismiss = htmlwidgets::JS("function() { Shiny.setInputValue('modules_elements_group_hide_dialog', Math.random()); }"),
+              dialogContentProps = dialogContentProps,
+              modalProps = list(),
+              shiny.fluent::DialogFooter(
+                shiny.fluent::PrimaryButton.shinyInput(ns("modules_elements_group_delete_confirmed"), text = translate(language, "delete", r$words)),
+                shiny.fluent::DefaultButton.shinyInput(ns("modules_elements_group_delete_canceled"), text = translate(language, "dont_delete", r$words))
+              )
+            ) -> render_react
+            
+            output$delete_confirm <- shiny.fluent::renderReact(render_react)
+          })
+          
+          # Whether to close or not delete dialog box
+          observeEvent(input$modules_elements_group_hide_dialog, r$patient_lvl_modules_elements_group_delete_dialog <- FALSE)
+          observeEvent(input$modules_elements_group_delete_canceled, r$patient_lvl_modules_elements_group_delete_dialog <- FALSE)
+          observeEvent(input$delete_module_element, {
+            req(length(input$module_element) > 0)
+            r$patient_lvl_modules_elements_group_delete_dialog <- TRUE 
+          })
+          
+          # When the delete is confirmed...
+          observeEvent(input$modules_elements_group_delete_confirmed, {
+            
+            # If user has access
+            req(paste0(prefix, "_modules_delete_data") %in% r$user_accesses)
+            
+            r$patient_lvl_modules_elements_group_delete_dialog <- FALSE
+            
+            sql <- paste0("UPDATE patient_lvl_modules_elements SET deleted = 1 WHERE group_id = ", input$module_element)
+            query <- DBI::dbSendStatement(r$db, sql)
+            DBI::dbClearResult(query)
+            
+            show_message_bar(output = output, id = 4, "module_element_deleted", type ="severeWarning", language = language)
+            
+            update_r(r = r, table = table, language = language)
+            
           })
         }
     
