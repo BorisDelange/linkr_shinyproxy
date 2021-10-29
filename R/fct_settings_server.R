@@ -928,7 +928,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
         # A module cannot be its own parent (infinite loop...)
         module_is_its_own_parent <- r[[paste0(table, "_temp")]] %>% dplyr::filter(id == parent_module_id) %>% nrow()
 
-        loop_over_modules <- r[[paste0(table, "_temp")]] %>% dplyr::filter(!is.na(parent_module_id)) %>%
+        if (module_is_its_own_parent == 0) loop_over_modules <- r[[paste0(table, "_temp")]] %>% dplyr::filter(!is.na(parent_module_id)) %>%
           dplyr::left_join(r[[paste0(table, "_temp")]] %>% dplyr::select(parent_module_id = id, parent_module_id_bis = parent_module_id), by = "parent_module_id") %>%
           dplyr::filter(id == parent_module_id_bis) %>% nrow()
       }
@@ -943,7 +943,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
       
       if (duplicates_name > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
       if (duplicates_display_order > 0) show_message_bar(output, 1, "modif_display_order_duplicates", "severeWarning", language)
-      if (module_is_its_own_parent > 0) show_message_bar(output, 1, "modif_display_order_duplicates", "severeWarning", language)
+      if (module_is_its_own_parent > 0) show_message_bar(output, 1, "module_cannot_be_its_own_parent", "severeWarning", language)
       if (loop_over_modules > 0) show_message_bar(output, 1, "module_loop_between_modules", "severeWarning", language)
       
     }

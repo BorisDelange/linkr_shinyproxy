@@ -21,13 +21,13 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       shiny.fluent::Nav(
         groups = list(
           list(links = list(
-            list(name = translate(language, "datamarts_studies", words), key = "datamarts_studies",
-                 url = shiny.router::route_link("home/datamarts_studies"))
+            list(name = translate(language, "home", words), key = "home",
+                 url = shiny.router::route_link("home"))
             )
           )
         ),
-        initialSelectedKey = "datamarts_studies",
-        selectedKey = substr(id, nchar("home") + 2, 100),
+        initialSelectedKey = "home",
+        selectedKey = "home",
         styles = list(
           root = list(
             height = "100%",

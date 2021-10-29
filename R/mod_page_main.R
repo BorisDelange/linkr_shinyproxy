@@ -18,13 +18,16 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   
   if (grepl("^home", id)){
     div(class = "main",
-      div(
+      make_card(
+        translate(language, "cdwtools", words),
         div(
-          class = glue::glue("card ms-depth-8 ms-sm{8} ms-xl{8}"),
-          shiny.fluent::Stack(
-            tokens = list(childrenGap = 5),
-            shiny.fluent::Text(variant = "large", "Datamarts", block = TRUE)
-          )
+          "..."
+        )
+      ),
+      make_card(
+        translate(language, "get_started", words),
+        div(
+          "..."
         )
       )
     ) -> result
