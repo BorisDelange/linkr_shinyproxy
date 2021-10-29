@@ -170,7 +170,7 @@ app_server <- function(router, language = "EN", db_info = list(), default_folder
           if (nrow(r[[paste0(prefix, "modules")]]) > 0) modules_ids <- r[[paste0(prefix, "modules")]] %>%
             dplyr::filter(module_family_id %in% modules_families_ids) %>% dplyr::pull(id)
           
-          if (nrow(r[[table]] > 0)){
+          if (nrow(r[[table]]) > 0){
             if (grepl("modules$", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_family_id %in% modules_families_ids)
             if (grepl("modules_elements", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_id %in% modules_ids)
           }
