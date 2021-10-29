@@ -215,6 +215,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             tryCatch({
               code_ui_card <- code_ui_card %>%
                 stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+                stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient)) %>%
                 stringr::str_replace_all("\r", "\n")
               code_ui <<- tagList(code_ui, div(id = ns(paste0(module_element_name, group_id)), make_card(module_element_name, eval(parse(text = code_ui_card)))))
             },
@@ -296,7 +297,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             
             toggles <<- c(toggles, paste0(module_element_name, group_id))
           
-          if (!grepl("load_toggles|selected_key", r[[paste0("reload_", prefix, "_code")]])){
+          if (!grepl("load_toggles", r[[paste0("reload_", prefix, "_code")]])){
             
             if (prefix == "patient_lvl"){
   
@@ -409,6 +410,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               dplyr::filter(link_id == plugin_id, category == "plugin_server") %>%
               dplyr::pull(code) %>% 
               stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+              stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient)) %>%
               stringr::str_replace_all("\r", "\n")
 
             # Try to run plugin server code

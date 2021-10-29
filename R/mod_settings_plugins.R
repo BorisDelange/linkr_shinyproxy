@@ -637,8 +637,14 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           }
           
           # Replace %group_id% in ui_code with 1 for our example
-          ui_code <- ui_code %>% stringr::str_replace_all("%group_id%", "1") %>% stringr::str_replace_all("\r", "\n")
-          server_code <- server_code %>% stringr::str_replace_all("%group_id%", "1") %>% stringr::str_replace_all("\r", "\n")
+          ui_code <- ui_code %>% 
+            stringr::str_replace_all("%group_id%", "1") %>%
+            stringr::str_replace_all("%patient_id%", as.character(input$patient)) %>% 
+            stringr::str_replace_all("\r", "\n")
+          server_code <- server_code %>% 
+            stringr::str_replace_all("%group_id%", "1") %>% 
+            stringr::str_replace_all("%patient_id%", as.character(input$patient)) %>% 
+            stringr::str_replace_all("\r", "\n")
   
           # Render UI result
           output$code_result_ui <- renderUI(
