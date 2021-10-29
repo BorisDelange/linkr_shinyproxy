@@ -963,7 +963,11 @@ get_translations <- function(){
     "EN", "error_multiple_item_id", "Some item IDs are duplicated. Remove duplicates before insert thesaurus.",
     "FR", "error_multiple_item_id", "Certains item IDs sont dupliqués. Retirer les duplicats avant d'importer le thesaurus.",
     "EN", "only_aggregated_data_authorized", "For this datamart, only aggregated data are available",
-    "FR", "only_aggregated_data_authorized", "Seules les données agrégées sont autorisées pour ce datamart"
+    "FR", "only_aggregated_data_authorized", "Seules les données agrégées sont autorisées pour ce datamart",
+    "EN", "module_cannot_be_its_own_parent", "A module cannot be its own parent",
+    "FR", "module_cannot_be_its_own_parent", "Un module ne peut pas être une sous-catégorie de lui-même",
+    "EN", "module_loop_between_modules", "There are loops between modules (a child is also a parent)",
+    "FR", "module_loop_between_modules", "Il y a des croisements dans les modules : une sous-catégorie est également catégorie de son parent"
     ) -> data
   data
 }
