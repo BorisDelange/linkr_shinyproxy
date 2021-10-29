@@ -86,7 +86,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
       # If user has access
       req("plugins_description_card" %in% r$user_accesses)
       
-      shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = convert_tibble_to_list(data = r$plugins, key_col = "id", text_col = "name"))
+      shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = convert_tibble_to_list(data = r$plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name"))
     })
     
     # When a plugin is chosen, update description UI output
@@ -293,7 +293,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
             warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
           
           # Update study dropdown
-          studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
+          studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart) %>% dplyr::arrange(name)
           if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", words))
           if (nrow(studies) > 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = convert_tibble_to_list(data = studies, key_col = "id", text_col = "name"), value = NULL)
           
@@ -314,7 +314,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           # Last ID, so it's the end
           # ID between begin and last, so separated by commas
           thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
-            grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id))
+            grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
           shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name"), value = NULL)
           shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", options = list(), value = NULL)
           
@@ -424,7 +424,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
               })
 
               # Inner join between thesaurus_items & patient_items
-              thesaurus_items <- thesaurus_items %>% dplyr::inner_join(patient_items, by = c("thesaurus_name", "item_id"))
+              thesaurus_items <- thesaurus_items %>% dplyr::inner_join(patient_items, by = c("thesaurus_name", "item_id")) %>% dplyr::arrange(name)
             }
           }
 

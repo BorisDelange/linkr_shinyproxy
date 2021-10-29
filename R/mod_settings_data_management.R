@@ -192,7 +192,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       function(data_var){
         observeEvent(r[[data_var]], {
           # Convert options to list
-          options <- convert_tibble_to_list(data = r[[data_var]], key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = r[[data_var]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
           shiny.fluent::updateDropdown.shinyInput(session, get_singular(word = data_var), options = options)
         })
       })

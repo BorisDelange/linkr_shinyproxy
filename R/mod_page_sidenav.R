@@ -142,7 +142,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       observeEvent(r$datamarts, {
         
         # Update dropdown
-        shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(r$datamarts, "id", "name", rm_deleted_rows = TRUE), value = NULL)
+        shiny.fluent::updateDropdown.shinyInput(session, "datamart", 
+          options = tibble_to_list(r$datamarts %>% dplyr::arrange(name), "id", "name", rm_deleted_rows = TRUE), value = NULL)
         shinyjs::hide("exclusion_reason_div")
       })
       
@@ -175,7 +176,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (nrow(studies) > 0){
           
           # Update dropdowns
-          shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE), value = NULL)
+          shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies %>% dplyr::arrange(name), "id", "name", rm_deleted_rows = TRUE), value = NULL)
           
           # Code of datamart will be run from mod_patient_and_aggregated_data.R
         }
@@ -350,7 +351,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         # If choice is excluded, update exclusion reason dropdown & show dropdown
         if (input$patient_status == "excluded"){
-          exclusion_reasons <- r$patients_options %>% dplyr::filter(category == "exclusion_reasons" & study_id == r$chosen_study)
+          exclusion_reasons <- r$patients_options %>% dplyr::filter(category == "exclusion_reasons" & study_id == r$chosen_study) %>% dplyr::arrange(value)
           options <- list()
           if (nrow(exclusion_reasons) > 0) options <- convert_tibble_to_list(data = exclusion_reasons, key_col = "value_num", text_col = "value")
           
@@ -419,7 +420,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           })
           
           # Select authorized datamarts
-          datamarts <- datamarts %>% dplyr::filter(id %in% datamarts_allowed)
+          datamarts <- datamarts %>% dplyr::filter(id %in% datamarts_allowed) %>% dplyr::arrange(name)
         }
         
       shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(datamarts, "id", "name", rm_deleted_rows = TRUE), value = r$chosen_datamart)
@@ -453,7 +454,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           })
 
           # Select authorized studies
-          studies <- studies %>% dplyr::filter(id %in% studies_allowed)
+          studies <- studies %>% dplyr::filter(id %in% studies_allowed) %>% dplyr::arrange(name)
         }
 
         shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE), value = r$chosen_study)

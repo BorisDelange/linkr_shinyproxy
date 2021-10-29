@@ -247,13 +247,13 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
         observeEvent(r[[paste0(prefix, "_modules_families")]], {
           table <- paste0(prefix, "_modules_families")
           
-          options <- convert_tibble_to_list(data = r[[table]], key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
           shiny.fluent::updateDropdown.shinyInput(session, "module_family", options = options)
         })
         
         observeEvent(r[[paste0(prefix, "_modules")]], {
-          options_parent_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]], key_col = "id", text_col = "name", null_value = TRUE)
-          options_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]], key_col = "id", text_col = "name", null_value = TRUE)
+          options_parent_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]] %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
+          options_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]] %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
           shiny.fluent::updateDropdown.shinyInput(session, "parent_module", options = options_parent_module)
           shiny.fluent::updateDropdown.shinyInput(session, "module", options = options_module)
         })
@@ -265,18 +265,18 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           # Filter on plugins user has access to
           plugins <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)
           
-          options <- convert_tibble_to_list(data = plugins, key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name")
           shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options)
         })
         
         observeEvent(r$datamarts, {
           
-          options <- convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name", null_value = TRUE)
+          options <- convert_tibble_to_list(data = r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
           shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = options)
         })
         
         observeEvent(r$thesaurus, {
-          options <- convert_tibble_to_list(data = r$thesaurus, key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = r$thesaurus %>% dplyr::arrange(name), key_col = "id", text_col = "name")
           shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = options)
         })
         
@@ -289,7 +289,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           # Update modules depending on chosen module family
           observeEvent(input$module_family, {
             req(input$module_family)
-            modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == input$module_family)
+            modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == input$module_family) %>% dplyr::arrange(name)
             shiny.fluent::updateDropdown.shinyInput(session, "module_new_element",
               options = convert_tibble_to_list(data = modules, key_col = "id", text_col = "name"))
           })
@@ -308,7 +308,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
               
               # Get datamarts linked to this thesaurus
               data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == input$thesaurus) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
-              datamarts <- datamarts %>% dplyr::filter(data_source_id %in% data_sources)
+              datamarts <- datamarts %>% dplyr::filter(data_source_id %in% data_sources) %>% dplyr::arrange(name)
               
               # Update datamart dropdown
               shiny.fluent::updateDropdown.shinyInput(session, "datamart", 
@@ -482,7 +482,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
                     link_id, input$thesaurus, thesaurus_name, item$item_id, display_name, item$unit, input[[paste0("colour_", link_id)]], item$input_text))
   
                 # Update dropdown of selected items
-                options <- tibble_to_list(r$modules_thesaurus_selected_items, "id", "input_text")
+                options <- tibble_to_list(r$modules_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), "id", "input_text")
                 value <- r$modules_thesaurus_selected_items %>% dplyr::pull(id)
                 shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
                   options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
@@ -511,7 +511,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
                   dplyr::anti_join(tibble::tribble(~thesaurus_id, ~id, input$thesaurus, link_id), by = c("thesaurus_id", "id"))
                 
                 # Update dropdown of selected items
-                options <- tibble_to_list(r$modules_thesaurus_selected_items, "id", "input_text")
+                options <- tibble_to_list(r$modules_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), "id", "input_text")
                 value <- r$modules_thesaurus_selected_items %>% dplyr::pull(id)
                 shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
                   options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
