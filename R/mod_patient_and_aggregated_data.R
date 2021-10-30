@@ -127,17 +127,24 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       }
 
       if (!is.null(input$current_tab)){
+        
         # If value = 0, go back to first level
-        # if (input$current_tab == 0)
-
-        shown_modules_temp <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(parent_module_id == input$current_tab)
-        if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
-        if (nrow(shown_modules_temp) == 0){
-          current_module <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(id == input$current_tab)
-          shown_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(parent_module_id == current_module$parent_module_id & level == current_module$level)
-          # If not any "brother", we are at level one
-          if (nrow(shown_modules) == 0){
-            shown_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(level == 1)
+        if (input$current_tab == 0) shown_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(level == 1)
+        else {
+  
+          shown_modules_temp <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(parent_module_id == input$current_tab)
+          
+          # If current tab has children
+          if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
+          
+          # If current tab has no children
+          if (nrow(shown_modules_temp) == 0){
+            current_module <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(id == input$current_tab)
+            shown_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(parent_module_id == current_module$parent_module_id & level == current_module$level)
+            # If not any "brother", we are at level one
+            if (nrow(shown_modules) == 0){
+              shown_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::filter(level == 1)
+            }
           }
         }
       }
@@ -155,7 +162,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       if (nb_levels == 1) is_current_item <- TRUE
       items <- list(
         list(key = "main", text = translate(language, id, words), href = paste0("#!/", id), isCurrentItem = is_current_item,
-             onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', ", first_module_shown$id, ")"))))
+             onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', 0)"))))
 
       # Other levels
       if (nb_levels >= 2){
@@ -303,7 +310,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
   
               # Get thesaurus items with thesaurus own item_id
               thesaurus_selected_items <- module_elements %>% dplyr::filter(group_id == !!group_id) %>%
-                dplyr::select(thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour)
+                dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name, 
+                  thesaurus_item_unit, colour = thesaurus_item_colour)
   
               # Need to have thesaurus_name & thesaurus_item_id (of the thesaurus, not of r$thesaurus table) to merge with r data variables
   
@@ -331,24 +339,21 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                     data$labs_vitals <-
                       r$labs_vitals %>%
                       dplyr::filter(patient_id == r$chosen_patient) %>%
-                      dplyr::rename(thesaurus_item_id = item_id) %>%
-                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "thesaurus_item_id")) %>%
-                      dplyr::mutate(thesaurus_item_unit = dplyr::case_when((thesaurus_item_unit != "" & !is.na(thesaurus_item_unit)) ~ thesaurus_item_unit, TRUE ~ unit)) %>% 
-                      dplyr::select(-unit)
+                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id")) %>%
+                      dplyr::mutate(unit = dplyr::case_when((thesaurus_item_unit != "" & !is.na(thesaurus_item_unit)) ~ thesaurus_item_unit, TRUE ~ unit)) %>% 
+                      dplyr::select(-thesaurus_item_unit)
                   }
                   if (nrow(r$text) > 0){
                     data$text <-
                       r$text %>%
                       dplyr::filter(patient_id == r$chosen_patient) %>%
-                      dplyr::rename(thesaurus_item_id = item_id) %>%
-                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "thesaurus_item_id"))
+                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
                   }
                   if (nrow(r$orders) > 0){
                     data$orders <-
                       r$orders %>%
                       dplyr::filter(patient_id == r$chosen_patient) %>%
-                      dplyr::rename(thesaurus_item_id = item_id) %>%
-                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "thesaurus_item_id"))
+                      dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
                   }
                 }
               }

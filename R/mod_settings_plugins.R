@@ -521,8 +521,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
             # Left join with thesaurus items
             # Change names to have the same as patient_lvl & aggregated modules page
             thesaurus_selected_items <- r$plugins_thesaurus_selected_items %>% 
-              dplyr::left_join(r$plugins_thesaurus_items, by = c("thesaurus_id", "item_id")) %>%
-              dplyr::rename(thesaurus_item_id = item_id, thesaurus_item_colour = colour, thesaurus_item_display_name = display_name)
+              dplyr::left_join(r$plugins_thesaurus_items, by = c("thesaurus_id", "item_id"))
             
             # Initialize variables
     
@@ -538,34 +537,26 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
             # Filter r variables with selected thesaurus items and with patient_id
             # Choose unit, priority to data, then thesaurus
             
-            # There's a difference here : item_id IS NOT thesaurus own item_id, but our database table ID
-            # This is different with patient_lvl page, where we choose item_id of the thesaurus
-            # It's OK here, cause this is a test area where the thesaurus will not change during our test
-            # For patient_lvl page, thesaurus can change between two sessions, so taking thesaurus own item_id is more reliable
-            
             if (nrow(r$stays) > 0) data$stays <- r$stays %>% dplyr::filter(patient_id == input$patient)
             if (nrow(r$labs_vitals) > 0){
               data$labs_vitals <-
                 r$labs_vitals %>%
                 dplyr::filter(patient_id == input$patient) %>%
-                dplyr::rename(thesaurus_item_id = item_id) %>%
-                dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "thesaurus_item_id")) %>%
-                dplyr::mutate(thesaurus_item_unit = dplyr::case_when((thesaurus_item_unit != "" & !is.na(thesaurus_item_unit)) ~ thesaurus_item_unit, TRUE ~ unit)) %>%
-                dplyr::select(-unit)
+                dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id")) %>%
+                dplyr::mutate(unit = dplyr::case_when((thesaurus_item_unit != "" & !is.na(thesaurus_item_unit)) ~ thesaurus_item_unit, TRUE ~ unit)) %>%
+                dplyr::select(-thesaurus_item_unit)
             }
             if (nrow(r$text) > 0){
               data$text <-
                 r$text %>%
                 dplyr::filter(patient_id == input$patient) %>%
-                dplyr::rename(thesaurus_item_id = item_id) %>%
-                dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "thesaurus_item_id"))
+                dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
             }
             if (nrow(r$orders) > 0){
               data$orders <-
                 r$orders %>%
                 dplyr::filter(patient_id == input$patient) %>%
-                dplyr::rename(thesaurus_item_id = item_id) %>%
-                dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "thesaurus_item_id"))
+                dplyr::inner_join(thesaurus_selected_items, by = c("thesaurus_name", "item_id"))
             }
     
             data$stay <- r$stays %>% dplyr::filter(stay_id == input$stay) %>% dplyr::select(admission_datetime, discharge_datetime)
