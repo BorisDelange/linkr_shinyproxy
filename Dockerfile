@@ -2,7 +2,8 @@
 
 # Indicates that the image starts from a pre-built image, available here
 # https://hub.docker.com/r/openanalytics/r-base/
-FROM openanalytics/r-base
+# FROM openanalytics/r-base
+FROM r-base
 
 MAINTAINER Boris Delange "boris.delange@gmail.com"
 
