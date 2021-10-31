@@ -115,7 +115,7 @@
 
       
 
-      </header><script src="cdwtools_files/header-attrs-2.10/header-attrs.js"></script><div class="row">
+      </header><script src="cdwtools_files/header-attrs-2.11/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Get started</h1>
@@ -128,44 +128,45 @@
 
     
     
-<blockquote>
-<p>Create a first project step by step, from data import to data exploitation.</p>
-</blockquote>
-<div id="first-launch" class="section level2">
+<div id="run-the-application-log-in" class="section level2">
 <h2 class="hasAnchor">
-<a href="#first-launch" class="anchor"></a>First launch</h2>
+<a href="#run-the-application-log-in" class="anchor"></a>Run the application &amp; log in</h2>
 <p>When cdwtools package is installed, run the Shiny application with :</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/cdwtools.html">cdwtools</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/cdwtools.html">cdwtools</a></span><span class="op">(</span>language <span class="op">=</span> <span class="st">"EN"</span><span class="op">)</span></code></pre></div>
+<p>Available languages are “EN” &amp; “FR”.</p>
 <p>The first time you launch the application, a <strong>local database</strong> is created, on the library directory.</p>
-<p>An <em>admin</em> user is created, with login = admin &amp; password = admin.</p>
-<p><em>screenshot</em></p>
+<p>Two users are created :</p>
+<ul>
+<li>an <strong>admin</strong> user, with login = admin &amp; password = admin</li>
+<li>a <strong>test</strong> user, with login = test &amp; password = test</li>
+</ul>
+<p>First, <strong>connect with the test user</strong>.</p>
 </div>
-<div id="users-management" class="section level2">
+<div id="patient-level-data" class="section level2">
 <h2 class="hasAnchor">
-<a href="#users-management" class="anchor"></a>Users management</h2>
-<p><em>Create new user status, user accesses &amp; users</em> <em>Basic example with creation of one clinician user</em> <em>At the end, after importing data, reconnect with this account</em></p>
+<a href="#patient-level-data" class="anchor"></a>Patient-level data</h2>
+<p>Click on the <strong>patient-level data</strong> link on the header of the page.</p>
+<p>With the <strong>dropdowns on left side</strong> of the page, select the <strong>datamart</strong> “Invasive mechanical ventilation”, the <strong>study</strong>, “Predicting extubation success” &amp; the <strong>subset</strong> “All patients”.</p>
+<p>Select <strong>a patient</strong>. You should have this screen :</p>
+<p><img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.jpg?raw=true"></p>
+<p>Try to change the selected patient : the charts are reloaded with new data.</p>
 </div>
-<div id="import-data" class="section level2">
+<div id="modules-plugins" class="section level2">
 <h2 class="hasAnchor">
-<a href="#import-data" class="anchor"></a>Import data</h2>
-<p><em>Basic example with data available from inside the App, 3 patients, various random data …</em> <em>Same with thesaurus</em></p>
-</div>
-<div id="import-plugins" class="section level2">
-<h2 class="hasAnchor">
-<a href="#import-plugins" class="anchor"></a>Import plugins</h2>
-<p><em>Import one or two plugins from website</em> <em>One or two for individual patient data, as Dygraph &amp; Datatable…</em> <em>One for aggregated data, as Flowchart</em></p>
-</div>
-<div id="create-a-project" class="section level2">
-<h2 class="hasAnchor">
-<a href="#create-a-project" class="anchor"></a>Create a project</h2>
-<p><em>Connect from the user we have created</em> <em>The user has access to the datamart we created, create a study</em> <em>Create two pages in patient-lvl, one page in aggregated</em> <em>Screenshot with result</em></p>
-</div>
-<div id="next" class="section level2">
-<h2 class="hasAnchor">
-<a href="#next" class="anchor"></a>Next ?</h2>
-<p>You’ve created your first project. It is possible to import data from various sources, as <strong>clinical datawarehouses</strong> (MIMIC, OMOP, eHOP…) but also from <strong>csv files</strong> or <strong>xls files</strong>. Even if your data file contains already transformed data (ie one row per patient with one variable per column), you can import it and manipulate data from the Aggregated pages.</p>
-<p><em>Screenshot of this last example ?</em></p>
+<a href="#modules-plugins" class="anchor"></a>Modules &amp; plugins</h2>
+<p>The application works with two concepts : the <strong>modules</strong> &amp; the <strong>plugins</strong>.</p>
+<p>Once you have access to a datamart (a corpus of patients data), you can create modules using plugins.</p>
+<p>A <strong>module</strong> is a page where you choose <strong>which data to render</strong> (by selected thesaurus items), and <strong>how to render these data</strong>, by selecting a plugin.</p>
+<p>A <strong>plugin</strong> is a way to render data, eg a plugin named Dygraph renders data with a timeline, a plugin named Text renders data with text areas.</p>
+<p>In the <strong>patient-level data</strong> page, you create modules to <strong>visualize data</strong> for each patient of the datamart.</p>
+<p>In the <strong>aggregated data</strong> page, you create modules to <strong>analyze data</strong>.</p>
+<p>Examples :</p>
+<ul>
+<li>create a “<strong>Patient management</strong>” module, where you can create exclusion criteria &amp; render the flowchart of your study</li>
+<li>create a “<strong>Data cleaning</strong>” module, where you clean your data, setting limit values of outlier data</li>
+<li>create a “<strong>Report" module</strong>”, where you can create a report, using figures created in previous modules, dynamically updated</li>
+</ul>
 </div>
   </div>
 

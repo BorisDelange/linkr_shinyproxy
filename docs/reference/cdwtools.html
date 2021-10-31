@@ -40,7 +40,18 @@
 
 
 <meta property="og:title" content="Run the Shiny Application — cdwtools" />
-<meta property="og:description" content="Run the Shiny Application" />
+<meta property="og:description" content="Runs the cdwtools Shiny Application.
+Use language argument to choose language to use (&quot;EN&quot; or &quot;FR&quot; available).
+Use options to set options to shiny::shinyApp() function, see documentation of shiny::shinyApp for more informations.
+To connect to distant database, use db_info argument. db_info is a list, containing these parameters :
+sql_lib : SQL library used, &quot;postgres&quot; or &quot;sqlite&quot; available for now
+dbname : database name (character)
+host : host connection name (character)
+port : connection port (integer)
+user : user name (character)
+password : password in clear (character)
+
+" />
 
 
 
@@ -165,18 +176,25 @@
     </div>
 
     <div class="ref-description">
-    <p>Run the Shiny Application</p>
+    <p>Runs the cdwtools Shiny Application.<br />
+Use language argument to choose language to use ("EN" or "FR" available).<br />
+Use options to set options to shiny::shinyApp() function, see documentation of shiny::shinyApp for more informations.<br /><br />
+To connect to distant database, use db_info argument. db_info is a list, containing these parameters :<br /></p><ul>
+<li><p><strong>sql_lib</strong> : SQL library used, "postgres" or "sqlite" available for now</p></li>
+<li><p><strong>dbname</strong> : database name (character)</p></li>
+<li><p><strong>host</strong> : host connection name (character)</p></li>
+<li><p><strong>port</strong> : connection port (integer)</p></li>
+<li><p><strong>user</strong> : user name (character)</p></li>
+<li><p><strong>password</strong> : password in clear (character)</p></li>
+</ul>
+
     </div>
 
     <pre class="usage"><span class='fu'>cdwtools</span><span class='op'>(</span>
-  onStart <span class='op'>=</span> <span class='cn'>NULL</span>,
-  options <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
-  enableBookmarking <span class='op'>=</span> <span class='cn'>NULL</span>,
-  uiPattern <span class='op'>=</span> <span class='st'>"/"</span>,
   language <span class='op'>=</span> <span class='st'>"EN"</span>,
-  css <span class='op'>=</span> <span class='st'>"fluent_style.css"</span>,
-  page_style <span class='op'>=</span> <span class='st'>"fluent"</span>,
   db_info <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
+  default_folder <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
+  options <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
   <span class='va'>...</span>
 <span class='op'>)</span></pre>
 
@@ -184,41 +202,30 @@
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>onStart</th>
-      <td><p>A function that will be called before the app is actually run.
-This is only needed for <code>shinyAppObj</code>, since in the <code>shinyAppDir</code>
-case, a <code>global.R</code> file can be used for this purpose.</p></td>
+      <th>language</th>
+      <td><p>Default language to use in the App (character)</p></td>
+    </tr>
+    <tr>
+      <th>db_info</th>
+      <td><p>Database connection informations, if it is needed to connect a distant db (list).</p></td>
+    </tr>
+    <tr>
+      <th>default_folder</th>
+      <td><p>Default folder where to save datamarts CSV files (character)</p></td>
     </tr>
     <tr>
       <th>options</th>
-      <td><p>Named options that should be passed to the <code>runApp</code> call
-(these can be any of the following: "port", "launch.browser", "host", "quiet",
-"display.mode" and "test.mode"). You can also specify <code>width</code> and
-<code>height</code> parameters which provide a hint to the embedding environment
-about the ideal height/width for the app.</p></td>
-    </tr>
-    <tr>
-      <th>enableBookmarking</th>
-      <td><p>Can be one of <code>"url"</code>, <code>"server"</code>, or
-<code>"disable"</code>. The default value, <code>NULL</code>, will respect the setting from
-any previous calls to  <code><a href='https://rdrr.io/pkg/shiny/man/enableBookmarking.html'>enableBookmarking()</a></code>. See <code><a href='https://rdrr.io/pkg/shiny/man/enableBookmarking.html'>enableBookmarking()</a></code>
-for more information on bookmarking your app.</p></td>
-    </tr>
-    <tr>
-      <th>uiPattern</th>
-      <td><p>A regular expression that will be applied to each <code>GET</code>
-request to determine whether the <code>ui</code> should be used to handle the
-request. Note that the entire request path must match the regular
-expression in order for the match to be considered successful.</p></td>
+      <td><p>A list of options that could be passed to shiny::shinyApp() function (list)</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>arguments to pass to golem_opts. 
-See `?golem::get_golem_options` for more details.</p></td>
+      <td><p>arguments to pass to golem_opts.</p></td>
     </tr>
     </table>
 
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

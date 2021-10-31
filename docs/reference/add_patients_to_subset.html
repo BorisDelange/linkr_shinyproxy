@@ -40,7 +40,7 @@
 
 
 <meta property="og:title" content="Add patients to a subset — add_patients_to_subset" />
-<meta property="og:description" content="Add patients to a subset" />
+<meta property="og:description" content="Add patients to a subset, only if not already in the subset" />
 
 
 
@@ -165,7 +165,7 @@
     </div>
 
     <div class="ref-description">
-    <p>Add patients to a subset</p>
+    <p>Add patients to a subset, only if not already in the subset</p>
     </div>
 
     <pre class="usage"><span class='fu'>add_patients_to_subset</span><span class='op'>(</span>
@@ -173,7 +173,7 @@
   r <span class='op'>=</span> <span class='fu'>shiny</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/shiny/man/reactiveValues.html'>reactiveValues</a></span><span class='op'>(</span><span class='op'>)</span>,
   patients <span class='op'>=</span> <span class='fu'>tibble</span><span class='fu'>::</span><span class='fu'><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></span><span class='op'>(</span><span class='op'>)</span>,
   subset_id <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/integer.html'>integer</a></span><span class='op'>(</span><span class='op'>)</span>,
-  erase <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  success_notification <span class='op'>=</span> <span class='cn'>TRUE</span>,
   language <span class='op'>=</span> <span class='st'>"EN"</span>
 <span class='op'>)</span></pre>
 
@@ -186,7 +186,7 @@
     </tr>
     <tr>
       <th>r</th>
-      <td><p>The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)</p></td>
+      <td><p>The r reactive variable, used to communicate between modules in the ShinyApp (reactiveValues object)</p></td>
     </tr>
     <tr>
       <th>patients</th>
@@ -197,8 +197,8 @@
       <td><p>ID of subset (integer)</p></td>
     </tr>
     <tr>
-      <th>erase</th>
-      <td><p>if TRUE, erase patients contained in selected subset (logical)</p></td>
+      <th>success_notification</th>
+      <td><p>Should a message bar be displayed if insertion of patient(s) is a success ? Default to TRUE</p></td>
     </tr>
     <tr>
       <th>language</th>
@@ -213,7 +213,7 @@
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='va'>patients</span> <span class='op'>&lt;-</span> <span class='fu'>tibble</span><span class='fu'>::</span><span class='fu'><a href='https://tibble.tidyverse.org/reference/tribble.html'>tribble</a></span><span class='op'>(</span><span class='op'>~</span><span class='va'>patient_id</span>, <span class='fl'>123L</span>, <span class='fl'>456L</span>, <span class='fl'>789L</span><span class='op'>)</span>
-<span class='fu'>subset_add_patients</span><span class='op'>(</span>output <span class='op'>=</span> <span class='va'>output</span>, r <span class='op'>=</span> <span class='va'>r</span>, patients <span class='op'>=</span> <span class='va'>patients</span>, subset_id <span class='op'>=</span> <span class='fl'>3</span>, erase <span class='op'>=</span> <span class='cn'>FALSE</span>, language <span class='op'>=</span> <span class='st'>"EN"</span><span class='op'>)</span>
+<span class='fu'>subset_add_patients</span><span class='op'>(</span>output <span class='op'>=</span> <span class='va'>output</span>, r <span class='op'>=</span> <span class='va'>r</span>, patients <span class='op'>=</span> <span class='va'>patients</span>, subset_id <span class='op'>=</span> <span class='fl'>3</span>, language <span class='op'>=</span> <span class='st'>"EN"</span><span class='op'>)</span>
 <span class='op'>}</span>
 </div></pre>
   </div>

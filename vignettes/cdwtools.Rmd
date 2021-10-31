@@ -14,50 +14,60 @@ knitr::opts_chunk$set(
 )
 ```
 
-> Create a first project step by step, from data import to data exploitation.
-
-## First launch
+## Run the application & log in
 
 When cdwtools package is installed, run the Shiny application with :
 
 ```r
-cdwtools()
+cdwtools(language = "EN")
 ```
+
+Available languages are "EN" & "FR".
 
 The first time you launch the application, a **local database** is created, on the library directory.
 
-An *admin* user is created, with login = admin & password = admin.
+Two users are created :
 
-*screenshot*
+- an **admin** user, with login = admin & password = admin
+- a **test** user, with login = test & password = test
 
-## Users management
+First, **connect with the test user**.
 
-*Create new user status, user accesses & users*
-*Basic example with creation of one clinician user*
-*At the end, after importing data, reconnect with this account*
+## Patient-level data
 
-## Import data
+Click on the **patient-level data** link on the header of the page.
 
-*Basic example with data available from inside the App, 3 patients, various random data ...*
-*Same with thesaurus*
+With the **dropdowns on left side** of the page, select the **datamart** "Invasive mechanical ventilation", the **study**, "Predicting extubation success" & the **subset** "All patients".
 
-## Import plugins
+Select **a patient**. You should have this screen :  
 
-*Import one or two plugins from website*
-*One or two for individual patient data, as Dygraph & Datatable...*
-*One for aggregated data, as Flowchart*
 
-## Create a project
 
-*Connect from the user we have created*
-*The user has access to the datamart we created, create a study*
-*Create two pages in patient-lvl, one page in aggregated*
-*Screenshot with result*
+![](https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.jpg?raw=true)
 
-## Next ?
+Try to change the selected patient : the charts are reloaded with new data.
 
-You've created your first project.
-It is possible to import data from various sources, as **clinical datawarehouses** (MIMIC, OMOP, eHOP...) but also from **csv files** or **xls files**.
-Even if your data file contains already transformed data (ie one row per patient with one variable per column), you can import it and manipulate data from the Aggregated pages.
+## Modules & plugins
 
-*Screenshot of this last example ?*
+The application works with two concepts : the **modules** & the **plugins**.
+
+Once you have access to a datamart (a corpus of patients data), you can create modules using plugins.
+
+A **module** is a page where you choose **which data to render** (by selected thesaurus items), and **how to render these data**, by selecting a plugin.
+
+A **plugin** is a way to render data, eg a plugin named Dygraph renders data with a timeline, a plugin named Text renders data with text areas.
+
+In the **patient-level data** page, you create modules to **visualize data** for each patient of the datamart.
+
+In the **aggregated data** page, you create modules to **analyze data**.
+
+Examples : 
+
+- create a "**Patient management**" module, where you can create exclusion criteria & render the flowchart of your study
+- create a "**Data cleaning**" module, where you clean your data, setting limit values of outlier data
+- create a "**Report" module**", where you can create a report, using figures created in previous modules, dynamically updated
+
+Try now to create your own module : click on **Parameters** link, on top of the page and go to **Patient-lvl modules** section.
+
+You should have this screen :
+

@@ -171,21 +171,32 @@ For plugins page, UI &amp; server code are displayed in distinct outputs (uiOutp
     </div>
 
     <pre class="usage"><span class='fu'>execute_settings_code</span><span class='op'>(</span>
+  <span class='va'>input</span>,
   <span class='va'>output</span>,
+  <span class='va'>session</span>,
   id <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
   ns <span class='op'>=</span> <span class='fu'>shiny</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/shiny/man/NS.html'>NS</a></span><span class='op'>(</span><span class='op'>)</span>,
   language <span class='op'>=</span> <span class='st'>"EN"</span>,
   r <span class='op'>=</span> <span class='fu'>shiny</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/shiny/man/reactiveValues.html'>reactiveValues</a></span><span class='op'>(</span><span class='op'>)</span>,
   edited_code <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
-  code_type <span class='op'>=</span> <span class='st'>""</span>
+  code_type <span class='op'>=</span> <span class='st'>""</span>,
+  data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
+      <th>input</th>
+      <td><p>variable from Shiny, used to execute UI &amp; server code (plugins page)</p></td>
+    </tr>
+    <tr>
       <th>output</th>
       <td><p>variable from Shiny, used to render messages on the message bar</p></td>
+    </tr>
+    <tr>
+      <th>session</th>
+      <td><p>variable from Shiny, used to execute UI &amp; server code (plugins page)</p></td>
     </tr>
     <tr>
       <th>id</th>
@@ -210,6 +221,10 @@ For plugins page, UI &amp; server code are displayed in distinct outputs (uiOutp
     <tr>
       <th>code_type</th>
       <td><p>For plugins page, code_type could be UI or server (character)</p></td>
+    </tr>
+    <tr>
+      <th>data</th>
+      <td><p>A list containing dataframes / tibbles, if data need to be used in the evaluated code (list)</p></td>
     </tr>
     </table>
 

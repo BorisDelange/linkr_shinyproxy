@@ -174,6 +174,7 @@
   ns <span class='op'>=</span> <span class='fu'>shiny</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/shiny/man/NS.html'>NS</a></span><span class='op'>(</span><span class='op'>)</span>,
   language <span class='op'>=</span> <span class='st'>"EN"</span>,
   id <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
+  output_name <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
   col_names <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
   table <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
   dropdowns <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
@@ -181,9 +182,12 @@
   datatable_dom <span class='op'>=</span> <span class='st'>"&lt;'datatable_length'l&gt;&lt;'top'ft&gt;&lt;'bottom'p&gt;"</span>,
   page_length <span class='op'>=</span> <span class='fl'>10</span>,
   start <span class='op'>=</span> <span class='fl'>1</span>,
-  editable_cols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/integer.html'>integer</a></span><span class='op'>(</span><span class='op'>)</span>,
-  sortable_cols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/integer.html'>integer</a></span><span class='op'>(</span><span class='op'>)</span>,
+  editable_cols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
+  sortable_cols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
   centered_cols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
+  searchable_cols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
+  filter <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  factorize_cols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
   column_widths <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span></pre>
 
@@ -209,6 +213,10 @@
     <tr>
       <th>id</th>
       <td><p>ID of the current page, format = "settings_[PAGE]" (character)</p></td>
+    </tr>
+    <tr>
+      <th>output_name</th>
+      <td><p>Name of the datatable output</p></td>
     </tr>
     <tr>
       <th>col_names</th>
@@ -251,6 +259,18 @@
       <td><p>Which cols are centered (character vector)</p></td>
     </tr>
     <tr>
+      <th>searchable_cols</th>
+      <td><p>If filter is TRUE, choose which columns are searchable (character)</p></td>
+    </tr>
+    <tr>
+      <th>filter</th>
+      <td><p>If TRUE, we can filter we search box each column (logical)</p></td>
+    </tr>
+    <tr>
+      <th>factorize_cols</th>
+      <td><p>Which columns are factorized (to be filtered with a dropdown) (character)</p></td>
+    </tr>
+    <tr>
       <th>column_widths</th>
       <td><p>Columns widths (named character vector)</p></td>
     </tr>
@@ -264,35 +284,7 @@ See DOM documentation here : https://datatables.net/reference/option/dom<br />
 See columnDefs doc here : https://datatables.net/reference/option/columnDefs</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='va'>data</span> <span class='op'>&lt;-</span> <span class='fu'>tibble</span><span class='fu'>::</span><span class='fu'><a href='https://tibble.tidyverse.org/reference/tribble.html'>tribble</a></span><span class='op'>(</span><span class='op'>~</span><span class='va'>id</span>, <span class='op'>~</span><span class='va'>name</span>, <span class='op'>~</span><span class='va'>description</span>, <span class='op'>~</span><span class='va'>data_source_id</span>,
-  <span class='fl'>2</span>, <span class='st'>"Name of the datamart"</span>, <span class='st'>"Description of the datamart"</span>, <span class='fl'>3</span><span class='op'>)</span>
-  
-
-<span class='va'>col_names</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"ID"</span>, <span class='st'>"Name"</span>, <span class='st'>"Description"</span>, <span class='st'>"Data source ID"</span>, <span class='st'>"Action"</span><span class='op'>)</span>
-<span class='va'>action_buttons</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"delete"</span>, <span class='st'>"edit_code"</span><span class='op'>)</span>
-<span class='va'>editable_cols</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"id"</span>, <span class='st'>"name"</span><span class='op'>)</span>
-<span class='va'>sortable_cols</span> <span class='op'>&lt;-</span> <span class='st'>"id"</span>
-<span class='va'>centered_cols</span> <span class='op'>&lt;-</span> <span class='st'>"id"</span>
-<span class='va'>column_widths</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"name"</span> <span class='op'>=</span> <span class='st'>"200px"</span>, <span class='st'>"description"</span> <span class='op'>=</span> <span class='st'>"300px"</span><span class='op'>)</span>
-
-<span class='fu'>render_settings_datatable</span><span class='op'>(</span>
-  output <span class='op'>=</span> <span class='va'>output</span>, r <span class='op'>=</span> <span class='va'>r</span>, 
-  ns <span class='op'>=</span> <span class='fu'>NS</span><span class='op'>(</span><span class='st'>"settings_datamart"</span><span class='op'>)</span>, language <span class='op'>=</span> <span class='st'>"EN"</span>,
-  id <span class='op'>=</span> <span class='st'>"settings_datamart"</span>,
-  col_names <span class='op'>=</span> <span class='va'>col_names</span>, 
-  table <span class='op'>=</span> <span class='st'>"datamarts"</span>, 
-  dropdowns <span class='op'>=</span> <span class='st'>"data_source"</span>,
-  action_buttons <span class='op'>=</span> <span class='va'>action_buttons</span>, 
-  datatable_dom <span class='op'>=</span> <span class='st'>"&lt;'top'ft&gt;"</span>,
-  page_length <span class='op'>=</span> <span class='fl'>20</span>, 
-  start <span class='op'>=</span> <span class='fl'>1</span>, 
-  editable_cols <span class='op'>=</span> <span class='va'>editable_cols</span>, 
-  sortable_cols <span class='op'>=</span> <span class='va'>sortable_cols</span>,
-  centered_cols <span class='op'>=</span> <span class='va'>centered_cols</span>, 
-  column_widths <span class='op'>=</span> <span class='va'>column_widths</span><span class='op'>)</span>
-<span class='op'>}</span>
-</div></pre>
+    <pre class="examples"></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
