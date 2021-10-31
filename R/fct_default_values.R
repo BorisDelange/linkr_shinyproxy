@@ -516,11 +516,27 @@ plugin_code_server_3 <- 'output$text_%group_id%_%patient_id% <- renderUI({
       9, "plugin_server", 2, plugin_code_server_1, 1, as.character(Sys.time()), FALSE,
       10, "plugin_ui", 3, plugin_code_ui_1, 1, as.character(Sys.time()), FALSE,
       11, "plugin_server", 3, plugin_code_server_1, 1, as.character(Sys.time()), FALSE))
-    
-    # Run subset code
-    run_datamart_code(output = output, r = r, datamart_id = 1)
-    patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)
-    add_patients_to_subset(output = output, r = r, patients = patients, subset_id = 1)
   }
+
+  ##########################################
+  # Add subset patients                    #
+  ##########################################
   
+  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM subset_patients")) == 0){
+    DBI::dbAppendTable(r$db, "subset_patients", tibble::tribble(~id, ~subset_id, ~patient_id, ~creator_id, ~datetime, ~deleted,
+      1, 1, 1, 1, as.character(Sys.time()), FALSE,
+      2, 1, 2, 1, as.character(Sys.time()), FALSE,
+      3, 1, 3, 1, as.character(Sys.time()), FALSE))
+  }
+
+  ##########################################
+  # Add plugins                            #
+  ##########################################
+
+  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM plugins")) == 0){
+    DBI::dbAppendTable(r$db, "plugins", tibble::tribble(~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
+      1, "Dygraph", "", 1, as.character(Sys.time()), FALSE,
+      2, "Datatable", "", 1, as.character(Sys.time()), FALSE,
+      3, "Text", "", 1, as.character(Sys.time()), FALSE))
+  }
 }
