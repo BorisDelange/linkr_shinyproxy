@@ -194,7 +194,13 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
         r$options %>% 
         dplyr::filter(category == "datamart", link_id == datamart_id, name == "user_allowed_read") %>%
         dplyr::pull(value_num)
-      picker_options <- picker_options %>% dplyr::filter(key %in% users_allowed_datamart)
+      users_allowed_read_group <- 
+        r$options %>% 
+        dplyr::filter(category == "datamart", link_id == datamart_id, name == "users_allowed_read_group") %>%
+        dplyr::pull(value)
+      
+      # Don't filter if everybody has access to the datamart
+      if (users_allowed_read_group != "everybody") picker_options <- picker_options %>% dplyr::filter(key %in% users_allowed_datamart)
     }
     
     # Users already allowed
