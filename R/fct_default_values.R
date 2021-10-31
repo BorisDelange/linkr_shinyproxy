@@ -22,7 +22,8 @@ insert_default_values <- function(r){
   # Add default user status
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM users_statuses")) == 0){
     DBI::dbAppendTable(r$db, "users_statuses", tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
-      1, "Data scientist", "", as.character(Sys.time()), FALSE))
+      1, "Data scientist", "", as.character(Sys.time()), FALSE,
+      2, "Clinician", "", as.character(Sys.time()), FALSE))
   }
   
   # Add default data source
@@ -128,32 +129,40 @@ insert_default_values <- function(r){
     
     data <- tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted)
     
-    # Loop over all toggles, set 0 to value_num is toggle is FALSE, 1 else
-    sapply(1:nrow(options_toggles), function(i){
-      data <<- data %>% dplyr::bind_rows(
-        tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-          "users_accesses", 1, options_toggles[[i, "name"]], "", 1, 1, as.character(Sys.time()), FALSE)
-      )
-      if (options_toggles[[i, "toggles"]] != ""){
-        sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
-          
-          data <<- data %>% dplyr::bind_rows(
-            tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-              "users_accesses", 1, toggle, "", 1, 1, as.character(Sys.time()), FALSE)
-          )
-        })
-      }
+    # Loop over all toggles, set 1 to value_num for admin, 0 for test
+    sapply(1:2, function(link_id) {
+      sapply(1:nrow(options_toggles), function(i){
+        data <<- data %>% dplyr::bind_rows(
+          tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+            "users_accesses", link_id, options_toggles[[i, "name"]], "", ifelse(link_id == 1, 1, 0), 1, as.character(Sys.time()), FALSE)
+        )
+        if (options_toggles[[i, "toggles"]] != ""){
+          sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
+            
+            data <<- data %>% dplyr::bind_rows(
+              tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+                "users_accesses", link_id, toggle, "", ifelse(link_id == 1, 1, 0), 1, as.character(Sys.time()), FALSE)
+            )
+          })
+        }
+      })
     })
-    
-    # Delete old data from options
-    
-    query <- DBI::dbSendStatement(r$db, paste0("DELETE FROM options WHERE category = 'users_accesses' AND link_id = 1"))
-    DBI::dbClearResult(query)
     
     # Attribute id values
     
-    last_row <- as.integer(DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull())
+    last_row <- get_last_row(r$db, "options")
     data$id <- seq.int(nrow(data)) + last_row
+    
+    # Set rights to test user
+    test_user_rights <- c("general_settings", "change_paswword_card",
+      "studies", "studies_edit_data", "studies_creation_card", "studies_datatable_card", "studies_options_card",
+      "thesaurus", "thesaurus_see_all_data", "thesaurus_datatable_card", "thesaurus_sub_datatable_card",
+      "patient_lvl_modules", "patient_lvl_modules_edit_data", "patient_lvl_modules_delete_data", "patient_lvl_modules_creation_card", "patient_lvl_modules_management_card", "patient_lvl_modules_options_card",
+      "plugins", "plugins_description_card",
+      "aggregated_modules",  "aggregated_modules_edit_data", "aggregated_modules_delete_data", "aggregated_modules_creation_card", "aggregated_modules_management_card", "aggregated_modules_options_card"
+    )
+    
+    data <- data %>% dplyr::mutate(value_num = dplyr::case_when((link_id == 2 & name %in% test_user_rights) ~ 1, TRUE ~ value_num))
     
     # Add new values to database
     DBI::dbAppendTable(r$db, "options", data)

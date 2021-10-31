@@ -142,23 +142,41 @@ mod_settings_sub_modules_ui <- function(id = character(), language = "EN", words
     }
 
     if (grepl("management", page)){
-      if (grepl("aggregated", id)) render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = page) -> result
-      if (grepl("patient_lvl", id)) {
-        div(
-          div(id = ns("datatable_card"),
-            make_card(translate(language, page, words),
-              div(
-                DT::DTOutput(ns("management_datatable")),
-                shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save", words)), br(), br(),
-                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
-                  div(make_dropdown(language = language, ns = ns, label = "module_element", width = "300px", words = words)),
-                  div(shiny.fluent::PrimaryButton.shinyInput(ns("delete_module_element"), translate(language, "delete", words)), style = "margin-top:38px;")
-                )
-              )
-            )
-          )
-        ) -> result
+        
+      delete_module_element <- ""
+        
+      if (id == "settings_modules_patient_lvl_modules_elements_management"){
+        
+        delete_module_element <- div(
+          hr(), span(translate(language, "delete_module_element"), style = "font-family: 'Segoe UI'; font-size: 18px;"), br(),
+          shiny.fluent::Stack(
+            horizontal = TRUE, tokens = list(childrenGap = 30),
+            div(make_dropdown(language = language, ns = ns, label = "module_family", id = "dme_module_family", width = "200px", words = words)),
+            div(make_dropdown(language = language, ns = ns, label = "module", id = "dme_module", width = "200px", words = words)),
+            div(make_dropdown(language = language, ns = ns, label = "module_element", id = "dme_module_element", width = "200px", words = words)),
+            div(shiny.fluent::PrimaryButton.shinyInput(ns("dme_delete"), translate(language, "delete", words)), style = "margin-top:38px;")
+          ), br()
+        )
       }
+      
+      div(div(id = ns("datatable_card"),
+        make_card(translate(language, "modules_elements_management", words),
+          div(
+            DT::DTOutput(ns("management_datatable")),
+            shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save", words)), br(), br(),
+            hr(), span(translate(language, "change_display_order_module_element"), style = "font-family: 'Segoe UI'; font-size: 18px;"), br(),
+            shiny.fluent::Stack(
+              horizontal = TRUE, tokens = list(childrenGap = 30),
+              div(make_dropdown(language = language, ns = ns, label = "module_family", id = "cdo_module_family", width = "200px", words = words)),
+              div(make_dropdown(language = language, ns = ns, label = "module", id = "cdo_module", width = "200px", words = words)),
+              div(make_dropdown(language = language, ns = ns, label = "module_element", id = "cdo_module_element", width = "200px", words = words)),
+              div(make_dropdown(language = language, ns = ns, label = "display_order", id = "cdo_display_order", width = "100px", words = words)),
+              div(shiny.fluent::PrimaryButton.shinyInput(ns("cdo_save"), translate(language, "save", words)), style = "margin-top:38px;")
+            ), br(),
+            delete_module_element
+          )
+        )
+      ), br()) -> result
     }
   
   tagList(render_settings_default_elements(ns = ns), result) 
@@ -172,6 +190,10 @@ mod_settings_sub_modules_ui <- function(id = character(), language = "EN", words
 mod_settings_modules_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    # To prevent refresh of dropdowns when change display order is saved
+    r$patient_lvl_cdo_saved <- 0L
+    r$aggregated_cdo_saved <- 0L
     
     if (grepl("patient_lvl", id)) prefix <- "patient_lvl"
     if (grepl("aggregated", id)) prefix <- "aggregated"
@@ -820,18 +842,134 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
         }
       
         #################################################
+        # Modules elements / change display order       #
+        #################################################
+        
+        if (grepl("modules_elements", id)){
+          
+          # Update the four dropdowns
+          observeEvent(r[[paste0(prefix, "_modules_elements_temp")]], {
+            
+            if (r[[paste0(prefix, "_cdo_saved")]] != 1){
+              cdo_modules_families <- r[[paste0(prefix, "_modules_elements_temp")]] %>%
+                dplyr::distinct(module_id) %>% dplyr::left_join(r[[paste0(prefix, "_modules")]] %>% dplyr::select(module_id = id, module_family_id), by = "module_id") %>%
+                dplyr::left_join(r[[paste0(prefix, "_modules_families")]] %>% dplyr::select(module_family_id = id, name), by = "module_family_id") %>%
+                dplyr::group_by(name) %>% dplyr::slice(1) %>% dplyr::ungroup() %>% dplyr::arrange(name)
+              
+              options <- list()
+              if (nrow(cdo_modules_families) > 0) options <- convert_tibble_to_list(data = cdo_modules_families, key_col = "module_family_id", text_col = "name")
+              
+              shiny.fluent::updateDropdown.shinyInput(session, "cdo_module_family", options = options)
+              shiny.fluent::updateDropdown.shinyInput(session, "cdo_module", options = list())
+              shiny.fluent::updateDropdown.shinyInput(session, "cdo_module_element", options = list())
+              shiny.fluent::updateDropdown.shinyInput(session, "cdo_display_order", options = list())
+            }
+          })
+          
+          observeEvent(input$cdo_module_family, {
+            req(input$cdo_module_family)
+            cdo_modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == input$cdo_module_family)
+            options <- list()
+            if (nrow(cdo_modules) > 0) options <- convert_tibble_to_list(data = cdo_modules, key_col = "id", text_col = "name")
+            shiny.fluent::updateDropdown.shinyInput(session, "cdo_module", options = options)
+            shiny.fluent::updateDropdown.shinyInput(session, "cdo_module_element", options = list())
+            shiny.fluent::updateDropdown.shinyInput(session, "cdo_display_order", options = list())
+          })
+          
+          observeEvent(input$cdo_module, {
+            req(input$cdo_module)
+            cdo_modules_elements_groups <- r[[paste0(prefix, "_modules_elements_temp")]] %>% dplyr::filter(module_id == input$cdo_module) %>% 
+              dplyr::group_by(group_id) %>% dplyr::slice(1) %>% dplyr::ungroup()
+            options <- list()
+            if (nrow(cdo_modules_elements_groups) > 0) options <- convert_tibble_to_list(data = cdo_modules_elements_groups, key_col = "group_id", text_col = "name")
+            shiny.fluent::updateDropdown.shinyInput(session, "cdo_module_element", options = options)
+            shiny.fluent::updateDropdown.shinyInput(session, "cdo_display_order", options = list())
+          })
+          
+          observeEvent(input$cdo_module_element, {
+            req(input$cdo_module_element, input$cdo_module)
+            cdo_modules_elements_display_orders <- r[[paste0(prefix, "_modules_elements_temp")]] %>% dplyr::filter(module_id == input$cdo_module) %>%
+              dplyr::group_by(display_order) %>% dplyr::slice(1) %>% dplyr::ungroup()
+            value <- r[[paste0(prefix, "_modules_elements_temp")]] %>% dplyr::filter(group_id == input$cdo_module_element) %>% dplyr::slice(1) %>% dplyr::pull(display_order)
+            options <- convert_tibble_to_list(data = cdo_modules_elements_display_orders, key_col = "display_order", text_col = "display_order")
+            shiny.fluent::updateDropdown.shinyInput(session, "cdo_display_order", options = options, value = value)
+          })
+          
+          observeEvent(input$cdo_save, {
+            req(length(input$cdo_display_order) > 0)
+            
+            # The group which had selected display order
+            original_group_id <- r[[paste0(prefix, "_modules_elements_temp")]] %>% dplyr::filter(module_id == input$cdo_module, display_order == input$cdo_display_order) %>%
+              dplyr::slice(1) %>% dplyr::pull(group_id)
+            
+            # The ID of the new group, which will have selected display order
+            new_group_id <- input$cdo_module_element
+            
+            # If they are the same, nothing changes
+            # Else, update display_orders in database
+            
+            if (original_group_id != new_group_id){
+              
+              # Display order of the new_group_id will become display order of original_group_id
+              new_group_display_order <- r[[paste0(prefix, "_modules_elements_temp")]] %>% dplyr::filter(group_id == new_group_id) %>% dplyr::slice(1) %>% dplyr::pull(display_order)
+              
+              sql <- paste0("UPDATE ", prefix, "_modules_elements SET display_order = ", input$cdo_display_order, " WHERE group_id = ", input$cdo_module_element)
+              query <- DBI::dbSendStatement(r$db, sql)
+              DBI::dbClearResult(query)
+              
+              sql <- paste0("UPDATE ", prefix, "_modules_elements SET display_order = ", new_group_display_order, " WHERE group_id = ", original_group_id)
+              query <- DBI::dbSendStatement(r$db, sql)
+              DBI::dbClearResult(query)
+              
+              show_message_bar(output = output, id = 4, "modif_saved", type ="success", language = language)
+              
+              update_r(r = r, table = paste0(prefix, "_modules_elements"))
+              
+              # To prevent refresh of dropdowns
+              r[[paste0(prefix, "_cdo_saved")]] <- 1L
+            }
+            
+          })
+        }
+      
+        #################################################
         # Patient-lvl modules elements / delete a group #
         #################################################
+        
+        if (id == "settings_modules_patient_lvl_modules_elements_management"){
       
-        if (grepl("management", id) & grepl("patient_lvl", id)){
-      
+          # Update the three dropdowns
           observeEvent(r$patient_lvl_modules_elements_temp, {
 
-            elements_groups <- r$patient_lvl_modules_elements_temp %>% dplyr::group_by(group_id) %>% dplyr::slice(1) %>% dplyr::ungroup()
+            dme_modules_families <- r$patient_lvl_modules_elements_temp %>%
+              dplyr::distinct(module_id) %>% dplyr::left_join(r$patient_lvl_modules %>% dplyr::select(module_id = id, module_family_id), by = "module_id") %>%
+              dplyr::left_join(r$patient_lvl_modules_families %>% dplyr::select(module_family_id = id, name), by = "module_family_id") %>%
+              dplyr::group_by(name) %>% dplyr::slice(1) %>% dplyr::ungroup() %>% dplyr::arrange(name)
+            
             options <- list()
-            if (nrow(elements_groups) > 0) options <- convert_tibble_to_list(data = elements_groups, key_col = "group_id", text_col = "name")
+            if (nrow(dme_modules_families) > 0) options <- convert_tibble_to_list(data = dme_modules_families, key_col = "module_family_id", text_col = "name")
 
-            shiny.fluent::updateDropdown.shinyInput(session, "module_element", options = options)
+            shiny.fluent::updateDropdown.shinyInput(session, "dme_module_family", options = options)
+            shiny.fluent::updateDropdown.shinyInput(session, "dme_module", options = list())
+            shiny.fluent::updateDropdown.shinyInput(session, "dme_module_element", options = list())
+          })
+          
+          observeEvent(input$dme_module_family, {
+            req(input$dme_module_family)
+            dme_modules <- r$patient_lvl_modules %>% dplyr::filter(module_family_id == input$dme_module_family)
+            options <- list()
+            if (nrow(dme_modules) > 0) options <- convert_tibble_to_list(data = dme_modules, key_col = "id", text_col = "name")
+            shiny.fluent::updateDropdown.shinyInput(session, "dme_module", options = options)
+            shiny.fluent::updateDropdown.shinyInput(session, "dme_module_element", options = list())
+          })
+          
+          observeEvent(input$dme_module, {
+            req(input$dme_module)
+            dme_modules_elements_groups <- r$patient_lvl_modules_elements_temp %>% dplyr::filter(module_id == input$dme_module) %>% 
+              dplyr::group_by(group_id) %>% dplyr::slice(1) %>% dplyr::ungroup()
+            options <- list()
+            if (nrow(dme_modules_elements_groups) > 0) options <- convert_tibble_to_list(data = dme_modules_elements_groups, key_col = "group_id", text_col = "name")
+            shiny.fluent::updateDropdown.shinyInput(session, "dme_module_element", options = options)
           })
           
           # Create & show dialog box
@@ -861,8 +999,8 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           # Whether to close or not delete dialog box
           observeEvent(input$modules_elements_group_hide_dialog, r$patient_lvl_modules_elements_group_delete_dialog <- FALSE)
           observeEvent(input$modules_elements_group_delete_canceled, r$patient_lvl_modules_elements_group_delete_dialog <- FALSE)
-          observeEvent(input$delete_module_element, {
-            req(length(input$module_element) > 0)
+          observeEvent(input$dme_delete, {
+            req(length(input$dme_module_element) > 0)
             r$patient_lvl_modules_elements_group_delete_dialog <- TRUE 
           })
           
@@ -874,7 +1012,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             
             r$patient_lvl_modules_elements_group_delete_dialog <- FALSE
             
-            sql <- paste0("UPDATE patient_lvl_modules_elements SET deleted = 1 WHERE group_id = ", input$module_element)
+            sql <- paste0("UPDATE patient_lvl_modules_elements SET deleted = 1 WHERE group_id = ", input$dme_module_element)
             query <- DBI::dbSendStatement(r$db, sql)
             DBI::dbClearResult(query)
             
