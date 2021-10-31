@@ -3,9 +3,12 @@
 #'
 #' @param r shiny reactive value, used to communicate between modules
 
-insert_default_values <- function(r){
+insert_default_values <- function(output, r){
   
-  # Add default users
+  ##########################################
+  # Add default users, accesses & statuses #
+  ##########################################
+  
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM users")) == 0) {
     DBI::dbAppendTable(r$db, "users", tibble::tribble(~id, ~username, ~firstname, ~lastname, ~password, ~user_access_id, ~user_status_id, ~datetime, ~deleted,
       1, "admin", "John", "Doe", rlang::hash("admin"), 1, 1, as.character(Sys.time()), FALSE,
@@ -25,6 +28,10 @@ insert_default_values <- function(r){
       1, "Data scientist", "", as.character(Sys.time()), FALSE,
       2, "Clinician", "", as.character(Sys.time()), FALSE))
   }
+  
+  ##########################################
+  # Add default data management            #
+  ##########################################
   
   # Add default data source
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM data_sources")) == 0){
@@ -59,6 +66,10 @@ insert_default_values <- function(r){
       1, "My datawarehouse thesaurus", "", 1L, 1, as.character(Sys.time()), FALSE))
   }
   
+  ##########################################
+  # Add default modules                    #
+  ##########################################
+  
   # Add default patient_lvl_modules_families
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_modules_families")) == 0){
     DBI::dbAppendTable(r$db, "patient_lvl_modules_families", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
@@ -92,8 +103,16 @@ insert_default_values <- function(r){
       4, "Guidelines", "A module made to show EQUATOR guidelines", 1, NA_integer_, 2, 1, as.character(Sys.time()), FALSE))
   }
   
-  # Add default options
-  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category != 'distant_db'")) == 0){
+  ##########################################
+  # Add default options                    #
+  ##########################################
+  
+  insert_options_rows <- FALSE
+  
+  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category != 'distant_db'")) == 0) insert_options_rows <- TRUE
+    
+  if (insert_options_rows){
+    
     DBI::dbAppendTable(r$db, "options", tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       1, "datamart", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
       2, "datamart", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
@@ -125,7 +144,7 @@ insert_default_values <- function(r){
     "log", c("all_users", "only_me")
   )
   
-  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category != 'distant_db'")) == 9){
+  if (insert_options_rows){
     
     data <- tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted)
     
@@ -168,17 +187,340 @@ insert_default_values <- function(r){
     DBI::dbAppendTable(r$db, "options", data)
   }
   
-  code_subsets <- paste0("run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n",
-    "patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)\n",
-    "add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)")
+  # Add plugins
   
-  # # Add default code
+  # Add plugins descriptions
+  
+  plugin_description1 <- '- **Version** : 0.0.1
+- **Libraries** : dygraphs, xts
+- **Data allowed** : data$labs_vitals, data$labs_vitals_stay
+
+This plugin creates a **dygraph chart** using [R dygraphs library](https://rstudio.github.io/dygraphs/), a R library which uses [dygraphs Javascript library](https://dygraphs.com/).
+
+Here is an example :
+
+![Screenshot](https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/dygraph.jpg?raw=true)
+
+You choose **which items to display** in the time-chart. The chosen colours & display names will be used.
+
+You can change the value in the box at the bottom left corner : this **smoothes the curve** more or less.
+
+You can **zoom in on a time interval by two ways** : click and select a time interval directly on the curves or change the time interval in the range selector. Double click to **reset** the interval.'
+  
+  plugin_description2 <- '- **Version** : 0.0.1
+- **Libraries** : DT
+- **Data allowed** : data$labs_vitals, data$labs_vitals_stay
+
+This plugin creates a **datatable**, using [R Datatable library](https://rstudio.github.io/DT/shiny.html), a R library which is derived from [Datatables Javascript library](https://datatables.net/).
+
+Here is an example :
+
+![Screenshot](https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/datatable.jpg?raw=true)
+
+Values are sortable. You can **search** with the text area on the top right corner on the **whole data** and also **column by column** with text areas on top of the columns.'
+  plugin_description3 <- '- **Version** : 0.0.1
+- **Libraries** : none
+- **Data allowed** : data$text, data$text_stay
+
+This plugin renders **text data**, using Shiny functions.
+
+Here is an example :
+
+![Screenshot](https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/text.jpg?raw=true)'
+  
+  if (insert_options_rows){
+    DBI::dbAppendTable(r$db, "options", tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+      170, "plugin", 1, "markdown_description", plugin_description1, NA_integer_, 1,  as.character(Sys.time()), FALSE,
+      171, "plugin", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
+      172, "plugin", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
+      173, "plugin", 2, "markdown_description", plugin_description2, NA_integer_, 1,  as.character(Sys.time()), FALSE,
+      174, "plugin", 2, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
+      175, "plugin", 2, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
+      176, "plugin", 3, "markdown_description", plugin_description3, NA_integer_, 1,  as.character(Sys.time()), FALSE,
+      177, "plugin", 3, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
+      178, "plugin", 3, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,))
+  }
+  
+  ##########################################
+  # Add default code                       #
+  ##########################################
+  
+  datamart_code <- 
+'####################
+#     PATIENTS     #
+####################
+
+patients <- function() {
+    tibble::tribble(
+    ~patient_id, ~gender, ~age, ~dod, 
+    1L, "F", 45, "",
+    2L, "M", 71, "",
+    3L, "F", 65, "2020-09-17 20:11:00") %>%
+    dplyr::mutate_at("dod", lubridate::ymd_hms)}
+    
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = patients(), type = "patients", save_as_csv = FALSE, language = language)
+
+####################
+#       STAYS      #
+####################
+
+stays <- function(){
+    tibble::tribble(
+    ~patient_id, ~stay_id, ~unit_name, ~admission_datetime, ~discharge_datetime,
+    1L, 1L, "Emergency room", "2021-04-21 15:10:00", "2021-04-22 03:17:00",
+    1L, 2L, "Medical ICU", "2021-04-22 03:17:00", "2021-05-01 04:27:00",
+    2L, 3L, "Emergency room", "2021-01-18 09:10:00", "2021-01-19 03:05:00",
+    2L, 4L, "Medical ICU", "2021-01-19 03:05:00", "2021-02-02 17:52:00",
+    3L, 5L, "Emergency room", "2020-09-15 16:10:00", "2020-09-15 19:12:00",
+    3L, 6L, "Medical ICU", "2020-09-15 19:12:00", "2020-09-17 20:11:00") %>%
+    dplyr::mutate_at(c("admission_datetime", "discharge_datetime"), lubridate::ymd_hms)}
+
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = stays(), type = "stays", save_as_csv = FALSE, language = language)
+
+####################
+#  LABS VITALS     #
+####################
+
+labs_vitals <- function(){
+
+    data_temp <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(), 
+    datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(), value_num = numeric(),
+    unit = character(), comments = character())
+    
+    # Boundaries for our values
+    boundaries <- tibble::tribble(
+        ~item_id, ~lower_limit, ~upper_limit,
+        11L, 70, 80, # Heart rate
+        12L, 90, 110, # SBP // DBP & MBP obtained with SBP
+        15L, 90, 100, # Pulse oxymetry
+        16L, 400, 450, # Tidal volume,
+        17L, 5, 8 # PEEP
+    )
+  
+    # Loop over patients stays
+    sapply(1:nrow(stays()), function(i){
+    
+        row <- stays()[i, ]
+        
+        # Loop over thesaurus items
+        sapply(1:nrow(boundaries), function(i){
+            
+            item <- boundaries[i, ]
+        
+            by <- ifelse(grepl("ICU", row$unit_name), "5 min", "60 min") # Higher frequency of vitals for ICU stays
+            
+            seq_datetimes <- seq(row$admission_datetime, row$discharge_datetime, by = by)
+            
+            seq_value_num <- round(runif(length(seq_datetimes), item$lower_limit, item$upper_limit), 0)
+            if (item$item_id == 12L){
+                seq_dbp <- seq_value_num - 30L
+                seq_mbp <- as.integer(round((2*seq_value_num + seq_dbp) / 3, 0))
+                seq_value_num <- c(seq_value_num, seq_dbp, seq_mbp)
+                item_id <- as.integer(c(seq(12, 12, length.out = length(seq_datetimes)), 
+                    seq(13, 13, length.out = length(seq_datetimes)), seq(14, 14, length.out = length(seq_datetimes))))
+                seq_datetimes <- rep(seq_datetimes, 3)
+            }
+            else item_id <- as.integer(rep(item$item_id, length(seq_datetimes)))
+            
+            data_temp <<- data_temp %>% dplyr::bind_rows(
+                tibble::tibble(
+                    patient_id = row$patient_id, thesaurus_name = "My datawarehouse thesaurus", item_id = item_id,
+                    datetime_start = seq_datetimes, datetime_stop = lubridate::ymd_hms(""),
+                    value = as.character(seq_value_num), value_num = seq_value_num, unit = "", comments = ""
+                )
+            )
+        })
+    })
+    
+    data_temp
+}
+
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = labs_vitals(), type = "labs_vitals", save_as_csv = FALSE, language = language)
+
+####################
+#       TEXT       #
+####################
+
+text <- function(){
+    tibble::tribble(
+        ~patient_id, ~thesaurus_name, ~item_id, ~datetime_start, ~datetime_stop, ~value, ~comments,
+        1L, "My datawarehouse thesaurus", 18L, "2021-04-21 15:10:00", "", "- Atrial fibrillation\n- Chronic heart failure\n- Type 2 diabetes", "",
+        1L, "My datawarehouse thesaurus", 19L, "2021-04-21 15:10:00", "", "Septic shock", "",
+        1L, "My datawarehouse thesaurus", 20L, "2021-04-22 08:00:00", "", "Vitals : HR 70 bpm, BP 90/60 mmHg\n\nDay 2 of Piperacillin-tazobactam", "",
+        1L, "My datawarehouse thesaurus", 20L, "2021-04-23 08:00:00", "", "Vitals : HR 60 bpm, BP 100/60 mmHg\n\nEnd of Norepinephrine today", "",
+        1L, "My datawarehouse thesaurus", 20L, "2021-04-24 08:00:00", "", "Vitals : HR 65 bpm, BP 110/70 mmHg\n\nBacterial blood sample positive : E. Coli", "",
+        1L, "My datawarehouse thesaurus", 20L, "2021-04-25 08:00:00", "", "Vitals : HR 70 bpm, BP 115/65 mmHg\n\nExtubation with success today", "",
+        2L, "My datawarehouse thesaurus", 18L, "2021-01-18 09:10:00", "", "- Cirrhosis\n- Chronic kidney disease", "",
+        2L, "My datawarehouse thesaurus", 19L, "2021-01-18 09:10:00", "", "Acute respiratory failure", "",
+        2L, "My datawarehouse thesaurus", 20L, "2021-01-19 08:00:00", "", "Vitals : HR 60 bpm, BP 100/60 mmHg\n\nDiagnosis of COVID-19. Initiation of Dexamethasone", "",
+        2L, "My datawarehouse thesaurus", 20L, "2021-01-20 08:00:00", "", "Vitals : HR 70 bpm, BP 140/90 mmHg\n\nIncrease of oxygenotherapy, facial oxygen mask with 10 L / min", "",
+        2L, "My datawarehouse thesaurus", 20L, "2021-01-21 08:00:00", "", "Vitals : HR 90 bpm, BP 110/60 mmHg\n\nPatient intubated this morning. Cisatracurium initiated.", "",
+        3L, "My datawarehouse thesaurus", 18L, "2020-09-15 16:10:00", "", "- Cirrhosis", "",
+        3L, "My datawarehouse thesaurus", 19L, "2020-09-15 16:10:00", "", "Acute on chronic liver failure", "",
+        3L, "My datawarehouse thesaurus", 20L, "2020-09-16 08:10:00", "", "Day 1 of admission.\n\nRapid deterioration of clinical condition.", ""
+    ) %>%
+    dplyr::mutate_at(c("datetime_start", "datetime_stop"), lubridate::ymd_hms)}
+
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = text(), type = "text", save_as_csv = FALSE, language = language)'
+  
+thesaurus_code <-
+'####################
+#    THESAURUS     #
+####################
+
+thesaurus <- function(){
+    tibble::tribble(
+    ~item_id, ~name, ~display_name, ~category, ~unit,
+    11L, "Heart rate", "HR", "Vitals", "bpm",
+    12L, "Systolic blood pressure", "SBP", "Vitals", "mmHg",
+    13L, "Diastolic blood pressure", "DBP", "Vitals", "mmHg",
+    14L, "Mean blood pressure", "MBP", "Vitals", "mmHg",
+    15L, "Pulse oxymetry", "", "Vitals", "%",
+    16L, "Tidal volumne", "", "Vitals", "mL",
+    17L, "Positive End-Expiratory Pressure", "PEEP", "Vitals", "cmH2O",
+    18L, "Past medical history", "", "Admission notes", "",
+    19L, "Reason for hospital admission", "", "Admission notes", "",
+    20L, "Daily clinical note", "", "Daily notes", "")}
+
+import_thesaurus(output = output, r = r, thesaurus_id = %thesaurus_id%, thesaurus = thesaurus(), language = language)'
+
+subset_code <- 'run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)
+patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)
+add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)'
+
+plugin_code_ui_1 <- 'div(
+    br(),
+    dygraphs::dygraphOutput(ns("dygraph_%group_id%_%patient_id%"), height = "300px")
+)'
+plugin_code_server_1 <- '# Remove duplicates if exist
+
+data_temp <- 
+    data$labs_vitals %>%
+    dplyr::group_by(datetime_start, item_id, value_num) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(datetime_start, display_name, value_num) %>%
+    dplyr::arrange(datetime_start)
+
+data_temp <- data_temp %>% tidyr::pivot_wider(names_from = display_name, values_from = value_num)
+
+data_temp <- xts::xts(x = data_temp %>% dplyr::select(-datetime_start), order.by = data_temp %>% dplyr::pull(datetime_start))
+
+data_temp <-
+    dygraphs::dygraph(data_temp) %>%
+    dygraphs::dyAxis("y", valueRange = c(0, max(data_temp, na.rm = T) + max(data_temp, na.rm = T) / 5)) %>%
+    dygraphs::dyAxis("x", drawGrid = FALSE)
+
+output$dygraph_%group_id% <- dygraphs::renderDygraph(data_temp)# Remove duplicates if exist
+
+data_temp <- 
+    data$labs_vitals %>%
+    dplyr::group_by(datetime_start, item_id, value_num) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(datetime_start, display_name, value_num) %>%
+    dplyr::arrange(datetime_start)
+
+data_temp <- data_temp %>% tidyr::pivot_wider(names_from = display_name, values_from = value_num)
+
+data_temp <- xts::xts(x = data_temp %>% dplyr::select(-datetime_start), order.by = data_temp %>% dplyr::pull(datetime_start))
+
+data_temp <-
+    dygraphs::dygraph(data_temp) %>%
+    dygraphs::dyAxis("y", valueRange = c(0, max(data_temp, na.rm = T) + max(data_temp, na.rm = T) / 4)) %>%
+    dygraphs::dyAxis("x", drawGrid = FALSE) %>%
+    dygraphs::dyRangeSelector() %>%
+    dygraphs::dyRoller(rollPeriod = 50) %>%
+    dygraphs::dyLegend(show = "always", hideOnMouseOut = TRUE, labelsSeparateLines = T) %>%
+    dygraphs::dyHighlight(highlightCircleSize = 5)
+    
+data_temp_items <-
+    data$labs_vitals %>%
+    dplyr::group_by(item_id, display_name, colour, unit) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup()
+    
+sapply(1:nrow(data_temp_items), function(i){
+    row <- data_temp_items[i, ]
+    data_temp <<- 
+        data_temp %>%
+        dygraphs::dySeries(
+            name = row$display_name, 
+            label = paste0(row$display_name, " (", row$unit, ")"),
+            color = row$colour
+    )
+})
+
+output$dygraph_%group_id%_%patient_id% <- dygraphs::renderDygraph(data_temp)'
+
+plugin_code_ui_2 <- 'DT::DTOutput(ns("datatable_%group_id%_%patient_id%"))'
+plugin_code_server_2 <- 'data_temp <-
+    data$labs_vitals %>%
+    dplyr::select(display_name, datetime_start, value_num, unit) %>%
+    dplyr::mutate_at("datetime_start", as.character)
+
+col_names <- c("Item name", "Datetime", "Value", "Unit")
+sortable_cols <- c("display_name", "datetime_start", "value_num")
+centered_cols <- c("datetime_start")
+column_widths = c("datetime" = "180px")
+searchable_cols <- c("display_name", "datetime_start", "value_num")
+factorize_cols <- c("display_name")
+
+render_datatable(
+    data = data_temp,
+    output = output,
+    r = r,
+    ns = ns,
+    language = language,
+    output_name = "datatable_%group_id%_%patient_id%",
+    col_names = col_names,
+    page_length = 10,
+    sortable_cols = sortable_cols,
+    centered_cols = centered_cols,
+    column_widths = column_widths,
+    filter = TRUE,
+    searchable_cols = searchable_cols,
+    factorize_cols = factorize_cols
+)'
+plugin_code_ui_3 <- 'uiOutput(ns("text_%group_id%_%patient_id%"))'
+plugin_code_server_3 <- 'output$text_%group_id%_%patient_id% <- renderUI({
+
+    result <- tagList()
+    
+    data_temp <- data$text %>% dplyr::arrange(desc(datetime_start))
+
+    sapply(1:nrow(data_temp), function(i){
+        row <- data_temp[i, ]
+        result <<- tagList(result, br(),
+            div(
+                strong(paste0(row$datetime_start, " - ", row$display_name)), br(), br(),
+                HTML(row$value %>% stringr::str_replace_all("\n", "<br />")),
+                style = "border: dashed 1px; padding: 10px"
+            ),
+        )
+    })
+    
+    result
+})'
+
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM code")) == 0){
     DBI::dbAppendTable(r$db, "code", tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      1, "datamart", 1, "", 1, as.character(Sys.time()), FALSE,
-      2, "thesaurus", 1, "", 1, as.character(Sys.time()), FALSE,
-      3, "subset", 1, code_subsets, 1, as.character(Sys.time()), FALSE,
+      1, "datamart", 1, datamart_code, 1, as.character(Sys.time()), FALSE,
+      2, "thesaurus", 1, thesaurus_code, 1, as.character(Sys.time()), FALSE,
+      3, "subset", 1, subset_code, 1, as.character(Sys.time()), FALSE,
       4, "subset", 2, "", 1, as.character(Sys.time()), FALSE,
-      5, "subset", 3, "", 1, as.character(Sys.time()), FALSE))
+      5, "subset", 3, "", 1, as.character(Sys.time()), FALSE,
+      6, "plugin_ui", 1, plugin_code_ui_1, 1, as.character(Sys.time()), FALSE,
+      7, "plugin_server", 1, plugin_code_server_1, 1, as.character(Sys.time()), FALSE,
+      8, "plugin_ui", 2, plugin_code_ui_1, 1, as.character(Sys.time()), FALSE,
+      9, "plugin_server", 2, plugin_code_server_1, 1, as.character(Sys.time()), FALSE,
+      10, "plugin_ui", 3, plugin_code_ui_1, 1, as.character(Sys.time()), FALSE,
+      11, "plugin_server", 3, plugin_code_server_1, 1, as.character(Sys.time()), FALSE))
+    
+    # Run subset code
+    run_datamart_code(output = output, r = r, datamart_id = 1)
+    patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)
+    add_patients_to_subset(output = output, r = r, patients = patients, subset_id = 1)
   }
+  
 }

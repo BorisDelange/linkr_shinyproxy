@@ -65,7 +65,7 @@ app_server <- function(router, language = "EN", db_info = list(), default_folder
     observeEvent(r$db, {
       
       # Add default values in database, if it is empty
-      insert_default_values(r = r)
+      insert_default_values(output = output, r = r)
       
       tables <- c(
         "users_accesses", "users_statuses",
@@ -99,7 +99,7 @@ app_server <- function(router, language = "EN", db_info = list(), default_folder
     # Get user ID
     
     observeEvent(r$res_auth, {
-      r$user_id <- reactiveValuesToList(r$res_auth)$id
+      r$user_id <- as.integer(reactiveValuesToList(r$res_auth)$id)
       add_log_entry(r = r, category = "Connection start", name = "Connection start", value = "")
     })
     
@@ -107,6 +107,8 @@ app_server <- function(router, language = "EN", db_info = list(), default_folder
     # When r$user_id loaded, load user_accesses
     
     observeEvent(r$user_id, {
+      req(r$user_id)
+      
       user_access_id <- r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::pull(user_access_id)
       
       # Get user accesses

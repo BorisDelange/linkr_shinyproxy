@@ -160,7 +160,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   if (id == "settings_plugins"){
 
     # Add options rows
-    value <- paste0("- Version : 1.0.0\n- Libraries : *put libraries needed here*\n- Data allowed : *put data allowed here*\n",
+    value <- paste0("- **Version** : 0.0.1\n- **Libraries** : *put libraries needed here*\n- **Data allowed** : *put data allowed here*\n",
       "- Previous plugin needed first : *put previous plugins needed here*\n\n*Put full description here*")
     
     new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
@@ -215,9 +215,9 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_subsets))
 
     # Add code for creating subset with all patients
-    code <- paste0("run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n",
-                   "patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)\n",
-                   "add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)")
+    code <- paste0('run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n',
+                   'patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n',
+                   'add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)')
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row_code + 1, "subset", last_row_subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_code + 2, "subset", last_row_subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
