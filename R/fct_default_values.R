@@ -10,26 +10,23 @@ insert_default_values <- function(output, r){
   ##########################################
   
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM users")) == 0) {
-    query <- DBI::dbAppendTable(r$db, "users", tibble::tribble(~id, ~username, ~firstname, ~lastname, ~password, ~user_access_id, ~user_status_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "users", tibble::tribble(~id, ~username, ~firstname, ~lastname, ~password, ~user_access_id, ~user_status_id, ~datetime, ~deleted,
       1, "admin", "John", "Doe", rlang::hash("admin"), 1, 1, as.character(Sys.time()), FALSE,
       2, "test", "Jane", "Doe", rlang::hash("test"), 2, 2, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   # Add default user access
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM users_accesses")) == 0){
-    query <- DBI::dbAppendTable(r$db, "users_accesses", tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "users_accesses", tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
       1, "Administrator", "Administrator access", as.character(Sys.time()), FALSE,
       2, "User", "User access", as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   # Add default user status
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM users_statuses")) == 0){
-    query <- DBI::dbAppendTable(r$db, "users_statuses", tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "users_statuses", tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
       1, "Data scientist", "", as.character(Sys.time()), FALSE,
       2, "Clinician", "", as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   ##########################################
@@ -38,45 +35,40 @@ insert_default_values <- function(output, r){
   
   # Add default data source
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM data_sources")) == 0){
-    query <- DBI::dbAppendTable(r$db, "data_sources", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "data_sources", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
       1, "My datawarehouse", "", 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   # Add default datamart
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM datamarts")) == 0){
-    query <- DBI::dbAppendTable(r$db, "datamarts", tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "datamarts", tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
       1, "Invasive mechanical ventilation", "A datamart containing patients who were treated with invasive MV during ICU stay", 1, 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   # Add default study
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM studies")) == 0){
-    query <- DBI::dbAppendTable(r$db, "studies", tibble::tribble(~id, ~name, ~description, 
+    DBI::dbAppendTable(r$db, "studies", tibble::tribble(~id, ~name, ~description, 
       ~datamart_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id, ~creator_id, ~datetime, ~deleted,
       1, "Predicting extubation success", "This study aims to build a predictive model to predict extubation success", 1, 1, 1, 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   # Add default subsets
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM subsets")) == 0){
-    query <- DBI::dbAppendTable(r$db, "subsets", tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "subsets", tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id, ~datetime, ~deleted,
       1, "All patients", "", 1, 1, as.character(Sys.time()), FALSE,
       2, "Included patients", "", 1, 1, as.character(Sys.time()), FALSE,
       3, "Excluded patients", "", 1, 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   # Add default thesaurus
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM thesaurus")) == 0){
-    query <- DBI::dbAppendTable(r$db, "thesaurus", tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "thesaurus", tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
       1, "My datawarehouse thesaurus", "", 1L, 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   # Add default thesaurus items
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM thesaurus_items")) == 0){
-    query <- DBI::dbAppendTable(r$db, "thesaurus_items", tibble::tribble(
+    DBI::dbAppendTable(r$db, "thesaurus_items", tibble::tribble(
       ~id, ~thesaurus_id, ~item_id, ~name, ~display_name, ~category, ~unit, ~datetime, ~deleted,
       1, 1, 11L, "Heart rate", "HR", "Vitals", "bpm", as.character(Sys.time()), FALSE,
       2, 1, 12L, "Systolic blood pressure", "SBP", "Vitals", "mmHg", as.character(Sys.time()), FALSE,
@@ -88,7 +80,6 @@ insert_default_values <- function(output, r){
       8, 1, 18L, "Past medical history", "", "Admission notes", "", as.character(Sys.time()), FALSE,
       9, 1, 19L, "Reason for hospital admission", "", "Admission notes", "", as.character(Sys.time()), FALSE,
       10, 1, 20L, "Daily clinical note", "", "Daily notes", "", as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   ##########################################
@@ -97,26 +88,24 @@ insert_default_values <- function(output, r){
   
   # Add default patient_lvl_modules_families
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_modules_families")) == 0){
-    query <- DBI::dbAppendTable(r$db, "patient_lvl_modules_families", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "patient_lvl_modules_families", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
       1, "Default patient-lvl module family", "", 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   # Add default patient_lvl_modules
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_modules")) == 0){
-    query <- DBI::dbAppendTable(r$db, "patient_lvl_modules", tibble::tribble(~id, ~name, ~description, ~module_family_id, ~parent_module_id, ~display_order, 
+    DBI::dbAppendTable(r$db, "patient_lvl_modules", tibble::tribble(~id, ~name, ~description, ~module_family_id, ~parent_module_id, ~display_order, 
       ~creator_id, ~datetime, ~deleted,
       1, "Haemodynamics", "A module containing haemodynamics data", 1, NA_integer_, 1, 1, as.character(Sys.time()), FALSE,
       2, "Respiratory", "A module containing respiratory data", 1, NA_integer_, 2, 1, as.character(Sys.time()), FALSE,
       3, "Clinical notes", "A module containing clinical notes", 1, NA_integer_, 3, 1, as.character(Sys.time()), FALSE,
       4, "Admission notes", "A sub-module containing admission clinical notes", 1, 3, 1, 1, as.character(Sys.time()), FALSE,
       5, "Daily notes", "A sub-module containing daily clinical notes", 1, 3, 2, 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   # Add default patient_lvl_modules_elements
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_modules_elements")) == 0){
-    query <- DBI::dbAppendTable(r$db, "patient_lvl_modules_elements", tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, 
+    DBI::dbAppendTable(r$db, "patient_lvl_modules_elements", tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, 
       ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~display_order, ~creator_id, ~datetime, ~deleted,
       1, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 11, "HR", "bpm", "#5AAE61", 1, 1, as.character(Sys.time()), FALSE,
       2, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 12, "SBP", "bpm", "#CB181D", 1, 1, as.character(Sys.time()), FALSE,
@@ -135,25 +124,22 @@ insert_default_values <- function(output, r){
       15, "Admission notes", 5, 4, 3, "My datawarehouse thesaurus", 18, "Daily clinical note", "", "#000000", 1, 1, as.character(Sys.time()), FALSE,
       16, "Admission notes", 5, 4, 3, "My datawarehouse thesaurus", 19, "Reason for hospital admission", "", "#000000", 1, 1, as.character(Sys.time()), FALSE,
       17, "Daily notes", 6, 5, 3, "My datawarehouse thesaurus", 20, "Daily clinical note", "", "#000000", 1, 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   # Add default aggregated_modules_families
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM aggregated_modules_families")) == 0){
-    query <- DBI::dbAppendTable(r$db, "aggregated_modules_families", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "aggregated_modules_families", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
       1, "Default aggregated module family", "", 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   # Add default aggregated_modules
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM aggregated_modules")) == 0){
-    query <- DBI::dbAppendTable(r$db, "aggregated_modules", tibble::tribble(~id, ~name, ~description, ~module_family_id, ~parent_module_id, ~display_order,
+    DBI::dbAppendTable(r$db, "aggregated_modules", tibble::tribble(~id, ~name, ~description, ~module_family_id, ~parent_module_id, ~display_order,
       ~creator_id, ~datetime, ~deleted,
       1, "Study patients management", "A module made to manage patients status for the study", 1, NA_integer_, 1, 1, as.character(Sys.time()), FALSE,
       2, "Inclusion / exclusion", "A module made to manage inclusion & exclusion criteria", 1, 1, 1, 1, as.character(Sys.time()), FALSE,
       3, "Flowchart", "A module made to create the flowchart", 1, 1, 2, 1, as.character(Sys.time()), FALSE,
       4, "Guidelines", "A module made to show EQUATOR guidelines", 1, NA_integer_, 2, 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   ##########################################
@@ -166,7 +152,7 @@ insert_default_values <- function(output, r){
     
   if (insert_options_rows){
     
-    query <- DBI::dbAppendTable(r$db, "options", tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "options", tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       1, "datamart", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
       2, "datamart", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
       3, "datamart", 1, "show_only_aggregated_data", "", 0, 1, as.character(Sys.time()), FALSE,
@@ -176,7 +162,6 @@ insert_default_values <- function(output, r){
       7, "patient_lvl_module_family", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
       8, "aggregated_module_family", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
       9, "aggregated_module_family", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   options_toggles <- tibble::tribble(
@@ -238,8 +223,7 @@ insert_default_values <- function(output, r){
     data <- data %>% dplyr::mutate(value_num = dplyr::case_when((link_id == 2 & name %in% test_user_rights) ~ 1, TRUE ~ value_num))
     
     # Add new values to database
-    query <- DBI::dbAppendTable(r$db, "options", data)
-    DBI::dbClearResult(query)
+    DBI::dbAppendTable(r$db, "options", data)
   }
   
   # Add plugins
@@ -284,7 +268,7 @@ Here is an example :
 ![Screenshot](https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/text.jpg?raw=true)'
   
   if (insert_options_rows){
-    query <- DBI::dbAppendTable(r$db, "options", tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "options", tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       170, "plugin", 1, "markdown_description", plugin_description1, NA_integer_, 1,  as.character(Sys.time()), FALSE,
       171, "plugin", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
       172, "plugin", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
@@ -294,7 +278,6 @@ Here is an example :
       176, "plugin", 3, "markdown_description", plugin_description3, NA_integer_, 1,  as.character(Sys.time()), FALSE,
       177, "plugin", 3, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
       178, "plugin", 3, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
   
   ##########################################
@@ -560,7 +543,7 @@ plugin_code_server_3 <- 'output$text_%group_id%_%patient_id% <- renderUI({
 })'
 
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM code")) == 0){
-    query <- DBI::dbAppendTable(r$db, "code", tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "code", tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       1, "datamart", 1, datamart_code, 1, as.character(Sys.time()), FALSE,
       2, "thesaurus", 1, thesaurus_code, 1, as.character(Sys.time()), FALSE,
       3, "subset", 1, subset_code, 1, as.character(Sys.time()), FALSE,
@@ -572,7 +555,6 @@ plugin_code_server_3 <- 'output$text_%group_id%_%patient_id% <- renderUI({
       9, "plugin_server", 2, plugin_code_server_2, 1, as.character(Sys.time()), FALSE,
       10, "plugin_ui", 3, plugin_code_ui_3, 1, as.character(Sys.time()), FALSE,
       11, "plugin_server", 3, plugin_code_server_3, 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
 
   ##########################################
@@ -580,11 +562,10 @@ plugin_code_server_3 <- 'output$text_%group_id%_%patient_id% <- renderUI({
   ##########################################
   
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM subset_patients")) == 0){
-    query <- DBI::dbAppendTable(r$db, "subset_patients", tibble::tribble(~id, ~subset_id, ~patient_id, ~creator_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "subset_patients", tibble::tribble(~id, ~subset_id, ~patient_id, ~creator_id, ~datetime, ~deleted,
       1, 1, 1, 1, as.character(Sys.time()), FALSE,
       2, 1, 2, 1, as.character(Sys.time()), FALSE,
       3, 1, 3, 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
 
   ##########################################
@@ -592,10 +573,9 @@ plugin_code_server_3 <- 'output$text_%group_id%_%patient_id% <- renderUI({
   ##########################################
 
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM plugins")) == 0){
-    query <- DBI::dbAppendTable(r$db, "plugins", tibble::tribble(~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
+    DBI::dbAppendTable(r$db, "plugins", tibble::tribble(~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
       1, "Dygraph", "", 1, as.character(Sys.time()), FALSE,
       2, "Datatable", "", 1, as.character(Sys.time()), FALSE,
       3, "Text", "", 1, as.character(Sys.time()), FALSE))
-    DBI::dbClearResult(query)
   }
 }
