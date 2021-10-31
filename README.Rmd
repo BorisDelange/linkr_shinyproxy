@@ -37,7 +37,7 @@ devtools::install_github("BorisDelange/cdwtools")
 
 ## Overview
 
-![](https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.jpg?raw=true)
+![](https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.png?raw=true)
 
 The core principle of the App is the **modularity** : each user chooses which pages to display (called **modules** in the App), which **figures** display in each page, which **thesaurus items** each figure uses.
 
