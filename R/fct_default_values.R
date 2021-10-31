@@ -70,7 +70,7 @@ insert_default_values <- function(output, r){
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM thesaurus_items")) == 0){
     DBI::dbAppendTable(r$db, "thesaurus_items", tibble::tribble(
       ~id, ~thesaurus_id, ~item_id, ~name, ~display_name, ~category, ~unit, ~datetime, ~deleted,
-      1, 1, 11L, "Heart rate", "HR", "Vitals", "bpm",
+      1, 1, 11L, "Heart rate", "HR", "Vitals", "bpm", as.character(Sys.time()), FALSE,
       2, 1, 12L, "Systolic blood pressure", "SBP", "Vitals", "mmHg", as.character(Sys.time()), FALSE,
       3, 1, 13L, "Diastolic blood pressure", "DBP", "Vitals", "mmHg", as.character(Sys.time()), FALSE,
       4, 1, 14L, "Mean blood pressure", "MBP", "Vitals", "mmHg", as.character(Sys.time()), FALSE,
@@ -79,7 +79,7 @@ insert_default_values <- function(output, r){
       7, 1, 17L, "Positive End-Expiratory Pressure", "PEEP", "Vitals", "cmH2O", as.character(Sys.time()), FALSE,
       8, 1, 18L, "Past medical history", "", "Admission notes", "", as.character(Sys.time()), FALSE,
       9, 1, 19L, "Reason for hospital admission", "", "Admission notes", "", as.character(Sys.time()), FALSE,
-      10, 1, 20L, "Daily clinical note", "", "Daily notes", "", as.character(Sys.time()), FALSE,))
+      10, 1, 20L, "Daily clinical note", "", "Daily notes", "", as.character(Sys.time()), FALSE))
   }
   
   ##########################################
@@ -277,7 +277,7 @@ Here is an example :
       175, "plugin", 2, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
       176, "plugin", 3, "markdown_description", plugin_description3, NA_integer_, 1,  as.character(Sys.time()), FALSE,
       177, "plugin", 3, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
-      178, "plugin", 3, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,))
+      178, "plugin", 3, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE))
   }
   
   ##########################################
