@@ -193,7 +193,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       sapply(1:nrow(shown_modules), function(i){
         # Get module UI code
 
-        module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == shown_modules[[i, "id"]])
+        module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == shown_modules[[i, "id"]]) %>% dplyr::arrange(display_order)
         code_ui <- tagList()
         cards <- list()
         activated_cards <- ""

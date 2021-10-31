@@ -66,6 +66,22 @@ insert_default_values <- function(output, r){
       1, "My datawarehouse thesaurus", "", 1L, 1, as.character(Sys.time()), FALSE))
   }
   
+  # Add default thesaurus items
+  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM thesaurus_items")) == 0){
+    DBI::dbAppendTable(r$db, "thesaurus_items", tibble::tribble(
+      ~id, ~thesaurus_id, ~item_id, ~name, ~display_name, ~category, ~unit, ~datetime, ~deleted,
+      1, 1, 11L, "Heart rate", "HR", "Vitals", "bpm",
+      2, 1, 12L, "Systolic blood pressure", "SBP", "Vitals", "mmHg", as.character(Sys.time()), FALSE,
+      3, 1, 13L, "Diastolic blood pressure", "DBP", "Vitals", "mmHg", as.character(Sys.time()), FALSE,
+      4, 1, 14L, "Mean blood pressure", "MBP", "Vitals", "mmHg", as.character(Sys.time()), FALSE,
+      5, 1, 15L, "Pulse oxymetry", "", "Vitals", "%", as.character(Sys.time()), FALSE,
+      6, 1, 16L, "Tidal volumne", "", "Vitals", "mL", as.character(Sys.time()), FALSE,
+      7, 1, 17L, "Positive End-Expiratory Pressure", "PEEP", "Vitals", "cmH2O", as.character(Sys.time()), FALSE,
+      8, 1, 18L, "Past medical history", "", "Admission notes", "", as.character(Sys.time()), FALSE,
+      9, 1, 19L, "Reason for hospital admission", "", "Admission notes", "", as.character(Sys.time()), FALSE,
+      10, 1, 20L, "Daily clinical note", "", "Daily notes", "", as.character(Sys.time()), FALSE,))
+  }
+  
   ##########################################
   # Add default modules                    #
   ##########################################
@@ -85,6 +101,29 @@ insert_default_values <- function(output, r){
       3, "Clinical notes", "A module containing clinical notes", 1, NA_integer_, 3, 1, as.character(Sys.time()), FALSE,
       4, "Admission notes", "A sub-module containing admission clinical notes", 1, 3, 1, 1, as.character(Sys.time()), FALSE,
       5, "Daily notes", "A sub-module containing daily clinical notes", 1, 3, 2, 1, as.character(Sys.time()), FALSE))
+  }
+  
+  # Add default patient_lvl_modules_elements
+  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_modules_elements")) == 0){
+    DBI::dbAppendTable(r$db, "patient_lvl_modules_elements", tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, 
+      ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~display_order, ~creator_id, ~datetime, ~deleted,
+      1, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 11, "HR", "bpm", "#5AAE61", 1, 1, as.character(Sys.time()), FALSE,
+      2, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 12, "SBP", "bpm", "#CB181D", 1, 1, as.character(Sys.time()), FALSE,
+      3, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 13, "DBP", "bpm", "#CB181D", 1, 1, as.character(Sys.time()), FALSE,
+      4, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 14, "MBP", "bpm", "#EF3B2C", 1, 1, as.character(Sys.time()), FALSE,
+      5, "Vitals datatable", 2, 1, 2, "My datawarehouse thesaurus", 11, "HR", "bpm", "#5AAE61", 2, 1, as.character(Sys.time()), FALSE,
+      6, "Vitals datatable", 2, 1, 2, "My datawarehouse thesaurus", 12, "SBP", "bpm", "#CB181D", 2, 1, as.character(Sys.time()), FALSE,
+      7, "Vitals datatable", 2, 1, 2, "My datawarehouse thesaurus", 13, "DBP", "bpm", "#CB181D", 2, 1, as.character(Sys.time()), FALSE,
+      8, "Vitals datatable", 2, 1, 2, "My datawarehouse thesaurus", 14, "MBP", "bpm", "#EF3B2C", 2, 1, as.character(Sys.time()), FALSE,
+      9, "Vitals dygraph", 3, 2, 1, "My datawarehouse thesaurus", 16, "Tidal volume", "mL", "#000000", 1, 1, as.character(Sys.time()), FALSE,
+      10, "Vitals dygraph", 3, 2, 1, "My datawarehouse thesaurus", 17, "PEEP", "cmH2O", "#000000", 1, 1, as.character(Sys.time()), FALSE,
+      11, "Vitals dygraph", 3, 2, 1, "My datawarehouse thesaurus", 15, "Pulse oxymetry", "%", "#2B8CBE", 1, 1, as.character(Sys.time()), FALSE,
+      12, "Vitals datatable", 4, 2, 2, "My datawarehouse thesaurus", 16, "Tidal volume", "mL", "#000000", 2, 1, as.character(Sys.time()), FALSE,
+      13, "Vitals datatable", 4, 2, 2, "My datawarehouse thesaurus", 17, "PEEP", "cmH2O", "#000000", 2, 1, as.character(Sys.time()), FALSE,
+      14, "Vitals datatable", 4, 2, 2, "My datawarehouse thesaurus", 15, "Pulse oxymetry", "%", "#2B8CBE", 2, 1, as.character(Sys.time()), FALSE,
+      15, "Admission notes", 5, 4, 3, "My datawarehouse thesaurus", 18, "Daily clinical note", "", "#000000", 1, 1, as.character(Sys.time()), FALSE,
+      16, "Admission notes", 5, 4, 3, "My datawarehouse thesaurus", 19, "Reason for hospital admission", "", "#000000", 1, 1, as.character(Sys.time()), FALSE,
+      17, "Daily notes", 6, 5, 3, "My datawarehouse thesaurus", 20, "Daily clinical note", "", "#000000", 1, 1, as.character(Sys.time()), FALSE))
   }
   
   # Add default aggregated_modules_families

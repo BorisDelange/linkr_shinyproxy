@@ -859,7 +859,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
               options <- list()
               if (nrow(cdo_modules_families) > 0) options <- convert_tibble_to_list(data = cdo_modules_families, key_col = "module_family_id", text_col = "name")
               
-              shiny.fluent::updateDropdown.shinyInput(session, "cdo_module_family", options = options)
+              shiny.fluent::updateDropdown.shinyInput(session, "cdo_module_family", options = options, value = NULL)
               shiny.fluent::updateDropdown.shinyInput(session, "cdo_module", options = list())
               shiny.fluent::updateDropdown.shinyInput(session, "cdo_module_element", options = list())
               shiny.fluent::updateDropdown.shinyInput(session, "cdo_display_order", options = list())
@@ -949,7 +949,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             options <- list()
             if (nrow(dme_modules_families) > 0) options <- convert_tibble_to_list(data = dme_modules_families, key_col = "module_family_id", text_col = "name")
 
-            shiny.fluent::updateDropdown.shinyInput(session, "dme_module_family", options = options)
+            shiny.fluent::updateDropdown.shinyInput(session, "dme_module_family", options = options, value = NULL)
             shiny.fluent::updateDropdown.shinyInput(session, "dme_module", options = list())
             shiny.fluent::updateDropdown.shinyInput(session, "dme_module_element", options = list())
           })
