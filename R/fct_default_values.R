@@ -551,10 +551,10 @@ plugin_code_server_3 <- 'output$text_%group_id%_%patient_id% <- renderUI({
       5, "subset", 3, "", 1, as.character(Sys.time()), FALSE,
       6, "plugin_ui", 1, plugin_code_ui_1, 1, as.character(Sys.time()), FALSE,
       7, "plugin_server", 1, plugin_code_server_1, 1, as.character(Sys.time()), FALSE,
-      8, "plugin_ui", 2, plugin_code_ui_1, 1, as.character(Sys.time()), FALSE,
-      9, "plugin_server", 2, plugin_code_server_1, 1, as.character(Sys.time()), FALSE,
-      10, "plugin_ui", 3, plugin_code_ui_1, 1, as.character(Sys.time()), FALSE,
-      11, "plugin_server", 3, plugin_code_server_1, 1, as.character(Sys.time()), FALSE))
+      8, "plugin_ui", 2, plugin_code_ui_2, 1, as.character(Sys.time()), FALSE,
+      9, "plugin_server", 2, plugin_code_server_2, 1, as.character(Sys.time()), FALSE,
+      10, "plugin_ui", 3, plugin_code_ui_3, 1, as.character(Sys.time()), FALSE,
+      11, "plugin_server", 3, plugin_code_server_3, 1, as.character(Sys.time()), FALSE))
   }
 
   ##########################################
