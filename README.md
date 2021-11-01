@@ -26,17 +26,24 @@ install.packages("cdwtools")
 You can install the development version from Github, with :
 
 ``` r
-devtools::install_github("BorisDelange/cdwtools")
+remotes::install_github("BorisDelange/cdwtools")
 ```
 
 ## Overview
 
-![](https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.png?raw=true)
+<br />
+<img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.png?raw=true" width="100%" />
+
+<br /> The application contains a **data management section**, that
+allows the import of datamarts & thesaurus, the creation of studies &
+subsets. You choose who has access to which part of the app in the
+**users management section**.
 
 The core principle of the App is the **modularity** : each user chooses
-which pages to display (called **modules** in the App), which
-**figures** display in each page, which **thesaurus items** each figure
-uses.
+which pages to display (called **modules** in the app, Haemodynamics or
+Respiratory modules in the above screenshot), which **figures** display
+in each page (a timeline ? a text area ?), which **thesaurus items**
+each figure uses.
 
 The App contains two sides : a **user side**, which requires no
 particular skill in R and a **developper side**, where new plugins can
@@ -58,3 +65,10 @@ access. In the developper mode, you have direct access to the R
 environment and the database, so developper access has to be used
 carefully. It is recommended to install the App on a secure local
 server, as health data will be handled.
+
+## Development
+
+The app has been developed with the [LTSI lab - DMS
+unit](https://www.ltsi.univ-rennes1.fr/) of the university of Rennes -
+France, which is behind the [eHOP clinical data
+warehouse](https://centrededonneescliniques.univ-rennes1.fr/ehop).
