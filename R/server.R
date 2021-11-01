@@ -8,6 +8,9 @@
 app_server <- function(router, language = "EN", db_info = list(), default_folder = character()){
   function(input, output, session ) {
     
+    # Set wd to app wd
+    setwd(paste0(.libPaths()[1], "/cdwtools"))
+    
     # Create r reactive value
     r <- reactiveValues()
     
