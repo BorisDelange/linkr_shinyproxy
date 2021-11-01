@@ -51,6 +51,9 @@ cdwtools <- function(
   
   options(shiny.maxRequestSize = 500*1024^2)
   
+  # Set wd to app wd
+  setwd(golem::get_golem_wd())
+  
   # Load translations
   
   words <- get_translations()
