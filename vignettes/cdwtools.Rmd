@@ -20,7 +20,7 @@ Once cdwtools package is installed, run the Shiny application with :
 
 ```r
 setwd(paste0(.libPaths()[1], "/cdwtools"))
-cdwtools(language = "EN")
+cdwtools::cdwtools(language = "EN")
 ```
 
 The first line set the working directory to the directory of the application.
