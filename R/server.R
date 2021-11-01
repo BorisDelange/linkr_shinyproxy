@@ -185,8 +185,6 @@ app_server <- function(router, language = "EN", db_info = list(), default_folder
       # Load server modules                    #
       ##########################################
       
-      mod_page_header_server(input, output, session)
-      
       sapply(c("patient_level_data", "aggregated_data"), function(page){
         mod_patient_and_aggregated_data_server(page, r, language, r$words)
         mod_page_sidenav_server(page, r, language, r$words)

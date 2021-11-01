@@ -33,17 +33,9 @@ mod_page_header_ui <- function(language = "EN", words = tibble::tibble()){
           href = shiny.router::route_link("settings/general_settings")),
         shiny.fluent::CommandBarButton.shinyInput("settings", iconProps = list("iconName" = "Info"), 
           href = "https://borisdelange.github.io/cdwtools/articles/", target = "_blank"),
-        shiny.fluent::CommandBarButton.shinyInput("disconnect", iconProps = list("iconName" = "PowerButton")),
+        shiny.fluent::CommandBarButton.shinyInput(".shinymanager_logout", iconProps = list("iconName" = "PowerButton")),
         
       )
     )
   )
-}
-
-mod_page_header_server <- function(input, output, session){
-  
-  # When disconnect button is clicked, click on shinymanager logout button
-  observeEvent(input$disconnect, {
-    shinyjs::click(".shinymanager_logout")
-  }) 
 }
