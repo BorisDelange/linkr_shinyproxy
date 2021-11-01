@@ -18,74 +18,191 @@ knitr::opts_chunk$set(
 
 ### Description
 
-- Version : 1.0.0
-- Libraries : dygraphs
-- Data allowed : r$labs_vitals
+- **Version** : 0.0.1
+- **Libraries** : dygraphs, xts
+- **Data allowed** : data\$labs_vitals, data\$labs_vitals_stay
 
-This plugin generates a dygraph ...
+This plugin creates a **dygraph chart** using [R dygraphs library](https://rstudio.github.io/dygraphs/), a R library which uses [dygraphs Javascript library](https://dygraphs.com/).
+
+Here is an example :
+
+![Screenshot](https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/dygraph.jpg?raw=true)
+
+You choose **which items to display** in the time-chart. The chosen colours & display names will be used.
+
+You can change the value in the box at the bottom left corner : this **smoothes the curve** more or less.
+
+You can **zoom in on a time interval by two ways** : click and select a time interval directly on the curves or change the time interval in the range selector. Double click to **reset** the interval.
 
 ### UI code
 
 ```{r, eval = FALSE}
-dygraphs::dygraphOutput(ns("group_%group_id%"), height = "250px")
+div(
+    br(),
+    dygraphs::dygraphOutput(ns("dygraph_%group_id%_%patient_id%"), height = "300px")
+)
 ```
 
 ### Server code
 
 ```{r, eval = FALSE}
-observeEvent(r$chosen_patient, {
-  lungDeaths <- cbind(mdeaths, fdeaths)
-  output$group_%group_id% <- dygraphs::renderDygraph({
-      dygraphs::dygraph(lungDeaths)
-  })
+# Remove duplicates if exist
+
+data_temp <- 
+    data$labs_vitals %>%
+    dplyr::group_by(datetime_start, item_id, value_num) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(datetime_start, display_name, value_num) %>%
+    dplyr::arrange(datetime_start)
+
+data_temp <- data_temp %>% tidyr::pivot_wider(names_from = display_name, values_from = value_num)
+
+data_temp <- xts::xts(x = data_temp %>% dplyr::select(-datetime_start), order.by = data_temp %>% dplyr::pull(datetime_start))
+
+data_temp <-
+    dygraphs::dygraph(data_temp) %>%
+    dygraphs::dyAxis("y", valueRange = c(0, max(data_temp, na.rm = T) + max(data_temp, na.rm = T) / 5)) %>%
+    dygraphs::dyAxis("x", drawGrid = FALSE)
+
+output$dygraph_%group_id% <- dygraphs::renderDygraph(data_temp)# Remove duplicates if exist
+
+data_temp <- 
+    data$labs_vitals %>%
+    dplyr::group_by(datetime_start, item_id, value_num) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(datetime_start, display_name, value_num) %>%
+    dplyr::arrange(datetime_start)
+
+data_temp <- data_temp %>% tidyr::pivot_wider(names_from = display_name, values_from = value_num)
+
+data_temp <- xts::xts(x = data_temp %>% dplyr::select(-datetime_start), order.by = data_temp %>% dplyr::pull(datetime_start))
+
+data_temp <-
+    dygraphs::dygraph(data_temp) %>%
+    dygraphs::dyAxis("y", valueRange = c(0, max(data_temp, na.rm = T) + max(data_temp, na.rm = T) / 4)) %>%
+    dygraphs::dyAxis("x", drawGrid = FALSE) %>%
+    dygraphs::dyRangeSelector() %>%
+    dygraphs::dyRoller(rollPeriod = 50) %>%
+    dygraphs::dyLegend(show = "always", hideOnMouseOut = TRUE, labelsSeparateLines = T) %>%
+    dygraphs::dyHighlight(highlightCircleSize = 5)
+    
+data_temp_items <-
+    data$labs_vitals %>%
+    dplyr::group_by(item_id, display_name, colour, unit) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup()
+    
+sapply(1:nrow(data_temp_items), function(i){
+    row <- data_temp_items[i, ]
+    data_temp <<- 
+        data_temp %>%
+        dygraphs::dySeries(
+            name = row$display_name, 
+            label = paste0(row$display_name, " (", row$unit, ")"),
+            color = row$colour
+    )
 })
+
+output$dygraph_%group_id%_%patient_id% <- dygraphs::renderDygraph(data_temp)
 ```
 
 ## Datatable plugin
 
 ### Description
 
-- Version : 1.0.0
-- Libraries : DT
-- Data allowed : `r$labs_vitals`
+- **Version** : 0.0.1
+- **Libraries** : DT
+- **Data allowed** : data\$labs_vitals, data\$labs_vitals_stay
 
-This plugin generates a datatable ...
+This plugin creates a **datatable**, using [R Datatable library](https://rstudio.github.io/DT/shiny.html), a R library which is derived from [Datatables Javascript library](https://datatables.net/).
+
+Here is an example :
+
+![Screenshot](https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/datatable.jpg?raw=true)
+
+Values are sortable. You can **search** with the text area on the top right corner on the **whole data** and also **column by column** with text areas on top of the columns.
 
 ### UI code
 
 ```{r, eval = FALSE}
-DT::DTOutput(ns("group_%group_id%"))
+DT::DTOutput(ns("datatable_%group_id%_%patient_id%"))
 ```
 
 ### Server code
 
 ```{r, eval = FALSE}
-# Thesaurus items are on the thesaurus_items tibble, with columns = item_id (own thesaurus item_id), thesaurus_item_display_name & thesaurus_item_unit
+data_temp <-
+    data$labs_vitals %>%
+    dplyr::select(display_name, datetime_start, value_num, unit) %>%
+    dplyr::mutate_at("datetime_start", as.character)
 
-data <- r$data_labs %>%
-  # Filter on subject & thesaurus items
-  dplyr::filter(subject_id == as.integer(%patient_id%)) %>%
-  # Make sure itemid is integer
-  dplyr::mutate_at("itemid", as.integer) %>%
-  dplyr::inner_join(thesaurus_items %>% dplyr::select(itemid = item_id, thesaurus_item_display_name, thesaurus_item_unit), by = "itemid") %>%
-  dplyr::mutate(charttime = stringr::str_replace_all(stringr::str_replace_all(as.character(charttime), "T", " "), "Z", "")) %>%
-  dplyr::select(itemid, thesaurus_item_display_name, charttime, valuenum, thesaurus_item_unit)
+col_names <- c("Item name", "Datetime", "Value", "Unit")
+sortable_cols <- c("display_name", "datetime_start", "value_num")
+centered_cols <- c("datetime_start")
+column_widths = c("datetime" = "180px")
+searchable_cols <- c("display_name", "datetime_start", "value_num")
+factorize_cols <- c("display_name")
+
+render_datatable(
+    data = data_temp,
+    output = output,
+    r = r,
+    ns = ns,
+    language = language,
+    output_name = "datatable_%group_id%_%patient_id%",
+    col_names = col_names,
+    page_length = 10,
+    sortable_cols = sortable_cols,
+    centered_cols = centered_cols,
+    column_widths = column_widths,
+    filter = TRUE,
+    searchable_cols = searchable_cols,
+    factorize_cols = factorize_cols
+)
+```
+
+## Text plugin
+
+### Description
+
+- **Version** : 0.0.1
+- **Libraries** : none
+- **Data allowed** : data\$text, data\$text_stay
+
+This plugin renders **text data**, using Shiny functions.
+
+Here is an example :
+
+![Screenshot](https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/text.jpg?raw=true)
+
+### UI code
+
+```{r, eval = FALSE}
+  uiOutput(ns("text_%group_id%_%patient_id%"))
+```
+
+### Server code
+
+```{r, eval = FALSE}
+  output$text_%group_id%_%patient_id% <- renderUI({
+
+    result <- tagList()
     
-colnames(data) <- c(translate(language, "item_id"), translate(language, "item_name"), translate(language, "datetime"), translate(language, "value"), translate(language, "unit"))
-  
-observeEvent(r$chosen_patient, {
+    data_temp <- data$text %>% dplyr::arrange(desc(datetime_start))
+
+    sapply(1:nrow(data_temp), function(i){
+        row <- data_temp[i, ]
+        result <<- tagList(result, br(),
+            div(
+                strong(paste0(row$datetime_start, " - ", row$display_name)), br(), br(),
+                HTML(row$value %>% stringr::str_replace_all("\n", "<br />")),
+                style = "border: dashed 1px; padding: 10px"
+            ),
+        )
+    })
     
-  page_length <- isolate(input$group_%group_id%_management_datatable_state$length)
-  start <- isolate(input$group_%group_id%_management_datatable_state$start)
-  
-  output$group_%group_id% <- DT::renderDT(data,
-  options = list(dom = "<'datatable_length'l><'top'ft><'bottom'p>",
-      stateSave = TRUE, stateDuration = 30,
-      pageLength = page_length, displayStart = start,
-      language = list(
-          paginate = list(previous = translate(language, "DT_previous_page"), `next` = translate(language, "DT_next_page")),
-          search = translate(language, "DT_search"),
-          lengthMenu = translate(language, "DT_length"))),
-      rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
+    result
 })
 ```

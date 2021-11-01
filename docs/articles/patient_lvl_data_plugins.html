@@ -135,27 +135,94 @@
 <h3 class="hasAnchor">
 <a href="#description" class="anchor"></a>Description</h3>
 <ul>
-<li>Version : 1.0.0</li>
-<li>Libraries : dygraphs</li>
-<li>Data allowed : r$labs_vitals</li>
+<li>
+<strong>Version</strong> : 0.0.1</li>
+<li>
+<strong>Libraries</strong> : dygraphs, xts</li>
+<li>
+<strong>Data allowed</strong> : data$labs_vitals, data$labs_vitals_stay</li>
 </ul>
-<p>This plugin generates a dygraph …</p>
+<p>This plugin creates a <strong>dygraph chart</strong> using <a href="https://rstudio.github.io/dygraphs/">R dygraphs library</a>, a R library which uses <a href="https://dygraphs.com/">dygraphs Javascript library</a>.</p>
+<p>Here is an example :</p>
+<div class="figure">
+<img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/dygraph.jpg?raw=true" alt=""><p class="caption">Screenshot</p>
+</div>
+<p>You choose <strong>which items to display</strong> in the time-chart. The chosen colours &amp; display names will be used.</p>
+<p>You can change the value in the box at the bottom left corner : this <strong>smoothes the curve</strong> more or less.</p>
+<p>You can <strong>zoom in on a time interval by two ways</strong> : click and select a time interval directly on the curves or change the time interval in the range selector. Double click to <strong>reset</strong> the interval.</p>
 </div>
 <div id="ui-code" class="section level3">
 <h3 class="hasAnchor">
 <a href="#ui-code" class="anchor"></a>UI code</h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">dygraphs</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dygraphs/man/dygraph-shiny.html">dygraphOutput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"group_%group_id%"</span><span class="op">)</span>, height <span class="op">=</span> <span class="st">"250px"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu">div</span><span class="op">(</span>
+    <span class="fu">br</span><span class="op">(</span><span class="op">)</span>,
+    <span class="fu">dygraphs</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dygraphs/man/dygraph-shiny.html">dygraphOutput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"dygraph_%group_id%_%patient_id%"</span><span class="op">)</span>, height <span class="op">=</span> <span class="st">"300px"</span><span class="op">)</span>
+<span class="op">)</span></code></pre></div>
 </div>
 <div id="server-code" class="section level3">
 <h3 class="hasAnchor">
 <a href="#server-code" class="anchor"></a>Server code</h3>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(r<span class="sc">$</span>chosen_patient, {</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  lungDeaths <span class="ot">&lt;-</span> <span class="fu">cbind</span>(mdeaths, fdeaths)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  output<span class="sc">$</span>group_<span class="sc">%group_id%</span> <span class="er">&lt;</span><span class="sc">-</span> dygraphs<span class="sc">::</span><span class="fu">renderDygraph</span>({</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>      dygraphs<span class="sc">::</span><span class="fu">dygraph</span>(lungDeaths)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove duplicates if exist</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    data<span class="sc">$</span>labs_vitals <span class="sc">%&gt;%</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">group_by</span>(datetime_start, item_id, value_num) <span class="sc">%&gt;%</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(datetime_start, display_name, value_num) <span class="sc">%&gt;%</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">arrange</span>(datetime_start)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> data_temp <span class="sc">%&gt;%</span> tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> display_name, <span class="at">values_from =</span> value_num)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> xts<span class="sc">::</span><span class="fu">xts</span>(<span class="at">x =</span> data_temp <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>datetime_start), <span class="at">order.by =</span> data_temp <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(datetime_start))</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dygraph</span>(data_temp) <span class="sc">%&gt;%</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyAxis</span>(<span class="st">"y"</span>, <span class="at">valueRange =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">max</span>(data_temp, <span class="at">na.rm =</span> T) <span class="sc">+</span> <span class="fu">max</span>(data_temp, <span class="at">na.rm =</span> T) <span class="sc">/</span> <span class="dv">5</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyAxis</span>(<span class="st">"x"</span>, <span class="at">drawGrid =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>output<span class="sc">$</span>dygraph_<span class="sc">%group_id%</span> <span class="er">&lt;</span><span class="sc">-</span> dygraphs<span class="sc">::</span><span class="fu">renderDygraph</span>(data_temp)<span class="co"># Remove duplicates if exist</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> </span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    data<span class="sc">$</span>labs_vitals <span class="sc">%&gt;%</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">group_by</span>(datetime_start, item_id, value_num) <span class="sc">%&gt;%</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(datetime_start, display_name, value_num) <span class="sc">%&gt;%</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">arrange</span>(datetime_start)</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> data_temp <span class="sc">%&gt;%</span> tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> display_name, <span class="at">values_from =</span> value_num)</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> xts<span class="sc">::</span><span class="fu">xts</span>(<span class="at">x =</span> data_temp <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>datetime_start), <span class="at">order.by =</span> data_temp <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(datetime_start))</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dygraph</span>(data_temp) <span class="sc">%&gt;%</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyAxis</span>(<span class="st">"y"</span>, <span class="at">valueRange =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">max</span>(data_temp, <span class="at">na.rm =</span> T) <span class="sc">+</span> <span class="fu">max</span>(data_temp, <span class="at">na.rm =</span> T) <span class="sc">/</span> <span class="dv">4</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyAxis</span>(<span class="st">"x"</span>, <span class="at">drawGrid =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyRangeSelector</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyRoller</span>(<span class="at">rollPeriod =</span> <span class="dv">50</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyLegend</span>(<span class="at">show =</span> <span class="st">"always"</span>, <span class="at">hideOnMouseOut =</span> <span class="cn">TRUE</span>, <span class="at">labelsSeparateLines =</span> T) <span class="sc">%&gt;%</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyHighlight</span>(<span class="at">highlightCircleSize =</span> <span class="dv">5</span>)</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>data_temp_items <span class="ot">&lt;-</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>    data<span class="sc">$</span>labs_vitals <span class="sc">%&gt;%</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">group_by</span>(item_id, display_name, colour, unit) <span class="sc">%&gt;%</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">ungroup</span>()</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(data_temp_items), <span class="cf">function</span>(i){</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>    row <span class="ot">&lt;-</span> data_temp_items[i, ]</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>    data_temp <span class="ot">&lt;&lt;-</span> </span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>        data_temp <span class="sc">%&gt;%</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>        dygraphs<span class="sc">::</span><span class="fu">dySeries</span>(</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>            <span class="at">name =</span> row<span class="sc">$</span>display_name, </span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>            <span class="at">label =</span> <span class="fu">paste0</span>(row<span class="sc">$</span>display_name, <span class="st">" ("</span>, row<span class="sc">$</span>unit, <span class="st">")"</span>),</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>            <span class="at">color =</span> row<span class="sc">$</span>colour</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>output<span class="sc">$</span>dygraph_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> dygraphs<span class="sc">::</span><span class="fu">renderDygraph</span>(data_temp)</span></code></pre></div>
 </div>
 </div>
 <div id="datatable-plugin" class="section level2">
@@ -165,50 +232,108 @@
 <h3 class="hasAnchor">
 <a href="#description-1" class="anchor"></a>Description</h3>
 <ul>
-<li>Version : 1.0.0</li>
-<li>Libraries : DT</li>
-<li>Data allowed : <code>r$labs_vitals</code>
-</li>
+<li>
+<strong>Version</strong> : 0.0.1</li>
+<li>
+<strong>Libraries</strong> : DT</li>
+<li>
+<strong>Data allowed</strong> : data$labs_vitals, data$labs_vitals_stay</li>
 </ul>
-<p>This plugin generates a datatable …</p>
+<p>This plugin creates a <strong>datatable</strong>, using <a href="https://rstudio.github.io/DT/shiny.html">R Datatable library</a>, a R library which is derived from <a href="https://datatables.net/">Datatables Javascript library</a>.</p>
+<p>Here is an example :</p>
+<div class="figure">
+<img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/datatable.jpg?raw=true" alt=""><p class="caption">Screenshot</p>
+</div>
+<p>Values are sortable. You can <strong>search</strong> with the text area on the top right corner on the <strong>whole data</strong> and also <strong>column by column</strong> with text areas on top of the columns.</p>
 </div>
 <div id="ui-code-1" class="section level3">
 <h3 class="hasAnchor">
 <a href="#ui-code-1" class="anchor"></a>UI code</h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">DT</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DT/man/dataTableOutput.html">DTOutput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"group_%group_id%"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu">DT</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DT/man/dataTableOutput.html">DTOutput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"datatable_%group_id%_%patient_id%"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="server-code-1" class="section level3">
 <h3 class="hasAnchor">
 <a href="#server-code-1" class="anchor"></a>Server code</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Thesaurus items are on the thesaurus_items tibble, with columns = item_id (own thesaurus item_id), thesaurus_item_display_name &amp; thesaurus_item_unit</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> r<span class="sc">$</span>data_labs <span class="sc">%&gt;%</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter on subject &amp; thesaurus items</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(subject_id <span class="sc">==</span> <span class="fu">as.integer</span>(<span class="sc">%patient_id%</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Make sure itemid is integer</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"itemid"</span>, as.integer) <span class="sc">%&gt;%</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">inner_join</span>(thesaurus_items <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="at">itemid =</span> item_id, thesaurus_item_display_name, thesaurus_item_unit), <span class="at">by =</span> <span class="st">"itemid"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">charttime =</span> stringr<span class="sc">::</span><span class="fu">str_replace_all</span>(stringr<span class="sc">::</span><span class="fu">str_replace_all</span>(<span class="fu">as.character</span>(charttime), <span class="st">"T"</span>, <span class="st">" "</span>), <span class="st">"Z"</span>, <span class="st">""</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(itemid, thesaurus_item_display_name, charttime, valuenum, thesaurus_item_unit)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(data) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">translate</span>(language, <span class="st">"item_id"</span>), <span class="fu">translate</span>(language, <span class="st">"item_name"</span>), <span class="fu">translate</span>(language, <span class="st">"datetime"</span>), <span class="fu">translate</span>(language, <span class="st">"value"</span>), <span class="fu">translate</span>(language, <span class="st">"unit"</span>))</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(r<span class="sc">$</span>chosen_patient, {</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  page_length <span class="ot">&lt;-</span> <span class="fu">isolate</span>(input<span class="sc">$</span>group_<span class="sc">%group_id%</span>_management_datatable_state<span class="sc">$</span>length)</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  start <span class="ot">&lt;-</span> <span class="fu">isolate</span>(input<span class="sc">$</span>group_<span class="sc">%group_id%</span>_management_datatable_state<span class="sc">$</span>start)</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  output<span class="sc">$</span>group_<span class="sc">%group_id%</span> <span class="er">&lt;</span><span class="sc">-</span> DT<span class="sc">::</span><span class="fu">renderDT</span>(data,</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">options =</span> <span class="fu">list</span>(<span class="at">dom =</span> <span class="st">"&lt;'datatable_length'l&gt;&lt;'top'ft&gt;&lt;'bottom'p&gt;"</span>,</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">stateSave =</span> <span class="cn">TRUE</span>, <span class="at">stateDuration =</span> <span class="dv">30</span>,</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">pageLength =</span> page_length, <span class="at">displayStart =</span> start,</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">language =</span> <span class="fu">list</span>(</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>          <span class="at">paginate =</span> <span class="fu">list</span>(<span class="at">previous =</span> <span class="fu">translate</span>(language, <span class="st">"DT_previous_page"</span>), <span class="st">`</span><span class="at">next</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">translate</span>(language, <span class="st">"DT_next_page"</span>)),</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>          <span class="at">search =</span> <span class="fu">translate</span>(language, <span class="st">"DT_search"</span>),</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>          <span class="at">lengthMenu =</span> <span class="fu">translate</span>(language, <span class="st">"DT_length"</span>))),</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>      <span class="at">rownames =</span> <span class="cn">FALSE</span>, <span class="at">selection =</span> <span class="st">"single"</span>, <span class="at">escape =</span> <span class="cn">FALSE</span>, <span class="at">server =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">data_temp</span> <span class="op">&lt;-</span>
+    <span class="va">data</span><span class="op">$</span><span class="va">labs_vitals</span> <span class="op">%&gt;%</span>
+    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">display_name</span>, <span class="va">datetime_start</span>, <span class="va">value_num</span>, <span class="va">unit</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate_all.html">mutate_at</a></span><span class="op">(</span><span class="st">"datetime_start"</span>, <span class="va">as.character</span><span class="op">)</span>
+
+<span class="va">col_names</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Item name"</span>, <span class="st">"Datetime"</span>, <span class="st">"Value"</span>, <span class="st">"Unit"</span><span class="op">)</span>
+<span class="va">sortable_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"display_name"</span>, <span class="st">"datetime_start"</span>, <span class="st">"value_num"</span><span class="op">)</span>
+<span class="va">centered_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"datetime_start"</span><span class="op">)</span>
+<span class="va">column_widths</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"datetime"</span> <span class="op">=</span> <span class="st">"180px"</span><span class="op">)</span>
+<span class="va">searchable_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"display_name"</span>, <span class="st">"datetime_start"</span>, <span class="st">"value_num"</span><span class="op">)</span>
+<span class="va">factorize_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"display_name"</span><span class="op">)</span>
+
+<span class="fu"><a href="../reference/render_datatable.html">render_datatable</a></span><span class="op">(</span>
+    data <span class="op">=</span> <span class="va">data_temp</span>,
+    output <span class="op">=</span> <span class="va">output</span>,
+    r <span class="op">=</span> <span class="va">r</span>,
+    ns <span class="op">=</span> <span class="va">ns</span>,
+    language <span class="op">=</span> <span class="va">language</span>,
+    output_name <span class="op">=</span> <span class="st">"datatable_%group_id%_%patient_id%"</span>,
+    col_names <span class="op">=</span> <span class="va">col_names</span>,
+    page_length <span class="op">=</span> <span class="fl">10</span>,
+    sortable_cols <span class="op">=</span> <span class="va">sortable_cols</span>,
+    centered_cols <span class="op">=</span> <span class="va">centered_cols</span>,
+    column_widths <span class="op">=</span> <span class="va">column_widths</span>,
+    filter <span class="op">=</span> <span class="cn">TRUE</span>,
+    searchable_cols <span class="op">=</span> <span class="va">searchable_cols</span>,
+    factorize_cols <span class="op">=</span> <span class="va">factorize_cols</span>
+<span class="op">)</span></code></pre></div>
+</div>
+</div>
+<div id="text-plugin" class="section level2">
+<h2 class="hasAnchor">
+<a href="#text-plugin" class="anchor"></a>Text plugin</h2>
+<div id="description-2" class="section level3">
+<h3 class="hasAnchor">
+<a href="#description-2" class="anchor"></a>Description</h3>
+<ul>
+<li>
+<strong>Version</strong> : 0.0.1</li>
+<li>
+<strong>Libraries</strong> : none</li>
+<li>
+<strong>Data allowed</strong> : data$text, data$text_stay</li>
+</ul>
+<p>This plugin renders <strong>text data</strong>, using Shiny functions.</p>
+<p>Here is an example :</p>
+<div class="figure">
+<img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/text.jpg?raw=true" alt=""><p class="caption">Screenshot</p>
+</div>
+</div>
+<div id="ui-code-2" class="section level3">
+<h3 class="hasAnchor">
+<a href="#ui-code-2" class="anchor"></a>UI code</h3>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R">  <span class="fu">uiOutput</span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"text_%group_id%_%patient_id%"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+</div>
+<div id="server-code-2" class="section level3">
+<h3 class="hasAnchor">
+<a href="#server-code-2" class="anchor"></a>Server code</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>  output<span class="sc">$</span>text_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="fu">renderUI</span>({</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    result <span class="ot">&lt;-</span> <span class="fu">tagList</span>()</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    data_temp <span class="ot">&lt;-</span> data<span class="sc">$</span>text <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">arrange</span>(<span class="fu">desc</span>(datetime_start))</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(data_temp), <span class="cf">function</span>(i){</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        row <span class="ot">&lt;-</span> data_temp[i, ]</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        result <span class="ot">&lt;&lt;-</span> <span class="fu">tagList</span>(result, <span class="fu">br</span>(),</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>            <span class="fu">div</span>(</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                <span class="fu">strong</span>(<span class="fu">paste0</span>(row<span class="sc">$</span>datetime_start, <span class="st">" - "</span>, row<span class="sc">$</span>display_name)), <span class="fu">br</span>(), <span class="fu">br</span>(),</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>                <span class="fu">HTML</span>(row<span class="sc">$</span>value <span class="sc">%&gt;%</span> stringr<span class="sc">::</span><span class="fu">str_replace_all</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">"</span>, <span class="st">"&lt;br /&gt;"</span>)),</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                <span class="at">style =</span> <span class="st">"border: dashed 1px; padding: 10px"</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    result</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div>
 </div>
 </div>
   </div>

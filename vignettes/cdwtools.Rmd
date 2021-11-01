@@ -37,7 +37,7 @@ First, try to **connect with the test user**.
 
 Click on the **patient-level data** link on the header of the page.
 
-With the **dropdowns on the left side** of the page, select the **datamart** *Invasive mechanical ventilation*, the **study**, *Predicting extubation success* & the **subset** *All patients*.
+With the **dropdowns on the left side** of the page, select the **datamart** *Invasive mechanical ventilation*, the **study** *Predicting extubation success* & the **subset** *All patients*.
 
 **Select a patient**. You should have this screen :  
 
@@ -73,6 +73,8 @@ Examples of aggregated modules :
 - create a '**Data cleaning**' module, where you clean your data, set limit values of outliers
 - create a '**Report module**', where you create a report, using charts created in previous modules, dynamically updated
 
+### Create your first module element
+
 Try now to create your own module : click on **Parameters** link, on top of the page and go to **Patient-level modules** section. Click on **New module**.
 
 You should have this screen :
@@ -96,11 +98,11 @@ knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/in
 ```
 
 <br />
-Enter a name, choose the module family, **choose the module you've just created**, choose the **Dygraph plugin**.
-Now, choose the thesaurus : a datatable appears, with the **items of the thesaurus**.
-If you choose **our test datamart**, you can choose to display only the items used in your datamart.
-Now, choose the colours of your items and add them : here we add *Heart rate* & *Systolic blood pressure*.
-You can change the *display name* (the name will appear in the chart) and the *unit*.
+Enter a name, choose the module family, the **module you've just created**, the **Dygraph plugin**.  
+Now, choose the thesaurus : a datatable appears, with the **items of the thesaurus**.  
+If you choose **our test datamart**, you can choose to display only the items used in the datamart.  
+Now, choose the colours of your items and add them : here we added *Heart rate* & *Systolic blood pressure*.  
+You can change the *display name* (the name will appear in the chart) and the *unit*.  
 Click on the **add button** on the right side of the screen, then click on **Add button**, on the bottom of the page.
 
 <br />
@@ -120,3 +122,14 @@ You should now see your module appear.
 ```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_create_module_element3.png?raw=true")
 ```
+
+### Plugins
+
+To choose a plugin, you can see the **descriptions of the plugins** in the Plugins page.
+
+If you need a plugin that is not available :
+
+- if you're a **clinician**, ask a data scientist to create a new plugin 
+- if you're a **data scientist**, go to the [Developper help](file:///C:/Users/Boris/Documents/cdwtools/docs/articles/EN_developper_help.html#modules-plugins-1) page to know how to create a new plugin
+
+**New plugins** are made [**available here**](file:///C:/Users/Boris/Documents/cdwtools/docs/articles/patient_lvl_data_plugins.html).
