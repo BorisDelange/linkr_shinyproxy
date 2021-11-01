@@ -20,14 +20,17 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
     div(class = "main",
       make_card(
         translate(language, "cdwtools", words),
-        div(
-          "..."
+        div(br(),
+          strong("Clinical Data Warehouse tools"), " is a R Shiny web application.", br(), br(),
+          "It aims to help clinicians, statisticians & data scientists work with CDW data, with ", 
+          strong("data visualization, data cleaning, exploratory data analysis & model building tools"), "."
         )
       ),
       make_card(
         translate(language, "get_started", words),
-        div(
-          "..."
+        div(br(),
+          "If this is your first connection, visit the ", 
+          tags$a("Get started", href = "https://borisdelange.github.io/cdwtools/articles/cdwtools.html", target="_blank"), " section of the documentation."
         )
       )
     ) -> result

@@ -85,6 +85,10 @@ mod_settings_sub_modules_ui <- function(id = character(), language = "EN", words
         textfields = c("name", "description"), textfields_width = "300px",
         dropdowns = c("module_family", "parent_module"), dropdowns_width = "300px", words = words) -> result
     }
+  
+    if (page %in% c("modules_management", "modules_families_management")){
+      render_settings_datatable_card(language = language, ns = ns, title = page, words = words) -> result
+    }
 
     if (page == "modules_elements_creation"){
       if (grepl("patient_lvl", id)){
@@ -141,7 +145,7 @@ mod_settings_sub_modules_ui <- function(id = character(), language = "EN", words
       }
     }
 
-    if (grepl("management", page)){
+    if (grepl("modules_elements_management", id)){
         
       delete_module_element <- ""
         

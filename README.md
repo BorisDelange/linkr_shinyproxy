@@ -12,7 +12,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 cdwtools stands for **Clinical Data Warehouse tools**. This package aims
 to help clinicians, statisticians & data scientists work with CDW data,
 with data visualization, data cleaning, exploratory data analysis &
-model building tools, using a Shiny web application.
+model building tools, using a **Shiny web application**.
 
 ## Installation
 
@@ -31,13 +31,15 @@ remotes::install_github("BorisDelange/cdwtools")
 
 ## Overview
 
-<br />
 <img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.png?raw=true" width="100%" />
 
-<br /> The application contains a **data management section**, that
-allows the import of datamarts & thesaurus, the creation of studies &
-subsets. You choose who has access to which part of the app in the
-**users management section**.
+<br /> For your **first connection**, [follow this
+guide](https://borisdelange.github.io/cdwtools/articles/cdwtools.html).
+
+The application contains a **data management section**, which allows the
+import of datamarts & thesaurus, the creation of studies & subsets. You
+choose who has access to which part of the app in the **users management
+section**.
 
 The core principle of the app is the **modularity** : each user chooses
 :
