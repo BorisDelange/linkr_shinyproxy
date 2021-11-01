@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# cdwtools <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex-cdwtools.png" align="right" height="110" /></a>
+# cdwtools <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex-cdwtools.png" align="right" height="90" /></a>
 
 <!-- badges: start -->
 
