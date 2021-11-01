@@ -131,42 +131,61 @@
 <div id="run-the-application-log-in" class="section level2">
 <h2 class="hasAnchor">
 <a href="#run-the-application-log-in" class="anchor"></a>Run the application &amp; log in</h2>
-<p>When cdwtools package is installed, run the Shiny application with :</p>
+<p>Once cdwtools package is installed, run the Shiny application with :</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/cdwtools.html">cdwtools</a></span><span class="op">(</span>language <span class="op">=</span> <span class="st">"EN"</span><span class="op">)</span></code></pre></div>
-<p>Available languages are “EN” &amp; “FR”.</p>
+<p>Available languages are ‘EN’ &amp; ‘FR’.</p>
 <p>The first time you launch the application, a <strong>local database</strong> is created, on the library directory.</p>
 <p>Two users are created :</p>
 <ul>
-<li>an <strong>admin</strong> user, with login = admin &amp; password = admin</li>
-<li>a <strong>test</strong> user, with login = test &amp; password = test</li>
+<li>an <strong>admin</strong> user, with login = ‘admin’ &amp; password = ‘admin’</li>
+<li>a <strong>test</strong> user, with login = ‘test’ &amp; password = ‘test’</li>
 </ul>
-<p>First, <strong>connect with the test user</strong>.</p>
+<p>First, try to <strong>connect with the test user</strong>.</p>
 </div>
 <div id="patient-level-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#patient-level-data" class="anchor"></a>Patient-level data</h2>
 <p>Click on the <strong>patient-level data</strong> link on the header of the page.</p>
-<p>With the <strong>dropdowns on left side</strong> of the page, select the <strong>datamart</strong> “Invasive mechanical ventilation”, the <strong>study</strong>, “Predicting extubation success” &amp; the <strong>subset</strong> “All patients”.</p>
-<p>Select <strong>a patient</strong>. You should have this screen :</p>
-<p><img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.jpg?raw=true"></p>
-<p>Try to change the selected patient : the charts are reloaded with new data.</p>
+<p>With the <strong>dropdowns on the left side</strong> of the page, select the <strong>datamart</strong> <em>Invasive mechanical ventilation</em>, the <strong>study</strong>, <em>Predicting extubation success</em> &amp; the <strong>subset</strong> <em>All patients</em>.</p>
+<p><strong>Select a patient</strong>. You should have this screen :</p>
+<p><br><img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.png?raw=true" width="100%"></p>
+<p><br> Try to change the selected patient : the charts are reloaded with new data.</p>
+</div>
+<div id="aggregated-data" class="section level2">
+<h2 class="hasAnchor">
+<a href="#aggregated-data" class="anchor"></a>Aggregated data</h2>
+<p>The modules of aggregated data page do not have plugins yet, they are under development.</p>
 </div>
 <div id="modules-plugins" class="section level2">
 <h2 class="hasAnchor">
 <a href="#modules-plugins" class="anchor"></a>Modules &amp; plugins</h2>
 <p>The application works with two concepts : the <strong>modules</strong> &amp; the <strong>plugins</strong>.</p>
 <p>Once you have access to a datamart (a corpus of patients data), you can create modules using plugins.</p>
-<p>A <strong>module</strong> is a page where you choose <strong>which data to render</strong> (by selected thesaurus items), and <strong>how to render these data</strong>, by selecting a plugin.</p>
-<p>A <strong>plugin</strong> is a way to render data, eg a plugin named Dygraph renders data with a timeline, a plugin named Text renders data with text areas.</p>
+<p>A <strong>module</strong> is a page where you choose <strong>which data to display</strong> (after having chosen thesaurus items), and <strong>how to display these data</strong>, by selecting a plugin.</p>
+<p>A <strong>plugin</strong> is a way to display data, eg a plugin named Dygraph displays data with a timeline, a plugin named Text displays data with text areas.</p>
 <p>In the <strong>patient-level data</strong> page, you create modules to <strong>visualize data</strong> for each patient of the datamart.</p>
 <p>In the <strong>aggregated data</strong> page, you create modules to <strong>analyze data</strong>.</p>
-<p>Examples :</p>
+<p>Examples of aggregated modules :</p>
 <ul>
-<li>create a “<strong>Patient management</strong>” module, where you can create exclusion criteria &amp; render the flowchart of your study</li>
-<li>create a “<strong>Data cleaning</strong>” module, where you clean your data, setting limit values of outlier data</li>
-<li>create a “<strong>Report" module</strong>”, where you can create a report, using figures created in previous modules, dynamically updated</li>
+<li>create a ‘<strong>Patient management</strong>’ module, where you can create exclusion criteria &amp; display the flowchart of your study</li>
+<li>create a ‘<strong>Data cleaning</strong>’ module, where you clean your data, set limit values of outliers</li>
+<li>create a ‘<strong>Report module</strong>’, where you create a report, using charts created in previous modules, dynamically updated</li>
 </ul>
+<p>Try now to create your own module : click on <strong>Parameters</strong> link, on top of the page and go to <strong>Patient-level modules</strong> section. Click on <strong>New module</strong>.</p>
+<p>You should have this screen :</p>
+<p><br><img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_create_module.png?raw=true" width="100%"></p>
+<p><br> Create a module, for example named <strong>My first module</strong>, under the <strong>Default patient-lvl module family</strong>, with no parent. Note that putting a parent module allows you to have sub-categories. Once you’ve made this, the <em>Modules management</em> section opens.</p>
+<p>We will now <strong>create a module element</strong> : click on <strong>New module element</strong>.</p>
+<p>You should have this screen :</p>
+<p><br><img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_create_module_element.png?raw=true" width="100%"></p>
+<p><br> Enter a name, choose the module family, <strong>choose the module you’ve just created</strong>, choose the <strong>Dygraph plugin</strong>. Now, choose the thesaurus : a datatable appears, with the <strong>items of the thesaurus</strong>. If you choose <strong>our test datamart</strong>, you can choose to display only the items used in your datamart. Now, choose the colours of your items and add them : here we add <em>Heart rate</em> &amp; <em>Systolic blood pressure</em>. You can change the <em>display name</em> (the name will appear in the chart) and the <em>unit</em>. Click on the <strong>add button</strong> on the right side of the screen, then click on <strong>Add button</strong>, on the bottom of the page.</p>
+<p><br><img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_create_module_element2.png?raw=true" width="100%"></p>
+<p><br></p>
+<p><strong>That’s it</strong>, your first module element is created.</p>
+<p>Refresh the page, reconnect, and go back to <strong>Patient-level data page</strong>.</p>
+<p>You should now see your module appear.</p>
+<p><br><img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_create_module_element3.png?raw=true" width="100%"></p>
 </div>
   </div>
 
