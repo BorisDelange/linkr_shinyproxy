@@ -13,29 +13,15 @@ knitr::opts_chunk$set(
 )
 ```
 
-# cdwtools
+# cdwtools <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex-cdwtools.png" align="right" height="110" /></a>
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-cdwtools stands for **Clinical Data Warehouse tools**. This package aims to help clinicians, statisticians & data scientists work with CDW data, with data visualization, data cleaning, exploratory data analysis & model building tools, using a **Shiny web application**.
-
-## Installation
-
-<!--You can install the released version of cdwtools from [CRAN](https://CRAN.R-project.org) with:
-
-``` r
-install.packages("cdwtools")
-```
--->
-
-You can install the development version from Github, with :
-``` r
-remotes::install_github("BorisDelange/cdwtools")
-```
-
 ## Overview
+
+cdwtools stands for **Clinical Data Warehouse tools**. This package aims to help clinicians, statisticians & data scientists work with CDW data, with data visualization, data cleaning, exploratory data analysis & model building tools, using a **Shiny web application**.
 
 ```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.png?raw=true")
@@ -64,6 +50,20 @@ The app contains two sides :
 
 A **plugin** is a Shiny code used to render and manipulate data.
 Some plugins are available in the **Articles section** of this website. You can **create new plugins** and share them.
+
+## Installation
+
+<!--You can install the released version of cdwtools from [CRAN](https://CRAN.R-project.org) with:
+
+``` r
+install.packages("cdwtools")
+```
+-->
+
+You can install the development version from Github, with :
+``` r
+remotes::install_github("BorisDelange/cdwtools")
+```
 
 ## Deployment
 

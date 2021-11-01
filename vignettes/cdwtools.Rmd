@@ -130,6 +130,6 @@ To choose a plugin, you can see the **descriptions of the plugins** in the Plugi
 If you need a plugin that is not available :
 
 - if you're a **clinician**, ask a data scientist to create a new plugin 
-- if you're a **data scientist**, go to the [Developper help](file:///C:/Users/Boris/Documents/cdwtools/docs/articles/EN_developper_help.html#modules-plugins-1) page to know how to create a new plugin
+- if you're a **data scientist**, go to the [Developper help](https://borisdelange.github.io/cdwtools/articles/EN_developper_help.html#modules-plugins-1) page to know how to create a new plugin
 
-**New plugins** are made [**available here**](file:///C:/Users/Boris/Documents/cdwtools/docs/articles/patient_lvl_data_plugins.html).
+**New plugins** are made [**available here**](https://borisdelange.github.io/cdwtools/articles/patient_lvl_data_plugins.html).

@@ -30,7 +30,7 @@ golem_add_external_resources <- function(css){
   add_resource_path('www', app_sys('app/www'))
  
   tags$head(
-    # favicon(ext = "png"),
+    favicon(ext = "png"),
     bundle_resources(
       path = app_sys('app/www'),
       app_title = 'cdwtools'
