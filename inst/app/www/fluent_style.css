@@ -113,3 +113,11 @@ td[data-type="factor"] input {
   float: right;
   margin-left: 10px;
 }
+
+a, a:visited {
+  color:#000000;
+}
+
+a:hover {
+  color: #129AFD;
+}

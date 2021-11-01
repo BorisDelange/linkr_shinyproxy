@@ -12,7 +12,7 @@ app_ui <- function(request, css, page, language) {
       golem_add_external_resources(css),
       shiny.fluent::fluentPage(page$ui)
     ),
-    enable_admin = FALSE, language = tolower(language)
+    enable_admin = FALSE, language = tolower(language), fab_position = "none"
   )
 }
 
