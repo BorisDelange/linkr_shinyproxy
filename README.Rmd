@@ -45,10 +45,24 @@ knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/in
 <br />
 The application contains a **data management section**, that allows the import of datamarts & thesaurus, the creation of studies & subsets. You choose who has access to which part of the app in the **users management section**.
 
-The core principle of the App is the **modularity** : each user chooses which pages to display (called **modules** in the app, Haemodynamics or Respiratory modules in the above screenshot), which **figures** display in each page (a timeline ? a text area ?), which **thesaurus items** each figure uses.
+The core principle of the app is the **modularity** : each user chooses : 
 
-The App contains two sides : a **user side**, which requires no particular skill in R and a **developper side**, where new plugins can be developped.
-A **plugin** is a Shiny code used to render and manipulate data. Some plugins are available in the **Articles section** of this website. You can **create new plugins** and share it with other people.
+- which pages to display, called **modules** in the app, *Haemodynamics* or *Respiratory* modules in the above screenshot
+- which **figures** to display in each page : a timeline ? a text area ?
+- which **thesaurus items** each figure uses
+
+You can customize two main pages :
+
+- **patient-level data page**, where you explore data patient by patient
+- **aggregated data page**, where you manipulate aggregated data, with data cleaning, EDA...
+
+The app contains two sides : 
+
+- a **user side**, which requires no particular skill in R
+- a **developper side**, where new plugins can be developped
+
+A **plugin** is a Shiny code used to render and manipulate data.
+Some plugins are available in the **Articles section** of this website. You can **create new plugins** and share them.
 
 ## Deployment
 
