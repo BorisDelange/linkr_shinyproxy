@@ -100,7 +100,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
         div(
           br(), uiOutput(ns("last_db_save")), br(),
           shiny.fluent::PrimaryButton.shinyInput(ns("db_save_button"), translate(language, "export_db", words), iconProps = list(iconName = "Download")),
-          div(style = "display:none;", downloadButton(ns("db_save"), label = ""))
+          div(style = "visibility:hidden;", downloadButton(ns("db_save"), label = ""))
         )
       )
     )#,
