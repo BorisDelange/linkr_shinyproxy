@@ -127,7 +127,9 @@ db_create_tables <- function(db){
 get_local_db <- function(){
   
   # Connect to local database
+  setwd(path.expand('~'))
   db <- DBI::dbConnect(RSQLite::SQLite(), "cdwtools")
+  setwd(find.package("cdwtools"))
   
   db_create_tables(db)
   
@@ -177,7 +179,7 @@ test_distant_db <- function(local_db, language = "EN", words = tibble::tibble())
       port = db_info$port, user = db_info$user, password = db_info$password)
     
     # SQLite
-    if (db_info$sql_lib == "postgres") DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$dbname, host = db_info$host,
+    if (db_info$sql_lib == "sqlite") DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$dbname, host = db_info$host,
       port = db_info$port, user = db_info$user, password = db_info$password)
     result <- "success"
   },
