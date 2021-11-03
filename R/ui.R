@@ -6,8 +6,6 @@
 
 app_ui <- function(request, css, page, language) {
   
-  setwd(find.package("cdwtools"))
-  
   # Secure page with ShinyManager
   shinymanager::secure_app(
     tagList(

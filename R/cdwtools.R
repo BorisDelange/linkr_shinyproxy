@@ -46,8 +46,6 @@ cdwtools <- function(
   ...
 ) {
   
-  setwd(find.package("cdwtools"))
-  
   # Maximum size for uploaded data (500 MB)
   # Used to restore database
   
