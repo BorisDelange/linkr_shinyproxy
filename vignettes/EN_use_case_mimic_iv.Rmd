@@ -107,7 +107,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localh
 # Create a stays function & import this data
 stays <- function(){
     DBI::dbGetQuery(con, paste0("
-        SELECT subject_id AS patient_id, hadm_id AS stay_id, 'Un service' AS unit_name, 
+        SELECT subject_id AS patient_id, hadm_id AS stay_id, 'Random unit' AS unit_name, 
         admittime AS admission_datetime, dischtime AS discharge_datetime
         FROM mimic_core.admissions 
         WHERE subject_id IN (", patients_list(), ")")) %>%
@@ -209,7 +209,7 @@ patients_list <- function() paste(patients() %>% dplyr::pull(patient_id), collap
 ########## STAYS ##########
 stays <- function(){
     DBI::dbGetQuery(con, paste0("
-        SELECT subject_id AS patient_id, hadm_id AS stay_id, 'Un service' AS unit_name, 
+        SELECT subject_id AS patient_id, hadm_id AS stay_id, 'Random unit' AS unit_name, 
         admittime AS admission_datetime, dischtime AS discharge_datetime
         FROM mimic_core.admissions 
         WHERE subject_id IN (", patients_list(), ")")) %>%
@@ -410,5 +410,14 @@ This code adds all the patients of the datamart in this subset.
 
 ## Manipulate data
 
-*Patient-lvl data*
-*Aggregated data*
+Go back to **Patient-level data** page, you should have this screen :
+
+```{r, echo = FALSE}
+knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_patient_lvl_data.png?raw=true")
+```
+
+Try to change patient, stay...
+
+## Get new plugins
+
+...
