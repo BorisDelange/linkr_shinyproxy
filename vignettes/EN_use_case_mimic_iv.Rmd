@@ -328,7 +328,7 @@ Let's **order our data by Nb of rows** to see the most used items.
 You should have this screen :
 
 ```{r, echo = FALSE}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_thesaurus_items.png?raw=true")
+knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_thesaurus_items_datatable.png?raw=true")
 ```
 
 ## Modules & plugins
@@ -367,7 +367,7 @@ Choose a name for your Module element, like *Haemodynamic vitals*.
 A dataframe with the **thesaurus items** should appear :
 
 ```{r, echo = FALSE}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_thesaurus_items_module_element.png?raw=true")
+knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_thesaurus_items_module_element_datatable.png?raw=true")
 ```
 
 **Arrange** your items by *Nb of rows*.
