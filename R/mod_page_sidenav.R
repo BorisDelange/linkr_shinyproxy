@@ -55,7 +55,6 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       div(id = ns("exclusion_reason_div"),
         div(class = "input_title", translate(language, "exclusion_reason", words)),
         div(shiny.fluent::Dropdown.shinyInput(ns("exclusion_reason"), value = NULL, options = list()))), br(),
-      # make_dropdown(language = language, ns = ns, label = "exclusion_reason"), br(),
       uiOutput(ns("patient_info")),
       textOutput(ns("test"))
     ) -> result
@@ -149,37 +148,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       
       observeEvent(input$datamart, {
         
-        # Studies depending on the chosen datamart
-        
-        studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
-        
-        # Reset r$chosen_study (to reset main display)
-        r$chosen_study <- NA_integer_
-        
         # Save value in r$chosen_dropdown, to update patient-level data dropdowns AND aggregated data dropdowns
         r$chosen_datamart <- input$datamart
         
-        # Reset dropdowns & uiOutput
-        # Hide exclusion_reason dropdown
-        
-        shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
-        shinyjs::hide("exclusion_reason_div")
-        output$patient_info <- renderUI("")
-        
-        # If studies is empty
-        if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", words))
-        
-        if (nrow(studies) > 0){
-          
-          # Update dropdowns
-          shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies %>% dplyr::arrange(name), "id", "name", rm_deleted_rows = TRUE), value = NULL)
-          
-          # Code of datamart will be run from mod_patient_and_aggregated_data.R
-        }
+        # Update Dropdowns AFTER having executing datamart code (prevents a bug, where UI displays and disappears)
       })
       
       observeEvent(input$study, {
@@ -392,70 +364,43 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
   
       # Update the two pages dropdowns (patient-level data page & aggregated data page)
       observeEvent(r$chosen_datamart, {
-      
-        # If users_allowed_read_group is set to everybody, everybody has access. Else, filter on people who has access.
         
-        datamarts <- r$datamarts
-        if (nrow(datamarts) > 0) {
+        shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(r$datamarts, "id", "name", rm_deleted_rows = TRUE), value = r$chosen_datamart)
+        
+        # Studies depending on the chosen datamart
+        
+        studies <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)
+        
+        # Reset r$chosen_study (to reset main display)
+        r$chosen_study <- NA_integer_
+        
+        # Reset dropdowns & uiOutput
+        # Hide exclusion_reason dropdown
+        
+        shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL)
+        shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
+        shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
+        shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(), value = NULL)
+        shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
+        shinyjs::hide("exclusion_reason_div")
+        output$patient_info <- renderUI("")
+        
+        # If studies is empty
+        if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", words))
+        
+        if (nrow(studies) > 0){
           
-          # Merge with options
-          datamarts_options <- datamarts %>% dplyr::inner_join(r$options %>% 
-            dplyr::filter(category == "datamart") %>% dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
+          # Update dropdowns
+          shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies %>% dplyr::arrange(name), "id", "name", rm_deleted_rows = TRUE), value = NULL)
           
-          # Vector of authorized datamarts
-          datamarts_allowed <- integer()
-          
-          # For each datamart, select those the user has access
-          sapply(unique(datamarts_options$id), function(datamart_id){
-            
-            # Loop over each datamart ID
-            
-            users_allowed_read_group <- datamarts_options %>% dplyr::filter(id == datamart_id, option_name == "users_allowed_read_group")
-            users_allowed_read <- datamarts_options %>% dplyr::filter(id == datamart_id, option_name == "user_allowed_read")
-            
-            if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") datamarts_allowed <<- c(datamarts_allowed, datamart_id)
-            else {
-              if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) datamarts_allowed <<- c(datamarts_allowed, datamart_id)
-            }
-          })
-          
-          # Select authorized datamarts
-          datamarts <- datamarts %>% dplyr::filter(id %in% datamarts_allowed) %>% dplyr::arrange(name)
+          # Code of datamart will be run from mod_patient_and_aggregated_data.R
         }
-        
-      shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = tibble_to_list(datamarts, "id", "name", rm_deleted_rows = TRUE), value = r$chosen_datamart)
       })
       
       observeEvent(r$chosen_study, {
         req(input$datamart & !is.na(r$chosen_study))
 
         studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
-        if (nrow(studies) > 0) {
-
-          # Merge with options
-          studies_options <- studies %>% dplyr::inner_join(r$options %>%
-            dplyr::filter(category == "study") %>% dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
-
-          # Vector of authorized studies
-          studies_allowed <- integer()
-
-          # For each study, select those the user has access
-          sapply(unique(studies_options$id), function(study_id){
-
-            # Loop over each study ID
-
-            users_allowed_read_group <- studies_options %>% dplyr::filter(id == study_id, option_name == "users_allowed_read_group")
-            users_allowed_read <- studies_options %>% dplyr::filter(id == study_id, option_name == "user_allowed_read")
-
-            if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") studies_allowed <<- c(studies_allowed, study_id)
-            else {
-              if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) studies_allowed <<- c(studies_allowed, study_id)
-            }
-          })
-
-          # Select authorized studies
-          studies <- studies %>% dplyr::filter(id %in% studies_allowed) %>% dplyr::arrange(name)
-        }
 
         shiny.fluent::updateDropdown.shinyInput(session, "study", options = tibble_to_list(studies, "id", "name", rm_deleted_rows = TRUE), value = r$chosen_study)
       })
