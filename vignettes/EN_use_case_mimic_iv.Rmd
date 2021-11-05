@@ -14,26 +14,48 @@ knitr::opts_chunk$set(
 )
 ```
 
-> A complete use case with data from the [MIMIC-IV database](https://mimic.mit.edu/).
+> A complete use case with data coming from the <a href="https://mimic.mit.edu/" target="_blank">MIMIC-IV database</a>.
 
 ## Ask access to MIMIC-IV data
 
-...
+To have access to the MIMIC-IV database, <a href="https://physionet.org/content/mimiciv/1.0/" target="_blank">click on this link</a> and go on the bottom of the page.
 
-You can see database's tables strucutre [here](https://mimic.mit.edu/docs/iv/modules/core/admissions/).
+You have to :
+
+- <a href="https://physionet.org/settings/credentialing/" target="_blank">Create an account here</a>
+- <a href="https://physionet.org/sign-dua/mimiciv/1.0/" target="_blank">Sign the data use agreement</a>
+
+You can see database's <a href="https://mimic.mit.edu/docs/iv/modules/core/admissions/" target="_blank">tables structure here</a>.
+
+## Launch the app
+
+In RStudio, run the Shiny application with :
+
+```r
+app_db_folder <- "C:/Users/John/My cdwtools project"
+datamarts_folder <- "C:/Users/John/My cdwtools project/data"
+cdwtools::cdwtools(language = "EN", app_db_folder = app_db_folder, datamarts_folder = datamarts_folder)
+```
+
+See <a href="https://borisdelange.github.io/cdwtools/articles/cdwtools.html " target="_blank">Get started</a> page for more informations about `app_db_folder  &`datamarts_folder` arguments.
 
 ## Data source & datamart
 
 First, create a *Data source* called *MIMIC-IV* in Settings/Data management/Data sources.
 
-Then, create a *Datamart* called *MIMIC-IV tutorial datamart*. Don't forget to attribute access to some users.
+```{r, echo = FALSE}
+knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_create_data_source.png?raw=true")
+```
 
-**Edit the code** of your datamart, enter this code, after having modified `dbConnect` informations.
+Then, create a *Datamart* called *MIMIC-IV tutorial datamart*. By default, everybody has access to this datamart. You can **change the visibility** of this datamart on Datamarts management > Settings (on the Action column) > Grant access to.
 
-First, let's import **patients data** (from table [*admissions*](https://mimic.mit.edu/docs/iv/modules/core/patients/)).  
+**Edit the code** of your datamart (Datamarts management > Edit code (on the Action column)), enter this code, after having modified `dbConnect` informations.
+
+First, let's import **patients data** (from table <strong><a href="https://mimic.mit.edu/docs/iv/modules/core/patients/" target="_blank">patients</a></strong>).  
 See `import_datamart` documentation to know which columns & which data type is required (`?import_datamart`).
+Let's select only 10 patients.
 
-```{r, eval = FALSE}
+```r
 # Connection to the database, from where we extract data
 con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
   port = 5432, user = "admin", password = "admin")
@@ -59,26 +81,26 @@ patients_list <- function() paste(patients() %>% dplyr::pull(patient_id), collap
 DBI::dbDisconnect(con)
 ```
 
-**Error messages** are printed in box, below the editor.
+**Error messages** are printed in the box below the editor.
 
 If you want to check the data before running `import_datamart`, you can print it in the console with :
 
-```{r, eval = FALSE}
+```r
 con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
   port = 5432, user = "admin", password = "admin")
 patients <- function(){
     DBI::dbGetQuery(con, paste0("SELECT * FROM mimic_core.patients p LIMIT 10")) %>%
     dplyr::select(patient_id = subject_id, gender, age = anchor_age, dod)}
 
-# Prints the dataframe
+# Show the dataframe
 print(patients())
 
 DBI::dbDisconnect(con)
 ```
 
-We then create **stays data**, containing informations on distinct hospital stays (from table [*admissions*](https://mimic.mit.edu/docs/iv/modules/core/admissions/)).
+We then create **stays data**, containing informations on distinct hospital stays (from table <strong><a href="https://mimic.mit.edu/docs/iv/modules/core/admissions/" target="_blank">admissions</a></strong>).
 
-```{r, eval = FALSE}
+```r
 con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
   port = 5432, user = "admin", password = "admin")
 
@@ -97,9 +119,9 @@ import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = stay
 DBI::dbDisconnect(con)
 ```
 
-Import **labs_vitals**, containing labs data (from [*labevents*](https://mimic.mit.edu/docs/iv/modules/hosp/labevents/) table), vitals (from [*chartevents*](https://mimic.mit.edu/docs/iv/modules/icu/chartevents/) table) and other informations like output events (table [*outputevents*](https://mimic.mit.edu/docs/iv/modules/icu/outputevents/)) & datetime events (table [*datetimeevents*](https://mimic.mit.edu/docs/iv/modules/icu/datetimesevents/)).
+Import **labs_vitals**, containing labs data (from <strong><a href="https://mimic.mit.edu/docs/iv/modules/hosp/labevents/" target="_blank">labevents</a></strong> table), vitals (from <strong><a href="https://mimic.mit.edu/docs/iv/modules/icu/chartevents/" target="_blank">chartevents</a></strong>) table) and other informations like output events (table <strong><a href="https://mimic.mit.edu/docs/iv/modules/icu/outputevents/" target="_blank">outputevents</a></strong>) & datetime events (table <strong><a href="https://mimic.mit.edu/docs/iv/modules/icu/datetimesevents/" target="_blank">datetimeevents</a></strong>).
 
-```{r, eval = FALSE}
+```r
 con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
   port = 5432, user = "admin", password = "admin")
 
@@ -140,9 +162,9 @@ DBI::dbDisconnect(con)
 
 For now, we do not have access to clinical notes from the MIMIC-IV database, we **do not import text data**.
 
-Finally, let's import **orders data** (we use only table [*inputevents*](https://mimic.mit.edu/docs/iv/modules/icu/inputevents/))
+Finally, let's import **orders data** (we use only table <strong><a href="https://mimic.mit.edu/docs/iv/modules/icu/inputevents/" target="_blank">inputevents</a></strong>)
 
-```{r, eval = FALSE}
+```r
 con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
   port = 5432, user = "admin", password = "admin")
 
@@ -166,7 +188,7 @@ DBI::dbDisconnect(con)
 
 **Put it all together** (copy and paste the entire code in your App and Save) :
 
-```{r eval = FALSE}
+```r
 # Connection to the database, from where we extract data
 con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost", port = 5432, 
     user = "admin", password = "admin")
@@ -245,21 +267,31 @@ import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = orde
 DBI::dbDisconnect(con)
 ```
 
+**Run the code** with the Run code button.
+
+This may take a **few minutes**, depending on the server where MIMIC-IV data are hosted and if SQL indexes have been made.
+
+You should have this screen, confirming everything went fine :
+
+```{r, echo = FALSE}
+knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_import_datamart.png?raw=true")
+```
+
 ## Thesaurus
 
 Let's now **import the thesaurus**.
 
-Go to **settings/thesaurus** and create a new thesaurus.
+Go to **Settings > thesaurus** and create a new thesaurus.
 
 As you've seen in previous section, we have called the thesaurus 'MIMIC-IV', so we need to call our thesaurus 'MIMIV-IV' here too.
 
 Then, **edit the code** of the thesaurus you've just created.
 
-MIMIC-IV thesaurus can be found in these tables : [*d_items*](https://mimic.mit.edu/docs/iv/modules/icu/d_items/) and [*d_labitems*](https://mimic.mit.edu/docs/iv/modules/hosp/d_labitems/).
+MIMIC-IV thesaurus can be found in these tables : <strong><a href="https://mimic.mit.edu/docs/iv/modules/icu/d_items/ " target="_blank">d_items</a></strong> and <strong><a href="https://mimic.mit.edu/docs/iv/modules/hosp/d_labitems/" target="_blank">d_labitems</a></strong>.
 
-Let's see documentation with `?import_thesaurus`.
+See documentation with `?import_thesaurus`.
 
-```{r, eval = FALSE}
+```r
 # Connection to the database, from where we extract data
 con <- DBI::dbConnect(RPostgres::Postgres(), dbname = "mimic-iv", host = "localhost",
   port = 5432, user = "admin", password = "admin")
@@ -281,10 +313,72 @@ import_thesaurus(output = output, r = r, thesaurus_id = %thesaurus_id%, thesauru
 DBI::dbDisconnect(con)
 ```
 
+You can now **load the thesaurus items** with the **Table button** on the Action column of Thesaurus management card.
+
+The first time you load the thesaurus, it may take a few seconds. Data are saved in the cache table, so refresh the page, reconnect and reload thesaurus items, it should take **less than one second**.
+
+You can **edit** display names & units of the thesaurus items.
+
+If you choose the **MIMIC-IV tutorial datamart** in the dropdown, and click on **Show only used items in this datamart**.
+
+You should see two new columns in the datatable, a column **Nb of patients**, telling you the number of patients of you datamart who actually have at least one time this item in their data, and a column **Nb of rows** indicating the total number of occurences of this items, in the whole datamart.
+
+Let's **order our data by Nb of rows** to see the most used items.
+
+You should have this screen :
+
+```{r, echo = FALSE}
+knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_thesaurus_items.png?raw=true")
+```
+
 ## Modules & plugins
 
-*Import plugins from the website*
-*Create modules*
+In this section, we will create :
+- A module family
+- Some modules
+- Somes modules elements
+
+A module family is a group of modules, which can be shared with other users (for example, the *MIMIC-IV default* module family we will create can be shared).
+A module is a page containing multiple modules elements.
+A module element is a chart, used to visualize data.
+
+### Patient-level modules
+
+We will first create some patient-level modules, similar to those you can see with demo data.
+
+Go to **Patient-level modules** page, click on **New module family**, create a module family named *MIMIC-IV default*.
+
+Now, click on **New module**, create a *Haemodynamics* module, under the module family we've just created.
+
+Notice that you can choose a **parent module**, if you do so, the current module will be a sub-category of the parent module.
+
+Now you've created a module family and a first module, you can create some **modules elements**.
+
+Go to **New module element**, select our module family called *MIMIC-IV default*, our first module called *Haemodynamics*.
+
+Now, choose the **Dygraph** plugin. Notice that you can see descriptions of the plugins in the **Plugins section**.
+
+Choose the *MIMIC-IV thesaurus*, the *MIMIC-IV tutorial datamart*.
+
+Once again, it may take a few minutes : the application is creating some cache data.
+
+Choose a name for your Module element, like *Haemodynamics vitals*.
+
+A dataframe with the **thesaurus items** should appear :
+
+```{r, echo = FALSE}
+knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_thesaurus_items_module_element.png?raw=true")
+```
+
+**Arrange** your items by *Nb of rows*.
+
+Select the colour of your items and click on the plus button.
+
+For example, add the *Heart rate* item & *Non invasive Blood Pressure mean*.
+
+Notice that you can change the **display name**, it will be the name of the item displayed in the chart.
+
+When you add an item, it is added in the dropdown *Items selected*. You can unselect items or reset the dropdown.
 
 ## Manipulate data
 

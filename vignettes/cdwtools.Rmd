@@ -19,21 +19,28 @@ knitr::opts_chunk$set(
 Once cdwtools package is installed, run the Shiny application with :
 
 ```r
-setwd(paste0(.libPaths()[1], "/cdwtools"))
 cdwtools::cdwtools(language = "EN")
 ```
 
-The first line set the working directory to the directory of the application.
-It is **necessary** for the application to work.
-
 Available languages are 'EN' & 'FR'.
 
-The first time you launch the application, a **local database** is created, on the library directory.
+The first time you launch the application, a **local database** is created, on the your RStudio home directory.
 
 Two users are created :
 
 - an **admin** user, with login = 'admin' & password = 'admin'
 - a **test** user, with login = 'test' & password = 'test'
+
+You can change the **folder where the local database** will be created, using the app_db_folder argument.
+You can also change the **folder where the datamats** will be saved, if you choose to save CSV files, using the datamarts_folder argument.
+
+By **default**, the local **database** & the **datamarts** are **saved in your RStudio home folder** (with `path.expand('~')` command).
+
+```r
+app_db_folder <- "C:/Users/John/My cdwtools project"
+datamarts_folder <- "C:/Users/John/My cdwtools project/data"
+cdwtools::cdwtools(language = "EN", app_db_folder = app_db_folder, datamarts_folder = datamarts_folder)
+```
 
 First, try to **connect with the test user**.
 

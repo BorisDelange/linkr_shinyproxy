@@ -293,12 +293,20 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           shiny.fluent::updateDropdown.shinyInput(session, "module_family", options = options)
         })
         
-        observeEvent(r[[paste0(prefix, "_modules")]], {
-          options_parent_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]] %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
-          options_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]] %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
+        # Update parent_module dropdown only when a module family is chosen
+        observeEvent(input$module_family, {
+          req(input$module_family)
+          options_parent_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]] %>%
+            dplyr::filter(module_family_id == input$module_family) %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
           shiny.fluent::updateDropdown.shinyInput(session, "parent_module", options = options_parent_module)
-          shiny.fluent::updateDropdown.shinyInput(session, "module", options = options_module)
         })
+        
+        # observeEvent(r[[paste0(prefix, "_modules")]], {
+        #   options_parent_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]] %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
+        #   options_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]] %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
+        #   shiny.fluent::updateDropdown.shinyInput(session, "parent_module", options = options_parent_module)
+        #   shiny.fluent::updateDropdown.shinyInput(session, "module", options = options_module)
+        # })
         
         observeEvent(r$plugins, {
           

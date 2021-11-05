@@ -106,7 +106,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   # If a datamarts_folder is provided, take this value
   # Take package working directory else
   if (length(r$datamarts_folder) > 0) folder <- paste0(r$datamarts_folder, "/datamart_", datamart_id)
-  else folder <- paste0(golem::get_golem_wd(), "/data/datamart_", datamart_id)
+  else folder <- paste0(path.expand('~'), "/data/datamart_", datamart_id)
   path <- paste0(folder, "/", type, ".csv")
   
   # If files already exists and we do not want to rewrite it
@@ -226,7 +226,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   
   # if  save_as_csv is TRUE, save data in datamart folder
   if (save_as_csv){
-    if (!file.exists(folder)) dir.create(folder)
+    if (!file.exists(folder)) dir.create(folder, recursive = TRUE)
     if (!file.exists(path)) tryCatch(readr::write_csv(data, path),
       error = function(e){
         show_message_bar(output, 1, "error_saving_csv", "severeWarning", language, r$words)
