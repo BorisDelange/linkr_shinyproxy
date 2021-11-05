@@ -43,8 +43,8 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
   
   if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
     
-    if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
-    if (grepl("aggregated", table)) prefix <- "aggregated_"
+    if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
+    if (grepl("aggregated", table)) prefix <- "aggregated"
     
     if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
       if (nrow(r[[table]] > 0)){

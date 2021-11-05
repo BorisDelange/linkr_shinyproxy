@@ -47,11 +47,14 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # Check if values required to be unique are unique
   sapply(req_unique_values, function(field){
     
-    sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = r$db)
-    distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
+    # If it is a new module, group by module family, so a name musn't be unique in distinct modules families
+    if (table %in% c("patient_lvl_modules", "aggregated_modules")) sql <- 
+        glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE AND module_family_id = {data$module_family}", .con = r$db)
+    else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = r$db)
+    distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull() %>% tolower()
       
-    if (data[[field]] %in% distinct_values) show_message_bar(output, 2, paste0(field, "_already_used"), "severeWarning", language)
-      req(data[[field]] %not_in% distinct_values)
+    if (tolower(data[[field]]) %in% distinct_values) show_message_bar(output, 2, paste0(field, "_already_used"), "severeWarning", language)
+      req(tolower(data[[field]]) %not_in% distinct_values)
   })
   
   # Check if dropdowns are not empty (if all are required)

@@ -7,7 +7,8 @@
 cdwtools(
   language = "EN",
   db_info = list(),
-  default_folder = character(),
+  app_db_folder = character(),
+  datamarts_folder = character(),
   options = list(),
   ...
 )
@@ -17,7 +18,9 @@ cdwtools(
 
 \item{db_info}{Database connection informations, if it is needed to connect a distant db (list).}
 
-\item{default_folder}{Default folder where to save datamarts CSV files (character)}
+\item{app_db_folder}{Folder where to save local database file (character)}
+
+\item{datamarts_folder}{Folder where to save datamarts CSV files (character)}
 
 \item{options}{A list of options that could be passed to shiny::shinyApp() function (list)}
 
@@ -47,7 +50,9 @@ db_info <- list(
   user = "admin",
   passord = "admin"
 )
-cdwtools(language = "EN", db_info = db_info)
+datamarts_folder <- "C:/Users/John/My CDW project/data"
+app_db_folder <- "C:/Users/John/My CDW project"
+cdwtools(language = "EN", db_info = db_info, datamarts_folder = datamarts_folder, app_db_folder = app_db_folder)
 }
 See `?golem::get_golem_options` for more details.
 }

@@ -37,7 +37,7 @@ Imports:
     xts
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 URL: https://github.com/BorisDelange/cdwtools
 BugReports: https://github.com/BorisDelange/cdwtools/issues
 Language: en-US

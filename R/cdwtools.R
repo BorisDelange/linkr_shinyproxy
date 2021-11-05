@@ -17,7 +17,7 @@
 #' @param language Default language to use in the App (character)
 #' @param db_info Database connection informations, if it is needed to connect a distant db (list).
 #' @param datamarts_folder Folder where to save datamarts CSV files (character)
-#' @app_db_folder Folder where to save local database file (character)
+#' @param app_db_folder Folder where to save local database file (character)
 #' @param ... arguments to pass to golem_opts. 
 #' @examples 
 #' \dontrun{
@@ -29,7 +29,9 @@
 #'   user = "admin",
 #'   passord = "admin"
 #' )
-#' cdwtools(language = "EN", db_info = db_info)
+#' datamarts_folder <- "C:/Users/John/My CDW project/data"
+#' app_db_folder <- "C:/Users/John/My CDW project"
+#' cdwtools(language = "EN", db_info = db_info, datamarts_folder = datamarts_folder, app_db_folder = app_db_folder)
 #' }
 #' See `?golem::get_golem_options` for more details.
 #' @inheritParams shiny::shinyApp
