@@ -218,9 +218,10 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_subsets))
 
     # Add code for creating subset with all patients
-    code <- paste0('run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n',
-                   'patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n',
-                   'add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)')
+    code <- paste0('run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n\n',
+                   'patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n\n',
+                   'add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)\n\n',
+                   'update_r(r = r, table = "subset_patients")')
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row_code + 1, "subset", last_row_subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_code + 2, "subset", last_row_subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
@@ -240,6 +241,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     if (nrow(r$patients) != 0){
       patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
       add_patients_to_subset(output, r, patients, last_row_subsets + 1)
+      update_r(r = r, table = "subset_patients")
     }
   }
   
@@ -1048,7 +1050,32 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
   r[[paste0(table, "_delete_dialog")]] <- FALSE
   
   # Delete row in database
-  DBI::dbSendStatement(r$db, paste0("UPDATE ", table, " SET deleted = TRUE WHERE id = ", row_deleted))
+  DBI::dbSendStatement(r$db, paste0("UPDATE ", table, " SET deleted = TRUE WHERE id = ", row_deleted)) -> query
+  DBI::dbClearResult(query)
+  
+  # If we delete a datamart, delete all studies & subsets associated
+  if (table == "datamarts"){
+    
+    DBI::dbSendStatement(r$db, paste0("UPDATE datamarts SET deleted = TRUE WHERE id = ", row_deleted)) -> query
+    DBI::dbClearResult(query)
+    
+    studies <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM studies WHERE datamart_id = ", row_deleted)) %>% dplyr::pull()
+    
+    DBI::dbSendStatement(r$db, paste0("UPDATE studies SET deleted = TRUE WHERE datamart_id = ", row_deleted)) -> query
+    DBI::dbClearResult(query)
+    
+    DBI::dbSendStatement(r$db, paste0("UPDATE subsets SET deleted = TRUE WHERE study_id IN (", paste(row_deleted, collapse = ","), ")")) -> query
+    DBI::dbClearResult(query)
+  }
+  
+  # If we delete a study, delete all subsets associated
+  if (table == "studies"){
+    DBI::dbSendStatement(r$db, paste0("UPDATE studies SET deleted = TRUE WHERE id = ", row_deleted)) -> query
+    DBI::dbClearResult(query)
+    
+    DBI::dbSendStatement(r$db, paste0("UPDATE subsets SET deleted = TRUE WHERE study_id = ", row_deleted)) -> query
+    DBI::dbClearResult(query)
+  }
   
   # Update r vars
   # For thesaurus_items : the r variable is r$sub_thesaurus_items (from page settings / data management / thesaurus)

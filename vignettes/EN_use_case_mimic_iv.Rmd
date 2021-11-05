@@ -362,7 +362,7 @@ Choose the *MIMIC-IV thesaurus*, the *MIMIC-IV tutorial datamart*.
 
 Once again, it may take a few minutes : the application is creating some cache data.
 
-Choose a name for your Module element, like *Haemodynamics vitals*.
+Choose a name for your Module element, like *Haemodynamic vitals*.
 
 A dataframe with the **thesaurus items** should appear :
 
@@ -379,6 +379,34 @@ For example, add the *Heart rate* item & *Non invasive Blood Pressure mean*.
 Notice that you can change the **display name**, it will be the name of the item displayed in the chart.
 
 When you add an item, it is added in the dropdown *Items selected*. You can unselect items or reset the dropdown.
+
+Once you've selected your items, click on **Add**.
+
+That's it, you've created your first module element.
+
+You can't go to Patient-level page and see your data, cause you first need to create at least an aggregated module family, and then **create a study**.
+
+### Aggregated modules
+
+With the same principle, create an aggregated module family, called *MIMIC-IV default*.
+
+Create a module called *Patients management*.
+
+Create two modules under this first module (by selected this last one as a parent of the new modules) : *Exclusion criteria* & *Flowchart*.
+
+## Create a study
+
+Go to the **Studies** page. Create a study named *My study*. Select your datamart & the modules families you've created.
+
+By default, **three subsets are created** :
+
+- All patients
+- Included patients
+- Excluded patients
+
+You can see the code of *All patients* subset in the **Subsets** page, by clicking on the Edit code button, on the Action column.
+
+This code adds all the patients of the datamart in this subset.
 
 ## Manipulate data
 

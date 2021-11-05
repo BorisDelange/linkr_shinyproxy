@@ -330,7 +330,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       
         # When save button is clicked
         # Do that for main datatable (management_datatable) & sub_datatable
-        observeEvent(input$management_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language))
+        observeEvent(input$management_save, {
+          duplicates_allowed <- FALSE
+          if (table == "subsets") duplicates_allowed <- TRUE
+          save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language, duplicates_allowed = duplicates_allowed)
+        })
         observeEvent(input$sub_datatable_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", duplicates_allowed = TRUE, language = language))
     
       ##########################################

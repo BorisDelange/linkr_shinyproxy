@@ -294,7 +294,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
         })
         
         # Update parent_module dropdown only when a module family is chosen
-        observeEvent(input$module_family, {
+        observe({
           req(input$module_family)
           options_parent_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]] %>%
             dplyr::filter(module_family_id == input$module_family) %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
