@@ -416,7 +416,7 @@ Go back to **Patient-level data** page, you should have this screen :
 knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_patient_lvl_data.png?raw=true")
 ```
 
-Try to change patient, stay...
+Try to change the patient, the current stay : charts are **updated with new data**.
 
 ## Get new plugins
 
