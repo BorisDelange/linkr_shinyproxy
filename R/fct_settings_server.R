@@ -164,7 +164,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 
     # Add options rows
     value <- paste0("- **Version** : 0.0.1\n- **Libraries** : *put libraries needed here*\n- **Data allowed** : *put data allowed here*\n",
-      "- Previous plugin needed first : *put previous plugins needed here*\n\n*Put full description here*")
+      "- **Previous plugin needed first** : *put previous plugins needed here*\n\n*Put full description here*")
     
     new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row_options + 1, "plugin", last_row + 1, "markdown_description", value, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
@@ -1258,7 +1258,7 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
   if (code_type == "ui"){
     
     tryCatch(eval(parse(text = edited_code)), error = function(e) stop(e), warning = function(w) stop(w))
-    result <- eval(parse(text = edited_code))
+    result <- ui_result
   }
   
   # If code is server, capture the console output
