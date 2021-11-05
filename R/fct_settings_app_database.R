@@ -124,12 +124,14 @@ db_create_tables <- function(db){
 #' (with db_create_tables function). It uses RSQLite library.
 #' It also adds distant database connection informations in the options table, if they do not already exist.
 
-get_local_db <- function(){
+get_local_db <- function(app_db_folder = character()){
   
   # Connect to local database
-  setwd(path.expand('~'))
-  db <- DBI::dbConnect(RSQLite::SQLite(), "cdwtools")
-  setwd(find.package("cdwtools"))
+  # If r$default_folder is not null, take this folder
+  # Else, take home folder
+  
+  if (length(app_db_folder) > 0) db <- DBI::dbConnect(RSQLite::SQLite(), paste0(app_db_folder, "/cdwtools"))
+  else db <- DBI::dbConnect(RSQLite::SQLite(), paste0(path.expand('~'), "/cdwtools"))
   
   db_create_tables(db)
   
@@ -240,11 +242,11 @@ get_distant_db <- function(local_db, db_info = list(), language = "EN", words = 
 #' @param db_info DB informations given in cdwtools function
 #' @param language Language used to display messages (character)
 
-get_db <- function(db_info = list(), language = "EN"){
+get_db <- function(db_info = list(), app_db_folder = character(), language = "EN"){
   
   # First, get local database connection
   
-  db <- get_local_db()
+  db <- get_local_db(app_db_folder = app_db_folder)
   
   # Second, if db_info is not empty, try this connection
   

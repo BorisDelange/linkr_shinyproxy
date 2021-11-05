@@ -16,7 +16,8 @@
 #' @param options A list of options that could be passed to shiny::shinyApp() function (list)
 #' @param language Default language to use in the App (character)
 #' @param db_info Database connection informations, if it is needed to connect a distant db (list).
-#' @param default_folder Default folder where to save datamarts CSV files (character)
+#' @param datamarts_folder Folder where to save datamarts CSV files (character)
+#' @app_db_folder Folder where to save local database file (character)
 #' @param ... arguments to pass to golem_opts. 
 #' @examples 
 #' \dontrun{
@@ -41,7 +42,8 @@
 cdwtools <- function(
   language = "EN",
   db_info = list(),
-  default_folder = character(),
+  app_db_folder = character(),
+  datamarts_folder = character(),
   options = list(),
   ...
 ) {
@@ -84,7 +86,8 @@ cdwtools <- function(
   with_golem_options(
     app = shinyApp(
       ui = app_ui(css = css, page = page, language = language),
-      server = app_server(router = page, language = language, db_info = db_info, default_folder = default_folder),
+      server = app_server(router = page, language = language, db_info = db_info, 
+        datamarts_folder = datamarts_folder, app_db_folder = app_db_folder),
       options = options
     ), 
     golem_opts = list(...)

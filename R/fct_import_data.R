@@ -103,9 +103,9 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   }
   id_message_bar <- switch(type, "patients" = 1, "stays" = 2, "labs_vitals" = 3, "text" = 4, "orders" = 5)
   
-  # If a default_folder is provided, take this value
+  # If a datamarts_folder is provided, take this value
   # Take package working directory else
-  if (length(r$default_folder) > 0) folder <- paste0(r$default_folder, "/datamart_", datamart_id)
+  if (length(r$datamarts_folder) > 0) folder <- paste0(r$datamarts_folder, "/datamart_", datamart_id)
   else folder <- paste0(golem::get_golem_wd(), "/data/datamart_", datamart_id)
   path <- paste0(folder, "/", type, ".csv")
   

@@ -5,7 +5,7 @@
 #' @import shiny
 #' @noRd
 
-app_server <- function(router, language = "EN", db_info = list(), default_folder = character()){
+app_server <- function(router, language = "EN", db_info = list(), datamarts_folder = character(), app_db_folder = character()){
   function(input, output, session ) {
     
     # Create r reactive value
@@ -14,8 +14,8 @@ app_server <- function(router, language = "EN", db_info = list(), default_folder
     # Create an agg reactive value, to communicate between aggregated plugins
     agg <- reactiveValues()
     
-    # Save default_folder in r variable
-    r$default_folder <- default_folder
+    # Save datamarts_folder in r variable
+    r$datamarts_folder <- datamarts_folder
     
     # Get translations
     r$words <- get_translations()
@@ -23,7 +23,7 @@ app_server <- function(router, language = "EN", db_info = list(), default_folder
     # Connection to database
     # If connection informations have been given in cdwtools() function, use these informations
     
-    r$local_db <- get_local_db()
+    r$local_db <- get_local_db(app_db_folder = app_db_folder)
     
     # Add distant db informations in local database
     
@@ -46,7 +46,7 @@ app_server <- function(router, language = "EN", db_info = list(), default_folder
       }
     })
     
-    r$db <- get_db(db_info = db_info, language = language)
+    r$db <- get_db(db_info = db_info, app_db_folder = app_db_folder, language = language)
     
     
     # Close DB connection on exit
