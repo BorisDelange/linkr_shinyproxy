@@ -235,13 +235,23 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     update_r(r, "code", language)
 
     # Run code to add patients in the subset. Get datamart_id first.
+    
+    r$patients <- tibble::tibble()
+    
     datamart_id <- r$studies %>% dplyr::filter(id == last_row) %>% dplyr::pull(datamart_id)
-    run_datamart_code(output, r,datamart_id)
+    
+    tryCatch(run_datamart_code(output = output, r = r, datamart_id = datamart_id),
+      error = function(e) show_message_bar(output = output, id = 2, message = "error_loading_datamart", type = "severeWarning", language = language),
+      warning = function(w) show_message_bar(output = output, id = 2, message = "error_loading_datamart", type = "severeWarning", language = language))
+    
     if (nrow(r$patients) == 0) show_message_bar(output = output, id = 2, message = "error_loading_datamart", type = "severeWarning", language = language)
     if (nrow(r$patients) != 0){
-      patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
-      add_patients_to_subset(output, r, patients, last_row_subsets + 1)
-      update_r(r = r, table = "subset_patients")
+      tryCatch({
+        patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
+        add_patients_to_subset(output, r, patients, last_row_subsets + 1)
+        update_r(r = r, table = "subset_patients")
+      }, error = function(e) show_message_bar(output = output, id = 2, message = "error_adding_patients_to_subset", type = "severeWarning", language = language),
+         warning = function(w) error = function(e) show_message_bar(output = output, id = 2, message = "error_adding_patients_to_subset", type = "severeWarning", language = language))
     }
   }
   
@@ -1064,8 +1074,11 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
     DBI::dbSendStatement(r$db, paste0("UPDATE studies SET deleted = TRUE WHERE datamart_id = ", row_deleted)) -> query
     DBI::dbClearResult(query)
     
-    DBI::dbSendStatement(r$db, paste0("UPDATE subsets SET deleted = TRUE WHERE study_id IN (", paste(row_deleted, collapse = ","), ")")) -> query
+    DBI::dbSendStatement(r$db, paste0("UPDATE subsets SET deleted = TRUE WHERE study_id IN (", paste(studies, collapse = ","), ")")) -> query
     DBI::dbClearResult(query)
+    
+    update_r(r = r, table = "studies")
+    update_r(r = r, table = "subsets")
   }
   
   # If we delete a study, delete all subsets associated
@@ -1075,6 +1088,8 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
     
     DBI::dbSendStatement(r$db, paste0("UPDATE subsets SET deleted = TRUE WHERE study_id = ", row_deleted)) -> query
     DBI::dbClearResult(query)
+    
+    update_r(r = r, table = "subsets")
   }
   
   # Update r vars

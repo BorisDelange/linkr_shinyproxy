@@ -912,6 +912,8 @@ get_translations <- function(){
     "FR", "only_me", "Uniquement moi",
     "EN", "patient_already_in_subset", "Patient already in this subset",
     "FR", "patient_already_in_subset", "Patient déjà dans ce subset",
+    "EN", "error_adding_patients_to_subset", "Error adding patients to subset",
+    "FR", "error_adding_patients_to_subset", "Errur lors de l'ajout de patients dans le subset",
     "EN", "error_removing_patients_from_subset", "Error removing patients from subset",
     "FR", "error_removing_patients_from_subset", "Erreur lors de la suppression des patients du subset",
     "EN", "thesaurus_items_empty", "Choose at least one thesaurus item",
