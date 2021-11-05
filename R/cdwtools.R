@@ -52,7 +52,7 @@ cdwtools <- function(
   options(shiny.maxRequestSize = 500*1024^2)
   
   # Set wd to app wd
-  # setwd(paste0(.libPaths()[1], "/cdwtools"))
+  setwd(find.package("cdwtools"))
   
   # Load translations
   

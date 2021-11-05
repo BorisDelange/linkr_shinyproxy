@@ -127,7 +127,9 @@ db_create_tables <- function(db){
 get_local_db <- function(){
   
   # Connect to local database
+  setwd(path.expand('~'))
   db <- DBI::dbConnect(RSQLite::SQLite(), "cdwtools")
+  setwd(find.package("cdwtools"))
   
   db_create_tables(db)
   
