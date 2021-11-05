@@ -69,10 +69,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       
       tables <- c(
         "users_accesses", "users_statuses",
-        "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus",
-        "plugins", 
-        "patient_lvl_modules", "patient_lvl_modules_families", "patient_lvl_modules_elements",
-        "aggregated_modules", "aggregated_modules_families", "aggregated_modules_elements",
+        "data_sources", "subset_patients", "thesaurus",
         "code", 
         "options", "plugins_options", "patients_options")
       
@@ -158,7 +155,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
         if (nrow(r$subsets > 0)){
           studies_ids <- r$studies %>% dplyr::pull(id)
           r$subsets <- r$subsets %>% dplyr::filter(study_id %in% studies_ids)
-          r$studies_temp <- r$studies %>% dplyr::mutate(modified = FALSE)
+          r$subsets_temp <- r$subsets %>% dplyr::mutate(modified = FALSE)
         }
       }
       
