@@ -158,7 +158,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
         if (nrow(r$subsets > 0)){
           studies_ids <- r$studies %>% dplyr::pull(id)
           r$subsets <- r$subsets %>% dplyr::filter(study_id %in% studies_ids)
-          r$studies_temp <- r$studies %>% dplyr::mutate(modified = FALSE)
+          r$subsets_temp <- r$subsets %>% dplyr::mutate(modified = FALSE)
         }
       }
       
