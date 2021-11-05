@@ -150,7 +150,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       "settings_data_sources", "",
       "settings_datamarts", "data_source",
       "settings_studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
-      "settings_subsets", c("datamart", "study"),
+      "settings_subsets", "study",
       "settings_thesaurus", "data_source")
     
     # Table name
