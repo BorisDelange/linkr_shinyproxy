@@ -224,8 +224,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                 stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
                 stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient)) %>%
                 stringr::str_replace_all("\r", "\n")
-              eval(parse(text = code_ui_card))
-              code_ui <<- tagList(code_ui, div(id = ns(paste0(module_element_name, group_id)), make_card(module_element_name, ui_result)))
+              code_ui <<- tagList(code_ui, div(id = ns(paste0(module_element_name, group_id)), make_card(module_element_name, eval(parse(text = code_ui_card)))))
             },
             error = function(e){
               # Libraries needed

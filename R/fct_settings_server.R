@@ -1246,7 +1246,7 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
 #' @param data A list containing dataframes / tibbles, if data need to be used in the evaluated code (list)
 #' @examples 
 #' \dontrun{
-#' execute_settings_code(output = output, r = r, edited_code = "print('test')")
+#'  execute_settings_code(output = output, r = r, edited_code = "print('test')")
 #' }
 
 execute_settings_code <- function(input, output, session, id = character(), ns = shiny::NS(), language = "EN", r = shiny::reactiveValues(), 
@@ -1258,7 +1258,7 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
   if (code_type == "ui"){
     
     tryCatch(eval(parse(text = edited_code)), error = function(e) stop(e), warning = function(w) stop(w))
-    result <- ui_result
+    result <- eval(parse(text = edited_code))
   }
   
   # If code is server, capture the console output

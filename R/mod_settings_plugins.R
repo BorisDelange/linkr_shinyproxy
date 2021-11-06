@@ -638,10 +638,11 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
             stringr::str_replace_all("%patient_id%", as.character(input$patient)) %>% 
             stringr::str_replace_all("\r", "\n")
           
-          eval(parse(text = ui_code))
-  
           # Render UI result
-          output$code_result_ui <- renderUI(ui_result)
+          output$code_result_ui <- renderUI(
+            make_card("", 
+              execute_settings_code(input = input, output = output, session = session,
+              id = id, ns = ns, language = language, r = r, edited_code = ui_code, code_type = "ui", data = data)))
           
           # Warnings messages (render server result)
           output$code_result_server <- renderText(execute_settings_code(input = input, output = output, session = session,
