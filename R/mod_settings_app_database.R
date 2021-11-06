@@ -296,7 +296,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       output$request_result <- renderText({
         
         # Change this option to display correctly tibble in textbox
-        eval(parse(text = "options('cli.num_colors' = 1)"))
+        options('cli.num_colors' = 1)
         
         # Capture console output of our code
         captured_output <-
@@ -325,7 +325,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           }, error = function(e) print(e), warning = function(w) print(w))
         
         # Restore normal value
-        eval(parse(text = "options('cli.num_colors' = NULL)"))
+        options('cli.num_colors' = NULL)
         
         # Display result
         paste(captured_output, collapse = "\n")

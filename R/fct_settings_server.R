@@ -1257,8 +1257,7 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
   # If code is UI, execute it only
   if (code_type == "ui"){
     
-    tryCatch(eval(parse(text = edited_code)), error = function(e) stop(e), warning = function(w) stop(w))
-    result <- eval(parse(text = edited_code))
+    tryCatch(result <- eval(parse(text = edited_code)), error = function(e) stop(e), warning = function(w) stop(w))
   }
   
   # If code is server, capture the console output
@@ -1266,14 +1265,14 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
   if (code_type == "server"){
     
     # Change this option to display correctly tibble in textbox
-    eval(parse(text = "options('cli.num_colors' = 1)"))
+    options('cli.num_colors' = 1)
     
     # Capture console output of our code
     captured_output <- capture.output(
       tryCatch(eval(parse(text = edited_code)), error = function(e) print(e), warning = function(w) print(w)))
     
     # Restore normal value
-    eval(parse(text = "options('cli.num_colors' = NULL)"))
+    options('cli.num_colors' = NULL)
     
     # Display result
     paste(captured_output, collapse = "\n") -> result
@@ -1289,14 +1288,14 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
       stringr::str_replace_all("%thesaurus_id%", as.character(isolate(r$thesaurus_id)))
     
     # Change this option to display correctly tibble in textbox
-    eval(parse(text = "options('cli.num_colors' = 1)"))
+    options('cli.num_colors' = 1)
     
     # Capture console output of our code
     captured_output <- capture.output(
       tryCatch(eval(parse(text = as.character(code))), error = function(e) print(e), warning = function(w) print(w)))
     
     # Restore normal value
-    eval(parse(text = "options('cli.num_colors' = NULL)"))
+    options('cli.num_colors' = NULL)
     
     # Display result
     paste(captured_output, collapse = "\n") -> result
