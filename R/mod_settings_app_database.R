@@ -17,8 +17,8 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
       list(key = "db_connection_infos_card", label = "db_connection_infos_card"),
       list(key = "db_datatable_card", label = "db_datatable_card"),
       list(key = "db_request_card", label = "db_request_card"),
-      list(key = "db_save_card", label = "db_save_card")#,
-      # list(key = "db_restore_card", label = "db_restore_card")
+      list(key = "db_save_card", label = "db_save_card"),
+      list(key = "db_restore_card", label = "db_restore_card")
       ), words = words),
     div(
       id = ns("db_connection_infos_card"),
@@ -103,18 +103,21 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
           div(style = "visibility:hidden;", downloadButton(ns("db_save"), label = ""))
         )
       )
-    )#,
-    # div(
-    #   id = ns("db_restore_card"),
-    #   make_card(
-    #     translate(language, "db_restore", words),
-    #     div(
-    #       br(), uiOutput(ns("last_db_restore")), br(),
-    #       shiny.fluent::PrimaryButton.shinyInput(ns("db_restore_button"), translate(language, "restore_db", words), iconProps = list(iconName = "Upload")),
-    #       div(style = "display:none;", fileInput(ns("db_restore"), label = "", multiple = FALSE, accept = ".tar"))
-    #     )
-    #   )
-    # )
+    ),
+    div(
+      id = ns("db_restore_card"),
+      make_card(
+        translate(language, "db_restore", words),
+        div(
+          br(), uiOutput(ns("last_db_restore")), br(),
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+            shiny.fluent::DefaultButton.shinyInput(ns("db_restore_browse"), translate(language, "choose_tar_file", words)),
+            uiOutput(ns("db_restore_status"))), br(),
+          shiny.fluent::PrimaryButton.shinyInput(ns("db_restore_button"), translate(language, "restore_db", words), iconProps = list(iconName = "Upload")),
+          div(style = "display:none;", fileInput(ns("db_restore"), label = "", multiple = FALSE, accept = ".tar"))
+        )
+      )
+    )
   )
 }
     
@@ -126,7 +129,35 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    toggles <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card")#, "db_restore_card")
+    # Col types of database (to restore database)
+    col_types <- tibble::tribble(
+      ~table, ~col_types,
+      "users", "icccciicl",
+      "users_accesses", "icccl",
+      "users_statuses", "icccl",
+      "data_sources", "iccicl",
+      "datamarts", "icciicl",
+      "studies", "icciiiicl",
+      "subsets", "icciicl",
+      "subset_patients", "iiiicl",
+      "thesaurus", "icccicl",
+      "thesaurus_items", "iiicccccl",
+      "plugins", "iccicl",
+      "plugins_options", "iiiicicnicl",
+      "patients_options", "iiiiiiciccnicl",
+      "modules_elements_options", "iiiicccnicl",
+      "patient_lvl_modules_families", "iccicl",
+      "aggregated_modules_families", "iccicl",
+      "patient_lvl_modules", "icciiiicl",
+      "aggregated_modules", "icciiiicl",
+      "patient_lvl_modules_elements", "iciiiciccciicl",
+      "aggregated_modules_elements", "iciiiiicl",
+      "code", "icicicl",
+      "options", "iciccnicl",
+      "log", "icccic"
+    )
+    
+    toggles <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card")
     
     ##########################################
     # Show or hide cards   #
@@ -393,9 +424,12 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         tables <- DBI::dbListTables(r$db)
 
         for (table in tables){
-          file_name <- paste0(table, ".csv")
-          readr::write_csv(DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table)), file_name)
-          files <- c(file_name, files)
+          # Download all tables, except cache table
+          if (table != "cache"){
+            file_name <- paste0(table, ".csv")
+            readr::write_csv(DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table)), file_name)
+            files <- c(file_name, files)
+          }
         }
         
         tar(file, files)
@@ -421,9 +455,56 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     # Overcome absence of downloadButton in shiny.fluent
     # And save that the database has been restored
     
+    observeEvent(input$db_restore_browse, shinyjs::click("db_restore"))
+    
+    output$db_restore_status <- renderUI(tagList(div(
+      span("Loaded file : ", style = "padding-top:5px;"), 
+      span(input$db_restore$name, style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;")))
+    
     observeEvent(input$db_restore_button, {
       
-      shinyjs::click("db_restore")
+      req(input$db_restore)
+      
+      # Restore database
+      
+      tryCatch({
+        
+        untar(input$db_restore$datapath, exdir = "data/temp")
+        csv_files <- untar(input$db_restore$datapath, list = TRUE)
+        
+        lapply(csv_files, function(file_name){
+          
+          # Name of the table
+          table <- substr(file_name, 1, nchar(file_name) - 4)
+          
+          # For older versions (when cache was downloaded when you clicked on save database)
+          if (table != "cache"){
+            
+            # Load CSV file
+            col_types_temp <- col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
+            temp <- readr::read_csv(paste0("data/temp/", file_name), col_types = col_types_temp)
+
+            # Delete data from old table
+            sql <- glue::glue_sql("DELETE FROM {`table`}", .con = r$db)
+            query <- DBI::dbSendStatement(r$db, sql)
+            DBI::dbClearResult(query)
+
+            # Insert new data in table
+            DBI::dbAppendTable(r$db, table, temp)
+          }
+        })
+        
+        # Load database, restored
+        # TO DO...
+        
+        show_message_bar(output, 3, "database_restored", "success", language)
+      },
+      error = function(e) print(e),
+      warning = function(w) print(w))
+      # error = function(e) show_message_bar(output, 2, "error_restoring_database", "severeWarning", language),
+      # warning = function(w) show_message_bar(output, 2, "error_restoring_database", "severeWarning", language))
+      
+      # If restore is a success, save in database
       
       last_restore <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_restore' AND name = 'last_db_restore'")
       
