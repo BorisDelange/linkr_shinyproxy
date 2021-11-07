@@ -412,21 +412,34 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             # Get plugin code
             
             plugin_id <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
+            
             code_server_card <- r$code %>% 
               dplyr::filter(link_id == plugin_id, category == "plugin_server") %>%
               dplyr::pull(code) %>% 
               stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
               stringr::str_replace_all("\r", "\n")
             
-            if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
-            if (length(r$chosen_patient) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient))
+            # If it is an aggregated plugin, change %study_id% with current chosen study
+            if (length(r$chosen_study) > 0 & prefix == "aggregated") code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
+            # If it is a patient-lvl plugin, change %patient_id% with current chosen patient
+            if (length(r$chosen_patient) > 0 & prefix == "patient_lvl") code_server_card <- code_server_card %>% stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient))
 
             # Try to run plugin server code
+            # Only if this code has not been already loaded
+            if (prefix == "aggregated") trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_study)
+            if (prefix == "patient_lvl") trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_patient)
             
-            tryCatch(eval(parse(text = code_server_card)),
-              error = function(e) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language),
-              warning = function(w) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language)
-            )
+            if ((length(r$chosen_study) > 0 & prefix == "aggregated") | (length(r$chosen_patient) > 0 & prefix == "patient_lvl")){
+              if (trace_code %not_in% r$server_plugins_loaded){
+                # Add the trace_code to loaded plugins list
+                r$server_plugins_loaded <- c(r$server_plugins_loaded, trace_code)
+                
+                tryCatch(eval(parse(text = code_server_card)),
+                  error = function(e) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language),
+                  warning = function(w) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language)
+                )
+              }
+            }
           }
         })
         
