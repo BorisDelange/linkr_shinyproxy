@@ -226,7 +226,12 @@ show_message_bar <- function(output, id = integer(), message = character(), type
   type <- switch(type, "info" = 0, "error" = 1, "blocked" = 2, "severeWarning" = 3, "success" = 4, "warning" = 5)
   shinyjs::show(paste0("message_bar", id))
   shinyjs::delay(time, shinyjs::hide(paste0("message_bar", id)))
-  output[[paste0("message_bar", id)]] <- renderUI(div(shiny.fluent::MessageBar(translate(language, message, words), messageBarType = type), style = "margin-top:10px;"))
+  
+  # If translation of the message doesn't exist, return raw message
+  output_message <- translate(language, message, words)
+  if (output_message == "") output_message <- message
+  
+  output[[paste0("message_bar", id)]] <- renderUI(div(shiny.fluent::MessageBar(output_message, messageBarType = type), style = "margin-top:10px;"))
 }
 
 #' Make a shiny.fluent choiceGroup
