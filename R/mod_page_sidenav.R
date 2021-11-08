@@ -327,13 +327,17 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         # If choice is excluded, update exclusion reason dropdown & show dropdown
         if (input$patient_status == "excluded"){
-          exclusion_reasons <- r$patients_options %>% dplyr::filter(category == "exclusion_reasons" & study_id == r$chosen_study) %>% dplyr::arrange(value)
+          
+          sql <- glue::glue_sql(paste0("SELECT id, value FROM modules_elements_options WHERE deleted IS FALSE AND category = 'aggregated' AND name = 'exclusion_reason_name'
+            AND study_id = {r$chosen_study}"), .con = r$db)
+          exclusion_reasons <- DBI::dbGetQuery(r$db, sql) %>% dplyr::arrange(value)
+          
           options <- list()
-          if (nrow(exclusion_reasons) > 0) options <- convert_tibble_to_list(data = exclusion_reasons, key_col = "value_num", text_col = "value")
+          if (nrow(exclusion_reasons) > 0) options <- convert_tibble_to_list(data = exclusion_reasons, key_col = "id", text_col = "value")
           
           value <- r$patients_options %>% dplyr::filter(category == "exclusion_reason" & study_id == r$chosen_study & patient_id == r$chosen_patient)
           if (nrow(value) == 0) value <- NULL
-          else value <- value %>% dplyr::pull(value_num)
+          if (length(value) > 0) value <- value %>% dplyr::pull(value_num)
           
           shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = options, value = value)
           shinyjs::show("exclusion_reason_div")
