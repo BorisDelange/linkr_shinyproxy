@@ -47,9 +47,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       # Try to load datamart 
       tryCatch(run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language),
         error = function(e) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-          error_name = paste0(id, " - Run server code"), category = "Error", error_report = e, language = language), 
+          error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language), 
         warning = function(w) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-          error_name = paste0(id, " - Run server code"), category = "Warning", error_report = w, language = language))
+          error_name = paste0(id, " - run server code"), category = "Warning", error_report = w, language = language))
     })
   
     ##########################################
@@ -240,7 +240,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               error_message <- paste0(translate(language, "error_run_plugin_ui_code", words), " (group_id = ", group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, "). ", libraries_needed)
               
               report_bug(r = r, output = output, error_message = error_message, 
-                error_name = paste0(id, " - Run server code"), category = "Error", error_report = e, language = language)
+                error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language)
             })
           })
         }

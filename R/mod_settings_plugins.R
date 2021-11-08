@@ -257,6 +257,22 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
         output$code_result_ui <- renderUI("")
         output$code_result_server <- renderText("")
       })
+        
+        ##########################################
+        # Hide ace editor                        #
+        ########################################## 
+      
+        observeEvent(input$hide_editor, {
+          if (input$hide_editor){
+            shinyjs::hide("ace_edit_code_ui")
+            shinyjs::hide("ace_edit_code_server")
+          }
+          else {
+            shinyjs::show("ace_edit_code_ui")
+            shinyjs::show("ace_edit_code_server")
+          }
+        })
+      
       
         #########################################################
         # Datamarts, study, subset, patients & stays dropdowns  #

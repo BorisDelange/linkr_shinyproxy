@@ -362,10 +362,14 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
     }
     
     # Toggle for choice of UI or server code
-    shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
-      list(key = "ui", text = translate(language, "ui", words)),
-      list(key = "server", text = translate(language, "server", words))
-    ), className = "inline_choicegroup") -> choice_ui_server
+    shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+      shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
+        list(key = "ui", text = translate(language, "ui", words)),
+        list(key = "server", text = translate(language, "server", words))
+      ), className = "inline_choicegroup"),
+      div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
+      div(translate(language, "hide_editor", words), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+    ) -> choice_ui_server
     
     # Ace editors
     tagList(

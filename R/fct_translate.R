@@ -989,7 +989,9 @@ get_translations <- function(){
     "EN", "database_restored", "Database restored",
     "FR", "database_restored", "Base de données restaurée",
     "EN", "loaded_file", "Loaded file",
-    "FR", "loaded_file", "Fichier chargé"
+    "FR", "loaded_file", "Fichier chargé",
+    "EN", "hide_editor", "Hide editor",
+    "FR", "hide_editor", "Masquer l'editeur"
     ) -> data
   data
 }
