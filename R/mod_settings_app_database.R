@@ -99,6 +99,8 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
         translate(language, "db_save", words),
         div(
           br(), uiOutput(ns("last_db_save")), br(),
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+            make_toggle(language = language, ns = ns, label = "db_export_log", value = FALSE, inline = TRUE)), br(),
           shiny.fluent::PrimaryButton.shinyInput(ns("db_save_button"), translate(language, "export_db", words), iconProps = list(iconName = "Download")),
           div(style = "visibility:hidden;", downloadButton(ns("db_save"), label = ""))
         )
@@ -110,6 +112,8 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
         translate(language, "db_restore", words),
         div(
           br(), uiOutput(ns("last_db_restore")), br(),
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+            make_toggle(language = language, ns = ns, label = "db_import_log", value = FALSE, inline = TRUE)), br(),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
             shiny.fluent::DefaultButton.shinyInput(ns("db_restore_browse"), translate(language, "choose_tar_file", words)),
             uiOutput(ns("db_restore_status"))), br(),
@@ -409,7 +413,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     
     output$db_save <- downloadHandler(
       
-      filename = function() { paste0("cdwtools_svg_", as.character(Sys.Date()), ".tar") },
+      filename = function() paste0("cdwtools_svg_", as.character(Sys.Date()), ".tar"),
       
       content = function(file){
         
@@ -423,9 +427,13 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         for (table in tables){
           # Download all tables, except cache table
           if (table != "cache"){
-            file_name <- paste0(table, ".csv")
-            readr::write_csv(DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table)), file_name)
-            files <- c(file_name, files)
+            
+            # Download log if user choice is TRUE
+            if (table != "log" | (table == "log" & input$db_export_log)){
+              file_name <- paste0(table, ".csv")
+              readr::write_csv(DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table)), file_name)
+              files <- c(file_name, files)
+            }
           }
         }
         
@@ -480,23 +488,27 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           table <- substr(file_name, 1, nchar(file_name) - 4)
           
           # For older versions (when cache was downloaded when you clicked on save database)
+          # (and when plugins_options table existed)
           if (table %not_in% c("cache", "plugins_options")){
             
-            # Load CSV file
-            col_types_temp <- col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
-            temp <- readr::read_csv(paste0(exdir, "/", file_name), col_types = col_types_temp)
-
-            # Delete data from old table
-            sql <- glue::glue_sql("DELETE FROM {`table`}", .con = r$db)
-            query <- DBI::dbSendStatement(r$db, sql)
-            DBI::dbClearResult(query)
-
-            # Insert new data in table
-            DBI::dbAppendTable(r$db, table, temp)
+            if (table != "log" | (table == "log" & input$db_import_log)){
             
-            # Delete temp file
-            file.remove(paste0(exdir, "/", file_name))
+              # Load CSV file
+              col_types_temp <- col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
+              temp <- readr::read_csv(paste0(exdir, "/", file_name), col_types = col_types_temp)
+  
+              # Delete data from old table
+              sql <- glue::glue_sql("DELETE FROM {`table`}", .con = r$db)
+              query <- DBI::dbSendStatement(r$db, sql)
+              DBI::dbClearResult(query)
+  
+              # Insert new data in table
+              DBI::dbAppendTable(r$db, table, temp)
+            }
           }
+          
+          # Delete temp file
+          file.remove(paste0(exdir, "/", file_name))
         })
         
         # Load database, restored
