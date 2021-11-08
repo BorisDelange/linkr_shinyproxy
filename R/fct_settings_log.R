@@ -26,15 +26,16 @@ add_log_entry <- function(r, category, name, value){
 #' @param output Shiny output variable
 #' @param error_message Error message that will be displayed to user, after translation (character())
 #' @param error_name Name of the error, to add an entry in the log table (character)
+#' @param category Category : error or warning ? (character)
 #' @param error_report Report of the error (character)
 #' @param language Language used for translations (character)
 
 report_bug <- function(r = shiny::reactiveValues(), output, error_message = character(), 
-  error_name = character(), error_report = character(), language = "EN"){
+  error_name = character(), category = character(), error_report = character(), language = "EN"){
   
   # Notification to user
   show_message_bar(output, 3, error_message, "severeWarning", language)
   
   # Add a log entry for bug report
-  add_log_entry(r = r, category = "Error", name = error_name, value = error_report)
+  add_log_entry(r = r, category = category, name = error_name, value = error_report)
 }

@@ -46,8 +46,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       
       # Try to load datamart 
       tryCatch(run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language),
-        error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language), 
-        warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
+        error = function(e) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
+          error_name = paste0(id, " - Run server code"), category = "Error", error_report = e, language = language), 
+        warning = function(w) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
+          error_name = paste0(id, " - Run server code"), category = "Warning", error_report = w, language = language))
     })
   
     ##########################################
@@ -234,7 +236,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               libraries_needed <- paste0(translate(language, "libraries_needed_plugin", words), " : ",
                 strsplit(code_ui_card, " ") %>% unlist() %>% grep("::", ., value = TRUE) %>% sub("::.*", "", .) %>% sub("\n", "", .) %>% toString(), ".")
               plugin_name <- r$plugins %>% dplyr::filter(id == plugin_id) %>% dplyr::pull(name)
-              show_message_bar(1, paste0(translate(language, "error_run_plugin_ui_code", words), " (group_id = ", group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, "). ", libraries_needed), "severeWarning", language)
+              
+              error_message <- paste0(translate(language, "error_run_plugin_ui_code", words), " (group_id = ", group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, "). ", libraries_needed)
+              
+              report_bug(r = r, output = output, error_message = error_message, 
+                error_name = paste0(id, " - Run server code"), category = "Error", error_report = e, language = language)
             })
           })
         }
@@ -438,9 +444,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                 
                 tryCatch(eval(parse(text = code_server_card)),
                   error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code", 
-                    error_name = paste0(id, " - Run server code"), error_report = e, language = language),
+                    error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language),
                   warning = function(w) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code", 
-                    error_name = paste0(id, " - Run server code"), error_report = w, language = language)
+                    error_name = paste0(id, " - run server code"), category = "Warning", error_report = w, language = language)
                 )
               }
             }
