@@ -31,7 +31,7 @@ temp <- function(){
     new_words <- tibble::tribble(~language, ~reference_word, ~translated_word,
         "EN", "add_exclusion_criterion", "Add an exclusion criterion",
         "FR", "add_exclusion_criterion", "Ajouter un critère d'exclusion",
-        "EN", "exclusion_criteria_management", "Exclusion criterion management",
+        "EN", "exclusion_criteria_management", "Exclusion criteria management",
         "FR", "exclusion_criteria_management", "Gestion des critères d'exclusion"
     )
     
@@ -90,6 +90,7 @@ plugins_load_%group_id%_%study_id% <- function(r){
     display_orders <- DBI::dbGetQuery(r$db, sql) %>% dplyr::select(id = link_id, display_order = value_num)
     
     # Merge the two tables
+    # Reset display_order column (if we have display orders 1, 2 & 4 in database - if on criterion has been deleted - we will have 1, 2 & 3)
     exclusion_criteria <- exclusion_criteria %>% dplyr::left_join(display_orders, by = "id") %>% dplyr::relocate(display_order, .after = "value") %>% dplyr::arrange(display_order)
     
     # Get creator name
@@ -167,8 +168,8 @@ observeEvent(input$add_%group_id%_%study_id%, {
 
 col_names <- c("ID", "Name", "Display order", "Creator", "Datetime", "Action")
 sortable_cols <- c("id", "value", "display_order", "creator_name", "datetime")
-centered_cols <- c("id", "datetime", "display_order", "action")
-column_widths = c("id" = "100px", "datetime" = "180px", "action" = "80px", "display_order" = "100px")
+centered_cols <- c("id", "datetime", "display_order", "action", "creator_name")
+column_widths = c("id" = "100px", "datetime" = "180px", "action" = "80px", "display_order" = "100px", "creator_name" = "100px", "name" = "400px")
 searchable_cols <- c("value", "datetime", "creator_name")
 
 
@@ -178,30 +179,42 @@ observeEvent(r$plugins_load_%group_id%_%study_id%, {
     
         # Get page_id for dropdowns & delete button
         page_id <- id
-    
+        
         # Add dropdown for display order & delete buttons
         
         options <- list()
-        if (nrow(r$plugins_load_%group_id%_%study_id%) > 0) options <- convert_tibble_to_list(data = r$plugins_load_%group_id%_%study_id% %>% dplyr::mutate(n = 1:dplyr::n()), key_col = "n", text_col = "n")
-        
-        data_temp <- r$plugins_load_%group_id%_%study_id% %>% dplyr::rowwise() %>%
-            dplyr::mutate(
-                display_order = as.character(
-                    div(
-                        shiny.fluent::Dropdown.shinyInput(ns(paste0("dropdown_%group_id%_%study_id%_", id)),
-                            options = options, value = display_order,
-                            onclick = paste0("Shiny.setInputValue('", page_id, "-dropdown_updated', '", paste0("dropdown_%group_id%_%study_id%_value_", id), "', {priority: 'event'})"),
-                            style = "width:120px;"
+        if (nrow(r$plugins_load_%group_id%_%study_id%) > 0){
+            
+            options <- convert_tibble_to_list(data = r$plugins_load_%group_id%_%study_id% %>% dplyr::mutate(n = 1:dplyr::n()), key_col = "n", text_col = "n")
+            
+            # If this is not an update of the dropdowns
+            
+            if (length(unique(r$plugins_load_%group_id%_%study_id%$display_order)) == nrow(r$plugins_load_%group_id%_%study_id%)){
+                r$plugins_load_%group_id%_%study_id% <- r$plugins_load_%group_id%_%study_id% %>% dplyr::arrange(display_order) %>% dplyr::mutate(n = 1:dplyr::n())} 
+            else r$plugins_load_%group_id%_%study_id% <- r$plugins_load_%group_id%_%study_id% %>% dplyr::mutate(n = display_order)
+            
+            data_temp <- r$plugins_load_%group_id%_%study_id% %>%
+                dplyr::rowwise() %>%
+                dplyr::mutate(
+                    display_order = as.character(
+                        div(
+                            shiny.fluent::Dropdown.shinyInput(ns(paste0("dropdown_%group_id%_%study_id%_", id)),
+                                options = options, value = as.integer(n),
+                                onclick = paste0("Shiny.setInputValue('", page_id, "-dropdown_updated', '", paste0("dropdown_%group_id%_%study_id%_value_", id), "', {priority: 'event'})"),
+                                style = "width:120px;"
+                            )
+                        )
+                    ),
+                    action = as.character(
+                        div(
+                            shiny::actionButton(ns(paste0("delete_%group_id%_%study_id%_", id)), "", icon = icon("trash-alt"),
+                            onclick = paste0("Shiny.setInputValue('", page_id, "-deleted_pressed_%group_id%_%study_id%', this.id, {priority: 'event'})"))
                         )
                     )
-                ),
-                action = as.character(
-                    div(
-                        shiny::actionButton(ns(paste0("delete_%group_id%_%study_id%_", id)), "", icon = icon("trash-alt"),
-                        onclick = paste0("Shiny.setInputValue('", page_id, "-deleted_pressed_%group_id%_%study_id%', this.id, {priority: 'event'})"))
-                    )
-                )
-            )
+                ) %>%
+                dplyr::select(-n)
+        }
+        else data_temp <- tibble::tibble()
     
         # Render datatable
         render_datatable(
@@ -308,15 +321,23 @@ observeEvent(input$delete_confirmed_%group_id%_%study_id%, {
     row_deleted <- as.integer(substr(input$deleted_pressed_%group_id%_%study_id%, nchar(paste0(id, "-delete_%group_id%_%study_id%_")) + 1, nchar(input$deleted_pressed_%group_id%_%study_id%)))
     
     # Delete row in database
-    sql <- glue::glue_sql("DELETE FROM modules_elements_options WHERE id = {row_deleted}", .con = r$db)
+    sql <- glue::glue_sql("UPDATE modules_elements_options SET deleted = TRUE WHERE id = {row_deleted} OR link_id = {row_deleted}", .con = r$db)
     query <- DBI::dbSendStatement(r$db, sql)
     DBI::dbClearResult(query)
     
-    # Reload r variable
-    plugins_load_%group_id%_%study_id%(r)
+    # Change display orders, depending on the display order of deleted row
+    sql <- glue::glue_sql("SELECT value_num FROM modules_elements_options WHERE link_id = {row_deleted}", .con = r$db)
+    display_order_deleted <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
+    sql <- glue::glue_sql(paste0("UPDATE modules_elements_options SET value_num = value_num - 1",
+        " WHERE deleted IS FALSE AND group_id = %group_id% AND study_id = %study_id% AND category = 'aggregated' AND name = 'display_order' AND value_num > {display_order_deleted}"), .con = r$db)
+    query <- DBI::dbSendStatement(r$db, sql)
+    DBI::dbClearResult(query)
     
     # Close dialog box
     r$delete_dialog_%group_id%_%study_id% <- FALSE
+    
+    # Reload r variable
+    plugins_load_%group_id%_%study_id%(r)
     
     # Notification to user
     show_message_bar(output = output, id = 3, translate(language, "exclusion_criterion_deleted", new_words), type ="severeWarning", language = language)

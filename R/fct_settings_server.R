@@ -1385,7 +1385,7 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
       shiny.router::get_query_param()
       shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = FALSE)
       # If this toggle was activated, reactivate it
-      if (paste0(id, toggle) %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = TRUE)
+      if (paste0(id, toggle) %in% isolate(r$activated_toggles)) shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = TRUE)
     })
     
     # If user has no access, hide card
