@@ -141,9 +141,6 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
 mod_settings_data_management_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
-    
-    # Toggles IDs
-    toggles <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card")
 
     # Dropdowns in the management datatable, by page
     dropdowns <- tibble::tribble(~id, ~dropdowns,
@@ -160,27 +157,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Data management / Show or hide cards   #
     ##########################################
     
-    # Depending on user_accesses
-    # observeEvent(r$user_accesses, {
-      # For each page, hide toggles if user has no access
-      # (Doesn't work anymore : we had a condition in server.R to not load server data if user has no access)
-      # if (table %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
-    # })
+    # Toggles IDs
+    toggles <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card")
     
-    # Depending on toggles activated
-    sapply(toggles, function(toggle){
-      
-      # If user has no access, hide card
-      observeEvent(r$user_accesses, if (paste0(table, "_", toggle) %not_in% r$user_accesses) shinyjs::hide(toggle)) 
-      
-      # If user has access, show or hide card when toggle is clicked
-      observeEvent(input[[paste0(toggle, "_toggle")]], {
-        if (paste0(table, "_", toggle) %in% r$user_accesses){
-          if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) 
-          else shinyjs::hide(toggle)
-        }
-      })
-    })
+    show_hide_cards(r = r, input = input, session = session, table = table, id = id, toggles = toggles)
     
     ##########################################
     # Data management / Add a new element    #

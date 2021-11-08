@@ -48,34 +48,14 @@ mod_settings_plugins_ui <- function(id = character(), language = "EN", words = t
 mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
- 
-    toggles <- c("description_card", "creation_card", "datatable_card", "options_card", "edit_code_card")
     
     ##########################################
     # Show or hide cards   #
     ##########################################
     
-    # Depending on user_accesses
-    # observeEvent(r$user_accesses, {
-      # Hide toggles if user has no access
-      # (Doesn't work anymore : we had a condition in server.R to not load server data if user has no access)
-      # if ("plugins" %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
-    # })
+    toggles <- c("description_card", "creation_card", "datatable_card", "options_card", "edit_code_card")
     
-    # Depending on toggles activated
-    sapply(toggles, function(toggle){
-      
-      # If user has no access, hide card
-      observeEvent(r$user_accesses, if (paste0("plugins_", toggle) %not_in% r$user_accesses) shinyjs::hide(toggle)) 
-      
-      # If user has access, show or hide card when toggle is clicked
-      observeEvent(input[[paste0(toggle, "_toggle")]], {
-        if (paste0("plugins_", toggle) %in% r$user_accesses){
-          if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) 
-          else shinyjs::hide(toggle)
-        }
-      })
-    })
+    show_hide_cards(r = r, input = input, session = session, table = "plugins", id = id, toggles = toggles)
     
     ##########################################
     # Plugins descriptions                   #

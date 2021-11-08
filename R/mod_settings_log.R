@@ -37,6 +37,13 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     ##########################################
     
     # Depending on toggles activated
+    
+    # Reset toggles when we load the page (restart reactivity, sometimes frozen)
+    observeEvent(shiny.router::get_query_param(), {
+      shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = FALSE)
+      # If this toggles was activated, reactivate it
+      if (paste0(id, toggle) %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = TRUE)
+    })
       
     # If user has no access, hide card
     observeEvent(r$user_accesses, if ("log" %not_in% r$user_accesses) shinyjs::hide("log_card")) 
@@ -44,8 +51,14 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     # If user has access, show or hide card when toggle is clicked
     observeEvent(input$log_card_toggle, {
       if ("log" %in% r$user_accesses){
-        if(input$log_card_toggle) shinyjs::show("log_card") 
-        else shinyjs::hide("log_card")
+        if(input$log_card_toggle){
+          shinyjs::show("log_card") 
+          r$activated_toggles <- c(r$activated_toggles, paste0(id, "log_card"))
+        }
+        else{
+          shinyjs::hide("log_card")
+          r$activated_toggles <- r$activated_toggles[r$activated_toggles != paste0(id, "log_card")]
+        }
       }
     })
   

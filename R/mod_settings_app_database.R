@@ -157,15 +157,13 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       "log", "icccic"
     )
     
-    toggles <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card")
-    
     ##########################################
     # Show or hide cards   #
     ##########################################
     
-    sapply(toggles, function(toggle){
-      observeEvent(input[[paste0(toggle, "_toggle")]], if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle))
-    })
+    toggles <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card")
+    
+    show_hide_cards(r = r, input = input, session = session, id = id, toggles = toggles)
     
     ##########################################
     # Database connection                    #

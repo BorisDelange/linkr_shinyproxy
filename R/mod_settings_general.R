@@ -41,27 +41,14 @@ mod_settings_general_server <- function(id = character(), r = shiny::reactiveVal
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    # Toggles IDs
-    toggles <- c("change_password_card")
-    
     ##########################################
     # Data management / Show or hide cards   #
     ##########################################
 
-    # Depending on toggles activated
-    sapply(toggles, function(toggle){
-      
-      # If user has no access, hide card
-      observeEvent(r$user_accesses, if ("change_password_card" %not_in% r$user_accesses) shinyjs::hide(toggle))
-      
-      # If user has access, show or hide card when toggle is clicked
-      observeEvent(input[[paste0(toggle, "_toggle")]], {
-        if (toggle %in% r$user_accesses){
-          if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) 
-          else shinyjs::hide(toggle)
-        }
-      })
-    })
+    # Toggles IDs
+    toggles <- c("change_password_card")
+    
+    show_hide_cards(r = r, input = input, session = session, id = id, toggles = toggles)
     
     ##########################################
     # Change password                        #

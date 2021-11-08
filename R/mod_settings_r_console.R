@@ -33,26 +33,12 @@ mod_settings_r_console_server <- function(id = character(), r = shiny::reactiveV
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    toggles <- "edit_code_card"
-    
     ##########################################
     # R console / Show or hide cards         #
     ##########################################
     
-    # Depending on toggles activated
-    sapply(toggles, function(toggle){
-      
-      # If user has no access, hide card
-      observeEvent(r$user_accesses, if (paste0("r_console_", toggle) %not_in% r$user_accesses) shinyjs::hide(toggle)) 
-      
-      # If user has access, show or hide card when toggle is clicked
-      observeEvent(input[[paste0(toggle, "_toggle")]], {
-        if (paste0("r_console_", toggle) %in% r$user_accesses){
-          if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) 
-          else shinyjs::hide(toggle)
-        }
-      })
-    })
+    toggles <- "edit_code_card"
+    show_hide_cards(r = r, input = input, session = session, table = "r_console", id = id, toggles = toggles)
     
     ##########################################
     # R console / Execute code               #

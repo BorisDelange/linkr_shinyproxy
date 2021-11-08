@@ -16,8 +16,6 @@ mod_settings_modules_ui <- function(id = character(), language = "EN", words = t
   # Patient-lvl modules                    #
   ##########################################
   
-  # if (id == "settings_modules_patient_lvl"){
-  
     if (grepl("patient_lvl", id)) prefix <- "patient_lvl"
     if (grepl("aggregated", id)) prefix <- "aggregated"
 
@@ -53,8 +51,6 @@ mod_settings_modules_ui <- function(id = character(), language = "EN", words = t
       ), words = words),
       cards
     ) -> result
-  # }
-  
   
   result
 }
@@ -242,6 +238,13 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
         # Depending on toggles activated
         sapply(toggles, function(toggle){
           
+          # Reset toggles when we load the page (restart reactivity, sometimes frozen)
+          observeEvent(shiny.router::get_query_param(), {
+            shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = FALSE)
+            # If this toggles was activated, reactivate it
+            if (paste0(id, toggle) %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = TRUE)
+          })
+          
           # If user has no access, hide card
           observeEvent(r$user_accesses,
             if ((paste0(prefix, "_modules_creation_card") %not_in% r$user_accesses & grepl("creation_card", toggle))
@@ -254,8 +257,14 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
               if ((paste0(prefix, "_modules_creation_card") %in% r$user_accesses & grepl("creation_card", toggle))
                 | (paste0(prefix, "_modules_management_card") %in% r$user_accesses & grepl("management_card", toggle))
                 | (paste0(prefix, "_modules_options_card") %in% r$user_accesses & grepl("options_card", toggle))) {
-                if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
-                else shinyjs::hide(toggle)
+                if(input[[paste0(toggle, "_toggle")]]){
+                  shinyjs::show(toggle)
+                  r$activated_toggles <- c(r$activated_toggles, paste0(id, toggle))
+                }
+                else {
+                  shinyjs::hide(toggle)
+                  r$activated_toggles <- r$activated_toggles[r$activated_toggles != paste0(id, toggle)]
+                }
               }
           })
         })
@@ -717,6 +726,9 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language)
           
           update_r(r = r, table = table, language = language)
+          
+          # Reset name dropdown
+          shiny.fluent::updateDropdown.shinyInput(session, "name", "")
         })
         
       }
@@ -908,6 +920,9 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           })
           
           observeEvent(input$cdo_save, {
+            
+            if (length(input$cdo_display_order) == 0) show_message_bar(output = output, id = 1, "dropdown_empty", type = "severeWarning", language = language)
+            
             req(length(input$cdo_display_order) > 0)
             
             # The group which had selected display order
@@ -933,13 +948,13 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
               query <- DBI::dbSendStatement(r$db, sql)
               DBI::dbClearResult(query)
               
-              show_message_bar(output = output, id = 4, "modif_saved", type ="success", language = language)
-              
               update_r(r = r, table = paste0(prefix, "_modules_elements"))
               
               # To prevent refresh of dropdowns
               r[[paste0(prefix, "_cdo_saved")]] <- 1L
             }
+            
+            show_message_bar(output = output, id = 4, "modif_saved", type ="success", language = language)
             
           })
         }

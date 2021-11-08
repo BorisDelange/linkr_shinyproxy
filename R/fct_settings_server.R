@@ -439,12 +439,22 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
             null_value <- FALSE
             if (name == "parent_module_id") null_value <- TRUE
             
+            # For dropdown parent_module in patient_lvl & aggregated_modules, need to select only modules depending on the same module family
+            
+            options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = null_value) 
+            
+            if (dropdowns[[name]] %in% c("patient_lvl_modules", "aggregated_modules")){
+              options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]] %>% dplyr::filter(module_family_id == data[[i, "module_family_id"]]),
+                key_col = "id", text_col = "name", null_value = null_value)
+            }
+            else options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = null_value)
+            
             data[i, name] <<- as.character(
               div(
                 # So ID is like "data_sources13" if ID = 13
               shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[[name]], data[[i, "id"]])),
                 # To get options, convert data var to tibble (convert r$data_sources to list)
-                options = convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = null_value),
+                options = options,
                 # value is an integer, the value of the column like "data_source_id"
                 value = as.integer(data[[i, name]])),
                 # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
@@ -1063,11 +1073,12 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
   DBI::dbSendStatement(r$db, paste0("UPDATE ", table, " SET deleted = TRUE WHERE id = ", row_deleted)) -> query
   DBI::dbClearResult(query)
   
+  # Prefix, for patient_lvl & aggregated tables
+  if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
+  if (grepl("aggregated", table)) prefix <- "aggregated"
+  
   # If we delete a datamart, delete all studies & subsets associated
   if (table == "datamarts"){
-    
-    DBI::dbSendStatement(r$db, paste0("UPDATE datamarts SET deleted = TRUE WHERE id = ", row_deleted)) -> query
-    DBI::dbClearResult(query)
     
     studies <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM studies WHERE datamart_id = ", row_deleted)) %>% dplyr::pull()
     
@@ -1083,13 +1094,35 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
   
   # If we delete a study, delete all subsets associated
   if (table == "studies"){
-    DBI::dbSendStatement(r$db, paste0("UPDATE studies SET deleted = TRUE WHERE id = ", row_deleted)) -> query
-    DBI::dbClearResult(query)
     
     DBI::dbSendStatement(r$db, paste0("UPDATE subsets SET deleted = TRUE WHERE study_id = ", row_deleted)) -> query
     DBI::dbClearResult(query)
     
     update_r(r = r, table = "subsets")
+  }
+  
+  # If we delete a module family, delete all modules & modules elements associated
+  if (table == paste0(prefix, "_modules_families")){
+    
+    modules <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM ", prefix, "_modules WHERE module_family_id = ", row_deleted)) %>% dplyr::pull()
+    
+    DBI::dbSendStatement(r$db, paste0("UPDATE ", prefix, "_modules SET deleted = TRUE WHERE module_family_id = ", row_deleted)) -> query
+    DBI::dbClearResult(query)
+    
+    DBI::dbSendStatement(r$db, paste0("UPDATE ", prefix, "_modules_elements SET deleted = TRUE WHERE module_id IN (", paste(modules, collapse = ","), ")")) -> query
+    DBI::dbClearResult(query)
+    
+    update_r(r = r, table = paste0(prefix, "_modules"))
+    update_r(r = r, table = paste0(prefix, "_modules_elements"))
+  }
+  
+  # If we delete a module, delete all modules elements associated
+  if (table == paste0(prefix, "_modules")){
+    
+    DBI::dbSendStatement(r$db, paste0("UPDATE ", prefix, "_modules_elements SET deleted = TRUE WHERE module_id = ", row_deleted)) -> query
+    DBI::dbClearResult(query)
+    
+    update_r(r = r, table = paste0(prefix, "_modules_elements"))
   }
   
   # Update r vars
@@ -1336,4 +1369,43 @@ get_authorized_data <- function(r, table, data = tibble::tibble()){
   
   # Select authorized data
   data %>% dplyr::filter(id %in% data_allowed)
+}
+
+#' Show or hide cards
+#' 
+#' 
+
+show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table = character(), id = character(), toggles = character()){
+  
+  sapply(toggles, function(toggle){
+    
+    # Reset toggles when we load the page (restart reactivity, sometimes frozen)
+    observeEvent(shiny.router::get_query_param(), {
+      shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = FALSE)
+      # If this toggles was activated, reactivate it
+      if (paste0(id, toggle) %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = TRUE)
+    })
+    
+    # If user has no access, hide card
+    if (length(table > 0)) toggle_user_access <- paste0(table, "_", toggle)
+    else toggle_user_access <- toggle
+        
+    observeEvent(r$user_accesses, if (toggle_user_access %not_in% r$user_accesses) shinyjs::hide(toggle)) 
+    
+    # If user has access, show or hide card when toggle is clicked
+    observeEvent(input[[paste0(toggle, "_toggle")]], {
+      if (toggle_user_access %in% r$user_accesses){
+        if(input[[paste0(toggle, "_toggle")]]){
+          shinyjs::show(toggle) 
+          # Save that this toggle is activated
+          r$activated_toggles <- c(r$activated_toggles, paste0(id, toggle))
+        }
+        else{
+          shinyjs::hide(toggle)
+          # Save that this toggle is disabled
+          r$activated_toggles <- r$activated_toggles[r$activated_toggles != paste0(id, toggle)]
+        }
+      }
+    })
+  })
 }

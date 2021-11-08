@@ -24,6 +24,9 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
     # Get translations
     r$words <- get_translations()
     
+    # Save currently opened toggles (used to reload cards when we load a page, restart reactivity)
+    r$activated_toggles <- ""
+    
     # Connection to database
     # If connection informations have been given in cdwtools() function, use these informations
     

@@ -123,19 +123,8 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       })
 
       # Depending on toggles activated
-      sapply(toggles, function(toggle){
-
-        # If user has no access, hide card
-        observeEvent(r$user_accesses, if (toggle %not_in% r$user_accesses) shinyjs::hide(toggle))
-
-        # If user has access, show or hide card when toggle is clicked
-        observeEvent(input[[paste0(toggle, "_toggle")]], {
-          if (toggle %in% r$user_accesses){
-            if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
-            else shinyjs::hide(toggle)
-          }
-        })
-      })
+      
+      show_hide_cards(r = r, input = input, session = session, id = id, toggles = toggles)
       
       # When a new user, a user status or a user access is added, close add card & show data management card
       sapply(c("users", "users_accesses", "users_statuses"), function(page){
@@ -340,7 +329,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         options_toggles <- tibble::tribble(
           ~name, ~toggles,
           "general_settings", "change_password_card",
-          "app_db", c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card"),#, "db_restore_card"),
+          "app_db", c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card"),
           "users", c("users_delete_data", "users_creation_card", "users_management_card",
              "users_accesses_creation_card", "users_accesses_management_card", "users_accesses_options_card",
              "users_statuses_creation_card", "users_statuses_management_card"),
