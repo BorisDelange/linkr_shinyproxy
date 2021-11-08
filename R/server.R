@@ -5,7 +5,8 @@
 #' @import shiny
 #' @noRd
 
-app_server <- function(router, language = "EN", db_info = list(), datamarts_folder = character(), app_db_folder = character()){
+app_server <- function(router, language = "EN", db_info = list(), datamarts_folder = character(), app_db_folder = character(),
+  initial_wd = character()){
   function(input, output, session ) {
     
     # Create r reactive value
@@ -53,11 +54,11 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
     
     
     # Close DB connection on exit
-    session$onSessionEnded(function() {
-      observe(on.exit({
-        add_log_entry(r = r, category = "Conncetion end", name = "Connection end", value = "")
-        DBI::dbDisconnect(r$db)
-      }))
+    # And restore initial working directory
+    onStop(function() {
+      add_log_entry(r = isolate(r), category = "Connection ends", name = "Connection ends", value = "")
+      DBI::dbDisconnect(isolate(r$db))
+      setwd(initial_wd)
     })
     
     # Add default values in database if database is empty
@@ -70,27 +71,8 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       # Add default values in database, if it is empty
       insert_default_values(output = output, r = r)
       
-      tables <- c(
-        "users_accesses", "users_statuses",
-        "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus",
-        "plugins", 
-        "patient_lvl_modules", "patient_lvl_modules_families", "patient_lvl_modules_elements",
-        "aggregated_modules", "aggregated_modules_families", "aggregated_modules_elements",
-        "code", 
-        "options", "plugins_options", "patients_options")
-      
-      sapply(tables, function(table){
-        r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
-        r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-      })
-      
-      # For users table, don't load passwords
-      r$users <- DBI::dbGetQuery(r$db, "SELECT id, username, firstname, lastname, user_access_id, user_status_id, datetime, deleted
-        FROM users WHERE deleted IS FALSE ORDER BY id")
-      r$users_temp <- r$users %>% dplyr::mutate(modified = FALSE)
-      
-      # Add a module_types variable, for settings/plugins dropdown
-      r$module_types <- tibble::tribble(~id, ~name, 1, translate(language, "patient_level_data"), 2, translate(language, "aggregated_data"))
+      # Load database
+      load_database(r = r, language = language)
       
     })
 
@@ -103,7 +85,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
     
     observeEvent(r$res_auth, {
       r$user_id <- as.integer(reactiveValuesToList(r$res_auth)$id)
-      add_log_entry(r = r, category = "Connection start", name = "Connection start", value = "")
+      add_log_entry(r = r, category = "Connection starts", name = "Connection starts", value = "")
     })
     
     

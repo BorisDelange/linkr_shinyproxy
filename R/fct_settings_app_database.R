@@ -69,9 +69,9 @@ db_create_tables <- function(db){
     tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 
       datetime = character(), deleted = logical()))
   
-  db_create_table(db, "plugins_options",
-    tibble::tibble(id = integer(), plugin_id = integer(), module_id = integer(), group_id = integer(), category = character(), link_id = integer(),
-    value = character(), valuenum = numeric(), creator_id = integer(), datetime = character(), deleted = logical()))
+  # db_create_table(db, "plugins_options",
+  #   tibble::tibble(id = integer(), plugin_id = integer(), module_id = integer(), group_id = integer(), category = character(), link_id = integer(),
+  #   value = character(), valuenum = numeric(), creator_id = integer(), datetime = character(), deleted = logical()))
 
   db_create_table(db, "patients_options",
     tibble::tibble(id = integer(), datamart_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
@@ -270,6 +270,37 @@ get_db <- function(db_info = list(), app_db_folder = character(), language = "EN
   
   # Returns distant db connection if succesfully loaded, returns local db connection else
   db
+}
+
+
+#' Load database
+#' 
+#' @param r Shiny r reactive value, used to communicate between modules
+
+load_database <- function(r = shiny::reactiveValues(), language = "EN"){
+  
+  # Database tables to load
+  tables <- c(
+    "users_accesses", "users_statuses",
+    "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus",
+    "plugins", 
+    "patient_lvl_modules", "patient_lvl_modules_families", "patient_lvl_modules_elements",
+    "aggregated_modules", "aggregated_modules_families", "aggregated_modules_elements",
+    "code", 
+    "options", "patients_options", "modules_elements_options")
+  
+  sapply(tables, function(table){
+    r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
+    r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
+  })
+  
+  # For users table, don't load passwords
+  r$users <- DBI::dbGetQuery(r$db, "SELECT id, username, firstname, lastname, user_access_id, user_status_id, datetime, deleted
+        FROM users WHERE deleted IS FALSE ORDER BY id")
+  r$users_temp <- r$users %>% dplyr::mutate(modified = FALSE)
+  
+  # Add a module_types variable, for settings/plugins dropdown
+  r$module_types <- tibble::tribble(~id, ~name, 1, translate(language, "patient_level_data"), 2, translate(language, "aggregated_data"))
 }
 
 

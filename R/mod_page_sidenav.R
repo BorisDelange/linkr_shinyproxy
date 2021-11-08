@@ -190,7 +190,11 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           patients <- r$patients %>% dplyr::inner_join(subset_patients %>% dplyr::select(patient_id), by = "patient_id")
         }
         
-        if (nrow(patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available", words))
+        if (nrow(patients) == 0){
+          # Set chosen_patient to NA, not to display a chart when no patient is chosen
+          r$chosen_patient <- NA_integer_
+          shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available", words)) 
+        }
         if (nrow(patients) > 0){
           # Order patients by patient_id
           patients <- patients %>% dplyr::arrange(patient_id)

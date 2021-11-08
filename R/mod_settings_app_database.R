@@ -458,7 +458,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     observeEvent(input$db_restore_browse, shinyjs::click("db_restore"))
     
     output$db_restore_status <- renderUI(tagList(div(
-      span("Loaded file : ", style = "padding-top:5px;"), 
+      span(translate(language, "loaded_file"), " : ", style = "padding-top:5px;"), 
       span(input$db_restore$name, style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;")))
     
     observeEvent(input$db_restore_button, {
@@ -478,7 +478,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           table <- substr(file_name, 1, nchar(file_name) - 4)
           
           # For older versions (when cache was downloaded when you clicked on save database)
-          if (table != "cache"){
+          if (table %not_in% c("cache", "plugins_options")){
             
             # Load CSV file
             col_types_temp <- col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
@@ -491,44 +491,42 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
 
             # Insert new data in table
             DBI::dbAppendTable(r$db, table, temp)
+            
+            # Delete temp file
+            file.remove(paste0("data/temp/", file_name))
           }
         })
         
         # Load database, restored
-        # TO DO...
+        load_database(r = r, language = language)
+        
+        # If restore is a success, save in database
+        
+        last_restore <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_restore' AND name = 'last_db_restore'")
+        
+        if (nrow(last_restore) == 0) {
+          
+          # Insert last time row
+          last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull()
+          query <- DBI::dbSendStatement(r$db, paste0("INSERT INTO options(id, category, name, value, creator_id, datetime, deleted) ",
+            "SELECT ", last_row + 1, ", 'last_db_restore', 'last_db_restore', '", as.character(Sys.time()), "', ", r$user_id, ", ",
+            "'", as.character(Sys.time()), "', FALSE"))
+          DBI::dbClearResult(query)
+        }
+        
+        else {
+          query <- DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", as.character(Sys.time()), "', datetime = '", as.character(Sys.time()), "'",
+            " WHERE category = 'last_db_restore' AND name = 'last_db_restore'"))
+          DBI::dbClearResult(query)
+        }
+        
+        update_r(r = r, table = "options", language = language)
         
         show_message_bar(output, 3, "database_restored", "success", language)
       },
-      error = function(e) print(e),
-      warning = function(w) print(w))
-      # error = function(e) show_message_bar(output, 2, "error_restoring_database", "severeWarning", language),
-      # warning = function(w) show_message_bar(output, 2, "error_restoring_database", "severeWarning", language))
-      
-      # If restore is a success, save in database
-      
-      last_restore <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_restore' AND name = 'last_db_restore'")
-      
-      if (nrow(last_restore) == 0) {
-        
-        # Insert last time row
-        last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull()
-        query <- DBI::dbSendStatement(r$db, paste0("INSERT INTO options(id, category, name, value, creator_id, datetime, deleted) ",
-          "SELECT ", last_row + 1, ", 'last_db_restore', 'last_db_restore', '", as.character(Sys.time()), "', ", r$user_id, ", ",
-          "'", as.character(Sys.time()), "', FALSE"))
-        DBI::dbClearResult(query)
-      }
-      
-      else {
-        query <- DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", as.character(Sys.time()), "', datetime = '", as.character(Sys.time()), "'",
-          " WHERE category = 'last_db_restore' AND name = 'last_db_restore'"))
-        DBI::dbClearResult(query)
-      }
-      
-      update_r(r = r, table = "options", language = language)
-      
+      error = function(e) show_message_bar(output, 2, "error_restoring_database", "severeWarning", language),
+      warning = function(w) show_message_bar(output, 2, "error_restoring_database", "severeWarning", language))
     })
-    
-    # How to do is here : https://techinplanet.com/read-zip-file-containing-multiple-csv-tables-in-r-shiny-app/
     
   })
 }
