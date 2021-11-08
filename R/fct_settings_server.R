@@ -1381,7 +1381,8 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
   sapply(toggles, function(toggle){
     
     # Reset toggles when we load the page (restart reactivity, sometimes frozen)
-    observeEvent(shiny.router::get_query_param(), {
+    observe({
+      shiny.router::get_query_param()
       shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = FALSE)
       # If this toggle was activated, reactivate it
       if (paste0(id, toggle) %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = TRUE)
