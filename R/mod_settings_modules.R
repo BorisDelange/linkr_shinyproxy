@@ -727,8 +727,8 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           
           update_r(r = r, table = table, language = language)
           
-          # Reset name dropdown
-          shiny.fluent::updateDropdown.shinyInput(session, "name", "")
+          # Reset name textfield
+          shiny.fluent::updateTextField.shinyInput(session, "name", "")
         })
         
       }

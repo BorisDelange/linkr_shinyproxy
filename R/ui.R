@@ -42,6 +42,9 @@ golem_add_external_resources <- function(css){
     shinyjs::useShinyjs(),
     
     # Shinybusy is used to add a busy bar on top of the page, when there are loading times
-    shinybusy::add_busy_bar(timeout = 1000, color = "#0D98FF", height = "3px")
+    shinybusy::add_busy_bar(timeout = 1000, color = "#0D98FF", height = "3px"),
+    
+    # Use shinyCopy2clipboard
+    shinyCopy2clipboard::use_copy()
   )
 }
