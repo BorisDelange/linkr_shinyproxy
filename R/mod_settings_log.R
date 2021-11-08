@@ -111,11 +111,11 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     # When a user is chosen
     
     observeEvent(input$see_log_of, {
-      
+     
       r$log <- tibble::tibble()
       
       if (input$see_log_of == "only_me"){
-        sql <- glue::glue_sql("SELECT id, category, name, value, creator_id, datetime FROM log WHERE creator_id = {r$user_id}", .con = r$db)
+        sql <- glue::glue_sql("SELECT id, category, name, value, creator_id, datetime FROM log WHERE creator_id = {r$user_id} ORDER BY datetime DESC", .con = r$db)
         r$log <- DBI::dbGetQuery(r$db, sql)
       }
       
@@ -123,7 +123,7 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     
     observeEvent(input$users, {
       
-      sql <- glue::glue_sql("SELECT id, category, name, value, creator_id, datetime FROM log WHERE creator_id IN ({input$users*})", .con = r$db)
+      sql <- glue::glue_sql("SELECT id, category, name, value, creator_id, datetime FROM log WHERE creator_id IN ({input$users*}) ORDER BY datetime DESC", .con = r$db)
       r$log <- DBI::dbGetQuery(r$db, sql)
       
     })

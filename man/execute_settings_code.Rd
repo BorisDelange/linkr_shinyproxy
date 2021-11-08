@@ -44,6 +44,6 @@ For plugins page, UI & server code are displayed in distinct outputs (uiOutput f
 }
 \examples{
 \dontrun{
-execute_settings_code(output = output, r = r, edited_code = "print('test')")
+ execute_settings_code(output = output, r = r, edited_code = "print('test')")
 }
 }

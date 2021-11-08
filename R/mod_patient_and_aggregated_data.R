@@ -437,8 +437,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                 r$server_plugins_loaded <- c(r$server_plugins_loaded, trace_code)
                 
                 tryCatch(eval(parse(text = code_server_card)),
-                  error = function(e) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language),
-                  warning = function(w) show_message_bar(output, 3, "error_run_plugin_server_code", "severeWarning", language)
+                  error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code", 
+                    error_name = paste0(id, " - Run server code"), error_report = e, language = language),
+                  warning = function(w) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code", 
+                    error_name = paste0(id, " - Run server code"), error_report = w, language = language)
                 )
               }
             }

@@ -14,7 +14,7 @@ render_datatable(
   col_names = character(),
   datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>",
   page_length = 10,
-  start = 1,
+  start = 0,
   editable_cols = character(),
   sortable_cols = character(),
   centered_cols = character(),
