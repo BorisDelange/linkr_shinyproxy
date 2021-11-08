@@ -274,7 +274,7 @@ make_choicegroup <- function(language = "EN", ns = shiny::NS(), label = characte
 #' @param column_widths Columns widths (named character vector)
 
 render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", data = tibble::tibble(),
-  output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 1,
+  output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 0,
   editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
   filter = FALSE, factorize_cols = character(), column_widths = character()
 ){
@@ -365,6 +365,15 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
     filter = filter_list,
     
     # Default options
-    rownames = FALSE, selection = "single", escape = FALSE, server = TRUE
+    rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
+    
+    # Javascript code allowing to have dropdowns & actionButtons on the DataTable
+    callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
+      var $this = $(this.node());
+      $this.attr('id', this.data()[0]);
+      $this.addClass('shiny-input-container');
+      });
+      Shiny.unbindAll(table.table().node());
+      Shiny.bindAll(table.table().node());")
   )
 }

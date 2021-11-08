@@ -1074,6 +1074,7 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
   DBI::dbClearResult(query)
   
   # Prefix, for patient_lvl & aggregated tables
+  prefix <- ""
   if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
   if (grepl("aggregated", table)) prefix <- "aggregated"
   
@@ -1382,7 +1383,7 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
     # Reset toggles when we load the page (restart reactivity, sometimes frozen)
     observeEvent(shiny.router::get_query_param(), {
       shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = FALSE)
-      # If this toggles was activated, reactivate it
+      # If this toggle was activated, reactivate it
       if (paste0(id, toggle) %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = TRUE)
     })
     

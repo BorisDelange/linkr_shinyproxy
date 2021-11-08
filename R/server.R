@@ -12,9 +12,6 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
     # Create r reactive value
     r <- reactiveValues()
     
-    # Create an agg reactive value, to communicate between aggregated plugins
-    agg <- reactiveValues()
-    
     # Create r$server_plugins_loaded
     r$server_plugins_loaded <- ""
     

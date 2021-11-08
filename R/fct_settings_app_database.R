@@ -69,18 +69,14 @@ db_create_tables <- function(db){
     tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 
       datetime = character(), deleted = logical()))
   
-  # db_create_table(db, "plugins_options",
-  #   tibble::tibble(id = integer(), plugin_id = integer(), module_id = integer(), group_id = integer(), category = character(), link_id = integer(),
-  #   value = character(), valuenum = numeric(), creator_id = integer(), datetime = character(), deleted = logical()))
-
   db_create_table(db, "patients_options",
     tibble::tibble(id = integer(), datamart_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
       category = character(), link_id = integer(), name = character(), value = character(), value_num = numeric(), 
       creator_id = integer(), datetime = character(), deleted = logical()))
   
   db_create_table(db, "modules_elements_options",
-    tibble::tibble(id = integer(), group_id = integer(), study_id = integer(), patient_id = integer(),
-      category = character(), name = character(), value = character(), value_num = numeric(), 
+    tibble::tibble(id = integer(), group_id = integer(), study_id = integer(), patient_id = integer(), link_id = integer(),
+      category = character(), name = character(), value = character(), value_num = numeric(),
       creator_id = integer(), datetime = character(), deleted = logical()))
   
   db_create_table(db, "patient_lvl_modules_families",

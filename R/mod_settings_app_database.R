@@ -467,7 +467,12 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       
       tryCatch({
         
-        untar(input$db_restore$datapath, exdir = "data/temp")
+        exdir <- paste0(find.package("cdwtools"), "/data/temp")
+        
+        # Remove temp dir first
+        unlink(exdir)
+        
+        untar(input$db_restore$datapath, exdir = exdir)
         csv_files <- untar(input$db_restore$datapath, list = TRUE)
         
         lapply(csv_files, function(file_name){
@@ -480,7 +485,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
             
             # Load CSV file
             col_types_temp <- col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
-            temp <- readr::read_csv(paste0("data/temp/", file_name), col_types = col_types_temp)
+            temp <- readr::read_csv(paste0(exdir, "/", file_name), col_types = col_types_temp)
 
             # Delete data from old table
             sql <- glue::glue_sql("DELETE FROM {`table`}", .con = r$db)
@@ -491,7 +496,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
             DBI::dbAppendTable(r$db, table, temp)
             
             # Delete temp file
-            file.remove(paste0("data/temp/", file_name))
+            file.remove(paste0(exdir, "/", file_name))
           }
         })
         
