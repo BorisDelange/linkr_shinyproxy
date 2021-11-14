@@ -18,6 +18,10 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
     # Save datamarts_folder in r variable
     r$datamarts_folder <- datamarts_folder
     
+    # App db folder
+    if (length(app_db_folder) > 0) r$app_db_folder <- app_db_folder
+    if (length(app_db_folder) == 0) r$app_db_folder <- path.expand('~')
+    
     # Get translations
     r$words <- get_translations()
     
@@ -76,45 +80,45 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       
     })
 
-    
+
     # Secure the app with ShinyManager
-    
+
     r$res_auth <- shinymanager::secure_server(check_credentials = check_authentification(r$db))
-    
+
     # Get user ID
-    
+
     observeEvent(r$res_auth, {
       r$user_id <- as.integer(reactiveValuesToList(r$res_auth)$id)
       add_log_entry(r = r, category = "Connection starts", name = "Connection starts", value = "")
     })
-    
-    
+
+
     # When r$user_id loaded, load user_accesses
-    
+
     observeEvent(r$user_id, {
       req(r$user_id)
-      
+
       user_access_id <- r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::pull(user_access_id)
-      
+
       # Get user accesses
       r$user_accesses <- r$options %>% dplyr::filter(category == "users_accesses" & link_id == user_access_id & value_num == 1) %>% dplyr::pull(name)
 
     })
-    
+
     # Route pages
     router$server(input, output, session)
-    
+
     # Load modules
     # Don't load modules user has no access to
-    
+
     observeEvent(r$user_accesses, {
-      
+
       ##########################################
       # Keep data user has access to          #
       ##########################################
-      
+
       # Thesaurus & data_sources tables are visible for everybody
-      
+
       # Access by options => user access list
       sapply(c("studies", "datamarts", "plugins"), function(table){
         if (paste0(table, "_see_all_data") %not_in% r$user_accesses){
@@ -125,10 +129,10 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
         }
       })
       sapply(c("patient_lvl_modules_families", "aggregated_modules_families"), function(table){
-        
+
         if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
         if (grepl("aggregated", table)) prefix <- "aggregated_"
-        
+
         if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
           if (nrow(r[[table]] > 0)){
             r[[table]] <- get_authorized_data(r = r, table = table)
@@ -136,9 +140,9 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
           }
         }
       })
-      
+
       # Access by parent
-      
+
       if ("subsets_see_all_data" %not_in% r$user_accesses){
         if (nrow(r$subsets > 0)){
           studies_ids <- r$studies %>% dplyr::pull(id)
@@ -146,66 +150,66 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
           r$subsets_temp <- r$subsets %>% dplyr::mutate(modified = FALSE)
         }
       }
-      
+
       sapply(c("patient_lvl_modules", "aggregated_modules", "patient_lvl_modules_elements", "aggregated_modules_elements"), function(table){
-        
+
         if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
         if (grepl("aggregated", table)) prefix <- "aggregated_"
-        
+
         if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
           modules_families_ids <- get_authorized_data(r = r, table = paste0(prefix, "modules_families")) %>% dplyr::pull(id)
           if (nrow(r[[paste0(prefix, "modules")]]) > 0) modules_ids <- r[[paste0(prefix, "modules")]] %>%
             dplyr::filter(module_family_id %in% modules_families_ids) %>% dplyr::pull(id)
-          
+
           if (nrow(r[[table]]) > 0){
             if (grepl("modules$", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_family_id %in% modules_families_ids)
             if (grepl("modules_elements", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_id %in% modules_ids)
           }
-          
+
           r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
         }
       })
-      
+
       ##########################################
       # Load server modules                    #
       ##########################################
-      
+
       sapply(c("patient_level_data", "aggregated_data"), function(page){
         mod_patient_and_aggregated_data_server(page, r, language, r$words)
         mod_page_sidenav_server(page, r, language, r$words)
       })
-      
+
       mod_settings_general_server("settings_general_settings", r, language, r$words)
       mod_page_sidenav_server("settings_general_settings", r, language, r$words)
-  
+
       if ("app_db" %in% r$user_accesses) mod_settings_app_database_server("settings_app_db", r, language, r$words)
       mod_page_sidenav_server("settings_app_db", r, language, r$words)
-  
+
       if ("users" %in% r$user_accesses) mod_settings_users_server("settings_users", r, language, r$words)
       mod_page_sidenav_server("settings_users", r, language, r$words)
-      
+
       sapply(c("users", "users_statuses", "users_accesses"), function(page){
         if ("users" %in% r$user_accesses) mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language, r$words)
         if ("users" %in% r$user_accesses) mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language, r$words)
         if ("users" %in% r$user_accesses & page == "users_accesses") mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language, r$words)
       })
-  
+
       if ("r_console" %in% r$user_accesses) mod_settings_r_console_server("settings_r_console", r, language, r$words)
       mod_page_sidenav_server("settings_r_console", r, language, r$words)
-  
+
       sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
         if (page %in% r$user_accesses) mod_settings_data_management_server(paste0("settings_", page), r, language, r$words)
         mod_page_sidenav_server(paste0("settings_", page), r, language, r$words)
       })
-  
+
       if ("plugins" %in% r$user_accesses) mod_settings_plugins_server("settings_plugins", r, language, r$words)
       mod_page_sidenav_server("settings_plugins", r, language, r$words)
-  
+
       sapply(c("patient_lvl_modules", "aggregated_modules"), function(page){
         if (page %in% r$user_accesses) mod_settings_modules_server(paste0("settings_", page), r, language, r$words)
         mod_page_sidenav_server(paste0("settings_", page), r, language, r$words)
       })
-      
+
       # Patient-lvl & aggregated modules page sub modules
       if ("patient_lvl_modules" %in% r$user_accesses | "aggregated_modules" %in% r$user_accesses){
         sapply(c("patient_lvl", "aggregated"), function(prefix){
@@ -216,10 +220,10 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
           })
         })
       }
-      
+
       if ("log" %in% r$user_accesses) mod_settings_log_server("settings_log", r, language, r$words)
       mod_page_sidenav_server("settings_log", r, language, r$words)
-      
+
     })
     
   }

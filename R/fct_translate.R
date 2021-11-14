@@ -991,7 +991,9 @@ get_translations <- function(){
     "EN", "loaded_file", "Loaded file",
     "FR", "loaded_file", "Fichier chargé",
     "EN", "hide_editor", "Hide editor",
-    "FR", "hide_editor", "Masquer l'editeur"
+    "FR", "hide_editor", "Masquer l'editeur",
+    "EN", "current_db", "Current used database",
+    "FR", "current_db_", "Base de données actuellement utilisée"
     ) -> data
   data
 }

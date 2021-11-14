@@ -98,6 +98,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
       make_card(
         translate(language, "db_save", words),
         div(
+          br(), uiOutput(ns("current_db_save")),
           br(), uiOutput(ns("last_db_save")), br(),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
             make_toggle(language = language, ns = ns, label = "db_export_log", value = FALSE, inline = TRUE)), br(),
@@ -111,6 +112,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
       make_card(
         translate(language, "db_restore", words),
         div(
+          br(), uiOutput(ns("current_db_restore")),
           br(), uiOutput(ns("last_db_restore")), br(),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
             make_toggle(language = language, ns = ns, label = "db_import_log", value = FALSE, inline = TRUE)), br(),
@@ -130,7 +132,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
 #' @noRd 
 
 mod_settings_app_database_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
-  moduleServer( id, function(input, output, session){
+  moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     # Col types of database (to restore database)
@@ -173,11 +175,11 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     ##########################################
     
     observeEvent(r$local_db, {
-      
+
       # Get distant db informations
       db_info <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'distant_db'") %>% tibble::as_tibble()
       db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
-      
+
       # Fill textfields & choicegroup with recorded informations in local database
       sapply(names(db_info), function(name){
         if (name == "connection_type"){
@@ -369,15 +371,28 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     ##########################################
     
     # Last time the db was saved
-    
+    # And current db
+
     observeEvent(r$options, {
-      
+
       last_save <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_save' AND name = 'last_db_save'")
-      
+
       if (nrow(last_save) > 0) last_save <- last_save %>% dplyr::pull(value)
       else last_save <- translate(language, "never", words)
-      
+
       output$last_db_save <- renderUI(tagList(strong(translate(language, "last_db_save", words)), " : ", last_save))
+
+      current_db <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'distant_db'")
+      connection_type <- current_db %>% dplyr::filter(name == "connection_type") %>% dplyr::pull(value)
+      if (connection_type == "local") current_db_text <- paste0(translate(language, "local", words), " (", r$app_db_folder, ")")
+      else {
+        sql_lib <- current_db %>% dplyr::filter(name == "sql_lib") %>% dplyr::pull(value)
+        dbname <- current_db %>% dplyr::filter(name == "dbname") %>% dplyr::pull(value)
+        current_db_text <- paste0(translate(language, "distant", words), " (", sql_lib, " - ", dbname, ")")
+      }
+
+      output$current_db_save <- renderUI(tagList(strong(translate(language, "current_db", words)), " : ", current_db_text))
+      output$current_db_restore <- renderUI(tagList(strong(translate(language, "current_db", words)), " : ", current_db_text))
     })
     
     # Overcome absence of downloadButton in shiny.fluent
@@ -448,12 +463,12 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     # Last time the db was restored
     
     observeEvent(r$options, {
-      
+
       last_restore <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_restore' AND name = 'last_db_restore'")
-      
+
       if (nrow(last_restore) > 0) last_restore <- last_restore %>% dplyr::pull(value)
       else last_restore <- translate(language, "never", words)
-      
+
       output$last_db_restore <- renderUI(tagList(strong(translate(language, "last_db_restore", words)), " : ", last_restore))
     })
     
@@ -474,10 +489,9 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       
       tryCatch({
         
-        exdir <- paste0(find.package("cdwtools"), "/data/temp")
-        
-        # Remove temp dir first
-        unlink(exdir)
+        exdir <- paste0(find.package("cdwtools"), "/data/temp/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"))
+        dir.create(paste0(find.package("cdwtools"), "/data/temp/"), showWarnings = FALSE)
+        dir.create(exdir)
         
         untar(input$db_restore$datapath, exdir = exdir)
         csv_files <- untar(input$db_restore$datapath, list = TRUE)
@@ -508,8 +522,11 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           }
           
           # Delete temp file
-          file.remove(paste0(exdir, "/", file_name))
+          # file.remove(paste0(exdir, "/", file_name))
         })
+        
+        # Remove temp dir
+        unlink(paste0(find.package("cdwtools"), "/data/temp"), recursive = TRUE, force = TRUE)
         
         # Load database, restored
         load_database(r = r, language = language)
@@ -536,10 +553,12 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         
         update_r(r = r, table = "options", language = language)
         
-        show_message_bar(output, 3, "database_restored", "success", language)
+        show_message_bar(output, 3, "database_restored", "success", language, time = 15000)
       },
-      error = function(e) show_message_bar(output, 2, "error_restoring_database", "severeWarning", language),
-      warning = function(w) show_message_bar(output, 2, "error_restoring_database", "severeWarning", language))
+      error = function(e) report_bug(r = r, output = output, error_message = "error_restoring_database", 
+        error_name = paste0(id, " - restore database"), category = "Error", error_report = e, language = language),
+      warning = function(w) report_bug(r = r, output = output, error_message = "error_restoring_database", 
+        error_name = paste0(id, " - restore database"), category = "Warning", error_report = w, language = language))
     })
     
   })

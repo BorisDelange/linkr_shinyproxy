@@ -9,6 +9,7 @@ report_bug(
   output,
   error_message = character(),
   error_name = character(),
+  category = character(),
   error_report = character(),
   language = "EN"
 )
@@ -21,6 +22,8 @@ report_bug(
 \item{error_message}{Error message that will be displayed to user, after translation (character())}
 
 \item{error_name}{Name of the error, to add an entry in the log table (character)}
+
+\item{category}{Category : error or warning ? (character)}
 
 \item{error_report}{Report of the error (character)}
 
