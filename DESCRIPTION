@@ -7,36 +7,35 @@ Description: CDW Tools package gives some tools to help clinicians without advan
   to pooled patient data analytics, using a web application created with {shiny}.
 License: file License
 Imports: 
-    DBI,
-    dplyr,
-    DT,
+    DBI (>= 1.1.1),
+    dplyr (>= 1.0.7),
+    DT (>= 0.19),
+    golem (>= 0.3.1),
+    glue (>= 1.4.2),
+    magrittr (>= 2.0.1),
+    readr (>= 2.0.2),
+    RPostgres (>= 1.4.1),
+    RSQLite (>= 2.2.8),
+    rlang (>= 0.4.12),
+    rlist (>= 0.4.6.2),
+    shiny (>= 1.6.0),
+    shiny.fluent (>= 0.2.1),
+    shinymanager (>= 1.0.400),
+    shiny.react (>= 0.2.3),
+    shiny.router (>= 0.2.2),
+    shinyAce (>= 0.4.1),
+    shinybusy (>= 0.2.2),
+    shinyjs (>= 2.0.0),
+    stringr (>= 1.4.0),
+    tidyr (>= 1.1.4)
+Suggests:
+    clipr,
     dygraphs,
     ggplot2,
-    golem,
-    glue,
     knitr,
-    magrittr,
-    readr,
-    RPostgres,
-    RSQLite,
-    rlang,
     rmarkdown,
-    rlist,
-    shiny (>= 1.6.0),
-    shinyFeedback,
-    shiny.fluent,
-    shinymanager,
-    shiny.react,
-    shiny.router,
-    shinyAce,
-    shinybusy,
-    shinyjs,
-    stringr,
-    tidyr,
     vistime,
     xts
-Suggests:
-    clipr
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.2
