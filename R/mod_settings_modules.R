@@ -405,14 +405,20 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
                   # Add count_items_rows in the cache & get it if already in the cache
                   tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus,
                     datamart_id = as.integer(input$datamart), category = "count_items_rows"),
-                      error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language),
-                      warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
+                    error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
+                      error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", input$datamart), category = "Error", error_report = toString(e), language = language),
+                    warning = function(w) if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
+                      error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", input$datamart), category = "Warning", error_report = toString(w), language = language)
+                  )
                   
                   # Add count_items_rows in the cache & get it if already in the cache
                   tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus,
                     datamart_id = as.integer(input$datamart), category = "count_patients_rows"),
-                      error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language),
-                      warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
+                    error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
+                      error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", input$datamart), category = "Error", error_report = toString(e), language = language),
+                    warning = function(w) if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
+                      error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", input$datamart), category = "Warning", error_report = toString(w), language = language)
+                  )
                   
                   if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language)
                   req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)

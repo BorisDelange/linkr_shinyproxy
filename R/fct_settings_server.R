@@ -238,11 +238,11 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     
     r$patients <- tibble::tibble()
     
-    datamart_id <- r$studies %>% dplyr::filter(id == last_row) %>% dplyr::pull(datamart_id)
-    
-    tryCatch(run_datamart_code(output = output, r = r, datamart_id = datamart_id),
-      error = function(e) show_message_bar(output = output, id = 2, message = "error_loading_datamart", type = "severeWarning", language = language),
-      warning = function(w) show_message_bar(output = output, id = 2, message = "error_loading_datamart", type = "severeWarning", language = language))
+    tryCatch(run_datamart_code(output = output, r = r, datamart_id = data$datamart, quiet = TRUE),
+      error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_datamart", 
+        error_name = paste0("add study - run_datamart_code - id = ", data$datamart), category = "Error", error_report = toString(e), language = language),
+      warning = function(w) if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_datamart", 
+        error_name = paste0("add study - run_datamart_code - id = ", data$datamart), category = "Warning", error_report = toString(w), language = language))
     
     if (nrow(r$patients) == 0) show_message_bar(output = output, id = 2, message = "error_loading_datamart", type = "severeWarning", language = language)
     if (nrow(r$patients) != 0){
@@ -250,8 +250,11 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
         patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
         add_patients_to_subset(output, r, patients, last_row_subsets + 1)
         update_r(r = r, table = "subset_patients")
-      }, error = function(e) show_message_bar(output = output, id = 2, message = "error_adding_patients_to_subset", type = "severeWarning", language = language),
-         warning = function(w) error = function(e) show_message_bar(output = output, id = 2, message = "error_adding_patients_to_subset", type = "severeWarning", language = language))
+      }, 
+      error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
+        error_name = paste0("add study - add_patients_to_subsets - id = ", last_row_subsets + 1), category = "Error", error_report = toString(e), language = language),
+      warning = function(w) if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
+        error_name = paste0("add study - add_patients_to_subsets - id = ", last_row_subsets + 1), category = "Warning", error_report = toString(w), language = language))
     }
   }
   

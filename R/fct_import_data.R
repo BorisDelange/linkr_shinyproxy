@@ -80,13 +80,16 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   
   # Check datamart_id
   tryCatch(as.integer(datamart_id),
-  error = function(e){
-    show_message_bar(output, 1, "invalid_datamart_id_value", "severeWarning", language, r$words)
-    stop(translate(language, "invalid_datamart_id_value", r$words))
-  }, warning = function(w){
-    show_message_bar(output, 1, "invalid_datamart_id_value", "severeWarning", language, r$words)
-    stop(translate(language, "invalid_datamart_id_value", r$words))
-  })
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_datamart_id_value", 
+        error_name = paste0("import_datamart - invalid_datamart_id_value - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
+      stop(translate(language, "invalid_datamart_id_value", r$words))},
+    warning = function(w) if (nchar(w[1]) > 0){
+      report_bug(r = r, output = output, error_message = "invalid_datamart_id_value", 
+        error_name = paste0("import_datamart - invalid_datamart_id_value - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
+      stop(translate(language, "invalid_datamart_id_value", r$words))}
+  )
+  
   # If try is a success, assign new value to data (problem with assignment inside the tryCatch)
   datamart_id <- as.integer(datamart_id)
   
@@ -124,24 +127,30 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
         r[[type]] <- readr::read_csv(path, col_types = col_types)
       })
       }, 
+      
       error = function(e){
-        show_message_bar(output, 1, "error_loading_csv", "severeWarning", language, r$words)
-        stop(translate(language, "error_loading_csv", r$words))
-      }, warning = function(w){
-        show_message_bar(output, 1, "error_loading_csv", "severeWarning", language, r$words)
-        stop(translate(language, "error_loading_csv", r$words))
-      })
+        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_csv", 
+          error_name = paste0("import_datamart - error_loading_csv - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
+        stop(translate(language, "error_loading_csv", r$words))},
+      warning = function(w) if (nchar(w[1]) > 0){
+        report_bug(r = r, output = output, error_message = "error_loading_csv", 
+          error_name = paste0("import_datamart - error_loading_csv - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
+        stop(translate(language, "error_loading_csv", r$words))}
+    )
   }
   
   # Transform as tibble
   tryCatch(tibble::as_tibble(data), 
     error = function(e){
-      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language, r$words)
-      stop(translate(language, "error_transforming_tibble", r$words))
-    }, warning = function(w){
-      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language, r$words)
-      stop(translate(language, "error_transforming_tibble", r$words)) 
-    })
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
+        error_name = paste0("import_datamart - error_transforming_tibble - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
+      stop(translate(language, "error_transforming_tibble", r$words))},
+    warning = function(w) if (nchar(w[1]) > 0){
+      report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
+        error_name = paste0("import_datamart - error_transforming_tibble - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
+      stop(translate(language, "error_transforming_tibble", r$words))}
+  )
+  
   data <- tibble::as_tibble(data)
   
   # Data cols
@@ -229,22 +238,26 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
     if (!file.exists(folder)) dir.create(folder, recursive = TRUE)
     if (!file.exists(path)) tryCatch(readr::write_csv(data, path),
       error = function(e){
-        show_message_bar(output, 1, "error_saving_csv", "severeWarning", language, r$words)
-        stop(translate(language, "error_saving_csv", r$words)) 
-      }, warning = function(w){
-        show_message_bar(output, 1, "error_saving_csv", "severeWarning", language, r$words)
-        stop(translate(language, "error_saving_csv", r$words))
-      })
+        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
+          error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
+        stop(translate(language, "error_saving_csv", r$words))},
+      warning = function(w) if (nchar(w[1]) > 0){
+        report_bug(r = r, output = output, error_message = "error_saving_csv", 
+          error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
+        stop(translate(language, "error_saving_csv", r$words))}
+    )
     if (file.exists(path) & rewrite) tryCatch({
       # file.remove(path)
       readr::write_csv(data, path)}, 
       error = function(e){
-        show_message_bar(output, 1, "error_saving_csv", "severeWarning", language, r$words)
-        stop(translate(language, "error_saving_csv", r$words))
-      }, warning = function(w){
-        show_message_bar(output, 1, "error_saving_csv", "severeWarning", language, r$words)
-        stop(translate(language, "error_saving_csv", r$words))
-      })
+        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
+          error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
+            stop(translate(language, "error_saving_csv", r$words))},
+        warning = function(w) if (nchar(w[1]) > 0){
+          report_bug(r = r, output = output, error_message = "error_saving_csv", 
+            error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
+          stop(translate(language, "error_saving_csv", r$words))}
+      )
   }
   
   r[[type]] <- data
@@ -281,12 +294,15 @@ import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id =
   # Check thesaurus_id
   tryCatch(thesaurus_id <- as.integer(thesaurus_id), 
     error = function(e){
-      show_message_bar(output, 1, "invalid_thesaurus_id_value", "severeWarning", language, r$words)
-      stop(translate(language, "invalid_thesaurus_id_value", r$words))
-    }, warning = function(w){
-      show_message_bar(output, 1, "invalid_thesaurus_id_value", "severeWarning", language, r$words)
-      stop(translate(language, "invalid_thesaurus_id_value", r$words)) 
-    })
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_thesaurus_id_value", 
+        error_name = paste0("import_thesaurus - invalid_thesaurus_id_value - id = ", thesaurus_id), category = "Error", error_report = toString(e), language = language)
+      stop(translate(language, "invalid_thesaurus_id_value", r$words))},
+    warning = function(w) if (nchar(w[1]) > 0){
+      report_bug(r = r, output = output, error_message = "invalid_thesaurus_id_value", 
+        error_name = paste0("import_thesaurus - invalid_thesaurus_id_value - id = ", thesaurus_id), category = "Warning", error_report = toString(w), language = language)
+      stop(translate(language, "invalid_thesaurus_id_value", r$words))}
+  )
+  
   if (is.na(thesaurus_id) | length(thesaurus_id) == 0){
     show_message_bar(output, 1, "invalid_thesaurus_id_value", "severeWarning", language, r$words)
     stop(translate(language, "invalid_thesaurus_id_value", r$words))
@@ -322,12 +338,14 @@ import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id =
   # Transform as tibble
   tryCatch(thesaurus <- tibble::as_tibble(thesaurus), 
     error = function(e){
-      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language, r$words)
-      stop(translate(language, "error_transforming_tibble", r$words))
-    }, warning = function(w){
-      show_message_bar(output, 1, "error_transforming_tibble", "severeWarning", language, r$words)
-      stop(translate(language, "error_transforming_tibble", r$words))
-    })
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
+        error_name = paste0("import_thesaurus - error_transforming_tibble - id = ", thesaurus_id), category = "Error", error_report = toString(e), language = language)
+      stop(translate(language, "error_transforming_tibble", r$words))},
+    warning = function(w) if (nchar(w[1]) > 0){
+      report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
+        error_name = paste0("import_thesaurus - error_transforming_tibble - id = ", thesaurus_id), category = "Warning", error_report = toString(w), language = language)
+      stop(translate(language, "error_transforming_tibble", r$words))}
+  )
   
   # Check if there are no duplicates in items_id
   items_duplicates <- thesaurus %>% dplyr::group_by(item_id) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
@@ -340,12 +358,14 @@ import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id =
   tryCatch(actual_items <- 
     DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE")) %>% dplyr::select(item_id),
     error = function(e){
-      show_message_bar(output, 1, "error_get_actuel_items", "severeWarning", language, r$words)
-      stop(translate(language, "error_get_actuel_items", r$words))
-    }, warning = function(w){
-      show_message_bar(output, 1, "error_get_actuel_items", "severeWarning", language, r$words)
-      stop(translate(language, "error_get_actuel_items", r$words))
-    })
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_get_actuel_items", 
+        error_name = paste0("import_thesaurus - error_get_actuel_items - id = ", thesaurus_id), category = "Error", error_report = toString(e), language = language)
+      stop(translate(language, "error_get_actuel_items", r$words))},
+    warning = function(w) if (nchar(w[1]) > 0){
+      report_bug(r = r, output = output, error_message = "error_get_actuel_items", 
+        error_name = paste0("import_thesaurus - error_get_actuel_items - id = ", thesaurus_id), category = "Warning", error_report = toString(w), language = language)
+      stop(translate(language, "error_get_actuel_items", r$words))}
+  )
   
   # Get items to insert with an anti-join
   items_to_insert <- thesaurus %>% dplyr::anti_join(actual_items, by = "item_id")
@@ -373,12 +393,14 @@ import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id =
   
   tryCatch(DBI::dbAppendTable(r$db, "thesaurus_items", items_to_insert),
     error = function(e){
-      show_message_bar(output, 1, "thesaurus_error_append_table", "severeWarning", language, r$words)
-      stop(translate(language, "thesaurus_error_append_table", r$words))
-    }, warning = function(w){
-      show_message_bar(output, 1, "thesaurus_error_append_table", "severeWarning", language, r$words)
-      stop(translate(language, "thesaurus_error_append_table", r$words))
-    })
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "thesaurus_error_append_table", 
+        error_name = paste0("import_thesaurus - thesaurus_error_append_table - id = ", thesaurus_id), category = "Error", error_report = toString(e), language = language)
+      stop(translate(language, "thesaurus_error_append_table", r$words))},
+    warning = function(w) if (nchar(w[1]) > 0){
+      report_bug(r = r, output = output, error_message = "thesaurus_error_append_table", 
+        error_name = paste0("import_thesaurus - thesaurus_error_append_table - id = ", thesaurus_id), category = "Warning", error_report = toString(w), language = language)
+      stop(translate(language, "thesaurus_error_append_table", r$words))}
+  )
   
   show_message_bar(output, 1, "import_thesaurus_success", "success", language, r$words)
   print(translate(language, "import_thesaurus_success", r$words))

@@ -50,6 +50,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language), 
         warning = function(w) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
           error_name = paste0(id, " - run server code"), category = "Warning", error_report = w, language = language))
+      
+      # Reload main output
+      output$main <- renderUI("")
     })
     
     ##########################################
@@ -305,8 +308,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_key")]]) %>% dplyr::arrange(display_order)
 
       # If no thesaurus elements to show in this module, notificate user
-      if (nrow(module_elements) == 0 & !grepl("selected_key", r[[paste0("reload_", prefix, "_code")]]) &
-          r[[paste0("reload_", prefix, "_code")]] != "load_toggles") show_message_bar(output = output, id = 2,
+      if (nrow(module_elements) == 0 & !grepl("selected_key|load_toggles", r[[paste0("reload_", prefix, "_code")]])) show_message_bar(output = output, id = 2,
             message = "no_module_element_to_show", type = "severeWarning", language = language)
 
       if (nrow(module_elements) > 0){
