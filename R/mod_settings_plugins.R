@@ -29,7 +29,7 @@ mod_settings_plugins_ui <- function(id = character(), language = "EN", words = t
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
             make_dropdown(language = language, ns = ns, label = "module_type", width = "300px", words = words,
               options = list(list(key = 1, text = translate(language, "patient_level_data")),
-                list(key = 2, text = translate(language, "aggregated_data")))),
+                list(key = 2, text = translate(language, "aggregated_data"))), value = 1),
             make_dropdown(language = language, ns = ns, label = "plugin", width = "300px", words = words)), br(),
           div(uiOutput(ns("plugin_description"),
             style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
@@ -79,7 +79,6 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
     
     # When input$module_type changes, update plugin dropdown
     observeEvent(input$module_type, {
-      showNotification(input$module_type)
       options <- convert_tibble_to_list(data = r$plugins %>% dplyr::filter(module_type_id == input$module_type) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options)
     })

@@ -286,8 +286,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     # Once a stay is chosen, render patient's tabs
 
     if (prefix == "patient_lvl"){
-      observeEvent(r$chosen_patient, r$reload_patient_lvl_code <- as.character(r$chosen_patient))
-      observeEvent(r$chosen_stay, r$reload_patient_lvl_code <- as.character(r$chosen_stay))
+      observeEvent(r$chosen_patient, r$reload_patient_lvl_code <- as.character(paste0("patient_", r$chosen_patient)))
+      observeEvent(r$chosen_stay, r$reload_patient_lvl_code <- as.character(paste0("stay_", r$chosen_stay)))
     }
     if (prefix == "aggregated"){
       observeEvent(r$chosen_subset, r$reload_aggregated_code <- r$chosen_subset)
@@ -448,7 +448,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             # Try to run plugin server code
             # Only if this code has not been already loaded
             if (prefix == "aggregated") trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_study)
-            if (prefix == "patient_lvl") trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_patient)
+            if (prefix == "patient_lvl") trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_patient, "_", r$chosen_stay)
 
             if ((length(r$chosen_study) > 0 & prefix == "aggregated") | (length(r$chosen_patient) > 0 & prefix == "patient_lvl")){
               if (trace_code %not_in% r$server_plugins_loaded){
