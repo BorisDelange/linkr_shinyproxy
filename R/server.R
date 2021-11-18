@@ -107,6 +107,9 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
 
     # Route pages
     router$server(input, output, session)
+    
+    # Keep trace of loaded observers (not to have multiple identical observers)
+    r$loaded_observers <- ""
 
     # Load modules
     # Don't load modules user has no access to

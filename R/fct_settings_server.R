@@ -869,45 +869,52 @@ update_settings_datatable <- function(input, r = shiny::reactiveValues(), ns = s
   
   sapply(r[[table]] %>% dplyr::pull(id), function(id){
     sapply(dropdowns, function(dropdown){
-      observeEvent(input[[paste0(get_plural(word = dropdown), id)]], {
-        
-        dropdown_table <- dropdown
-        dropdown_input <- dropdown
-        
-        # If table is a module table, dropdown name is different
-        if (table %in% c("patient_lvl_modules", "aggregated_modules")){
-          dropdown_table <- switch(dropdown, 
-            "patient_lvl_module_family" = "module_family", "aggregated_module_family" = "module_family",
-            "patient_lvl_module" = "parent_module", "aggregated_module" = "parent_module")
-        }
-        
-        # When we load a page, every dropdown triggers the event
-        # Change temp variable only if new value is different than old value
-        old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]]
-        new_value <- NA_integer_
-        
-        # If thesaurus, data_source_id can accept multiple values (converting to string)
-        if (table == "thesaurus") new_value <- toString(as.integer(input[[paste0("data_sources", id)]]))
-        if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins", "users", "patient_lvl_modules", "aggregated_modules")){
-          # if (!is.null(input[[paste0(get_plural(word = dropdown_input), id)]])) {
-          #   if (length(input[[paste0(get_plural(word = dropdown_input), id)]]) == 0) new_value <- NA_integer_
-            new_value <- coalesce2("int", input[[paste0(get_plural(word = dropdown_input), id)]])
-          # }
-        }
-        
-        # showNotification(new_value)
-
-        if (length(new_value) > 0 & length(old_value) > 0){
-          if (new_value == "" | is.na(new_value)){
-            r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]] <- NA_integer_
-            r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
+      
+      observer_name <- paste0(get_plural(word = dropdown), id)
+      
+      # Load the observer only once
+      if (observer_name %not_in% r$loaded_observers){
+        observeEvent(input[[observer_name]], {
+          
+          dropdown_table <- dropdown
+          dropdown_input <- dropdown
+          
+          # If table is a module table, dropdown name is different
+          if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+            dropdown_table <- switch(dropdown, 
+              "patient_lvl_module_family" = "module_family", "aggregated_module_family" = "module_family",
+              "patient_lvl_module" = "parent_module", "aggregated_module" = "parent_module")
           }
-          else if (old_value == "" | is.na(old_value) | new_value != old_value){
-            r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]] <- new_value
-            r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
+          
+          # When we load a page, every dropdown triggers the event
+          # Change temp variable only if new value is different than old value
+          old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]]
+          new_value <- NA_integer_
+          
+          # If thesaurus, data_source_id can accept multiple values (converting to string)
+          if (table == "thesaurus") new_value <- toString(as.integer(input[[paste0("data_sources", id)]]))
+          if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins", "users", "patient_lvl_modules", "aggregated_modules")){
+            # if (!is.null(input[[paste0(get_plural(word = dropdown_input), id)]])) {
+            #   if (length(input[[paste0(get_plural(word = dropdown_input), id)]]) == 0) new_value <- NA_integer_
+              new_value <- coalesce2("int", input[[paste0(get_plural(word = dropdown_input), id)]])
+            # }
           }
-        }
-      })
+  
+          if (length(new_value) > 0 & length(old_value) > 0){
+            if (new_value == "" | is.na(new_value)){
+              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]] <- NA_integer_
+              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
+            }
+            else if (old_value == "" | is.na(old_value) | new_value != old_value){
+              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]] <- new_value
+              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
+            }
+          }
+        }, ignoreInit = TRUE)
+      
+        # Keep trace that this observer has been loaded
+        r$loaded_observers <- c(r$loaded_observers, observer_name)
+      }
     })
   })
 }

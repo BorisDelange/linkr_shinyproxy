@@ -51,15 +51,28 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         warning = function(w) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
           error_name = paste0(id, " - run server code"), category = "Warning", error_report = w, language = language))
     })
+    
+    ##########################################
+    # Initiate observers                     #
+    ##########################################
+    
+    observeEvent(r$chosen_study, {
+      
+      req(!is.na(r$chosen_study))
+      
+      # Load tabs
+      r[[paste0("load_", prefix, "_tabs")]] <- r$chosen_study
+      
+      # Load code for toggles
+      r[[paste0("reload_", prefix, "_code")]] <- paste0(r$chosen_study, "load_toggles")
+    })
   
     ##########################################
     # Load & display tabs                    #
     ##########################################
     
     # Once a study is chosen, load its tabs
-    observeEvent(r$chosen_study, {
-
-      req(!is.na(r$chosen_study))
+    observeEvent(r[[paste0("load_", prefix, "_tabs")]], {
 
       # Load study informations
       # For one study, you choose ONE patient_lvl or aggregated data module family
@@ -200,8 +213,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           activated_cards <- ""
 
           if (nrow(module_elements) != 0){
-            
-            showNotification("UI code reloaded")
 
             # Get module element group_id
             distinct_groups <- unique(module_elements$group_id)
@@ -268,9 +279,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     # Run server code                        #
     ##########################################
 
-    # Once a study is chosen, load code for toggles
-    observeEvent(r$chosen_study, r[[paste0("reload_", prefix, "_code")]] <- paste0(r$chosen_study, "load_toggles"))
-
     # Once a patient is chosen, render its tabs (without data for current stay)
     # Once a stay is chosen, render patient's tabs
 
@@ -285,11 +293,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(r[[paste0(prefix, "_selected_key")]], r[[paste0("reload_", prefix, "_code")]] <- paste0("selected_key", r[[paste0(prefix, "_selected_key")]]))
 
     observeEvent(r[[paste0("reload_", prefix, "_code")]], {
-      
-      showNotification("Server code reloaded")
 
       req(!is.na(r$chosen_study))
-
+      
       # Update module when selected key changed
       # One module is composed by multiple groups
       # One group corresponds to one plugin and one or multiple thesaurus items

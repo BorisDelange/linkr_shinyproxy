@@ -16,7 +16,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
     "settings_data_sources", "",
     "settings_datamarts", "data_source",
     "settings_studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
-    "settings_subsets", "study",
+    "settings_subsets", c("datamart", "study"),
     "settings_thesaurus", "data_source")
   
   ##########################################
@@ -147,7 +147,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       "settings_data_sources", "",
       "settings_datamarts", "data_source",
       "settings_studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
-      "settings_subsets", "study",
+      "settings_subsets", c("datamart", "study"),
       "settings_thesaurus", "data_source")
     
     # Table name
@@ -167,14 +167,33 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     ##########################################
     
     # Update dropdowns with reactive data
-    sapply(c("data_sources", "datamarts", "studies", "subsets", "patient_lvl_modules_families", "aggregated_modules_families"), 
+    
+    uploaded_dropdowns <- dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist()
+    
+    sapply(uploaded_dropdowns, 
       function(data_var){
-        observeEvent(r[[data_var]], {
-          # Convert options to list
-          options <- convert_tibble_to_list(data = r[[data_var]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-          shiny.fluent::updateDropdown.shinyInput(session, get_singular(word = data_var), options = options)
-        })
+        
+        # Create only needed observers for current page
+        if (data_var != ""){
+          data_var <- get_plural(data_var)
+          observeEvent(r[[data_var]], {
+            
+            # Convert options to list
+            if (table == "subsets" & data_var == "studies") options <- list()
+            else options <- convert_tibble_to_list(data = r[[data_var]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+            shiny.fluent::updateDropdown.shinyInput(session, get_singular(word = data_var), options = options)
+          })
+        }
       })
+    
+    # Particular case for subsets, update study dropdown with current datamart
+    if (table == "subsets"){
+      observeEvent(input$datamart, {
+        studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
+        options <- convert_tibble_to_list(data = studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+        shiny.fluent::updateDropdown.shinyInput(session, "study", options = options)
+      })
+    }
     
     # When add button is clicked
     observeEvent(input$add, {

@@ -155,7 +155,11 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
       
       observeEvent(input$study, {
-        r$chosen_study <- input$study
+        
+        # Prevent multi change of r$chosen_study
+        # We have to keep multiple observers, cause we use input variable
+        if (is.na(r$chosen_study)) r$chosen_study <- input$study
+        if (!is.na(r$chosen_study) & r$chosen_study != input$study) r$chosen_study <- input$study
         
         # Subsets depending on the chosen study
         subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
@@ -380,7 +384,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         studies <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)
         
         # Reset r$chosen_study (to reset main display)
-        r$chosen_study <- NA_integer_
+        if (length(r$chosen_study) == 0) r$chosen_study <- NA_integer_
+        if (!is.na(r$chosen_study)) r$chosen_study <- NA_integer_
         
         # Reset dropdowns & uiOutput
         # Hide exclusion_reason dropdown
