@@ -26,7 +26,11 @@ mod_settings_plugins_ui <- function(id = character(), language = "EN", words = t
       make_card(
         translate(language, "plugins_description", words),
         div(
-          make_dropdown(language = language, ns = ns, label = "plugin", width = "300px", words = words), br(),
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+            make_dropdown(language = language, ns = ns, label = "module_type", width = "300px", words = words,
+              options = list(list(key = 1, text = translate(language, "patient_level_data")),
+                list(key = 2, text = translate(language, "aggregated_data")))),
+            make_dropdown(language = language, ns = ns, label = "plugin", width = "300px", words = words)), br(),
           div(uiOutput(ns("plugin_description"),
             style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
         ))
@@ -46,7 +50,7 @@ mod_settings_plugins_ui <- function(id = character(), language = "EN", words = t
 #' @noRd 
 
 mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
-  moduleServer( id, function(input, output, session){
+  moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     # A variable used to have a new group_id value each time we execute a module server code
@@ -67,9 +71,17 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
     # When r$plugins changes, update plugin dropdown
     observeEvent(r$plugins, {
       # If user has access
-      req("plugins_description_card" %in% r$user_accesses)
+      req("plugins_description_card" %in% r$user_accesses, input$module_type)
       
-      shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = convert_tibble_to_list(data = r$plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name"))
+      options <- convert_tibble_to_list(data = r$plugins %>% dplyr::filter(module_type_id == input$module_type) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options)
+    })
+    
+    # When input$module_type changes, update plugin dropdown
+    observeEvent(input$module_type, {
+      showNotification(input$module_type)
+      options <- convert_tibble_to_list(data = r$plugins %>% dplyr::filter(module_type_id == input$module_type) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options)
     })
     
     # When a plugin is chosen, update description UI output

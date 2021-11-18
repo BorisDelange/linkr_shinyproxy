@@ -342,6 +342,12 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           observeEvent(input$module_family, {
             req(input$module_family)
             modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == input$module_family) %>% dplyr::arrange(name)
+            
+            # Exclude modules who has children
+            modules <- modules %>% 
+              dplyr::left_join(modules %>% dplyr::select(has_children = id, id = parent_module_id), by = "id") %>%
+              dplyr::filter(is.na(has_children))
+            
             shiny.fluent::updateDropdown.shinyInput(session, "module_new_element",
               options = convert_tibble_to_list(data = modules, key_col = "id", text_col = "name"))
           })
