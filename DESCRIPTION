@@ -5,7 +5,7 @@ Authors@R: person('Boris', 'Delange', email = 'boris.delange@gmail.com', role = 
 Description: CDW Tools package gives some tools to help clinicians without advanced programmation skills, 
   statisticiants and data scientists use their clinical data warehouse, from patient-level data visualization 
   to pooled patient data analytics, using a web application created with {shiny}.
-License: GPL (>= 3)
+License: file License
 Imports: 
     DBI,
     dplyr,
