@@ -310,13 +310,6 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           shiny.fluent::updateDropdown.shinyInput(session, "parent_module", options = options_parent_module)
         })
         
-        # observeEvent(r[[paste0(prefix, "_modules")]], {
-        #   options_parent_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]] %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
-        #   options_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]] %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
-        #   shiny.fluent::updateDropdown.shinyInput(session, "parent_module", options = options_parent_module)
-        #   shiny.fluent::updateDropdown.shinyInput(session, "module", options = options_module)
-        # })
-        
         observeEvent(r$plugins, {
           
           module_type_id <- switch(prefix, "patient_lvl" = 1, "aggregated" = 2)
@@ -727,8 +720,17 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           
           update_r(r = r, table = table, language = language)
           
-          # Reset name textfield
-          shiny.fluent::updateTextField.shinyInput(session, "name", "")
+          # Reset name textfield & dropdowns
+          shiny.fluent::updateTextField.shinyInput(session, "name", value = "")
+          
+          modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == input$module_family) %>% dplyr::arrange(name)
+          shiny.fluent::updateDropdown.shinyInput(session, "module_new_element",
+            options = convert_tibble_to_list(data = modules, key_col = "id", text_col = "name"), value = NULL)
+          
+          module_type_id <- switch(prefix, "patient_lvl" = 1, "aggregated" = 2)
+          plugins <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)
+          options <- convert_tibble_to_list(data = plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options, value = NULL)
         })
         
       }

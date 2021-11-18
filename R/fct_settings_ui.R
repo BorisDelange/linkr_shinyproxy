@@ -396,7 +396,7 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
         choice_ui_server,
         ace_editor,
         shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), translate(language, "save", words)), " ",
-        shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code", words)), 
+        shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), translate(language, "execute_code", words)), 
         br(), br(),
         output_div
       )

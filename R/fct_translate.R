@@ -16,7 +16,6 @@
 translate <- function(language = "EN", reference_word = character(), words = tibble::tibble()){
   
   if (nrow(words) == 0) words <- get_translations()
-  # if (nrow(words) == 0) print(paste0("Words = ", reference_word))
   
   if (nchar(language) %not_in% c(2, 3)) stop("Input 'language' has less than 2 or more than 3 characters")
   if (!is.data.frame(words)) stop("Input 'words' is not a dataframe")
@@ -27,6 +26,9 @@ translate <- function(language = "EN", reference_word = character(), words = tib
     dplyr::filter(language == !!language, reference_word == !!reference_word) %>%
     dplyr::pull(translated_word) -> result
   if (length(result) == 0) result <- ""
+  
+  if (nrow(words) == 0) result <- "Deprecated use of translations"
+  
   result
 }
 

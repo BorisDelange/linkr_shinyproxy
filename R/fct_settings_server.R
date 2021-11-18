@@ -528,7 +528,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
 
       # Get names for other columns if there are not dropdowns
 
-      cols <- c("data_source_id" = "data_sources", "datamart_id" = "datamarts", "study_id" = "studies")
+      cols <- c("data_source_id" = "data_sources", "datamart_id" = "datamarts", "study_id" = "studies", "module_type_id" = "module_types")
       sapply(names(cols), function(name){
         if (name %in% names(data) & name %not_in% names(dropdowns)){
           row_id <- data[[i, name]]

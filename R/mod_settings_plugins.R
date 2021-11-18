@@ -114,15 +114,13 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
         # If user has access
         req("plugins_datatable_card" %in% r$user_accesses)
 
-        dropdowns_datatable <- c("module_type_id" = "module_types")
-
         if ("plugins_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
         action_buttons <- c(action_buttons, "edit_code", "options")
 
-        sortable_cols <- c("id", "name", "datetime")
+        sortable_cols <- c("id", "name", "module_type_id", "datetime")
 
         # Column widths
-        column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
+        column_widths <- c("id" = "80px", "datetime" = "130px", "module_type_id" = "130px", "action" = "80px")
 
         # Centered columns
         centered_cols <- c("id", "module_type_id", "datetime", "action")
@@ -132,7 +130,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
         start <- isolate(input$management_datatable_state$start)
 
         render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-          col_names =  get_col_names(table_name = "plugins", language = language), table = "plugins", dropdowns = dropdowns_datatable, action_buttons = action_buttons,
+          col_names =  get_col_names(table_name = "plugins", language = language), table = "plugins", action_buttons = action_buttons,
           datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
           editable_cols = c("name"), sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths)
       })
@@ -294,7 +292,13 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           # Update study dropdown
           studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart) %>% dplyr::arrange(name)
           if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", words))
-          if (nrow(studies) > 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = convert_tibble_to_list(data = studies, key_col = "id", text_col = "name"), value = NULL)
+          if (nrow(studies) > 0){
+            options <- convert_tibble_to_list(data = studies, key_col = "id", text_col = "name")
+            shiny.fluent::updateDropdown.shinyInput(session, "study", options = options, value = options[[1]][["key"]])
+          }
+          
+          # Update subset dropdown
+          shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL)
           
           # Update patient dropdown
           if (nrow(r$patients) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available", words))
@@ -333,7 +337,10 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           
           subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
           if (nrow(subsets) == 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available", words))
-          if (nrow(subsets) > 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = convert_tibble_to_list(data = subsets, key_col = "id", text_col = "name"), value = NULL)
+          if (nrow(subsets) > 0){
+            options <- convert_tibble_to_list(data = subsets, key_col = "id", text_col = "name")
+            shiny.fluent::updateDropdown.shinyInput(session, "subset", options = options, value = options[[1]][["key"]])
+          }
         })
         
         # When a patient is chosen

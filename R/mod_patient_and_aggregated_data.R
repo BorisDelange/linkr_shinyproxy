@@ -200,6 +200,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           activated_cards <- ""
 
           if (nrow(module_elements) != 0){
+            
+            showNotification("UI code reloaded")
 
             # Get module element group_id
             distinct_groups <- unique(module_elements$group_id)
@@ -283,6 +285,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(r[[paste0(prefix, "_selected_key")]], r[[paste0("reload_", prefix, "_code")]] <- paste0("selected_key", r[[paste0(prefix, "_selected_key")]]))
 
     observeEvent(r[[paste0("reload_", prefix, "_code")]], {
+      
+      showNotification("Server code reloaded")
 
       req(!is.na(r$chosen_study))
 
