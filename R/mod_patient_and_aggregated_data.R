@@ -208,10 +208,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
 
         shown_tabs <- tagList()
         sapply(1:nrow(shown_modules), function(i){
+          
           # Get module UI code
+          
+          has_children <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == shown_modules[[i, "id"]]) %>% nrow()
 
           module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == shown_modules[[i, "id"]]) %>% dplyr::arrange(display_order)
-          code_ui <- tagList()
+          code_ui <- tagList("")
           cards <- list()
           activated_cards <- ""
 
@@ -261,10 +264,19 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               })
             })
           }
-
-          code_ui <- tagList(
-            render_settings_toggle_card(language = language, ns = ns, cards = cards, activated = activated_cards, translate = FALSE),
-            code_ui)
+        
+          # If no toggles to show, display a message
+          if (length(cards) == 0 & has_children == 0) code_ui <- tagList(code_ui, make_card("", 
+            div(shiny.fluent::MessageBar(translate(language, "empty_page", r$words), messageBarType = 3), style = "margin-top:10px;")))
+          
+          if (has_children > 0) code_ui <- tagList(code_ui, make_card("", 
+            div(shiny.fluent::MessageBar(translate(language, "page_contains_subpages", r$words), messageBarType = 0), style = "margin-top:10px;")))
+          
+          if (length(cards) > 0 & has_children == 0){
+            code_ui <- tagList(
+              render_settings_toggle_card(language = language, ns = ns, cards = cards, activated = activated_cards, translate = FALSE),
+              code_ui)
+          }
 
           shown_tabs <<- tagList(shown_tabs, shiny.fluent::PivotItem(id = shown_modules[[i, "id"]], itemKey = shown_modules[[i, "id"]], headerText = shown_modules[[i, "name"]], code_ui))
         })
