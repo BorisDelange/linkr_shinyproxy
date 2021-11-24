@@ -384,7 +384,7 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
     # UI output to render UI code of the plugin and text output to render server error messages
     output_div <- tagList(
       shiny::uiOutput(ns("code_result_ui")), br(),
-      div(shiny::verbatimTextOutput(ns("code_result_server")), 
+      div(verbatimTextOutput(ns("code_result_server")), 
           style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
   }
   

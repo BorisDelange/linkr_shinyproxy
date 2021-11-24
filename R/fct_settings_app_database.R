@@ -115,6 +115,19 @@ db_create_tables <- function(db){
   db_create_table(db, "cache",
     tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
   
+  db_create_table(db, "cache_for_settings",
+    tibble::tibble(id = integer(), table_name = character(), link_id = integer(), name = character(), description = character(),
+      username = character(), firstname = character(), lastname = character(), password = character(),
+      user_access_id = character(), user_status_id = character(),
+      data_source_id = character(), data_source_id_thesaurus = character(), datamart_id = character(), 
+      patient_lvl_module_family_id = character(), aggregated_module_family_id = character(),
+      study_id = character(), module_type_id = character(), module_family_id = character(), parent_module_id = character(),
+      group_id = integer(), module_id = character(), plugin_id = character(),
+      thesaurus_name = character(), thesaurus_item_id = character(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+      thesaurus_item_colour = character(), display_order = character(),
+      action = character(), creator_id = character(), datetime = character(), deleted = logical())
+    )
+  
   db_create_table(db, "log",
     tibble::tibble(id = integer(), category = character(), name = character(), value = character(), creator_id = integer(), datetime = character()))
 }

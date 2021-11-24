@@ -228,11 +228,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               }
 
               # Get name of module element
+              # Remove special characters (-, / ...)
               module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
+              module_element_name_escaping <- module_element_name %>% stringr::str_replace_all(c("-" = "_", "/" = "_", "\\(" = "_", "\\)" = "_"))
 
               # Append a toggle to our cards list
-              cards <<- rlist::list.append(cards, list(key = paste0(module_element_name, group_id), label = module_element_name))
-              activated_cards <<- c(activated_cards, paste0(module_element_name, group_id))
+              cards <<- rlist::list.append(cards, list(key = paste0(module_element_name_escaping, group_id), label = module_element_name))
+              activated_cards <<- c(activated_cards, paste0(module_element_name_escaping, group_id))
 
               # Try to run plugin UI code
               # ID of UI element is in the following format : "group_[ID]"
@@ -244,7 +246,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                 if (length(r$chosen_study) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
                 if (length(r$chosen_patient) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient))
 
-                code_ui <<- tagList(code_ui, div(id = ns(paste0(module_element_name, group_id)), make_card(module_element_name, eval(parse(text = code_ui_card)))))
+                code_ui <<- tagList(code_ui, div(id = ns(paste0(module_element_name_escaping, group_id)), make_card("", eval(parse(text = code_ui_card)))))
               },
               error = function(e){
                 # Libraries needed
@@ -322,9 +324,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         sapply(distinct_groups, function(group_id){
 
             # Get name of module element
-            module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
+            module_element_name_escaping <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% 
+              dplyr::pull(name) %>% stringr::str_replace_all(c("-" = "_", "/" = "_", "\\(" = "_", "\\)" = "_"))
 
-            toggles <<- c(toggles, paste0(module_element_name, group_id))
+            toggles <<- c(toggles, paste0(module_element_name_escaping, group_id))
 
           if (!grepl("load_toggles", r[[paste0("reload_", prefix, "_code")]])){
 
