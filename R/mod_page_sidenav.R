@@ -151,6 +151,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         # Save value in r$chosen_dropdown, to update patient-level data dropdowns AND aggregated data dropdowns
         r$chosen_datamart <- input$datamart
         
+        # Resetchosen_study variable
+        r$chosen_study <- NA_integer_
+        shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL)
+        
         # Update Dropdowns AFTER having executing datamart code (prevents a bug, where UI displays and disappears)
       })
       
@@ -211,6 +215,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
       
       observeEvent(input$patient, {
+        
+        req(input$patient)
         
         r$chosen_patient <- input$patient
         

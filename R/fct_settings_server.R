@@ -491,19 +491,19 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
         # Add options button
         if ("options" %in% action_buttons){
           actions <- tagList(actions,
-            shiny::actionButton(paste0("options_", data[i, "id"]), "", icon = icon("cog"),
+            actionButton(paste0("options_", data[i, "id"]), "", icon = icon("cog"),
               onclick = paste0("Shiny.setInputValue('", id, "-options", "', this.id, {priority: 'event'})")), "")}
   
         # Add edit code button
         if ("edit_code" %in% action_buttons){
           actions <- tagList(actions,
-            shiny::actionButton(paste0("edit_code_", data[i, "id"]), "", icon = icon("file-code"),
+            actionButton(paste0("edit_code_", data[i, "id"]), "", icon = icon("file-code"),
               onclick = paste0("Shiny.setInputValue('", id, "-edit_code", "', this.id, {priority: 'event'})")), "")}
   
         # Add sub datatable button
         if ("sub_datatable" %in% action_buttons){
           actions <- tagList(actions,
-            shiny::actionButton(paste0("sub_datatable_", data[i, "id"]), "", icon = icon("table"),
+            actionButton(paste0("sub_datatable_", data[i, "id"]), "", icon = icon("table"),
               onclick = paste0("Shiny.setInputValue('", id, "-sub_datatable", "', this.id, {priority: 'event'})")), "")}
   
         # Add delete button
@@ -512,7 +512,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
           # If row is deletable (we havn't made a function argument for deletable or not, only default subsets are not deletable)
           # Could be changed later
           
-          delete <- shiny::actionButton(paste0("delete_", data[i, "id"]), "", icon = icon("trash-alt"),
+          delete <- actionButton(paste0("delete_", data[i, "id"]), "", icon = icon("trash-alt"),
             onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})"))
           
           # Default subsets are not deletable

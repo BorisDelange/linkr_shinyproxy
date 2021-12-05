@@ -219,7 +219,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
               if (name == "port" & input[[name]] != "" & grepl("^[0-9]+$", input[[name]])) db_checks[[name]] <<- TRUE
             }
           })
-          sapply(names(db_checks), function(name) if (!db_checks[[name]]) shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = translate(language, paste0("provide_valid_", name), words)))
+          sapply(names(db_checks), function(name) if (!db_checks[[name]]) shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = translate(language, paste0("provide_valid_", name), r$words)))
           
           req(db_checks[["dbname"]], db_checks[["host"]], db_checks[["port"]], db_checks[["user"]], db_checks[["password"]])
           
@@ -261,7 +261,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         output$test_connection_success <- renderText("")
         output$test_connection_failure <- renderText("")
         
-        sapply(names(db_checks), function(name) if (!db_checks[[name]]) shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = translate(language, paste0("provide_valid_", name), words)))
+        sapply(names(db_checks), function(name) if (!db_checks[[name]]) shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = translate(language, paste0("provide_valid_", name), r$words)))
         
         req(db_checks[["dbname"]], db_checks[["host"]], db_checks[["port"]], db_checks[["user"]], db_checks[["password"]])
         
@@ -275,7 +275,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           tryCatch(eval(parse(text = isolate(code))), error = function(e) print(e), warning = function(w) print(w))
         )
         
-        if (!grepl("exception|error|warning|fatal", tolower(result))) result_success <- paste0(translate(language, "success", words), " !")
+        if (!grepl("exception|error|warning|fatal", tolower(result))) result_success <- paste0(translate(language, "success", r$words), " !")
         if (grepl("exception|error|warning|fatal", tolower(result))) result_failure <- result
         
         output$test_connection_success <- renderText(result_success)
@@ -310,7 +310,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         }
       }
       
-      colnames(data) <- c(translate(language, "table_name", words), translate(language, "row_number", words))
+      colnames(data) <- c(translate(language, "table_name", r$words), translate(language, "row_number", r$words))
       
       output$app_db_tables <- DT::renderDT(
         data,
@@ -378,21 +378,21 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       last_save <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_save' AND name = 'last_db_save'")
 
       if (nrow(last_save) > 0) last_save <- last_save %>% dplyr::pull(value)
-      else last_save <- translate(language, "never", words)
+      else last_save <- translate(language, "never", r$words)
 
-      output$last_db_save <- renderUI(tagList(strong(translate(language, "last_db_save", words)), " : ", last_save))
+      output$last_db_save <- renderUI(tagList(strong(translate(language, "last_db_save", r$words)), " : ", last_save))
 
       current_db <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'distant_db'")
       connection_type <- current_db %>% dplyr::filter(name == "connection_type") %>% dplyr::pull(value)
-      if (connection_type == "local") current_db_text <- paste0(translate(language, "local", words), " (", r$app_db_folder, ")")
+      if (connection_type == "local") current_db_text <- paste0(translate(language, "local", r$words), " (", r$app_db_folder, ")")
       else {
         sql_lib <- current_db %>% dplyr::filter(name == "sql_lib") %>% dplyr::pull(value)
         dbname <- current_db %>% dplyr::filter(name == "dbname") %>% dplyr::pull(value)
-        current_db_text <- paste0(translate(language, "distant", words), " (", sql_lib, " - ", dbname, ")")
+        current_db_text <- paste0(translate(language, "distant", r$words), " (", sql_lib, " - ", dbname, ")")
       }
 
-      output$current_db_save <- renderUI(tagList(strong(translate(language, "current_db", words)), " : ", current_db_text))
-      output$current_db_restore <- renderUI(tagList(strong(translate(language, "current_db", words)), " : ", current_db_text))
+      output$current_db_save <- renderUI(tagList(strong(translate(language, "current_db", r$words)), " : ", current_db_text))
+      output$current_db_restore <- renderUI(tagList(strong(translate(language, "current_db", r$words)), " : ", current_db_text))
     })
     
     # Overcome absence of downloadButton in shiny.fluent
@@ -467,9 +467,9 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       last_restore <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_restore' AND name = 'last_db_restore'")
 
       if (nrow(last_restore) > 0) last_restore <- last_restore %>% dplyr::pull(value)
-      else last_restore <- translate(language, "never", words)
+      else last_restore <- translate(language, "never", r$words)
 
-      output$last_db_restore <- renderUI(tagList(strong(translate(language, "last_db_restore", words)), " : ", last_restore))
+      output$last_db_restore <- renderUI(tagList(strong(translate(language, "last_db_restore", r$words)), " : ", last_restore))
     })
     
     # Overcome absence of downloadButton in shiny.fluent
@@ -478,7 +478,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     observeEvent(input$db_restore_browse, shinyjs::click("db_restore"))
     
     output$db_restore_status <- renderUI(tagList(div(
-      span(translate(language, "loaded_file"), " : ", style = "padding-top:5px;"), 
+      span(translate(language, "loaded_file", r$words), " : ", style = "padding-top:5px;"), 
       span(input$db_restore$name, style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;")))
     
     observeEvent(input$db_restore_button, {
@@ -490,6 +490,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       tryCatch({
         
         exdir <- paste0(find.package("cdwtools"), "/data/temp/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"))
+        dir.create(paste0(find.package("cdwtools"), "/data/"), showWarnings = FALSE)
         dir.create(paste0(find.package("cdwtools"), "/data/temp/"), showWarnings = FALSE)
         dir.create(exdir)
         
@@ -556,9 +557,9 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         show_message_bar(output, 3, "database_restored", "success", language, time = 15000)
       },
       error = function(e) report_bug(r = r, output = output, error_message = "error_restoring_database", 
-        error_name = paste0(id, " - restore database"), category = "Error", error_report = e, language = language),
-      warning = function(w) report_bug(r = r, output = output, error_message = "error_restoring_database", 
-        error_name = paste0(id, " - restore database"), category = "Warning", error_report = w, language = language))
+        error_name = paste0(id, " - restore database"), category = "Error", error_report = e, language = language))#,
+      # warning = function(w) report_bug(r = r, output = output, error_message = "error_restoring_database", 
+      #   error_name = paste0(id, " - restore database"), category = "Warning", error_report = w, language = language))
     })
     
   })

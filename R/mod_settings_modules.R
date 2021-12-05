@@ -516,8 +516,9 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
               
               # Initiate r variable if doesn't exist
               if (length(r$modules_thesaurus_selected_items) == 0){
-                r$modules_thesaurus_selected_items <- tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, 
-                 ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text) 
+                r$modules_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
+                  thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+                  thesaurus_item_colour = character(), input_text = character()) 
               }
               
               # Get ID of chosen thesaurus item
@@ -538,12 +539,13 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
                 # NB : the thesaurus_item_id saved in the database is the thesaurus ITEM_ID, no its ID in the database (in case thesaurus is deleted or re-uploaded)
                 item <- r$modules_thesaurus_items_temp %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", name))
                 
-                display_name <- ifelse(item$display_name == "", item$name, item$display_name)
+                display_name <- ifelse((item$display_name == "" | is.na(item$display_name)), item$name, item$display_name)
                 
                 # Add item to selected items
                 r$modules_thesaurus_selected_items <- r$modules_thesaurus_selected_items %>% dplyr::bind_rows(
                   tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text,
-                    link_id, input$thesaurus, thesaurus_name, item$item_id, display_name, item$unit, input[[paste0("colour_", link_id)]], item$input_text))
+                    as.integer(link_id), as.integer(input$thesaurus), as.character(thesaurus_name), as.integer(item$item_id), as.character(display_name), 
+                    as.character(item$unit), as.character(input[[paste0("colour_", link_id)]]), as.character(item$input_text)))
   
                 # Update dropdown of selected items
                 options <- tibble_to_list(r$modules_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), "id", "input_text")
@@ -559,8 +561,9 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
               
               # Initiate r variable if doesn't exist
               if (length(r$modules_thesaurus_selected_items) == 0){
-                r$modules_thesaurus_selected_items <- tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, 
-                  ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text) 
+                r$modules_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
+                  thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+                  thesaurus_item_colour = character(), input_text = character())
               }
               
               # Get ID of chosen thesaurus item
@@ -585,8 +588,9 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             # When reset button is clicked
             observeEvent(input$reset_thesaurus_items, {
               # Reset r$modules_thesaurus_selected_items
-              r$modules_thesaurus_selected_items <- tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, 
-                ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text) 
+              r$modules_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
+                thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+                thesaurus_item_colour = character(), input_text = character()) 
               
               shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
             })
@@ -1053,7 +1057,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             
             r$patient_lvl_modules_elements_group_delete_dialog <- FALSE
             
-            sql <- paste0("UPDATE patient_lvl_modules_elements SET deleted = 1 WHERE group_id = ", input$dme_module_element)
+            sql <- paste0("UPDATE patient_lvl_modules_elements SET deleted = TRUE WHERE group_id = ", input$dme_module_element)
             query <- DBI::dbSendStatement(r$db, sql)
             DBI::dbClearResult(query)
             

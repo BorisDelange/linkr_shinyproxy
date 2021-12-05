@@ -996,8 +996,8 @@ get_translations <- function(){
     "FR", "hide_editor", "Masquer l'editeur",
     "EN", "current_db", "Current used database",
     "FR", "current_db_", "Base de données actuellement utilisée",
-    "EN", "page_contains_subpages", "This page contains subpages. Click again on the link to show subpages.",
-    "FR", "page_contains_subpages", "Cette page contient des sous-catégories. Cliquer de nouveau sur le lien pour afficher les sous-catégories.",
+    "EN", "module_contains_submodules", "This module contains sub-modules. Click again on the module link to show sub-modules",
+    "FR", "module_contains_submodules", "Ce module contient des sous-modules. Cliquer de nouveau sur le lien pour afficher les sous-modules.",
     "EN", "empty_page", "This module doesn't contain any module element",
     "FR", "empty_page", "Ce module ne contient aucune figure"
     ) -> data

@@ -116,7 +116,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   if (save_as_csv & !rewrite & file.exists(path)){
     tryCatch({
       show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", language, r$words)
-      print(translate(language, "import_datamart_success", r$words))
+      # print(translate(language, "import_datamart_success", r$words))
       return({
         col_types <- switch(type, 
           "patients" = "icnT",
@@ -263,7 +263,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   r[[type]] <- data
   
   show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", language, r$words)
-  print(translate(language, "import_datamart_success", r$words))
+  # print(translate(language, "import_datamart_success", r$words))
 }
 
 #' Import a thesaurus
@@ -403,5 +403,5 @@ import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id =
   )
   
   show_message_bar(output, 1, "import_thesaurus_success", "success", language, r$words)
-  print(translate(language, "import_thesaurus_success", r$words))
+  # print(translate(language, "import_thesaurus_success", r$words))
 }

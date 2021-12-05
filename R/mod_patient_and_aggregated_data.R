@@ -270,7 +270,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             div(shiny.fluent::MessageBar(translate(language, "empty_page", r$words), messageBarType = 3), style = "margin-top:10px;")))
           
           if (has_children > 0) code_ui <- tagList(code_ui, make_card("", 
-            div(shiny.fluent::MessageBar(translate(language, "page_contains_subpages", r$words), messageBarType = 0), style = "margin-top:10px;")))
+            div(shiny.fluent::MessageBar(translate(language, "module_contains_submodules", r$words), messageBarType = 0), style = "margin-top:10px;")))
           
           if (length(cards) > 0 & has_children == 0){
             code_ui <- tagList(
