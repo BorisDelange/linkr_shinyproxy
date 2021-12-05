@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,18 +33,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cdwtools</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.2</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../articles/cdwtools.html">Get started</a>
 </li>
@@ -57,7 +53,8 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li class="divider">
-    <li class="dropdown-header">FR - Aide</li>
+    </li>
+<li class="dropdown-header">FR - Aide</li>
     <li>
       <a href="../articles/FR_user_help.html">Aide aux utilisateurs</a>
     </li>
@@ -71,7 +68,8 @@
       <a href="../articles/FR_deploy_shiny_proxy.html">Déployer avec ShinyProxy</a>
     </li>
     <li class="divider">
-    <li class="dropdown-header">EN - Help</li>
+    </li>
+<li class="dropdown-header">EN - Help</li>
     <li>
       <a href="../articles/EN_user_help.html">User help</a>
     </li>
@@ -85,7 +83,8 @@
       <a href="../articles/EN_deploy_shiny_proxy.html">Deploy with ShinyProxy</a>
     </li>
     <li class="divider">
-    <li class="dropdown-header">Plugins</li>
+    </li>
+<li class="dropdown-header">Plugins</li>
     <li>
       <a href="../articles/patient_lvl_data_plugins.html">Patient-level data plugins</a>
     </li>
@@ -100,7 +99,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/BorisDelange/cdwtools/">
+  <a href="https://github.com/BorisDelange/cdwtools/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -115,40 +114,40 @@
 
       
 
-      </header><script src="EN_developper_help_files/header-attrs-2.11/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Developper help</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/BorisDelange/cdwtools/blob/master/vignettes/EN_developper_help.Rmd"><code>vignettes/EN_developper_help.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/BorisDelange/cdwtools/blob/HEAD/vignettes/EN_developper_help.Rmd" class="external-link"><code>vignettes/EN_developper_help.Rmd</code></a></small>
       <div class="hidden name"><code>EN_developper_help.Rmd</code></div>
 
     </div>
 
     
     
-<div id="app-database" class="section level2">
-<h2 class="hasAnchor">
-<a href="#app-database" class="anchor"></a>App database</h2>
+<div class="section level2">
+<h2 id="app-database">App database<a class="anchor" aria-label="anchor" href="#app-database"></a>
+</h2>
 </div>
-<div id="users" class="section level2">
-<h2 class="hasAnchor">
-<a href="#users" class="anchor"></a>Users</h2>
+<div class="section level2">
+<h2 id="users">Users<a class="anchor" aria-label="anchor" href="#users"></a>
+</h2>
 </div>
-<div id="data-management" class="section level2">
-<h2 class="hasAnchor">
-<a href="#data-management" class="anchor"></a>Data management</h2>
-<div id="data-sources" class="section level3">
-<h3 class="hasAnchor">
-<a href="#data-sources" class="anchor"></a>Data sources</h3>
+<div class="section level2">
+<h2 id="data-management">Data management<a class="anchor" aria-label="anchor" href="#data-management"></a>
+</h2>
+<div class="section level3">
+<h3 id="data-sources">Data sources<a class="anchor" aria-label="anchor" href="#data-sources"></a>
+</h3>
 <p>A data source can be a data warehouse, a CSV file etc.</p>
 <p>To <strong>create a data source</strong>, the name must be unique. You can add a short description, which is optional. The thesaurus are attached to the data source later, in the thesaurus section.</p>
 <p>You can <strong>edit</strong> name &amp; description by double-clicking on the field, delete a data source.</p>
 </div>
-<div id="datamarts" class="section level3">
-<h3 class="hasAnchor">
-<a href="#datamarts" class="anchor"></a>Datamarts</h3>
+<div class="section level3">
+<h3 id="datamarts">Datamarts<a class="anchor" aria-label="anchor" href="#datamarts"></a>
+</h3>
 <p>A datamart is a <strong>data access to a part of a data warehouse</strong>. It is often the screening criteria of a study (eg : all patients who received Meropenem in the ICU unit of my hospital, between 2021-01 &amp; 2021-06).</p>
 <p>To <strong>create a datamart</strong>, the name must be unique. You can add a short description, which is optional. Choose a data source : it links the thesaurus (one thesaurus is attached to one or multiple data source(s)) and the datamart.</p>
 <p>On the <strong>management page</strong>, you can edit name &amp; description by double-clicking on the field, edit data source by changing the value of the dropdown. The other fields cannot be updated. In the action column, you can delete a datamart, edit options or edit code.</p>
@@ -183,9 +182,9 @@
 <p>On the <strong>options page</strong>, you can choose if the users are allowed to see individual patients data, or just aggregated data. It can be useful to have frequent statistics about a group of patients without having to see individual data : eg a weekly updated datamart with bed occupancy of a hospital unit.</p>
 <p>You have to choose which users will have access to this datamart.</p>
 </div>
-<div id="studies" class="section level3">
-<h3 class="hasAnchor">
-<a href="#studies" class="anchor"></a>Studies</h3>
+<div class="section level3">
+<h3 id="studies">Studies<a class="anchor" aria-label="anchor" href="#studies"></a>
+</h3>
 <p>A study is a project using a datamart. One datamart can contains several studies. Each study contains all patients of the datamart.</p>
 <p>To <strong>create a study</strong>, the name must be unique. You can add a short description, which is optional. You have to choose the datamart, from which the data comes. You have to choose a patient-level data module family &amp; an aggregated data module family.</p>
 <p>The page <strong>Patient-level data</strong> allows a user to have access to individual patient data. This page <strong>works with modules</strong>, which are subpages created by a user. In a module, a user <strong>chooses which items</strong> of the thesaurus will be displayed (eg Heart rate &amp; Respiratory rate), in <strong>which form</strong> (eg in a timeline). These modules are <strong>grouped under module families</strong>, so that a module created by one user can be re-used by others (eg MIMIC-IV default module family).</p>
@@ -200,9 +199,9 @@
 </ul>
 <p>The code to generate All patients subset is added in the subset code (see next section).</p>
 </div>
-<div id="subsets" class="section level3">
-<h3 class="hasAnchor">
-<a href="#subsets" class="anchor"></a>Subsets</h3>
+<div class="section level3">
+<h3 id="subsets">Subsets<a class="anchor" aria-label="anchor" href="#subsets"></a>
+</h3>
 <p>A subset is a set of patients picked in a study. All patients, included &amp; excluded patients subsets are created by default and are not deletable.</p>
 <p>To <strong>create a subset</strong>, the name must be unique. You can add a short description, which is optional. You have to choose a study, from which the patients comes.</p>
 <p>You can <strong>edit</strong> name &amp; description by double-clicking on the field, edit study by modifying the value of the dropdown. You can delete a subset (except All / Included / Excluded patients subsets), edit options : add or delete patients from the subset.</p>
@@ -223,9 +222,9 @@
 <p>It is the same principle here than developped in datamarts section : you can use <code>%datamart_id%</code> &amp; <code>%subset_id%</code> to access to current datamart’s &amp; subset’s IDs.</p>
 <p>See <code>run_datamart_code</code> &amp; <code>add_patients_to_subset</code> documentation for more informations (<code><a href="../reference/run_datamart_code.html">?run_datamart_code</a></code> or <code><a href="../reference/add_patients_to_subset.html">?add_patients_to_subset</a></code>).</p>
 </div>
-<div id="thesaurus" class="section level3">
-<h3 class="hasAnchor">
-<a href="#thesaurus" class="anchor"></a>Thesaurus</h3>
+<div class="section level3">
+<h3 id="thesaurus">Thesaurus<a class="anchor" aria-label="anchor" href="#thesaurus"></a>
+</h3>
 <p>A thesaurus contains concepts used in the data warehouse (eg heart rate, respiratory rate, medication etc).</p>
 <p>To <strong>create a thesaurus</strong>, the name must be unique. You can add a short description, which is optional. You need to choose one or several data sources, to which the thesaurus will be linked.</p>
 <p>On the <strong>management page</strong>, you can edit name &amp; description by double-clicking on the field, edit data source by modifying the value of the dropdown. You can delete a thesaurus, edit code, show thesaurus items.</p>
@@ -252,21 +251,21 @@
 <p>The <strong>display name</strong> is the named used by default in the figures, when the item is displayed on Patient-level data or Aggregated data (eg : HR for heart rate). The <strong>category</strong> is useful to search an item (eg : Haemodynamics for Heart rate, Systolic arterial blood pressure, Noradrenaline etc). You can edit an item <strong>unit name</strong>. The unit conversion is not yet available.</p>
 </div>
 </div>
-<div id="modules-plugins" class="section level2">
-<h2 class="hasAnchor">
-<a href="#modules-plugins" class="anchor"></a>Modules &amp; plugins</h2>
-<div id="plugins" class="section level3">
-<h3 class="hasAnchor">
-<a href="#plugins" class="anchor"></a>Plugins</h3>
+<div class="section level2">
+<h2 id="modules-plugins">Modules &amp; plugins<a class="anchor" aria-label="anchor" href="#modules-plugins"></a>
+</h2>
+<div class="section level3">
+<h3 id="plugins">Plugins<a class="anchor" aria-label="anchor" href="#plugins"></a>
+</h3>
 </div>
-<div id="modules" class="section level3">
-<h3 class="hasAnchor">
-<a href="#modules" class="anchor"></a>Modules</h3>
+<div class="section level3">
+<h3 id="modules">Modules<a class="anchor" aria-label="anchor" href="#modules"></a>
+</h3>
 </div>
 </div>
-<div id="log" class="section level2">
-<h2 class="hasAnchor">
-<a href="#log" class="anchor"></a>Log</h2>
+<div class="section level2">
+<h2 id="log">Log<a class="anchor" aria-label="anchor" href="#log"></a>
+</h2>
 </div>
   </div>
 
@@ -281,11 +280,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Boris Delange.</p>
+  <p></p>
+<p>Developed by Boris Delange.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -293,6 +294,8 @@
 
   
 
+
+  
 
   </body>
 </html>

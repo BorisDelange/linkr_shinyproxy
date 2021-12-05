@@ -1,5 +1,5 @@
 pandoc: 2.11.4
-pkgdown: 1.6.1
+pkgdown: 2.0.1
 pkgdown_sha: ~
 articles:
   aggregated_data_plugins: aggregated_data_plugins.html
@@ -13,5 +13,5 @@ articles:
   FR_user_help: FR_user_help.html
   FR_use_case_mimic_iv: FR_use_case_mimic_iv.html
   patient_lvl_data_plugins: patient_lvl_data_plugins.html
-last_built: 2021-11-05T17:46Z
+last_built: 2021-12-05T19:31Z
 

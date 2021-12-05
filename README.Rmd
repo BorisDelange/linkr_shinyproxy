@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# cdwtools <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex-cdwtools.png" align="right" height="90" /></a>
+<!--# cdwtools <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="man/figures/hex-cdwtools.png" align="right" height="90px" /></a>-->
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 cdwtools stands for **Clinical Data Warehouse tools**. This package aims to help clinicians, statisticians & data scientists work with CDW data, with data visualization, data cleaning, exploratory data analysis & model building tools, using a **Shiny web application**.
 
 ```{r, echo=FALSE, out.width="100%"}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.png?raw=true")
+knitr::include_graphics("man/figures/get_started/patient_lvl_first_connection.png")
 ```
 
 <br />

@@ -2,7 +2,7 @@
 title: "Use case with MIMIC-IV"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{EN_use_case_mimic_iv}
+  %\VignetteIndexEntry{Use case with MIMIC-IV}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -44,7 +44,7 @@ See <a href="https://borisdelange.github.io/cdwtools/articles/cdwtools.html " ta
 First, create a *Data source* called *MIMIC-IV* in Settings/Data management/Data sources.
 
 ```{r, echo = FALSE}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_create_data_source.png?raw=true")
+knitr::include_graphics("../man/figures/mimic_iv_tutorial/EN_create_data_source.png")
 ```
 
 Then, create a *Datamart* called *MIMIC-IV tutorial datamart*. By default, everybody has access to this datamart. You can **change the visibility** of this datamart on Datamarts management > Settings (on the Action column) > Grant access to.
@@ -274,7 +274,7 @@ This may take a **few minutes**, depending on the server where MIMIC-IV data are
 You should have this screen, confirming everything went fine :
 
 ```{r, echo = FALSE}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_import_datamart.png?raw=true")
+knitr::include_graphics("../man/figures/mimic_iv_tutorial/EN_import_datamart.png")
 ```
 
 ## Thesaurus
@@ -328,7 +328,7 @@ Let's **order our data by Nb of rows** to see the most used items.
 You should have this screen :
 
 ```{r, echo = FALSE}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_thesaurus_items_datatable.png?raw=true")
+knitr::include_graphics("../man/figures/mimic_iv_tutorial/EN_thesaurus_items_datatable.png")
 ```
 
 ## Modules & plugins
@@ -367,7 +367,7 @@ Choose a name for your Module element, like *Haemodynamic vitals*.
 A dataframe with the **thesaurus items** should appear :
 
 ```{r, echo = FALSE}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_thesaurus_items_module_element_datatable.png?raw=true")
+knitr::include_graphics("../man/figures/mimic_iv_tutorial/EN_thesaurus_items_module_element_datatable.png")
 ```
 
 **Arrange** your items by *Nb of rows*.
@@ -413,7 +413,7 @@ This code adds all the patients of the datamart in this subset.
 Go back to **Patient-level data** page, you should have this screen :
 
 ```{r, echo = FALSE}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/mimic_iv_tutorial/EN_patient_lvl_data.png?raw=true")
+knitr::include_graphics("../man/figures/mimic_iv_tutorial/EN_patient_lvl_data.png")
 ```
 
 Try to change the patient, the current stay : charts are **updated with new data**.

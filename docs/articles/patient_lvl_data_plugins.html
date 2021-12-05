@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,18 +33,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cdwtools</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.2</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../articles/cdwtools.html">Get started</a>
 </li>
@@ -57,7 +53,8 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li class="divider">
-    <li class="dropdown-header">FR - Aide</li>
+    </li>
+<li class="dropdown-header">FR - Aide</li>
     <li>
       <a href="../articles/FR_user_help.html">Aide aux utilisateurs</a>
     </li>
@@ -71,7 +68,8 @@
       <a href="../articles/FR_deploy_shiny_proxy.html">Déployer avec ShinyProxy</a>
     </li>
     <li class="divider">
-    <li class="dropdown-header">EN - Help</li>
+    </li>
+<li class="dropdown-header">EN - Help</li>
     <li>
       <a href="../articles/EN_user_help.html">User help</a>
     </li>
@@ -85,7 +83,8 @@
       <a href="../articles/EN_deploy_shiny_proxy.html">Deploy with ShinyProxy</a>
     </li>
     <li class="divider">
-    <li class="dropdown-header">Plugins</li>
+    </li>
+<li class="dropdown-header">Plugins</li>
     <li>
       <a href="../articles/patient_lvl_data_plugins.html">Patient-level data plugins</a>
     </li>
@@ -100,7 +99,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/BorisDelange/cdwtools/">
+  <a href="https://github.com/BorisDelange/cdwtools/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -115,225 +114,693 @@
 
       
 
-      </header><script src="patient_lvl_data_plugins_files/header-attrs-2.11/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Patient-level data plugins</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/BorisDelange/cdwtools/blob/master/vignettes/patient_lvl_data_plugins.Rmd"><code>vignettes/patient_lvl_data_plugins.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/BorisDelange/cdwtools/blob/HEAD/vignettes/patient_lvl_data_plugins.Rmd" class="external-link"><code>vignettes/patient_lvl_data_plugins.Rmd</code></a></small>
       <div class="hidden name"><code>patient_lvl_data_plugins.Rmd</code></div>
 
     </div>
 
     
     
-<div id="dygraph-plugin" class="section level2">
-<h2 class="hasAnchor">
-<a href="#dygraph-plugin" class="anchor"></a>Dygraph plugin</h2>
-<div id="description" class="section level3">
-<h3 class="hasAnchor">
-<a href="#description" class="anchor"></a>Description</h3>
+<div class="section level2">
+<h2 id="dygraph-plugin">Dygraph plugin<a class="anchor" aria-label="anchor" href="#dygraph-plugin"></a>
+</h2>
+<div class="section level3">
+<h3 id="description">Description<a class="anchor" aria-label="anchor" href="#description"></a>
+</h3>
 <ul>
 <li>
 <strong>Version</strong> : 0.0.1</li>
 <li>
 <strong>Libraries</strong> : dygraphs, xts</li>
-<li>
-<strong>Data allowed</strong> : data$labs_vitals, data$labs_vitals_stay</li>
 </ul>
-<p>This plugin creates a <strong>dygraph chart</strong> using <a href="https://rstudio.github.io/dygraphs/">R dygraphs library</a>, a R library which uses <a href="https://dygraphs.com/">dygraphs Javascript library</a>.</p>
-<p>Here is an example :</p>
-<div class="figure">
-<img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/dygraph.jpg?raw=true" alt=""><p class="caption">Screenshot</p>
 </div>
-<p>You choose <strong>which items to display</strong> in the time-chart. The chosen colours &amp; display names will be used.</p>
-<p>You can change the value in the box at the bottom left corner : this <strong>smoothes the curve</strong> more or less.</p>
-<p>You can <strong>zoom in on a time interval by two ways</strong> : click and select a time interval directly on the curves or change the time interval in the range selector. Double click to <strong>reset</strong> the interval.</p>
-</div>
-<div id="ui-code" class="section level3">
-<h3 class="hasAnchor">
-<a href="#ui-code" class="anchor"></a>UI code</h3>
+<div class="section level3">
+<h3 id="ui-code">UI code<a class="anchor" aria-label="anchor" href="#ui-code"></a>
+</h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">div</span><span class="op">(</span>
-    <span class="fu">br</span><span class="op">(</span><span class="op">)</span>,
-    <span class="fu">dygraphs</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dygraphs/man/dygraph-shiny.html">dygraphOutput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"dygraph_%group_id%_%patient_id%"</span><span class="op">)</span>, height <span class="op">=</span> <span class="st">"300px"</span><span class="op">)</span>
-<span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">temp</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span><span class="op">{</span>
+
+    <span class="co">##########################################</span>
+    <span class="co"># Translations                           #</span>
+    <span class="co">##########################################</span>
+    
+    <span class="va">new_words</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html" class="external-link">tribble</a></span><span class="op">(</span><span class="op">~</span><span class="va">language</span>, <span class="op">~</span><span class="va">reference_word</span>, <span class="op">~</span><span class="va">translated_word</span>,
+        <span class="st">"EN"</span>, <span class="st">"all_stays"</span>, <span class="st">"All stays"</span>,
+        <span class="st">"FR"</span>, <span class="st">"all_stays"</span>, <span class="st">"Tous les séjours"</span>,
+        <span class="st">"EN"</span>, <span class="st">"current_stay"</span>, <span class="st">"Current stay"</span>,
+        <span class="st">"FR"</span>, <span class="st">"current_stay"</span>, <span class="st">"Du séjour sélectionné"</span>,
+        <span class="st">"EN"</span>, <span class="st">"show_data_of"</span>, <span class="st">"Show data of"</span>,
+        <span class="st">"FR"</span>, <span class="st">"show_data_of"</span>, <span class="st">"Afficher les données de"</span>,
+        <span class="st">"EN"</span>, <span class="st">"show_stays"</span>, <span class="st">"Show stays"</span>,
+        <span class="st">"FR"</span>, <span class="st">"show_stays"</span>, <span class="st">"Afficher les séjours"</span>
+    <span class="op">)</span>
+
+    <span class="co">##########################################</span>
+    <span class="co"># Render UI                              #</span>
+    <span class="co">##########################################</span>
+
+    <span class="va">dygraph_output</span> <span class="op">&lt;-</span> <span class="st">""</span>
+    <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"dygraphs"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="va">dygraph_output</span> <span class="op">&lt;-</span> <span class="fu">dygraphs</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dygraphs/man/dygraph-shiny.html" class="external-link">dygraphOutput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"dygraph_%group_id%_%patient_id%"</span><span class="op">)</span>, height <span class="op">=</span> <span class="st">"300px"</span><span class="op">)</span>
+    
+    <span class="va">options</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
+        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>key <span class="op">=</span> <span class="st">"all_stays"</span>, text <span class="op">=</span> <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"all_stays"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span>,
+        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>key <span class="op">=</span> <span class="st">"current_stay"</span>, text <span class="op">=</span> <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"current_stay"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span>
+    <span class="op">)</span>
+
+    <span class="fu">div</span><span class="op">(</span>
+        <span class="fu">uiOutput</span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"message_bar_1_%group_id%_%patient_id%"</span><span class="op">)</span><span class="op">)</span>,
+        <span class="fu">uiOutput</span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"message_bar_2_%group_id%_%patient_id%"</span><span class="op">)</span><span class="op">)</span>, <span class="fu">br</span><span class="op">(</span><span class="op">)</span>,
+        <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Stack.html" class="external-link">Stack</a></span><span class="op">(</span>horizontal <span class="op">=</span> <span class="cn">TRUE</span>, tokens <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>childrenGap <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,
+            <span class="fu">div</span><span class="op">(</span><span class="fu">strong</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"show_data_of"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span>, <span class="st">" :"</span><span class="op">)</span>, style <span class="op">=</span> <span class="st">"margin-top:8px;"</span><span class="op">)</span>, 
+            <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/ChoiceGroup.html" class="external-link">ChoiceGroup.shinyInput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"data_choice_%group_id%_%patient_id%"</span><span class="op">)</span>, value <span class="op">=</span> <span class="st">"all_stays"</span>, options <span class="op">=</span> <span class="va">options</span>, className <span class="op">=</span> <span class="st">"inline_choicegroup"</span><span class="op">)</span>,
+            <span class="fu">div</span><span class="op">(</span>style <span class="op">=</span> <span class="st">"width:50px;"</span><span class="op">)</span>,
+            <span class="fu">div</span><span class="op">(</span><span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Toggle.html" class="external-link">Toggle.shinyInput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"show_stays_%group_id%_%patient_id%"</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, style <span class="op">=</span> <span class="st">"margin-top:8px;"</span><span class="op">)</span>,
+            <span class="fu">div</span><span class="op">(</span><span class="fu">strong</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"show_stays"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, style <span class="op">=</span> <span class="st">"margin-top:8px;"</span><span class="op">)</span>
+        <span class="op">)</span>, <span class="fu">br</span><span class="op">(</span><span class="op">)</span>,
+        <span class="va">dygraph_output</span>
+    <span class="op">)</span>
+
+<span class="op">}</span>
+
+<span class="fu">temp</span><span class="op">(</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="server-code" class="section level3">
-<h3 class="hasAnchor">
-<a href="#server-code" class="anchor"></a>Server code</h3>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove duplicates if exist</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> </span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    data<span class="sc">$</span>labs_vitals <span class="sc">%&gt;%</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">group_by</span>(datetime_start, item_id, value_num) <span class="sc">%&gt;%</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(datetime_start, display_name, value_num) <span class="sc">%&gt;%</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">arrange</span>(datetime_start)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> data_temp <span class="sc">%&gt;%</span> tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> display_name, <span class="at">values_from =</span> value_num)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> xts<span class="sc">::</span><span class="fu">xts</span>(<span class="at">x =</span> data_temp <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>datetime_start), <span class="at">order.by =</span> data_temp <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(datetime_start))</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dygraph</span>(data_temp) <span class="sc">%&gt;%</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyAxis</span>(<span class="st">"y"</span>, <span class="at">valueRange =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">max</span>(data_temp, <span class="at">na.rm =</span> T) <span class="sc">+</span> <span class="fu">max</span>(data_temp, <span class="at">na.rm =</span> T) <span class="sc">/</span> <span class="dv">5</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyAxis</span>(<span class="st">"x"</span>, <span class="at">drawGrid =</span> <span class="cn">FALSE</span>)</span>
+<div class="section level3">
+<h3 id="server-code">Server code<a class="anchor" aria-label="anchor" href="#server-code"></a>
+</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Translations                           #</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>new_words <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tribble</span>(<span class="sc">~</span>language, <span class="sc">~</span>reference_word, <span class="sc">~</span>translated_word,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"dygraphs_required"</span>, <span class="st">"Library dygraphs required to display the graph, please install it with install.packages('dygraphs')"</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"dygraphs_required"</span>, <span class="st">"Le package dygraphs est nécessaire pour afficher le graphique, merci de l'installer avec install.packages('dygraphs')"</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"xts_required"</span>, <span class="st">"Library xts required to display the graph, please install it with install.packages('xts')"</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"xts_required"</span>, <span class="st">"Le package xts est nécessaire pour afficher le graphique, merci de l'installer avec install.packages('xts')"</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"admission"</span>, <span class="st">"Admission"</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"admission"</span>, <span class="st">"Admission"</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"discharge"</span>, <span class="st">"Discharge"</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"discharge"</span>, <span class="st">"Discharge"</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Reload dygraph                         #</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>output<span class="sc">$</span>dygraph_<span class="sc">%group_id%</span> <span class="er">&lt;</span><span class="sc">-</span> dygraphs<span class="sc">::</span><span class="fu">renderDygraph</span>(data_temp)<span class="co"># Remove duplicates if exist</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> </span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    data<span class="sc">$</span>labs_vitals <span class="sc">%&gt;%</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">group_by</span>(datetime_start, item_id, value_num) <span class="sc">%&gt;%</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(datetime_start, display_name, value_num) <span class="sc">%&gt;%</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">arrange</span>(datetime_start)</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> data_temp <span class="sc">%&gt;%</span> tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> display_name, <span class="at">values_from =</span> value_num)</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span> xts<span class="sc">::</span><span class="fu">xts</span>(<span class="at">x =</span> data_temp <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>datetime_start), <span class="at">order.by =</span> data_temp <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(datetime_start))</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>data_temp <span class="ot">&lt;-</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dygraph</span>(data_temp) <span class="sc">%&gt;%</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyAxis</span>(<span class="st">"y"</span>, <span class="at">valueRange =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">max</span>(data_temp, <span class="at">na.rm =</span> T) <span class="sc">+</span> <span class="fu">max</span>(data_temp, <span class="at">na.rm =</span> T) <span class="sc">/</span> <span class="dv">4</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyAxis</span>(<span class="st">"x"</span>, <span class="at">drawGrid =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyRangeSelector</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyRoller</span>(<span class="at">rollPeriod =</span> <span class="dv">50</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyLegend</span>(<span class="at">show =</span> <span class="st">"always"</span>, <span class="at">hideOnMouseOut =</span> <span class="cn">TRUE</span>, <span class="at">labelsSeparateLines =</span> T) <span class="sc">%&gt;%</span></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>    dygraphs<span class="sc">::</span><span class="fu">dyHighlight</span>(<span class="at">highlightCircleSize =</span> <span class="dv">5</span>)</span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>data_temp_items <span class="ot">&lt;-</span></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>    data<span class="sc">$</span>labs_vitals <span class="sc">%&gt;%</span></span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">group_by</span>(item_id, display_name, colour, unit) <span class="sc">%&gt;%</span></span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">ungroup</span>()</span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(data_temp_items), <span class="cf">function</span>(i){</span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>    row <span class="ot">&lt;-</span> data_temp_items[i, ]</span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>    data_temp <span class="ot">&lt;&lt;-</span> </span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>        data_temp <span class="sc">%&gt;%</span></span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>        dygraphs<span class="sc">::</span><span class="fu">dySeries</span>(</span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>            <span class="at">name =</span> row<span class="sc">$</span>display_name, </span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>            <span class="at">label =</span> <span class="fu">paste0</span>(row<span class="sc">$</span>display_name, <span class="st">" ("</span>, row<span class="sc">$</span>unit, <span class="st">")"</span>),</span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>            <span class="at">color =</span> row<span class="sc">$</span>colour</span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>output<span class="sc">$</span>dygraph_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> dygraphs<span class="sc">::</span><span class="fu">renderDygraph</span>(data_temp)</span></code></pre></div>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>data_choice_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, r<span class="sc">$</span>reload_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="fu">Sys.time</span>())</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>show_stays_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, r<span class="sc">$</span>reload_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="fu">Sys.time</span>())</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(r<span class="sc">$</span>reload_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, {</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tryCatch</span>({</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>        <span class="do">##########################################</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Data processing                        #</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>        <span class="do">##########################################</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (input<span class="sc">$</span>data_choice_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">==</span> <span class="st">"all_stays"</span>) data_temp <span class="ot">&lt;-</span> data<span class="sc">$</span>labs_vitals</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (input<span class="sc">$</span>data_choice_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">==</span> <span class="st">"current_stay"</span>) data_temp <span class="ot">&lt;-</span> data<span class="sc">$</span>labs_vitals_stay</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Remove duplicates if exist</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Group by display_name, so if we have multiple identical items from distinct thesaurus, only one legend will appear for both</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">nrow</span>(data_temp) <span class="sc">&gt;</span> <span class="dv">0</span>){</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">"dygraphs"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>) <span class="sc">&amp;</span> <span class="fu">requireNamespace</span>(<span class="st">"xts"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)){</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>                data_temp <span class="ot">&lt;-</span> </span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>                    data_temp <span class="sc">%&gt;%</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>                    dplyr<span class="sc">::</span><span class="fu">group_by</span>(datetime_start, display_name, value_num) <span class="sc">%&gt;%</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>                    dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>                    dplyr<span class="sc">::</span><span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>                    dplyr<span class="sc">::</span><span class="fu">select</span>(datetime_start, display_name, value_num) <span class="sc">%&gt;%</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>                    dplyr<span class="sc">::</span><span class="fu">arrange</span>(datetime_start)</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>                data_temp <span class="ot">&lt;-</span> data_temp <span class="sc">%&gt;%</span> tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> display_name, <span class="at">values_from =</span> value_num)</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>                data_temp <span class="ot">&lt;-</span> xts<span class="sc">::</span><span class="fu">xts</span>(<span class="at">x =</span> data_temp <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>datetime_start), <span class="at">order.by =</span> data_temp <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(datetime_start))</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>                <span class="co"># Create the dygraph</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>                data_temp <span class="ot">&lt;-</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>                    dygraphs<span class="sc">::</span><span class="fu">dygraph</span>(data_temp) <span class="sc">%&gt;%</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>                    dygraphs<span class="sc">::</span><span class="fu">dyAxis</span>(<span class="st">"y"</span>, <span class="at">valueRange =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">max</span>(data_temp, <span class="at">na.rm =</span> T) <span class="sc">+</span> <span class="fu">max</span>(data_temp, <span class="at">na.rm =</span> T) <span class="sc">/</span> <span class="dv">4</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>                    dygraphs<span class="sc">::</span><span class="fu">dyAxis</span>(<span class="st">"x"</span>, <span class="at">drawGrid =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>                    dygraphs<span class="sc">::</span><span class="fu">dyRangeSelector</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>                    dygraphs<span class="sc">::</span><span class="fu">dyRoller</span>(<span class="at">rollPeriod =</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>                    dygraphs<span class="sc">::</span><span class="fu">dyLegend</span>(<span class="at">show =</span> <span class="st">"always"</span>, <span class="at">hideOnMouseOut =</span> <span class="cn">TRUE</span>, <span class="at">labelsSeparateLines =</span> T) <span class="sc">%&gt;%</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>                    dygraphs<span class="sc">::</span><span class="fu">dyHighlight</span>(<span class="at">highlightCircleSize =</span> <span class="dv">5</span>)</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>                    </span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>                <span class="co"># Show stays with vertical lines ?</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> (input<span class="sc">$</span>show_stays_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>){</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>                    data_temp <span class="ot">&lt;-</span> data_temp <span class="sc">%&gt;%</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>                    dygraphs<span class="sc">::</span><span class="fu">dyEvent</span>(data<span class="sc">$</span>stays <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(admission_datetime),<span class="co"># color = "#5AAE61",</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>                        <span class="at">label =</span> <span class="fu">paste0</span>(data<span class="sc">$</span>stays <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(unit_name), <span class="st">" - "</span>, <span class="fu">translate</span>(language, <span class="st">"admission"</span>, new_words)), <span class="at">labelLoc =</span> <span class="st">"bottom"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>                    dygraphs<span class="sc">::</span><span class="fu">dyEvent</span>(data<span class="sc">$</span>stays <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(discharge_datetime),<span class="co"># color = "#5AAE61",</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>                        <span class="at">label =</span> <span class="fu">paste0</span>(data<span class="sc">$</span>stays <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(unit_name), <span class="st">" - "</span>, <span class="fu">translate</span>(language, <span class="st">"discharge"</span>, new_words)), <span class="at">labelLoc =</span> <span class="st">"bottom"</span>)</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>                } </span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>                data_temp_items <span class="ot">&lt;-</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>                    data<span class="sc">$</span>labs_vitals <span class="sc">%&gt;%</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>                    dplyr<span class="sc">::</span><span class="fu">group_by</span>(item_id, display_name, colour, unit) <span class="sc">%&gt;%</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>                    dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>                    dplyr<span class="sc">::</span><span class="fu">ungroup</span>()</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>                    </span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>                <span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(data_temp_items), <span class="cf">function</span>(i){</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>                    row <span class="ot">&lt;-</span> data_temp_items[i, ]</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>                    data_temp <span class="ot">&lt;&lt;-</span> </span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>                        data_temp <span class="sc">%&gt;%</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>                        dygraphs<span class="sc">::</span><span class="fu">dySeries</span>(</span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>                            <span class="at">name =</span> row<span class="sc">$</span>display_name, </span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>                            <span class="at">label =</span> <span class="fu">paste0</span>(row<span class="sc">$</span>display_name, <span class="st">" ("</span>, row<span class="sc">$</span>unit, <span class="st">")"</span>),</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>                            <span class="at">color =</span> row<span class="sc">$</span>colour</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>                    )</span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>                })</span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>                output<span class="sc">$</span>dygraph_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> dygraphs<span class="sc">::</span><span class="fu">renderDygraph</span>(data_temp)</span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">"dygraphs"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) output<span class="sc">$</span>message_bar_1_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="fu">renderUI</span>(</span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>                <span class="fu">div</span>(shiny.fluent<span class="sc">::</span><span class="fu">MessageBar</span>(<span class="fu">translate</span>(language, <span class="st">"dygraphs_required"</span>, new_words), <span class="at">messageBarType =</span> <span class="dv">3</span>), <span class="at">style =</span> <span class="st">"margin-top:10px;"</span>))</span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">"xts"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) output<span class="sc">$</span>message_bar_2_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="fu">renderUI</span>(</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>                <span class="fu">div</span>(shiny.fluent<span class="sc">::</span><span class="fu">MessageBar</span>(<span class="fu">translate</span>(language, <span class="st">"xts_required"</span>, new_words), <span class="at">messageBarType =</span> <span class="dv">3</span>), <span class="at">style =</span> <span class="st">"margin-top:10px;"</span>))</span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cf">if</span> (<span class="fu">nchar</span>(e[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, </span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>        <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Error"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(e), <span class="at">language =</span> language),</span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>    <span class="at">warning =</span> <span class="cf">function</span>(w) <span class="cf">if</span> (<span class="fu">nchar</span>(w[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, </span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>        <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Warning"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(w), <span class="at">language =</span> language))</span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div>
 </div>
 </div>
-<div id="datatable-plugin" class="section level2">
-<h2 class="hasAnchor">
-<a href="#datatable-plugin" class="anchor"></a>Datatable plugin</h2>
-<div id="description-1" class="section level3">
-<h3 class="hasAnchor">
-<a href="#description-1" class="anchor"></a>Description</h3>
+<div class="section level2">
+<h2 id="datatable-plugin">Datatable plugin<a class="anchor" aria-label="anchor" href="#datatable-plugin"></a>
+</h2>
+<div class="section level3">
+<h3 id="description-1">Description<a class="anchor" aria-label="anchor" href="#description-1"></a>
+</h3>
 <ul>
 <li>
 <strong>Version</strong> : 0.0.1</li>
 <li>
 <strong>Libraries</strong> : DT</li>
-<li>
-<strong>Data allowed</strong> : data$labs_vitals, data$labs_vitals_stay</li>
 </ul>
-<p>This plugin creates a <strong>datatable</strong>, using <a href="https://rstudio.github.io/DT/shiny.html">R Datatable library</a>, a R library which is derived from <a href="https://datatables.net/">Datatables Javascript library</a>.</p>
-<p>Here is an example :</p>
-<div class="figure">
-<img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/datatable.jpg?raw=true" alt=""><p class="caption">Screenshot</p>
 </div>
-<p>Values are sortable. You can <strong>search</strong> with the text area on the top right corner on the <strong>whole data</strong> and also <strong>column by column</strong> with text areas on top of the columns.</p>
-</div>
-<div id="ui-code-1" class="section level3">
-<h3 class="hasAnchor">
-<a href="#ui-code-1" class="anchor"></a>UI code</h3>
+<div class="section level3">
+<h3 id="ui-code-1">UI code<a class="anchor" aria-label="anchor" href="#ui-code-1"></a>
+</h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">DT</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DT/man/dataTableOutput.html">DTOutput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"datatable_%group_id%_%patient_id%"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-</div>
-<div id="server-code-1" class="section level3">
-<h3 class="hasAnchor">
-<a href="#server-code-1" class="anchor"></a>Server code</h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">data_temp</span> <span class="op">&lt;-</span>
-    <span class="va">data</span><span class="op">$</span><span class="va">labs_vitals</span> <span class="op">%&gt;%</span>
-    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">display_name</span>, <span class="va">datetime_start</span>, <span class="va">value_num</span>, <span class="va">unit</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate_all.html">mutate_at</a></span><span class="op">(</span><span class="st">"datetime_start"</span>, <span class="va">as.character</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">temp</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span><span class="op">{</span>
 
-<span class="va">col_names</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Item name"</span>, <span class="st">"Datetime"</span>, <span class="st">"Value"</span>, <span class="st">"Unit"</span><span class="op">)</span>
-<span class="va">sortable_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"display_name"</span>, <span class="st">"datetime_start"</span>, <span class="st">"value_num"</span><span class="op">)</span>
-<span class="va">centered_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"datetime_start"</span><span class="op">)</span>
-<span class="va">column_widths</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"datetime"</span> <span class="op">=</span> <span class="st">"180px"</span><span class="op">)</span>
-<span class="va">searchable_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"display_name"</span>, <span class="st">"datetime_start"</span>, <span class="st">"value_num"</span><span class="op">)</span>
-<span class="va">factorize_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"display_name"</span><span class="op">)</span>
+    <span class="co">##########################################</span>
+    <span class="co"># Translations                           #</span>
+    <span class="co">##########################################</span>
+    
+    <span class="va">new_words</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html" class="external-link">tribble</a></span><span class="op">(</span><span class="op">~</span><span class="va">language</span>, <span class="op">~</span><span class="va">reference_word</span>, <span class="op">~</span><span class="va">translated_word</span>,
+        <span class="st">"EN"</span>, <span class="st">"all_stays"</span>, <span class="st">"All stays"</span>,
+        <span class="st">"FR"</span>, <span class="st">"all_stays"</span>, <span class="st">"Tous les séjours"</span>,
+        <span class="st">"EN"</span>, <span class="st">"current_stay"</span>, <span class="st">"Current stay"</span>,
+        <span class="st">"FR"</span>, <span class="st">"current_stay"</span>, <span class="st">"Du séjour sélectionné"</span>,
+        <span class="st">"EN"</span>, <span class="st">"show_data_of"</span>, <span class="st">"Show data of"</span>,
+        <span class="st">"FR"</span>, <span class="st">"show_data_of"</span>, <span class="st">"Afficher les données de"</span>,
+        <span class="st">"EN"</span>, <span class="st">"show_stays"</span>, <span class="st">"Show stays"</span>,
+        <span class="st">"FR"</span>, <span class="st">"show_stays"</span>, <span class="st">"Afficher les séjours"</span>
+    <span class="op">)</span>
 
-<span class="fu"><a href="../reference/render_datatable.html">render_datatable</a></span><span class="op">(</span>
-    data <span class="op">=</span> <span class="va">data_temp</span>,
-    output <span class="op">=</span> <span class="va">output</span>,
-    r <span class="op">=</span> <span class="va">r</span>,
-    ns <span class="op">=</span> <span class="va">ns</span>,
-    language <span class="op">=</span> <span class="va">language</span>,
-    output_name <span class="op">=</span> <span class="st">"datatable_%group_id%_%patient_id%"</span>,
-    col_names <span class="op">=</span> <span class="va">col_names</span>,
-    page_length <span class="op">=</span> <span class="fl">10</span>,
-    sortable_cols <span class="op">=</span> <span class="va">sortable_cols</span>,
-    centered_cols <span class="op">=</span> <span class="va">centered_cols</span>,
-    column_widths <span class="op">=</span> <span class="va">column_widths</span>,
-    filter <span class="op">=</span> <span class="cn">TRUE</span>,
-    searchable_cols <span class="op">=</span> <span class="va">searchable_cols</span>,
-    factorize_cols <span class="op">=</span> <span class="va">factorize_cols</span>
-<span class="op">)</span></code></pre></div>
+    <span class="co">##########################################</span>
+    <span class="co"># Render UI                              #</span>
+    <span class="co">##########################################</span>
+
+    <span class="va">options</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
+        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>key <span class="op">=</span> <span class="st">"all_stays"</span>, text <span class="op">=</span> <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"all_stays"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span>,
+        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>key <span class="op">=</span> <span class="st">"current_stay"</span>, text <span class="op">=</span> <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"current_stay"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span>
+    <span class="op">)</span>
+
+    <span class="fu">div</span><span class="op">(</span>
+        <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Stack.html" class="external-link">Stack</a></span><span class="op">(</span>horizontal <span class="op">=</span> <span class="cn">TRUE</span>, tokens <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>childrenGap <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,
+            <span class="fu">div</span><span class="op">(</span><span class="fu">strong</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"show_data_of"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span>, <span class="st">" :"</span><span class="op">)</span>, style <span class="op">=</span> <span class="st">"margin-top:8px;"</span><span class="op">)</span>, 
+            <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/ChoiceGroup.html" class="external-link">ChoiceGroup.shinyInput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"data_choice_%group_id%_%patient_id%"</span><span class="op">)</span>, value <span class="op">=</span> <span class="st">"all_stays"</span>, options <span class="op">=</span> <span class="va">options</span>, className <span class="op">=</span> <span class="st">"inline_choicegroup"</span><span class="op">)</span>
+        <span class="op">)</span>, 
+        <span class="fu">DT</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DT/man/dataTableOutput.html" class="external-link">DTOutput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"datatable_%group_id%_%patient_id%"</span><span class="op">)</span><span class="op">)</span>
+    <span class="op">)</span>
+    
+<span class="op">}</span>
+
+<span class="fu">temp</span><span class="op">(</span><span class="op">)</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="server-code-1">Server code<a class="anchor" aria-label="anchor" href="#server-code-1"></a>
+</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Translations                           #</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>new_words <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tribble</span>(<span class="sc">~</span>language, <span class="sc">~</span>reference_word, <span class="sc">~</span>translated_word,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"item_name"</span>, <span class="st">"Item name"</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"item_name"</span>, <span class="st">"Nom de l'item"</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"datetime"</span>, <span class="st">"Datetime"</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"datetime"</span>, <span class="st">"Date &amp; heure"</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"value"</span>, <span class="st">"Value"</span>,</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"value"</span>, <span class="st">"Valeur"</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"unit"</span>, <span class="st">"Unit"</span>,</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"unit"</span>, <span class="st">"Unité"</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Reload datatable                       #</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>data_choice_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, r<span class="sc">$</span>reload_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="fu">Sys.time</span>())</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(r<span class="sc">$</span>reload_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, {</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tryCatch</span>({</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>        <span class="do">##########################################</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Data preprocessing                     #</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>        <span class="do">##########################################</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (input<span class="sc">$</span>data_choice_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">==</span> <span class="st">"all_stays"</span>) data_temp <span class="ot">&lt;-</span> data<span class="sc">$</span>labs_vitals</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (input<span class="sc">$</span>data_choice_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">==</span> <span class="st">"current_stay"</span>) data_temp <span class="ot">&lt;-</span> data<span class="sc">$</span>labs_vitals_stay</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>        data_temp <span class="ot">&lt;-</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>            data_temp <span class="sc">%&gt;%</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>            dplyr<span class="sc">::</span><span class="fu">select</span>(display_name, value_num, unit, datetime_start) <span class="sc">%&gt;%</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>            dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"datetime_start"</span>, as.character)</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>        <span class="do">##########################################</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Render datatable                       #</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>        <span class="do">##########################################</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>        col_names <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">translate</span>(language, <span class="st">"item_name"</span>, new_words), <span class="fu">translate</span>(language, <span class="st">"value"</span>, new_words), <span class="fu">translate</span>(language, <span class="st">"unit"</span>, new_words), </span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>            <span class="fu">translate</span>(language, <span class="st">"datetime"</span>, new_words))</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>        sortable_cols <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"display_name"</span>, <span class="st">"datetime_start"</span>, <span class="st">"value_num"</span>)</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>        centered_cols <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"datetime_start"</span>, <span class="st">"unit"</span>)</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>        column_widths <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"datetime_start"</span> <span class="ot">=</span> <span class="st">"180px"</span>, <span class="st">"value_num"</span> <span class="ot">=</span> <span class="st">"150px"</span>, <span class="st">"unit"</span> <span class="ot">=</span> <span class="st">"100px"</span>)</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>        searchable_cols <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"display_name"</span>, <span class="st">"datetime_start"</span>, <span class="st">"value_num"</span>)</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>        factorize_cols <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"display_name"</span>)</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>        <span class="fu">render_datatable</span>(</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>            <span class="at">data =</span> data_temp,</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>            <span class="at">output =</span> output,</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>            <span class="at">r =</span> r,</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>            <span class="at">ns =</span> ns,</span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>            <span class="at">language =</span> language,</span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>            <span class="at">output_name =</span> <span class="st">"datatable_%group_id%_%patient_id%"</span>,</span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>            <span class="at">col_names =</span> col_names,</span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>            <span class="at">page_length =</span> <span class="dv">10</span>,</span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>            <span class="at">sortable_cols =</span> sortable_cols,</span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>            <span class="at">centered_cols =</span> centered_cols,</span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>            <span class="at">column_widths =</span> column_widths,</span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>            <span class="at">filter =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>            <span class="at">searchable_cols =</span> searchable_cols,</span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>            <span class="at">factorize_cols =</span> factorize_cols</span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cf">if</span> (<span class="fu">nchar</span>(e[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, </span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>        <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Error"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(e), <span class="at">language =</span> language),</span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>    <span class="at">warning =</span> <span class="cf">function</span>(w) <span class="cf">if</span> (<span class="fu">nchar</span>(w[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, </span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a>        <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Warning"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(w), <span class="at">language =</span> language))</span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div>
 </div>
 </div>
-<div id="text-plugin" class="section level2">
-<h2 class="hasAnchor">
-<a href="#text-plugin" class="anchor"></a>Text plugin</h2>
-<div id="description-2" class="section level3">
-<h3 class="hasAnchor">
-<a href="#description-2" class="anchor"></a>Description</h3>
+<div class="section level2">
+<h2 id="text-plugin">Text plugin<a class="anchor" aria-label="anchor" href="#text-plugin"></a>
+</h2>
+<div class="section level3">
+<h3 id="description-2">Description<a class="anchor" aria-label="anchor" href="#description-2"></a>
+</h3>
 <ul>
 <li>
 <strong>Version</strong> : 0.0.1</li>
 <li>
 <strong>Libraries</strong> : none</li>
-<li>
-<strong>Data allowed</strong> : data$text, data$text_stay</li>
 </ul>
-<p>This plugin renders <strong>text data</strong>, using Shiny functions.</p>
-<p>Here is an example :</p>
-<div class="figure">
-<img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/plugins/text.jpg?raw=true" alt=""><p class="caption">Screenshot</p>
 </div>
-</div>
-<div id="ui-code-2" class="section level3">
-<h3 class="hasAnchor">
-<a href="#ui-code-2" class="anchor"></a>UI code</h3>
+<div class="section level3">
+<h3 id="ui-code-2">UI code<a class="anchor" aria-label="anchor" href="#ui-code-2"></a>
+</h3>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R">  <span class="fu">uiOutput</span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"text_%group_id%_%patient_id%"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">temp</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span><span class="op">{</span>
+
+    <span class="co">##########################################</span>
+    <span class="co"># Translations                           #</span>
+    <span class="co">##########################################</span>
+    
+    <span class="va">new_words</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html" class="external-link">tribble</a></span><span class="op">(</span><span class="op">~</span><span class="va">language</span>, <span class="op">~</span><span class="va">reference_word</span>, <span class="op">~</span><span class="va">translated_word</span>,
+        <span class="st">"EN"</span>, <span class="st">"all_stays"</span>, <span class="st">"All stays"</span>,
+        <span class="st">"FR"</span>, <span class="st">"all_stays"</span>, <span class="st">"Tous les séjours"</span>,
+        <span class="st">"EN"</span>, <span class="st">"current_stay"</span>, <span class="st">"Current stay"</span>,
+        <span class="st">"FR"</span>, <span class="st">"current_stay"</span>, <span class="st">"Du séjour sélectionné"</span>,
+        <span class="st">"EN"</span>, <span class="st">"show_data_of"</span>, <span class="st">"Show data of"</span>,
+        <span class="st">"FR"</span>, <span class="st">"show_data_of"</span>, <span class="st">"Afficher les données de"</span>,
+        <span class="st">"EN"</span>, <span class="st">"search_text"</span>, <span class="st">"Search text"</span>,
+        <span class="st">"FR"</span>, <span class="st">"search_text"</span>, <span class="st">"Recherche de texte"</span>,
+        <span class="st">"EN"</span>, <span class="st">"manage_words_sets"</span>, <span class="st">"Manage words sets"</span>,
+        <span class="st">"FR"</span>, <span class="st">"manage_words_sets"</span>, <span class="st">"Gérer les sets de mots"</span>,
+        <span class="st">"EN"</span>, <span class="st">"words_set"</span>, <span class="st">"Words set"</span>,
+        <span class="st">"FR"</span>, <span class="st">"words_set"</span>, <span class="st">"Set de mots"</span>,
+        <span class="st">"EN"</span>, <span class="st">"new_words_set"</span>, <span class="st">"New words set"</span>,
+        <span class="st">"FR"</span>, <span class="st">"new_words_set"</span>, <span class="st">"Nouveau set de mots"</span>,
+        <span class="st">"EN"</span>, <span class="st">"delete_words_set"</span>, <span class="st">"Delete a words set"</span>,
+        <span class="st">"FR"</span>, <span class="st">"delete_words_set"</span>, <span class="st">"Supprimer un set de mots"</span>,
+        <span class="st">"EN"</span>, <span class="st">"add_remove_words"</span>, <span class="st">"Add or remove words"</span>,
+        <span class="st">"FR"</span>, <span class="st">"add_remove_words"</span>, <span class="st">"Ajouter ou supprimer des mots"</span>,
+        <span class="st">"EN"</span>, <span class="st">"words"</span>, <span class="st">"Words"</span>,
+        <span class="st">"FR"</span>, <span class="st">"words"</span>, <span class="st">"Mots"</span>
+    <span class="op">)</span>
+    
+    <span class="co">##########################################</span>
+    <span class="co"># Render UI                              #</span>
+    <span class="co">##########################################</span>
+    
+    <span class="va">options_text_choice</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
+        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>key <span class="op">=</span> <span class="st">"search_text"</span>, text <span class="op">=</span> <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"search_text"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span>,
+        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>key <span class="op">=</span> <span class="st">"manage_words_sets"</span>, text <span class="op">=</span> <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"manage_words_sets"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+    
+    <span class="va">options</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
+        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>key <span class="op">=</span> <span class="st">"all_stays"</span>, text <span class="op">=</span> <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"all_stays"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span>,
+        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>key <span class="op">=</span> <span class="st">"current_stay"</span>, text <span class="op">=</span> <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"current_stay"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+        
+    <span class="va">options_words_set</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/convert_tibble_to_list.html">convert_tibble_to_list</a></span><span class="op">(</span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbGetQuery.html" class="external-link">dbGetQuery</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">db</span>, <span class="st">"SELECT * FROM modules_elements_options WHERE deleted IS FALSE 
+        AND group_id = %group_id% AND patient_id = %patient_id% AND name = 'words_set_name'"</span><span class="op">)</span>, key_col <span class="op">=</span> <span class="st">"id"</span>, text_col <span class="op">=</span> <span class="st">"value"</span><span class="op">)</span>
+    
+    <span class="fu">div</span><span class="op">(</span>
+        <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Stack.html" class="external-link">Stack</a></span><span class="op">(</span>horizontal <span class="op">=</span> <span class="cn">TRUE</span>, tokens <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>childrenGap <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,
+            <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/ChoiceGroup.html" class="external-link">ChoiceGroup.shinyInput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"text_choice_%group_id%_%patient_id%"</span><span class="op">)</span>, value <span class="op">=</span> <span class="st">"search_text"</span>, options <span class="op">=</span> <span class="va">options_text_choice</span>, className <span class="op">=</span> <span class="st">"inline_choicegroup"</span><span class="op">)</span>,
+            <span class="fu">div</span><span class="op">(</span>style <span class="op">=</span> <span class="st">"width:50px;"</span><span class="op">)</span>,
+            <span class="fu">div</span><span class="op">(</span><span class="fu">strong</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"show_data_of"</span>, <span class="va">new_words</span><span class="op">)</span><span class="op">)</span>, <span class="st">" :"</span><span class="op">)</span>, style <span class="op">=</span> <span class="st">"margin-top:8px;"</span><span class="op">)</span>, 
+            <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/ChoiceGroup.html" class="external-link">ChoiceGroup.shinyInput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"data_choice_%group_id%_%patient_id%"</span><span class="op">)</span>, value <span class="op">=</span> <span class="st">"all_stays"</span>, options <span class="op">=</span> <span class="va">options</span>, className <span class="op">=</span> <span class="st">"inline_choicegroup"</span><span class="op">)</span>
+        <span class="op">)</span>,
+        
+        <span class="fu">conditionalPanel</span><span class="op">(</span>condition <span class="op">=</span> <span class="st">"input.text_choice_%group_id%_%patient_id% == 'search_text'"</span>, ns <span class="op">=</span> <span class="va">ns</span>,
+            <span class="fu"><a href="../reference/make_dropdown.html">make_dropdown</a></span><span class="op">(</span>label <span class="op">=</span> <span class="st">"words_set"</span>, id <span class="op">=</span> <span class="st">"select_words_set_%group_id%_%patient_id%"</span>, ns <span class="op">=</span> <span class="va">ns</span>, options <span class="op">=</span> <span class="va">options_words_set</span>, width <span class="op">=</span> <span class="st">"300px"</span>, words <span class="op">=</span> <span class="va">new_words</span><span class="op">)</span>,
+            <span class="fu">uiOutput</span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"text_%group_id%_%patient_id%"</span><span class="op">)</span><span class="op">)</span>
+        <span class="op">)</span>,
+        
+        <span class="fu">conditionalPanel</span><span class="op">(</span>condition <span class="op">=</span> <span class="st">"input.text_choice_%group_id%_%patient_id% == 'manage_words_sets'"</span>, ns <span class="op">=</span> <span class="va">ns</span>,
+            <span class="fu">br</span><span class="op">(</span><span class="op">)</span>, <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Text.html" class="external-link">Text</a></span><span class="op">(</span>variant <span class="op">=</span> <span class="st">"large"</span>, <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"add_remove_words"</span>, <span class="va">new_words</span><span class="op">)</span>, block <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,
+            <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Stack.html" class="external-link">Stack</a></span><span class="op">(</span>horizontal <span class="op">=</span> <span class="cn">TRUE</span>, tokens <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>childrenGap <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,
+                <span class="fu"><a href="../reference/make_dropdown.html">make_dropdown</a></span><span class="op">(</span>label <span class="op">=</span> <span class="st">"words_set"</span>, id <span class="op">=</span> <span class="st">"manage_words_set_%group_id%_%patient_id%"</span>, ns <span class="op">=</span> <span class="va">ns</span>, options <span class="op">=</span> <span class="va">options_words_set</span>, width <span class="op">=</span> <span class="st">"300px"</span>, words <span class="op">=</span> <span class="va">new_words</span><span class="op">)</span>,
+                <span class="fu"><a href="../reference/make_dropdown.html">make_dropdown</a></span><span class="op">(</span>label <span class="op">=</span> <span class="st">"words"</span>, id <span class="op">=</span> <span class="st">"manage_words_%group_id%_%patient_id%"</span>, ns <span class="op">=</span> <span class="va">ns</span>, width <span class="op">=</span> <span class="st">"300px"</span>, words <span class="op">=</span> <span class="va">new_words</span>, multiSelect <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,
+                <span class="fu">div</span><span class="op">(</span><span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Button.html" class="external-link">DefaultButton.shinyInput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"manage_words_save_%group_id%_%patient_id%"</span><span class="op">)</span>, <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"save"</span>, <span class="va">r</span><span class="op">$</span><span class="va">words</span><span class="op">)</span><span class="op">)</span>, style <span class="op">=</span> <span class="st">"padding-top:38px;"</span><span class="op">)</span>
+            <span class="op">)</span>,
+            <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Stack.html" class="external-link">Stack</a></span><span class="op">(</span>horizontal <span class="op">=</span> <span class="cn">TRUE</span>, tokens <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>childrenGap <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,
+                <span class="fu"><a href="../reference/make_textfield.html">make_textfield</a></span><span class="op">(</span>label <span class="op">=</span> <span class="st">"name"</span>, id <span class="op">=</span> <span class="st">"manage_words_add_name_%group_id%_%patient_id%"</span>, ns <span class="op">=</span> <span class="va">ns</span>, width <span class="op">=</span> <span class="st">"300px"</span><span class="op">)</span>,
+                <span class="fu">div</span><span class="op">(</span><span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Button.html" class="external-link">PrimaryButton.shinyInput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"manage_words_add_%group_id%_%patient_id%"</span><span class="op">)</span>, <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"add"</span>, <span class="va">r</span><span class="op">$</span><span class="va">words</span><span class="op">)</span><span class="op">)</span>, style <span class="op">=</span> <span class="st">"padding-top:38px;"</span><span class="op">)</span>
+            <span class="op">)</span>,
+            <span class="fu">br</span><span class="op">(</span><span class="op">)</span>, <span class="fu">hr</span><span class="op">(</span><span class="op">)</span>, <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Text.html" class="external-link">Text</a></span><span class="op">(</span>variant <span class="op">=</span> <span class="st">"large"</span>, <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"new_words_set"</span>, <span class="va">new_words</span><span class="op">)</span>, block <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,
+            <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Stack.html" class="external-link">Stack</a></span><span class="op">(</span>horizontal <span class="op">=</span> <span class="cn">TRUE</span>, tokens <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>childrenGap <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,
+                <span class="fu"><a href="../reference/make_textfield.html">make_textfield</a></span><span class="op">(</span>label <span class="op">=</span> <span class="st">"name"</span>, id <span class="op">=</span> <span class="st">"new_words_set_name_%group_id%_%patient_id%"</span>, ns <span class="op">=</span> <span class="va">ns</span>, width <span class="op">=</span> <span class="st">"300px"</span><span class="op">)</span>,
+                <span class="fu">div</span><span class="op">(</span><span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Button.html" class="external-link">PrimaryButton.shinyInput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"new_words_set_add_%group_id%_%patient_id%"</span><span class="op">)</span>, <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"add"</span>, <span class="va">r</span><span class="op">$</span><span class="va">words</span><span class="op">)</span><span class="op">)</span>, style <span class="op">=</span> <span class="st">"padding-top:38px;"</span><span class="op">)</span>
+            <span class="op">)</span>,
+            <span class="fu">br</span><span class="op">(</span><span class="op">)</span>, <span class="fu">hr</span><span class="op">(</span><span class="op">)</span>, <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Text.html" class="external-link">Text</a></span><span class="op">(</span>variant <span class="op">=</span> <span class="st">"large"</span>, <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"delete_words_set"</span>, <span class="va">new_words</span><span class="op">)</span>, block <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,
+            <span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Stack.html" class="external-link">Stack</a></span><span class="op">(</span>horizontal <span class="op">=</span> <span class="cn">TRUE</span>, tokens <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>childrenGap <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,
+                <span class="fu"><a href="../reference/make_dropdown.html">make_dropdown</a></span><span class="op">(</span>label <span class="op">=</span> <span class="st">"words_set"</span>, id <span class="op">=</span> <span class="st">"delete_words_set_%group_id%_%patient_id%"</span>, ns <span class="op">=</span> <span class="va">ns</span>, options <span class="op">=</span> <span class="va">options_words_set</span>, width <span class="op">=</span> <span class="st">"300px"</span>, words <span class="op">=</span> <span class="va">new_words</span><span class="op">)</span>,
+                <span class="fu">div</span><span class="op">(</span><span class="fu">shiny.fluent</span><span class="fu">::</span><span class="fu"><a href="https://appsilon.github.io/shiny.fluent/reference/Button.html" class="external-link">DefaultButton.shinyInput</a></span><span class="op">(</span><span class="fu">ns</span><span class="op">(</span><span class="st">"delete_words_set_validate_%group_id%_%patient_id%"</span><span class="op">)</span>, <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">language</span>, <span class="st">"delete"</span>, <span class="va">r</span><span class="op">$</span><span class="va">words</span><span class="op">)</span><span class="op">)</span>, style <span class="op">=</span> <span class="st">"padding-top:38px;"</span><span class="op">)</span>
+            <span class="op">)</span>
+        <span class="op">)</span>
+    <span class="op">)</span>
+    
+<span class="op">}</span>
+
+<span class="fu">temp</span><span class="op">(</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="server-code-2" class="section level3">
-<h3 class="hasAnchor">
-<a href="#server-code-2" class="anchor"></a>Server code</h3>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>  output<span class="sc">$</span>text_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="fu">renderUI</span>({</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    result <span class="ot">&lt;-</span> <span class="fu">tagList</span>()</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    data_temp <span class="ot">&lt;-</span> data<span class="sc">$</span>text <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">arrange</span>(<span class="fu">desc</span>(datetime_start))</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(data_temp), <span class="cf">function</span>(i){</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        row <span class="ot">&lt;-</span> data_temp[i, ]</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        result <span class="ot">&lt;&lt;-</span> <span class="fu">tagList</span>(result, <span class="fu">br</span>(),</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>            <span class="fu">div</span>(</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                <span class="fu">strong</span>(<span class="fu">paste0</span>(row<span class="sc">$</span>datetime_start, <span class="st">" - "</span>, row<span class="sc">$</span>display_name)), <span class="fu">br</span>(), <span class="fu">br</span>(),</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>                <span class="fu">HTML</span>(row<span class="sc">$</span>value <span class="sc">%&gt;%</span> stringr<span class="sc">::</span><span class="fu">str_replace_all</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">"</span>, <span class="st">"&lt;br /&gt;"</span>)),</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                <span class="at">style =</span> <span class="st">"border: dashed 1px; padding: 10px"</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>            ),</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    })</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    result</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div>
+<div class="section level3">
+<h3 id="server-code-2">Server code<a class="anchor" aria-label="anchor" href="#server-code-2"></a>
+</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Translations                           #</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>new_words <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tribble</span>(<span class="sc">~</span>language, <span class="sc">~</span>reference_word, <span class="sc">~</span>translated_word,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"new_words_set_added"</span>, <span class="st">"New words set added"</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"new_words_set_added"</span>, <span class="st">"Nouveau set de mots ajouté"</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"delete_words_set"</span>, <span class="st">"Delete a words set"</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"delete_words_set"</span>, <span class="st">"Supprimer un set de mots"</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"delete_words_set_subtext"</span>, <span class="st">"Are you sure you want to delete this words set ?"</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"delete_words_set_subtext"</span>, <span class="st">"Etes-vous sûr de vouloir supprimer ce set de mots ?"</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EN"</span>, <span class="st">"words_set_deleted"</span>, <span class="st">"Words set deleted"</span>,</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FR"</span>, <span class="st">"words_set_deleted"</span>, <span class="st">"Set de mots supprimé"</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a new words set                    #</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>new_words_set_add_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, {</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tryCatch</span>({</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>        new_name <span class="ot">&lt;-</span> input<span class="sc">$</span>new_words_set_name_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">length</span>(new_name) <span class="sc">==</span> <span class="dv">0</span>) shiny.fluent<span class="sc">::</span><span class="fu">updateTextField.shinyInput</span>(session, <span class="st">"new_words_set_name_%group_id%_%patient_id%"</span>, <span class="at">errorMessage =</span> <span class="fu">translate</span>(language, <span class="fu">paste0</span>(<span class="st">"provide_valid_name"</span>), r<span class="sc">$</span>words))</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> shiny.fluent<span class="sc">::</span><span class="fu">updateTextField.shinyInput</span>(session, <span class="st">"new_words_set_name_%group_id%_%patient_id%"</span>, <span class="at">errorMessage =</span> <span class="cn">NULL</span>)</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>        <span class="fu">req</span>(<span class="fu">length</span>(new_name) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>        sql <span class="ot">&lt;-</span> <span class="st">"SELECT DISTINCT(value) FROM modules_elements_options WHERE deleted IS FALSE AND group_id = %group_id% AND patient_id = %patient_id% AND name = 'words_set_name'"</span> </span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>        distinct_values <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(r<span class="sc">$</span>db, sql) <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>() <span class="sc">%&gt;%</span> <span class="fu">tolower</span>()</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>          </span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">tolower</span>(new_name) <span class="sc">%in%</span> distinct_values) <span class="fu">show_message_bar</span>(output, <span class="dv">2</span>, <span class="st">"name_already_used"</span>, <span class="st">"severeWarning"</span>, language)</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>        <span class="fu">req</span>(<span class="fu">tolower</span>(new_name) <span class="sc">%not_in%</span> distinct_values)</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>        last_row <span class="ot">&lt;-</span> <span class="fu">get_last_row</span>(r<span class="sc">$</span>db, <span class="st">"modules_elements_options"</span>)</span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Insert new words_set in database</span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>        sql <span class="ot">&lt;-</span> glue<span class="sc">::</span><span class="fu">glue_sql</span>(<span class="st">"INSERT INTO modules_elements_options(id, group_id, patient_id, category, name, value, creator_id, datetime, deleted)</span></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="st">            SELECT {last_row + 1}, %group_id%, %patient_id%, 'aggregated', 'words_set_name', {new_name}, {r$user_id}, {as.character(Sys.time())}, FALSE"</span>, <span class="at">.con =</span> r<span class="sc">$</span>db)</span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>        query <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbSendStatement</span>(r<span class="sc">$</span>db, sql)</span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>        DBI<span class="sc">::</span><span class="fu">dbClearResult</span>(query)</span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Reset textfield</span></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>        shiny.fluent<span class="sc">::</span><span class="fu">updateTextField.shinyInput</span>(session, <span class="st">"new_words_set_name_%group_id%_%patient_id%"</span>, <span class="at">value =</span> <span class="cn">NULL</span>)</span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Update dropdowns</span></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>        r<span class="sc">$</span>reload_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>        <span class="fu">show_message_bar</span>(output, <span class="dv">1</span>, <span class="fu">translate</span>(language, <span class="st">"new_words_set_added"</span>, new_words), <span class="st">"success"</span>, language)</span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cf">if</span> (<span class="fu">nchar</span>(e[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Error"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(e), <span class="at">language =</span> language))</span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a><span class="co"># Delete a words set                     #</span></span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a><span class="co"># Delete button is pressed</span></span>
+<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>delete_words_set_validate_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, r<span class="sc">$</span>delete_dialog_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Rendering react output</span></span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(r<span class="sc">$</span>delete_dialog_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> , {</span>
+<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a>    output<span class="sc">$</span>delete_confirm <span class="ot">&lt;-</span> shiny.fluent<span class="sc">::</span><span class="fu">renderReact</span>({</span>
+<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a>        dialogContentProps <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a>            <span class="at">type =</span> <span class="dv">0</span>,</span>
+<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a>            <span class="at">title =</span> <span class="fu">translate</span>(language, <span class="st">"delete_words_set"</span>, new_words),</span>
+<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a>            <span class="at">closeButtonAriaLabel =</span> <span class="st">"Close"</span>,</span>
+<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a>            <span class="at">subText =</span> <span class="fu">translate</span>(language, <span class="st">"delete_words_set_subtext"</span>, new_words)</span>
+<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a>        shiny.fluent<span class="sc">::</span><span class="fu">Dialog</span>(</span>
+<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a>            <span class="at">hidden =</span> <span class="sc">!</span>r<span class="sc">$</span>delete_dialog_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>,</span>
+<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a>            <span class="at">onDismiss =</span> htmlwidgets<span class="sc">::</span><span class="fu">JS</span>(<span class="fu">paste0</span>(<span class="st">"function() { Shiny.setInputValue('hide_dialog_%group_id%_%patient_id%', Math.random()); }"</span>)),</span>
+<span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a>            <span class="at">dialogContentProps =</span> dialogContentProps,</span>
+<span id="cb6-78"><a href="#cb6-78" aria-hidden="true" tabindex="-1"></a>            <span class="at">modalProps =</span> <span class="fu">list</span>(),</span>
+<span id="cb6-79"><a href="#cb6-79" aria-hidden="true" tabindex="-1"></a>            shiny.fluent<span class="sc">::</span><span class="fu">DialogFooter</span>(</span>
+<span id="cb6-80"><a href="#cb6-80" aria-hidden="true" tabindex="-1"></a>                shiny.fluent<span class="sc">::</span><span class="fu">PrimaryButton.shinyInput</span>(<span class="fu">ns</span>(<span class="st">"delete_confirmed_%group_id%_%patient_id%"</span>), <span class="at">text =</span> <span class="fu">translate</span>(language, <span class="st">"delete"</span>, r<span class="sc">$</span>words)),</span>
+<span id="cb6-81"><a href="#cb6-81" aria-hidden="true" tabindex="-1"></a>                shiny.fluent<span class="sc">::</span><span class="fu">DefaultButton.shinyInput</span>(<span class="fu">ns</span>(<span class="st">"delete_canceled_%group_id%_%patient_id%"</span>), <span class="at">text =</span> <span class="fu">translate</span>(language, <span class="st">"dont_delete"</span>, r<span class="sc">$</span>words))</span>
+<span id="cb6-82"><a href="#cb6-82" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb6-83"><a href="#cb6-83" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb6-84"><a href="#cb6-84" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb6-85"><a href="#cb6-85" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb6-86"><a href="#cb6-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-87"><a href="#cb6-87" aria-hidden="true" tabindex="-1"></a><span class="co"># Whether to close or not delete dialog box</span></span>
+<span id="cb6-88"><a href="#cb6-88" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>hide_dialog_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, r<span class="sc">$</span>delete_dialog_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-89"><a href="#cb6-89" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>delete_canceled_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, r<span class="sc">$</span>delete_dialog_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-90"><a href="#cb6-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-91"><a href="#cb6-91" aria-hidden="true" tabindex="-1"></a><span class="co"># When the delete is confirmed</span></span>
+<span id="cb6-92"><a href="#cb6-92" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>delete_confirmed_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, {</span>
+<span id="cb6-93"><a href="#cb6-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-94"><a href="#cb6-94" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tryCatch</span>({</span>
+<span id="cb6-95"><a href="#cb6-95" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-96"><a href="#cb6-96" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Get value of deleted row</span></span>
+<span id="cb6-97"><a href="#cb6-97" aria-hidden="true" tabindex="-1"></a>        row_deleted <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(input<span class="sc">$</span>delete_words_set_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>)</span>
+<span id="cb6-98"><a href="#cb6-98" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-99"><a href="#cb6-99" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Delete row in database</span></span>
+<span id="cb6-100"><a href="#cb6-100" aria-hidden="true" tabindex="-1"></a>        sql <span class="ot">&lt;-</span> glue<span class="sc">::</span><span class="fu">glue_sql</span>(<span class="st">"UPDATE modules_elements_options SET deleted = TRUE WHERE id = {row_deleted} OR link_id = {row_deleted}"</span>, <span class="at">.con =</span> r<span class="sc">$</span>db)</span>
+<span id="cb6-101"><a href="#cb6-101" aria-hidden="true" tabindex="-1"></a>        query <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbSendStatement</span>(r<span class="sc">$</span>db, sql)</span>
+<span id="cb6-102"><a href="#cb6-102" aria-hidden="true" tabindex="-1"></a>        DBI<span class="sc">::</span><span class="fu">dbClearResult</span>(query)</span>
+<span id="cb6-103"><a href="#cb6-103" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-104"><a href="#cb6-104" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Close dialog box</span></span>
+<span id="cb6-105"><a href="#cb6-105" aria-hidden="true" tabindex="-1"></a>        r<span class="sc">$</span>delete_dialog_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="cn">FALSE</span></span>
+<span id="cb6-106"><a href="#cb6-106" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-107"><a href="#cb6-107" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Notification to user</span></span>
+<span id="cb6-108"><a href="#cb6-108" aria-hidden="true" tabindex="-1"></a>        <span class="fu">show_message_bar</span>(<span class="at">output =</span> output, <span class="at">id =</span> <span class="dv">3</span>, <span class="fu">translate</span>(language, <span class="st">"words_set_deleted"</span>, new_words), <span class="at">type =</span> <span class="st">"severeWarning"</span>, <span class="at">language =</span> language)</span>
+<span id="cb6-109"><a href="#cb6-109" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-110"><a href="#cb6-110" aria-hidden="true" tabindex="-1"></a>        r<span class="sc">$</span>reload_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb6-111"><a href="#cb6-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-112"><a href="#cb6-112" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb6-113"><a href="#cb6-113" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cf">if</span> (<span class="fu">nchar</span>(e[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Error"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(e), <span class="at">language =</span> language))</span>
+<span id="cb6-114"><a href="#cb6-114" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb6-115"><a href="#cb6-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-116"><a href="#cb6-116" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-117"><a href="#cb6-117" aria-hidden="true" tabindex="-1"></a><span class="co"># Load words of a words set              #</span></span>
+<span id="cb6-118"><a href="#cb6-118" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-119"><a href="#cb6-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-120"><a href="#cb6-120" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>manage_words_set_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, {</span>
+<span id="cb6-121"><a href="#cb6-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-122"><a href="#cb6-122" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tryCatch</span>({</span>
+<span id="cb6-123"><a href="#cb6-123" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-124"><a href="#cb6-124" aria-hidden="true" tabindex="-1"></a>        sql <span class="ot">&lt;-</span> glue<span class="sc">::</span><span class="fu">glue_sql</span>(<span class="st">"SELECT * FROM modules_elements_options WHERE deleted IS FALSE AND group_id = %group_id% AND patient_id = %patient_id%</span></span>
+<span id="cb6-125"><a href="#cb6-125" aria-hidden="true" tabindex="-1"></a><span class="st">            AND name = 'words_set_word' AND link_id = {input$manage_words_set_%group_id%_%patient_id%}"</span>, <span class="at">.con =</span> r<span class="sc">$</span>db)</span>
+<span id="cb6-126"><a href="#cb6-126" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-127"><a href="#cb6-127" aria-hidden="true" tabindex="-1"></a>        r<span class="sc">$</span>words_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(r<span class="sc">$</span>db, sql) <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(value)</span>
+<span id="cb6-128"><a href="#cb6-128" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-129"><a href="#cb6-129" aria-hidden="true" tabindex="-1"></a>        shiny.fluent<span class="sc">::</span><span class="fu">updateDropdown.shinyInput</span>(session, <span class="st">"manage_words_%group_id%_%patient_id%"</span>, </span>
+<span id="cb6-130"><a href="#cb6-130" aria-hidden="true" tabindex="-1"></a>            <span class="at">options =</span> <span class="fu">convert_tibble_to_list</span>(<span class="at">data =</span> r<span class="sc">$</span>words_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, <span class="at">key_col =</span> <span class="st">"value"</span>, <span class="at">text_col =</span> <span class="st">"value"</span>, <span class="at">null_value =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb6-131"><a href="#cb6-131" aria-hidden="true" tabindex="-1"></a>            <span class="at">value =</span> r<span class="sc">$</span>words_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(value))</span>
+<span id="cb6-132"><a href="#cb6-132" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb6-133"><a href="#cb6-133" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cf">if</span> (<span class="fu">nchar</span>(e[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Error"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(e), <span class="at">language =</span> language))</span>
+<span id="cb6-134"><a href="#cb6-134" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb6-135"><a href="#cb6-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-136"><a href="#cb6-136" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-137"><a href="#cb6-137" aria-hidden="true" tabindex="-1"></a><span class="co"># Update words in a words set            #</span></span>
+<span id="cb6-138"><a href="#cb6-138" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-139"><a href="#cb6-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-140"><a href="#cb6-140" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>manage_words_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, {</span>
+<span id="cb6-141"><a href="#cb6-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-142"><a href="#cb6-142" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tryCatch</span>({</span>
+<span id="cb6-143"><a href="#cb6-143" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-144"><a href="#cb6-144" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Update r var ...</span></span>
+<span id="cb6-145"><a href="#cb6-145" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb6-146"><a href="#cb6-146" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cf">if</span> (<span class="fu">nchar</span>(e[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Error"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(e), <span class="at">language =</span> language)) </span>
+<span id="cb6-147"><a href="#cb6-147" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb6-148"><a href="#cb6-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-149"><a href="#cb6-149" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-150"><a href="#cb6-150" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a new word                         #</span></span>
+<span id="cb6-151"><a href="#cb6-151" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-152"><a href="#cb6-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-153"><a href="#cb6-153" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>manage_words_add_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, {</span>
+<span id="cb6-154"><a href="#cb6-154" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-155"><a href="#cb6-155" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tryCatch</span>({</span>
+<span id="cb6-156"><a href="#cb6-156" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-157"><a href="#cb6-157" aria-hidden="true" tabindex="-1"></a>        r<span class="sc">$</span>words_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> r<span class="sc">$</span>words_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">bind_rows</span>(tibble<span class="sc">::</span><span class="fu">tribble</span>(<span class="sc">~</span>value, input<span class="sc">$</span>manage_words_add_name_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>))</span>
+<span id="cb6-158"><a href="#cb6-158" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-159"><a href="#cb6-159" aria-hidden="true" tabindex="-1"></a>        shiny.fluent<span class="sc">::</span><span class="fu">updateDropdown.shinyInput</span>(session, <span class="st">"manage_words_%group_id%_%patient_id%"</span>, </span>
+<span id="cb6-160"><a href="#cb6-160" aria-hidden="true" tabindex="-1"></a>            <span class="at">options =</span> <span class="fu">convert_tibble_to_list</span>(<span class="at">data =</span> r<span class="sc">$</span>words_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, <span class="at">key_col =</span> <span class="st">"value"</span>, <span class="at">text_col =</span> <span class="st">"value"</span>, <span class="at">null_value =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb6-161"><a href="#cb6-161" aria-hidden="true" tabindex="-1"></a>            <span class="at">value =</span> r<span class="sc">$</span>words_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(value))</span>
+<span id="cb6-162"><a href="#cb6-162" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb6-163"><a href="#cb6-163" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cf">if</span> (<span class="fu">nchar</span>(e[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Error"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(e), <span class="at">language =</span> language))  </span>
+<span id="cb6-164"><a href="#cb6-164" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb6-165"><a href="#cb6-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-166"><a href="#cb6-166" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-167"><a href="#cb6-167" aria-hidden="true" tabindex="-1"></a><span class="co"># Save words of a words set              #</span></span>
+<span id="cb6-168"><a href="#cb6-168" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-169"><a href="#cb6-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-170"><a href="#cb6-170" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>manage_words_save_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, {</span>
+<span id="cb6-171"><a href="#cb6-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-172"><a href="#cb6-172" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tryCatch</span>({</span>
+<span id="cb6-173"><a href="#cb6-173" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-174"><a href="#cb6-174" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-175"><a href="#cb6-175" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb6-176"><a href="#cb6-176" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cf">if</span> (<span class="fu">nchar</span>(e[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Error"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(e), <span class="at">language =</span> language))</span>
+<span id="cb6-177"><a href="#cb6-177" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb6-178"><a href="#cb6-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-179"><a href="#cb6-179" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-180"><a href="#cb6-180" aria-hidden="true" tabindex="-1"></a><span class="co"># Reload data                            #</span></span>
+<span id="cb6-181"><a href="#cb6-181" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-182"><a href="#cb6-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-183"><a href="#cb6-183" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(r<span class="sc">$</span>reload_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, {</span>
+<span id="cb6-184"><a href="#cb6-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-185"><a href="#cb6-185" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tryCatch</span>({</span>
+<span id="cb6-186"><a href="#cb6-186" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-187"><a href="#cb6-187" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Update dropdowns</span></span>
+<span id="cb6-188"><a href="#cb6-188" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-189"><a href="#cb6-189" aria-hidden="true" tabindex="-1"></a>        options <span class="ot">&lt;-</span> <span class="fu">convert_tibble_to_list</span>(DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(r<span class="sc">$</span>db, <span class="st">"SELECT * FROM modules_elements_options WHERE deleted IS FALSE AND group_id = %group_id% AND patient_id = %patient_id% AND name = 'words_set_name'"</span>), <span class="at">key_col =</span> <span class="st">"id"</span>, <span class="at">text_col =</span> <span class="st">"value"</span>)</span>
+<span id="cb6-190"><a href="#cb6-190" aria-hidden="true" tabindex="-1"></a>        shiny.fluent<span class="sc">::</span><span class="fu">updateDropdown.shinyInput</span>(session, <span class="st">"select_words_set_%group_id%_%patient_id%"</span>, <span class="at">options =</span> options)</span>
+<span id="cb6-191"><a href="#cb6-191" aria-hidden="true" tabindex="-1"></a>        shiny.fluent<span class="sc">::</span><span class="fu">updateDropdown.shinyInput</span>(session, <span class="st">"manage_words_set_%group_id%_%patient_id%"</span>, <span class="at">options =</span> options)</span>
+<span id="cb6-192"><a href="#cb6-192" aria-hidden="true" tabindex="-1"></a>        shiny.fluent<span class="sc">::</span><span class="fu">updateDropdown.shinyInput</span>(session, <span class="st">"delete_words_set_%group_id%_%patient_id%"</span>, <span class="at">options =</span> options)</span>
+<span id="cb6-193"><a href="#cb6-193" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-194"><a href="#cb6-194" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb6-195"><a href="#cb6-195" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cf">if</span> (<span class="fu">nchar</span>(e[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Error"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(e), <span class="at">language =</span> language))</span>
+<span id="cb6-196"><a href="#cb6-196" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb6-197"><a href="#cb6-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-198"><a href="#cb6-198" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-199"><a href="#cb6-199" aria-hidden="true" tabindex="-1"></a><span class="co"># Get results for search &amp; sets          #</span></span>
+<span id="cb6-200"><a href="#cb6-200" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-201"><a href="#cb6-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-202"><a href="#cb6-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-203"><a href="#cb6-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-204"><a href="#cb6-204" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-205"><a href="#cb6-205" aria-hidden="true" tabindex="-1"></a><span class="co"># Load &amp; render text                     #</span></span>
+<span id="cb6-206"><a href="#cb6-206" aria-hidden="true" tabindex="-1"></a><span class="do">##########################################</span></span>
+<span id="cb6-207"><a href="#cb6-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-208"><a href="#cb6-208" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>data_choice_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, r<span class="sc">$</span>reload_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="fu">Sys.time</span>())</span>
+<span id="cb6-209"><a href="#cb6-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-210"><a href="#cb6-210" aria-hidden="true" tabindex="-1"></a><span class="fu">observeEvent</span>(r<span class="sc">$</span>reload_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span>, {</span>
+<span id="cb6-211"><a href="#cb6-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-212"><a href="#cb6-212" aria-hidden="true" tabindex="-1"></a>    output<span class="sc">$</span>text_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="fu">renderUI</span>({</span>
+<span id="cb6-213"><a href="#cb6-213" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-214"><a href="#cb6-214" aria-hidden="true" tabindex="-1"></a>        <span class="fu">tryCatch</span>({</span>
+<span id="cb6-215"><a href="#cb6-215" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb6-216"><a href="#cb6-216" aria-hidden="true" tabindex="-1"></a>            result <span class="ot">&lt;-</span> <span class="fu">tagList</span>()</span>
+<span id="cb6-217"><a href="#cb6-217" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb6-218"><a href="#cb6-218" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (input<span class="sc">$</span>data_choice_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">==</span> <span class="st">"all_stays"</span>) data_temp <span class="ot">&lt;-</span> data<span class="sc">$</span>text</span>
+<span id="cb6-219"><a href="#cb6-219" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (input<span class="sc">$</span>data_choice_<span class="sc">%group_id%</span>_<span class="sc">%patient_id%</span> <span class="er">==</span> <span class="st">"current_stay"</span>) data_temp <span class="ot">&lt;-</span> data<span class="sc">$</span>text_stay</span>
+<span id="cb6-220"><a href="#cb6-220" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb6-221"><a href="#cb6-221" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (<span class="fu">nrow</span>(data_temp) <span class="sc">&gt;</span> <span class="dv">0</span>){</span>
+<span id="cb6-222"><a href="#cb6-222" aria-hidden="true" tabindex="-1"></a>                data_temp <span class="ot">&lt;-</span> data_temp <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">arrange</span>(<span class="fu">desc</span>(datetime_start))</span>
+<span id="cb6-223"><a href="#cb6-223" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb6-224"><a href="#cb6-224" aria-hidden="true" tabindex="-1"></a>                <span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(data_temp), <span class="cf">function</span>(i){</span>
+<span id="cb6-225"><a href="#cb6-225" aria-hidden="true" tabindex="-1"></a>                    row <span class="ot">&lt;-</span> data_temp[i, ]</span>
+<span id="cb6-226"><a href="#cb6-226" aria-hidden="true" tabindex="-1"></a>                    result <span class="ot">&lt;&lt;-</span> <span class="fu">tagList</span>(result, <span class="fu">br</span>(),</span>
+<span id="cb6-227"><a href="#cb6-227" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">div</span>(</span>
+<span id="cb6-228"><a href="#cb6-228" aria-hidden="true" tabindex="-1"></a>                            <span class="fu">strong</span>(<span class="fu">paste0</span>(row<span class="sc">$</span>datetime_start, <span class="st">" - "</span>, row<span class="sc">$</span>display_name)), <span class="fu">br</span>(), <span class="fu">br</span>(),</span>
+<span id="cb6-229"><a href="#cb6-229" aria-hidden="true" tabindex="-1"></a>                            <span class="fu">HTML</span>(row<span class="sc">$</span>value <span class="sc">%&gt;%</span> stringr<span class="sc">::</span><span class="fu">str_replace_all</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">"</span>, <span class="st">"&lt;br /&gt;"</span>)),</span>
+<span id="cb6-230"><a href="#cb6-230" aria-hidden="true" tabindex="-1"></a>                            <span class="at">style =</span> <span class="st">"border: dashed 1px; padding: 10px"</span></span>
+<span id="cb6-231"><a href="#cb6-231" aria-hidden="true" tabindex="-1"></a>                        ),</span>
+<span id="cb6-232"><a href="#cb6-232" aria-hidden="true" tabindex="-1"></a>                    )</span>
+<span id="cb6-233"><a href="#cb6-233" aria-hidden="true" tabindex="-1"></a>                })</span>
+<span id="cb6-234"><a href="#cb6-234" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb6-235"><a href="#cb6-235" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb6-236"><a href="#cb6-236" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (<span class="fu">nrow</span>(data_temp) <span class="sc">==</span> <span class="dv">0</span>) result <span class="ot">&lt;-</span> <span class="fu">div</span>(shiny.fluent<span class="sc">::</span><span class="fu">MessageBar</span>(<span class="fu">translate</span>(language, <span class="st">"DT_empty"</span>, r<span class="sc">$</span>words), <span class="at">messageBarType =</span> <span class="dv">0</span>), <span class="at">style =</span> <span class="st">"margin-top:10px;"</span>)</span>
+<span id="cb6-237"><a href="#cb6-237" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-238"><a href="#cb6-238" aria-hidden="true" tabindex="-1"></a>            result</span>
+<span id="cb6-239"><a href="#cb6-239" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-240"><a href="#cb6-240" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb6-241"><a href="#cb6-241" aria-hidden="true" tabindex="-1"></a>        <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cf">if</span> (<span class="fu">nchar</span>(e[<span class="dv">1</span>]) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">report_bug</span>(<span class="at">r =</span> r, <span class="at">output =</span> output, <span class="at">error_message =</span> <span class="st">"error_run_plugin_server_code"</span>, <span class="at">error_name =</span> <span class="st">"%group_id% - run server code"</span>, <span class="at">category =</span> <span class="st">"Error"</span>, <span class="at">error_report =</span> <span class="fu">toString</span>(e), <span class="at">language =</span> language))</span>
+<span id="cb6-242"><a href="#cb6-242" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb6-243"><a href="#cb6-243" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="vistime">Vistime<a class="anchor" aria-label="anchor" href="#vistime"></a>
+</h2>
+<div class="section level3">
+<h3 id="description-3">Description<a class="anchor" aria-label="anchor" href="#description-3"></a>
+</h3>
+<ul>
+<li>
+<strong>Version</strong> : 0.0.1</li>
+<li>
+<strong>Libraries</strong> : none</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="ui-code-3">UI code<a class="anchor" aria-label="anchor" href="#ui-code-3"></a>
+</h3>
+</div>
+<div class="section level3">
+<h3 id="server-code-3">Server code<a class="anchor" aria-label="anchor" href="#server-code-3"></a>
+</h3>
 </div>
 </div>
   </div>
@@ -349,11 +816,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Boris Delange.</p>
+  <p></p>
+<p>Developed by Boris Delange.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -361,6 +830,8 @@
 
   
 
+
+  
 
   </body>
 </html>

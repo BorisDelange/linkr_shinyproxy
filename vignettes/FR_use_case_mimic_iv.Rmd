@@ -2,7 +2,7 @@
 title: "Application avec la MIMIC-IV"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{FR_use_case_mimic_iv}
+  %\VignetteIndexEntry{Application avec la MIMIC-IV}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
