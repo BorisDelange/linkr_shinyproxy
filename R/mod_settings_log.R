@@ -42,7 +42,7 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     observeEvent(shiny.router::get_query_param(), {
       shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = FALSE)
       # If this toggles was activated, reactivate it
-      if (paste0(id, toggle) %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = TRUE)
+      if (paste0(id, "log_card") %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = TRUE)
     })
       
     # If user has no access, hide card

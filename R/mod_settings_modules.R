@@ -85,6 +85,19 @@ mod_settings_sub_modules_ui <- function(id = character(), language = "EN", words
     if (page %in% c("modules_management", "modules_families_management")){
       render_settings_datatable_card(language = language, ns = ns, title = page, words = words) -> result
     }
+  
+    # For modules management, add a dropdown to select module family
+    # if (page == "modules_management"){
+    #   div(id = ns("datatable_card"),
+    #     make_card(translate(language, page, words),
+    #       div(
+    #         make_dropdown(language = language, ns = ns, label = "module_family", width = "300px"),
+    #         DT::DTOutput(ns("management_datatable")),
+    #         shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save", words))
+    #       )
+    #     )
+    #   ) -> result
+    # }
 
     if (page == "modules_elements_creation"){
       if (grepl("patient_lvl", id)){
@@ -412,19 +425,13 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
                   tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus,
                     datamart_id = as.integer(input$datamart), category = "count_items_rows"),
                     error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-                      error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", input$datamart), category = "Error", error_report = toString(e), language = language),
-                    warning = function(w) if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-                      error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", input$datamart), category = "Warning", error_report = toString(w), language = language)
-                  )
+                      error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", input$datamart), category = "Error", error_report = toString(e), language = language))
                   
                   # Add count_items_rows in the cache & get it if already in the cache
                   tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus,
                     datamart_id = as.integer(input$datamart), category = "count_patients_rows"),
                     error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-                      error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", input$datamart), category = "Error", error_report = toString(e), language = language),
-                    warning = function(w) if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-                      error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", input$datamart), category = "Warning", error_report = toString(w), language = language)
-                  )
+                      error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", input$datamart), category = "Error", error_report = toString(e), language = language))
                   
                   if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language)
                   req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
@@ -763,7 +770,16 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
         if (grepl("management", id)){
           
           # If r$... variable changes
+          # observeEvent(r[[paste0(table, "_temp")]], r[[paste0("reload_", table)]] <- Sys.time())
+          # If module family choice changes
+          # observeEvent(input$module_family, r[[paste0("reload_", table)]] <- Sys.time())
+          
+          # Reload datatable
           observeEvent(r[[paste0(table, "_temp")]], {
+            
+            # Update input module_family
+            options <- convert_tibble_to_list(r[[paste0(prefix, "_modules_families")]], key_col = "id", text_col = "name")
+            shiny.fluent::updateDropdown.shinyInput(session, "module_family", options = options)
             
             # If user has access
             req(paste0(prefix, "_modules_management_card") %in% r$user_accesses)
@@ -807,11 +823,16 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             page_length <- isolate(input$management_datatable_state$length)
             start <- isolate(input$management_datatable_state$start)
             
+            # Filter data on module family, for modules datatable
+            # data <- r[[paste0(table, "_temp")]]
+            # if (length(input$module_family) > 0) data <- r[[paste0(prefix, "_modules_temp")]] %>% dplyr::filter(module_family_id == input$module_family)
+            
             render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
               col_names =  get_col_names(table_name = table, language = language), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
               datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
               editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
               filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
+              # data = data)
           })
         }
         

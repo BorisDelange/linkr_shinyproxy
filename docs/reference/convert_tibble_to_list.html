@@ -130,31 +130,9 @@
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html" class="external-link">tribble</a></span><span class="op">(</span><span class="op">~</span><span class="va">key</span>, <span class="op">~</span><span class="va">text</span>, <span class="st">"my_key1"</span>, <span class="st">"my_text1"</span>, <span class="st">"my_key2"</span>, <span class="st">"my_text2"</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">my_list</span> <span class="op">&lt;-</span> <span class="fu">convert_tibble_to_list</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data</span>, key_col <span class="op">=</span> <span class="st">"key"</span>, text_col <span class="op">=</span> <span class="st">"text"</span>, null_value <span class="op">=</span> <span class="cn">TRUE</span>, language <span class="op">=</span> <span class="st">"EN"</span><span class="op">)</span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in convert_tibble_to_list(data = data, key_col = "key", text_col = "text",     null_value = TRUE, language = "EN"):</span> could not find function "convert_tibble_to_list"</span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">my_list</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]$key</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] ""</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]$text</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "None"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]$key</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "my_key1"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]$text</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "my_text1"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[3]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[3]]$key</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "my_key2"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[3]]$text</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "my_text2"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in print(my_list):</span> object 'my_list' not found</span>
 </code></pre></div>
     </div>
   </div>

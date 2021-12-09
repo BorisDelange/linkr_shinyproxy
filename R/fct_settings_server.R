@@ -271,9 +271,12 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
 
   # Hide creation card & options card, show management card
-  shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = FALSE)
-  shiny.fluent::updateToggle.shinyInput(session, "creation_card_toggle", value = FALSE)
-  shiny.fluent::updateToggle.shinyInput(session, "datatable_card_toggle", value = TRUE)
+  # Except for modules (we usually add several modules)
+  if (table %not_in% c("patient_lvl_modules", "aggregated_modules")){
+    shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = FALSE)
+    shiny.fluent::updateToggle.shinyInput(session, "creation_card_toggle", value = FALSE)
+    shiny.fluent::updateToggle.shinyInput(session, "datatable_card_toggle", value = TRUE)
+  }
 
   show_message_bar(output = output, id = 1, message = paste0(get_singular(table), "_added"), type = "success", language = language)
 
@@ -314,6 +317,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' @param factorize_cols Which columns are factorized (to be filtered with a dropdown) (character)
 #' @param searchable_cols If filter is TRUE, choose which columns are searchable (character)
 #' @param column_widths Columns widths (named character vector)
+#' @param data If we do not want to load all data from r$... temp table, use this argument
 #' @examples 
 #' \dontrun{
 #' data <- tibble::tribble(~id, ~name, ~description, ~data_source_id,
@@ -353,7 +357,7 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
   output_name = character(), col_names = character(), table = character(), dropdowns = character(), action_buttons = character(),
   datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 1,
   editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
-  filter = FALSE, factorize_cols = character(), column_widths = character()
+  filter = FALSE, factorize_cols = character(), column_widths = character(), data = tibble::tibble()
 ){
   
   # Translation for datatable
@@ -364,10 +368,11 @@ render_settings_datatable <- function(output, r = shiny::reactiveValues(), ns = 
     emptyTable = translate(language, "DT_empty", r$words))
   
   # Load temp data
-  data <- r[[paste0(table, "_temp")]]
+  # If argument data is not empty, use this variable, else, load r$... temp table
+  if (nrow(data) == 0) data <- r[[paste0(table, "_temp")]]
   
   # If no row in dataframe, stop here
-  if (nrow(data) == 0) return({
+  if (nrow(data) == 0) lengreturn({
     data <- tibble::tribble(~id, ~name, ~description,  ~datetime)
     names(data) <- c(translate(language, "id", r$words), translate(language, "name", r$words), translate(language, "description", r$words), translate(language, "datetime", r$words))
     output[[output_name]] <- DT::renderDT(data, options = list(dom = 'tp'))

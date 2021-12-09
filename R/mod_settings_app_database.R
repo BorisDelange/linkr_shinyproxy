@@ -453,6 +453,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         }
         
         tar(file, files)
+        # Sometimes, zip(file, files) works better (tar didn't work in Rstudio server when I tested)
       }
     )
     
