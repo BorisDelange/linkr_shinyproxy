@@ -177,7 +177,7 @@ mod_settings_sub_modules_ui <- function(id = character(), language = "EN", words
           div(
             DT::DTOutput(ns("management_datatable")),
             shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save", words)), br(), br(),
-            hr(), span(translate(language, "change_display_order_module_element"), style = "font-family: 'Segoe UI'; font-size: 18px;"), br(),
+            hr(), span(translate(language, "change_display_order_module_element", words), style = "font-family: 'Segoe UI'; font-size: 18px;"), br(),
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 30),
               div(make_dropdown(language = language, ns = ns, label = "module_family", id = "cdo_module_family", width = "200px", words = words)),
@@ -311,7 +311,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
         observeEvent(r[[paste0(prefix, "_modules_families")]], {
           table <- paste0(prefix, "_modules_families")
           
-          options <- convert_tibble_to_list(data = r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words)
           shiny.fluent::updateDropdown.shinyInput(session, "module_family", options = options)
         })
         
@@ -319,7 +319,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
         observe({
           req(input$module_family)
           options_parent_module <- convert_tibble_to_list(data = r[[paste0(prefix, "_modules")]] %>%
-            dplyr::filter(module_family_id == input$module_family) %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
+            dplyr::filter(module_family_id == input$module_family) %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE, words = r$words)
           shiny.fluent::updateDropdown.shinyInput(session, "parent_module", options = options_parent_module)
         })
         
@@ -330,18 +330,18 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           # Filter on plugins user has access to
           plugins <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)
           
-          options <- convert_tibble_to_list(data = plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words)
           shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options)
         })
         
         observeEvent(r$datamarts, {
           
-          options <- convert_tibble_to_list(data = r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE)
+          options <- convert_tibble_to_list(data = r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name", null_value = TRUE, words = r$words)
           shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = options)
         })
         
         observeEvent(r$thesaurus, {
-          options <- convert_tibble_to_list(data = r$thesaurus %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = r$thesaurus %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words)
           shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = options)
         })
         
@@ -362,7 +362,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
               dplyr::filter(is.na(has_children))
             
             shiny.fluent::updateDropdown.shinyInput(session, "module_new_element",
-              options = convert_tibble_to_list(data = modules, key_col = "id", text_col = "name"))
+              options = convert_tibble_to_list(data = modules, key_col = "id", text_col = "name", words = r$words))
           })
         
           ##########################################
@@ -383,7 +383,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
               
               # Update datamart dropdown
               shiny.fluent::updateDropdown.shinyInput(session, "datamart", 
-                options = convert_tibble_to_list(data = datamarts, key_col = "id", text_col = "name", null_value = TRUE), value = "")
+                options = convert_tibble_to_list(data = datamarts, key_col = "id", text_col = "name", null_value = TRUE, words = r$words), value = "")
               
               # Set r$modules_refresh_thesaurus_items to "all_items", cause we havn't chosen yet the thesaurus or the datamart
               r$modules_refresh_thesaurus_items <- paste0(input$thesaurus, "all_items")
@@ -460,33 +460,6 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
                 dplyr::mutate_at("category", as.factor) %>%
                 dplyr::mutate_at("item_id", as.character)
               
-              # Parameters for the datatable
-              action_buttons <- ""
-              if (paste0(prefix, "modules_delete_data") %in% r$user_accesses) action_buttons <- "delete"
-              
-              
-              editable_cols <- c("display_name", "unit")
-              searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
-              factorize_cols <- c("category", "unit")
-              column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "name" = "300px", "display_name" = "150px",
-                "unit" = "100px")
-              
-              # If we have count cols
-              if ("count_patients_rows" %in% names(r$modules_thesaurus_items)){
-                sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
-                centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-                col_names <- get_col_names(table_name = "modules_thesaurus_items_with_counts", language = language)
-              }
-              else {
-                sortable_cols <- c("id", "item_id", "name", "display_name", "category")
-                centered_cols <- c("id", "item_id", "unit", "datetime", "action")
-                col_names <- get_col_names(table_name = "modules_thesaurus_items", language = language)
-              }
-              
-              # Restore datatable state
-              page_length <- isolate(input$thesaurus_items_state$length)
-              start <- isolate(input$thesaurus_items_state$start)
-              
               # Render datatable
               render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "thesaurus_items",
                 col_names =  col_names, table = "modules_thesaurus_items", action_buttons = action_buttons,
@@ -555,7 +528,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
                     as.character(item$unit), as.character(input[[paste0("colour_", link_id)]]), as.character(item$input_text)))
   
                 # Update dropdown of selected items
-                options <- tibble_to_list(r$modules_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), "id", "input_text")
+                options <- convert_tibble_to_list(r$modules_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", words = r$words)
                 value <- r$modules_thesaurus_selected_items %>% dplyr::pull(id)
                 shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
                   options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
@@ -585,7 +558,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
                   dplyr::anti_join(tibble::tribble(~thesaurus_id, ~id, input$thesaurus, link_id), by = c("thesaurus_id", "id"))
                 
                 # Update dropdown of selected items
-                options <- tibble_to_list(r$modules_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), "id", "input_text")
+                options <- convert_tibble_to_list(r$modules_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", words = r$words)
                 value <- r$modules_thesaurus_selected_items %>% dplyr::pull(id)
                 shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
                   options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
@@ -748,11 +721,11 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           
           modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == input$module_family) %>% dplyr::arrange(name)
           shiny.fluent::updateDropdown.shinyInput(session, "module_new_element",
-            options = convert_tibble_to_list(data = modules, key_col = "id", text_col = "name"), value = NULL)
+            options = convert_tibble_to_list(data = modules, key_col = "id", text_col = "name", words = r$words), value = NULL)
           
           module_type_id <- switch(prefix, "patient_lvl" = 1, "aggregated" = 2)
           plugins <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)
-          options <- convert_tibble_to_list(data = plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list(data = plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words)
           shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options, value = NULL)
         })
         
@@ -769,71 +742,141 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
         # Only for data management subpages
         if (grepl("management", id)){
           
-          # If r$... variable changes
-          # observeEvent(r[[paste0(table, "_temp")]], r[[paste0("reload_", table)]] <- Sys.time())
-          # If module family choice changes
-          # observeEvent(input$module_family, r[[paste0("reload_", table)]] <- Sys.time())
+          # Create r var for datatable
+          
+          # Action buttons for each module / page
+          action_buttons <- ""
+          if (paste0(prefix, "_modules_delete_data") %in% r$user_accesses) action_buttons <- "delete"
+          if (grepl("modules_families", table)) action_buttons <- c("options", action_buttons)
+          
+          # Dropdowns for each module / page
+          dropdowns_datatable <- switch(table,
+            "patient_lvl_modules" = c("parent_module_id" = "patient_lvl_modules"),
+            "aggregated_modules" = c("parent_module_id" = "aggregated_modules"))
+          
+          # If r variable already created, or not
+          if (length(r[[paste0(table, "_datatable_temp")]]) == 0) data_output <- tibble::tibble()
+          else data_output <- r[[paste0(table, "_datatable_temp")]]
+          
+          # Prepare data for datatable (add code for dropdowns etc)
+          r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+            table = table, dropdowns = dropdowns_datatable, dropdowns_null_value = "parent_module_id",
+            action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
+          
+          # Editable cols
+          if (table == "patient_lvl_modules_elements") editable_cols <- c("thesaurus_item_display_name", "thesaurus_item_unit", "display_order")
+          else if (table == "aggregated_modules_elements") editable_cols <- c("name", "display_order")
+          else editable_cols <- c("name", "description", "display_order")
+          
+          # Sortable cols
+          sortable_cols <- c("id", "name", "description", "display_order", "datetime", "module_family_id", "module_id", "plugin_id", "thesaurus_name")
+
+          # Column widths
+          column_widths <- c("id" = "80px", "display_order" = "80px", "datetime" = "130px", "action" = "80px")
+          
+          # Searchable_cols
+          searchable_cols <- c("name", "description", "module_family_id", "module_id", "plugin_id", "thesaurus_name")
+          
+          # Centered columns
+          centered_cols <- c("id", "parent_module_id", "display_order", "datetime", "action")
+          
+          # Factorized cols
+          factorize_cols <- character()
+          if (table %in% c("patient_lvl_modules", "aggregated_modules")) factorize_cols <- c("module_family_id")
+          if (table == "patient_lvl_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id", "thesaurus_name")
+          if (table == "aggregated_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id")
+          
+          # Hidden cols
+          hidden_cols <- c("description", "deleted", "modified")
+          
+          # Render datatable
+          render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(table, "_datatable_temp")]],
+            output_name = "management_datatable", col_names =  get_col_names(table_name = table, language = language, words = r$words),
+            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
+            searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+          
+          # Create a proxy for datatatable
+          r[[paste0(table, "_datatable_proxy")]] <- DT::dataTableProxy("management_datatable", deferUntilFlush = FALSE)
           
           # Reload datatable
           observeEvent(r[[paste0(table, "_temp")]], {
             
-            # Update input module_family
-            options <- convert_tibble_to_list(r[[paste0(prefix, "_modules_families")]], key_col = "id", text_col = "name")
-            shiny.fluent::updateDropdown.shinyInput(session, "module_family", options = options)
+            # Reload datatable_temp variable
+            # r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+            #   table = table, dropdowns = dropdowns_datatable, dropdowns_null_value = "parent_module_id",
+            #   action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
             
-            # If user has access
-            req(paste0(prefix, "_modules_management_card") %in% r$user_accesses)
             
-            # Dropdowns for each module / page
-            dropdowns_datatable <- switch(table,
-              "patient_lvl_modules" = c("parent_module_id" = "patient_lvl_modules"),
-              "aggregated_modules" = c("parent_module_id" = "aggregated_modules"))
-            
-            # Action buttons for each module / page
-            action_buttons <- ""
-            if (paste0(prefix, "_modules_delete_data") %in% r$user_accesses) action_buttons <- "delete"
-            
-            # if (grepl("modules$", table) | grepl("modules_elements", table)) action_buttons <- "delete"
-            if (grepl("modules_families", table)) action_buttons <- c("options", action_buttons)
-            
-            # Sortable cols
-            sortable_cols <- c("id", "name", "description", "display_order", "datetime", "module_family_id", "module_id", "plugin_id", "thesaurus_name")
-            
-            # Column widths
-            column_widths <- c("id" = "80px", "display_order" = "80px", "datetime" = "130px", "action" = "80px")
-            
-            # Editable cols
-            if (table == "patient_lvl_modules_elements") editable_cols <- c("thesaurus_item_display_name", "thesaurus_item_unit", "display_order")
-            else if (table == "aggregated_modules_elements") editable_cols <- c("name", "display_order")
-            else editable_cols <- c("name", "description", "display_order")
-            
-            # Centered columns
-            centered_cols <- c("id", "parent_module_id", "display_order", "datetime", "action")
-            
-            # Searchable_cols
-            searchable_cols <- c("name", "description", "module_family_id", "module_id", "plugin_id", "thesaurus_name")
-            
-            # Factorized cols
-            factorize_cols <- character()
-            if (table %in% c("patient_lvl_modules", "aggregated_modules")) factorize_cols <- c("module_family_id")
-            if (table == "patient_lvl_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id", "thesaurus_name")
-            if (table == "aggregated_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id")
-            
-            # Restore datatable state
-            page_length <- isolate(input$management_datatable_state$length)
-            start <- isolate(input$management_datatable_state$start)
-            
-            # Filter data on module family, for modules datatable
-            # data <- r[[paste0(table, "_temp")]]
-            # if (length(input$module_family) > 0) data <- r[[paste0(prefix, "_modules_temp")]] %>% dplyr::filter(module_family_id == input$module_family)
-            
-            render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-              col_names =  get_col_names(table_name = table, language = language), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
-              datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-              editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
-              filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
-              # data = data)
+            # Reload data of datatable
+            DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE)
           })
+          
+          
+          # Reload datatable
+          # observeEvent(r[[paste0(table, "_temp")]], {
+          #   
+          #   # Update input module_family
+          #   options <- convert_tibble_to_list(r[[paste0(prefix, "_modules_families")]], key_col = "id", text_col = "name")
+          #   shiny.fluent::updateDropdown.shinyInput(session, "module_family", options = options)
+          #   
+          #   # If user has access
+          #   req(paste0(prefix, "_modules_management_card") %in% r$user_accesses)
+          #   
+          #   # Dropdowns for each module / page
+          #   dropdowns_datatable <- switch(table,
+          #     "patient_lvl_modules" = c("parent_module_id" = "patient_lvl_modules"),
+          #     "aggregated_modules" = c("parent_module_id" = "aggregated_modules"))
+          #   
+          #   # Action buttons for each module / page
+          #   action_buttons <- ""
+          #   if (paste0(prefix, "_modules_delete_data") %in% r$user_accesses) action_buttons <- "delete"
+          #   
+          #   # if (grepl("modules$", table) | grepl("modules_elements", table)) action_buttons <- "delete"
+          #   if (grepl("modules_families", table)) action_buttons <- c("options", action_buttons)
+          #   
+          #   # Sortable cols
+          #   sortable_cols <- c("id", "name", "description", "display_order", "datetime", "module_family_id", "module_id", "plugin_id", "thesaurus_name")
+          #   
+          #   # Column widths
+          #   column_widths <- c("id" = "80px", "display_order" = "80px", "datetime" = "130px", "action" = "80px")
+          #   
+          #   # Editable cols
+          #   if (table == "patient_lvl_modules_elements") editable_cols <- c("thesaurus_item_display_name", "thesaurus_item_unit", "display_order")
+          #   else if (table == "aggregated_modules_elements") editable_cols <- c("name", "display_order")
+          #   else editable_cols <- c("name", "description", "display_order")
+          #   
+          #   # Centered columns
+          #   centered_cols <- c("id", "parent_module_id", "display_order", "datetime", "action")
+          #   
+          #   # Searchable_cols
+          #   searchable_cols <- c("name", "description", "module_family_id", "module_id", "plugin_id", "thesaurus_name")
+          #   
+          #   # Factorized cols
+          #   factorize_cols <- character()
+          #   if (table %in% c("patient_lvl_modules", "aggregated_modules")) factorize_cols <- c("module_family_id")
+          #   if (table == "patient_lvl_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id", "thesaurus_name")
+          #   if (table == "aggregated_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id")
+          #   
+          #   # Restore datatable state
+          #   page_length <- isolate(input$management_datatable_state$length)
+          #   start <- isolate(input$management_datatable_state$start)
+          #   order <- isolate(input$management_datatable_state$order)
+          #   columns <- isolate(input$management_datatable_state$columns)
+          #   str(columns)
+          #   # str(isolate(input$management_datatable_state))
+          #   
+          #   # Filter data on module family, for modules datatable
+          #   # data <- r[[paste0(table, "_temp")]]
+          #   # if (length(input$module_family) > 0) data <- r[[paste0(prefix, "_modules_temp")]] %>% dplyr::filter(module_family_id == input$module_family)
+          #   
+          #   render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
+          #     col_names =  get_col_names(table_name = table, language = language), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
+          #     page_length = page_length, start = start, order = order, columns = columns,
+          #     editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
+          #     filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
+          #     # data = data)
+          # })
+            
         }
         
         ##########################################
@@ -920,7 +963,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
                 dplyr::group_by(name) %>% dplyr::slice(1) %>% dplyr::ungroup() %>% dplyr::arrange(name)
               
               options <- list()
-              if (nrow(cdo_modules_families) > 0) options <- convert_tibble_to_list(data = cdo_modules_families, key_col = "module_family_id", text_col = "name")
+              if (nrow(cdo_modules_families) > 0) options <- convert_tibble_to_list(data = cdo_modules_families, key_col = "module_family_id", text_col = "name", words = r$words)
               
               shiny.fluent::updateDropdown.shinyInput(session, "cdo_module_family", options = options, value = NULL)
               shiny.fluent::updateDropdown.shinyInput(session, "cdo_module", options = list())
@@ -933,7 +976,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             req(input$cdo_module_family)
             cdo_modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == input$cdo_module_family)
             options <- list()
-            if (nrow(cdo_modules) > 0) options <- convert_tibble_to_list(data = cdo_modules, key_col = "id", text_col = "name")
+            if (nrow(cdo_modules) > 0) options <- convert_tibble_to_list(data = cdo_modules, key_col = "id", text_col = "name", words = r$words)
             shiny.fluent::updateDropdown.shinyInput(session, "cdo_module", options = options)
             shiny.fluent::updateDropdown.shinyInput(session, "cdo_module_element", options = list())
             shiny.fluent::updateDropdown.shinyInput(session, "cdo_display_order", options = list())
@@ -944,7 +987,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             cdo_modules_elements_groups <- r[[paste0(prefix, "_modules_elements_temp")]] %>% dplyr::filter(module_id == input$cdo_module) %>% 
               dplyr::group_by(group_id) %>% dplyr::slice(1) %>% dplyr::ungroup()
             options <- list()
-            if (nrow(cdo_modules_elements_groups) > 0) options <- convert_tibble_to_list(data = cdo_modules_elements_groups, key_col = "group_id", text_col = "name")
+            if (nrow(cdo_modules_elements_groups) > 0) options <- convert_tibble_to_list(data = cdo_modules_elements_groups, key_col = "group_id", text_col = "name", words = r$words)
             shiny.fluent::updateDropdown.shinyInput(session, "cdo_module_element", options = options)
             shiny.fluent::updateDropdown.shinyInput(session, "cdo_display_order", options = list())
           })
@@ -954,7 +997,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             cdo_modules_elements_display_orders <- r[[paste0(prefix, "_modules_elements_temp")]] %>% dplyr::filter(module_id == input$cdo_module) %>%
               dplyr::group_by(display_order) %>% dplyr::slice(1) %>% dplyr::ungroup()
             value <- r[[paste0(prefix, "_modules_elements_temp")]] %>% dplyr::filter(group_id == input$cdo_module_element) %>% dplyr::slice(1) %>% dplyr::pull(display_order)
-            options <- convert_tibble_to_list(data = cdo_modules_elements_display_orders, key_col = "display_order", text_col = "display_order")
+            options <- convert_tibble_to_list(data = cdo_modules_elements_display_orders, key_col = "display_order", text_col = "display_order", words = r$words)
             shiny.fluent::updateDropdown.shinyInput(session, "cdo_display_order", options = options, value = value)
           })
           
@@ -1013,7 +1056,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
               dplyr::group_by(name) %>% dplyr::slice(1) %>% dplyr::ungroup() %>% dplyr::arrange(name)
             
             options <- list()
-            if (nrow(dme_modules_families) > 0) options <- convert_tibble_to_list(data = dme_modules_families, key_col = "module_family_id", text_col = "name")
+            if (nrow(dme_modules_families) > 0) options <- convert_tibble_to_list(data = dme_modules_families, key_col = "module_family_id", text_col = "name", words = r$words)
 
             shiny.fluent::updateDropdown.shinyInput(session, "dme_module_family", options = options, value = NULL)
             shiny.fluent::updateDropdown.shinyInput(session, "dme_module", options = list())
@@ -1024,7 +1067,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             req(input$dme_module_family)
             dme_modules <- r$patient_lvl_modules %>% dplyr::filter(module_family_id == input$dme_module_family)
             options <- list()
-            if (nrow(dme_modules) > 0) options <- convert_tibble_to_list(data = dme_modules, key_col = "id", text_col = "name")
+            if (nrow(dme_modules) > 0) options <- convert_tibble_to_list(data = dme_modules, key_col = "id", text_col = "name", words = r$words)
             shiny.fluent::updateDropdown.shinyInput(session, "dme_module", options = options)
             shiny.fluent::updateDropdown.shinyInput(session, "dme_module_element", options = list())
           })
@@ -1034,7 +1077,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             dme_modules_elements_groups <- r$patient_lvl_modules_elements_temp %>% dplyr::filter(module_id == input$dme_module) %>% 
               dplyr::group_by(group_id) %>% dplyr::slice(1) %>% dplyr::ungroup()
             options <- list()
-            if (nrow(dme_modules_elements_groups) > 0) options <- convert_tibble_to_list(data = dme_modules_elements_groups, key_col = "group_id", text_col = "name")
+            if (nrow(dme_modules_elements_groups) > 0) options <- convert_tibble_to_list(data = dme_modules_elements_groups, key_col = "group_id", text_col = "name", words = r$words)
             shiny.fluent::updateDropdown.shinyInput(session, "dme_module_element", options = options)
           })
           

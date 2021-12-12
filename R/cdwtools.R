@@ -52,8 +52,9 @@ cdwtools <- function(
   
   # Maximum size for uploaded data (500 MB)
   # Used to restore database
+  # shiny.launch.browser to automatically open browser
   
-  options(shiny.maxRequestSize = 500*1024^2)
+  options(shiny.maxRequestSize = 500*1024^2, shiny.launch.browser = TRUE)
   
   # Initial wd
   initial_wd <- getwd()
@@ -95,6 +96,6 @@ cdwtools <- function(
         datamarts_folder = datamarts_folder, app_db_folder = app_db_folder, initial_wd = initial_wd),
       options = options
     ), 
-    golem_opts = list(...)
+    golem_opts = list()
   )
 }

@@ -243,6 +243,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               # ID of UI element is in the following format : "group_[ID]"
               tryCatch({
                 code_ui_card <- code_ui_card %>%
+                  stringr::str_replace_all("%module_id%", as.character(r[[paste0(prefix, "_selected_key")]])) %>%
                   stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
                   stringr::str_replace_all("\r", "\n")
 
@@ -287,7 +288,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
             selectedKey = r[[paste0(prefix, "_selected_key")]],
             shown_tabs
-          )
+          ),
+          br()
         )
       })
     })
@@ -452,6 +454,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             code_server_card <- r$code %>%
               dplyr::filter(link_id == plugin_id, category == "plugin_server") %>%
               dplyr::pull(code) %>%
+              stringr::str_replace_all("%module_id%", as.character(r[[paste0(prefix, "_selected_key")]])) %>%
               stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
               stringr::str_replace_all("\r", "\n")
 

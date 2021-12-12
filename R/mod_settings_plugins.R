@@ -19,7 +19,7 @@ mod_settings_plugins_ui <- function(id = character(), language = "EN", words = t
       list(key = "datatable_card", label = "plugins_management_card"),
       list(key = "options_card", label = "plugins_options_card"),
       list(key = "edit_code_card", label = "plugins_edit_code_card")
-    )),
+    ), words = words),
     render_settings_default_elements(ns = ns),
     div(
       id = ns("description_card"),
@@ -39,7 +39,7 @@ mod_settings_plugins_ui <- function(id = character(), language = "EN", words = t
       textfields = "name", textfields_width = "300px"),
     uiOutput(ns("edit_code_card")),
     uiOutput(ns("options_card")),
-    render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "plugins_management")
+    render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "plugins_management", words = words)
   ) -> result
   
   result
@@ -73,13 +73,13 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
       # If user has access
       req("plugins_description_card" %in% r$user_accesses, input$module_type)
       
-      options <- convert_tibble_to_list(data = r$plugins %>% dplyr::filter(module_type_id == input$module_type) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      options <- convert_tibble_to_list(data = r$plugins %>% dplyr::filter(module_type_id == input$module_type) %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words)
       shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options)
     })
     
     # When input$module_type changes, update plugin dropdown
     observeEvent(input$module_type, {
-      options <- convert_tibble_to_list(data = r$plugins %>% dplyr::filter(module_type_id == input$module_type) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      options <- convert_tibble_to_list(data = r$plugins %>% dplyr::filter(module_type_id == input$module_type) %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words)
       shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options)
     })
     
@@ -141,14 +141,14 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
         start <- isolate(input$management_datatable_state$start)
 
         render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-          col_names =  get_col_names(table_name = "plugins", language = language), table = "plugins", action_buttons = action_buttons,
+          col_names =  get_col_names(table_name = "plugins", language = language, words = r$words), table = "plugins", action_buttons = action_buttons,
           datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
           editable_cols = c("name"), sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths)
       })
     
       ##########################################
       # Save changes in datatable              #
-      #########################################
+      ##########################################
 
       # Hide save button if user has no access
       observeEvent(r$user_accesses, if ("plugins_edit_data" %not_in% r$user_accesses) shinyjs::hide("management_save"))
@@ -304,7 +304,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart) %>% dplyr::arrange(name)
           if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", words))
           if (nrow(studies) > 0){
-            options <- convert_tibble_to_list(data = studies, key_col = "id", text_col = "name")
+            options <- convert_tibble_to_list(data = studies, key_col = "id", text_col = "name", words = r$words)
             shiny.fluent::updateDropdown.shinyInput(session, "study", options = options, value = options[[1]][["key"]])
           }
           
@@ -317,7 +317,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           if (nrow(r$patients) > 0){
             shiny.fluent::updateDropdown.shinyInput(session, "patient", 
               options = convert_tibble_to_list(data = r$patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender, " - ", age, " ", translate(language, "years", words))), 
-                key_col = "patient_id", text_col = "name_display"), value = NULL)}
+                key_col = "patient_id", text_col = "name_display", words = r$words), value = NULL)}
           
           # Update also thesaurus dropdown, depending on data source
           # Reset thesaurus items dropdown
@@ -329,7 +329,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           # ID between begin and last, so separated by commas
           thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
             grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
-          shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name"), value = NULL)
+          shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", words = r$words), value = NULL)
           shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", options = list(), value = NULL)
           
           # Reset outputs
@@ -349,7 +349,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
           if (nrow(subsets) == 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available", words))
           if (nrow(subsets) > 0){
-            options <- convert_tibble_to_list(data = subsets, key_col = "id", text_col = "name")
+            options <- convert_tibble_to_list(data = subsets, key_col = "id", text_col = "name", words = r$words)
             shiny.fluent::updateDropdown.shinyInput(session, "subset", options = options, value = options[[1]][["key"]])
           }
         })
@@ -369,7 +369,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
             shiny.fluent::updateDropdown.shinyInput(session, "stay",
               options = convert_tibble_to_list(data = stays %>% dplyr::mutate(name_display = paste0(unit_name, " - ", 
                 format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", translate(language, "to", words), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
-              key_col = "stay_id", text_col = "name_display"), value = NULL)
+              key_col = "stay_id", text_col = "name_display", words = r$words), value = NULL)
           }
           
           # Reset outputs
@@ -447,7 +447,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
 
           # Update dropdown with only selected thesaurus items
           shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_items", value = NULL,
-            options = convert_tibble_to_list(data = thesaurus_items, key_col = "item_id", text_col = "name"))
+            options = convert_tibble_to_list(data = thesaurus_items, key_col = "item_id", text_col = "name", words = r$words))
 
         })
 
@@ -646,6 +646,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           
           # Replace %group_id% in ui_code with 1 for our example
           ui_code <- ui_code %>% 
+            stringr::str_replace_all("%module_id%", "1") %>%
             stringr::str_replace_all("%group_id%", as.character(r$plugins_group_id + 1)) %>%
             stringr::str_replace_all("\r", "\n")
           
@@ -653,6 +654,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           if (length(input$patient) > 0) ui_code <- ui_code %>% stringr::str_replace_all("%patient_id%", as.character(input$patient))
           
           server_code <- server_code %>% 
+            stringr::str_replace_all("%module_id%", "1") %>%
             stringr::str_replace_all("%group_id%", as.character(r$plugins_group_id + 1)) %>%
             stringr::str_replace_all("\r", "\n")
           

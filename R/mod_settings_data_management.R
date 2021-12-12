@@ -180,7 +180,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             
             # Convert options to list
             if (table == "subsets" & data_var == "studies") options <- list()
-            else options <- convert_tibble_to_list(data = r[[data_var]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+            else options <- convert_tibble_to_list(data = r[[data_var]] %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words)
             shiny.fluent::updateDropdown.shinyInput(session, get_singular(word = data_var), options = options)
           })
         }
@@ -190,7 +190,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     if (table == "subsets"){
       observeEvent(input$datamart, {
         studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
-        options <- convert_tibble_to_list(data = studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+        options <- convert_tibble_to_list(data = studies %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words)
         shiny.fluent::updateDropdown.shinyInput(session, "study", options = options)
       })
     }
@@ -292,7 +292,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # search_recorded <- ""
           
           render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-            col_names =  get_col_names(table_name = table, language = language), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
+            col_names =  get_col_names(table_name = table, language = language, words = r$words), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
             editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
             filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
@@ -627,12 +627,12 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if ("count_patients_rows" %in% names(r$sub_thesaurus_items)){
             sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
             centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-            col_names <- get_col_names("thesaurus_items_with_counts", language = language)
+            col_names <- get_col_names("thesaurus_items_with_counts", language = language, words = r$words)
           }
           else {
             sortable_cols <- c("id", "item_id", "name", "display_name", "category")
             centered_cols <- c("id", "item_id", "unit", "datetime", "action")
-            col_names <- get_col_names("thesaurus_items", language = language)
+            col_names <- get_col_names("thesaurus_items", language = language, words = r$words)
           }
   
           # Restore datatable state

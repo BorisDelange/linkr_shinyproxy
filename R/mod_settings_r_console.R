@@ -12,7 +12,7 @@ mod_settings_r_console_ui <- function(id = character(), language = "EN", words =
   ns <- NS(id)
   div(class = "main",
     render_settings_toggle_card(language = language, ns = ns, cards = list(
-      list(key = "edit_code_card", label = "r_console"))),
+      list(key = "edit_code_card", label = "r_console")), words = words),
     
     div(id = ns("edit_code_card"),
       div(shinyAce::aceEditor(ns("ace_code"), "", mode = "r", 

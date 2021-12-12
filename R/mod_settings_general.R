@@ -16,7 +16,7 @@ mod_settings_general_ui <- function(id = character(), language = character(), wo
     div(shinyAce::aceEditor("hidden"), style = "display: none;"),
     render_settings_default_elements(ns = ns),
     render_settings_toggle_card(language = language, ns = ns, cards = list(
-      list(key = "change_password_card", label = "change_password"))),
+      list(key = "change_password_card", label = "change_password")), words = words),
     div(id = ns("change_password_card"),
       make_card(translate(language, "change_password", words),
         div(

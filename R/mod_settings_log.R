@@ -149,7 +149,7 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
         lengthMenu = translate(language, "DT_length", words),
         emptyTable = translate(language, "DT_empty", words))
       
-      col_names <- get_col_names("log")
+      col_names <- get_col_names("log", language = language, words = r$words)
       page_length <- 100
       centered_cols <- c("id", "name", "creator_id", "datetime")
       sortable_cols <- c("id", "category", "name", "creator_id", "datetime")

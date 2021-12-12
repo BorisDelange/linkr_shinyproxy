@@ -154,7 +154,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         function(data_var){
           observeEvent(r[[data_var]], {
             # Convert options to list
-            options <- convert_tibble_to_list(data = r[[data_var]], key_col = "id", text_col = "name")
+            options <- convert_tibble_to_list(data = r[[data_var]], key_col = "id", text_col = "name", words = r$words)
             shiny.fluent::updateDropdown.shinyInput(session, get_singular(word = data_var), options = options)
           })
         })
@@ -238,7 +238,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
           start <- isolate(input$management_datatable_state$start)
   
           render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-            col_names =  get_col_names(table_name = table, language = language), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
+            col_names =  get_col_names(table_name = table, language = language, words = r$words), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
             datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
             editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
             filter = TRUE, searchable_cols = searchable_cols, column_widths = column_widths)

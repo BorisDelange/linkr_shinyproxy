@@ -101,7 +101,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
           br(), uiOutput(ns("current_db_save")),
           br(), uiOutput(ns("last_db_save")), br(),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-            make_toggle(language = language, ns = ns, label = "db_export_log", value = FALSE, inline = TRUE)), br(),
+            make_toggle(language = language, ns = ns, label = "db_export_log", value = FALSE, inline = TRUE, words = words)), br(),
           shiny.fluent::PrimaryButton.shinyInput(ns("db_save_button"), translate(language, "export_db", words), iconProps = list(iconName = "Download")),
           div(style = "visibility:hidden;", downloadButton(ns("db_save"), label = ""))
         )
@@ -115,7 +115,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
           br(), uiOutput(ns("current_db_restore")),
           br(), uiOutput(ns("last_db_restore")), br(),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-            make_toggle(language = language, ns = ns, label = "db_import_log", value = FALSE, inline = TRUE)), br(),
+            make_toggle(language = language, ns = ns, label = "db_import_log", value = FALSE, inline = TRUE, words = words)), br(),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
             shiny.fluent::DefaultButton.shinyInput(ns("db_restore_browse"), translate(language, "choose_tar_file", words)),
             uiOutput(ns("db_restore_status"))), br(),

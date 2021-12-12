@@ -276,7 +276,7 @@ make_choicegroup <- function(language = "EN", ns = shiny::NS(), label = characte
 render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", data = tibble::tibble(),
   output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 0,
   editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
-  filter = FALSE, factorize_cols = character(), column_widths = character()
+  filter = FALSE, factorize_cols = character(), column_widths = character(), hidden_cols = character()
 ){
   
   # Translation for datatable
@@ -316,6 +316,12 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
     centered_cols_vec <<- c(centered_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   
+  # Which cols are hidden
+  hidden_cols_vec <- integer()
+  sapply(hidden_cols, function(col){
+    hidden_cols_vec <<- c(hidden_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  
   # Which cols are searchable
   searchable_cols_vec <- integer()
   sapply(searchable_cols, function(col){
@@ -334,6 +340,9 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
   
   # Add centered_cols to column_defs
   column_defs <- rlist::list.append(column_defs, list(className = "dt-body-center", targets = centered_cols_vec))
+  
+  # Add hidden_cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(visible = FALSE, targets = hidden_cols_vec))
   
   # Add sortables cols to column_defs
   column_defs <- rlist::list.append(column_defs, list(sortable = FALSE, targets = non_sortable_cols_vec))

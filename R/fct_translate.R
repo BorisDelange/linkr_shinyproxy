@@ -15,7 +15,10 @@
 
 translate <- function(language = "EN", reference_word = character(), words = tibble::tibble()){
   
-  if (nrow(words) == 0) words <- get_translations()
+  if (nrow(words) == 0){
+    words <- get_translations()
+    print(paste0(Sys.time(), " _ ", reference_word))
+  }
   
   if (nchar(language) %not_in% c(2, 3)) stop("Input 'language' has less than 2 or more than 3 characters")
   if (!is.data.frame(words)) stop("Input 'words' is not a dataframe")
@@ -350,6 +353,8 @@ get_translations <- function(){
     "FR", "log_filter_people", "Utilisateurs",
     "EN", "modif_saved", "Modifications saved",
     "FR", "modif_saved", "Modifications enregistrées",
+    "EN", "modified", "Modified",
+    "FR", "modified", "Modifié",
     "EN", "data_source_deleted", "Data source deleted",
     "FR", "data_source_deleted", "Source de données supprimée",
     "EN", "datamart_deleted", "Datamart deleted",
@@ -898,9 +903,9 @@ get_translations <- function(){
     "FR", "num_patients", "Nb de patients",
     "EN", "num_rows", "Nb of rows",
     "FR", "num_rows", "Nb de lignes",
-    "EN", "show_only_used_items", "Show only used items in this datamart",
+    "EN", "show_only_used_items", "Show only items used in this datamart",
     "FR", "show_only_used_items", "N'afficher que les items utilisés dans ce datamart",
-    "EN", "show_only_used_items_patient", "Show only used items by this patient",
+    "EN", "show_only_used_items_patient", "Show only items used by this patient",
     "FR", "show_only_used_items_patient", "N'afficher que les items utilisés par ce patient",
     "EN", "no_modules_to_show", "There are no modules set for this study. Configure modules in parameters.",
     "FR", "no_modules_to_show", "Il n'y a pas de module configuré pour cette étude. Configurer les modules dans les paramètres.",
@@ -974,6 +979,8 @@ get_translations <- function(){
     "FR", "insert_new_data", "Ajout nouvelles données",
     "EN", "sql_query", "SQL query",
     "FR", "sql_query", "Requête SQL",
+    "EN", "deleted", "Deleted",
+    "FR", "deleted", "Supprimé",
     "EN", "error_multiple_item_id", "Some item IDs are duplicated. Remove duplicates before insert thesaurus.",
     "FR", "error_multiple_item_id", "Certains item IDs sont dupliqués. Retirer les duplicats avant d'importer le thesaurus.",
     "EN", "only_aggregated_data_authorized", "For this datamart, only aggregated data are available",
