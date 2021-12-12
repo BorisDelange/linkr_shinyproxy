@@ -274,7 +274,7 @@ make_choicegroup <- function(language = "EN", ns = shiny::NS(), label = characte
 #' @param column_widths Columns widths (named character vector)
 
 render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", data = tibble::tibble(),
-  output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 0,
+  output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top't><'bottom'p>", page_length = 10, start = 0,
   editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
   filter = FALSE, factorize_cols = character(), column_widths = character(), hidden_cols = character()
 ){
@@ -365,7 +365,6 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
     # Options of the datatable
     options = list(
       dom = datatable_dom,
-      stateSave = TRUE, stateDuration = 30,
       pageLength = page_length, displayStart = start,
       columnDefs = column_defs,
       language = dt_translation

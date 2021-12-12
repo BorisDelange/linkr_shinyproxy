@@ -18,6 +18,7 @@
 #' @param db_info Database connection informations, if it is needed to connect a distant db (list).
 #' @param datamarts_folder Folder where to save datamarts CSV files (character)
 #' @param app_db_folder Folder where to save local database file (character)
+#' @param perf_monitoring Monitore app performances print timestamps step by step (boolean)
 #' @param ... arguments to pass to golem_opts. 
 #' @examples 
 #' \dontrun{
@@ -46,6 +47,7 @@ cdwtools <- function(
   db_info = list(),
   app_db_folder = character(),
   datamarts_folder = character(),
+  perf_monitoring = FALSE,
   options = list(),
   ...
 ) {
@@ -93,7 +95,7 @@ cdwtools <- function(
     app = shinyApp(
       ui = app_ui(css = css, page = page, language = language),
       server = app_server(router = page, language = language, db_info = db_info, 
-        datamarts_folder = datamarts_folder, app_db_folder = app_db_folder, initial_wd = initial_wd),
+        datamarts_folder = datamarts_folder, app_db_folder = app_db_folder, initial_wd = initial_wd, perf_monitoring = perf_monitoring),
       options = options
     ), 
     golem_opts = list()

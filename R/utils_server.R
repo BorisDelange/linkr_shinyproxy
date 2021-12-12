@@ -20,12 +20,7 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
   
   if (table %not_in% tables) stop(paste0(translate(language, "invalid_table_name"), ". ", translate(language, "tables_allowed"), " : ", toString(tables)))
   
-  # Don't load password col for table users
-  if (table == "users"){
-    new_table <- DBI::dbGetQuery(r$db, "SELECT id, username, firstname, lastname, user_access_id, user_status_id, datetime, deleted
-      FROM users WHERE deleted IS FALSE ORDER BY id")
-  }
-  else new_table <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
+  new_table <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
   
   r[[table]] <- new_table
   r[[paste0(table, "_temp")]] <- new_table %>% dplyr::mutate(modified = FALSE)
@@ -121,43 +116,53 @@ get_col_names <- function(table_name = character(), language = "EN", words = tib
         translate(language, "aggregated_module_family", words)),
       "subsets" = translate(language, "study", words),
       "thesaurus" = translate(language, "data_sources", words))) -> result
-    result <- c(result, translate(language, "creator", words), translate(language, "datetime", words), translate(language, "action", words))
+    result <- c(result, translate(language, "creator", words), translate(language, "datetime", words),
+      translate(language, "deleted", words), translate(language, "modified", words), translate(language, "action", words))
   }
   
   if (table_name == "thesaurus_items"){
-    result <- c(translate(language, "item_id", words), translate(language, "name", words),
-      translate(language, "display_name", words), translate(language, "category", words), translate(language, "unit", words), translate(language, "action", words))
+    result <- c(translate(language, "id", words), translate(language, "thesaurus", words), translate(language, "item", words), translate(language, "name", words), 
+      translate(language, "display_name", words), translate(language, "category", words), translate(language, "unit", words),
+      translate(language, "datetime", words), translate(language, "deleted", words), translate(language, "action", words), translate(language, "modified", words))
   }
   
   if (table_name == "modules_thesaurus_items"){
-    result <- c(translate(language, "id", words), translate(language, "name", words), translate(language, "display_name", words), translate(language, "category", words), translate(language, "unit", words),
-      translate(language, "item_colour", words), translate(language, "action", words))
+    result <- c(translate(language, "id", words), translate(language, "thesaurus", words), translate(language, "item", words), translate(language, "name", words), 
+      translate(language, "display_name", words), translate(language, "category", words), translate(language, "unit", words),
+      translate(language, "colour", words), translate(language, "datetime", words), translate(language, "deleted", words),
+      translate(language, "action", words), translate(language, "modified", words))
   }
   
   if (table_name == "thesaurus_items_with_counts"){
-    result <- c(translate(language, "id", words), translate(language, "name", words),
+    result <- c(translate(language, "id", words), translate(language, "thesaurus", words), translate(language, "item", words), translate(language, "name", words), 
       translate(language, "display_name", words), translate(language, "category", words), translate(language, "unit", words),
-      translate(language, "num_patients", words), translate(language, "num_rows", words), translate(language, "action", words))
+      translate(language, "datetime", words), translate(language, "deleted", words),
+      translate(language, "num_patients", words), translate(language, "num_rows", words),
+      translate(language, "action", words), translate(language, "modified", words))
   }
   
   if (table_name == "modules_thesaurus_items_with_counts"){
-    result <- c(translate(language, "id", words), translate(language, "name", words), translate(language, "display_name", words), translate(language, "category", words), translate(language, "unit", words),
-      translate(language, "item_colour", words), translate(language, "num_patients", words), translate(language, "num_rows", words), translate(language, "action", words))
+    result <- c(translate(language, "id", words), translate(language, "thesaurus", words), translate(language, "item", words), translate(language, "name", words), 
+      translate(language, "display_name", words), translate(language, "category", words), translate(language, "unit", words),
+      translate(language, "item_colour", words), translate(language, "datetime", words), translate(language, "deleted", words),
+      translate(language, "num_patients", words), translate(language, "num_rows", words),
+      translate(language, "action", words), translate(language, "modified", words))
   }
   
   if (table_name == "plugins"){
-    result <- c(translate(language, "id", words), translate(language, "name", words), translate(language, "module_type", words), 
-      translate(language, "datetime", words), translate(language, "action", words))
+    result <- c(translate(language, "id", words), translate(language, "name", words), translate(language, "description", words), translate(language, "module_type", words), 
+      translate(language, "datetime", words),  translate(language, "deleted", words), translate(language, "modified", words), translate(language, "action", words))
   }
   
   if (table_name == "users"){
     result <- c(translate(language, "id", words), translate(language, "username", words), translate(language, "firstname", words), translate(language, "lastname", words),
-      translate(language, "user_access", words), translate(language, "user_status", words), translate(language, "datetime", words), translate(language, "action", words))
+      translate(language, "password", words), translate(language, "user_access", words), translate(language, "user_status", words), translate(language, "datetime", words), 
+      translate(language, "deleted", words), translate(language, "modified", words), translate(language, "action", words))
   }
   
   if (table_name %in% c("users_accesses", "users_statuses")){
     result <- c(translate(language, "id", words), translate(language, "name", words), translate(language, "description", words), 
-      translate(language, "datetime", words), translate(language, "action", words))
+      translate(language, "datetime", words), translate(language, "deleted", words), translate(language, "modified", words), translate(language, "action", words))
   }
   
   if (table_name %in% c("patient_lvl_modules", "aggregated_modules")){
@@ -168,17 +173,24 @@ get_col_names <- function(table_name = character(), language = "EN", words = tib
   
   if (table_name %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
     result <- c(translate(language, "id", words), translate(language, "name", words), translate(language, "description", words),
-      translate(language, "creator", words), translate(language, "datetime", words), translate(language, "action", words))
+      translate(language, "creator", words), translate(language, "datetime", words), 
+      translate(language, "deleted", words), translate(language, "modified", words), translate(language, "action", words))
   }
   
   if (table_name == "patient_lvl_modules_elements"){
-    result <- c(translate(language, "name", words), translate(language, "module_family", words), translate(language, "module", words), translate(language, "plugin", words), 
-      translate(language, "thesaurus", words), translate(language, "display_name", words), translate(language, "unit", words), translate(language, "action", words))
+    result <- c(translate(language, "id", words), translate(language, "name", words), translate(language, "module_family", words), 
+      translate(language, "group", words), translate(language, "module", words), translate(language, "plugin", words), 
+      translate(language, "thesaurus", words), translate(language, "thesaurus_item", words), translate(language, "display_name", words),
+      translate(language, "unit", words), translate(language, "colour", words), translate(language, "display_order", words),
+      translate(language, "creator", words), translate(language, "datetime", words),
+      translate(language, "deleted", words), translate(language, "modified", words), translate(language, "action", words))
   }
   
   if (table_name == "aggregated_modules_elements"){
-    result <- c(translate(language, "name", words), translate(language, "module_family", words), translate(language, "module", words), 
-      translate(language, "plugin", words), translate(language, "display_order", words), translate(language, "action", words))
+    result <- c(translate(language, "id", words), translate(language, "name", words), translate(language, "module_family", words),
+      translate(language, "group", words), translate(language, "module", words), 
+      translate(language, "plugin", words), translate(language, "display_order", words), translate(language, "creator", words),
+      translate(language, "datetime", words), translate(language, "deleted", words), translate(language, "modified", words), translate(language, "action", words))
   }
   
   if (table_name == "log"){

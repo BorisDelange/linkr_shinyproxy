@@ -204,6 +204,8 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
+    if (r$perf_monitoring) print(paste0(Sys.time(), " _ BEGIN mod ", id))
+    
     # To prevent refresh of dropdowns when change display order is saved
     r$patient_lvl_cdo_saved <- 0L
     r$aggregated_cdo_saved <- 0L
@@ -433,7 +435,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
                     error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
                       error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", input$datamart), category = "Error", error_report = toString(e), language = language))
                   
-                  if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language)
+                  if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language, words = r$words)
                   req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
                   
                   # Transform count_rows cols to integer, to be sortable
@@ -446,26 +448,49 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
                   # If r$modules_refresh_thesaurus_items is set to "only_used_items", filter on count_items_rows > 0
                   if (grepl("only_used_items", r$modules_refresh_thesaurus_items)) r$modules_thesaurus_items <- r$modules_thesaurus_items %>% dplyr::filter(count_items_rows > 0)
                   
-                  r$modules_thesaurus_items_temp <- r$modules_thesaurus_items %>% dplyr::mutate(modified = FALSE)
+                  # r$modules_thesaurus_items_temp <- r$modules_thesaurus_items %>% dplyr::mutate(modified = FALSE)
                 }
               }
               
-              r$modules_thesaurus_items_temp <- r$modules_thesaurus_items %>% dplyr::mutate(modified = FALSE)
-            })
-              
-            observeEvent(r$modules_thesaurus_items_temp, {
-              
-              # Transform category to factor, to be filtering in datatable
-              r$modules_thesaurus_items_temp <- r$modules_thesaurus_items_temp %>% 
+              r$modules_thesaurus_items_temp <- r$modules_thesaurus_items %>% 
+                dplyr::mutate(modified = FALSE) %>%
                 dplyr::mutate_at("category", as.factor) %>%
                 dplyr::mutate_at("item_id", as.character)
               
+              editable_cols <- c("display_name", "unit")
+              searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
+              factorize_cols <- c("category", "unit")
+              column_widths <- c("id" = "80px", "action" = "80px")# "name" = "300px", "display_name" = "300px", "unit" = "100px", 
+                                 # "category" = "300px", "colour" = "100px")
+              
+              if ("count_patients_rows" %in% names(r$modules_thesaurus_items)){
+                sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+                centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
+                col_names <- get_col_names(table_name = "modules_thesaurus_items_with_counts", language = language, words = r$words)
+              }
+              else {
+                sortable_cols <- c("id", "item_id", "name", "display_name", "category")
+                centered_cols <- c("id", "item_id", "unit", "datetime", "action")
+                col_names <- get_col_names(table_name = "modules_thesaurus_items", language = language, words = r$words)
+              }
+              
+              hidden_cols <- c("id", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
+              
               # Render datatable
-              render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "thesaurus_items",
-                col_names =  col_names, table = "modules_thesaurus_items", action_buttons = action_buttons,
-                datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-                editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, 
-                searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE)
+              render_datatable(output = output, r = r, ns = ns, language = language, data = r$modules_thesaurus_items_temp,
+                output_name = "thesaurus_items", col_names =  col_names,
+                editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+                searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+              
+              # Create a proxy for datatatable
+              r[[paste0(table, "_datatable_proxy")]] <- DT::dataTableProxy("thesaurus_items", deferUntilFlush = FALSE)
+              
+              # Reload datatable
+              observeEvent(r$modules_thesaurus_items_temp, {
+                
+                # Reload data of datatable
+                DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r$modules_thesaurus_items_temp, resetPaging = FALSE, rownames = FALSE)
+              })
             })
           }
               
@@ -481,8 +506,9 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             ##############################################
               
             observeEvent(input$thesaurus_items_cell_edit, {
+              
               edit_info <- input$thesaurus_items_cell_edit
-              edit_info$col <- edit_info$col + 2 # Cause id & thesaurus_id cols removed
+              
               r$modules_thesaurus_items_temp <- DT::editData(r$modules_thesaurus_items_temp, edit_info, rownames = FALSE)
               r$modules_thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
             })
@@ -661,7 +687,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
 
           sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {new_data$module_new_element}", .con = r$db)
           distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
-          if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", language)
+          if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", language, words = r$words)
           req(new_data$name %not_in% distinct_values)
 
           # Check if dropdowns are not empty (if all are required)
@@ -674,14 +700,14 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             else if (is.na(new_data[[dropdown]])) dropdowns_check <<- FALSE
           })
 
-          if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language)
+          if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language, words = r$words)
           req(dropdowns_check)
 
           # Check if list of items is not empty (only for patient_lvl)
           if (grepl("patient_lvl", table)){
-            if (length(r$modules_thesaurus_selected_items) == 0) show_message_bar(output, 2, "thesaurus_items_empty", "severeWarning", language)
+            if (length(r$modules_thesaurus_selected_items) == 0) show_message_bar(output, 2, "thesaurus_items_empty", "severeWarning", language, words = r$words)
             req(length(r$modules_thesaurus_selected_items) > 0)
-            if (nrow(r$modules_thesaurus_selected_items) == 0) show_message_bar(output, 2, "thesaurus_items_empty", "severeWarning", language)
+            if (nrow(r$modules_thesaurus_selected_items) == 0) show_message_bar(output, 2, "thesaurus_items_empty", "severeWarning", language, words = r$wrds)
             req(nrow(r$modules_thesaurus_selected_items) > 0)
           }
 
@@ -712,7 +738,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           DBI::dbAppendTable(r$db, table, new_data)
           add_log_entry(r = r, category = paste0(table, " - ", translate(language, "insert_new_data", words)), name = translate(language, "sql_query", words), value = toString(new_data))
           
-          show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language)
+          show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language, words = r$words)
           
           update_r(r = r, table = table, language = language)
           
@@ -742,7 +768,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
         # Only for data management subpages
         if (grepl("management", id)){
           
-          # Create r var for datatable
+          if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- BEGIN load", table, " management datatable"))
           
           # Action buttons for each module / page
           action_buttons <- ""
@@ -754,14 +780,20 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             "patient_lvl_modules" = c("parent_module_id" = "patient_lvl_modules"),
             "aggregated_modules" = c("parent_module_id" = "aggregated_modules"))
           
+          # Factorized cols
+          factorize_cols <- character()
+          if (table %in% c("patient_lvl_modules", "aggregated_modules")) factorize_cols <- c("module_family_id")
+          if (table == "patient_lvl_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id", "thesaurus_name")
+          if (table == "aggregated_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id")
+          
           # If r variable already created, or not
           if (length(r[[paste0(table, "_datatable_temp")]]) == 0) data_output <- tibble::tibble()
           else data_output <- r[[paste0(table, "_datatable_temp")]]
           
           # Prepare data for datatable (add code for dropdowns etc)
           r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-            table = table, dropdowns = dropdowns_datatable, dropdowns_null_value = "parent_module_id",
-            action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
+            table = table, dropdowns = dropdowns_datatable, dropdowns_null_value = "parent_module_id", factorize_cols = factorize_cols,
+            action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
           
           # Editable cols
           if (table == "patient_lvl_modules_elements") editable_cols <- c("thesaurus_item_display_name", "thesaurus_item_unit", "display_order")
@@ -780,19 +812,15 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           # Centered columns
           centered_cols <- c("id", "parent_module_id", "display_order", "datetime", "action")
           
-          # Factorized cols
-          factorize_cols <- character()
-          if (table %in% c("patient_lvl_modules", "aggregated_modules")) factorize_cols <- c("module_family_id")
-          if (table == "patient_lvl_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id", "thesaurus_name")
-          if (table == "aggregated_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id")
-          
           # Hidden cols
-          hidden_cols <- c("description", "deleted", "modified")
+          if (table %in% c("patient_lvl_modules_elements", "aggregated_modules_elements")) hidden_cols <- c("id", "group_id", "plugin_id", "thesaurus_name", 
+            "thesaurus_item_id", "thesaurus_item_colour", "creator_id", "deleted", "modified", "datetime")
+          else hidden_cols <- c("id", "description", "deleted", "modified", "datetime", "creator_id")
           
           # Render datatable
           render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(table, "_datatable_temp")]],
             output_name = "management_datatable", col_names =  get_col_names(table_name = table, language = language, words = r$words),
-            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
+            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
             searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
           
           # Create a proxy for datatatable
@@ -802,81 +830,15 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           observeEvent(r[[paste0(table, "_temp")]], {
             
             # Reload datatable_temp variable
-            # r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-            #   table = table, dropdowns = dropdowns_datatable, dropdowns_null_value = "parent_module_id",
-            #   action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
-            
-            
+            r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+              table = table, dropdowns = dropdowns_datatable, dropdowns_null_value = "parent_module_id", factorize_cols = factorize_cols,
+              action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
+
             # Reload data of datatable
-            DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE)
+            DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
           })
-          
-          
-          # Reload datatable
-          # observeEvent(r[[paste0(table, "_temp")]], {
-          #   
-          #   # Update input module_family
-          #   options <- convert_tibble_to_list(r[[paste0(prefix, "_modules_families")]], key_col = "id", text_col = "name")
-          #   shiny.fluent::updateDropdown.shinyInput(session, "module_family", options = options)
-          #   
-          #   # If user has access
-          #   req(paste0(prefix, "_modules_management_card") %in% r$user_accesses)
-          #   
-          #   # Dropdowns for each module / page
-          #   dropdowns_datatable <- switch(table,
-          #     "patient_lvl_modules" = c("parent_module_id" = "patient_lvl_modules"),
-          #     "aggregated_modules" = c("parent_module_id" = "aggregated_modules"))
-          #   
-          #   # Action buttons for each module / page
-          #   action_buttons <- ""
-          #   if (paste0(prefix, "_modules_delete_data") %in% r$user_accesses) action_buttons <- "delete"
-          #   
-          #   # if (grepl("modules$", table) | grepl("modules_elements", table)) action_buttons <- "delete"
-          #   if (grepl("modules_families", table)) action_buttons <- c("options", action_buttons)
-          #   
-          #   # Sortable cols
-          #   sortable_cols <- c("id", "name", "description", "display_order", "datetime", "module_family_id", "module_id", "plugin_id", "thesaurus_name")
-          #   
-          #   # Column widths
-          #   column_widths <- c("id" = "80px", "display_order" = "80px", "datetime" = "130px", "action" = "80px")
-          #   
-          #   # Editable cols
-          #   if (table == "patient_lvl_modules_elements") editable_cols <- c("thesaurus_item_display_name", "thesaurus_item_unit", "display_order")
-          #   else if (table == "aggregated_modules_elements") editable_cols <- c("name", "display_order")
-          #   else editable_cols <- c("name", "description", "display_order")
-          #   
-          #   # Centered columns
-          #   centered_cols <- c("id", "parent_module_id", "display_order", "datetime", "action")
-          #   
-          #   # Searchable_cols
-          #   searchable_cols <- c("name", "description", "module_family_id", "module_id", "plugin_id", "thesaurus_name")
-          #   
-          #   # Factorized cols
-          #   factorize_cols <- character()
-          #   if (table %in% c("patient_lvl_modules", "aggregated_modules")) factorize_cols <- c("module_family_id")
-          #   if (table == "patient_lvl_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id", "thesaurus_name")
-          #   if (table == "aggregated_modules_elements") factorize_cols <- c("module_family_id", "module_id", "plugin_id")
-          #   
-          #   # Restore datatable state
-          #   page_length <- isolate(input$management_datatable_state$length)
-          #   start <- isolate(input$management_datatable_state$start)
-          #   order <- isolate(input$management_datatable_state$order)
-          #   columns <- isolate(input$management_datatable_state$columns)
-          #   str(columns)
-          #   # str(isolate(input$management_datatable_state))
-          #   
-          #   # Filter data on module family, for modules datatable
-          #   # data <- r[[paste0(table, "_temp")]]
-          #   # if (length(input$module_family) > 0) data <- r[[paste0(prefix, "_modules_temp")]] %>% dplyr::filter(module_family_id == input$module_family)
-          #   
-          #   render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-          #     col_names =  get_col_names(table_name = table, language = language), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
-          #     page_length = page_length, start = start, order = order, columns = columns,
-          #     editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
-          #     filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
-          #     # data = data)
-          # })
             
+          if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- END load ", table, " management datatable"))
         }
         
         ##########################################
@@ -893,8 +855,9 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           observeEvent(input$management_datatable_cell_edit, {
             edit_info <- input$management_datatable_cell_edit
             
-            if (table == "patient_lvl_modules_elements") edit_info$col <- edit_info$col + 2 # Cause some cols have been removed in datatable
-            if (table == "aggregated_modules_elements") edit_info$col <- edit_info$col + 1
+            if (table %in% c("patient_lvl_modules_elements", "aggregated_modules_elements")) edit_info$col <- edit_info$col - 1
+            # if (table == "patient_lvl_modules_elements") edit_info$col <- edit_info$col + 2 # Cause some cols have been removed in datatable
+            # if (table == "aggregated_modules_elements") edit_info$col <- edit_info$col + 1
             
             r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
             # Store that this row has been modified
@@ -1003,7 +966,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
           
           observeEvent(input$cdo_save, {
             
-            if (length(input$cdo_display_order) == 0) show_message_bar(output = output, id = 1, "dropdown_empty", type = "severeWarning", language = language)
+            if (length(input$cdo_display_order) == 0) show_message_bar(output = output, id = 1, "dropdown_empty", type = "severeWarning", language = language, words = r$words)
             
             req(length(input$cdo_display_order) > 0)
             
@@ -1036,7 +999,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
               r[[paste0(prefix, "_cdo_saved")]] <- 1L
             }
             
-            show_message_bar(output = output, id = 4, "modif_saved", type ="success", language = language)
+            show_message_bar(output = output, id = 4, "modif_saved", type ="success", language = language, words = r$words)
             
           })
         }
@@ -1125,7 +1088,7 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             query <- DBI::dbSendStatement(r$db, sql)
             DBI::dbClearResult(query)
             
-            show_message_bar(output = output, id = 4, "module_element_deleted", type ="severeWarning", language = language)
+            show_message_bar(output = output, id = 4, "module_element_deleted", type ="severeWarning", language = language, words = r$words)
             
             update_r(r = r, table = table, language = language)
             
@@ -1189,6 +1152,8 @@ mod_settings_modules_server <- function(id = character(), r = shiny::reactiveVal
             
           })
         })
-      }  
+      } 
+      
+      if (r$perf_monitoring) print(paste0(Sys.time(), " _ END mod ", id))
   })
 }

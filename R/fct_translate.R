@@ -17,7 +17,7 @@ translate <- function(language = "EN", reference_word = character(), words = tib
   
   if (nrow(words) == 0){
     words <- get_translations()
-    print(paste0(Sys.time(), " _ ", reference_word))
+    print(paste0(Sys.time(), " _ TRANSLATION for ", reference_word))
   }
   
   if (nchar(language) %not_in% c(2, 3)) stop("Input 'language' has less than 2 or more than 3 characters")
@@ -111,6 +111,8 @@ get_translations <- function(){
     "FR", "aggregated_module_family_added", "Groupe de modules ajouté",
     "EN", "aggregated_module_element_added", "Module element added",
     "FR", "aggregated_module_element_added", "Figure ajoutée",
+    "EN", "group", "Group",
+    "FR", "group", "Groupe",
     "EN", "study", "Study",
     "FR", "study", "Etude",
     "EN", "studies", "Studies",
@@ -313,6 +315,8 @@ get_translations <- function(){
     "FR", "thesaurus_edit_code_card", "Editer le code",
     "EN", "thesaurus_items", "Items",
     "FR", "thesaurus_items", "Items",
+    "EN", "item", "Item",
+    "FR", "item", "Item",
     "EN", "item_colour", "Item colour",
     "FR", "item_colour", "Couleur de l'item",
     "EN", "thesaurus_selected_items", "Items selected",
@@ -773,6 +777,8 @@ get_translations <- function(){
     "FR", "valid_col_names_are", "Noms de colonnes non valides. Les noms requis sont : ",
     "EN", "column", "Column",
     "FR", "column", "La colonne",
+    "EN", "colour", "Colour",
+    "FR", "colour", "Couleur",
     "EN", "type_must_be_integer", "type must be integer",
     "FR", "type_must_be_integer", "doit être de type integer",
     "EN", "type_must_be_character", "type must be character",
@@ -1002,7 +1008,7 @@ get_translations <- function(){
     "EN", "hide_editor", "Hide editor",
     "FR", "hide_editor", "Masquer l'editeur",
     "EN", "current_db", "Current used database",
-    "FR", "current_db_", "Base de données actuellement utilisée",
+    "FR", "current_db", "Base de données actuellement utilisée",
     "EN", "module_contains_submodules", "This module contains sub-modules. Click again on the module link to show sub-modules",
     "FR", "module_contains_submodules", "Ce module contient des sous-modules. Cliquer de nouveau sur le lien pour afficher les sous-modules.",
     "EN", "empty_page", "This module doesn't contain any module element",

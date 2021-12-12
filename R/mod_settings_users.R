@@ -202,47 +202,66 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       
       # Only for data management subpages
       if (grepl("management", id)){
-      
-        # If r$... variable changes
+        
+        if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- BEGIN load", table, " management datatable"))
+        
+        # Dropdowns for each module / page
+        dropdowns_datatable <- switch(table, "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
+          "users_accesses" = "", "users_statuses" = "")
+        
+        # Action buttons for each module / page
+        if ("users_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
+        action_buttons = switch(table, "users" = action_buttons, "users_accesses" = c("options", action_buttons), "users_statuses" =action_buttons)
+        
+        # Sortable cols
+        sortable_cols <- c("id", "name", "description", "username", "firstname", "lastname", "datetime")
+        
+        # Column widths
+        column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
+        
+        # Editable cols
+        editable_cols <- switch(table, "users" = c("username", "firstname", "lastname"),
+          "users_accesses" = c("name", "description"), "users_statuses" = c("name", "description"))
+        
+        # Centered columns
+        centered_cols <- c("id", "user_access_id", "user_status_id", "datetime", "action")
+        
+        # Searchable_cols
+        searchable_cols <- c("name", "description", "username", "firstname", "lastname")
+        
+        # If r variable already created, or not
+        if (length(r[[paste0(table, "_datatable_temp")]]) == 0) data_output <- tibble::tibble()
+        else data_output <- r[[paste0(table, "_datatable_temp")]]
+        
+        # Prepare data for datatable (add code for dropdowns etc)
+        r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+          table = table, dropdowns = dropdowns_datatable,
+          action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
+        
+        hidden_cols <- c("id", "password", "deleted", "modified")
+        
+        # Render datatable
+        render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(table, "_datatable_temp")]],
+          output_name = "management_datatable", col_names =  get_col_names(table_name = table, language = language, words = r$words),
+          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+          searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
+        
+        # Create a proxy for datatatable
+        r[[paste0(table, "_datatable_proxy")]] <- DT::dataTableProxy("management_datatable", deferUntilFlush = FALSE)
+        
+        # Reload datatable
         observeEvent(r[[paste0(table, "_temp")]], {
           
-          # If user has access
-          req(paste0(table, "_management_card") %in% r$user_accesses)
-  
-          # Dropdowns for each module / page
-          dropdowns_datatable <- switch(table, "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
-            "users_accesses" = "", "users_statuses" = "")
-  
-          # Action buttons for each module / page
-          if ("users_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
-          action_buttons = switch(table, "users" = action_buttons, "users_accesses" = c("options", action_buttons), "users_statuses" =action_buttons)
-  
-          # Sortable cols
-          sortable_cols <- c("id", "name", "description", "username", "firstname", "lastname", "datetime")
-  
-          # Column widths
-          column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
-  
-          # Editable cols
-          editable_cols <- switch(table, "users" = c("username", "firstname", "lastname"),
-            "users_accesses" = c("name", "description"), "users_statuses" = c("name", "description"))
-  
-          # Centered columns
-          centered_cols <- c("id", "user_access_id", "user_status_id", "datetime", "action")
-  
-          # Searchable_cols
-          searchable_cols <- c("name", "description", "username", "firstname", "lastname")
-  
-          # Restore datatable state
-          page_length <- isolate(input$management_datatable_state$length)
-          start <- isolate(input$management_datatable_state$start)
-  
-          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-            col_names =  get_col_names(table_name = table, language = language, words = r$words), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
-            datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
-            filter = TRUE, searchable_cols = searchable_cols, column_widths = column_widths)
+          # Reload datatable_temp variable
+          r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+            table = table, dropdowns = dropdowns_datatable,
+            action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
+          
+          # Reload data of datatable
+          DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
         })
+        
+        if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- END load ", table, " management datatable"))
       }
       
       ##########################################

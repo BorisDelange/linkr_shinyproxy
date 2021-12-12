@@ -290,7 +290,7 @@ load_database <- function(r = shiny::reactiveValues(), language = "EN"){
   
   # Database tables to load
   tables <- c(
-    "users_accesses", "users_statuses",
+    "users", "users_accesses", "users_statuses",
     "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus",
     "plugins", 
     "patient_lvl_modules", "patient_lvl_modules_families", "patient_lvl_modules_elements",
@@ -302,11 +302,6 @@ load_database <- function(r = shiny::reactiveValues(), language = "EN"){
     r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
     r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
   })
-  
-  # For users table, don't load passwords
-  r$users <- DBI::dbGetQuery(r$db, "SELECT id, username, firstname, lastname, user_access_id, user_status_id, datetime, deleted
-        FROM users WHERE deleted IS FALSE ORDER BY id")
-  r$users_temp <- r$users %>% dplyr::mutate(modified = FALSE)
   
   # Add a module_types variable, for settings/plugins dropdown
   r$module_types <- tibble::tribble(~id, ~name, 1, translate(language, "patient_level_data"), 2, translate(language, "aggregated_data"))

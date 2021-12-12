@@ -118,33 +118,65 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
       ##########################################
       # Generate datatable                     #
       ##########################################
+    
+    if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- BEGIN load plugins management datatable"))
+    
+    # If user has access
+    if("plugins_datatable_card" %in% r$user_accesses){
       
-      # If r$... variable changes
+      if ("plugins_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
+      action_buttons <- c(action_buttons, "edit_code", "options")
+      
+      sortable_cols <- c("id", "name", "module_type_id", "datetime")
+      
+      # Column widths
+      column_widths <- c("id" = "80px", "datetime" = "130px", "module_type_id" = "130px", "action" = "80px")
+      
+      # Centered columns
+      centered_cols <- c("id", "module_type_id", "datetime", "action")
+      
+      # Factorized cols
+      factorize_cols <- "module_type_id"
+      
+      # Searchable cols
+      searchable_cols <- "module_type_id"
+      
+      # Hidden cols
+      hidden_cols <- c("description", "deleted", "modified")
+      
+      # If r variable already created, or not
+      if (length(r$plugins_datatable_temp) == 0) data_output <- tibble::tibble()
+      else data_output <- r$plugins_datatable_temp
+      
+      # Prepare data for datatable (add code for dropdowns etc)
+      r$plugins_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+        table = "plugins", factorize_cols = factorize_cols, action_buttons = action_buttons,
+        data_input = r$plugins_temp, data_output = data_output, words = r$words)
+      
+      # Render datatable
+      render_datatable(output = output, r = r, ns = ns, language = language, data = r$plugins_datatable_temp,
+        output_name = "management_datatable", col_names =  get_col_names(table_name = "plugins", language = language, words = r$words),
+        sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+      
+      # Create a proxy for datatatable
+      r$plugins_datatable_proxy <- DT::dataTableProxy("management_datatable", deferUntilFlush = FALSE)
+      
+      # Reload datatable
       observeEvent(r$plugins_temp, {
         
-        # If user has access
-        req("plugins_datatable_card" %in% r$user_accesses)
-
-        if ("plugins_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
-        action_buttons <- c(action_buttons, "edit_code", "options")
-
-        sortable_cols <- c("id", "name", "module_type_id", "datetime")
-
-        # Column widths
-        column_widths <- c("id" = "80px", "datetime" = "130px", "module_type_id" = "130px", "action" = "80px")
-
-        # Centered columns
-        centered_cols <- c("id", "module_type_id", "datetime", "action")
-
-        # Restore datatable state
-        page_length <- isolate(input$management_datatable_state$length)
-        start <- isolate(input$management_datatable_state$start)
-
-        render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-          col_names =  get_col_names(table_name = "plugins", language = language, words = r$words), table = "plugins", action_buttons = action_buttons,
-          datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-          editable_cols = c("name"), sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths)
+        # Reload datatable_temp variable
+        r$plugins_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+          table = "plugins", factorize_cols = factorize_cols, action_buttons = action_buttons,
+          data_input = r$plugins_temp, data_output = data_output, words = r$words)
+        
+        # Reload data of datatable
+        DT::replaceData(r$plugins_datatable_proxy, r$plugins_datatable_temp, resetPaging = FALSE, rownames = FALSE)
       })
+      
+    }
+    
+    if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- END load plugins management datatable"))
     
       ##########################################
       # Save changes in datatable              #

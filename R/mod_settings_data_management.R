@@ -141,6 +141,8 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
 mod_settings_data_management_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    if (r$perf_monitoring) print(paste0(Sys.time(), " _ BEGIN mod ", id))
 
     # Dropdowns in the management datatable, by page
     dropdowns <- tibble::tribble(~id, ~dropdowns,
@@ -232,71 +234,96 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Generate datatable                     #
       ##########################################
     
-        # If r$... variable changes
-        observeEvent(r[[paste0(substr(id, nchar("settings_") + 1, nchar(id)), "_temp")]], {
+      table <- paste0(substr(id, nchar("settings_") + 1, nchar(id)))
+    
+      if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- BEGIN load", table, " management datatable"))
+      
+      if (paste0(table, "_datatable_card") %in% r$user_accesses){
+        
+        dropdowns_datatable <- switch(id,
+          "settings_data_sources" = "",
+          "settings_datamarts" = "",
+          # "settings_datamarts" = c("data_source_id" = "data_sources"),
+          # "settings_studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_modules_families", "aggregated_module_family_id" = "aggregated_modules_families"),
+          "settings_studies" = c("patient_lvl_module_family_id" = "patient_lvl_modules_families", "aggregated_module_family_id" = "aggregated_modules_families"),
+          "settings_subsets" = "",
+          # "settings_subsets" = c("study_id" = "studies"),
+          "settings_thesaurus" = c("data_source_id" = "data_sources"))
+        
+        # Dropdowns with multiSelect
+        dropdowns_multiselect <- ""
+        if (table == "thesaurus") dropdowns_multiselect <- "data_source_id"
+        
+        # Action buttons for each module / page
+        if (paste0(table, "_delete_data") %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
+        action_buttons = switch(table,
+          "data_sources" = action_buttons,
+          "datamarts" = c(action_buttons, "edit_code", "options"),
+          "studies" = c(action_buttons, "options"),
+          "subsets" = c(action_buttons, "edit_code"),
+          "thesaurus" = c(action_buttons, "edit_code", "sub_datatable")
+        )
+        
+        # Editable cols
+        if (id != "settings_subsets") editable_cols <- c("name", "description")
+        if (id == "settings_subsets") editable_cols <- "description"
+        
+        # Sortable cols
+        if (id == "settings_thesaurus") sortable_cols <- c("id", "name", "description", "creator_id", "datetime")
+        if (id != "settings_thesaurus") sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
+        
+        # Column widths
+        column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
+        
+        # Centered columns
+        centered_cols <- c("id", "creator", "datetime", "action")
+        
+        # Searchable_cols
+        if (id != "settings_thesaurus") searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
+        if (id == "settings_thesaurus") searchable_cols <- c("name", "description", "creator_id")
+        
+        # Factorize_cols
+        factorize_cols <- switch(id,
+          "settings_data_sources" = "creator_id",
+          "settings_datamarts" = c("data_source_id", "creator_id"),
+          "settings_studies" = c("datamart_id", "creator_id"),
+          "settings_subsets" = c("study_id", "creator_id"),
+          "settings_thesaurus" = "creator_id")
+        
+        hidden_cols <- c("id", "description", "deleted", "modified")
+        
+        # If r variable already created, or not
+        if (length(r[[paste0(table, "_datatable_temp")]]) == 0) data_output <- tibble::tibble()
+        else data_output <- r[[paste0(table, "_datatable_temp")]]
+        
+        # Prepare data for datatable (add code for dropdowns etc)
+        r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+          table = table, dropdowns = dropdowns_datatable, dropdowns_multiselect = dropdowns_multiselect, factorize_cols = factorize_cols,
+          action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
+        
+        # Render datatable
+        render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(table, "_datatable_temp")]],
+          output_name = "management_datatable", col_names =  get_col_names(table_name = table, language = language, words = r$words),
+          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+        
+        # Create a proxy for datatatable
+        r[[paste0(table, "_datatable_proxy")]] <- DT::dataTableProxy("management_datatable", deferUntilFlush = FALSE)
+        
+        # Reload datatable
+        observeEvent(r[[paste0(table, "_temp")]], {
           
-          # If user has access
-          req(paste0(table, "_datatable_card") %in% r$user_accesses)
+          # Reload datatable_temp variable
+          r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+            table = table, dropdowns = dropdowns_datatable, dropdowns_multiselect = dropdowns_multiselect, factorize_cols = factorize_cols,
+            action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
           
-          # Dropdowns for each module / page
-          # Finally, some columns are not editable (commented lines below)
-          dropdowns_datatable <- switch(id,
-            "settings_data_sources" = "",
-            "settings_datamarts" = "",
-            # "settings_datamarts" = c("data_source_id" = "data_sources"),
-            # "settings_studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_modules_families", "aggregated_module_family_id" = "aggregated_modules_families"),
-            "settings_studies" = c("patient_lvl_module_family_id" = "patient_lvl_modules_families", "aggregated_module_family_id" = "aggregated_modules_families"),
-            "settings_subsets" = "",
-            # "settings_subsets" = c("study_id" = "studies"),
-            "settings_thesaurus" = c("data_source_id" = "data_sources"))
-          
-          # Action buttons for each module / page
-          if (paste0(table, "_delete_data") %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
-          action_buttons = switch(table,
-            "data_sources" = action_buttons,
-            "datamarts" = c(action_buttons, "edit_code", "options"),
-            "studies" = c(action_buttons, "options"),
-            "subsets" = c(action_buttons, "edit_code"),
-            "thesaurus" = c(action_buttons, "edit_code", "sub_datatable")
-          )
-          
-          # Editable cols
-          if (id != "settings_subsets") editable_cols <- c("name", "description")
-          if (id == "settings_subsets") editable_cols <- "description"
-          
-          # Sortable cols
-          if (id == "settings_thesaurus") sortable_cols <- c("id", "name", "description", "creator_id", "datetime")
-          if (id != "settings_thesaurus") sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
-          
-          # Column widths
-          column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
-          
-          # Centered columns
-          centered_cols <- c("id", "data_source_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "creator", "datetime", "action")
-          
-          # Searchable_cols
-          if (id != "settings_thesaurus") searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
-          if (id == "settings_thesaurus") searchable_cols <- c("name", "description", "creator_id")
-          
-          # Factorize_cols
-          factorize_cols <- switch(id,
-            "settings_data_sources" = "creator_id",
-            "settings_datamarts" = c("data_source_id", "creator_id"),
-            "settings_studies" = c("datamart_id", "creator_id"),
-            "settings_subsets" = c("study_id", "creator_id"),
-            "settings_thesaurus" = "creator_id")
-          
-          # Restore datatable state
-          page_length <- isolate(input$management_datatable_state$length)
-          start <- isolate(input$management_datatable_state$start)
-          # search_recorded <- ""
-          
-          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "management_datatable",
-            col_names =  get_col_names(table_name = table, language = language, words = r$words), table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons,
-            datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
-            filter = TRUE, searchable_cols = searchable_cols, factorize_cols = factorize_cols, column_widths = column_widths)
+          # Reload data of datatable
+          DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
         })
+      }
+      
+      if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- END load ", table, " management datatable"))
     
       ##########################################
       # Save changes in datatable              #
@@ -316,7 +343,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
         observeEvent(input$sub_datatable_cell_edit, {
           edit_info <- input$sub_datatable_cell_edit
-          edit_info$col <- edit_info$col + 2 # We have removed id & thesaurus_id cols, so need to add two to col index
+          # edit_info$col <- edit_info$col + 2 # We have removed id & thesaurus_id cols, so need to add two to col index
           r$sub_thesaurus_items_temp <- DT::editData(r$sub_thesaurus_items_temp, edit_info, rownames = FALSE)
           r$sub_thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
         })
@@ -605,47 +632,55 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
               # If r$thesaurus_refresh_thesaurus_items is set to "only_used_items", filter on count_items_rows > 0
               if (grepl("only_used_items", r$thesaurus_refresh_thesaurus_items)) r$sub_thesaurus_items <- r$sub_thesaurus_items %>% dplyr::filter(count_items_rows > 0)
               
-              r$sub_thesaurus_items_temp <- r$sub_thesaurus_items %>% dplyr::mutate(modified = FALSE)
+              # r$sub_thesaurus_items_temp <- r$sub_thesaurus_items %>% dplyr::mutate(modified = FALSE)
             }
           }
           
-          r$sub_thesaurus_items_temp <- r$sub_thesaurus_items %>% dplyr::mutate(modified = FALSE)
-        })
-  
-        observeEvent(r$sub_thesaurus_items_temp, {
-  
-          # Transform item_id to character, to be filterable in datatable
-          r$sub_thesaurus_items_temp <- r$sub_thesaurus_items_temp %>% dplyr::mutate_at("item_id", as.character)
-  
-          # Parameters for the datatable
+          r$sub_thesaurus_items_temp <- r$sub_thesaurus_items %>% 
+            dplyr::mutate(modified = FALSE) %>%
+            dplyr::mutate_at("category", as.factor) %>%
+            dplyr::mutate_at("item_id", as.character)
+          
           if ("thesaurus_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
+          
           editable_cols <- c("display_name", "unit")
           searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
           factorize_cols <- c("category", "unit")
-  
-          # If we have count cols
+          column_widths <- c("id" = "80px", "action" = "80px")# "name" = "300px", "display_name" = "300px", "unit" = "100px", 
+          # "category" = "300px", "colour" = "100px")
+          
           if ("count_patients_rows" %in% names(r$sub_thesaurus_items)){
             sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
             centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-            col_names <- get_col_names("thesaurus_items_with_counts", language = language, words = r$words)
+            col_names <- get_col_names(table_name = "thesaurus_items_with_counts", language = language, words = r$words)
           }
           else {
             sortable_cols <- c("id", "item_id", "name", "display_name", "category")
             centered_cols <- c("id", "item_id", "unit", "datetime", "action")
-            col_names <- get_col_names("thesaurus_items", language = language, words = r$words)
+            col_names <- get_col_names(table_name = "thesaurus_items", language = language, words = r$words)
           }
-  
-          # Restore datatable state
-          page_length <- isolate(input$sub_datatable_state$length)
-          start <- isolate(input$sub_datatable_state$start)
-  
+          
+          hidden_cols <- c("id", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
+          
           # Render datatable
-          render_settings_datatable(output = output, r = r, ns = ns, language = language, id = id, output_name = "sub_datatable",
-            col_names =  col_names, table = "sub_thesaurus_items", action_buttons = action_buttons,
-            datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = page_length, start = start,
-            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
-            searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE)
+          render_datatable(output = output, r = r, ns = ns, language = language, data = r$sub_thesaurus_items_temp,
+            output_name = "sub_datatable", col_names =  col_names,
+            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+            searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+          
+          # Create a proxy for datatatable
+          r$sub_thesaurus_datatable_proxy <- DT::dataTableProxy("sub_datatable", deferUntilFlush = FALSE)
+          
+          # Reload datatable
+          observeEvent(r$sub_thesaurus_items_temp, {
+            
+            # Reload data of datatable
+            DT::replaceData(r$sub_thesaurus_datatable_proxy, r$sub_thesaurus_items_temp, resetPaging = FALSE, rownames = FALSE)
+          })
+          
         })
       }
+        
+      if (r$perf_monitoring) print(paste0(Sys.time(), " _ END mod ", id))
   })
 }
