@@ -95,7 +95,7 @@ make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character()
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
   div(
-    div(class = "input_title", translate(language, label, words)),
+    div(id = ns(paste0(id, "_title")), class = "input_title", translate(language, label, words)),
     div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect), style = style)
   )
 }
