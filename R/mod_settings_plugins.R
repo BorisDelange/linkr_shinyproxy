@@ -57,7 +57,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
     r$plugins_group_id <- 1L
     
     ##########################################
-    # Show or hide cards   #
+    # Show or hide cards                     #
     ##########################################
     
     toggles <- c("description_card", "creation_card", "datatable_card", "options_card", "edit_code_card")
@@ -540,7 +540,7 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           
           if (r$plugin_module_type == "patient_lvl"){
             
-            if (length(input$datamart) == 0 | length(input$patient) == 0 | length(input$stay) == 0 | 
+            if (length(input$datamart) == 0 | length(input$patient) == 0 | length(input$stay) == 0 | length(input$study) == 0 |
                 length(input$thesaurus) == 0) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language)
             else if (nrow(r$plugins_thesaurus_selected_items) == 0) show_message_bar(output, 3, "thesaurus_items_empty", "severeWarning", language)
     

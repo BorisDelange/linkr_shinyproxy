@@ -334,6 +334,7 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
           make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
             options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name"), words = words),
+          make_dropdown(language = language, ns = ns, label = "study", width = "300px", words = words),
           make_dropdown(language = language, ns = ns, label = "patient", width = "300px", words = words),
           make_dropdown(language = language, ns = ns, label = "stay", width = "300px", words = words)),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),

@@ -276,7 +276,8 @@ make_choicegroup <- function(language = "EN", ns = shiny::NS(), label = characte
 render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", data = tibble::tibble(),
   output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top't><'bottom'p>", page_length = 10, start = 0,
   editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
-  filter = FALSE, factorize_cols = character(), column_widths = character(), hidden_cols = character()
+  filter = FALSE, factorize_cols = character(), column_widths = character(), hidden_cols = character(),
+  default_tibble = tibble::tibble()
 ){
   
   # Translation for datatable
@@ -288,9 +289,16 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
   
   # If no row in dataframe, stop here
   if (nrow(data) == 0) return({
-    data <- tibble::tribble(~id, ~datetime)
-    names(data) <- c(translate(language, "id", r$words), translate(language, "datetime", r$words))
-    output[[output_name]] <- DT::renderDT(data, options = list(dom = 'tp'))
+    if (length(names(default_tibble)) > 0){
+      data <- default_tibble
+      if (length(col_names) == length(names(data))) names(data) <- col_names
+    }
+    else {
+      data <- tibble::tribble(~id, ~datetime)
+      names(data) <- c(translate(language, "id", r$words), translate(language, "datetime", r$words))
+    }
+    output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom), 
+      rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,)
   })
 
   

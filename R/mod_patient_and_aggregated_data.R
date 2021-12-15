@@ -59,9 +59,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     # Initiate observers                     #
     ##########################################
     
-    observeEvent(r$chosen_study, {
+    observeEvent(r$chosen_patient, {
       
-      req(!is.na(r$chosen_study))
+      req(!is.na(r$chosen_patient))
       
       # Load tabs
       r[[paste0("load_", prefix, "_tabs")]] <- r$chosen_study
@@ -253,15 +253,15 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                 code_ui <<- tagList(code_ui, div(id = ns(paste0(module_element_name_escaping, group_id)), make_card("", eval(parse(text = code_ui_card)))))
               },
               error = function(e){
-                # Libraries needed
-                libraries_needed <- paste0(translate(language, "libraries_needed_plugin", words), " : ",
-                  strsplit(code_ui_card, " ") %>% unlist() %>% grep("::", ., value = TRUE) %>% sub("::.*", "", .) %>% sub("\n", "", .) %>% toString(), ".")
-                plugin_name <- r$plugins %>% dplyr::filter(id == plugin_id) %>% dplyr::pull(name)
+                # # Libraries needed
+                # libraries_needed <- paste0(translate(language, "libraries_needed_plugin", words), " : ",
+                #   strsplit(code_ui_card, " ") %>% unlist() %>% grep("::", ., value = TRUE) %>% sub("::.*", "", .) %>% sub("\n", "", .) %>% toString(), ".")
+                # plugin_name <- r$plugins %>% dplyr::filter(id == plugin_id) %>% dplyr::pull(name)
+                # 
+                # error_message <- paste0(translate(language, "error_run_plugin_ui_code", words), " (group_id = ", group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, "). ", libraries_needed)
 
-                error_message <- paste0(translate(language, "error_run_plugin_ui_code", words), " (group_id = ", group_id, ", plugin_id = ", plugin_id, ", plugin_name = ", plugin_name, "). ", libraries_needed)
-
-                report_bug(r = r, output = output, error_message = error_message,
-                  error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language)
+                report_bug(r = r, output = output, error_message = translate(language, "error_run_plugin_ui_code", words),
+                  error_name = paste0(id, " - run ui code"), category = "Error", error_report = e, language = language)
               })
             })
           }
@@ -459,7 +459,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               stringr::str_replace_all("\r", "\n")
 
             # If it is an aggregated plugin, change %study_id% with current chosen study
-            if (length(r$chosen_study) > 0 & prefix == "aggregated") code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
+            if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
             # If it is a patient-lvl plugin, change %patient_id% with current chosen patient
             if (length(r$chosen_patient) > 0 & prefix == "patient_lvl") code_server_card <- code_server_card %>% stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient))
 

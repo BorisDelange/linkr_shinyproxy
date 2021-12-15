@@ -22,7 +22,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
         groups = list(
           list(links = list(
             list(name = translate(language, "home", words), key = "home",
-                 url = shiny.router::route_link("home"))
+              url = shiny.router::route_link("home"))
             )
           )
         ),
@@ -69,6 +69,33 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       make_dropdown(language = language, ns = ns, label = "datamart", words = words),
       make_dropdown(language = language, ns = ns, label = "study", words = words),
       make_dropdown(language = language, ns = ns, label = "subset", words = words),
+    ) -> result
+  }
+  
+  ##########################################
+  # Plugins                                #
+  ##########################################
+  
+  if (grepl("^plugins", id)){
+    div(class = "sidenav",
+      shiny.fluent::Nav(
+        groups = list(
+          list(links = list(
+            list(name = translate(language, "plugins_patient_lvl", words = words),
+              key = "patient_lvl", url = shiny.router::route_link("plugins/patient_lvl")),
+            list(name = translate(language, "plugins_aggregated", words = words),
+              key = "aggregated", url = shiny.router::route_link("plugins/aggregated"))
+          ))
+        ),
+        selectedKey = substr(id, nchar("plugins") + 2, 100),
+        styles = list(
+          root = list(
+            height = "100%",
+            boxSizing = "border-box",
+            overflowY = "auto"
+          )
+        )
+      )
     ) -> result
   }
   

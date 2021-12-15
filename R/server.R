@@ -187,6 +187,9 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
         mod_patient_and_aggregated_data_server(page, r, language, r$words)
         mod_page_sidenav_server(page, r, language, r$words)
       })
+      
+      if (perf_monitoring) print(paste0(Sys.time(), " _ plugins"))
+      mod_plugins_server("plugins", r, language, r$words)
 
       if (perf_monitoring) print(paste0(Sys.time(), " _ general"))
       mod_settings_general_server("settings_general_settings", r, language, r$words)

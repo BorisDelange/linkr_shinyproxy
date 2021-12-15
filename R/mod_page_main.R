@@ -44,6 +44,14 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   if (id == "aggregated_data") mod_patient_and_aggregated_data_ui(id = "aggregated_data", language = language, words = words) -> result
   
   ##########################################
+  # Plugins page                           #
+  ##########################################
+  
+  if (grepl("^plugins", id)){
+    mod_plugins_ui(id = "plugins", language = language, words = words) -> result -> result
+  }
+  
+  ##########################################
   # Settings pages                         #
   ##########################################
   
