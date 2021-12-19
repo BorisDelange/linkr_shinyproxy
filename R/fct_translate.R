@@ -17,7 +17,7 @@ translate <- function(language = "EN", reference_word = character(), words = tib
   
   if (nrow(words) == 0){
     words <- get_translations()
-    print(paste0(Sys.time(), " _ TRANSLATION for ", reference_word))
+    # print(paste0(Sys.time(), " _ TRANSLATION for ", reference_word))
   }
   
   if (nchar(language) %not_in% c(2, 3)) stop("Input 'language' has less than 2 or more than 3 characters")

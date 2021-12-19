@@ -9,6 +9,7 @@ cdwtools(
   db_info = list(),
   app_db_folder = character(),
   datamarts_folder = character(),
+  perf_monitoring = FALSE,
   options = list(),
   ...
 )
@@ -21,6 +22,8 @@ cdwtools(
 \item{app_db_folder}{Folder where to save local database file (character)}
 
 \item{datamarts_folder}{Folder where to save datamarts CSV files (character)}
+
+\item{perf_monitoring}{Monitore app performances print timestamps step by step (boolean)}
 
 \item{options}{A list of options that could be passed to shiny::shinyApp() function (list)}
 

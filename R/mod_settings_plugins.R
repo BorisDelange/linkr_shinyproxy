@@ -337,7 +337,9 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", words))
           if (nrow(studies) > 0){
             options <- convert_tibble_to_list(data = studies, key_col = "id", text_col = "name", words = r$words)
-            shiny.fluent::updateDropdown.shinyInput(session, "study", options = options, value = options[[1]][["key"]])
+            shiny.fluent::updateDropdown.shinyInput(session, "study", options = options)
+            # shiny.fluent::updateDropdown.shinyInput(session, "study", options = options, value = options[[1]][["key"]])
+            # r$chosen_study <- options[[1]][["key"]]
           }
           
           # Update subset dropdown
@@ -382,7 +384,8 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           if (nrow(subsets) == 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available", words))
           if (nrow(subsets) > 0){
             options <- convert_tibble_to_list(data = subsets, key_col = "id", text_col = "name", words = r$words)
-            shiny.fluent::updateDropdown.shinyInput(session, "subset", options = options, value = options[[1]][["key"]])
+            shiny.fluent::updateDropdown.shinyInput(session, "subset", options = options)
+            # shiny.fluent::updateDropdown.shinyInput(session, "subset", options = options, value = options[[1]][["key"]])
           }
         })
         
@@ -697,14 +700,32 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           if (length(input$patient) > 0) server_code <- server_code %>% stringr::str_replace_all("%patient_id%", as.character(input$patient))
           
           # Render UI result
-          output$code_result_ui <- renderUI(
-            make_card("", 
-              execute_settings_code(input = input, output = output, session = session,
-              id = id, ns = ns, language = language, r = r, edited_code = ui_code, code_type = "ui", data = data)))
+          # output$code_result_ui <- renderUI(
+          #   make_card("", 
+          #     execute_settings_code(input = input, output = output, session = session,
+          #     id = id, ns = ns, language = language, r = r, edited_code = ui_code, code_type = "ui", data = data)))
+          
+          output$code_result_ui <- renderUI(make_card("", tryCatch(result <- eval(parse(text = ui_code)), error = function(e) stop(e), warning = function(w) stop(w))))
           
           # Warnings messages (render server result)
-          output$code_result_server <- renderText(execute_settings_code(input = input, output = output, session = session,
-            id = id, ns= ns, language = language, r = r, edited_code = server_code, code_type = "server", data = data))
+          # output$code_result_server <- renderText(execute_settings_code(input = input, output = output, session = session,
+          #   id = id, ns= ns, language = language, r = r, edited_code = server_code, code_type = "server", data = data))
+          
+          output$code_result_server <- renderText({
+            
+            options('cli.num_colors' = 1)
+            
+            # Capture console output of our code
+            captured_output <- capture.output(
+              tryCatch(eval(parse(text = server_code)), error = function(e) print(e), warning = function(w) print(w)))
+            
+            # Restore normal value
+            options('cli.num_colors' = NULL)
+            
+            # Display result
+            paste(captured_output, collapse = "\n") -> result
+          })
+          
         })
         
         ##########################################
@@ -725,5 +746,72 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           save_settings_code(output = output, r = r, id = id, category = "plugin_server",
             code_id_input = input$edit_code, edited_code = input$ace_edit_code_server, language = "EN")
         })
+        
+        ##########################################
+        # Assign r vars                          #
+        ##########################################
+        
+        observeEvent(input$datamart, r$chosen_datamart <- input$datamart)
+        observeEvent(input$study, r$chosen_study <- input$study)
+        observeEvent(input$subset, r$chosen_subset <- input$subset)
+        observeEvent(input$patient, r$chosen_patient <- input$patient)
+        observeEvent(input$stay, r$chosen_stay <- input$stay)
+        
+        # if (r$plugin_module_type == "patient_lvl"){
+          
+        observeEvent(r$chosen_patient, {
+          
+          r$data_patient <- list()
+          
+          if (length(r$chosen_patient) > 0){
+            if (!is.na(r$chosen_patient) & r$chosen_patient != ""){
+              if (nrow(r$stays) > 0) r$data_patient$stays <- r$stays %>% dplyr::filter(patient_id == r$chosen_patient)
+              if (nrow(r$labs_vitals) > 0) r$data_patient$labs_vitals <- r$labs_vitals %>% dplyr::filter(patient_id == r$chosen_patient)
+              if (nrow(r$text) > 0) r$data_patient$text <- r$text %>% dplyr::filter(patient_id == r$chosen_patient)
+              if (nrow(r$orders) > 0) r$data_patient$orders <- r$orders %>% dplyr::filter(patient_id == r$chosen_patient)
+            }
+          }
+        })
+        
+        observeEvent(r$chosen_stay, {
+          
+          req(r$data_patient)
+          
+          r$data_stay <- list()
+          
+          if (length(r$chosen_stay) > 0){
+            if (!is.na(r$chosen_stay) & r$chosen_stay != ""){
+              
+              r$data_stay$stay <- r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
+          
+              if (nrow(r$data_patient$labs_vitals) > 0) r$data_stay$labs_vitals_stay <- r$data_patient$labs_vitals %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
+              if (nrow(r$data_patient$text) > 0) r$data_stay$text_stay <- r$data_patient$text %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
+              if (nrow(r$data_patient$orders) > 0) r$data_stay$orders_stay <- r$data_patient$orders %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
+            }
+          }
+        })
+        # }
+        
+        # if (r$plugin_module_type == "aggregated"){
+          
+        observeEvent(r$chosen_subset, {
+          
+          r$data_subset <- list()
+          patients <- tibble::tibble()
+          
+          if (length(r$chosen_subset) > 0){
+            if (!is.na(r$chosen_subset) & r$chosen_subset != "") patients <- r$subset_patients %>% dplyr::filter(subset_id == r$chosen_subset)
+          }
+            
+          if (nrow(patients) > 0){
+            patients <- patients %>% dplyr::select(patient_id)
+            if (nrow(r$patients) > 0) r$data_subset$patients_subset <- r$patients %>% dplyr::inner_join(patients, by = "patient_id")
+            if (nrow(r$stays) > 0) r$data_subset$stays_subset <- r$stays %>% dplyr::inner_join(patients, by = "patient_id")
+            if (nrow(r$labs_vitals) > 0) r$data_subset$labs_vitals_subset <- r$labs_vitals %>% dplyr::inner_join(patients, by = "patient_id")
+            if (nrow(r$text) > 0) r$data_subset$text_subset <- r$text %>% dplyr::inner_join(patients, by = "patient_id")
+            if (nrow(r$orders) > 0) r$data_subset$orders_subset <- r$orders %>% dplyr::inner_join(patients, by = "patient_id")
+          }
+        })
+        # }
   })
 }
