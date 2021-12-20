@@ -263,7 +263,6 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   r[[type]] <- data
   
   show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", language, r$words)
-  # print(translate(language, "import_datamart_success", r$words))
 }
 
 #' Import a thesaurus

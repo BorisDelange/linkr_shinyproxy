@@ -449,7 +449,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         # Studies depending on the chosen datamart
         
-        studies <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)
+        # studies <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)
         
         # Reset r$chosen_study (to reset main display)
         if (length(r$chosen_study) == 0) r$chosen_study <- NA_integer_
@@ -467,13 +467,30 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         output$patient_info <- renderUI("")
         
         # If studies is empty
-        if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", r$words))
+        # if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", r$words))
+        # 
+        # if (nrow(studies) > 0){
+        #   
+        #   # Update dropdowns
+        #   shiny.fluent::updateDropdown.shinyInput(session, "study", options = convert_tibble_to_list(studies %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), value = NULL)
+        #   
+        #   # Code of datamart will be run from mod_patient_and_aggregated_data.R
+        # }
+      })
+      
+      # Once the datamart is loaded, load studies
+      observeEvent(r$loaded_datamart, {
         
+        studies <- r$studies %>% dplyr::filter(datamart_id == r$loaded_datamart)
+        
+        # If studies is empty
+        if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", r$words))
+
         if (nrow(studies) > 0){
-          
+
           # Update dropdowns
           shiny.fluent::updateDropdown.shinyInput(session, "study", options = convert_tibble_to_list(studies %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), value = NULL)
-          
+
           # Code of datamart will be run from mod_patient_and_aggregated_data.R
         }
       })
