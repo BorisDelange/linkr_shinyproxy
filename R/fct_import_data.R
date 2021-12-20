@@ -76,17 +76,13 @@
 #'   save_as_csv = FALSE, rewrite = FALSE, language = language)
 #' }
 import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = integer(), data = tibble::tibble(), 
-  type = "patients", save_as_csv = TRUE, rewrite = FALSE, language = "EN"){
+  type = "patients", save_as_csv = TRUE, rewrite = FALSE, language = "EN", quiet = FALSE){
   
   # Check datamart_id
   tryCatch(as.integer(datamart_id),
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_datamart_id_value", 
         error_name = paste0("import_datamart - invalid_datamart_id_value - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-      stop(translate(language, "invalid_datamart_id_value", r$words))},
-    warning = function(w) if (nchar(w[1]) > 0){
-      report_bug(r = r, output = output, error_message = "invalid_datamart_id_value", 
-        error_name = paste0("import_datamart - invalid_datamart_id_value - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
       stop(translate(language, "invalid_datamart_id_value", r$words))}
   )
   
@@ -115,8 +111,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
   # If files already exists and we do not want to rewrite it
   if (save_as_csv & !rewrite & file.exists(path)){
     tryCatch({
-      show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", language, r$words)
-      # print(translate(language, "import_datamart_success", r$words))
+      if (!quiet) show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", language, r$words)
       return({
         col_types <- switch(type, 
           "patients" = "icnT",
@@ -131,10 +126,6 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_csv", 
           error_name = paste0("import_datamart - error_loading_csv - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-        stop(translate(language, "error_loading_csv", r$words))},
-      warning = function(w) if (nchar(w[1]) > 0){
-        report_bug(r = r, output = output, error_message = "error_loading_csv", 
-          error_name = paste0("import_datamart - error_loading_csv - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
         stop(translate(language, "error_loading_csv", r$words))}
     )
   }
@@ -144,10 +135,6 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
         error_name = paste0("import_datamart - error_transforming_tibble - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-      stop(translate(language, "error_transforming_tibble", r$words))},
-    warning = function(w) if (nchar(w[1]) > 0){
-      report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = paste0("import_datamart - error_transforming_tibble - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
       stop(translate(language, "error_transforming_tibble", r$words))}
   )
   
@@ -240,10 +227,6 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
           error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-        stop(translate(language, "error_saving_csv", r$words))},
-      warning = function(w) if (nchar(w[1]) > 0){
-        report_bug(r = r, output = output, error_message = "error_saving_csv", 
-          error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
         stop(translate(language, "error_saving_csv", r$words))}
     )
     if (file.exists(path) & rewrite) tryCatch({
@@ -252,17 +235,13 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
           error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-            stop(translate(language, "error_saving_csv", r$words))},
-        warning = function(w) if (nchar(w[1]) > 0){
-          report_bug(r = r, output = output, error_message = "error_saving_csv", 
-            error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
-          stop(translate(language, "error_saving_csv", r$words))}
+            stop(translate(language, "error_saving_csv", r$words))}
       )
   }
   
   r[[type]] <- data
   
-  show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", language, r$words)
+  if (!quiet) show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", language, r$words)
 }
 
 #' Import a thesaurus

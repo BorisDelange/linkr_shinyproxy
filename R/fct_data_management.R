@@ -18,10 +18,6 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_code", 
         error_name = paste0("run_datamart_code - load_code - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-      stop(translate(language, "fail_load_code", r$words))},
-    warning = function(w) if (nchar(w[1]) > 0){
-      report_bug(r = r, output = output, error_message = "fail_load_code", 
-        error_name = paste0("run_datamart_code - load_code - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
       stop(translate(language, "fail_load_code", r$words))}
   )
   code <- r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code)
@@ -45,10 +41,6 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_execute_code", 
         error_name = paste0("run_datamart_code - execute_code - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-      stop(translate(language, "fail_execute_code", r$words))},
-    warning = function(w) if (nchar(w[1]) > 0){
-      report_bug(r = r, output = output, error_message = "fail_execute_code", 
-        error_name = paste0("run_datamart_code - execute_code - id = ", datamart_id), category = "Warning", error_report = toString(w), language = language)
       stop(translate(language, "fail_execute_code", r$words))}
   )
   
