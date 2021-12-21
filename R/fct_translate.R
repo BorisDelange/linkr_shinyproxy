@@ -647,6 +647,8 @@ get_translations <- function(){
     "FR", "modules_options", "Options du module",
     "EN", "new_module_added", "New module added",
     "FR", "new_module_added", "Nouveau module ajouté",
+    "EN", "new_module_element", "Module element",
+    "FR", "new_module_element", "Figure",
     "EN", "req_module_family", "Need to create at least one module family before creating a module",
     "FR", "req_module_family", "Il faut créer au moins une familly de module avant de créer un module",
     "EN", "patient_lvl_modules", "Patient-level modules",
@@ -687,6 +689,8 @@ get_translations <- function(){
     "FR", "patient_lvl_modules_elements_group_delete_subtext", "Confirmez-vous la suppression de cette figure ?",
     "EN", "patient_lvl_module_element_deleted", "Item deleted",
     "FR", "patient_lvl_module_element_deleted", "Item supprimé",
+    "EN", "patient_lvl_module_element_group_deleted", "Module element deleted",
+    "FR", "patient_lvl_module_element_group_deleted", "Figure supprimée",
     "EN", "aggregated_modules_elements_delete", "Delete a module family element",
     "FR", "aggregated_modules_elements_delete", "Supprimer une figure",
     "EN", "aggregated_modules_elements_delete_subtext", "Do you want to delete this module element ?",
@@ -1020,7 +1024,9 @@ get_translations <- function(){
     "EN", "module_contains_submodules", "This module contains sub-modules. Click again on the module link to show sub-modules",
     "FR", "module_contains_submodules", "Ce module contient des sous-modules. Cliquer de nouveau sur le lien pour afficher les sous-modules.",
     "EN", "empty_page", "This module doesn't contain any module element",
-    "FR", "empty_page", "Ce module ne contient aucune figure"
+    "FR", "empty_page", "Ce module ne contient aucune figure",
+    "EN", "add_module_element_step_1", "Step 1 - Choose a name",
+    "FR", "add_module_element_step_1", "Etape 1 - Choisir un nom"
     ) -> data
   data
 }

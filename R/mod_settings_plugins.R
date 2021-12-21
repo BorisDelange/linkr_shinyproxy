@@ -56,6 +56,23 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
     # A variable used to have a new group_id value each time we execute a module server code
     r$plugins_group_id <- 1L
     
+    # Initiate r vars
+    # r$data_patient <- list()
+    # r$data_patient$stays <- tibble::tibble()
+    # r$data_patient$labs_vitals <- tibble::tibble()
+    # r$data_patient$orders <- tibble::tibble()
+    # r$data_patient$text <- tibble::tibble()
+    # r$data_stay <- list()
+    # r$data_stay$labs_vitals <- tibble::tibble()
+    # r$data_stay$orders <- tibble::tibble()
+    # r$data_stay$text <- tibble::tibble()
+    # r$data_subset <- list()
+    # r$data_subset$patients <- tibble::tibble()
+    # r$data_subset$stays <- tibble::tibble()
+    # r$data_subset$labs_vitals <- tibble::tibble()
+    # r$data_subset$orders <- tibble::tibble()
+    # r$data_subset$text <- tibble::tibble()
+    
     ##########################################
     # Show or hide cards                     #
     ##########################################
@@ -328,7 +345,10 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           req("plugins_edit_code_card" %in% r$user_accesses)
           
           # Try to load datamart
-          tryCatch(run_datamart_code(output, r, datamart_id = input$datamart, language = language),
+          tryCatch({
+            run_datamart_code(output, r, datamart_id = input$datamart, language = language, quiet = TRUE)
+            show_message_bar(output, 4, "import_datamart_success", "success", language, r$words)
+            },
             error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language), 
             warning = function(w) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language))
           

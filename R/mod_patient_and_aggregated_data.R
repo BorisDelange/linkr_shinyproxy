@@ -12,8 +12,13 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
   ns <- NS(id)
   result <- ""
   
+  # Prefix depending on page id
+  if (id == "patient_level_data") prefix <- "patient_lvl"
+  if (id == "aggregated_data") prefix <- "aggregated"
+  
   div(class = "main",
       render_settings_default_elements(ns = ns),
+      div(style = "display:none", shiny.fluent::Toggle.shinyInput(ns(paste0(prefix, "_hidden_toggle")), value = TRUE)),
       uiOutput(ns("main"))
   )
 }
@@ -29,6 +34,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     # Prefix depending on page id
     if (id == "patient_level_data") prefix <- "patient_lvl"
     if (id == "aggregated_data") prefix <- "aggregated"
+    
+    r$cards <- list()
     
     # Once a datamart is chosen, load its data
     
@@ -63,6 +70,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     ##########################################
     # Initiate observers                     #
     ##########################################
+    
+    # A way to automatically refresh the page
+    observe({
+      shiny.router::get_query_param()
+      value <- ifelse(isolate(input[[paste0(prefix, "_hidden_toggle")]]), FALSE, TRUE)
+      shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_hidden_toggle"), value = value)
+    })
     
     observeEvent(r$chosen_study, {
       
@@ -285,16 +299,51 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             })
           }
           
+          # Save IDs of cards
+          r$cards[[paste0("module_", shown_modules[[i, "id"]])]] <- cards
+          
+          # Card to add a new module element
+          add_module_element_card <- shinyjs::hidden(div(id = ns(paste0(prefix, "_add_module_element_", r[[paste0(prefix, "_selected_key")]], "_card")),
+            make_card(translate(language, "add_module_element_step_1", r$words),
+              div(br(), "test")  
+            )
+          ))
+          
           # If no toggles to show, display a message
-          if (length(cards) == 0 & has_children == 0) code_ui <- tagList(code_ui, make_card("", 
-            div(shiny.fluent::MessageBar(translate(language, "empty_page", r$words), messageBarType = 3), style = "margin-top:10px;")))
+          if (length(cards) == 0 & has_children == 0) code_ui <- tagList(make_card("", 
+            shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", shown_modules[[i, "id"]])), translate(language, "new_module_element", r$words), iconProps = list(iconName = "Add"))), 
+            add_module_element_card, code_ui)
           
-          if (has_children > 0) code_ui <- tagList(code_ui, make_card("", 
-            div(shiny.fluent::MessageBar(translate(language, "module_contains_submodules", r$words), messageBarType = 0), style = "margin-top:10px;")))
+          if (has_children > 0) code_ui <- tagList(code_ui, 
+            make_card("", shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", shown_modules[[i, "id"]])), translate(language, "new_module_element", r$words), iconProps = list(iconName = "Add"))), 
+            make_card("", div(shiny.fluent::MessageBar(translate(language, "module_contains_submodules", r$words), messageBarType = 0), style = "margin-top:10px;")),
+            add_module_element_card)
           
+          # Render toggles
+          # Add a "New module element" button
           if (length(cards) > 0 & has_children == 0){
+            
+            toggles <- tagList()
+            # For each card, create a toggle
+            sapply(cards, function(card){
+              if (card$label != "") toggles <<- tagList(toggles, 
+                shiny.fluent::Toggle.shinyInput(ns(paste0(card$key, "_toggle")), value = ifelse(card$key %in% activated_cards, TRUE, FALSE), style = "margin-top:10px;"),
+                div(class = "toggle_title", card$label, style = "padding-top:12px;"))
+            })
+            
             code_ui <- tagList(
-              render_settings_toggle_card(language = language, ns = ns, cards = cards, activated = activated_cards, translate = FALSE),
+              
+              # Render card with distinct toggles
+              div(id = ns("toggles"),
+                make_card("",
+                  shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                    shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", shown_modules[[i, "id"]])), translate(language, "new_module_element", r$words), iconProps = list(iconName = "Add")),
+                    div(style = "width:20px;"),
+                    toggles
+                  )
+                )
+              ),
+              add_module_element_card,
               code_ui)
           }
           
@@ -302,7 +351,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         })
         
         # Add an add button, to add a new module
-        shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0("add_module_", r[[paste0(prefix, "_selected_key")]]), itemIcon = "Add"))
+        shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", r[[paste0(prefix, "_selected_key")]]), itemIcon = "Add"))
         
         tagList(
           shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
@@ -314,6 +363,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           br()
         )
       })
+      
     })
     
     ##########################################
@@ -391,6 +441,32 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == module_family) %>% dplyr::select(module_id = id)
       module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::inner_join(modules, by = "module_id")
       
+      ##########################################
+      # Create a new module element            #
+      ##########################################
+      
+      # Loop over modules
+      
+      sapply(modules$module_id, function(module_id){
+        
+        observeEvent(input[[paste0(prefix, "_add_module_element_", module_id)]], {
+          
+          # Hide other cards
+          sapply(r$cards[[paste0("module_", module_id)]], function(key){
+            key <- key %>% unlist()
+            key <- paste0(key[[1]], "_toggle")
+            shiny.fluent::updateToggle.shinyInput(session, key, value = FALSE)
+          })
+          
+          shinyjs::show(paste0(prefix, "_add_module_element_", r[[paste0(prefix, "_selected_key")]], "_card"))
+          
+        })
+      })
+      
+      ##########################################
+      # Run server code for cards              #
+      ##########################################
+      
       # If no thesaurus elements to show in this module, notify the user
       if (nrow(module_elements) == 0) show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning", language = language)
       
@@ -462,8 +538,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                 subText = translate(language, paste0(prefix, "_modules_elements_group_delete_subtext"), r$words)
               )
               
-              # showNotification("test3")
-              
               output$delete_confirm <- shiny.fluent::renderReact({
 
                 shiny.fluent::Dialog(
@@ -487,23 +561,32 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             observeEvent(input[[paste0(prefix, "_delete_confirmed_", group_id, "_", r$chosen_study)]], {
               
               # If user has access
-              # req(paste0(table, "_datatable_card") %in% r$user_accesses)
-              
-              # Get value of deleted row
-              # row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_module_element_") + 1, nchar(input$deleted_pressed)))
-              
-              showNotification(paste0(prefix, " // deleted = ", group_id))
+              # req(paste0(prefix, "_modules_delete_data") %in% r$user_accesses)
               
               r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE
               
               # Delete row in DB table
-              # delete_settings_datatable_row(output = output, r = r, ns = ns, language = language, row_deleted = row_deleted, table = table)
+              table <- paste0(prefix, "_modules_elements")
+              sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE group_id = {group_id}" , .con = r$db)
+              DBI::dbSendStatement(r$db, sql) -> query
+              DBI::dbClearResult(query)
+              
+              update_r(r = r, table = table)
+              
+              # Notify user
+              show_message_bar(output = output, id = 4, paste0(prefix, "_module_element_group_deleted"), type ="severeWarning", language = language)
               
               # Reload UI code
+              r[[paste0("load_", prefix, "_tabs")]] <- Sys.time()
+              
             })
-            # })
           }
         })
+        
+        
+        ##########################################
+        # Server code for toggles                #
+        ##########################################
           
         if (length(toggles) > 0){
           # Load toggles server code

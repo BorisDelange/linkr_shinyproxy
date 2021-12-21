@@ -55,8 +55,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       div(id = ns("exclusion_reason_div"),
         div(class = "input_title", translate(language, "exclusion_reason", words)),
         div(shiny.fluent::Dropdown.shinyInput(ns("exclusion_reason"), value = NULL, options = list()))), br(),
-      uiOutput(ns("patient_info")),
-      textOutput(ns("test"))
+      uiOutput(ns("patient_info"))
     ) -> result
   }
   
@@ -481,7 +480,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       # Once the datamart is loaded, load studies
       observeEvent(r$loaded_datamart, {
         
-        studies <- r$studies %>% dplyr::filter(datamart_id == r$loaded_datamart)
+        studies <- r$studies %>% dplyr::filter(datamart_id == as.integer(r$loaded_datamart))
         
         # If studies is empty
         if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", r$words))
