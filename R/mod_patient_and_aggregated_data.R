@@ -280,7 +280,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                   stringr::str_replace_all("\r", "\n")
                 
                 if (length(r$chosen_study) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
-                if (length(r$chosen_patient) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient))
+                # if (length(r$chosen_patient) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient))
                 
                 code_ui <<- tagList(code_ui, div(id = ns(paste0(module_element_name_escaping, group_id)),
                   make_card("", 
