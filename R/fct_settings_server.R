@@ -1667,7 +1667,7 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
       shiny.router::get_query_param()
       shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = FALSE)
       # If this toggle was activated, reactivate it
-      if (paste0(id, toggle) %in% isolate(r$activated_toggles)) shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = TRUE)
+      if (paste0(id, "_", toggle) %in% isolate(r$activated_toggles)) shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = TRUE)
     })
     
     # If user has no access, hide card
@@ -1682,12 +1682,12 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
         if(input[[paste0(toggle, "_toggle")]]){
           shinyjs::show(toggle) 
           # Save that this toggle is activated
-          r$activated_toggles <- c(r$activated_toggles, paste0(id, toggle))
+          r$activated_toggles <- c(r$activated_toggles, paste0(id, "_", toggle))
         }
         else{
           shinyjs::hide(toggle)
           # Save that this toggle is disabled
-          r$activated_toggles <- r$activated_toggles[r$activated_toggles != paste0(id, toggle)]
+          r$activated_toggles <- r$activated_toggles[r$activated_toggles != paste0(id, "_", toggle)]
         }
       }
     })

@@ -23,27 +23,42 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
         div(
           id = ns("datamart_main"),
           render_settings_toggle_card(language = language, ns = ns, cards = list(
-            list(key = "datamart_management_card", label = "datamart_management"),
-            list(key = "edit_datamart_code_card", label = "edit_datamart_code"),
-            list(key = "create_study_card", label = "create_study"),
-            list(key = "studies_management_card", label = "studies_management")),
-            activated = "datamart_management_card", words = words)
-        ),
-        div(
-          id = ns("creation_card"),
-          make_card("Creation card", "blabla")
+            list(key = "datamarts_options_card", label = "datamart_options"),
+            list(key = "datamarts_edit_code_card", label = "edit_datamart_code"),
+            list(key = "studies_creation_card", label = "create_study"),
+            list(key = "studies_datatable_card", label = "studies_management")),
+            activated = "datamarts_options_card", words = words, div_id = "datamart_toggles"),
+          div(
+            id = ns("datamarts_options_card"),
+            make_card("Datamarts options", "blabla")
+          ),
+          div(
+            id = ns("studies_creation_card"),
+            make_card("Studies creation", "blabla")
+          )
         )
       ),
-      shinyjs::hidden(uiOutput(ns("study_main"))),
+      shinyjs::hidden(
+        div(
+          id = ns("study_main"),
+          uiOutput(ns("study_breadcrumb")),
+          uiOutput(ns("study_pivot_1")),
+          uiOutput(ns("study_pivot_2")),
+          uiOutput(ns("study_pivot_3")),
+          uiOutput(ns("study_toggles")),
+          uiOutput(ns("study_cards"))
+        )
+      ),
+      # shinyjs::hidden(uiOutput(ns("study_main"))),
       shinyjs::hidden(
         div(
           id = ns("subset_main"),
           render_settings_toggle_card(language = language, ns = ns, cards = list(
-            list(key = "subset_management_card", label = "subset_management"),
-            list(key = "edit_subset_code_card", label = "edit_subset_code"),
-            list(key = "create_subset_card", label = "create_subset"),
-            list(key = "subsets_management_card", label = "subsets_management")), 
-            activated = "subset_management_card", words = words)
+            list(key = "subsets_options_card", label = "subset_options"),
+            list(key = "subsets_edit_code_card", label = "edit_subset_code"),
+            list(key = "subsets_creation_card", label = "create_subset"),
+            list(key = "subsets_datatable_card", label = "subsets_management")), 
+            activated = "subsets_options_card", words = words, div_id = "subset_toggles")
         )
       )
   )
@@ -69,8 +84,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     r$cards <- list()
     
     # Toggles IDs for datamart & subset pages
-    toggles <- c("datamart_management_card", "edit_datamart_code_card", "create_study_card", "studies_management_card",
-                 "subset_management_card", "edit_subset_code_card", "create_subset_card", "subsets_management_card")
+    toggles <- c("datamarts_options_card", "datamarts_edit_code_card", "studies_creation_card", "studies_datatable_card",
+                 "subsets_options_card", "subsets_edit_code_card", "subsets_creation_card", "subsets_datatable_card")
     
     show_hide_cards(r = r, input = input, session = session, id = id, toggles = toggles)
     
@@ -152,11 +167,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       ##########################################
       
       # A way to automatically refresh the page
-      observe({
-        shiny.router::get_query_param()
-        value <- ifelse(isolate(input[[paste0(prefix, "_hidden_toggle")]]), FALSE, TRUE)
-        shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_hidden_toggle"), value = value)
-      })
+      # observe({
+      #   shiny.router::get_query_param()
+      #   value <- ifelse(isolate(input[[paste0(prefix, "_hidden_toggle")]]), FALSE, TRUE)
+      #   shiny.fluent::updateToggle.shinyInput(session, paste0(prefix, "_hidden_toggle"), value = value)
+      # })
       
       observeEvent(r$chosen_study, {
         
@@ -445,6 +460,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             ),
             br()
           )
+          
         })
         
       })

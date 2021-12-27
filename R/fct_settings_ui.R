@@ -35,7 +35,7 @@ render_settings_default_elements <- function(ns = shiny::NS()){
 #'   list(key = "edit_code_card", label = "edit_datamart_code"))
 #' settings_toggle_card(ns = NS("settings_datamart"), cards = cards, activated = c("creation_card", "datatable_card"), language = "EN")
 
-render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list(), activated = "", translate = TRUE, words = tibble::tibble()){
+render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list(), activated = "", translate = TRUE, div_id = "toggles", words = tibble::tibble()){
   
   toggles <- tagList()
   # For each card, create a toggle
@@ -45,7 +45,7 @@ render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards
         id = paste0(card$key, "_toggle"), value = ifelse(card$key %in% activated, TRUE, FALSE), inline = TRUE, translate = translate, words = words))
   })
   # Render card with distinct toggles
-  div(id = ns("toggles"),
+  div(id = ns(div_id),
     make_card("",
       shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 10), toggles
