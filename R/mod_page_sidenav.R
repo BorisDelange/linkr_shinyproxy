@@ -40,18 +40,50 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   }
   
   ##########################################
+  # Patient-level & aggregated data        #
+  ##########################################
+  
+  if (id %in% c("patient_level_data", "aggregated_data")){
+    
+    dropdowns <- function(names, arrows = TRUE){
+      
+      result <- tagList()
+      
+      sapply(names, function(name){
+        
+        action_button <- ""
+        width <- "250px"
+        
+        if (arrows){
+          action_button <- actionButton(ns(paste0(name, "_page")), "", icon = icon("arrow-right"),
+            style = "background-color:white; border-width:1px; height:32px;")
+          width <- "220px"
+        }
+        
+        result <<- tagList(result,
+          div(id = ns(paste0(name, "_title")), class = "input_title", translate(language, name, words)),
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 5),
+            div(shiny.fluent::Dropdown.shinyInput(ns(name)), style = paste0("min-width:", width, "; max-width:", width, ";")),
+            action_button
+          )
+        )
+      })
+      
+      result
+    }
+  }
+  
+  ##########################################
   # Patient-level data                     #
   ##########################################
   
   if (id == "patient_level_data"){
     div(class = "sidenav",
-      make_dropdown(language = language, ns = ns, label = "datamart", words = words),
-      make_dropdown(language = language, ns = ns, label = "study", words = words),
-      make_dropdown(language = language, ns = ns, label = "subset", words = words),
+      dropdowns(c("datamart", "study", "subset")),
       br(), div(id = ns("hr1"), hr()),
-      make_dropdown(language = language, ns = ns, label = "patient", words = words),
-      make_dropdown(language = language, ns = ns, label = "stay", words = words), br(), div(id = ns("hr2"), hr()),
-      make_dropdown(language = language, ns = ns, label = "patient_status", words = words), br(),
+      dropdowns(c("patient", "stay"), arrows = FALSE),
+      br(), div(id = ns("hr2"), hr()),
+      dropdowns("patient_status", arrows = FALSE), br(),
       div(id = ns("exclusion_reason_div"),
         div(class = "input_title", translate(language, "exclusion_reason", words)),
         div(shiny.fluent::Dropdown.shinyInput(ns("exclusion_reason"), value = NULL, options = list()))), br(),
@@ -64,11 +96,8 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   ##########################################
   
   if (id == "aggregated_data"){
-    div(class = "sidenav",
-      make_dropdown(language = language, ns = ns, label = "datamart", words = words),
-      make_dropdown(language = language, ns = ns, label = "study", words = words),
-      make_dropdown(language = language, ns = ns, label = "subset", words = words),
-    ) -> result
+    
+    div(class = "sidenav", dropdowns(c("datamart", "study", "subset"))) -> result
   }
   
   ##########################################
@@ -164,6 +193,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       # Patient-level & aggregated data        #
       ##########################################
       
+      # Show or hide main UI
+      
+      sapply(c("datamart", "study", "subset"), function(name) observeEvent(input[[paste0(name, "_page")]], r[[paste0(name, "_page")]] <- Sys.time()))
+      
       observeEvent(r$datamarts, {
         
         # Update dropdown
@@ -171,8 +204,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           options = convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), value = NULL)
         
         sapply(c("study", "subset", "patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
-          shinyjs::hide(element)
-          shinyjs::hide(paste0(element, "_title"))
+          sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
         shinyjs::hide("exclusion_reason_div")
       })
@@ -187,13 +219,9 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL)
         
         sapply(c("subset", "patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
-          shinyjs::hide(element)
-          shinyjs::hide(paste0(element, "_title"))
+          sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
-        sapply(c("study"), function(element){
-          shinyjs::show(element)
-          shinyjs::show(paste0(element, "_title"))
-        })
+        sapply(c("study"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         
         # Update Dropdowns AFTER having executing datamart code (prevents a bug, where UI displays and disappears)
       })
@@ -215,13 +243,9 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
         
         sapply(c("patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
-          shinyjs::hide(element)
-          shinyjs::hide(paste0(element, "_title"))
+          sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
-        sapply(c("subset"), function(element){
-          shinyjs::show(element)
-          shinyjs::show(paste0(element, "_title"))
-        })
+        sapply(c("subset"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         shinyjs::hide("exclusion_reason_div")
         output$patient_info <- renderUI("")
         
@@ -238,13 +262,9 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(), value = NULL)
         shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
         sapply(c("stay", "patient_status", "hr2", "exclusion_reason_div"), function(element){
-          shinyjs::hide(element)
-          shinyjs::hide(paste0(element, "_title"))
+          sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
-        sapply(c("patient", "hr1"), function(element){
-          shinyjs::show(element)
-          shinyjs::show(paste0(element, "_title"))
-        })
+        sapply(c("patient", "hr1"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         shinyjs::hide("exclusion_reason_div")
         output$patient_info <- renderUI("")
         
@@ -327,10 +347,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         # Reset exclusion_reason dropdown & hide it
         shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
-        sapply(c("stay", "patient_status", "hr1", "hr2"), function(element){
-          shinyjs::show(element)
-          shinyjs::show(paste0(element, "_title"))
-        })
+        sapply(c("stay", "patient_status", "hr1", "hr2"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         shinyjs::hide("exclusion_reason_div")
       })
       
