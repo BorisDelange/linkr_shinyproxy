@@ -42,7 +42,18 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
         div(
           id = ns("study_main"),
           uiOutput(ns("study_menu")),
-          uiOutput(ns("study_cards"))
+          uiOutput(ns("study_cards")),
+          shinyjs::hidden(
+            div(
+              id = ns(paste0(prefix, "_add_module_element")),
+              make_card("Add a module element", 
+                div("blabla", 
+                  actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:8px; right: 10px;")
+                )
+              ),
+              style = "position:relative;"
+            )
+          )
         )
       ),
       # shinyjs::hidden(uiOutput(ns("study_main"))),
@@ -50,7 +61,6 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
         div(
           id = ns("subset_main"),
           render_settings_toggle_card(language = language, ns = ns, cards = list(
-            list(key = "subsets_options_card", label = "subset_options"),
             list(key = "subsets_edit_code_card", label = "edit_subset_code"),
             list(key = "subsets_creation_card", label = "create_subset"),
             list(key = "subsets_datatable_card", label = "subsets_management")), 
@@ -81,7 +91,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     
     # Toggles IDs for datamart & subset pages
     toggles <- c("datamarts_options_card", "datamarts_edit_code_card", "studies_creation_card", "studies_datatable_card",
-                 "subsets_options_card", "subsets_edit_code_card", "subsets_creation_card", "subsets_datatable_card")
+                 "subsets_edit_code_card", "subsets_creation_card", "subsets_datatable_card")
     
     show_hide_cards(r = r, input = input, session = session, id = id, toggles = toggles)
     
@@ -149,6 +159,22 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     # STUDY - Load & settings                #
     ##########################################
     
+      observeEvent(r$chosen_study, {
+        
+        # Reset selected key
+        r[[paste0(prefix, "_selected_key")]] <- NA_integer_
+        
+        # Reset shown modules
+        r[[paste0(prefix, "_open_cards")]] <- ""
+        
+        # Hide Add module element card
+        shinyjs::hide("add_module_element")
+        
+        r[[paste0(prefix, "_load_ui")]] <- Sys.time()
+        r[[paste0(prefix, "_load_server")]] <- Sys.time()
+        
+      })
+    
       observeEvent(r$study_page, {
         
         req(!is.na(r$chosen_study))
@@ -160,22 +186,19 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     
       
       ##########################################
-      # Load & display tabs                    #
+      # LOAD UI                                #
       ##########################################
     
         ##########################################
         # Load modules                           #
         ##########################################
   
-        observeEvent(r$chosen_study, {
+        observeEvent(r[[paste0(prefix, "_load_ui")]], {
           
           req(!is.na(r$chosen_study))
           
           # Show study UI, hide other UIs
           r$study_page <- Sys.time()
-          
-          # Reset shown modules
-          r[[paste0(prefix, "_shown_modules")]] <- NA_integer_
           
           # Load study informations
           # For one study, you choose ONE patient_lvl or aggregated data module family
@@ -331,8 +354,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
               selectedKey = r[[paste0(prefix, "_selected_key")]],
               shown_tabs
-            ),
-            br()
+            )
           )
           
         })
@@ -351,14 +373,15 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           
           sapply(distinct_modules, function(module_id){
             
-            toggles <- tagList()
+            toggles <<- tagList()
             
-            cards <- list()
-            activated_cards <- ""
+            cards <<- list()
+            activated_cards <<- ""
           
             module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == !!module_id) %>% dplyr::arrange(display_order)
+            # print(module_elements)
             
-            if (nrow(module_elements) != 0){
+            if (nrow(module_elements) > 0){
               
               # Get module element group_id
               distinct_groups <- unique(module_elements$group_id)
@@ -366,6 +389,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               # Loop over distinct cards, for this module
               
               sapply(distinct_groups, function(group_id){
+                
+                print(group_id)
 
                 plugin_id <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
                 if (length(plugin_id) != 0){
@@ -378,11 +403,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                 # module_element_name_escaping <- module_element_name %>% stringr::str_replace_all(c("-" = "_", "/" = "_", "\\(" = "_", "\\)" = "_"))
 
                 # Append a toggle to our cards list
-                cards <<- rlist::list.append(cards, list(key = paste0("module_element_", group_id), label = module_element_name))
-                activated_cards <<- c(activated_cards, paste0("module_element_", group_id))
+                cards <<- rlist::list.append(cards, list(key = paste0(prefix, "_group_", group_id), label = module_element_name))
+                activated_cards <<- c(activated_cards, paste0(prefix, "_group_", group_id))
                 
                 toggles <<- tagList(toggles,
-                  shiny.fluent::Toggle.shinyInput(ns(paste0(paste0("module_element_", group_id), "_toggle")), style = "margin-top:10px;"),
+                  shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_group_", group_id), "_toggle")), 
+                    # value = TRUE,
+                    style = "margin-top:10px;"),
                   div(class = "toggle_title", module_element_name, style = "padding-top:12px;"))
 
                 # Try to run plugin UI code
@@ -399,8 +426,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                   
                   code_ui <<- tagList(code_ui,
                     shinyjs::hidden(
-                      div(id = ns(paste0("module_element_", group_id)),
-                        make_card("",
+                      div(id = ns(paste0(prefix, "_group_", group_id)),
+                        make_card(paste0(prefix, "_group_", group_id),
                           div(eval(parse(text = code_ui_card)),
                               actionButton(ns(paste0(prefix, "_settings_module_element_", group_id, "_", r$chosen_study)), "", icon = icon("cog"), style = "position:absolute; top:8px; right: 41px;"),
                               actionButton(ns(paste0(prefix, "_delete_module_element_", group_id, "_", r$chosen_study)), "", icon = icon("trash-alt"), style = "position:absolute; top:8px; right: 10px;")
@@ -416,34 +443,34 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                     error_name = paste0(id, " - run ui code"), category = "Error", error_report = e, language = language)
                 })
                 
-                # Put all div together
-                
-                
-                code_ui <<- tagList(
-                  # Render card with distinct toggles
-                  shinyjs::hidden(
-                    div(id = ns(paste0("toggles_", module_id)),
-                      make_card("",
-                        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                        shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", r$words), iconProps = list(iconName = "Add")),
-                        div(style = "width:20px;"),
-                        toggles
-                        )
-                      )
-                    )
-                  ),
-                  code_ui
-                )
-                
               })
-              
-              # Save IDs of cards
-              r$cards[[paste0("module_", module_id)]] <- cards
-              
-              # Final result
-              code_ui
             }
+            
+            # Put all div together
+            
+            toggles_div <- div(id = ns(paste0(prefix, "_toggles_", module_id)),
+              make_card(paste0("toggles_", module_id),
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", r$words), iconProps = list(iconName = "Add")),
+                  div(style = "width:20px;"),
+                  toggles
+                )
+              )
+            )
+            
+            # if (is.na(isolate(r[[paste0(prefix, "_selected_key")]]))) toggles_div <- shinyjs::hidden(toggles_div)
+            toggles_div <- shinyjs::hidden(toggles_div)
+            
+            code_ui <<- tagList(toggles_div, code_ui)
+            
+            # Save IDs of cards
+            r$cards[[paste0("module_", module_id)]] <- cards
+            
           })
+          
+          # Final result
+          code_ui
+          
         })
     
         ############################################
@@ -451,20 +478,214 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         ############################################
         
         observeEvent(r[[paste0(prefix, "_selected_key")]], {
+
+          # Hide opened cards
+          sapply(r[[paste0(prefix, "_open_cards")]], shinyjs::hide)
+
+          # Hide Add module element card
+          shinyjs::hide("add_module_element")
+
+          shinyjs::show(paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_key")]]))
+
+          # Add to the list of open cards and reset the list
+          r[[paste0(prefix, "_open_cards")]] <- paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_key")]])
+
+          module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_key")]])
+          distinct_groups <- unique(module_elements$group_id)
+
+          sapply(distinct_groups, function(group_id){
+            shinyjs::show(paste0(prefix, "_group_", group_id))
+
+            # Add to the list of open cards
+            r[[paste0(prefix, "_open_cards")]] <- c(r[[paste0(prefix, "_open_cards")]], paste0(prefix, "_group_", group_id))
+          })
+
+        })
+    
+      ##########################################
+      # LOAD SERVER                            #
+      ##########################################
+      
+      observeEvent(r[[paste0(prefix, "_load_server")]], {
+        
+        req(!is.na(r$chosen_study))
+        
+        # Get modules elements, arrange them by display_order
+        
+        module_family <- r$studies %>% dplyr::filter(id == r$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+        modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == module_family) %>% dplyr::select(module_id = id)
+        module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::inner_join(modules, by = "module_id")
+        
+        ##########################################
+        # Create a new module element            #
+        ##########################################
+        
+        # Loop over modules
+        
+        # sapply(modules$module_id, function(module_id){
+        #   
+        #   observeEvent(input[[paste0(prefix, "_add_module_element_", module_id)]], {
+        #     
+        #     # Hide opened cards
+        #     sapply(r[[paste0(prefix, "_open_cards")]], shinyjs::hide)
+        #     
+        #     # Show Add module element div
+        #     shinyjs::show(paste0(prefix, "_add_module_element"))
+        #     
+        #   })
+        # })
+        # 
+        # # Close creation div
+        # 
+        # observeEvent(input[[paste0(prefix, "_close_add_module_element")]], {
+        #   
+        #   # Show opened cards before opening Add module element div
+        #   sapply(r[[paste0(prefix, "_open_cards")]], shinyjs::show)
+        #   
+        #   # Hide Add module element div
+        #   shinyjs::hide(paste0(prefix, "_add_module_element"))
+        # })
+        
+        ##########################################
+        # Run server code for cards              #
+        ##########################################
+        
+        # If no thesaurus elements to show in this module, notify the user
+        if (nrow(module_elements) == 0) show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning", language = language)
+        
+        if (nrow(module_elements) > 0){
           
-          shinyjs::show(paste0("toggles_", r[[paste0(prefix, "_selected_key")]]))
-          
-          module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_key")]]) 
+          # Get module element group_id
           distinct_groups <- unique(module_elements$group_id)
           
+          toggles <- c()
+          
+          # Loop over distinct cards
           sapply(distinct_groups, function(group_id){
-            shinyjs::show(paste0("module_element_", group_id))
+            
+            # Run plugin server code
+            # Only if this code has not been already loaded
+            trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_study)
+            if (trace_code %not_in% r$server_plugins_loaded){
+              
+              # Add the trace_code to loaded plugins list
+              r$server_plugins_loaded <- c(r$server_plugins_loaded, trace_code)
+              
+              # Get name of module element
+              # module_element_name_escaping <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% 
+                # dplyr::pull(name) %>% stringr::str_replace_all(c("-" = "_", "/" = "_", "\\(" = "_", "\\)" = "_"))
+              
+              toggles <<- c(toggles, paste0(prefix, "_group_", group_id))
+              
+              if (prefix == "patient_lvl"){
+                
+                # Get thesaurus items with thesaurus own item_id
+                thesaurus_selected_items <- module_elements %>% dplyr::filter(group_id == !!group_id) %>%
+                  dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
+                    thesaurus_item_unit, colour = thesaurus_item_colour)
+              }
+              
+              # Get plugin code
+              
+              ids <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::select(plugin_id, module_id)
+              
+              code_server_card <- r$code %>%
+                dplyr::filter(link_id == ids$plugin_id, category == "plugin_server") %>%
+                dplyr::pull(code) %>%
+                stringr::str_replace_all("%module_id%", as.character(ids$module_id)) %>%
+                stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+                stringr::str_replace_all("\r", "\n")
+              
+              # If it is an aggregated plugin, change %study_id% with current chosen study
+              if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
+              
+              tryCatch(eval(parse(text = code_server_card)),
+                error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
+                  error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language),
+                warning = function(w) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
+                  error_name = paste0(id, " - run server code"), category = "Warning", error_report = w, language = language)
+              )
+              
+              ##########################################
+              # Delete a module element                #
+              ##########################################
+              
+              observeEvent(input[[paste0(prefix, "_delete_module_element_", group_id, "_", r$chosen_study)]], r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- TRUE)
+              
+              observeEvent(r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] , {
+                
+                dialogContentProps <- list(
+                  type = 0,
+                  title = translate(language, paste0(prefix, "_modules_elements_group_delete"), r$words),
+                  closeButtonAriaLabel = "Close",
+                  subText = translate(language, paste0(prefix, "_modules_elements_group_delete_subtext"), r$words)
+                )
+                
+                output$delete_confirm <- shiny.fluent::renderReact({
+                  
+                  shiny.fluent::Dialog(
+                    hidden = !r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]],
+                    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", prefix, "hide_dialog', Math.random()); }")),
+                    dialogContentProps = dialogContentProps,
+                    modalProps = list(),
+                    shiny.fluent::DialogFooter(
+                      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_delete_confirmed_", group_id, "_", r$chosen_study)), text = translate(language, "delete", r$words)),
+                      shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "_delete_canceled_", group_id, "_", r$chosen_study)), text = translate(language, "dont_delete", r$words))
+                    )
+                  )
+                })
+              })
+              
+              # Whether to close or not delete dialog box
+              observeEvent(input[[paste0(prefix, "_hide_dialog_", group_id, "_", r$chosen_study)]], r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE)
+              observeEvent(input[[paste0(prefix, "_delete_canceled_", group_id, "_", r$chosen_study)]], r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE)
+              
+              # When the delete is confirmed...
+              observeEvent(input[[paste0(prefix, "_delete_confirmed_", group_id, "_", r$chosen_study)]], {
+                
+                # If user has access
+                # req(paste0(prefix, "_modules_delete_data") %in% r$user_accesses)
+                
+                r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE
+                
+                # Delete row in DB table
+                table <- paste0(prefix, "_modules_elements")
+                sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE group_id = {group_id}" , .con = r$db)
+                DBI::dbSendStatement(r$db, sql) -> query
+                DBI::dbClearResult(query)
+                
+                update_r(r = r, table = table)
+                
+                # Notify user
+                show_message_bar(output = output, id = 4, paste0(prefix, "_module_element_group_deleted"), type ="severeWarning", language = language)
+                
+                # Reload UI code
+                r[[paste0("load_modules_elements_", prefix, "_tabs")]] <- Sys.time()
+                
+              })
+            }
           })
           
-        })
+          
+          ##########################################
+          # Server code for toggles                #
+          ##########################################
+          
+          if (length(toggles) > 0){
+            # Load toggles server code
+            sapply(toggles, function(toggle){
+              observeEvent(input[[paste0(toggle, "_toggle")]], {
+                if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
+                else shinyjs::hide(toggle)
+              })
+            })
+          }
+        }
+      })
+      
       
       ##########################################
-      # Load data                              #
+      # LOAD DATA                              #
       ##########################################
       
       if (prefix == "patient_lvl"){
@@ -524,178 +745,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         })
       }
       
-      ##########################################
-      # Run server code                        #
-      ##########################################
-      
-      observeEvent(r$chosen_study, {
-        
-        req(!is.na(r$chosen_study))
-        
-        # Get modules elements, arrange them by display_order
-  
-        module_family <- r$studies %>% dplyr::filter(id == r$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
-        modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == module_family) %>% dplyr::select(module_id = id)
-        module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::inner_join(modules, by = "module_id")
-        
-        ##########################################
-        # Create a new module element            #
-        ##########################################
-        
-        # Loop over modules
-        
-        sapply(modules$module_id, function(module_id){
-          
-          observeEvent(input[[paste0(prefix, "_add_module_element_", module_id)]], {
-            
-            # Hide other cards
-            sapply(r$cards[[paste0("module_", module_id)]], function(key){
-              key <- key %>% unlist()
-              key <- paste0(key[[1]], "_toggle")
-              shiny.fluent::updateToggle.shinyInput(session, key, value = FALSE)
-            })
-            
-            shinyjs::show(paste0(prefix, "_add_module_element_", r[[paste0(prefix, "_selected_key")]], "_card"))
-            
-          })
-        })
-        
-        ##########################################
-        # Run server code for cards              #
-        ##########################################
-        
-        # If no thesaurus elements to show in this module, notify the user
-        if (nrow(module_elements) == 0) show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning", language = language)
-        
-        if (nrow(module_elements) > 0){
-          
-          # Get module element group_id
-          distinct_groups <- unique(module_elements$group_id)
-          
-          toggles <- c()
-          
-          # Loop over distinct cards
-          sapply(distinct_groups, function(group_id){
-            
-            # Run plugin server code
-            # Only if this code has not been already loaded
-            trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_study)
-            if (trace_code %not_in% r$server_plugins_loaded){
-              
-              # Add the trace_code to loaded plugins list
-              r$server_plugins_loaded <- c(r$server_plugins_loaded, trace_code)
-    
-                # Get name of module element
-                module_element_name_escaping <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% 
-                  dplyr::pull(name) %>% stringr::str_replace_all(c("-" = "_", "/" = "_", "\\(" = "_", "\\)" = "_"))
-    
-                toggles <<- c(toggles, paste0(module_element_name_escaping, group_id))
-    
-                if (prefix == "patient_lvl"){
-    
-                  # Get thesaurus items with thesaurus own item_id
-                  thesaurus_selected_items <- module_elements %>% dplyr::filter(group_id == !!group_id) %>%
-                    dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
-                      thesaurus_item_unit, colour = thesaurus_item_colour)
-                }
-   
-              # Get plugin code
-              
-              ids <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::select(plugin_id, module_id)
-              
-              code_server_card <- r$code %>%
-                dplyr::filter(link_id == ids$plugin_id, category == "plugin_server") %>%
-                dplyr::pull(code) %>%
-                stringr::str_replace_all("%module_id%", as.character(ids$module_id)) %>%
-                stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-                stringr::str_replace_all("\r", "\n")
-              
-              # If it is an aggregated plugin, change %study_id% with current chosen study
-              if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
-  
-              tryCatch(eval(parse(text = code_server_card)),
-                error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
-                  error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language),
-                warning = function(w) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
-                  error_name = paste0(id, " - run server code"), category = "Warning", error_report = w, language = language)
-              )
-              
-              ##########################################
-              # Delete a module element                #
-              ##########################################
-              
-              observeEvent(input[[paste0(prefix, "_delete_module_element_", group_id, "_", r$chosen_study)]], r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- TRUE)
-              
-              observeEvent(r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] , {
-                
-                dialogContentProps <- list(
-                  type = 0,
-                  title = translate(language, paste0(prefix, "_modules_elements_group_delete"), r$words),
-                  closeButtonAriaLabel = "Close",
-                  subText = translate(language, paste0(prefix, "_modules_elements_group_delete_subtext"), r$words)
-                )
-                
-                output$delete_confirm <- shiny.fluent::renderReact({
-  
-                  shiny.fluent::Dialog(
-                    hidden = !r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]],
-                    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", prefix, "hide_dialog', Math.random()); }")),
-                    dialogContentProps = dialogContentProps,
-                    modalProps = list(),
-                    shiny.fluent::DialogFooter(
-                      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_delete_confirmed_", group_id, "_", r$chosen_study)), text = translate(language, "delete", r$words)),
-                      shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "_delete_canceled_", group_id, "_", r$chosen_study)), text = translate(language, "dont_delete", r$words))
-                    )
-                  )
-                })
-              })
-              
-              # Whether to close or not delete dialog box
-              observeEvent(input[[paste0(prefix, "_hide_dialog_", group_id, "_", r$chosen_study)]], r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE)
-              observeEvent(input[[paste0(prefix, "_delete_canceled_", group_id, "_", r$chosen_study)]], r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE)
-              
-              # When the delete is confirmed...
-              observeEvent(input[[paste0(prefix, "_delete_confirmed_", group_id, "_", r$chosen_study)]], {
-                
-                # If user has access
-                # req(paste0(prefix, "_modules_delete_data") %in% r$user_accesses)
-                
-                r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE
-                
-                # Delete row in DB table
-                table <- paste0(prefix, "_modules_elements")
-                sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE group_id = {group_id}" , .con = r$db)
-                DBI::dbSendStatement(r$db, sql) -> query
-                DBI::dbClearResult(query)
-                
-                update_r(r = r, table = table)
-                
-                # Notify user
-                show_message_bar(output = output, id = 4, paste0(prefix, "_module_element_group_deleted"), type ="severeWarning", language = language)
-                
-                # Reload UI code
-                r[[paste0("load_modules_elements_", prefix, "_tabs")]] <- Sys.time()
-                
-              })
-            }
-          })
-          
-          
-          ##########################################
-          # Server code for toggles                #
-          ##########################################
-            
-          if (length(toggles) > 0){
-            # Load toggles server code
-            sapply(toggles, function(toggle){
-              observeEvent(input[[paste0(toggle, "_toggle")]], {
-                if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
-                else shinyjs::hide(toggle)
-              })
-            })
-          }
-        }
-      })
       
       
       ##########################################
@@ -715,9 +764,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         
         # Render subset UI
         # ...
-        
-        # Show subset UI, hide other UIs
-        r$subset_page <- Sys.time()
         
         # Subset data are loaded when the study is loaded
       })
