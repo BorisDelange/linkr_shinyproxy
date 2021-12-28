@@ -15,8 +15,9 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
     # If perf_monotoring activated
     r$perf_monitoring <- perf_monitoring
     
-    # Create r$server_plugins_loaded
-    r$server_plugins_loaded <- ""
+    # Create r$server_modules_groups_loaded & r$ui_modules_groups_loaded
+    r$server_modules_groups_loaded <- ""
+    r$ui_modules_groups_loaded <- ""
     
     # Save datamarts_folder in r variable
     r$datamarts_folder <- datamarts_folder
