@@ -653,6 +653,8 @@ get_translations <- function(){
     "FR", "new_module_added", "Nouveau module ajouté",
     "EN", "new_module_element", "Module element",
     "FR", "new_module_element", "Figure",
+    "EN", "add_module_element", "Add a module element",
+    "FR", "add_module_element", "Nouvelle figure",
     "EN", "req_module_family", "Need to create at least one module family before creating a module",
     "FR", "req_module_family", "Il faut créer au moins une familly de module avant de créer un module",
     "EN", "patient_lvl_modules", "Patient-level modules",
@@ -733,8 +735,6 @@ get_translations <- function(){
     "FR", "add_module", "Ajouter un module",
     "EN", "add_module_family", "Add a module family",
     "FR", "add_module_family", "Ajouter un groupe de modules",
-    "EN", "add_module_element", "Add a module element",
-    "FR", "add_module_element", "Ajouter une figure",
     "EN", "modules_families_management", "Modules families management",
     "FR", "modules_families_management", "Gestion des familles de modules",
     "EN", "modules_management", "Modules management",
@@ -1028,9 +1028,7 @@ get_translations <- function(){
     "EN", "module_contains_submodules", "This module contains sub-modules. Click again on the module link to show sub-modules",
     "FR", "module_contains_submodules", "Ce module contient des sous-modules. Cliquer de nouveau sur le lien pour afficher les sous-modules.",
     "EN", "empty_page", "This module doesn't contain any module element",
-    "FR", "empty_page", "Ce module ne contient aucune figure",
-    "EN", "add_module_element_step_1", "Step 1 - Choose a name",
-    "FR", "add_module_element_step_1", "Etape 1 - Choisir un nom"
+    "FR", "empty_page", "Ce module ne contient aucune figure"
     ) -> data
   data
 }

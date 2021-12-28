@@ -16,6 +16,57 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
   if (id == "patient_level_data") prefix <- "patient_lvl"
   if (id == "aggregated_data") prefix <- "aggregated"
   
+  # Module creation card
+  
+  module_creation_card <- make_card(
+    title = translate(language, "add_module", words),
+    content = div(
+      actionButton(ns(paste0(prefix, "_close_add_module")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
+      make_textfield(language = language, ns = ns, label = "name", id = "module_name", width = "300px", words = words), br(),
+      shiny.fluent::PrimaryButton.shinyInput(ns("add_module_button"), translate(language, "add", words)), br(),
+    )
+  )
+  
+  # Module element creation card
+  
+  if (prefix == "patient_lvl"){
+    module_element_creation_card <- make_card(
+      title = translate(language, "add_module_element", words),
+      content = div(
+        actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+          make_textfield(language = language, ns = ns, label = "name", id = "module_element_name", width = "300px", words = words),
+          make_dropdown(language = language, ns = ns, label = "plugin", id = "plugin", width = "300px", words = words)
+        ),
+        make_dropdown(language = language, ns = ns, label = "thesaurus", id = "thesaurus", width = "300px", words = words),
+        shiny.fluent::Stack(
+          horizontal = TRUE, tokens = list(childrenGap = 20),
+          make_dropdown(language = language, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
+            multiSelect = TRUE, width = "650px", words = words),
+          div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset", words)), style = "margin-top:38px;")
+        ),
+        br(),
+        shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), translate(language, "add", words)), br(),
+        DT::DTOutput(ns("thesaurus_items"))
+      )
+    )
+  }
+  
+  if (prefix == "aggregated"){
+    module_element_creation_card <- make_card(
+      title = translate(language, "add_module_element", words),
+      content = div(
+        actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+          make_textfield(language = language, ns = ns, label = "name", id = "name", width = "300px", words = words),
+          make_dropdown(language = language, ns = ns, label = "plugin", id = "plugin", width = "300px", words = words)
+        ),
+        br(),
+        shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), translate(language, "add", words)),
+      )
+    )
+  }
+  
   div(class = "main",
       render_settings_default_elements(ns = ns),
       div(style = "display:none", shiny.fluent::Toggle.shinyInput(ns(paste0(prefix, "_hidden_toggle")), value = TRUE)),
@@ -30,7 +81,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
             activated = "datamarts_options_card", words = words, div_id = "datamart_toggles"),
           div(
             id = ns("datamarts_options_card"),
-            make_card("Datamarts options", "blabla")
+            ""
           ),
           div(
             id = ns("studies_creation_card"),
@@ -46,17 +97,19 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
           shinyjs::hidden(
             div(
               id = ns(paste0(prefix, "_add_module_element")),
-              make_card("Add a module element", 
-                div("blabla", 
-                  actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:8px; right: 10px;")
-                )
-              ),
+              module_element_creation_card,
+              style = "position:relative;"
+            )
+          ),
+          shinyjs::hidden(
+            div(
+              id = ns(paste0(prefix, "_add_module")),
+              module_creation_card,
               style = "position:relative;"
             )
           )
         )
       ),
-      # shinyjs::hidden(uiOutput(ns("study_main"))),
       shinyjs::hidden(
         div(
           id = ns("subset_main"),
@@ -186,7 +239,71 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         shinyjs::show("study_main")
         sapply(c("datamart_main", "subset_main"), shinyjs::hide)
       })
-    
+      
+      ##########################################
+      # ADD A MODULE                           #
+      ##########################################
+      
+      observeEvent(input$current_tab, {
+        
+        req(grepl("add_module", input$current_tab))
+        
+        # paste0(prefix, "_add_module_", r[[paste0(prefix, "_selected_key")]])
+        
+        sapply(r[[paste0(prefix, "_open_cards")]], shinyjs::hide)
+        shinyjs::show(paste0(prefix, "_add_module"))
+      })
+      
+      # Close creation div
+      
+      observeEvent(input[[paste0(prefix, "_close_add_module")]], {
+        
+        # Show opened cards before opening Add module element div
+        sapply(r[[paste0(prefix, "_open_cards")]], shinyjs::show)
+        
+        # Hide Add module element div
+        shinyjs::hide(paste0(prefix, "_add_module"))
+      })
+      
+      ##########################################
+      # ADD A MODULE ELEMENT                  #
+      ##########################################
+      
+      observeEvent(r$plugins, {
+        
+        module_type_id <- switch(prefix, "patient_lvl" = 1, "aggregated" = 2)
+        
+        plugins <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)
+        
+        options <- convert_tibble_to_list(data = plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words)
+        shiny.fluent::updateDropdown.shinyInput(session, "plugin", options = options)
+      })
+      
+      observeEvent(r$chosen_datamart, {
+        
+        req(!is.na(r$chosen_datamart))
+        
+        data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id) %>% as.character()
+        
+        # Multiple cases
+        # Only one ID, so it's the beginning and the end
+        # Last ID, so it's the end
+        # ID between begin and last, so separated by commas
+        thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
+          grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
+        shiny.fluent::updateDropdown.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", words = r$words), value = NULL)
+      })
+      
+      # Close creation div
+      
+      observeEvent(input[[paste0(prefix, "_close_add_module_element")]], {
+        
+        # Show opened cards before opening Add module element div
+        sapply(r[[paste0(prefix, "_open_cards")]], shinyjs::show)
+        
+        # Hide Add module element div
+        shinyjs::hide(paste0(prefix, "_add_module_element"))
+      })
       
       ##########################################
       # LOAD UI                                #
@@ -197,8 +314,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         ##########################################
   
         observeEvent(r[[paste0(prefix, "_load_ui")]], {
-          
-          print("LOAD UI")
           
           req(!is.na(r$chosen_study))
           
@@ -239,8 +354,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         
         # Render menu
         output$study_menu <- renderUI({
-          
-          print("STUDY MENU")
           
           req(r[[paste0(prefix, "_display_modules")]])
           
@@ -289,14 +402,17 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             if (input$current_tab == 0) shown_modules <- display_modules %>% dplyr::filter(level == 1)
             else {
               
-              shown_modules_temp <- display_modules %>% dplyr::filter(parent_module_id == input$current_tab)
+              current_tab <- input$current_tab
+              if (grepl("add_module", input$current_tab)) current_tab <- isolate(r[[paste0(prefix, "_selected_key")]])
+              
+              shown_modules_temp <- display_modules %>% dplyr::filter(parent_module_id == current_tab)
               
               # If current tab has children
               if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
               
               # If current tab has no children
               if (nrow(shown_modules_temp) == 0){
-                current_module <- display_modules %>% dplyr::filter(id == input$current_tab)
+                current_module <- display_modules %>% dplyr::filter(id == current_tab)
                 if (nrow(current_module) > 0) shown_modules <- display_modules %>% dplyr::filter(parent_module_id == current_module$parent_module_id & level == current_module$level)
                 else show_modules <- tibble::tibble()
                 
@@ -309,9 +425,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           }
           
           # Currently selected tab
-          r[[paste0(prefix, "_selected_key")]] <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
+          if (length(input$current_tab) == 0) r[[paste0(prefix, "_selected_key")]] <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
           if (length(input$current_tab) > 0){
-            if (input$current_tab %in% shown_modules$id) r[[paste0(prefix, "_selected_key")]] <- input$current_tab
+            if (!grepl("add_module", input$current_tab) & input$current_tab != 0) r[[paste0(prefix, "_selected_key")]] <- input$current_tab
           }
           
           nb_levels <- max(shown_modules$level)
@@ -376,11 +492,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           
           req(r[[paste0(prefix, "_display_modules")]])
           
-          print("CARDS")
-          
           distinct_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::pull(id)
-          
-          # print(paste0("distinct modules = ", distinct_modules))
           
           code_ui <- tagList("")
           
@@ -404,7 +516,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               activated_cards <<- ""
             
               module_elements <- isolate(r[[paste0(prefix, "_modules_elements")]]) %>% dplyr::filter(module_id == !!module_id) %>% dplyr::arrange(display_order)
-              # print(module_elements)
               
               if (nrow(module_elements) > 0){
                 
@@ -434,8 +545,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                    
                     module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
                     
-                    # print(paste0(prefix, " / ", group_id, " / ", module_element_name))
-                    
                     # Append a toggle to our cards list
                     cards <<- rlist::list.append(cards, list(key = paste0(prefix, "_group_", group_id), label = module_element_name))
                     activated_cards <<- c(activated_cards, paste0(prefix, "_group_", group_id))
@@ -445,8 +554,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                         value = TRUE,
                         style = "margin-top:10px;"),
                       div(class = "toggle_title", module_element_name, style = "padding-top:12px;"))
-                    
-                    # print(paste0("toggle = ", paste0(paste0(prefix, "_group_", group_id), "_toggle")))
     
                     # Try to run plugin UI code
                     # ID of UI element is in the following format : "group_[ID]"
@@ -461,7 +568,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                       # Module element card
                       
                       element_code <- div(id = ns(paste0(prefix, "_group_", group_id)),
-                        make_card(paste0(prefix, "_group_", group_id),
+                        make_card("",
                           div(eval(parse(text = code_ui_card)),
                             actionButton(ns(paste0(prefix, "_settings_module_element_", group_id, "_",isolate(r$chosen_study))), "", icon = icon("cog"), style = "position:absolute; top:8px; right: 41px;"),
                             actionButton(ns(paste0(prefix, "_delete_module_element_", group_id, "_", isolate(r$chosen_study))), "", icon = icon("trash-alt"), style = "position:absolute; top:8px; right: 10px;")
@@ -483,8 +590,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               }
               
               # Put all div together
-              
-              # print(paste0(module_id, " = ", toggles))
               
               toggles_div <- div(id = ns(paste0(prefix, "_toggles_", module_id)),
                 make_card("",
@@ -535,8 +640,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           # Hide opened cards
           sapply(r[[paste0(prefix, "_open_cards")]], shinyjs::hide)
 
-          # Hide Add module element card
-          shinyjs::hide("add_module_element")
+          # Hide Add module element card & Add module card
+          sapply(c(paste0(prefix, "_add_module"), paste0(prefix, "_add_module_element")), shinyjs::hide)
 
           shinyjs::show(paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_key")]]))
 
@@ -547,6 +652,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           distinct_groups <- unique(module_elements$group_id)
 
           sapply(distinct_groups, function(group_id){
+            
+            # Activate toggles
+            shiny.fluent::updateToggle.shinyInput(session, paste0(paste0(prefix, "_group_", group_id), "_toggle"), value = TRUE)
+            
+            # Show card
             shinyjs::show(paste0(prefix, "_group_", group_id))
 
             # Add to the list of open cards
@@ -586,17 +696,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             shinyjs::show(paste0(prefix, "_add_module_element"))
 
           })
-        })
-
-        # Close creation div
-
-        observeEvent(input[[paste0(prefix, "_close_add_module_element")]], {
-
-          # Show opened cards before opening Add module element div
-          sapply(r[[paste0(prefix, "_open_cards")]], shinyjs::show)
-
-          # Hide Add module element div
-          shinyjs::hide(paste0(prefix, "_add_module_element"))
         })
         
         ##########################################
