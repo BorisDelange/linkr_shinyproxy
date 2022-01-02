@@ -1036,7 +1036,11 @@ get_translations <- function(){
     "EN", "level_under", "Level under",
     "FR", "level_under", "Niveau d'en-dessous",
     "EN", "add_module_has_modules_elements", "Can't add a module under this module because it contains modules elements. Delete modules elements first.",
-    "FR", "add_module_has_modules_elements", "Impossible d'ajouter un module en-dessous de celui-ci parce qu'il contient au moins une figure. Supprimer les figures avant."
+    "FR", "add_module_has_modules_elements", "Impossible d'ajouter un module en-dessous de celui-ci parce qu'il contient au moins une figure. Supprimer les figures avant.",
+    "EN", "import_study", "Import a study",
+    "FR", "import_study", "Importer une étuder",
+    "EN", "export_study", "Export a study",
+    "FR", "export_study", "Exporter une étude"
     ) -> data
   data
 }

@@ -63,7 +63,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
         result <<- tagList(result,
           div(id = ns(paste0(name, "_title")), class = "input_title", translate(language, name, words)),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 5),
-            div(shiny.fluent::Dropdown.shinyInput(ns(name)), style = paste0("min-width:", width, "; max-width:", width, ";")),
+            div(shiny.fluent::ComboBox.shinyInput(ns(name)), style = paste0("min-width:", width, "; max-width:", width, ";")),
             action_button
           )
         )
@@ -200,7 +200,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       observeEvent(r$datamarts, {
         
         # Update dropdown
-        shiny.fluent::updateDropdown.shinyInput(session, "datamart", 
+        shiny.fluent::updateComboBox.shinyInput(session, "datamart", 
           options = convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), value = NULL)
         
         sapply(c("study", "subset", "patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
@@ -216,7 +216,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         # Reset chosen_study variable
         r$chosen_study <- NA_integer_
-        shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "study", options = list(), value = NULL)
         
         sapply(c("subset", "patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
@@ -237,10 +237,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
         
         # Reset dropdowns & uiOutput
-        shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "patient_status", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
         
         sapply(c("patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
@@ -250,17 +250,17 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         output$patient_info <- renderUI("")
         
         # If subsets si empty
-        if (nrow(subsets) == 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available", r$words))
-        if (nrow(subsets) > 0) shiny.fluent::updateDropdown.shinyInput(session, "subset", options = convert_tibble_to_list(subsets, key_col = "id", text_col = "name", words = r$words), value = NULL)
+        if (nrow(subsets) == 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available", r$words))
+        if (nrow(subsets) > 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(subsets, key_col = "id", text_col = "name", words = r$words), value = NULL)
       })
       
       observeEvent(input$subset, {
         r$chosen_subset <- input$subset
         
         # Reset dropdown & uiOutput
-        shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "patient_status", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
         sapply(c("stay", "patient_status", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
@@ -278,14 +278,14 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (nrow(patients) == 0){
           # Set chosen_patient to NA, not to display a chart when no patient is chosen
           r$chosen_patient <- NA_integer_
-          shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available", words)) 
+          shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available", words)) 
         }
         if (nrow(patients) > 0){
           # Order patients by patient_id
           patients <- patients %>% dplyr::arrange(patient_id)
           
           # Update patients dropdown
-          shiny.fluent::updateDropdown.shinyInput(session, "patient", 
+          shiny.fluent::updateComboBox.shinyInput(session, "patient", 
           options = convert_tibble_to_list(data = patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender, " - ", age, " ", translate(language, "years", words))), 
             key_col = "patient_id", text_col = "name_display"), words = r$words)
         }
@@ -297,14 +297,14 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         r$chosen_patient <- input$patient
         
-        if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) == 0) shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available", words))
+        if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) == 0) shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = translate(language, "no_patient_available", words))
         if (nrow(r$stays %>% dplyr::filter(patient_id == input$patient)) > 0){
           
           # Order stays by admission datetime
           stays <- r$stays %>% dplyr::filter(patient_id == input$patient) %>% dplyr::arrange(admission_datetime)
         
           # Load stays of the patient & update dropdown
-          shiny.fluent::updateDropdown.shinyInput(session, "stay",
+          shiny.fluent::updateComboBox.shinyInput(session, "stay",
             options = convert_tibble_to_list(data = stays %>% dplyr::mutate(name_display = paste0(unit_name, " - ", 
               format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", translate(language, "to", words), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
               key_col = "stay_id", text_col = "name_display", words = r$words), value = NULL)
@@ -338,15 +338,15 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (translate("FR", "subset_excluded_patients", words) %in% subsets_names | translate("EN", "subset_excluded_patients", words) %in% subsets_names) value <- "excluded"
         
         # Set to null to reload input$patient_status if the value is the same between to patients, to load exclusion_reason input
-        shiny.fluent::updateDropdown.shinyInput(session, "patient_status", value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(
+        shiny.fluent::updateComboBox.shinyInput(session, "patient_status", value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "patient_status", options = list(
           list(key = "undefined", text = translate(language, "undefined_status", words)),
           list(key = "included", text = translate(language, "included_status", words)),
           list(key = "excluded", text = translate(language, "excluded_status", words))),
           value = value)
         
         # Reset exclusion_reason dropdown & hide it
-        shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
         sapply(c("stay", "patient_status", "hr1", "hr2"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         shinyjs::hide("exclusion_reason_div")
       })
@@ -427,7 +427,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           if (nrow(value) == 0) value <- NULL
           if (length(value) > 0) value <- value %>% dplyr::pull(value_num)
           
-          shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = options, value = value)
+          shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = options, value = value)
           shinyjs::show("exclusion_reason_div")
         }
         else shinyjs::hide("exclusion_reason_div")
@@ -461,7 +461,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       # Update the two pages dropdowns (patient-level data page & aggregated data page)
       observeEvent(r$chosen_datamart, {
         
-        shiny.fluent::updateDropdown.shinyInput(session, "datamart", options = convert_tibble_to_list(r$datamarts, key_col = "id", text_col = "name", words = r$words), value = r$chosen_datamart)
+        shiny.fluent::updateComboBox.shinyInput(session, "datamart", options = convert_tibble_to_list(r$datamarts, key_col = "id", text_col = "name", words = r$words), value = r$chosen_datamart)
         
         # Studies depending on the chosen datamart
         
@@ -474,11 +474,11 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         # Reset dropdowns & uiOutput
         # Hide exclusion_reason dropdown
         
-        shiny.fluent::updateDropdown.shinyInput(session, "subset", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "patient", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "stay", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "patient_status", options = list(), value = NULL)
-        shiny.fluent::updateDropdown.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "patient_status", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
         shinyjs::hide("exclusion_reason_div")
         output$patient_info <- renderUI("")
         
@@ -500,12 +500,12 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         studies <- r$studies %>% dplyr::filter(datamart_id == as.integer(r$loaded_datamart))
         
         # If studies is empty
-        if (nrow(studies) == 0) shiny.fluent::updateDropdown.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", r$words))
+        if (nrow(studies) == 0) shiny.fluent::updateComboBox.shinyInput(session, "study", options = list(), value = NULL, errorMessage = translate(language, "no_study_available", r$words))
 
         if (nrow(studies) > 0){
 
           # Update dropdowns
-          shiny.fluent::updateDropdown.shinyInput(session, "study", options = convert_tibble_to_list(studies %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), value = NULL)
+          shiny.fluent::updateComboBox.shinyInput(session, "study", options = convert_tibble_to_list(studies %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), value = NULL)
 
           # Code of datamart will be run from mod_patient_and_aggregated_data.R
         }
@@ -516,13 +516,13 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
 
         studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
 
-        shiny.fluent::updateDropdown.shinyInput(session, "study", options = convert_tibble_to_list(studies, key_col = "id", text_col = "name", words = r$words), value = r$chosen_study)
+        shiny.fluent::updateComboBox.shinyInput(session, "study", options = convert_tibble_to_list(studies, key_col = "id", text_col = "name", words = r$words), value = r$chosen_study)
       })
 
       observeEvent(r$chosen_subset, {
         req(input$study)
         subsets <- r$subsets %>% dplyr::filter(study_id == input$study)
-        shiny.fluent::updateDropdown.shinyInput(session, "subset", options = convert_tibble_to_list(subsets, key_col = "id", text_col = "name", words = r$words),
+        shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(subsets, key_col = "id", text_col = "name", words = r$words),
           value = r$chosen_subset)
       })
     }

@@ -82,19 +82,51 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
       shinyjs::hidden(
         div(
           id = ns("datamart_main"),
-          render_settings_toggle_card(language = language, ns = ns, cards = list(
-            list(key = "datamarts_options_card", label = "datamart_options"),
-            list(key = "datamarts_edit_code_card", label = "edit_datamart_code"),
-            list(key = "studies_creation_card", label = "create_study"),
-            list(key = "studies_datatable_card", label = "studies_management")),
-            activated = "datamarts_options_card", words = words, div_id = "datamart_toggles"),
-          div(
-            id = ns("datamarts_options_card"),
-            ""
+          shiny.fluent::Breadcrumb(items = list(
+            list(key = "datamart_main", text = translate(language, "datamart", words))
+          ), maxDisplayedItems = 3),
+          shiny.fluent::Pivot(
+            onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-datamart_current_tab', item.props.id)")),
+            shiny.fluent::PivotItem(id = "datamart_options_card", itemKey = "datamart_options", headerText = translate(language, "datamart_options", words)),
+            shiny.fluent::PivotItem(id = "edit_datamart_code_card", itemKey = "edit_datamart_code", headerText = translate(language, "edit_datamart_code", words)),
+            shiny.fluent::PivotItem(id = "create_study_card", itemKey = "create_study", headerText = translate(language, "create_study", words)),
+            shiny.fluent::PivotItem(id = "studies_management_card", itemKey = "studies_management", headerText = translate(language, "studies_management", words)),
+            shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study", headerText = translate(language, "import_study", words)),
+            shiny.fluent::PivotItem(id = "export_study_card", itemKey = "export_study", headerText = translate(language, "export_study", words))
           ),
           div(
-            id = ns("studies_creation_card"),
-            make_card("Studies creation", "blabla")
+            id = ns("datamart_options_card"),
+            make_card(translate(language, "datamart_options", words), "blabla")
+          ),
+          shinyjs::hidden(
+            div(
+              id = ns("edit_datamart_code_card"),
+              make_card(translate(language, "edit_datamart_code", words), "blabla")
+            )
+          ),
+          shinyjs::hidden(
+            div(
+              id = ns("create_study_card"),
+              make_card(translate(language, "create_study", words), "blabla")
+            )
+          ),
+          shinyjs::hidden(
+            div(
+              id = ns("studies_management_card"),
+              make_card(translate(language, "studies_management", words), "blabla")
+            )
+          ),
+          shinyjs::hidden(
+            div(
+              id = ns("import_study_card"),
+              make_card(translate(language, "import_study", words), "blabla")
+            )
+          ),
+          shinyjs::hidden(
+            div(
+              id = ns("export_study_card"),
+              make_card(translate(language, "export_study", words), "blabla")
+            )
           )
         )
       ),
@@ -122,11 +154,38 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
       shinyjs::hidden(
         div(
           id = ns("subset_main"),
-          render_settings_toggle_card(language = language, ns = ns, cards = list(
-            list(key = "subsets_edit_code_card", label = "edit_subset_code"),
-            list(key = "subsets_creation_card", label = "create_subset"),
-            list(key = "subsets_datatable_card", label = "subsets_management")), 
-            activated = "subsets_options_card", words = words, div_id = "subset_toggles")
+          shiny.fluent::Breadcrumb(items = list(
+            list(key = "subset_main", text = translate(language, "subsets", words))
+          ), maxDisplayedItems = 3),
+          shiny.fluent::Pivot(
+            onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-subsets_current_tab', item.props.id)")),
+            shiny.fluent::PivotItem(id = "subset_management_card", itemKey = "subset_management_card", headerText = translate(language, "subset_management", words)),
+            shiny.fluent::PivotItem(id = "subset_edit_code_card", itemKey = "subset_edit_code_card", headerText = translate(language, "edit_subset_code", words)),
+            shiny.fluent::PivotItem(id = "subset_creation_card", itemKey = "subset_creation_card", headerText = translate(language, "create_subset", words)),
+            shiny.fluent::PivotItem(id = "subset_datatable_card", itemKey = "subset_datatable_card", headerText = translate(language, "subsets_management", words))
+          ),
+          div(
+            id = ns("subset_management_card"),
+            make_card(translate(language, "subset_management", words), "blabla")
+          ),
+          shinyjs::hidden(
+            div(
+              id = ns("subset_edit_code_card"),
+              make_card(translate(language, "edit_subset_code", words), "blabla")
+            )
+          ),
+          shinyjs::hidden(
+            div(
+              id = ns("subset_creation_card"),
+              make_card(translate(language, "create_subset", words), "blabla")
+            )
+          ),
+          shinyjs::hidden(
+            div(
+              id = ns("subset_datatable_card"),
+              make_card(translate(language, "subsets_management", words), "blabla")
+            )
+          )
         )
       )
   )
@@ -206,13 +265,19 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       ##########################################
       # Render datamart UI                     #
       ##########################################
-      
-      # Render datamart UI
-      # ...
-      
-      # Show datamart UI, hide other UIs
+        
+        # Show datamart UI, hide other UIs
         r$datamart_page <- Sys.time()
-      
+        
+        # Show or hide datamart cards
+        
+        datamarts_cards <- c("datamart_options_card", "edit_datamart_code_card", "create_study_card", "studies_management_card",
+          "import_study_card", "export_study_card")
+        
+        observeEvent(input$datamart_current_tab, {
+          sapply(datamarts_cards %>% setdiff(., input$datamart_current_tab), shinyjs::hide)
+          shinyjs::show(input$datamart_current_tab)
+        })
     })
     
     
@@ -344,7 +409,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           # Show Add module element div
           shinyjs::show(paste0(prefix, "_add_module_element"))
 
-        })
+        }, ignoreInit = TRUE)
         
       })
       
@@ -693,7 +758,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               # print(paste0(module_id, " TOGGLE DIV = ", toggles_div))
               
               # if (is.na(isolate(r[[paste0(prefix, "_selected_key")]]))) toggles_div <- shinyjs::hidden(toggles_div)
-              if (module_id != isolate(r[[paste0(prefix, "_first_module_shown")]]$id)) toggles_div <- shinyjs::hidden(toggles_div)
+              # if (module_id != isolate(r[[paste0(prefix, "_first_module_shown")]]$id)) toggles_div <- shinyjs::hidden(toggles_div)
+              if (module_id != isolate(r[[paste0(prefix, "_selected_key")]])) toggles_div <- shinyjs::hidden(toggles_div)
               
               code_ui <<- tagList(toggles_div, code_ui)
               
@@ -704,7 +770,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           })
           
           # Hide all cards
-          r[[paste0(prefix, "_hide_cards")]] <- all_groups
+          # r[[paste0(prefix, "_hide_cards")]] <- all_groups
           
           # Final result
           code_ui
@@ -769,12 +835,16 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::inner_join(modules, by = "module_id")
         
         ##########################################
-        # Create a new module element            #
+        # Delete module & create module element  #
         ##########################################
-        
+
         # Loop over modules
         
         sapply(modules$module_id, function(module_id){
+          
+          ##########################################
+          # Create a new module element            #
+          ##########################################
 
           observeEvent(input[[paste0(prefix, "_add_module_element_", module_id)]], {
 
@@ -785,6 +855,69 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             shinyjs::show(paste0(prefix, "_add_module_element"))
 
           })
+          
+          ##########################################
+          # Delete a module                        #
+          ##########################################
+          
+          observeEvent(input[[paste0(prefix, "_remove_module_", module_id)]], {
+            
+            r[[paste0(prefix, "_delete_dialog_module_", module_id, "_", r$chosen_study)]] <- TRUE
+            
+          #   observeEvent(r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] , {
+          #     
+          #     dialogContentProps <- list(
+          #       type = 0,
+          #       title = translate(language, paste0(prefix, "_modules_elements_group_delete"), r$words),
+          #       closeButtonAriaLabel = "Close",
+          #       subText = translate(language, paste0(prefix, "_modules_elements_group_delete_subtext"), r$words)
+          #     )
+          #     
+          #     output$delete_confirm <- shiny.fluent::renderReact({
+          #       
+          #       shiny.fluent::Dialog(
+          #         hidden = !r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]],
+          #         onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", prefix, "hide_dialog', Math.random()); }")),
+          #         dialogContentProps = dialogContentProps,
+          #         modalProps = list(),
+          #         shiny.fluent::DialogFooter(
+          #           shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_delete_confirmed_", group_id, "_", r$chosen_study)), text = translate(language, "delete", r$words)),
+          #           shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "_delete_canceled_", group_id, "_", r$chosen_study)), text = translate(language, "dont_delete", r$words))
+          #         )
+          #       )
+          #     })
+          #   })
+          #   
+          #   # Whether to close or not delete dialog box
+          #   observeEvent(input[[paste0(prefix, "_hide_dialog_", group_id, "_", r$chosen_study)]], r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE)
+          #   observeEvent(input[[paste0(prefix, "_delete_canceled_", group_id, "_", r$chosen_study)]], r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE)
+          #   
+          #   # When the delete is confirmed...
+          #   observeEvent(input[[paste0(prefix, "_delete_confirmed_", group_id, "_", r$chosen_study)]], {
+          #     
+          #     # If user has access
+          #     # req(paste0(prefix, "_modules_delete_data") %in% r$user_accesses)
+          #     
+          #     r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE
+          #     
+          #     # Delete row in DB table
+          #     table <- paste0(prefix, "_modules_elements")
+          #     sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE group_id = {group_id}" , .con = r$db)
+          #     DBI::dbSendStatement(r$db, sql) -> query
+          #     DBI::dbClearResult(query)
+          #     
+          #     update_r(r = r, table = table)
+          #     
+          #     # Notify user
+          #     show_message_bar(output = output, id = 4, paste0(prefix, "_module_element_group_deleted"), type ="severeWarning", language = language)
+          #     
+          #     # Reload UI code
+          #     r[[paste0("load_modules_elements_", prefix, "_tabs")]] <- Sys.time()
+          #     
+          #   })
+          #   
+          })
+          
         })
         
         ##########################################
@@ -1001,6 +1134,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         # Show subset UI, hide other UIs
         shinyjs::show("subset_main")
         sapply(c("datamart_main", "study_main"), shinyjs::hide)
+      })
+      
+      subsets_cards <- c("subset_management_card", "subset_edit_code_card", "subset_creation_card", "subset_datatable_card")
+      
+      observeEvent(input$subsets_current_tab, {
+        sapply(subsets_cards %>% setdiff(., input$subsets_current_tab), shinyjs::hide)
+        shinyjs::show(input$subsets_current_tab)
       })
       
       observeEvent(r$chosen_subset, {
