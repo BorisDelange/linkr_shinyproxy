@@ -6,7 +6,8 @@
 #' @noRd
 
 app_server <- function(router, language = "EN", db_info = list(), datamarts_folder = character(), app_db_folder = character(),
-  initial_wd = character(), perf_monitoring = FALSE){
+  #initial_wd = character(), 
+  perf_monitoring = FALSE){
   function(input, output, session ) {
     
     # Create r reactive value
@@ -66,7 +67,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
     onStop(function() {
       add_log_entry(r = isolate(r), category = "Connection ends", name = "Connection ends", value = "")
       DBI::dbDisconnect(isolate(r$db))
-      setwd(initial_wd)
+      # setwd(initial_wd)
     })
     
     # Add default values in database if database is empty

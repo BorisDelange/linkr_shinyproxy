@@ -271,6 +271,8 @@ get_translations <- function(){
     "FR", "add", "Ajouter",
     "EN", "remove", "Remove",
     "FR", "remove", "Retirer",
+    "EN", "remove_module", "Module",
+    "FR", "remove_module", "Module",
     "EN", "reset", "Reset",
     "FR", "reset", "Remettre à zéro",
     "EN", "test_connection", "Test connection",
@@ -1028,7 +1030,13 @@ get_translations <- function(){
     "EN", "module_contains_submodules", "This module contains sub-modules. Click again on the module link to show sub-modules",
     "FR", "module_contains_submodules", "Ce module contient des sous-modules. Cliquer de nouveau sur le lien pour afficher les sous-modules.",
     "EN", "empty_page", "This module doesn't contain any module element",
-    "FR", "empty_page", "Ce module ne contient aucune figure"
+    "FR", "empty_page", "Ce module ne contient aucune figure",
+    "EN", "same_level", "Same level of current module",
+    "FR", "same_level", "Même niveau que le module actuel",
+    "EN", "level_under", "Level under",
+    "FR", "level_under", "Niveau d'en-dessous",
+    "EN", "add_module_has_modules_elements", "Can't add a module under this module because it contains modules elements. Delete modules elements first.",
+    "FR", "add_module_has_modules_elements", "Impossible d'ajouter un module en-dessous de celui-ci parce qu'il contient au moins une figure. Supprimer les figures avant."
     ) -> data
   data
 }

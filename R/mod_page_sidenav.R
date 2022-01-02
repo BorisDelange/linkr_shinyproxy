@@ -228,7 +228,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       
       observeEvent(input$study, {
         
-        # Prevent multi change of r$chosen_study
+        # Prevent multiple changes of r$chosen_study
         # We have to keep multiple observers, cause we use input variable
         if (is.na(r$chosen_study)) r$chosen_study <- input$study
         if (!is.na(r$chosen_study) & r$chosen_study != input$study) r$chosen_study <- input$study

@@ -48,8 +48,12 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   sapply(req_unique_values, function(field){
     
     # If it is a new module, group by module family, so a name musn't be unique in distinct modules families
-    if (table %in% c("patient_lvl_modules", "aggregated_modules")) sql <- 
-        glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE AND module_family_id = {data$module_family}", .con = r$db)
+    if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+      if (is.na(data$parent_module)) sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE 
+        AND module_family_id = {data$module_family} AND parent_module_id IS NULL", .con = r$db)
+      if (!is.na(data$parent_module)) sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
+        AND module_family_id = {data$module_family} AND parent_module_id = {data$parent_module}", .con = r$db)
+    }
     else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = r$db)
     distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull() %>% tolower()
       

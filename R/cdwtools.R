@@ -59,10 +59,10 @@ cdwtools <- function(
   options(shiny.maxRequestSize = 500*1024^2, shiny.launch.browser = TRUE)
   
   # Initial wd
-  initial_wd <- getwd()
+  # initial_wd <- getwd()
   
   # Set wd to app wd
-  setwd(find.package("cdwtools"))
+  # setwd(find.package("cdwtools"))
   
   # Load translations
   
@@ -97,7 +97,8 @@ cdwtools <- function(
     app = shinyApp(
       ui = app_ui(css = css, page = page, language = language),
       server = app_server(router = page, language = language, db_info = db_info, 
-        datamarts_folder = datamarts_folder, app_db_folder = app_db_folder, initial_wd = initial_wd, perf_monitoring = perf_monitoring),
+        datamarts_folder = datamarts_folder, app_db_folder = app_db_folder,# initial_wd = initial_wd, 
+        perf_monitoring = perf_monitoring),
       options = options
     ), 
     golem_opts = list()
