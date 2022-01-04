@@ -289,7 +289,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       observeEvent(r$chosen_study, {
         
         # Reset selected key
-        r[[paste0(prefix, "_selected_key")]] <- NA_integer_
+        r[[paste0(prefix, "_selected_module")]] <- NA_integer_
         
         # Reset shown modules
         r[[paste0(prefix, "_opened_cards")]] <- ""
@@ -316,14 +316,69 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       })
       
       ##########################################
+      # DELETE A MODULE                        #
+      ##########################################
+      
+      module_delete_prefix <- paste0(prefix, "_module_", r$chosen_study)
+      module_dialog_title <- paste0(prefix, "_modules_delete")
+      module_dialog_subtext <- paste0(prefix, "_modules_delete_subtext")
+      module_react_variable <- "delete_confirm"
+      module_table <- paste0(prefix, "_modules")
+      module_id_var_sql <- "id"
+      module_id_var_r <- paste0(prefix, "_selected_module")
+      module_delete_message <- paste0(prefix, "_module_deleted")
+      module_reload_variable <- paste0(prefix, "_load_ui")
+      module_information_variable <- paste0(prefix, "_module_deleted")
+      module_delete_variable <- paste0(module_delete_prefix, "_open_dialog")
+      
+      delete_element(r = r, input = input, output = output, session = session, ns = ns, language = language,
+        delete_prefix = module_delete_prefix, dialog_title = module_dialog_title, dialog_subtext = module_dialog_subtext,
+        react_variable = module_react_variable, table = module_table, id_var_sql = module_id_var_sql, id_var_r = module_id_var_r, 
+        delete_message = module_delete_message, translation = TRUE, reload_variable = module_reload_variable, 
+        information_variable = module_information_variable)
+      
+      # When a module is deleted, change current module variable
+      
+      observeEvent(r[[module_information_variable]], {
+        
+        table <- paste0(prefix, "_modules")
+        deleted_module_id <- r[[paste0(prefix, "_module_deleted")]]
+        sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE id = {deleted_module_id}", .con = r$db)
+        module_deleted <- DBI::dbGetQuery(r$db, sql)
+        
+        # If we are at level one, take first module of level one
+        if (is.na(module_deleted$parent_module_id)){
+          show_module_id <- r[[table]] %>% 
+            dplyr::filter(module_family_id == module_deleted$module_family_id & is.na(parent_module_id) & id != module_deleted$id) %>%
+            dplyr::arrange(display_order) %>%
+            dplyr::slice(1) %>%
+            dplyr::pull(id)
+        }
+        
+        # Else, take first module of the same level
+        if (!is.na(module_deleted$parent_module_id)){
+            show_module_id <- r[[table]] %>% 
+            dplyr::filter(module_family_id == module_deleted$module_family_id & parent_module_id == module_deleted$parent_module_id & id != module_deleted$id) %>%
+            dplyr::arrange(display_order) %>%
+            dplyr::slice(1) %>%
+            dplyr::pull(id)
+        }
+        
+        r[[paste0(prefix, "_selected_module")]] <- paste0("show_module_", show_module_id)
+        sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
+        shinyjs::show(paste0(prefix, "_toggles_", show_module_id))
+        
+      })
+      
+      ##########################################
       # ADD A MODULE                           #
       ##########################################
       
-      observeEvent(input$current_tab, {
+      observeEvent(input$study_current_tab, {
         
-        req(grepl("add_module", input$current_tab))
+        req(grepl("add_module", input$study_current_tab))
         
-        # paste0(prefix, "_add_module_", r[[paste0(prefix, "_selected_key")]])
+        # paste0(prefix, "_add_module_", r[[paste0(prefix, "_selected_module")]])
         
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
         shinyjs::hide(paste0(prefix, "_add_module_element"))
@@ -346,7 +401,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       observeEvent(input$add_module_button, {
         
         study <- r$studies %>% dplyr::filter(id == r$chosen_study)
-        module <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_key")]])
+        module <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_module")]])
         
         new_data <- list()
         new_data$name <- coalesce2(type = "char", x = input$module_name)
@@ -377,7 +432,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         
         # Can't add a module at the level under if there are modules elements attached to current module
         if (input$add_module_type == "level_under"){
-          modules_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_key")]], !deleted)
+          modules_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_module")]], !deleted)
           if (nrow(modules_elements) > 0) show_message_bar(output = output, id = 3, message = "add_module_has_modules_elements", language = language)
           req(nrow(modules_elements) == 0)
         }
@@ -393,15 +448,16 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         shiny.fluent::updateTextField.shinyInput(session, "module_name", value = "")
         shiny.fluent::updateChoiceGroup.shinyInput(session, "add_module_type", value = "same_level")
         
-        # Reload UI
+        # Reload UI, with new module opened
         
+        r[[paste0(prefix, "_selected_module")]] <- get_last_row(r$db, paste0(prefix, "_modules"))
         r[[paste0(prefix, "_load_ui")]] <- Sys.time()
         
         # Hide currently opened cards
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
         
         # Code to make Add module element button work
-        observeEvent(input[[paste0(prefix, "_add_module_element_", r[[paste0(prefix, "_selected_key")]])]], {
+        observeEvent(input[[paste0(prefix, "_add_module_element_", r[[paste0(prefix, "_selected_module")]])]], {
 
           # Hide opened cards
           sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
@@ -411,10 +467,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
 
         }, ignoreInit = TRUE)
         
+        # Code to make Remove module button work
+        observeEvent(input[[paste0(prefix, "_remove_module_", r[[paste0(prefix, "_selected_module")]])]], r[[module_delete_variable]] <- TRUE)
+        
       })
       
       ##########################################
-      # ADD A MODULE ELEMENT                  #
+      # ADD A MODULE ELEMENT                   #
       ##########################################
       
       observeEvent(r$plugins, {
@@ -544,19 +603,23 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           
           r[[paste0(prefix, "_first_module_shown")]] <- first_module_shown
           
-          if (length(input$current_tab) > 0){
+          if (length(input$study_current_tab) > 0){
             
             # If value = 0, go back to first level
-            if (input$current_tab == 0) shown_modules <- display_modules %>% dplyr::filter(level == 1)
+            if (input$study_current_tab == 0) shown_modules <- display_modules %>% dplyr::filter(level == 1)
             else {
               
-              if (grepl("add_module", input$current_tab)){
+              if (grepl("show_module", isolate(r[[paste0(prefix, "_selected_module")]]))){
+                study_current_tab <- as.integer(substr(isolate(r[[paste0(prefix, "_selected_module")]]), nchar("show_module_") + 1, 100))
+                shown_modules_temp <- display_modules %>% dplyr::filter(parent_module_id == study_current_tab)
+              }
+              else if (grepl("add_module", input$study_current_tab)){
                 shown_modules_temp <- tibble::tibble()
-                current_tab <- isolate(r[[paste0(prefix, "_selected_key")]])
+                study_current_tab <- isolate(r[[paste0(prefix, "_selected_module")]])
               }
               else {
-                current_tab <- input$current_tab
-                shown_modules_temp <- display_modules %>% dplyr::filter(parent_module_id == current_tab)
+                study_current_tab <- input$study_current_tab
+                shown_modules_temp <- display_modules %>% dplyr::filter(parent_module_id == study_current_tab)
               }
               
               # If current tab has children
@@ -564,7 +627,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               
               # If current tab has no children
               if (nrow(shown_modules_temp) == 0){
-                current_module <- display_modules %>% dplyr::filter(id == current_tab)
+                current_module <- display_modules %>% dplyr::filter(id == study_current_tab)
                 if (nrow(current_module) > 0) shown_modules <- display_modules %>% dplyr::filter(parent_module_id == current_module$parent_module_id & level == current_module$level)
                 else show_modules <- tibble::tibble()
                 
@@ -577,10 +640,22 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           }
           
           # Currently selected tab
-          if (length(input$current_tab) == 0) r[[paste0(prefix, "_selected_key")]] <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
-          if (length(input$current_tab) > 0){
-            if (nrow(shown_modules_temp) > 0) r[[paste0(prefix, "_selected_key")]] <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
-            else if (!grepl("add_module", input$current_tab) & input$current_tab != 0) r[[paste0(prefix, "_selected_key")]] <- input$current_tab
+          
+          # We have just deleted a module
+          if (grepl("show_module", isolate(r[[paste0(prefix, "_selected_module")]]))) r[[paste0(prefix, "_selected_module")]] <- 
+            as.integer(substr(isolate(r[[paste0(prefix, "_selected_module")]]), nchar("show_module_") + 1, 100))
+          
+          # First existing module
+          else if (length(input$study_current_tab) == 0) r[[paste0(prefix, "_selected_module")]] <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
+          
+          # We have clicked on a tab
+          else if (length(input$study_current_tab) > 0){
+            
+            # Current module has children, take the first of this level of modules
+            if (nrow(shown_modules_temp) > 0) r[[paste0(prefix, "_selected_module")]] <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
+            
+            # Take the input as current module
+            else if (!grepl("add_module", input$study_current_tab) & input$study_current_tab != 0) r[[paste0(prefix, "_selected_module")]] <- input$study_current_tab
           }
           
           nb_levels <- max(shown_modules$level)
@@ -590,7 +665,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           if (nb_levels == 1) is_current_item <- TRUE
           items <- list(
             list(key = "main", text = translate(language, id, words), href = paste0("#!/", id), isCurrentItem = is_current_item,
-                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', 0)"))))
+                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', 0)"))))
           
           # Other levels
           if (nb_levels >= 2){
@@ -612,7 +687,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               if (modules_tree[[i, "level"]] == nb_levels) is_current_item <- TRUE
               items <<- rlist::list.append(items, list(
                 key = modules_tree[[i, "name"]], text = modules_tree[[i, "name"]], href = paste0("#!/", id), isCurrentItem = is_current_item,
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', ", modules_tree[[i, "id"]], ")"))
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', ", modules_tree[[i, "id"]], ")"))
               ))
             })
           }
@@ -624,13 +699,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           })
           
           # Add an add button, to add a new module, and a delete button, to delete current module
-          shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", r[[paste0(prefix, "_selected_key")]]), itemIcon = "Add"))
+          shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", r[[paste0(prefix, "_selected_module")]]), itemIcon = "Add"))
           
           tagList(
             shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
             shiny.fluent::Pivot(
-              onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-              selectedKey = r[[paste0(prefix, "_selected_key")]],
+              onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', item.props.id)")),
+              selectedKey = r[[paste0(prefix, "_selected_module")]],
               shown_tabs
             )
           )
@@ -755,11 +830,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                 )
               )
               
-              # print(paste0(module_id, " TOGGLE DIV = ", toggles_div))
-              
-              # if (is.na(isolate(r[[paste0(prefix, "_selected_key")]]))) toggles_div <- shinyjs::hidden(toggles_div)
+              # if (is.na(isolate(r[[paste0(prefix, "_selected_module")]]))) toggles_div <- shinyjs::hidden(toggles_div)
               # if (module_id != isolate(r[[paste0(prefix, "_first_module_shown")]]$id)) toggles_div <- shinyjs::hidden(toggles_div)
-              if (module_id != isolate(r[[paste0(prefix, "_selected_key")]])) toggles_div <- shinyjs::hidden(toggles_div)
+              if (module_id != isolate(r[[paste0(prefix, "_selected_module")]])) toggles_div <- shinyjs::hidden(toggles_div)
               
               code_ui <<- tagList(toggles_div, code_ui)
               
@@ -769,41 +842,30 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             # }
           })
           
-          # Hide all cards
-          # r[[paste0(prefix, "_hide_cards")]] <- all_groups
-          
           # Final result
           code_ui
         })
-      
-        # observeEvent(r[[paste0(prefix, "_hide_cards")]], {
-        #   
-        #   sapply(r[[paste0(prefix, "_hide_cards")]], function(group_id){
-        #     if (!is.na(group_id)){
-        #       shinyjs::hide(paste0(prefix, "_group_", group_id))
-        #     }
-        #   })
-        #     
-        # })
     
         ############################################
         # Show / hide div when pivot item selected #
         ############################################
         
-        observeEvent(r[[paste0(prefix, "_selected_key")]], {
+        observeEvent(r[[paste0(prefix, "_selected_module")]], {
 
+          req(!grepl("show_module", r[[paste0(prefix, "_selected_module")]]))
+          
           # Hide opened cards
           sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
 
           # Hide Add module element card & Add module card
           sapply(c(paste0(prefix, "_add_module"), paste0(prefix, "_add_module_element")), shinyjs::hide)
 
-          shinyjs::show(paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_key")]]))
+          shinyjs::show(paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_module")]]))
 
           # Add to the list of open cards and reset the list
-          r[[paste0(prefix, "_opened_cards")]] <- paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_key")]])
+          r[[paste0(prefix, "_opened_cards")]] <- paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_module")]])
 
-          module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_key")]])
+          module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_module")]])
           distinct_groups <- unique(module_elements$group_id)
 
           sapply(distinct_groups, function(group_id){
@@ -860,63 +922,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           # Delete a module                        #
           ##########################################
           
-          observeEvent(input[[paste0(prefix, "_remove_module_", module_id)]], {
-            
-            r[[paste0(prefix, "_delete_dialog_module_", module_id, "_", r$chosen_study)]] <- TRUE
-            
-          #   observeEvent(r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] , {
-          #     
-          #     dialogContentProps <- list(
-          #       type = 0,
-          #       title = translate(language, paste0(prefix, "_modules_elements_group_delete"), r$words),
-          #       closeButtonAriaLabel = "Close",
-          #       subText = translate(language, paste0(prefix, "_modules_elements_group_delete_subtext"), r$words)
-          #     )
-          #     
-          #     output$delete_confirm <- shiny.fluent::renderReact({
-          #       
-          #       shiny.fluent::Dialog(
-          #         hidden = !r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]],
-          #         onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", prefix, "hide_dialog', Math.random()); }")),
-          #         dialogContentProps = dialogContentProps,
-          #         modalProps = list(),
-          #         shiny.fluent::DialogFooter(
-          #           shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_delete_confirmed_", group_id, "_", r$chosen_study)), text = translate(language, "delete", r$words)),
-          #           shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "_delete_canceled_", group_id, "_", r$chosen_study)), text = translate(language, "dont_delete", r$words))
-          #         )
-          #       )
-          #     })
-          #   })
-          #   
-          #   # Whether to close or not delete dialog box
-          #   observeEvent(input[[paste0(prefix, "_hide_dialog_", group_id, "_", r$chosen_study)]], r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE)
-          #   observeEvent(input[[paste0(prefix, "_delete_canceled_", group_id, "_", r$chosen_study)]], r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE)
-          #   
-          #   # When the delete is confirmed...
-          #   observeEvent(input[[paste0(prefix, "_delete_confirmed_", group_id, "_", r$chosen_study)]], {
-          #     
-          #     # If user has access
-          #     # req(paste0(prefix, "_modules_delete_data") %in% r$user_accesses)
-          #     
-          #     r[[paste0(prefix, "_delete_dialog_", group_id, "_", r$chosen_study)]] <- FALSE
-          #     
-          #     # Delete row in DB table
-          #     table <- paste0(prefix, "_modules_elements")
-          #     sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE group_id = {group_id}" , .con = r$db)
-          #     DBI::dbSendStatement(r$db, sql) -> query
-          #     DBI::dbClearResult(query)
-          #     
-          #     update_r(r = r, table = table)
-          #     
-          #     # Notify user
-          #     show_message_bar(output = output, id = 4, paste0(prefix, "_module_element_group_deleted"), type ="severeWarning", language = language)
-          #     
-          #     # Reload UI code
-          #     r[[paste0("load_modules_elements_", prefix, "_tabs")]] <- Sys.time()
-          #     
-          #   })
-          #   
-          })
+          observeEvent(input[[paste0(prefix, "_remove_module_", module_id)]], r[[module_delete_variable]] <- TRUE)
           
         })
         

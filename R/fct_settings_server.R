@@ -1697,3 +1697,68 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
     })
   })
 }
+
+#' Delete element
+#' 
+
+delete_element <- function(r = shiny::reactiveValues(), session, input, output, ns = shiny::NS(), language = "EN",
+  delete_prefix = character(), dialog_title = character(), dialog_subtext = character(),
+  react_variable = character(), table = character(), id_var_sql = character(), id_var_r = character(),
+  delete_message = character(), reload_variable = character(), information_variable = character(), translation = TRUE){
+  
+  delete_variable <- paste0(delete_prefix, "_open_dialog")
+
+  r[[delete_variable]] <- FALSE
+
+  if (translation){
+    dialog_title <- translate(language, dialog_title, r$words)
+    dialog_subtext <- translate(language, dialog_subtext, r$words)
+  }
+
+  dialog_content <- list(
+    type = 0,
+    title = dialog_title,
+    closeButtonAriaLabel = "Close",
+    subText = dialog_subtext
+  )
+  
+  output[[react_variable]] <- shiny.fluent::renderReact({
+
+    shiny.fluent::Dialog(
+      hidden = !r[[delete_variable]],
+      onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", delete_prefix, "_hide_dialog', Math.random()); }")),
+      dialogContentProps = dialog_content,
+      modalProps = list(),
+      shiny.fluent::DialogFooter(
+        shiny.fluent::PrimaryButton.shinyInput(ns(paste0(delete_prefix, "_delete_confirmed")), text = translate(language, "delete", r$words)),
+        shiny.fluent::DefaultButton.shinyInput(ns(paste0(delete_prefix, "_delete_canceled")), text = translate(language, "dont_delete", r$words))
+      )
+    )
+  })
+  
+  # Whether to close or not delete dialog box
+  observeEvent(input[[paste0(delete_prefix, "_hide_dialog")]], r[[delete_variable]] <- FALSE)
+  observeEvent(input[[paste0(delete_prefix, "_delete_canceled")]], r[[delete_variable]] <- FALSE)
+  
+  # When the delete is confirmed...
+  observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
+
+    r[[delete_variable]] <- FALSE
+    # Delete row in DB table
+    sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE {`id_var_sql`} = {r[[id_var_r]]}" , .con = r$db)
+    DBI::dbSendStatement(r$db, sql) -> query
+    DBI::dbClearResult(query)
+
+    update_r(r = r, table = table)
+
+    # Notify user
+    show_message_bar(output = output, id = 4, delete_message, type ="severeWarning", language = language)
+
+    # Activate reload variable
+    r[[reload_variable]] <- Sys.time()
+    
+    # Information variable
+    r[[information_variable]] <- r[[id_var_r]]
+
+  })
+}
