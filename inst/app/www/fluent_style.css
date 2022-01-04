@@ -114,10 +114,22 @@ td[data-type="factor"] input {
   margin-left: 10px;
 }
 
-a, a:visited {
+a, a:visited {mo
   color:#000000;
 }
 
 a:hover {
   color: #129AFD;
+}
+
+tbody td {
+  height:15px;
+  white-space: nowrap;
+}
+
+tbody td div{
+  height:18px;
+  word-wrap:break-word;
+  position:relative;
+  top:-4px;
 }

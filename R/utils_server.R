@@ -138,7 +138,7 @@ get_col_names <- function(table_name = character(), language = "EN", words = tib
       translate(language, "display_name", words), translate(language, "category", words), translate(language, "unit", words),
       translate(language, "datetime", words), translate(language, "deleted", words),
       translate(language, "num_patients", words), translate(language, "num_rows", words),
-      translate(language, "action", words), translate(language, "modified", words))
+      translate(language, "action", words), translate(language, "modified", wfords))
   }
   
   if (table_name == "modules_thesaurus_items_with_counts"){

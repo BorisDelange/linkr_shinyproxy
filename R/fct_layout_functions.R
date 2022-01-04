@@ -375,7 +375,8 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
       dom = datatable_dom,
       pageLength = page_length, displayStart = start,
       columnDefs = column_defs,
-      language = dt_translation
+      language = dt_translation,
+      compact = TRUE, hover = TRUE
     ),
     editable = list(target = "cell", disable = list(columns = non_editable_cols_vec)),
     filter = filter_list,
