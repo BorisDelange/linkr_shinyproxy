@@ -1767,7 +1767,7 @@ delete_element <- function(r = shiny::reactiveValues(), session, input, output, 
     r[[reload_variable]] <- Sys.time()
     
     # Information variable
-    r[[information_variable]] <- r[[id_var_r]]
+    if (length(information_variable) > 0) r[[information_variable]] <- r[[id_var_r]]
 
   })
 }
