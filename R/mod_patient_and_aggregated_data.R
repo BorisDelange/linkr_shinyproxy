@@ -715,6 +715,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       
       new_data <- list()
       
+<<<<<<< HEAD
       new_data$name <- coalesce2(type = "char", x = input$module_element_name)
       new_data$module_family <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_module")]]) %>% dplyr::pull(module_family_id)
       new_data$module_new_element <- r[[paste0(prefix, "_selected_module")]]
@@ -843,6 +844,556 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         observeEvent(input[[paste0(toggle, "_toggle")]], {
           if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
           else shinyjs::hide(toggle)
+||||||| merged common ancestors
+<<<<<<<<< Temporary merge branch 1
+        observeEvent(input$add_module_element_button, {
+          
+          new_data <- list()
+          
+          new_data$name <- coalesce2(type = "char", x = input$module_element_name)
+          new_data$module_family <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_module")]]) %>% dplyr::pull(module_family_id)
+          new_data$module_new_element <- r[[paste0(prefix, "_selected_module")]]
+          new_data$plugin <- input$plugin$key
+          
+          # Check if name is not empty
+          if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_element_name", errorMessage = translate(language, "provide_valid_name", words))
+          else shiny.fluent::updateTextField.shinyInput(session, "module_element_name", errorMessage = NULL)
+          req(!is.na(new_data$name))
+          
+          # Check if values required to be unique are unique
+          
+          table <- paste0(prefix, "_modules_elements")
+          
+          sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {new_data$module_new_element}", .con = r$db)
+          distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
+          if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", language, words = r$words)
+          req(new_data$name %not_in% distinct_values)
+          
+          # Check if dropdowns are not empty (if all are required)
+          dropdowns_check <- TRUE
+          
+          required_dropdowns <- c("plugin")
+          
+          sapply(required_dropdowns, function(dropdown){
+            if (is.null(new_data[[dropdown]])) dropdowns_check <<- FALSE
+            else if (is.na(new_data[[dropdown]])) dropdowns_check <<- FALSE
+          })
+          
+          if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language, words = r$words)
+          req(dropdowns_check)
+          
+          # Get last_row nb
+          last_row <- get_last_row(r$db, table)
+          group_id <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table)) %>% dplyr::pull() %>% as.integer() + 1
+          last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table, " WHERE module_id = ", new_data$module_new_element)) %>% dplyr::pull() %>% as.integer()
+          
+          if (prefix == "patient_lvl") new_data <- r$module_element_thesaurus_selected_items %>%
+            dplyr::transmute(
+              id = 1:dplyr::n() + last_row + 1,
+              name = as.character(new_data$name),
+              group_id = !!group_id,
+              module_id = as.integer(new_data$module_new_element),
+              plugin_id = as.integer(new_data$plugin),
+              thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour,
+              display_order = last_display_order + 1,
+              creator_id = r$user_id,
+              datetime = as.character(Sys.time()),
+              deleted = FALSE
+            )
+          
+          if (prefix == "aggregated") new_data <- tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, 
+            ~display_order, ~creator_id, ~datetime, ~deleted,
+            last_row + 1, as.character(new_data$name), last_row_group + 1, as.integer(new_data$module_new_element),
+            as.integer(new_data$plugin), last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
+          
+          DBI::dbAppendTable(r$db, table, new_data)
+          add_log_entry(r = r, category = paste0(table, " - ", translate(language, "insert_new_data", words)), name = translate(language, "sql_query", words), value = toString(new_data))
+          
+          show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language, words = r$words)
+          
+          update_r(r = r, table = table, language = language)
+          
+          # Reset name textfield & dropdowns
+          shiny.fluent::updateTextField.shinyInput(session, "module_element_name", value = "")
+          if (prefix == "patient_lvl"){
+            r$module_element_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
+              thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+              thesaurus_item_colour = character(), input_text = character()) 
+            shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
+          }
+          
+          # Run server code
+          
+          trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_study)
+          if (trace_code %not_in% r$server_modules_groups_loaded){
+            
+            # Add the trace_code to loaded plugins list
+            r$server_modules_groups_loaded <- c(r$server_modules_groups_loaded, trace_code)
+            
+            toggles <<- c(toggles, paste0(prefix, "_group_", group_id))
+            
+            if (prefix == "patient_lvl"){
+              
+              # Get thesaurus items with thesaurus own item_id
+              r$module_element_thesaurus_selected_items %>%
+                dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
+                  thesaurus_item_unit, colour = thesaurus_item_colour)
+            }
+            
+            # Get plugin code
+            
+            code_server_card <- r$code %>%
+              dplyr::filter(link_id == input$plugin, category == "plugin_server") %>%
+              dplyr::pull(code) %>%
+              stringr::str_replace_all("%module_id%", as.character(r[[paste0(prefix, "_selected_module")]])) %>%
+              stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+              stringr::str_replace_all("\r", "\n")
+            
+            # If it is an aggregated plugin, change %study_id% with current chosen study
+            if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
+            
+            tryCatch(eval(parse(text = code_server_card)),
+              error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
+                error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language),
+              warning = function(w) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
+                error_name = paste0(id, " - run server code"), category = "Warning", error_report = w, language = language)
+            )
+          }
+          
+          # Reload UI code
+          r[[paste0(prefix, "_load_ui")]] <- Sys.time()
+          
+          print(r[[paste0(prefix, "_load_ui")]])
+          
+        })
+||||||||| d1517db
+      observeEvent(input[[paste0(prefix, "_close_add_module_element")]], {
+=========
+        observeEvent(input$add_module_element_button, {
+          
+          new_data <- list()
+          
+          new_data$name <- coalesce2(type = "char", x = input$module_element_name)
+          new_data$module_family <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_module")]]) %>% dplyr::pull(module_family_id)
+          new_data$module_new_element <- r[[paste0(prefix, "_selected_module")]]
+          new_data$plugin <- input$plugin$key
+          
+          # Check if name is not empty
+          if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_element_name", errorMessage = translate(language, "provide_valid_name", words))
+          else shiny.fluent::updateTextField.shinyInput(session, "module_element_name", errorMessage = NULL)
+          req(!is.na(new_data$name))
+          
+          # Check if values required to be unique are unique
+          
+          table <- paste0(prefix, "_modules_elements")
+          
+          sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {new_data$module_new_element}", .con = r$db)
+          distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
+          if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", language, words = r$words)
+          req(new_data$name %not_in% distinct_values)
+          
+          # Check if dropdowns are not empty (if all are required)
+          dropdowns_check <- TRUE
+          
+          required_dropdowns <- c("plugin")
+          
+          sapply(required_dropdowns, function(dropdown){
+            if (is.null(new_data[[dropdown]])) dropdowns_check <<- FALSE
+            else if (is.na(new_data[[dropdown]])) dropdowns_check <<- FALSE
+          })
+          
+          if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language, words = r$words)
+          req(dropdowns_check)
+          
+          # Get last_row nb
+          last_row <- get_last_row(r$db, table)
+          group_id <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table)) %>% dplyr::pull() %>% as.integer() + 1
+          last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table, " WHERE module_id = ", new_data$module_new_element)) %>% dplyr::pull() %>% as.integer()
+          
+          if (prefix == "patient_lvl"){
+            
+            has_thesaurus_items <- TRUE
+            if (length(r$module_element_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
+            if (length(r$module_element_thesaurus_selected_items) > 0) if (nrow(r$module_element_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
+            
+            if (has_thesaurus_items){
+              new_data <- 
+                r$module_element_thesaurus_selected_items %>%
+                dplyr::transmute(
+                  id = 1:dplyr::n() + last_row + 1,
+                  name = as.character(new_data$name),
+                  group_id = !!group_id,
+                  module_id = as.integer(new_data$module_new_element),
+                  plugin_id = as.integer(new_data$plugin),
+                  thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour,
+                  display_order = last_display_order + 1,
+                  creator_id = r$user_id,
+                  datetime = as.character(Sys.time()),
+                  deleted = FALSE
+                )
+            }
+            if (!has_thesaurus_items){
+              new_data <- tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, ~thesaurus_name, ~thesaurus_item_id,
+                ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~display_order, ~creator_id, ~datetime, ~deleted,
+                last_row + 1, as.character(new_data$name), group_id, as.integer(new_data$module_new_element), as.integer(new_data$plugin),
+                "None", 0L, "None", "", "", last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
+            }
+          }
+          
+          if (prefix == "aggregated") new_data <- tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, 
+            ~display_order, ~creator_id, ~datetime, ~deleted,
+            last_row + 1, as.character(new_data$name), last_row_group + 1, as.integer(new_data$module_new_element),
+            as.integer(new_data$plugin), last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
+          
+          DBI::dbAppendTable(r$db, table, new_data)
+          add_log_entry(r = r, category = paste0(table, " - ", translate(language, "insert_new_data", words)), name = translate(language, "sql_query", words), value = toString(new_data))
+          
+          show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language, words = r$words)
+          
+          update_r(r = r, table = table, language = language)
+          
+          # Reset name textfield & dropdowns
+          shiny.fluent::updateTextField.shinyInput(session, "module_element_name", value = "")
+          if (prefix == "patient_lvl" & has_thesaurus_items){
+            
+            # Save thesaurus items for server code first
+            thesaurus_selected_items <-
+              r$module_element_thesaurus_selected_items %>%
+              dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
+                thesaurus_item_unit, colour = thesaurus_item_colour)
+            
+            r$module_element_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
+              thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+              thesaurus_item_colour = character(), input_text = character()) 
+            shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
+          }
+          
+          # Run server code
+          
+          trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_study)
+          if (trace_code %not_in% r$server_modules_groups_loaded){
+            
+            # Add the trace_code to loaded plugins list
+            r$server_modules_groups_loaded <- c(r$server_modules_groups_loaded, trace_code)
+            
+            toggles <<- c(toggles, paste0(prefix, "_group_", group_id))
+            
+            # Get plugin code
+            
+            code_server_card <- r$code %>%
+              dplyr::filter(link_id == input$plugin, category == "plugin_server") %>%
+              dplyr::pull(code) %>%
+              stringr::str_replace_all("%module_id%", as.character(r[[paste0(prefix, "_selected_module")]])) %>%
+              stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+              stringr::str_replace_all("\r", "\n")
+            
+            # If it is an aggregated plugin, change %study_id% with current chosen study
+            if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
+            
+            tryCatch(eval(parse(text = code_server_card)),
+              error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
+                error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language),
+              warning = function(w) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
+                error_name = paste0(id, " - run server code"), category = "Warning", error_report = w, language = language)
+            )
+            
+            # Code for toggle reactivity
+            toggle <-paste0(prefix, "_group_", group_id)
+            
+            observeEvent(input[[paste0(toggle, "_toggle")]], {
+              if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
+              else shinyjs::hide(toggle)
+            })
+            
+            # Code for removing module element
+            
+            observeEvent(input[[paste0(prefix, "_remove_module_element_", group_id)]], {
+              r[[paste0(prefix, "_selected_module_element")]] <- group_id
+              r[[module_element_delete_variable]] <- TRUE
+            })
+            
+          }
+          
+          # Reload UI code
+          r[[paste0(prefix, "_load_ui")]] <- Sys.time()
+          
+          shinyjs::hide(paste0(prefix, "_add_module_element"))
+          
+=======
+        observeEvent(input$add_module_element_button, {
+          
+          new_data <- list()
+          
+          new_data$name <- coalesce2(type = "char", x = input$module_element_name)
+          new_data$module_family <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_module")]]) %>% dplyr::pull(module_family_id)
+          new_data$module_new_element <- r[[paste0(prefix, "_selected_module")]]
+          new_data$plugin <- input$plugin$key
+          
+          # Check if name is not empty
+          if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_element_name", errorMessage = translate(language, "provide_valid_name", words))
+          else shiny.fluent::updateTextField.shinyInput(session, "module_element_name", errorMessage = NULL)
+          req(!is.na(new_data$name))
+          
+          # Check if values required to be unique are unique
+          
+          table <- paste0(prefix, "_modules_elements")
+          
+          sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {new_data$module_new_element}", .con = r$db)
+          distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
+          if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", language, words = r$words)
+          req(new_data$name %not_in% distinct_values)
+          
+          # Check if dropdowns are not empty (if all are required)
+          dropdowns_check <- TRUE
+          
+          required_dropdowns <- c("plugin")
+          
+          sapply(required_dropdowns, function(dropdown){
+            if (is.null(new_data[[dropdown]])) dropdowns_check <<- FALSE
+            else if (is.na(new_data[[dropdown]])) dropdowns_check <<- FALSE
+          })
+          
+          if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language, words = r$words)
+          req(dropdowns_check)
+          
+          # Get last_row nb
+          last_row <- get_last_row(r$db, table)
+          group_id <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table)) %>% dplyr::pull() %>% as.integer() + 1
+          last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table, " WHERE module_id = ", new_data$module_new_element)) %>% dplyr::pull() %>% as.integer()
+          
+          if (prefix == "patient_lvl"){
+            
+            has_thesaurus_items <- TRUE
+            if (length(r$module_element_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
+            if (length(r$module_element_thesaurus_selected_items) > 0) if (nrow(r$module_element_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
+            
+            if (has_thesaurus_items){
+              new_data <- 
+                r$module_element_thesaurus_selected_items %>%
+                dplyr::transmute(
+                  id = 1:dplyr::n() + last_row + 1,
+                  name = as.character(new_data$name),
+                  group_id = !!group_id,
+                  module_id = as.integer(new_data$module_new_element),
+                  plugin_id = as.integer(new_data$plugin),
+                  thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour,
+                  display_order = last_display_order + 1,
+                  creator_id = r$user_id,
+                  datetime = as.character(Sys.time()),
+                  deleted = FALSE
+                )
+            }
+            if (!has_thesaurus_items){
+              new_data <- tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, ~thesaurus_name, ~thesaurus_item_id,
+                ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~display_order, ~creator_id, ~datetime, ~deleted,
+                last_row + 1, as.character(new_data$name), group_id, as.integer(new_data$module_new_element), as.integer(new_data$plugin),
+                "None", 0L, "None", "", "", last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
+            }
+          }
+          
+          if (prefix == "aggregated") new_data <- tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, 
+            ~display_order, ~creator_id, ~datetime, ~deleted,
+            last_row + 1, as.character(new_data$name), last_row_group + 1, as.integer(new_data$module_new_element),
+            as.integer(new_data$plugin), last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
+          
+          DBI::dbAppendTable(r$db, table, new_data)
+          add_log_entry(r = r, category = paste0(table, " - ", translate(language, "insert_new_data", words)), name = translate(language, "sql_query", words), value = toString(new_data))
+          
+          show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language, words = r$words)
+          
+          update_r(r = r, table = table, language = language)
+          
+          # Reset name textfield & dropdowns
+          shiny.fluent::updateTextField.shinyInput(session, "module_element_name", value = "")
+          if (prefix == "patient_lvl" & has_thesaurus_items){
+            
+            # Save thesaurus items for server code first
+            thesaurus_selected_items <-
+              r$module_element_thesaurus_selected_items %>%
+              dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
+                thesaurus_item_unit, colour = thesaurus_item_colour)
+            
+            r$module_element_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
+              thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+              thesaurus_item_colour = character(), input_text = character()) 
+            shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
+          }
+          
+          # Run server code
+          
+          trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_study)
+          if (trace_code %not_in% r$server_modules_groups_loaded){
+            
+            # Add the trace_code to loaded plugins list
+            r$server_modules_groups_loaded <- c(r$server_modules_groups_loaded, trace_code)
+            
+            toggles <<- c(toggles, paste0(prefix, "_group_", group_id))
+            
+            # Get plugin code
+            
+            code_server_card <- r$code %>%
+              dplyr::filter(link_id == input$plugin, category == "plugin_server") %>%
+              dplyr::pull(code) %>%
+              stringr::str_replace_all("%module_id%", as.character(r[[paste0(prefix, "_selected_module")]])) %>%
+              stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+              stringr::str_replace_all("\r", "\n")
+            
+            # If it is an aggregated plugin, change %study_id% with current chosen study
+            if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
+            
+            tryCatch(eval(parse(text = code_server_card)),
+              error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
+                error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language),
+              warning = function(w) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
+                error_name = paste0(id, " - run server code"), category = "Warning", error_report = w, language = language)
+            )
+            
+            # Code for toggle reactivity
+            toggle <-paste0(prefix, "_group_", group_id)
+            
+            observeEvent(input[[paste0(toggle, "_toggle")]], {
+              if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
+              else shinyjs::hide(toggle)
+            })
+            
+            # Code for removing module element
+            
+            observeEvent(input[[paste0(prefix, "_remove_module_element_", group_id)]], {
+              r[[paste0(prefix, "_selected_module_element")]] <- group_id
+              r[[module_element_delete_variable]] <- TRUE
+            })
+            
+          }
+          
+          # Reload UI code
+          r[[paste0(prefix, "_load_ui")]] <- Sys.time()
+          
+          shinyjs::hide(paste0(prefix, "_add_module_element"))
+          
+        })
+      
+      observeEvent(input[[paste0(prefix, "_close_add_module_element")]], {
+        
+        observeEvent(input$add_module_element_button, {
+          
+          new_data <- list()
+          
+          new_data$name <- coalesce2(type = "char", x = input$module_element_name)
+          new_data$module_family <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_module")]]) %>% dplyr::pull(module_family_id)
+          new_data$module_new_element <- r[[paste0(prefix, "_selected_module")]]
+          new_data$plugin <- input$plugin$key
+          
+          # Check if name is not empty
+          if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_element_name", errorMessage = translate(language, "provide_valid_name", words))
+          else shiny.fluent::updateTextField.shinyInput(session, "module_element_name", errorMessage = NULL)
+          req(!is.na(new_data$name))
+          
+          # Check if values required to be unique are unique
+          
+          table <- paste0(prefix, "_modules_elements")
+          
+          sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {new_data$module_new_element}", .con = r$db)
+          distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
+          if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", language, words = r$words)
+          req(new_data$name %not_in% distinct_values)
+          
+          # Check if dropdowns are not empty (if all are required)
+          dropdowns_check <- TRUE
+          
+          required_dropdowns <- c("plugin")
+          
+          sapply(required_dropdowns, function(dropdown){
+            if (is.null(new_data[[dropdown]])) dropdowns_check <<- FALSE
+            else if (is.na(new_data[[dropdown]])) dropdowns_check <<- FALSE
+          })
+          
+          if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", language, words = r$words)
+          req(dropdowns_check)
+          
+          # Get last_row nb
+          last_row <- get_last_row(r$db, table)
+          group_id <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table)) %>% dplyr::pull() %>% as.integer() + 1
+          last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table, " WHERE module_id = ", new_data$module_new_element)) %>% dplyr::pull() %>% as.integer()
+          
+          if (prefix == "patient_lvl") new_data <- r$module_element_thesaurus_selected_items %>%
+            dplyr::transmute(
+              id = 1:dplyr::n() + last_row + 1,
+              name = as.character(new_data$name),
+              group_id = !!group_id,
+              module_id = as.integer(new_data$module_new_element),
+              plugin_id = as.integer(new_data$plugin),
+              thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour,
+              display_order = last_display_order + 1,
+              creator_id = r$user_id,
+              datetime = as.character(Sys.time()),
+              deleted = FALSE
+            )
+          
+          if (prefix == "aggregated") new_data <- tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, 
+            ~display_order, ~creator_id, ~datetime, ~deleted,
+            last_row + 1, as.character(new_data$name), last_row_group + 1, as.integer(new_data$module_new_element),
+            as.integer(new_data$plugin), last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
+          
+          DBI::dbAppendTable(r$db, table, new_data)
+          add_log_entry(r = r, category = paste0(table, " - ", translate(language, "insert_new_data", words)), name = translate(language, "sql_query", words), value = toString(new_data))
+          
+          show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language, words = r$words)
+          
+          update_r(r = r, table = table, language = language)
+          
+          # Reset name textfield & dropdowns
+          shiny.fluent::updateTextField.shinyInput(session, "module_element_name", value = "")
+          if (prefix == "patient_lvl"){
+            r$module_element_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
+              thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+              thesaurus_item_colour = character(), input_text = character()) 
+            shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
+          }
+          
+          # Run server code
+          
+          trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_study)
+          if (trace_code %not_in% r$server_modules_groups_loaded){
+            
+            # Add the trace_code to loaded plugins list
+            r$server_modules_groups_loaded <- c(r$server_modules_groups_loaded, trace_code)
+            
+            toggles <<- c(toggles, paste0(prefix, "_group_", group_id))
+            
+            if (prefix == "patient_lvl"){
+              
+              # Get thesaurus items with thesaurus own item_id
+              r$module_element_thesaurus_selected_items %>%
+                dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
+                  thesaurus_item_unit, colour = thesaurus_item_colour)
+            }
+            
+            # Get plugin code
+            
+            code_server_card <- r$code %>%
+              dplyr::filter(link_id == input$plugin, category == "plugin_server") %>%
+              dplyr::pull(code) %>%
+              stringr::str_replace_all("%module_id%", as.character(r[[paste0(prefix, "_selected_module")]])) %>%
+              stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+              stringr::str_replace_all("\r", "\n")
+            
+            # If it is an aggregated plugin, change %study_id% with current chosen study
+            if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
+            
+            tryCatch(eval(parse(text = code_server_card)),
+              error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
+                error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language),
+              warning = function(w) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
+                error_name = paste0(id, " - run server code"), category = "Warning", error_report = w, language = language)
+            )
+          }
+          
+          # Reload UI code
+          r[[paste0(prefix, "_load_ui")]] <- Sys.time()
+          
+          print(r[[paste0(prefix, "_load_ui")]])
+          
+>>>>>>> 130eba361e451c648a2091e6ae6ca6e409d26915
         })
         
         # Code for removing module element
