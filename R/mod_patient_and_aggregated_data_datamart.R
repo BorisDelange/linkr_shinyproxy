@@ -123,19 +123,6 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
         # A r variable to update Study dropdown, when the load of datamart is finished
         r$loaded_datamart <- r$chosen_datamart
         
-        r$stays <- r$stays %>%
-          dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
-
-        # For each thesaurus, left join with corresponding unit name
-        for (thesaurus_id in r$stays %>% dplyr::distinct(thesaurus_id) %>% dplyr::pull()){
-          sql <- glue::glue_sql("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id}", .con = r$db)
-          thesaurus_items <- DBI::dbGetQuery(r$db, sql)
-          r$stays <- r$stays %>%
-            dplyr::left_join(thesaurus_items %>% dplyr::select(thesaurus_id, item_id, name, display_name), by = c("thesaurus_id", "item_id")) %>%
-            dplyr::mutate(unit_name = ifelse((is.na(display_name) | display_name == ""), name, display_name)) %>%
-            dplyr::select(-name, -display_name)
-        }
-        
         show_message_bar(output, 1, "import_datamart_success", "success", language, r$words)
       },
       error = function(e) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
@@ -154,8 +141,6 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
         "import_study_card", "export_study_card")
       
       observeEvent(input$datamart_current_tab, {
-        
-        print(input$datamart_current_tab)
         
         sapply(datamarts_cards %>% setdiff(., input$datamart_current_tab), shinyjs::hide)
         shinyjs::show(input$datamart_current_tab)

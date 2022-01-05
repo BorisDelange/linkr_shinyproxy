@@ -71,7 +71,7 @@ cdwtools <- function(
   css <- "fluent_style.css"
    
   shiny.router::make_router(
-    shiny.router::route("home", make_layout(language = language, page = "home", words = words)),
+    shiny.router::route("home/get_started", make_layout(language = language, page = "home/get_started", words = words)),
     shiny.router::route("patient_level_data", make_layout(language = language, page = "patient_level_data", words = words)),
     shiny.router::route("aggregated_data", make_layout(language = language, page = "aggregated_data", words = words)),
     shiny.router::route("plugins/patient_lvl", make_layout(language = language, page = "plugins/patient_lvl", words = words)),

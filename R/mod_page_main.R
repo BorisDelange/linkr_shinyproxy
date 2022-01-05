@@ -17,23 +17,7 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   ##########################################
   
   if (grepl("^home", id)){
-    div(class = "main",
-      make_card(
-        translate(language, "cdwtools", words),
-        div(br(),
-          strong("Clinical Data Warehouse tools"), " is a R Shiny web application.", br(), br(),
-          "It aims to help clinicians, statisticians & data scientists work with CDW data, with ", 
-          strong("data visualization, data cleaning, exploratory data analysis & model building tools"), "."
-        )
-      ),
-      make_card(
-        translate(language, "get_started", words),
-        div(br(),
-          "If this is your first connection, visit the ", 
-          tags$a("Get started", href = "https://borisdelange.github.io/cdwtools/articles/cdwtools.html", target="_blank"), " section of the documentation."
-        )
-      )
-    ) -> result
+    mod_home_ui(id = "home", language = language, words = words) -> result
   }
   
   ##########################################
@@ -47,9 +31,8 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   # Plugins page                           #
   ##########################################
   
-  if (grepl("^plugins", id)){
-    mod_plugins_ui(id = "plugins", language = language, words = words) -> result -> result
-  }
+  if (id == "plugins_patient_lvl") mod_plugins_ui(id = "plugins_patient_lvl", language = language, words = words) -> result
+  if (id == "plugins_aggregated") mod_plugins_ui(id = "plugins_aggregated", language = language, words = words) -> result
   
   ##########################################
   # Settings pages                         #

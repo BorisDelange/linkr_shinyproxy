@@ -153,9 +153,9 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
     "stays", tibble::tribble(
       ~name, ~type,
       "patient_id", "integer",
+      "stay_id", "integer",
       "thesaurus_name", "character",
       "item_id", "integer",
-      "stay_id", "integer",
       "admission_datetime", "datetime",
       "discharge_datetime", "datetime"),
     "labs_vitals", tibble::tribble(
@@ -239,6 +239,29 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
           error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
             stop(translate(language, "error_saving_csv", r$words))}
       )
+  }
+  
+  # If type is stays, link with thesaurus
+  if (type == "stays"){
+    tryCatch({
+      data <- data %>%
+        dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
+      
+      # For each thesaurus, left join with corresponding unit name
+      for (thesaurus_id in data %>% dplyr::distinct(thesaurus_id) %>% dplyr::pull()){
+        sql <- glue::glue_sql("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id}", .con = r$db)
+        thesaurus_items <- DBI::dbGetQuery(r$db, sql)
+        data <- data %>%
+          dplyr::left_join(thesaurus_items %>% dplyr::select(thesaurus_id, item_id, name, display_name), by = c("thesaurus_id", "item_id")) %>%
+          dplyr::mutate(unit_name = ifelse((is.na(display_name) | display_name == ""), name, display_name)) %>%
+          dplyr::select(-name, -display_name)
+      }
+    },
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_linking_stays_with_thesaurus", 
+        error_name = paste0("import_datamart - error_linking_stays_with_thesaurus - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
+      stop(translate(language, "error_linking_stays_with_thesaurus", r$words))}
+    )
   }
   
   r[[type]] <- data

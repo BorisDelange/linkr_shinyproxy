@@ -184,6 +184,8 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
 
       if (perf_monitoring) print(paste0(Sys.time(), " _ START LOAD SERVER MODULES"))
       
+      mod_home_server("home", r, language, r$words)
+      
       if (perf_monitoring) print(paste0(Sys.time(), " _ data_pages"))
       sapply(c("patient_level_data", "aggregated_data"), function(page){
         mod_patient_and_aggregated_data_server(page, r, language, r$words)
@@ -195,7 +197,8 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       })
       
       if (perf_monitoring) print(paste0(Sys.time(), " _ plugins"))
-      mod_plugins_server("plugins", r, language, r$words)
+      mod_plugins_server("plugins_patient_lvl", r, language, r$words)
+      mod_plugins_server("plugins_aggregated", r, language, r$words)
 
       if (perf_monitoring) print(paste0(Sys.time(), " _ general"))
       mod_settings_general_server("settings_general_settings", r, language, r$words)

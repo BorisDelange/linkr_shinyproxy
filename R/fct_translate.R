@@ -811,6 +811,8 @@ get_translations <- function(){
     "FR", "type_must_be_datetime", "doit être de type datetime",
     "EN", "error_saving_csv", "Error saving CSV file",
     "FR", "error_saving_csv", "Erreur dans l'enregistrement du fichier CSV",
+    "EN", "error_linking_stays_with_thesaurus", "Error link stays variable with thesaurus",
+    "FR", "error_linking_stays_with_thesaurus", "Erreur dans le merge entre stays & thesaurus",
     "EN", "var_type_not_valid", "Variable 'type' is not valid",
     "FR", "var_type_not_valid", "La variable 'type' n'est pas valide",
     "EN", "error_transforming_tibble", "Error transforming data to tibble",
@@ -1044,7 +1046,23 @@ get_translations <- function(){
     "EN", "import_study", "Import study",
     "FR", "import_study", "Importer une étude",
     "EN", "export_study", "Export study",
-    "FR", "export_study", "Exporter une étude"
+    "FR", "export_study", "Exporter une étude",
+    "EN", "import_excel", "Import excel file",
+    "FR", "import_excel", "Importer fichier excel",
+    "EN", "import_csv", "Import csv file",
+    "FR", "import_csv", "Importer fichier csv",
+    "EN", "connect_db", "Connect to database",
+    "FR", "connect_db", "Connexion à une BDD",
+    "EN", "patient_lvl_plugins", "Patient-level data plugins",
+    "FR", "patient_lvl_plugins", "Plugins de données individuelles",
+    "EN", "aggregated_plugins", "Aggregated data plugins",
+    "FR", "aggregated_plugins", "Plugins de données agrégées",
+    "EN", "create_plugin", "Create a plugin",
+    "FR", "create_plugin", "Créer un plugin",
+    "EN", "import_plugin", "Import a plugin",
+    "FR", "import_plugin", "Importer un plugin",
+    "EN", "export_plugin", "Export a plugin",
+    "FR", "export_plugin", "Exporter un plugin"
     ) -> data
   data
 }

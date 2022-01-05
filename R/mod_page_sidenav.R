@@ -21,13 +21,13 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       shiny.fluent::Nav(
         groups = list(
           list(links = list(
-            list(name = translate(language, "home", words), key = "home",
-              url = shiny.router::route_link("home"))
+            list(name = translate(language, "get_started", words), key = "get_started",
+              url = shiny.router::route_link("home/get_started"))
             )
           )
         ),
-        initialSelectedKey = "home",
-        selectedKey = "home",
+        initialSelectedKey = "get_started",
+        selectedKey = "get_started",
         styles = list(
           root = list(
             height = "100%",
@@ -141,6 +141,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
     
     links_plugins_modules <- list()
     sapply(c("plugins", "patient_lvl_modules", "aggregated_modules"), function(page){
+    # sapply(c("plugins"), function(page){
       links_plugins_modules <<- rlist::list.append(links_plugins_modules, list(name = translate(language, page, words),
         id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
     })
@@ -151,10 +152,10 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       if (page == "data_management") links <<- rlist::list.append(links, list(name = translate(language, page, words),
         id = ns(page), key = page, links = links_data_management, selectedKey = substr(id, nchar("settings") + 2, 100), isExpanded = TRUE))
       
-      # # Sub links for plugins & modules
+      # Sub links for plugins & modules
       else if (page == "plugins_modules") links <<- rlist::list.append(links, list(name = translate(language, page, words),
         id = ns(page), key = page, links = links_plugins_modules, selectedKey = substr(id, nchar("settings") + 2, 100), isExpanded = TRUE))
-      # 
+      
       # No sub links
       else links <<- rlist::list.append(links, list(name = translate(language, page, words),
         id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))

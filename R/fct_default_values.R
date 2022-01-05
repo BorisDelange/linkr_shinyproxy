@@ -79,7 +79,9 @@ insert_default_values <- function(output, r){
       7, 1, 17L, "Positive End-Expiratory Pressure", "PEEP", "Vitals", "cmH2O", as.character(Sys.time()), FALSE,
       8, 1, 18L, "Past medical history", "", "Admission notes", "", as.character(Sys.time()), FALSE,
       9, 1, 19L, "Reason for hospital admission", "", "Admission notes", "", as.character(Sys.time()), FALSE,
-      10, 1, 20L, "Daily clinical note", "", "Daily notes", "", as.character(Sys.time()), FALSE))
+      10, 1, 20L, "Daily clinical note", "", "Daily notes", "", as.character(Sys.time()), FALSE,
+      11, 1, 21L, "Medical ICU", "", "Units", "", as.character(Sys.time()), FALSE,
+      12, 1, 22L, "Surgical ICU", "", "Units", "", as.character(Sys.time()), FALSE))
   }
   
   ##########################################
@@ -166,6 +168,7 @@ insert_default_values <- function(output, r){
   
   options_toggles <- tibble::tribble(
     ~name, ~toggles,
+    "patient_lvl_data", c(""),
     "general_settings", "change_password_card",
     "app_db", c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card"),
     "users", c("users_delete_data", "users_creation_card", "users_management_card",
@@ -297,7 +300,7 @@ patients <- function() {
     3L, "F", 65, "2020-09-17 20:11:00") %>%
     dplyr::mutate_at("dod", lubridate::ymd_hms)}
     
-import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = patients(), type = "patients", save_as_csv = FALSE, language = language)
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = patients(), type = "patients", save_as_csv = FALSE, language = language, quiet = TRUE)
 
 ####################
 #       STAYS      #
@@ -305,16 +308,16 @@ import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = pati
 
 stays <- function(){
     tibble::tribble(
-    ~patient_id, ~stay_id, ~unit_name, ~admission_datetime, ~discharge_datetime,
-    1L, 1L, "Emergency room", "2021-04-21 15:10:00", "2021-04-22 03:17:00",
-    1L, 2L, "Medical ICU", "2021-04-22 03:17:00", "2021-05-01 04:27:00",
-    2L, 3L, "Emergency room", "2021-01-18 09:10:00", "2021-01-19 03:05:00",
-    2L, 4L, "Medical ICU", "2021-01-19 03:05:00", "2021-02-02 17:52:00",
-    3L, 5L, "Emergency room", "2020-09-15 16:10:00", "2020-09-15 19:12:00",
-    3L, 6L, "Medical ICU", "2020-09-15 19:12:00", "2020-09-17 20:11:00") %>%
+    ~patient_id, ~stay_id, ~thesaurus_name, ~item_id, ~admission_datetime, ~discharge_datetime,
+    1L, 1L, "My datawarehouse thesaurus", 21L, "2021-04-21 15:10:00", "2021-04-22 03:17:00",
+    1L, 2L, "My datawarehouse thesaurus", 22L, "2021-04-22 03:17:00", "2021-05-01 04:27:00",
+    2L, 3L, "My datawarehouse thesaurus", 21L, "2021-01-18 09:10:00", "2021-01-19 03:05:00",
+    2L, 4L, "My datawarehouse thesaurus", 21L, "2021-01-19 03:05:00", "2021-02-02 17:52:00",
+    3L, 5L, "My datawarehouse thesaurus", 22L, "2020-09-15 16:10:00", "2020-09-15 19:12:00",
+    3L, 6L, "My datawarehouse thesaurus", 21L, "2020-09-15 19:12:00", "2020-09-17 20:11:00") %>%
     dplyr::mutate_at(c("admission_datetime", "discharge_datetime"), lubridate::ymd_hms)}
 
-import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = stays(), type = "stays", save_as_csv = FALSE, language = language)
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = stays(), type = "stays", save_as_csv = FALSE, language = language, quiet = TRUE)
 
 ####################
 #  LABS VITALS     #
@@ -346,7 +349,7 @@ labs_vitals <- function(){
             
             item <- boundaries[i, ]
         
-            by <- ifelse(grepl("ICU", row$unit_name), "5 min", "60 min") # Higher frequency of vitals for ICU stays
+            by <- "60 min"
             
             seq_datetimes <- seq(row$admission_datetime, row$discharge_datetime, by = by)
             
@@ -374,7 +377,7 @@ labs_vitals <- function(){
     data_temp
 }
 
-import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = labs_vitals(), type = "labs_vitals", save_as_csv = FALSE, language = language)
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = labs_vitals(), type = "labs_vitals", save_as_csv = FALSE, language = language, quiet = TRUE)
 
 ####################
 #       TEXT       #
@@ -383,24 +386,43 @@ import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = labs
 text <- function(){
     tibble::tribble(
         ~patient_id, ~thesaurus_name, ~item_id, ~datetime_start, ~datetime_stop, ~value, ~comments,
-        1L, "My datawarehouse thesaurus", 18L, "2021-04-21 15:10:00", "", "- Atrial fibrillation\n- Chronic heart failure\n- Type 2 diabetes", "",
+        1L, "My datawarehouse thesaurus", 18L, "2021-04-21 15:10:00", "", "- Atrial fibrillation
+- Chronic heart failure
+- Type 2 diabetes", "",
         1L, "My datawarehouse thesaurus", 19L, "2021-04-21 15:10:00", "", "Septic shock", "",
-        1L, "My datawarehouse thesaurus", 20L, "2021-04-22 08:00:00", "", "Vitals : HR 70 bpm, BP 90/60 mmHg\n\nDay 2 of Piperacillin-tazobactam", "",
-        1L, "My datawarehouse thesaurus", 20L, "2021-04-23 08:00:00", "", "Vitals : HR 60 bpm, BP 100/60 mmHg\n\nEnd of Norepinephrine today", "",
-        1L, "My datawarehouse thesaurus", 20L, "2021-04-24 08:00:00", "", "Vitals : HR 65 bpm, BP 110/70 mmHg\n\nBacterial blood sample positive : E. Coli", "",
-        1L, "My datawarehouse thesaurus", 20L, "2021-04-25 08:00:00", "", "Vitals : HR 70 bpm, BP 115/65 mmHg\n\nExtubation with success today", "",
-        2L, "My datawarehouse thesaurus", 18L, "2021-01-18 09:10:00", "", "- Cirrhosis\n- Chronic kidney disease", "",
+        1L, "My datawarehouse thesaurus", 20L, "2021-04-22 08:00:00", "", "Vitals : HR 70 bpm, BP 90/60 mmHg
+
+Day 2 of Piperacillin-tazobactam", "",
+        1L, "My datawarehouse thesaurus", 20L, "2021-04-23 08:00:00", "", "Vitals : HR 60 bpm, BP 100/60 mmHg
+
+End of Norepinephrine today", "",
+        1L, "My datawarehouse thesaurus", 20L, "2021-04-24 08:00:00", "", "Vitals : HR 65 bpm, BP 110/70 mmHg
+
+Bacterial blood sample positive : E. Coli", "",
+        1L, "My datawarehouse thesaurus", 20L, "2021-04-25 08:00:00", "", "Vitals : HR 70 bpm, BP 115/65 mmHg
+
+Extubation with success today", "",
+        2L, "My datawarehouse thesaurus", 18L, "2021-01-18 09:10:00", "", "- Cirrhosis
+- Chronic kidney disease", "",
         2L, "My datawarehouse thesaurus", 19L, "2021-01-18 09:10:00", "", "Acute respiratory failure", "",
-        2L, "My datawarehouse thesaurus", 20L, "2021-01-19 08:00:00", "", "Vitals : HR 60 bpm, BP 100/60 mmHg\n\nDiagnosis of COVID-19. Initiation of Dexamethasone", "",
-        2L, "My datawarehouse thesaurus", 20L, "2021-01-20 08:00:00", "", "Vitals : HR 70 bpm, BP 140/90 mmHg\n\nIncrease of oxygenotherapy, facial oxygen mask with 10 L / min", "",
-        2L, "My datawarehouse thesaurus", 20L, "2021-01-21 08:00:00", "", "Vitals : HR 90 bpm, BP 110/60 mmHg\n\nPatient intubated this morning. Cisatracurium initiated.", "",
+        2L, "My datawarehouse thesaurus", 20L, "2021-01-19 08:00:00", "", "Vitals : HR 60 bpm, BP 100/60 mmHg
+
+Diagnosis of COVID-19. Initiation of Dexamethasone", "",
+        2L, "My datawarehouse thesaurus", 20L, "2021-01-20 08:00:00", "", "Vitals : HR 70 bpm, BP 140/90 mmHg
+
+Increase of oxygenotherapy, facial oxygen mask with 10 L / min", "",
+        2L, "My datawarehouse thesaurus", 20L, "2021-01-21 08:00:00", "", "Vitals : HR 90 bpm, BP 110/60 mmHg
+
+Patient intubated this morning. Cisatracurium initiated.", "",
         3L, "My datawarehouse thesaurus", 18L, "2020-09-15 16:10:00", "", "- Cirrhosis", "",
         3L, "My datawarehouse thesaurus", 19L, "2020-09-15 16:10:00", "", "Acute on chronic liver failure", "",
-        3L, "My datawarehouse thesaurus", 20L, "2020-09-16 08:10:00", "", "Day 1 of admission.\n\nRapid deterioration of clinical condition.", ""
+        3L, "My datawarehouse thesaurus", 20L, "2020-09-16 08:10:00", "", "Day 1 of admission.
+
+Rapid deterioration of clinical condition.", ""
     ) %>%
     dplyr::mutate_at(c("datetime_start", "datetime_stop"), lubridate::ymd_hms)}
 
-import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = text(), type = "text", save_as_csv = FALSE, language = language)'
+import_datamart(output = output, r = r, datamart_id = %datamart_id%, data = text(), type = "text", save_as_csv = FALSE, language = language, quiet = TRUE)'
   
 thesaurus_code <-
 '####################
@@ -419,7 +441,9 @@ thesaurus <- function(){
     17L, "Positive End-Expiratory Pressure", "PEEP", "Vitals", "cmH2O",
     18L, "Past medical history", "", "Admission notes", "",
     19L, "Reason for hospital admission", "", "Admission notes", "",
-    20L, "Daily clinical note", "", "Daily notes", "")}
+    20L, "Daily clinical note", "", "Daily notes", "",
+    21L, "Medical ICU", "", "Units", "",
+    22L, "Surgical ICU", "", "Units", "")}
 
 import_thesaurus(output = output, r = r, thesaurus_id = %thesaurus_id%, thesaurus = thesaurus(), language = language)'
 
