@@ -31,42 +31,56 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
     ),
     div(
       id = ns("datamart_options_card"),
-      make_card(translate(language, "datamart_options", words), "blabla")
+      make_card(translate(language, "datamart_options", words),
+        div("...")
+      )
     ),
     shinyjs::hidden(
       div(
         id = ns("edit_datamart_code_card"),
-        make_card(translate(language, "edit_datamart_code", words), "blabla")
+        make_card(translate(language, "edit_datamart_code", words),
+          div("...")
+        )
       )
     ),
     shinyjs::hidden(
       div(
         id = ns("create_study_card"),
-        make_card(translate(language, "create_study", words), "blabla")
+        make_card(translate(language, "create_study", words), 
+          div("...")
+        )
       )
     ),
     shinyjs::hidden(
       div(
         id = ns("studies_management_card"),
-        make_card(translate(language, "studies_management", words), "blabla")
+        make_card(translate(language, "studies_management", words),
+          div("...")          
+        )
       )
     ),
     shinyjs::hidden(
       div(
         id = ns("import_study_card"),
-        make_card(translate(language, "import_study", words), "blabla")
+        make_card(translate(language, "import_study", words),
+          div("...")
+        )
       )
     ),
     shinyjs::hidden(
       div(
         id = ns("export_study_card"),
-        make_card(translate(language, "export_study", words), "blabla")
+        make_card(translate(language, "export_study", words),
+          div("...")
+        )
       )
     ),
     shinyjs::hidden(
       div(
         id = ns("thesaurus_card"),
-        make_card(translate(language, "thesaurus", words), div("blabla"))
+        make_card(translate(language, "thesaurus", words),
+          div("...")          
+        )
       )
     )
   )
@@ -108,6 +122,19 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
         
         # A r variable to update Study dropdown, when the load of datamart is finished
         r$loaded_datamart <- r$chosen_datamart
+        
+        r$stays <- r$stays %>%
+          dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
+
+        # For each thesaurus, left join with corresponding unit name
+        for (thesaurus_id in r$stays %>% dplyr::distinct(thesaurus_id) %>% dplyr::pull()){
+          sql <- glue::glue_sql("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id}", .con = r$db)
+          thesaurus_items <- DBI::dbGetQuery(r$db, sql)
+          r$stays <- r$stays %>%
+            dplyr::left_join(thesaurus_items %>% dplyr::select(thesaurus_id, item_id, name, display_name), by = c("thesaurus_id", "item_id")) %>%
+            dplyr::mutate(unit_name = ifelse((is.na(display_name) | display_name == ""), name, display_name)) %>%
+            dplyr::select(-name, -display_name)
+        }
         
         show_message_bar(output, 1, "import_datamart_success", "success", language, r$words)
       },

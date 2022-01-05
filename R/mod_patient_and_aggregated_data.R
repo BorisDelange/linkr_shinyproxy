@@ -65,7 +65,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         
         if (length(r$chosen_patient) > 0){
           if (!is.na(r$chosen_patient) & r$chosen_patient != ""){
-            if (nrow(r$stays) > 0) r$data_patient$stays <- r$stays %>% dplyr::filter(patient_id == r$chosen_patient)
+            if (nrow(r$stays) > 0) r$data_patient$stays <- r$stays %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::arrange(admission_datetime)
             if (nrow(r$labs_vitals) > 0) r$data_patient$labs_vitals <- r$labs_vitals %>% dplyr::filter(patient_id == r$chosen_patient)
             if (nrow(r$text) > 0) r$data_patient$text <- r$text %>% dplyr::filter(patient_id == r$chosen_patient)
             if (nrow(r$orders) > 0) r$data_patient$orders <- r$orders %>% dplyr::filter(patient_id == r$chosen_patient)
@@ -82,7 +82,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         if (length(r$chosen_stay) > 0){
           if (!is.na(r$chosen_stay) & r$chosen_stay != ""){
             
-            r$data_stay$stay <- r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
+            r$data_stay$stay <- r$data_patient$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
             
             if (nrow(r$data_patient$labs_vitals) > 0) r$data_stay$labs_vitals_stay <- r$data_patient$labs_vitals %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
             if (nrow(r$data_patient$text) > 0) r$data_stay$text_stay <- r$data_patient$text %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)

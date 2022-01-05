@@ -347,6 +347,20 @@ mod_settings_plugins_server <- function(id = character(), r = shiny::reactiveVal
           # Try to load datamart
           tryCatch({
             run_datamart_code(output, r, datamart_id = input$datamart, language = language, quiet = TRUE)
+            
+            r$stays <- r$stays %>%
+              dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
+            
+            # For each thesaurus, left join with corresponding unit name
+            for (thesaurus_id in r$stays %>% dplyr::distinct(thesaurus_id) %>% dplyr::pull()){
+              sql <- glue::glue_sql("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id}", .con = r$db)
+              thesaurus_items <- DBI::dbGetQuery(r$db, sql)
+              r$stays <- r$stays %>%
+                dplyr::left_join(thesaurus_items %>% dplyr::select(thesaurus_id, item_id, name, display_name), by = c("thesaurus_id", "item_id")) %>%
+                dplyr::mutate(unit_name = ifelse((is.na(display_name) | display_name == ""), name, display_name)) %>%
+                dplyr::select(-name, -display_name)
+            }
+            
             show_message_bar(output, 4, "import_datamart_success", "success", language, r$words)
             },
             error = function(e) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language), 

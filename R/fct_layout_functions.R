@@ -112,7 +112,7 @@ make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character()
 #' @param width Width of the dropdown, CSS code so "300px" or "100\%" are accepted
 #' @param allowFreeForm Allows user to enter free text, not provided by options (logical)
 
-make_combobox <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = TRUE,
+make_combobox <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
   allowFreeform = FALSE, autoComplete = "on", id = NA_character_, value = NULL, width = NULL, words = tibble::tibble()){
   
   if (is.na(id)) id <- label

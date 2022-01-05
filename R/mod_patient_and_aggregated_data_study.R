@@ -53,16 +53,16 @@ mod_patient_and_aggregated_data_study_ui <- function(id = character(), language 
         actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
           make_textfield(language = language, ns = ns, label = "name", id = "module_element_name", width = "300px", words = words),
-          make_combobox(language = language, ns = ns, label = "plugin", id = "plugin", allowFreeform = TRUE, multiSelect = FALSE, width = "300px", words = words)
+          make_combobox(language = language, ns = ns, label = "plugin", id = "plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px", words = words)
         ),
-        make_combobox(language = language, ns = ns, label = "thesaurus", id = "thesaurus", allowFreeform = TRUE, multiSelect = FALSE, width = "300px", words = words),
+        make_combobox(language = language, ns = ns, label = "thesaurus", id = "thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px", words = words),
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 20),
           make_dropdown(language = language, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
             multiSelect = TRUE, width = "650px", words = words),
           div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset", words)), style = "margin-top:38px;")
         ),
-        DT::DTOutput(ns("module_element_thesaurus_items")), br(),
+        div(DT::DTOutput(ns("module_element_thesaurus_items")), class = "thesaurus_table"), br(),
         shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), translate(language, "add", words)), br(),
         DT::DTOutput(ns("thesaurus_items"))
       )
@@ -75,8 +75,8 @@ mod_patient_and_aggregated_data_study_ui <- function(id = character(), language 
       content = div(
         actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_textfield(language = language, ns = ns, label = "name", id = "name", width = "300px", words = words),
-          make_combobox(language = language, ns = ns, label = "plugin", id = "plugin", allowFreeform = TRUE, multiSelect = FALSE, width = "300px", words = words)
+          make_textfield(language = language, ns = ns, label = "name", id = "module_element_name", width = "300px", words = words),
+          make_combobox(language = language, ns = ns, label = "plugin", id = "plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px", words = words)
         ),
         br(),
         shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), translate(language, "add", words)),
@@ -492,23 +492,23 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
           dplyr::filter(thesaurus_id == input$thesaurus$key) %>% dplyr::pull(id)
         
         if (link_id %not_in% value){
-          
+
           # Get thesaurus name
           thesaurus_name <- r$thesaurus %>% dplyr::filter(id == input$thesaurus$key) %>% dplyr::pull(name)
-          
+
           # Get item informations from datatable / r$modules_thesaurus_items
           # NB : the thesaurus_item_id saved in the database is the thesaurus ITEM_ID, no its ID in the database (in case thesaurus is deleted or re-uploaded)
           item <- r$module_element_thesaurus_items_temp %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", name))
-          
+
           # display_name <- ifelse((item$display_name == "" | is.na(item$display_name)), item$name, item$display_name)
-          
+
           # Add item to selected items
           r$module_element_thesaurus_selected_items <-
             tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text,
-              as.integer(link_id), as.integer(input$thesaurus$key), as.character(thesaurus_name), as.integer(item$item_id), as.character(item$display_name), 
+              as.integer(link_id), as.integer(input$thesaurus$key), as.character(thesaurus_name), as.integer(item$item_id), as.character(item$display_name),
               as.character(item$unit), as.character(input[[paste0("colour_", link_id)]]), as.character(item$input_text)) %>%
             dplyr::bind_rows(r$module_element_thesaurus_selected_items)
-          
+
           # Update dropdown of selected items
           options <- convert_tibble_to_list(r$module_element_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", words = r$words)
           value <- r$module_element_thesaurus_selected_items %>% dplyr::pull(id)
@@ -587,9 +587,10 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         group_id <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table)) %>% dplyr::pull() %>% as.integer() + 1
         last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table, " WHERE module_id = ", new_data$module_new_element)) %>% dplyr::pull() %>% as.integer()
         
+        has_thesaurus_items <- TRUE
+        
         if (prefix == "patient_lvl"){
           
-          has_thesaurus_items <- TRUE
           if (length(r$module_element_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
           if (length(r$module_element_thesaurus_selected_items) > 0) if (nrow(r$module_element_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
           
@@ -619,7 +620,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         
         if (prefix == "aggregated") new_data <- tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, 
           ~display_order, ~creator_id, ~datetime, ~deleted,
-          last_row + 1, as.character(new_data$name), last_row_group + 1, as.integer(new_data$module_new_element),
+          last_row + 1, as.character(new_data$name), group_id, as.integer(new_data$module_new_element),
           as.integer(new_data$plugin), last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
         
         DBI::dbAppendTable(r$db, table, new_data)
@@ -653,8 +654,6 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
           # Add the trace_code to loaded plugins list
           r$server_modules_groups_loaded <- c(r$server_modules_groups_loaded, trace_code)
           
-          toggles <<- c(toggles, paste0(prefix, "_group_", group_id))
-          
           # Get plugin code
           
           code_server_card <- r$code %>%
@@ -673,7 +672,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
           )
           
           # Code for toggle reactivity
-          toggle <-paste0(prefix, "_group_", group_id)
+          toggle <- paste0(prefix, "_group_", group_id)
           
           observeEvent(input[[paste0(toggle, "_toggle")]], {
             if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)

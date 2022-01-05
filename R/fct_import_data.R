@@ -24,7 +24,8 @@
 #' \itemize{
 #' \item{patient_id = integer}
 #' \item{stay_id = integer}
-#' \item{unit_name = character}
+#' \item{thesaurus_name = character}
+#' \item{item_id = integer}
 #' \item{admission_datetime = datetime}
 #' \item{discharge_datetime = datetime}
 #' }
@@ -115,7 +116,7 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
       return({
         col_types <- switch(type, 
           "patients" = "icnT",
-          "stays" = "iicTT",
+          "stays" = "iiciTT",
           "labs_vitals" = "iciTTcncc",
           "text" = "iciTTcc",
           "orders" = "iciTTcincncncc")
@@ -152,8 +153,9 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
     "stays", tibble::tribble(
       ~name, ~type,
       "patient_id", "integer",
+      "thesaurus_name", "character",
+      "item_id", "integer",
       "stay_id", "integer",
-      "unit_name", "character",
       "admission_datetime", "datetime",
       "discharge_datetime", "datetime"),
     "labs_vitals", tibble::tribble(
