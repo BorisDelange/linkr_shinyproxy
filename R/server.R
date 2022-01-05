@@ -240,16 +240,16 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       })
 
       # Patient-lvl & aggregated modules page sub modules
-      if ("patient_lvl_modules" %in% r$user_accesses | "aggregated_modules" %in% r$user_accesses){
-        sapply(c("patient_lvl", "aggregated"), function(prefix){
-          sapply(c("modules", "modules_families", "modules_elements"), function(page){
-            if (perf_monitoring) print(paste0(Sys.time(), " _ ", page))
-            mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_creation"), r, language, r$words)
-            mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_management"), r, language, r$words)
-            if (page == "modules_families") mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_options"), r, language, r$words)
-          })
-        })
-      }
+      # if ("patient_lvl_modules" %in% r$user_accesses | "aggregated_modules" %in% r$user_accesses){
+      #   sapply(c("patient_lvl", "aggregated"), function(prefix){
+      #     sapply(c("modules", "modules_families", "modules_elements"), function(page){
+      #       if (perf_monitoring) print(paste0(Sys.time(), " _ ", page))
+      #       mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_creation"), r, language, r$words)
+      #       mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_management"), r, language, r$words)
+      #       if (page == "modules_families") mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_options"), r, language, r$words)
+      #     })
+      #   })
+      # }
 
       if (perf_monitoring) print(paste0(Sys.time(), " _ log"))
       if ("log" %in% r$user_accesses) mod_settings_log_server("settings_log", r, language, r$words)
