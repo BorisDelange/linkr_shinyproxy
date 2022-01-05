@@ -153,6 +153,9 @@ make_combobox <- function(language = "EN", ns = shiny::NS(), label = character()
 make_people_picker <- function(language = "EN", ns = shiny::NS(), id = NA_character_, label = character(), 
   options = tibble::tibble(), value = NULL, width = NULL, style = character(), words = tibble::tibble()){
   
+  if (!is.null(value)) default_selected_items <- options %>% dplyr::filter(key %in% value)
+  else default_selected_items <- NULL
+  
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width)
   if (is.na(id)) id <- label
@@ -166,7 +169,7 @@ make_people_picker <- function(language = "EN", ns = shiny::NS(), id = NA_charac
         noResultsFoundText = translate(language, "no_results_found", words),
         showRemoveButtons = TRUE
       ),
-      defaultSelectedItems = options %>% dplyr::filter(key %in% value),
+      defaultSelectedItems = default_selected_items,
       value = value),
       style = style
     )
