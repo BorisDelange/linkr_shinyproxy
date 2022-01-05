@@ -188,6 +188,10 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       sapply(c("patient_level_data", "aggregated_data"), function(page){
         mod_patient_and_aggregated_data_server(page, r, language, r$words)
         mod_page_sidenav_server(page, r, language, r$words)
+        
+        mod_patient_and_aggregated_data_datamart_server(paste0(page, "_datamart"), r, language, r$words)
+        mod_patient_and_aggregated_data_subsets_server(paste0(page, "_subsets"), r, language, r$words)
+        mod_patient_and_aggregated_data_study_server(paste0(page, "_study"), r, language, r$words)
       })
       
       if (perf_monitoring) print(paste0(Sys.time(), " _ plugins"))
