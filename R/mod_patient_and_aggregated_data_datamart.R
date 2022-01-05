@@ -51,7 +51,7 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
                width = "100%", style = "padding-bottom:10px;", words = words)
             )
           ), br(),
-          shiny.fluent::PrimaryButton.shinyInput(ns("save_datamarts_options"), translate(language, "save", words))
+          shiny.fluent::PrimaryButton.shinyInput(ns("save_datamart_options"), translate(language, "save", words))
         )
       ), br()
     ),
@@ -200,19 +200,70 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
       })
       
       ##########################################
-      # Edit datamart code                     #
+      # Load data                              #
       ##########################################
-      
-      # Load data
       
       observeEvent(r$chosen_datamart, {
         
-        datamart_code <- r$code %>% dplyr::filter(category == "datamart" & link_id == r$chosen_datamart) %>% dplyr::pull(code)
+        # Datamart options
         
+        options <- r$options %>% dplyr::filter(category == "datamart", link_id == r$chosen_datamart)
+        
+        # All users
+        picker_options <-
+          r$users %>%
+          dplyr::left_join(r$users_statuses %>% dplyr::select(user_status_id = id, user_status = name), by = "user_status_id") %>%
+          dplyr::transmute(
+            key = id, 
+            imageInitials = paste0(substr(firstname, 0, 1), substr(lastname, 0, 1)),
+            text = paste0(firstname, " ", lastname), 
+            secondaryText = user_status)
+        
+        # Users who has access
+        value <-
+          picker_options %>%
+          dplyr::mutate(n = 1:dplyr::n()) %>%
+          dplyr::inner_join(
+            options %>%
+              dplyr::filter(name == "user_allowed_read") %>%
+              dplyr::select(key = value_num),
+            by = "key"
+          ) %>%
+          dplyr::pull(key)
+        
+        shiny.fluent::updateToggle.shinyInput(session, "show_only_aggregated_data", 
+          value = options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(value_num) %>% as.logical)
+        shiny.fluent::updateChoiceGroup.shinyInput(session, "users_allowed_read_group",
+          value = options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value))
+        shiny.fluent::updateNormalPeoplePicker.shinyInput(session, "users_allowed_read", options = picker_options, value = value)
+        
+        # Dtamart code
+        
+        datamart_code <- r$code %>% dplyr::filter(category == "datamart" & link_id == r$chosen_datamart) %>% dplyr::pull(code)
         shinyAce::updateAceEditor(session, "datamart_ace_editor", value = datamart_code)
         
       })
       
+      ##########################################
+      # Datamart options                       #
+      ##########################################
+      
+      observeEvent(input$save_datamart_options, {
+        
+        data <- list()
+        data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
+        data$users_allowed_read <- unique(input$users_allowed_read)
+        data$users_allowed_read_group <- input$users_allowed_read_group
+        
+        save_settings_options(output = output, r = r, id = id, category = "datamart", code_id_input = paste0("options_", r$chosen_datamart), 
+          language = language, data = data, page_options = c("show_only_aggregated_data", "users_al"))
+        
+      })
+      
+      ##########################################
+      # Edit datamart code                     #
+      ##########################################
+
       # Execute code
       
       observeEvent(input$execute_code, {

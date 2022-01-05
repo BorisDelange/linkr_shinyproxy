@@ -1457,7 +1457,7 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
 #' }
 
 save_settings_options <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
-  code_id_input = integer(), data = data, language = "EN"){
+  code_id_input = integer(), data = data, language = "EN", page_options = character()){
   
   # Get link_id variable to update code table
   link_id <- as.integer(substr(code_id_input, nchar("options_") + 1, nchar(code_id_input)))
@@ -1466,7 +1466,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   options <- r$options %>% dplyr::filter(category == !!category, link_id == !!link_id)
   
   # Get options with page ID
-  page_options <- get_page_options(id = id)
+  if (length(page_options) == 0) page_options <- get_page_options(id = id)
   
   if("show_only_aggregated_data" %in% page_options){
     option_id <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(id)
