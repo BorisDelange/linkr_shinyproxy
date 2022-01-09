@@ -1103,16 +1103,20 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
     # Delete old cache
     
     if (category %in% c("delete", "plus", "plus_minus", "colours")){
-      DBI::dbSendStatement(r$db, paste0("DELETE FROM cache c
+      DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE id IN (
+        SELECT c.id FROM cache c
         INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = '", category, "'
-          WHERE t.thesaurus_id = ", thesaurus_id)) -> query
+        WHERE t.thesaurus_id = ", thesaurus_id, 
+      ")")) -> query
     }
     
     # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
     if (category %in% c("count_patients_rows", "count_items_rows")){
-      DBI::dbSendStatement(r$db, paste0("DELETE FROM cache c
+      DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE id IN (
+        SELECT c.id FROM cache c
         INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.link_id_bis = ", datamart_id, " AND c.category = '", category, "'
-          WHERE t.thesaurus_id = ", thesaurus_id)) -> query
+        WHERE t.thesaurus_id = ", thesaurus_id, 
+      ")")) -> query
     }
     
     # DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "' AND link_id_bis = ", datamart_id)) -> query
