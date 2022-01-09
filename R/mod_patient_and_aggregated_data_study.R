@@ -389,8 +389,6 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
       # Load thesaurus items
       observeEvent(input$thesaurus, {
         
-        print(input$thesaurus$key)
-        
         r$module_element_thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus$key, category = "plus")
         
         colour_col <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus$key, category = "colours")
@@ -822,7 +820,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
           if (nrow(shown_modules_temp) == 0) shown_modules <- first_module_shown
         }
         
-        r[[paste0(prefix, "_first_module_shown")]] <- first_module_shown
+        r[[paste0(prefix, "_first_module_shown")]] <- first_module_shown$id
         
         if (length(input$study_current_tab) > 0){
           

@@ -56,22 +56,22 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
         )
       ), br()
     ),
-    shinyjs::hidden(
-      div(
-        id = ns("modules_families_card"),
-        make_card(translate(language, "create_module_family", words),
-          div(
-            make_textfield(language = language, ns = ns, label = "name", id = "module_family_name", width = "300px"), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("add_module_family"), translate(language, "add", words))
-          )
-        ),
-        make_card(translate(language, "modules_families_management", words),
-          div(
-            
-          )
-        ), br()
-      )
-    ),
+    # shinyjs::hidden(
+    #   div(
+    #     id = ns("modules_families_card"),
+    #     make_card(translate(language, "create_module_family", words),
+    #       div(
+    #         make_textfield(language = language, ns = ns, label = "name", id = "module_family_name", width = "300px"), br(),
+    #         shiny.fluent::PrimaryButton.shinyInput(ns("add_module_family"), translate(language, "add", words))
+    #       )
+    #     ),
+    #     make_card(translate(language, "modules_families_management", words),
+    #       div(
+    #         
+    #       )
+    #     ), br()
+    #   )
+    # ),
     shinyjs::hidden(
       div(
         id = ns("edit_datamart_code_card"),
@@ -291,14 +291,12 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
       options('cli.num_colors' = NULL)
       
       # Display result
-      output$code_result <- renderText(paste(captured_output, collapse = "\n"))
+      output$code_result <- renderText(paste(strwrap(captured_output), collapse = "\n"))
     })
     
     # Save updates
     
     observeEvent(input$save_code, {
-      
-      print(Sys.time())
       
       code_id <- r$code %>% dplyr::filter(category == "datamart" & link_id == r$chosen_datamart) %>% dplyr::pull(id)
 
@@ -315,6 +313,21 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     ##########################################
     # Create a study                         #
     ##########################################
+    
+    observeEvent(input$add_study, {
+      
+      new_data <- list()
+      new_data$name <- coalesce2(type = "char", x = input$study_name)
+      new_data$study_name <- new_data$name
+      new_data$description <- ""
+      new_data$patient_lvl_module_family <- get_last_row(r$db, "patient_lvl_modules_families") + 1
+      new_data$aggregated_module_family <- get_last_row(r$db, "aggregated_modules_families") + 1
+      new_data$datamart <- r$chosen_datamart
+      
+      add_settings_new_data(session = session, output = output, r = r, language = language, id = "settings_studies", 
+        data = new_data, table = "studies", required_textfields = "study_name", req_unique_values = "name")
+      
+    })
     
     ##########################################
     # Studies management                     #

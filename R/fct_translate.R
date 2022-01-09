@@ -437,6 +437,8 @@ get_translations <- function(){
     "FR", "edit_subset_code", "Editer le code du subset",
     "EN", "provide_valid_name", "Please provide a valid name",
     "FR", "provide_valid_name", "Nom valide requis",
+    "EN", "provide_valid_study_name", "Please provide a valid name",
+    "FR", "provide_valid_study_name", "Nom valide requis",
     "EN", "provide_valid_username", "Please provide a valid username",
     "FR", "provide_valid_username", "Pseudo valide requis",
     "EN", "provide_valid_firstname", "Please provide a valid first name",

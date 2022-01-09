@@ -27,7 +27,7 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
   
   # Access by table
   
-  if (table %in% c("studies", "datamarts", "plugins")){
+  if (table %in% c("datamarts", "plugins")){
     if (paste0(table, "_see_all_data") %not_in% r$user_accesses){
       if (nrow(r[[table]] > 0)){
         r[[table]] <- get_authorized_data(r = r, table = table)
@@ -36,21 +36,21 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
     }
   }
   
-  if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
-    
-    if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
-    if (grepl("aggregated", table)) prefix <- "aggregated"
-    
-    if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
-      if (nrow(r[[table]] > 0)){
-        r[[table]] <- get_authorized_data(r = r, table = table)
-        r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-      }
-    }
-  }
+  # if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
+  #   
+  #   if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
+  #   if (grepl("aggregated", table)) prefix <- "aggregated"
+  #   
+  #   if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
+  #     if (nrow(r[[table]] > 0)){
+  #       r[[table]] <- get_authorized_data(r = r, table = table)
+  #       r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
+  #     }
+  #   }
+  # }
   
   # Access by authorship
-  if (table %in% c("data_sources", "subsets", "thesaurus")){
+  if (table %in% c("data_sources", "thesaurus")){
     if (paste0(table, "_see_all_data") %not_in% r$user_accesses){
       if (nrow(r[[table]] > 0)){
         r[[table]] <- get_authorized_data(r = r, table = table)
@@ -60,24 +60,24 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
   }
   
   # Access by parent
-  if (table %in% c("patient_lvl_modules", "aggregated_modules", "patient_lvl_modules_elements", "aggregated_modules_elements")){
-    
-    if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
-    if (grepl("aggregated", table)) prefix <- "aggregated_"
-    
-    if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
-      modules_families_ids <- get_authorized_data(r = r, table = paste0(prefix, "modules_families")) %>% dplyr::pull(id)
-      if (nrow(r[[paste0(prefix, "modules")]]) > 0) modules_ids <- r[[paste0(prefix, "modules")]] %>%
-          dplyr::filter(module_family_id %in% modules_families_ids) %>% dplyr::pull(id)
-      
-      if (nrow(r[[table]] > 0)){
-        if (grepl("modules$", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_family_id %in% modules_families_ids)
-        if (grepl("modules_elements", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_id %in% modules_ids)
-      }
-      
-      r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-    }
-  }
+  # if (table %in% c("patient_lvl_modules", "aggregated_modules", "patient_lvl_modules_elements", "aggregated_modules_elements")){
+  #   
+  #   if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
+  #   if (grepl("aggregated", table)) prefix <- "aggregated_"
+  #   
+  #   if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
+  #     modules_families_ids <- get_authorized_data(r = r, table = paste0(prefix, "modules_families")) %>% dplyr::pull(id)
+  #     if (nrow(r[[paste0(prefix, "modules")]]) > 0) modules_ids <- r[[paste0(prefix, "modules")]] %>%
+  #         dplyr::filter(module_family_id %in% modules_families_ids) %>% dplyr::pull(id)
+  #     
+  #     if (nrow(r[[table]] > 0)){
+  #       if (grepl("modules$", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_family_id %in% modules_families_ids)
+  #       if (grepl("modules_elements", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_id %in% modules_ids)
+  #     }
+  #     
+  #     r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
+  #   }
+  # }
 }
 
 #' Get options of a page

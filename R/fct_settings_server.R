@@ -54,6 +54,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       if (!is.na(data$parent_module)) sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
         AND module_family_id = {data$module_family} AND parent_module_id = {data$parent_module}", .con = r$db)
     }
+    else if (table == "studies") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
+      AND datamart_id = {data$datamart}", .con = r$db)
     else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = r$db)
     distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull() %>% tolower()
       
@@ -211,7 +213,6 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     DBI::dbAppendTable(r$db, "options", new_options)
     add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_options))
     
-    
     # Add rows in subsets table, for inclusion / exclusion subsets
     # Add also code corresponding to each subset
     new_subsets <- tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id,  ~datetime, ~deleted,
@@ -233,33 +234,44 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     DBI::dbAppendTable(r$db, "code", new_code)
     add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_code))
 
-    # Update r$options, r$code & r$subsets
+    # Add patient_lvl & aggregated modules families
+    
+    new_patient_lvl_module_family <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+      get_last_row(r$db, "patient_lvl_modules_families") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+    DBI::dbAppendTable(r$db, "patient_lvl_modules_families", new_patient_lvl_module_family)
+    add_log_entry(r = r, category = paste0("patient_lvl_module_family", " - ", translate(language, "insert_new_data", r$words)),
+      name = translate(language, "sql_query", r$words), value = toString(new_patient_lvl_module_family))
+    
+    new_aggregated_module_family <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+      get_last_row(r$db, "aggregated_modules_families") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+    DBI::dbAppendTable(r$db, "aggregated_modules_families", new_aggregated_module_family)
+    add_log_entry(r = r, category = paste0("aggregated_module_family", " - ", translate(language, "insert_new_data", r$words)),
+      name = translate(language, "sql_query", r$words), value = toString(new_aggregated_module_family))
+    
+    # Update r$options, r$code & r$subsets, & r modules families
     update_r(r, "options", language)
     update_r(r, "subsets", language)
     update_r(r, "code", language)
-
-    # Run code to add patients in the subset. Get datamart_id first.
+    update_r(r, "patient_lvl_modules_families", language)
+    update_r(r, "aggregated_modules_families", language)
     
-    r$patients <- tibble::tibble()
+    # Add patients to subset
+    tryCatch({
+      patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
+      add_patients_to_subset(output, r, patients, last_row_subsets + 1)
+      update_r(r = r, table = "subset_patients")
+    }, 
+    error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
+      error_name = paste0("add study - add_patients_to_subsets - id = ", last_row_subsets + 1), category = "Error", error_report = toString(e), language = language),
+    warning = function(w) if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
+      error_name = paste0("add study - add_patients_to_subsets - id = ", last_row_subsets + 1), category = "Warning", error_report = toString(w), language = language))
     
-    tryCatch(run_datamart_code(output = output, r = r, datamart_id = data$datamart, quiet = TRUE),
-      error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_datamart", 
-        error_name = paste0("add study - run_datamart_code - id = ", data$datamart), category = "Error", error_report = toString(e), language = language),
-      warning = function(w) if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_datamart", 
-        error_name = paste0("add study - run_datamart_code - id = ", data$datamart), category = "Warning", error_report = toString(w), language = language))
+    # Update sidenav dropdown with the new study
+    r$studies_choices <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE datamart_id = ", data$datamart))
     
-    if (nrow(r$patients) == 0) show_message_bar(output = output, id = 2, message = "error_loading_datamart", type = "severeWarning", language = language)
-    if (nrow(r$patients) != 0){
-      tryCatch({
-        patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
-        add_patients_to_subset(output, r, patients, last_row_subsets + 1)
-        update_r(r = r, table = "subset_patients")
-      }, 
-      error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
-        error_name = paste0("add study - add_patients_to_subsets - id = ", last_row_subsets + 1), category = "Error", error_report = toString(e), language = language),
-      warning = function(w) if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
-        error_name = paste0("add study - add_patients_to_subsets - id = ", last_row_subsets + 1), category = "Warning", error_report = toString(w), language = language))
-    }
+    # Select new study as current study
+    r$chosen_study <- last_row + 1
+    r$study_page <- Sys.time()
   }
   
   # For options of patient_lvl & aggregated modules families, need to add two rows, for users accesses
@@ -286,7 +298,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 
   # Reset textfields
   if (table == "users") sapply(c("username", "firstname", "lastname", "password"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
-  else sapply(c("name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
+  else sapply(c("study_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
 ##########################################
@@ -301,25 +313,6 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shi
   if (r$perf_monitoring) print(paste0(Sys.time(), " _ prepare data ", table))
   
   reload <- TRUE
-  
-  # If data_output already loaded, remove deleted rows & update only modified rows
-  # if (nrow(data_output) > 0){
-  #   
-  #   # If nrow data_output != nrow data_input, some rows have been removed
-  #   if (nrow(data_input) != nrow(data_output)){
-  #     data_output <-
-  #       data_output %>%
-  #       dplyr::inner_join(data_input %>% dplyr::select(id), by = "id")
-  #     
-  #     reload <- FALSE
-  #   }
-  #   
-  #   # If modified tags on data_input, update these rows in data_output also
-  #   if (nrow(data_input %>% dplyr::filter(modified == 1)) > 0){
-  #     # reload <- FALSE
-  #   }
-  #   
-  # }
   
   # Else, reload data_output
   if (reload) {
