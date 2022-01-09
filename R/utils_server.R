@@ -120,6 +120,13 @@ get_col_names <- function(table_name = character(), language = "EN", words = tib
       translate(language, "deleted", words), translate(language, "modified", words), translate(language, "action", words))
   }
   
+  if (table_name == "studies"){
+    result <- c(translate(language, "id", words), translate(language, "name", words), translate(language, "description", words),
+      translate(language, "datamart", words), translate(language, "patient_lvl_module_family", words),
+      translate(language, "aggregated_module_family", words), translate(language, "creator", words), translate(language, "datetime", words),
+      translate(language, "deleted", words), translate(language, "modified", words), translate(language, "action", words))
+  }
+  
   if (table_name == "thesaurus_items"){
     result <- c(translate(language, "id", words), translate(language, "thesaurus", words), translate(language, "item", words), translate(language, "name", words), 
       translate(language, "display_name", words), translate(language, "category", words), translate(language, "unit", words),

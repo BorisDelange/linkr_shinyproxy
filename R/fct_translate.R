@@ -378,7 +378,7 @@ get_translations <- function(){
     "EN", "datamart_deleted", "Datamart deleted",
     "FR", "datamart_deleted", "Datamart supprimé",
     "EN", "study_deleted", "Study deleted",
-    "FR", "study_deleted", "Etude",
+    "FR", "study_deleted", "Etude supprimée",
     "EN", "subset_deleted", "Subset deleted",
     "FR", "subset_deleted", "Subset supprimé",
     "EN", "thesaurus_deleted", "Thesaurus deleted",

@@ -16,6 +16,8 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
   
   div(
     render_settings_default_elements(ns = ns),
+    shiny.fluent::reactOutput(ns("study_delete_confirm")),
+    shiny.fluent::reactOutput(ns("thesaurus_item_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "datamart_main", text = translate(language, "datamart", words))
     ), maxDisplayedItems = 3),
@@ -47,31 +49,12 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
             ), className = "inline_choicegroup"),
             conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
               uiOutput(ns("users_allowed_read_div"))
-            #  make_people_picker(
-            #    language = language, ns = ns, id = "users_allowed_read", label = "blank",
-            #    width = "100%", style = "padding-bottom:10px;", words = words)
             )
           ), br(),
           shiny.fluent::PrimaryButton.shinyInput(ns("save_datamart_options"), translate(language, "save", words))
         )
       ), br()
     ),
-    # shinyjs::hidden(
-    #   div(
-    #     id = ns("modules_families_card"),
-    #     make_card(translate(language, "create_module_family", words),
-    #       div(
-    #         make_textfield(language = language, ns = ns, label = "name", id = "module_family_name", width = "300px"), br(),
-    #         shiny.fluent::PrimaryButton.shinyInput(ns("add_module_family"), translate(language, "add", words))
-    #       )
-    #     ),
-    #     make_card(translate(language, "modules_families_management", words),
-    #       div(
-    #         
-    #       )
-    #     ), br()
-    #   )
-    # ),
     shinyjs::hidden(
       div(
         id = ns("edit_datamart_code_card"),
@@ -93,9 +76,7 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
         make_card(translate(language, "create_study", words), 
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_textfield(language = language, ns = ns, label = "name", id = "study_name", width = "300px"),
-              # make_combobox(language = language, ns = ns, label = "patient_lvl_module_family", width = "300px"),
-              # make_combobox(language = language, ns = ns, label = "aggregated_module_family", width = "300px")
+              make_textfield(language = language, ns = ns, label = "name", id = "study_name", width = "300px")
             ), br(),
             shiny.fluent::PrimaryButton.shinyInput(ns("add_study"), translate(language, "add", words))
           )
@@ -106,7 +87,10 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
       div(
         id = ns("studies_management_card"),
         make_card(translate(language, "studies_management", words),
-          div("...")          
+          div(
+            DT::DTOutput(ns("studies_datatable")),
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_studies_management"), translate(language, "save", words))
+          )
         ), br()
       )
     ),
@@ -332,6 +316,113 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     ##########################################
     # Studies management                     #
     ##########################################
+    
+    # Action buttons for each module / page
+    action_buttons <- c("delete")
+    
+    editable_cols <- c("name", "description")
+    sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
+    column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
+    centered_cols <- c("id", "creator", "datetime", "action")
+    searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
+    factorize_cols <- c("datamart_id", "creator_id")
+    hidden_cols <- c("id", "description", "datamart_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "deleted", "modified")
+    col_names <- get_col_names("studies", language)
+    
+    # Prepare data for datatable
+    
+    observeEvent(r$chosen_datamart, {
+      
+      r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)  %>% dplyr::mutate(modified = FALSE)
+      
+      # Prepare data for datatable
+      
+      r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+        table = "studies", factorize_cols = factorize_cols, action_buttons = action_buttons, 
+        data_input = r$studies_temp, words = r$words)
+      
+      # Render datatable
+      
+      render_datatable(output = output, r = r, ns = ns, language = language, data = r$studies_datatable_temp,
+        output_name = "studies_datatable", col_names =  get_col_names(table_name = "studies", language = language, words = r$words),
+        editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+      
+      # Create a proxy for datatable
+      
+      r[[paste0(prefix, "_studies_datatable_proxy")]] <- DT::dataTableProxy("studies_datatable", deferUntilFlush = FALSE)
+    })
+    
+    # Reload datatable
+    observeEvent(r$studies_temp, {
+
+      # Reload datatable_temp variable
+      r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+        table = "studies", factorize_cols = factorize_cols, action_buttons = action_buttons, 
+        data_input = r$studies_temp, words = r$words)
+
+      # Reload data of datatable
+      if (length(r[[paste0(prefix, "_studies_datatable_proxy")]]) > 0) DT::replaceData(r[[paste0(prefix, "_studies_datatable_proxy")]], 
+        r$studies_datatable_temp, resetPaging = FALSE, rownames = FALSE)
+    })
+    
+    # Updates on datatable data
+    observeEvent(input$studies_datatable_cell_edit, {
+      
+      edit_info <- input$studies_datatable_cell_edit
+      r$studies_temp <- DT::editData(r$studies_temp, edit_info, rownames = FALSE)
+      
+      # Store that this row has been modified
+      r$studies_temp[[edit_info$row, "modified"]] <- TRUE
+    })
+    
+    # Save updates
+    observeEvent(input$save_studies_management, {
+      
+      save_settings_datatable_updates(output = output, r = r, ns = ns, table = "studies", language = language, duplicates_allowed = FALSE)
+      
+      # Update sidenav dropdown with the new study
+      r$reload_studies <- Sys.time()
+    })
+    
+    # Delete a row in datatable
+    
+    study_delete_prefix <- paste0(prefix, "_study")
+    study_dialog_title <- "studies_delete"
+    study_dialog_subtext <- "studies_delete_subtext"
+    study_react_variable <- "study_delete_confirm"
+    study_table <- "studies"
+    study_id_var_sql <- "id"
+    study_id_var_r <- "delete_study"
+    study_delete_message <- "study_deleted"
+    study_reload_variable <- "reload_studies"
+    study_information_variable <- "study_deleted"
+    study_delete_variable <- paste0(study_delete_prefix, "_open_dialog")
+    
+    delete_element(r = r, input = input, output = output, session = session, ns = ns, language = language,
+      delete_prefix = study_delete_prefix, dialog_title = study_dialog_title, dialog_subtext = study_dialog_subtext,
+      react_variable = study_react_variable, table = study_table, id_var_sql = study_id_var_sql, id_var_r = study_id_var_r, 
+      delete_message = study_delete_message, translation = TRUE, reload_variable = study_reload_variable, 
+      information_variable = study_information_variable)
+    
+    observeEvent(input$deleted_pressed, {
+      
+      r$delete_study <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
+      r[[study_delete_variable]] <- TRUE
+      
+    })
+    
+    observeEvent(r$reload_studies, {
+      
+      # Reload sidenav dropdown
+      r$studies_choices <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE deleted IS FALSE AND datamart_id = ", r$chosen_datamart))
+      
+      # Reload datatable
+      r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)  %>% dplyr::mutate(modified = FALSE)
+      
+      # Reset chosen study
+      r$chosen_study <- NA_integer_
+    })
     
     ##########################################
     # Import a study                         #

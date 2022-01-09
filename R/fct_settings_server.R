@@ -1264,11 +1264,11 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
     # For other tables
     if (!grepl("modules", table)){
       
-      if (table != "users") duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
-          dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-      
       if (table == "users") duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("username", tolower) %>%
           dplyr::group_by(username) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+      
+      if (table != "users") duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+          dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
       
       if (duplicates_name > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
     }

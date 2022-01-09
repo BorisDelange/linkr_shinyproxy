@@ -955,6 +955,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         # Loop over distinct modules, for this study
         
         selected_module <- isolate(r[[paste0(prefix, "_selected_module")]])
+        
         if (grepl("show_module", selected_module)) selected_module <- as.integer(substr(selected_module, nchar("show_module_") + 1, 100))
         
         sapply(distinct_modules, function(module_id){
