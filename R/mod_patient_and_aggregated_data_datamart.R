@@ -115,8 +115,9 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
         id = ns("thesaurus_card"),
         make_card(translate(language, "thesaurus", words),
           div(
-            DT::DTOutput(ns("thesaurus")), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus"), translate(language, "save", words))
+            make_combobox(language = language, ns = ns, label = "thesaurus", width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
+            DT::DTOutput(ns("thesaurus_items")),
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), translate(language, "save", words))
           )
         ), br()
       )
@@ -331,7 +332,7 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     
     # Prepare data for datatable
     
-    observeEvent(r$chosen_datamart, {
+    observeEvent(r$studies, {
       
       r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)  %>% dplyr::mutate(modified = FALSE)
       
@@ -414,8 +415,8 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     
     observeEvent(r$reload_studies, {
       
-      # Reload sidenav dropdown
-      r$studies_choices <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE deleted IS FALSE AND datamart_id = ", r$chosen_datamart))
+      # Reload sidenav dropdown with reloading studies
+      update_r(r = r, table = "studies")
       
       # Reload datatable
       r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)  %>% dplyr::mutate(modified = FALSE)
@@ -435,6 +436,101 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     ##########################################
     # Thesaurus                              #
     ##########################################
+    
+    observeEvent(r$chosen_datamart, {
+      
+      data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)
+      
+      # Multiple cases
+      # Only one ID, so it's the beginning and the end
+      # Last ID, so it's the end
+      # ID between begin and last, so separated by commas
+      thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
+        grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
+      shiny.fluent::updateComboBox.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", words = r$words), value = NULL)
+      
+      if (length(r$datamart_thesaurus_items_temp) > 0) r$datamart_thesaurus_items_temp <- r$datamart_thesaurus_items_temp %>% dplyr::slice(0)
+      
+    })
+    
+    observeEvent(input$thesaurus, {
+      
+      r$datamart_thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus$key, category = "delete")
+      
+      count_items_rows <- tibble::tibble()
+      count_patients_rows <- tibble::tibble()
+      
+      # Add count_items_rows in the cache & get it if already in the cache
+      tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus$key,
+        datamart_id = r$chosen_datamart, category = "count_items_rows"),
+        error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
+          error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = language))
+      
+      # Add count_items_rows in the cache & get it if already in the cache
+      tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus$key,
+        datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
+        error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
+          error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = language))
+      
+      if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language, words = r$words)
+      req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
+      
+      # Transform count_rows cols to integer, to be sortable
+      r$datamart_thesaurus_items <- r$datamart_thesaurus_items %>%
+        dplyr::mutate(display_name = ifelse((display_name != "" & !is.na(display_name)), display_name, name)) %>%
+        dplyr::left_join(count_items_rows, by = "item_id") %>%
+        dplyr::left_join(count_patients_rows, by = "item_id") %>%
+        dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
+        dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
+      
+      # Filter on count_items_rows > 0
+      r$datamart_thesaurus_items <- r$datamart_thesaurus_items %>% dplyr::filter(count_items_rows > 0)
+      
+      r$datamart_thesaurus_items_temp <- r$datamart_thesaurus_items %>%
+        dplyr::mutate(modified = FALSE) %>%
+        dplyr::mutate_at("item_id", as.character)
+      
+      editable_cols <- c("display_name", "unit")
+      searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
+      factorize_cols <- c("category", "unit")
+      column_widths <- c("id" = "80px", "action" = "80px", "display_name" = "300px", "unit" = "100px", "category" = "400px")
+      sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+      centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
+      col_names <- get_col_names(table_name = "datamart_thesaurus_items_with_counts", language = language, words = r$words)
+      hidden_cols <- c("id", "name", "thesaurus_id", "item_id", "datetime", "deleted", "modified", "action")
+      
+      # Render datatable
+      render_datatable(output = output, r = r, ns = ns, language = language, data = r$datamart_thesaurus_items_temp,
+        output_name = "thesaurus_items", col_names =  col_names,
+        editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+      
+      # Create a proxy for datatatable
+      r[[paste0(prefix, "_datamart_thesaurus_items_datatable_proxy")]] <- DT::dataTableProxy("thesaurus_items", deferUntilFlush = FALSE)
+    })
+    
+    # Reload datatable
+    observeEvent(r$datamart_thesaurus_items_temp, {
+      
+      if (length(r[[paste0(prefix, "_datamart_thesaurus_items_datatable_proxy")]]) > 0) DT::replaceData(
+        r[[paste0(prefix, "_datamart_thesaurus_items_datatable_proxy")]], r$datamart_thesaurus_items_temp, resetPaging = FALSE, rownames = FALSE)
+    })
+    
+    # Updates on datatable data
+    observeEvent(input$thesaurus_items_cell_edit, {
+      
+      edit_info <- input$thesaurus_items_cell_edit
+      r$datamart_thesaurus_items_temp <- DT::editData(r$datamart_thesaurus_items_temp, edit_info, rownames = FALSE)
+      
+      # Store that this row has been modified
+      r$datamart_thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
+    })
+    
+    # Save updates
+    observeEvent(input$save_thesaurus_items, {
+      
+      save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", duplicates_allowed = TRUE, language = language)
+    })
     
   })
 }

@@ -291,12 +291,13 @@ load_database <- function(r = shiny::reactiveValues(), language = "EN"){
   # Database tables to load
   tables <- c(
     "users", "users_accesses", "users_statuses",
-    "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus",
+    "data_sources", "datamarts", "subsets", "subset_patients", "thesaurus",
     "plugins", 
     "patient_lvl_modules", "patient_lvl_modules_families", "patient_lvl_modules_elements",
     "aggregated_modules", "aggregated_modules_families", "aggregated_modules_elements",
     "code", 
-    "options", "patients_options", "modules_elements_options")
+    "options", "patients_options", "modules_elements_options"
+    )
   
   sapply(tables, function(table){
     r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))

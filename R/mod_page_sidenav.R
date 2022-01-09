@@ -486,14 +486,14 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
       
       # Once the datamart is loaded, load studies
-      observeEvent(r$loaded_datamart, r$studies_choices <- r$studies %>% dplyr::filter(datamart_id == as.integer(r$loaded_datamart)))
+      observeEvent(r$loaded_datamart, update_r(r = r, table = "studies"))
       
-      observeEvent(r$studies_choices, {
-        if (nrow(r$studies_choices) == 0) shiny.fluent::updateComboBox.shinyInput(session, "study", options = list(), value = NULL, 
+      observeEvent(r$studies, {
+        if (nrow(r$studies) == 0) shiny.fluent::updateComboBox.shinyInput(session, "study", options = list(), value = NULL, 
           errorMessage = translate(language, "no_study_available", r$words))
         
-        if (nrow(r$studies_choices) > 0) shiny.fluent::updateComboBox.shinyInput(session, "study",
-          options = convert_tibble_to_list(r$studies_choices %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), value = NULL)
+        if (nrow(r$studies) > 0) shiny.fluent::updateComboBox.shinyInput(session, "study",
+          options = convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), value = NULL)
       })
       
       observeEvent(r$chosen_study, {

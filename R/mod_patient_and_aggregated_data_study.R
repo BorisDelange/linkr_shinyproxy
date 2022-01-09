@@ -973,7 +973,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
             
             sapply(distinct_groups, function(group_id){
               
-              if (module_id != isolate(r[[paste0(prefix, "_first_module_shown")]]$id)) all_groups <- c(all_groups, group_id)
+              if (module_id != isolate(r[[paste0(prefix, "_first_module_shown")]])) all_groups <- c(all_groups, group_id)
               
               plugin_id <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
               if (length(plugin_id) != 0){
@@ -1040,7 +1040,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
             )
           )
           
-          if (module_id != selected_module) toggles_div <- shinyjs::hidden(toggles_div)
+          if (!is.na(selected_module)) if (module_id != selected_module) toggles_div <- shinyjs::hidden(toggles_div)
           
           code_ui <<- tagList(toggles_div, code_ui)
           

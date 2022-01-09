@@ -1101,7 +1101,21 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
     }
 
     # Delete old cache
-    DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "' AND link_id_bis = ", datamart_id)) -> query
+    
+    if (category %in% c("delete", "plus", "plus_minus", "colours")){
+      DBI::dbSendStatement(r$db, paste0("DELETE FROM cache c
+        INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = '", category, "'
+          WHERE t.thesaurus_id = ", thesaurus_id)) -> query
+    }
+    
+    # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
+    if (category %in% c("count_patients_rows", "count_items_rows")){
+      DBI::dbSendStatement(r$db, paste0("DELETE FROM cache c
+        INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.link_id_bis = ", datamart_id, " AND c.category = '", category, "'
+          WHERE t.thesaurus_id = ", thesaurus_id)) -> query
+    }
+    
+    # DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "' AND link_id_bis = ", datamart_id)) -> query
     DBI::dbClearResult(query)
 
     # Get last row & insert new data
@@ -1278,7 +1292,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   
   # Save changes in database
   
-  if (table == "thesaurus_items") r_table <- "sub_thesaurus_items"
+  if (table == "thesaurus_items") r_table <- "datamart_thesaurus_items"
   else r_table <- table
   
   ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
@@ -1294,7 +1308,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   DBI::dbAppendTable(r$db, table, data)
   
   # Reload r variable
-  if (table == "thesaurus_items") r$thesaurus_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
+  if (table == "thesaurus_items") r$datamart_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
   else update_r(r = r, table = table, language = language)
   
   # Notification to user

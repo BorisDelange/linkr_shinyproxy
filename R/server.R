@@ -223,7 +223,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       mod_page_sidenav_server("settings_r_console", r, language, r$words)
 
       if (perf_monitoring) print(paste0(Sys.time(), " _ data_management"))
-      sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
+      sapply(c("data_sources", "datamarts"), function(page){
         if (page %in% r$user_accesses) mod_settings_data_management_server(paste0("settings_", page), r, language, r$words)
         mod_page_sidenav_server(paste0("settings_", page), r, language, r$words)
       })
@@ -232,12 +232,12 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       if ("plugins" %in% r$user_accesses) mod_settings_plugins_server("settings_plugins", r, language, r$words)
       mod_page_sidenav_server("settings_plugins", r, language, r$words)
 
-      if (perf_monitoring) print(paste0(Sys.time(), " _ modules"))
-      sapply(c("patient_lvl_modules", "aggregated_modules"), function(page){
-        if (page %in% r$user_accesses) mod_settings_modules_server(paste0("settings_", page), r, language, r$words)
-        if (perf_monitoring) print(paste0(Sys.time(), " _ ", page))
-        mod_page_sidenav_server(paste0("settings_", page), r, language, r$words)
-      })
+      # if (perf_monitoring) print(paste0(Sys.time(), " _ modules"))
+      # sapply(c("patient_lvl_modules", "aggregated_modules"), function(page){
+      #   if (page %in% r$user_accesses) mod_settings_modules_server(paste0("settings_", page), r, language, r$words)
+      #   if (perf_monitoring) print(paste0(Sys.time(), " _ ", page))
+      #   mod_page_sidenav_server(paste0("settings_", page), r, language, r$words)
+      # })
 
       # Patient-lvl & aggregated modules page sub modules
       # if ("patient_lvl_modules" %in% r$user_accesses | "aggregated_modules" %in% r$user_accesses){

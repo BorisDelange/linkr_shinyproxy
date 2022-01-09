@@ -36,6 +36,13 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
     }
   }
   
+  # Load studies from current loaded datamart
+  
+  if (table == "studies" & !is.na(r$chosen_datamart)){
+    sql <- glue::glue_sql("SELECT * FROM studies WHERE datamart_id = {r$chosen_datamart}", .con = r$db)
+    r$studies <- DBI::dbGetQuery(r$db, sql)
+  }
+  
   # if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
   #   
   #   if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
@@ -154,6 +161,14 @@ get_col_names <- function(table_name = character(), language = "EN", words = tib
       translate(language, "item_colour", words), translate(language, "datetime", words), translate(language, "deleted", words),
       translate(language, "num_patients", words), translate(language, "num_rows", words),
       translate(language, "action", words), translate(language, "modified", words))
+  }
+  
+  if (table_name == "datamart_thesaurus_items_with_counts"){
+    result <- c(translate(language, "id", words), translate(language, "thesaurus", words), translate(language, "item", words), translate(language, "name", words), 
+    translate(language, "display_name", words), translate(language, "category", words), translate(language, "unit", words),
+    translate(language, "datetime", words), translate(language, "deleted", words),
+    translate(language, "num_patients", words), translate(language, "num_rows", words),
+    translate(language, "action", words), translate(language, "modified", words))
   }
   
   if (table_name == "plugins"){
