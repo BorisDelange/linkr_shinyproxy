@@ -1036,9 +1036,15 @@ get_translations <- function(){
     "EN", "choose_tar_file", "Choose tar file",
     "FR", "choose_tar_file", "Sélectionner le fichier tar",
     "EN", "error_restoring_database", "Error restoring database",
-    "FR", "error_restoring_database", "Erreur lors de la resturation de la base de données",
+    "FR", "error_restoring_database", "Erreur lors de la restauration de la base de données",
+    "EN", "error_importing_plugins", "Error importing plugin(s)",
+    "FR", "error_importing_plugins", "Erreur lors de l'import du / des plugin(s)",
+    "EN", "replace_already_existing_plugins", "Replace already existing plugins",
+    "FR", "replace_already_existing_plugins", "Remplacer les plugins déjà existants",
     "EN", "database_restored", "Database restored",
     "FR", "database_restored", "Base de données restaurée",
+    "EN", "plugin_imported", "Plugin(s) imported",
+    "FR", "plugin_imported", "Plugin(s) importé(s)",
     "EN", "loaded_file", "Loaded file",
     "FR", "loaded_file", "Fichier chargé",
     "EN", "hide_editor", "Hide editor",
@@ -1080,7 +1086,7 @@ get_translations <- function(){
     "EN", "plugins_to_export", "Plugins to export",
     "FR", "plugins_to_export", "Plugins à exporter",
     "EN", "export_plugins", "Export plugins",
-    "FR", "export_plugins", "Expoter les plugins"
+    "FR", "export_plugins", "Exporter les plugins"
     ) -> data
   data
 }

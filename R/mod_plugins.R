@@ -176,7 +176,15 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
       div(
         id = ns("import_plugin_card"),
         make_card(translate(language, "import_plugin", words),
-          div("...")
+          div(br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), 
+              make_toggle(language = language, ns = ns, label = "replace_already_existing_plugins", inline = TRUE, words = words)), br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::DefaultButton.shinyInput(ns("import_plugins_browse"), translate(language, "choose_tar_file", words)),
+              uiOutput(ns("import_plugins_status"))), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("import_plugins_button"), translate(language, "import_plugin", words), iconProps = list(iconName = "Upload")),
+            div(style = "display:none;", fileInput(ns("import_plugins_upload"), label = "", multiple = FALSE, accept = ".tar"))
+          )
         ), br()
       )
     ),
@@ -209,6 +217,12 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
 mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    col_types <- tibble::tribble(
+      ~table, ~col_types,
+      "plugins", "iccicl",
+      "code", "icicicl"
+    )
     
     # Prefix depending on page id
     if (id == "plugins_patient_lvl"){
@@ -842,6 +856,84 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     # Import a plugin                        #
     ##########################################
     
+    observeEvent(input$import_plugins_browse, shinyjs::click("import_plugins_upload"))
+    
+    output$import_plugins_status <- renderUI(tagList(div(
+      span(translate(language, "loaded_file", r$words), " : ", style = "padding-top:5px;"), 
+      span(input$import_plugins_upload$name, style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;")))
+    
+    observeEvent(input$import_plugins_button, {
+      
+      req(input$import_plugins_upload)
+      
+      tryCatch({
+        
+        exdir <- paste0(find.package("cdwtools"), "/data/temp/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"))
+        dir.create(paste0(find.package("cdwtools"), "/data/"), showWarnings = FALSE)
+        dir.create(paste0(find.package("cdwtools"), "/data/temp/"), showWarnings = FALSE)
+        dir.create(exdir)
+
+        untar(input$import_plugins_upload$datapath, exdir = exdir)
+        csv_files <- untar(input$import_plugins_upload$datapath, list = TRUE)
+        
+        data <- list()
+
+        lapply(csv_files, function(file_name){
+
+          # Name of the table
+          table <- substr(file_name, 1, nchar(file_name) - 4)
+
+          # Load CSV file
+          col_types_temp <- col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
+          data[[table]] <<- readr::read_csv(paste0(exdir, "/", file_name), col_types = col_types_temp)
+          
+        })
+        
+        # Add plugins that do not already exist
+        
+        sql <- glue::glue_sql("SELECT * FROM plugins WHERE deleted IS FALSE", .con = r$db)
+        all_plugins <- DBI::dbGetQuery(r$db, sql)
+        
+        new_plugins <- data$plugins %>% dplyr::anti_join(all_plugins %>% dplyr::select(name, module_type_id), by = c("name", "module_type_id"))
+        new_plugins_code <- data$code %>% dplyr::inner_join(new_plugins %>% dplyr::select(link_id = id), by = "link_id")
+        
+        existing_plugins <- data$plugins %>% dplyr::inner_join(all_plugins %>% dplyr::select(new_id = id, name, module_type_id), by = c("name", "module_type_id"))
+        existing_plugins_code <- data$code %>% dplyr::inner_join(existing_plugins %>% dplyr::select(link_id = id), by = "link_id")
+        
+        # Add new plugins & code
+        new_plugins <- new_plugins %>% 
+          dplyr::mutate(id = id + get_last_row(r$db, "plugins"), datetime = as.character(Sys.time()))
+        new_plugins_code <- new_plugins_code %>% 
+          dplyr::mutate(id = id + get_last_row(r$db, "code"), link_id = link_id + get_last_row(r$db, "plugins"),
+            creator_id = r$user_id, datetime = as.character(Sys.time()))
+        
+        DBI::dbAppendTable(r$db, "plugins", new_plugins)
+        DBI::dbAppendTable(r$db, "code", new_plugins_code)
+        
+        # Replace already existing plugins (based on module type & name)
+        if (input$replace_already_existing_plugins){
+
+          # Replace description in plugins table
+          # Take original id
+          
+          print(existing_plugins)
+          print(existing_plugins_code)
+          
+          # Replace 'code', 'creator_id' & 'datetime' cols in code table
+        }
+
+        # Remove temp dir
+        unlink(paste0(find.package("cdwtools"), "/data/temp"), recursive = TRUE, force = TRUE)
+
+        # Load database, restored
+        load_database(r = r, language = language)
+
+        show_message_bar(output, 3, "plugin_imported", "success", language, time = 15000)
+      },
+      error = function(e) report_bug(r = r, output = output, error_message = "error_importing_plugins", 
+        error_name = paste0(id, " - import plugins"), category = "Error", error_report = e, language = language))
+    })
+    
     ##########################################
     # Export a plugin                        #
     ##########################################
@@ -886,7 +978,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     })
     
     # Export plugins
-    observeEvent(input$export_plugins, shinyjs::click("export_plugins_download"))
+    observeEvent(input$export_plugins, {
+      
+      req(nrow(r[[paste0(prefix, "_export_plugins_selected")]]) > 0)
+      
+      shinyjs::click("export_plugins_download")
+    })
     
     output$export_plugins_download <- downloadHandler(
       
