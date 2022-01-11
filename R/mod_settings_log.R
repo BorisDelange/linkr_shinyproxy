@@ -13,8 +13,13 @@ mod_settings_log_ui <- function(id = character(), language = "EN", words = tibbl
   
   div(class = "main",
       
-    render_settings_toggle_card(language = language, ns = ns, cards = list(
-      list(key = "log_card", label = "log"))),
+    shiny.fluent::Breadcrumb(items = list(
+      list(key = "log", text = translate(language, "log", words))
+    ), maxDisplayedItems = 3),
+    shiny.fluent::Pivot(
+      onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+      shiny.fluent::PivotItem(id = "log_card", itemKey = "log_card", headerText = translate(language, "log", words))
+    ),
     
     div(id = ns("log_card"),
       make_card(translate(language, "log"),
@@ -40,9 +45,12 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     
     # Reset toggles when we load the page (restart reactivity, sometimes frozen)
     observeEvent(shiny.router::get_query_param(), {
-      shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = FALSE)
+      shinyjs::hide("log_card")
+      shinyjs::show("log_card")
+      
+      # shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = FALSE)
       # If this toggles was activated, reactivate it
-      if (paste0(id, "log_card") %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = TRUE)
+      # if (paste0(id, "log_card") %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = TRUE)
     })
       
     # If user has no access, hide card
@@ -51,14 +59,7 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     # If user has access, show or hide card when toggle is clicked
     observeEvent(input$log_card_toggle, {
       if ("log" %in% r$user_accesses){
-        if(input$log_card_toggle){
-          shinyjs::show("log_card") 
-          r$activated_toggles <- c(r$activated_toggles, paste0(id, "log_card"))
-        }
-        else{
-          shinyjs::hide("log_card")
-          r$activated_toggles <- r$activated_toggles[r$activated_toggles != paste0(id, "log_card")]
-        }
+        shinyjs::show("log_card")
       }
     })
   
@@ -155,7 +156,7 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
       sortable_cols <- c("id", "category", "name", "creator_id", "datetime")
       column_widths <- c("category" = "100px", "name" = "100px", "datetime" = "180px")
       searchable_cols <- c("category", "name", "creator_id", "datetime")
-      factorize_cols <- c("name", "category")
+      factorize_cols <- c("category")
       
       render_datatable(output = output, r = r, ns = ns, data = log, output_name = "datatable", col_names = col_names,
         page_length = page_length, centered_cols = centered_cols, sortable_cols = sortable_cols, column_widths = column_widths,

@@ -139,22 +139,22 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
         id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
     })
     
-    links_plugins_modules <- list()
+    # links_plugins_modules <- list()
     # sapply(c("plugins", "patient_lvl_modules", "aggregated_modules"), function(page){
-    sapply(c("plugins"), function(page){
-      links_plugins_modules <<- rlist::list.append(links_plugins_modules, list(name = translate(language, page, words),
-        id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
-    })
+    # sapply(c("plugins"), function(page){
+    #   links_plugins_modules <<- rlist::list.append(links_plugins_modules, list(name = translate(language, page, words),
+    #     id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
+    # })
     
     links <- list()
-    sapply(c("general_settings", "app_db", "users", "r_console", "data_management", "plugins_modules", "log"), function(page){
+    sapply(c("general_settings", "app_db", "users", "r_console", "data_management", "log"), function(page){
       # Sub links for data management
       if (page == "data_management") links <<- rlist::list.append(links, list(name = translate(language, page, words),
         id = ns(page), key = page, links = links_data_management, selectedKey = substr(id, nchar("settings") + 2, 100), isExpanded = TRUE))
       
       # Sub links for plugins & modules
-      else if (page == "plugins_modules") links <<- rlist::list.append(links, list(name = translate(language, page, words),
-        id = ns(page), key = page, links = links_plugins_modules, selectedKey = substr(id, nchar("settings") + 2, 100), isExpanded = TRUE))
+      # else if (page == "plugins_modules") links <<- rlist::list.append(links, list(name = translate(language, page, words),
+      #   id = ns(page), key = page, links = links_plugins_modules, selectedKey = substr(id, nchar("settings") + 2, 100), isExpanded = TRUE))
       
       # No sub links
       else links <<- rlist::list.append(links, list(name = translate(language, page, words),
@@ -535,15 +535,14 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         # Hide links to pages that user doesn't have access
         # Never hide General settings page (default when you click on settings on header page)
         
-        pages <- c("app_db", "users", "r_console", "data_sources", "datamarts", "studies", "subsets", "thesaurus",
-          "plugins", "patient_lvl_modules", "aggregated_modules", "log")
+        pages <- c("app_db", "users", "r_console", "data_sources", "datamarts", "thesaurus", "log")
         
         sapply(pages, function(page) if (page %not_in% r$user_accesses) shinyjs::hide(page))
         
         if ("data_sources" %not_in% r$user_accesses & "datamarts" %not_in% r$user_accesses & "studies" %not_in% r$user_accesses &
           "subsets" %not_in% r$user_accesses & "thesaurus" %not_in% r$user_accesses) shinyjs::hide("data_management")
         
-        if ("plugins" %not_in% r$user_accesses & "patient_lvl_modules" %not_in% r$user_accesses & "aggregated_modules" %not_in% r$user_accesses) shinyjs::hide("plugins_modules")
+        # if ("plugins" %not_in% r$user_accesses & "patient_lvl_modules" %not_in% r$user_accesses & "aggregated_modules" %not_in% r$user_accesses) shinyjs::hide("plugins_modules")
       })
     }
   })

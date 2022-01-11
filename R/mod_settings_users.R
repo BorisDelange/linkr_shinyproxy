@@ -30,15 +30,21 @@ mod_settings_users_ui <- function(id = character(), language = "EN", words = tib
   
   div(class = "main",
     render_settings_default_elements(ns = ns),
-    render_settings_toggle_card(language = language, ns = ns, cards = list(
-      list(key = "users_creation_card", label = "users_creation_card"),
-      list(key = "users_management_card", label = "users_management_card"),
-      list(key = "users_accesses_creation_card", label = "users_accesses_creation_card"),
-      list(key = "users_accesses_management_card", label = "users_accesses_management_card"),
-      list(key = "users_accesses_options_card", label = "users_accesses_options_card"),
-      list(key = "users_statuses_creation_card", label = "users_statuses_creation_card"),
-      list(key = "users_statuses_management_card", label = "users_statuses_management_card")
-    ), words = words),
+    shiny.fluent::Breadcrumb(items = list(
+      list(key = "users", text = translate(language, "users", words))
+    ), maxDisplayedItems = 3),
+    div(id = ns("pivot"),
+      shiny.fluent::Pivot(
+        onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+        shiny.fluent::PivotItem(id = "users_creation_card", itemKey = "users_creation_card", headerText = translate(language, "users_creation_card", words)),
+        shiny.fluent::PivotItem(id = "users_management_card", itemKey = "users_management_card", headerText = translate(language, "users_management_card", words)),
+        shiny.fluent::PivotItem(id = "users_accesses_creation_card", itemKey = "users_accesses_creation_card", headerText = translate(language, "users_accesses_creation_card", words)),
+        shiny.fluent::PivotItem(id = "users_accesses_management_card", itemKey = "users_accesses_management_card", headerText = translate(language, "users_accesses_management_card", words)),
+        shiny.fluent::PivotItem(id = "users_accesses_options_card", itemKey = "users_accesses_options_card", headerText = translate(language, "users_accesses_options_card", words)),
+        shiny.fluent::PivotItem(id = "users_statuses_creation_card", itemKey = "users_statuses_creation_card", headerText = translate(language, "users_statuses_creation_card", words)),
+        shiny.fluent::PivotItem(id = "users_statuses_management_card", itemKey = "users_statuses_management_card", headerText = translate(language, "users_statuses_management_card", words))
+      )
+    ),
     cards
   )
 }
@@ -82,10 +88,12 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    toggles <- c(
+    cards <- c(
       "users_creation_card", "users_management_card", 
       "users_accesses_creation_card", "users_accesses_management_card", "users_accesses_options_card",
       "users_statuses_creation_card", "users_statuses_management_card")
+    
+    sapply(cards, shinyjs::hide)
     
     # Current page
     page <- substr(id, nchar("settings_users_") + 1, nchar(id))
@@ -118,13 +126,13 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       
       # Depending on user_accesses
       observeEvent(r$user_accesses, {
-        # Hide toggles if user has no access
-        if ("users" %not_in% r$user_accesses) shinyjs::hide("toggles") else shinyjs::show("toggles")
+        # Hide Pivot if user has no access
+        if ("users" %not_in% r$user_accesses) shinyjs::hide("pivot") else shinyjs::show("pivot")
       })
 
-      # Depending on toggles activated
+      # Depending on cards activated
       
-      show_hide_cards(r = r, input = input, session = session, id = id, toggles = toggles)
+      show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
       
       # When a new user, a user status or a user access is added, close add card & show data management card
       sapply(c("users", "users_accesses", "users_statuses"), function(page){
@@ -137,7 +145,8 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       
       observeEvent(r$users_statuses_options, {
         if (r$users_statuses_options > 0){
-          shiny.fluent::updateToggle.shinyInput(session, "users_accesses_options_card_toggle", value = TRUE)
+          shinyjs::show("users_accesses_options_card")
+          # shiny.fluent::updateToggle.shinyInput(session, "users_accesses_options_card_toggle", value = TRUE)
         }
       })
     }

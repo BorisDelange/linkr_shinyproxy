@@ -223,7 +223,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       mod_page_sidenav_server("settings_r_console", r, language, r$words)
 
       if (perf_monitoring) print(paste0(Sys.time(), " _ data_management"))
-      sapply(c("data_sources", "datamarts"), function(page){
+      sapply(c("data_sources", "datamarts", "thesaurus"), function(page){
         if (page %in% r$user_accesses) mod_settings_data_management_server(paste0("settings_", page), r, language, r$words)
         mod_page_sidenav_server(paste0("settings_", page), r, language, r$words)
       })

@@ -15,18 +15,27 @@ mod_settings_general_ui <- function(id = character(), language = character(), wo
     # Hidden aceEditor, allows the other to be displayed...
     div(shinyAce::aceEditor("hidden"), style = "display: none;"),
     render_settings_default_elements(ns = ns),
-    render_settings_toggle_card(language = language, ns = ns, cards = list(
-      list(key = "change_password_card", label = "change_password")), words = words),
-    div(id = ns("change_password_card"),
-      make_card(translate(language, "change_password", words),
-        div(
-          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-            make_textfield(language = language, ns = ns, label = "old_password", type = "password", canRevealPassword = TRUE, width = "300px", words = words),
-            make_textfield(language = language, ns = ns, label = "new_password", type = "password", canRevealPassword = TRUE, width = "300px", words = words),
-            make_textfield(language = language, ns = ns, label = "new_password", id = "new_password_bis",
-              type = "password", canRevealPassword = TRUE, width = "300px", words = words)
-          ), br(),
-          shiny.fluent::PrimaryButton.shinyInput(ns("save"), translate(language, "save", words))
+    shiny.fluent::Breadcrumb(items = list(
+      list(key = "general_settings", text = translate(language, "general_settings", words))
+    ), maxDisplayedItems = 3),
+    shiny.fluent::Pivot(
+      onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+      shiny.fluent::PivotItem(id = "change_password_card", itemKey = "change_password", headerText = translate(language, "change_password", words))
+    ),
+    # render_settings_toggle_card(language = language, ns = ns, cards = list(
+    #   list(key = "change_password_card", label = "change_password")), words = words),
+    shinyjs::hidden(
+      div(id = ns("change_password_card"),
+        make_card(translate(language, "change_password", words),
+          div(
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+              make_textfield(language = language, ns = ns, label = "old_password", type = "password", canRevealPassword = TRUE, width = "300px", words = words),
+              make_textfield(language = language, ns = ns, label = "new_password", type = "password", canRevealPassword = TRUE, width = "300px", words = words),
+              make_textfield(language = language, ns = ns, label = "new_password", id = "new_password_bis",
+                type = "password", canRevealPassword = TRUE, width = "300px", words = words)
+            ), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("save"), translate(language, "save", words))
+          )
         )
       )
     )
@@ -44,11 +53,16 @@ mod_settings_general_server <- function(id = character(), r = shiny::reactiveVal
     ##########################################
     # Data management / Show or hide cards   #
     ##########################################
-
-    # Toggles IDs
-    toggles <- c("change_password_card")
     
-    show_hide_cards(r = r, input = input, session = session, id = id, toggles = toggles)
+    
+    cards <- c("change_password_card")
+    
+    show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
+    
+    # Toggles IDs
+    # toggles <- c("change_password_card")
+    # 
+    # show_hide_cards(r = r, input = input, session = session, id = id, toggles = toggles)
     
     ##########################################
     # Change password                        #

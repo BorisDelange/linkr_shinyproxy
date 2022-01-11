@@ -22,24 +22,33 @@ mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibbl
     ),
     div(
       id = ns("import_excel_card"),
-      make_card(translate(language, "import_excel", words),
-        div("...")
+      make_card("",
+        div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
       )
+      # make_card(translate(language, "import_excel", words),
+      #   div("...")
+      # ), br()
     ),
     shinyjs::hidden(
       div(
         id = ns("import_csv_card"),
-        make_card(translate(language, "import_csv", words),
-          div("...")
+        make_card("",
+          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
         )
+        # make_card(translate(language, "import_csv", words),
+        #   div("...")
+        # ), br()
       )
     ),
     shinyjs::hidden(
       div(
         id = ns("connect_db_card"),
-        make_card(translate(language, "connect_db", words),
-          div("...")
+        make_card("",
+          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
         )
+        # make_card(translate(language, "connect_db", words),
+        #   div("...")
+        # ), br()
       )
     )
   )

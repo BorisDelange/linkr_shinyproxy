@@ -1300,6 +1300,11 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   # Save changes in database
   
   ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+  
+  if (length(ids_to_del) == 0) show_message_bar(output, 2, "modif_saved", "success", language)
+  
+  req(length(ids_to_del) > 0)
+  
   DBI::dbSendStatement(r$db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
   DBI::dbClearResult(query)
   
@@ -1475,6 +1480,9 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   
   # Get options with category & link_id
   options <- r$options %>% dplyr::filter(category == !!category, link_id == !!link_id)
+  
+  if (nrow(options) == 0) show_message_bar(output, 4, "modif_saved", "success", language)
+  req (nrow(options) > 0)
   
   # Get options with page ID
   if (length(page_options) == 0) page_options <- get_page_options(id = id)
@@ -1715,6 +1723,21 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
         }
       }
     })
+  })
+}
+
+show_hide_cards_new <- function(r = shiny::reactiveValues(), session, input, table = character(), id = character(), cards = character()){
+    
+  # If user has access, show or hide card when Pivot is clicked
+  observeEvent(input$current_tab, {
+    
+    if (length(table > 0)) card_user_access <- paste0(table, "_", input$current_tab)
+    else card_user_access <- input$current_tab
+    
+    if (card_user_access %in% r$user_accesses){
+      sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
+      shinyjs::show(input$current_tab)
+    }
   })
 }
 

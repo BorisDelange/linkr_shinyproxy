@@ -11,16 +11,25 @@
 mod_settings_r_console_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   div(class = "main",
-    render_settings_toggle_card(language = language, ns = ns, cards = list(
-      list(key = "edit_code_card", label = "r_console")), words = words),
+    # render_settings_toggle_card(language = language, ns = ns, cards = list(
+    #   list(key = "edit_code_card", label = "r_console")), words = words),
+    shiny.fluent::Breadcrumb(items = list(
+      list(key = "r_console", text = translate(language, "r_console", words))
+    ), maxDisplayedItems = 3),
+    shiny.fluent::Pivot(
+      onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+      shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = translate(language, "r_console", words))
+    ),
     
-    div(id = ns("edit_code_card"),
-      div(shinyAce::aceEditor(ns("ace_code"), "", mode = "r", 
-        autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
-     
-      shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code", words)), br(),
-      div(shiny::verbatimTextOutput(ns("code_result")), 
-        style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+    shinyjs::hidden(
+      div(id = ns("edit_code_card"),
+        div(shinyAce::aceEditor(ns("ace_code"), "", mode = "r", 
+          autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
+       
+        shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code", words)), br(),
+        div(shiny::verbatimTextOutput(ns("code_result")), 
+          style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+      )
     )
   )
 }
@@ -37,12 +46,18 @@ mod_settings_r_console_server <- function(id = character(), r = shiny::reactiveV
     # R console / Show or hide cards         #
     ##########################################
     
-    toggles <- "edit_code_card"
-    show_hide_cards(r = r, input = input, session = session, table = "r_console", id = id, toggles = toggles)
+    cards <- "edit_code_card"
+    show_hide_cards_new(r = r, input = input, session = session, table = "r_console", id = id, cards = cards)
     
     ##########################################
     # R console / Execute code               #
     ##########################################
+    
+    observe({
+      shiny.router::get_query_param()
+      shinyjs::hide("edit_code_card")
+      shinyjs::show("edit_code_card")
+    })
     
     observeEvent(input$execute_code, {
       # If user has access

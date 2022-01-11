@@ -25,10 +25,15 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
   
   if (id == "settings_data_sources"){
       div(class = "main",
-        render_settings_toggle_card(language = language, ns = ns, cards = list(
-          list(key = "creation_card", label = "create_data_source"),
-          list(key = "datatable_card", label = "data_sources_management")), words = words),
         render_settings_default_elements(ns = ns),
+        shiny.fluent::Breadcrumb(items = list(
+          list(key = "data_sources", text = translate(language, "data_sources", words))
+        ), maxDisplayedItems = 3),
+        shiny.fluent::Pivot(
+          onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+          shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = translate(language, "create_data_source", words)),
+          shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = translate(language, "data_sources_management", words))
+        ),
         render_settings_creation_card(
         language = language, ns = ns, id = id, title = "create_data_source",
         textfields = c("name", "description"), textfields_width = "300px", words = words),
@@ -43,12 +48,17 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
   
   if (id == "settings_datamarts"){
     div(class = "main",
-      render_settings_toggle_card(language = language, ns = ns, cards = list(
-        list(key = "creation_card", label = "create_datamart"),
-        list(key = "datatable_card", label = "datamarts_management"),
-        list(key = "edit_code_card", label = "edit_datamart_code"),
-        list(key = "options_card", label = "datamart_options")), words = words),
       render_settings_default_elements(ns = ns),
+      shiny.fluent::Breadcrumb(items = list(
+        list(key = "datamarts", text = translate(language, "datamarts", words))
+      ), maxDisplayedItems = 3),
+      shiny.fluent::Pivot(
+        onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+        shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = translate(language, "create_datamart", words)),
+        shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = translate(language, "datamarts_management", words)),
+        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = translate(language, "edit_datamart_code", words)),
+        shiny.fluent::PivotItem(id = "options_card", itemKey = "options_card", headerText = translate(language, "datamart_options", words))
+      ),
       render_settings_creation_card(
         language = language, ns = ns, id = id, title = "create_datamart",
         textfields = c("name", "description"), textfields_width = "300px",
@@ -64,45 +74,45 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
   # Data management / Studies              #
   ##########################################
   
-  if (id == "settings_studies"){
-    div(class = "main",
-      render_settings_toggle_card(language = language, ns = ns, cards = list(
-        list(key = "creation_card", label = "create_study"),
-        list(key = "datatable_card", label = "studies_management"),
-        list(key = "options_card", label = "study_options")
-      ), words = words),
-      render_settings_default_elements(ns = ns),
-      render_settings_creation_card(
-        language = language, ns = ns, id = id, title = "create_study",
-        textfields = c("name", "description"), textfields_width = "300px",
-        dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px", words = words),
-      uiOutput(ns("options_card")),
-      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", 
-        output_id = "management_datatable", title = "studies_management", words = words)
-    ) -> result
-  }
-  
+  # if (id == "settings_studies"){
+  #   div(class = "main",
+  #     render_settings_toggle_card(language = language, ns = ns, cards = list(
+  #       list(key = "creation_card", label = "create_study"),
+  #       list(key = "datatable_card", label = "studies_management"),
+  #       list(key = "options_card", label = "study_options")
+  #     ), words = words),
+  #     render_settings_default_elements(ns = ns),
+  #     render_settings_creation_card(
+  #       language = language, ns = ns, id = id, title = "create_study",
+  #       textfields = c("name", "description"), textfields_width = "300px",
+  #       dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px", words = words),
+  #     uiOutput(ns("options_card")),
+  #     render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", 
+  #       output_id = "management_datatable", title = "studies_management", words = words)
+  #   ) -> result
+  # }
+  # 
   ##########################################
   # Data management / Subsets              #
   ##########################################
   
-  if (id == "settings_subsets"){
-    div(class = "main",
-      render_settings_toggle_card(language = language, ns = ns, cards = list(
-        list(key = "creation_card", label = "create_subset"),
-        list(key = "datatable_card", label = "subsets_management"),
-        list(key = "edit_code_card", label = "edit_subset_code")
-      ), words = words),
-      render_settings_default_elements(ns = ns),
-      render_settings_creation_card(
-        language = language, ns = ns, id = id, title = "create_subset",
-        textfields = c("name", "description"), textfields_width = "300px",
-        dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px", words = words),
-      uiOutput(ns("edit_code_card")),
-      render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", 
-        output_id = "management_datatable", title = "subsets_management", words = words)
-    ) -> result
-  }
+  # if (id == "settings_subsets"){
+  #   div(class = "main",
+  #     render_settings_toggle_card(language = language, ns = ns, cards = list(
+  #       list(key = "creation_card", label = "create_subset"),
+  #       list(key = "datatable_card", label = "subsets_management"),
+  #       list(key = "edit_code_card", label = "edit_subset_code")
+  #     ), words = words),
+  #     render_settings_default_elements(ns = ns),
+  #     render_settings_creation_card(
+  #       language = language, ns = ns, id = id, title = "create_subset",
+  #       textfields = c("name", "description"), textfields_width = "300px",
+  #       dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px", words = words),
+  #     uiOutput(ns("edit_code_card")),
+  #     render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card", 
+  #       output_id = "management_datatable", title = "subsets_management", words = words)
+  #   ) -> result
+  # }
   
   ##########################################
   # Data management / Thesaurus            #
@@ -110,13 +120,17 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
   
   if (id == "settings_thesaurus"){
     div(class = "main",
-      render_settings_toggle_card(language = language, ns = ns, cards = list(
-        list(key = "creation_card", label = "create_thesaurus"),
-        list(key = "datatable_card", label = "thesaurus_management_card"),
-        list(key = "sub_datatable_card", label = "thesaurus_items_management_card"),
-        list(key = "edit_code_card", label = "edit_thesaurus_code")
-      ), words = words),
       render_settings_default_elements(ns = ns),
+      shiny.fluent::Breadcrumb(items = list(
+        list(key = "thesaurus", text = translate(language, "thesaurus", words))
+      ), maxDisplayedItems = 3),
+      shiny.fluent::Pivot(
+        onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+        shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = translate(language, "create_thesaurus", words)),
+        shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = translate(language, "thesaurus_management_card", words)),
+        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = translate(language, "thesaurus_items_management_card", words)),
+        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = translate(language, "edit_thesaurus_code", words))
+      ),
       render_settings_creation_card(
         language = language, ns = ns, id = id, title = "create_thesaurus",
         textfields = c("name", "description"), textfields_width = "300px",
@@ -160,9 +174,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     ##########################################
     
     # Toggles IDs
-    toggles <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card")
+    cards <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card")
+    sapply(cards, shinyjs::hide)
     
-    show_hide_cards(r = r, input = input, session = session, table = table, id = id, toggles = toggles)
+    show_hide_cards_new(r = r, input = input, session = session, table = table, id = id, cards = cards)
     
     ##########################################
     # Data management / Add a new element    #

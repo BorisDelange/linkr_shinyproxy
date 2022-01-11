@@ -246,9 +246,9 @@ get_translations <- function(){
     "EN", "restore_db", "Restore database",
     "FR", "restore_db", "Restaurer la base de données",
     "EN", "change_password_card", "Change password",
-    "FR", "change_password_card", "Changer mdp",
+    "FR", "change_password_card", "Changer mot de passe",
     "EN", "change_password", "Change password",
-    "FR", "change_password", "Changer mdp",
+    "FR", "change_password", "Changer mot de passe",
     "EN", "password_changed", "Password updated",
     "FR", "password_changed", "Mot de passe modifié",
     "EN", "old_password", "Old password",
@@ -1074,7 +1074,13 @@ get_translations <- function(){
     "EN", "import_plugin", "Import a plugin",
     "FR", "import_plugin", "Importer un plugin",
     "EN", "export_plugin", "Export a plugin",
-    "FR", "export_plugin", "Exporter un plugin"
+    "FR", "export_plugin", "Exporter un plugin",
+    "EN", "in_progress", "In progress",
+    "FR", "in_progress", "En cours de développement",
+    "EN", "plugins_to_export", "Plugins to export",
+    "FR", "plugins_to_export", "Plugins à exporter",
+    "EN", "export_plugins", "Export plugins",
+    "FR", "export_plugins", "Expoter les plugins"
     ) -> data
   data
 }

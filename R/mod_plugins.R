@@ -45,47 +45,50 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
     ),
     div(
       id = ns("all_plugins_card"),
-      make_card(translate(language, "all_plugins", words),
-        div(
-          br(),
-          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-            shiny.fluent::DocumentCard(
-              shiny.fluent::DocumentCardPreview(previewImages = list(
-                list(
-                  previewImageSrc = "https://cdn.thenewstack.io/media/2017/12/f67e69da-screen-shot-2017-12-28-at-4.17.36-pm.png",
-                  width = 318,
-                  height = 196
-                ))
-              ),
-              shiny.fluent::DocumentCardTitle(
-                title = "Dygraph",
-                shouldTruncate = TRUE
-              )#,
-              # shiny.fluent::DocumentCardActivity(
-              #   activity = "2020-05-21",
-              #   people = list(list(name = "John Doe"))
-              # )
-            ),
-            shiny.fluent::DocumentCard(
-              shiny.fluent::DocumentCardPreview(previewImages = list(
-                list(
-                  previewImageSrc = "https://cran.r-project.org/web/packages/vistime/readme/man/figures/ward_movements.png",
-                  width = 318,
-                  height = 196
-                ))
-              ),
-              shiny.fluent::DocumentCardTitle(
-                title = "Vistime",
-                shouldTruncate = TRUE
-              ),
-              shiny.fluent::DocumentCardActivity(
-                activity = "2021-12-12",
-                people = list(list(name = "Boris Delange"))
-              )
-            )
-          )
-        )
+      make_card("",
+        div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
       )
+      # make_card(translate(language, "all_plugins", words),
+      #   div(
+      #     br(),
+      #     shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+      #       shiny.fluent::DocumentCard(
+      #         shiny.fluent::DocumentCardPreview(previewImages = list(
+      #           list(
+      #             previewImageSrc = "https://cdn.thenewstack.io/media/2017/12/f67e69da-screen-shot-2017-12-28-at-4.17.36-pm.png",
+      #             width = 318,
+      #             height = 196
+      #           ))
+      #         ),
+      #         shiny.fluent::DocumentCardTitle(
+      #           title = "Dygraph",
+      #           shouldTruncate = TRUE
+      #         )#,
+      #         # shiny.fluent::DocumentCardActivity(
+      #         #   activity = "2020-05-21",
+      #         #   people = list(list(name = "John Doe"))
+      #         # )
+      #       ),
+      #       shiny.fluent::DocumentCard(
+      #         shiny.fluent::DocumentCardPreview(previewImages = list(
+      #           list(
+      #             previewImageSrc = "https://cran.r-project.org/web/packages/vistime/readme/man/figures/ward_movements.png",
+      #             width = 318,
+      #             height = 196
+      #           ))
+      #         ),
+      #         shiny.fluent::DocumentCardTitle(
+      #           title = "Vistime",
+      #           shouldTruncate = TRUE
+      #         ),
+      #         shiny.fluent::DocumentCardActivity(
+      #           activity = "2021-12-12",
+      #           people = list(list(name = "Boris Delange"))
+      #         )
+      #       )
+      #     )
+      #   )
+      # )
     ),
     shinyjs::hidden(
       div(
@@ -153,7 +156,18 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
         make_card(translate(language, "plugin_options", words),
           div(
             make_combobox(language = language, ns = ns, label = "plugin", id = "options_chosen_plugin",
-              width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE)
+              width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
+            div(
+              div(class = "input_title", paste0(translate(language, "plugin_users_allowed_read", words), " :")),
+              shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
+                list(key = "everybody", text = translate(language, "everybody", words)),
+                list(key = "people_picker", text = translate(language, "people_picker", words))
+              ), className = "inline_choicegroup"),
+              conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
+                uiOutput(ns("users_allowed_read_div"))
+              )
+            ), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_plugin_options"), translate(language, "save", words))
           )
         ), br()
       )
@@ -170,7 +184,16 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
       div(
         id = ns("export_plugin_card"),
         make_card(translate(language, "export_plugin", words),
-          div("...")
+          div(
+            shiny.fluent::Stack(
+              horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_dropdown(language = language, ns = ns, label = "plugins_to_export",
+                multiSelect = TRUE, width = "650px", words = words),
+              div(shiny.fluent::PrimaryButton.shinyInput(ns("export_plugins"), 
+                translate(language, "export_plugins", words), iconProps = list(iconName = "Download")), style = "margin-top:38px;")
+            ),
+            DT::DTOutput(ns("plugins_to_export_datatable"))
+          )
         ), br()
       )
     )
@@ -304,10 +327,15 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         table = "plugins", action_buttons = action_buttons, 
         data_input = r[[paste0(prefix, "_plugins_temp")]], words = r$words)
       
-      # Render datatable
+      # Render datatables
       
       render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(prefix, "_plugins_datatable_temp")]],
         output_name = "plugins_datatable", col_names =  get_col_names(table_name = "plugins", language = language, words = r$words),
+        editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+        searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
+      
+      render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(prefix, "_plugins_datatable_temp")]],
+        output_name = "plugins_to_export_datatable", col_names =  get_col_names(table_name = "plugins", language = language, words = r$words),
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
         searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
       
@@ -406,14 +434,69 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     # Plugin options                         #
     ##########################################
     
-    # observeEvent(input$options_chosen_plugin, {
-    #   
-    #   link_id <- input$options_chosen_plugin
-    #   
-    #   options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-    #   shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = link_id)
-    #   
-    # })
+    observeEvent(input$options_chosen_plugin, {
+
+      if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
+      else link_id <- input$code_chosen_plugin
+
+      options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      value <- list(key = link_id, text = r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = link_id)
+      
+      # Plugin options
+      
+      options <- r$options %>% dplyr::filter(category == "plugin", link_id == !!link_id)
+      
+      # All users
+      picker_options <-
+        r$users %>%
+        dplyr::left_join(r$users_statuses %>% dplyr::select(user_status_id = id, user_status = name), by = "user_status_id") %>%
+        dplyr::transmute(
+          key = id,
+          imageInitials = paste0(substr(firstname, 0, 1), substr(lastname, 0, 1)),
+          text = paste0(firstname, " ", lastname),
+          secondaryText = user_status)
+      
+      # Users who has access
+      value <-
+        picker_options %>%
+        dplyr::mutate(n = 1:dplyr::n()) %>%
+        dplyr::inner_join(
+          options %>%
+            dplyr::filter(name == "user_allowed_read") %>%
+            dplyr::select(key = value_num),
+          by = "key"
+        ) %>%
+        dplyr::pull(key)
+      
+      selected_items <- picker_options %>% dplyr::filter(key %in% value)
+      
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "users_allowed_read_group",
+        value = options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value))
+      
+      output$users_allowed_read_div <- renderUI({
+        make_people_picker(
+          language = language, ns = ns, id = "users_allowed_read", label = "blank", options = picker_options, value = value,
+          width = "100%", style = "padding-bottom:10px;", words = words)
+      })
+      
+    })
+    
+    # Save updates
+    
+    observeEvent(input$save_plugin_options, {
+      
+      if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
+      else link_id <- input$code_chosen_plugin
+      
+      data <- list()
+      data$users_allowed_read <- unique(input$users_allowed_read)
+      data$users_allowed_read_group <- input$users_allowed_read_group
+      
+      save_settings_options(output = output, r = r, id = id, category = "plugin", code_id_input = paste0("options_", link_id),
+        language = language, data = data, page_options ="users_allowed_read")
+      
+    })
     
     ##########################################
     # Edit plugin code                       #
@@ -641,16 +724,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       # Get thesaurus items
       
-      # if (prefix == "patient_lvl"){
-      #   
-      #   r$plugin_thesaurus_selected_items
-      #   
-      #   # Get thesaurus items with thesaurus own item_id
-      #   thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
-      #     
-      #     dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
-      #       thesaurus_item_unit, colour = thesaurus_item_colour)
-      # }
+      if (prefix == "patient_lvl"){
+        
+        # Get thesaurus items with thesaurus own item_id
+        thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
+          dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
+            thesaurus_item_unit, colour = thesaurus_item_colour)
+      }
       
       if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
       else link_id <- input$code_chosen_plugin
@@ -730,6 +810,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         shinyjs::hide("div_br") 
       }
     })
+    
+    ##########################################
+    # Import a plugin                        #
+    ##########################################
     
     ##########################################
     # Export a plugin                        #

@@ -97,17 +97,23 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
     shinyjs::hidden(
       div(
         id = ns("import_study_card"),
-        make_card(translate(language, "import_study", words),
-          div("...")
-        ), br()
+        make_card("",
+          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
+        )
+        # make_card(translate(language, "import_study", words),
+        #   div("...")
+        # ), br()
       )
     ),
     shinyjs::hidden(
       div(
         id = ns("export_study_card"),
-        make_card(translate(language, "export_study", words),
-          div("...")
-        ), br()
+        make_card("",
+          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
+        )
+        # make_card(translate(language, "export_study", words),
+        #   div("...")
+        # ), br()
       )
     ),
     shinyjs::hidden(
@@ -208,9 +214,6 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
           language = language, ns = ns, id = "users_allowed_read", label = "blank", options = picker_options, value = value,
           width = "100%", style = "padding-bottom:10px;", words = words)
       })
-      
-      # shiny.fluent::updateNormalPeoplePicker.shinyInput(session, "users_allowed_read", options = picker_options, 
-      #   value = value, selectedItems = selected_items)
 
       # Datamart code
 
