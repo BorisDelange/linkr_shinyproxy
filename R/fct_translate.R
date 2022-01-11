@@ -437,6 +437,8 @@ get_translations <- function(){
     "FR", "plugin_options", "Options du plugin",
     "EN", "edit_subset_code", "Edit subset code",
     "FR", "edit_subset_code", "Editer le code du subset",
+    "EN", "load_some_patient_data", "Load some data before executing plugin's code",
+    "FR", "load_some_patient_data", "Charger des données avant d'exécuter le code du plugin",
     "EN", "provide_valid_name", "Please provide a valid name",
     "FR", "provide_valid_name", "Nom valide requis",
     "EN", "provide_valid_study_name", "Please provide a valid name",

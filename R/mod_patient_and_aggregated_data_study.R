@@ -396,9 +396,9 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
       # Load thesaurus items
       observeEvent(input$thesaurus, {
         
-        r$module_element_thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus$key, category = "plus")
+        r$module_element_thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus$key, category = "plus_module")
         
-        colour_col <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus$key, category = "colours")
+        colour_col <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus$key, category = "colours_module")
         
         if (nrow(colour_col) > 0) r$module_element_thesaurus_items <- r$module_element_thesaurus_items %>%
           dplyr::left_join(colour_col %>% dplyr::select(id, colour), by = "id") %>% dplyr::relocate(colour, .before = "datetime")
@@ -547,7 +547,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
       })
       
     }
-    # End of prefix == "patient_lvl"
+    # End of if(prefix == "patient_lvl")
     
       ##########################################
       # Add button clicked                     #

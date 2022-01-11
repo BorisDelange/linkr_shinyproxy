@@ -951,7 +951,7 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
   # Load join between our data and the cache
   
   # For action buttons (delete & plus_minus) & colours, don't use datamart_id / link_id_bis
-  if (category %in% c("delete", "plus", "plus_minus", "colours")){
+  if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus", "colours_module", "colours_plugin")){
     data <- DBI::dbGetQuery(r$db, paste0(
      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value
       FROM thesaurus_items t
@@ -1073,13 +1073,13 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
           shiny::actionButton(paste0("remove_", id), "", icon = icon("minus"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-item_removed', this.id, {priority: 'event'})")))))
     }
-    if (category == "plus"){
+    if (category %in% c("plus_module", "plus_plugin")){
       data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
           shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")))))
     }
-    if (category == "colours"){
+    if (category %in% c("colours_module", "colours_plugin")){
       
       colorCells <- list(
         list(id = "#EF3B2C", color = "#EF3B2C"),
@@ -1102,7 +1102,7 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
 
     # Delete old cache
     
-    if (category %in% c("delete", "plus", "plus_minus", "colours")){
+    if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus", "colours_module", "colours_plugin")){
       DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE id IN (
         SELECT c.id FROM cache c
         INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = '", category, "'
@@ -1139,8 +1139,8 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
     DBI::dbAppendTable(r$db, "cache", data_insert)
   }
   
-  if (category %in% c("delete", "plus", "plus_minus")) data <- data %>% dplyr::rename(action = value)
-  if (category == "colours") data <- data %>% dplyr::rename(colour = value)
+  if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus")) data <- data %>% dplyr::rename(action = value)
+  if (category %in% c("colours_module", "colours_plugin")) data <- data %>% dplyr::rename(colour = value)
   if (category %in% c("count_patients_rows", "count_items_rows")) data <- data %>% dplyr::rename(!!category := value) %>% dplyr::select(item_id, !!category)
   
   data

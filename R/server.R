@@ -256,6 +256,8 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       mod_page_sidenav_server("settings_log", r, language, r$words)
       
       if (perf_monitoring) print(paste0(Sys.time(), " _ END LOAD SERVER MODULES"))
+      
+      r$end_load_modules <- TRUE
 
     })
     

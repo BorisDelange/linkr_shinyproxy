@@ -12,8 +12,9 @@
 #' render_settings_default_elements(ns = NS("settings_datamart"))
 
 render_settings_default_elements <- function(ns = shiny::NS()){
-  tagList(shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
-    shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")), shiny.fluent::reactOutput(ns("delete_confirm")))
+  div(shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
+    shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")), shiny.fluent::reactOutput(ns("delete_confirm")),
+    style = "overflow-y:scroll; width: 100%; position: fixed; z-index:100;")
 }
 
 ##########################################

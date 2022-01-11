@@ -217,6 +217,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         # Reset chosen_study variable
         r$chosen_study <- NA_integer_
+        r$chosen_patient <- NA_integer_ # TO prevent bug when execute plugin code from plugin page
         # shiny.fluent::updateComboBox.shinyInput(session, "study", options = list(), value = NULL)
         
         sapply(c("subset", "patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
