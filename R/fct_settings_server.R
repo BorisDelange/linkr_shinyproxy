@@ -405,6 +405,12 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shi
         # Action buttons : if in action_buttons vector, add action button
         actions <- tagList()
         
+        # Add add_item button
+        if ("add" %in% action_buttons){
+          actions <- tagList(actions,
+            actionButton(paste0("add_item_", data_output[i, "id"]), "", icon = icon("plus"),
+              onclick = paste0("Shiny.setInputValue('", id, "-add_item", "', this.id, {priority: 'event'})")), "")}
+        
         # Add options button
         if ("options" %in% action_buttons){
           actions <- tagList(actions,
@@ -1646,7 +1652,8 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
     options('cli.num_colors' = NULL)
     
     # Display result
-    paste(strwrap(captured_output), collapse = "\n") -> result
+    paste(captured_output, collapse = "\n") -> result
+    # paste(strwrap(captured_output), collapse = "\n") -> result
   }
   
   result

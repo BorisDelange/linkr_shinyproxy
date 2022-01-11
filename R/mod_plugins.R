@@ -190,7 +190,8 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
               make_dropdown(language = language, ns = ns, label = "plugins_to_export",
                 multiSelect = TRUE, width = "650px", words = words),
               div(shiny.fluent::PrimaryButton.shinyInput(ns("export_plugins"), 
-                translate(language, "export_plugins", words), iconProps = list(iconName = "Download")), style = "margin-top:38px;")
+                translate(language, "export_plugins", words), iconProps = list(iconName = "Download")), style = "margin-top:38px;"),
+                div(style = "visibility:hidden;", downloadButton(ns("export_plugins_download"), label = ""))
             ),
             DT::DTOutput(ns("plugins_to_export_datatable"))
           )
@@ -304,7 +305,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     ##########################################
     
     # Action buttons for each module / page
-    action_buttons <- c("delete", "edit_code", "options")
+    action_buttons_plugins_management <- c("delete", "edit_code", "options")
+    action_buttons_export_plugins <- "add"
     
     editable_cols <- c("name")
     sortable_cols <- c("id", "name", "datetime")
@@ -320,12 +322,16 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>%
         dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+      r[[paste0(prefix, "_export_plugins_temp")]] <- r[[paste0(prefix, "_plugins_temp")]]
+      r[[paste0(prefix, "_export_plugins_selected")]] <- r[[paste0(prefix, "_export_plugins_temp")]] %>% dplyr::slice(0)
       
-      # Prepare data for datatable
+      # Prepare data for datatables
       
       r[[paste0(prefix, "_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-        table = "plugins", action_buttons = action_buttons, 
-        data_input = r[[paste0(prefix, "_plugins_temp")]], words = r$words)
+        table = "plugins", action_buttons = action_buttons_plugins_management, data_input = r[[paste0(prefix, "_plugins_temp")]], words = r$words)
+      
+      r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+        table = "plugins", action_buttons = action_buttons_export_plugins, data_input = r[[paste0(prefix, "_export_plugins_temp")]], words = r$words)
       
       # Render datatables
       
@@ -334,7 +340,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
         searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
       
-      render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(prefix, "_plugins_datatable_temp")]],
+      render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(prefix, "_export_plugins_datatable_temp")]],
         output_name = "plugins_to_export_datatable", col_names =  get_col_names(table_name = "plugins", language = language, words = r$words),
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
         searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
@@ -344,17 +350,29 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       r[[paste0(prefix, "_plugins_datatable_proxy")]] <- DT::dataTableProxy("plugins_datatable", deferUntilFlush = FALSE)
     })
     
-    # Reload datatable
+    # Reload datatables
     observeEvent(r[[paste0(prefix, "_plugins_temp")]], {
       
       # Reload datatable_temp variable
       r[[paste0(prefix, "_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-        table = "plugins", action_buttons = action_buttons, 
+        table = "plugins", action_buttons = action_buttons_plugins_management, 
         data_input = r[[paste0(prefix, "_plugins_temp")]], words = r$words)
       
       # Reload data of datatable
       if (length(r[[paste0(prefix, "_plugins_datatable_proxy")]]) > 0) DT::replaceData(r[[paste0(prefix, "_plugins_datatable_proxy")]], 
         r[[paste0(prefix, "_plugins_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
+    })
+    
+    observeEvent(r[[paste0(prefix, "_export_plugins_temp")]], {
+      
+      # Reload datatable_temp variable
+      r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+        table = "plugins", action_buttons = action_buttons_export_plugins, 
+        data_input = r[[paste0(prefix, "_export_plugins_temp")]], words = r$words)
+      
+      # Reload data of datatable
+      if (length(r[[paste0(prefix, "_export_plugins_datatable_proxy")]]) > 0) DT::replaceData(r[[paste0(prefix, "_export_plugins_datatable_proxy")]], 
+        r[[paste0(prefix, "_export_plugins_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
     })
     
     # Updates on datatable data
@@ -365,6 +383,15 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       # Store that this row has been modified
       r[[paste0(prefix, "_plugins_temp")]][[edit_info$row, "modified"]] <- TRUE
+    })
+    
+    observeEvent(input$plugins_to_export_datatable_cell_edit, {
+      
+      edit_info <- input$plugins_to_export_datatable_cell_edit
+      r[[paste0(prefix, "_export_plugins_temp")]] <- DT::editData(r[[paste0(prefix, "_export_plugins_temp")]], edit_info, rownames = FALSE)
+      
+      # Store that this row has been modified
+      r[[paste0(prefix, "_export_plugins_temp")]][[edit_info$row, "modified"]] <- TRUE
     })
     
     # Save updates
@@ -818,6 +845,83 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     ##########################################
     # Export a plugin                        #
     ##########################################
+    
+    # When add button is clicked
+    observeEvent(input$add_item, {
+      
+      # Get ID of chosen plugin
+      link_id <- as.integer(substr(input$add_item, nchar("add_item_") + 1, nchar(input$add_item)))
+      
+      print(link_id)
+      
+      # If this plugin is not already chosen, add it to the selected items dropdown
+      
+      value <- integer(1)
+      if (nrow(r[[paste0(prefix, "_export_plugins_selected")]]) > 0) value <- r[[paste0(prefix, "_export_plugins_selected")]] %>% dplyr::pull(id)
+      
+      if (link_id %not_in% value){
+        
+        r[[paste0(prefix, "_export_plugins_selected")]] <- r[[paste0(prefix, "_export_plugins_temp")]] %>% dplyr::filter(id == link_id) %>%
+          dplyr::bind_rows(r[[paste0(prefix, "_export_plugins_selected")]])
+        
+        # Update dropdown of selected items
+        options <- convert_tibble_to_list(r[[paste0(prefix, "_export_plugins_selected")]], key_col = "id", text_col = "name", words = r$words)
+        value <- r[[paste0(prefix, "_export_plugins_selected")]] %>% dplyr::pull(id)
+        shiny.fluent::updateDropdown.shinyInput(session, "plugins_to_export",
+          options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+      }
+      
+    })
+    
+    # When dropdown is modified
+    observeEvent(input$plugins_to_export, {
+
+      r[[paste0(prefix, "_export_plugins_selected")]] <- r[[paste0(prefix, "_export_plugins_selected")]] %>%
+        dplyr::filter(id %in% input$plugins_to_export)
+
+      options <- convert_tibble_to_list(r[[paste0(prefix, "_export_plugins_selected")]], key_col = "id", text_col = "name", words = r$words)
+      value <- r[[paste0(prefix, "_export_plugins_selected")]] %>% dplyr::pull(id)
+      shiny.fluent::updateDropdown.shinyInput(session, "plugins_to_export",
+        options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+    })
+    
+    # Export plugins
+    observeEvent(input$export_plugins, shinyjs::click("export_plugins_download"))
+    
+    output$export_plugins_download <- downloadHandler(
+      
+      filename = function() paste0("cdwtools_plugins_", as.character(Sys.Date()), ".tar"),
+      
+      content = function(file){
+        
+        owd <- setwd(tempdir())
+        on.exit(setwd(owd))
+        
+        # plugins.csv
+        plugins <- 
+          r[[paste0(prefix, "_export_plugins_selected")]] %>% 
+          dplyr::select(-modified) %>%
+          dplyr::mutate(new_id = 1:dplyr::n())
+        
+        # code.csv
+        code <-
+          r$code %>%
+          dplyr::inner_join(plugins %>% dplyr::select(link_id = id, new_id), by = "link_id") %>%
+          dplyr::filter(category %in% c("plugin_ui", "plugin_server")) %>%
+          dplyr::select(-link_id) %>% dplyr::rename(link_id = new_id) %>% dplyr::relocate(link_id, .after = "category") %>%
+          dplyr::mutate(new_id = 1:dplyr::n()) %>%
+          dplyr::select(-id) %>% dplyr::rename(id = new_id) %>% dplyr::relocate(id)
+        
+        plugins <- plugins %>% dplyr::select(-id) %>% dplyr::rename(id = new_id) %>% dplyr::relocate(id)
+        
+        readr::write_csv(plugins, "plugins.csv")
+        readr::write_csv(code, "code.csv")
+        
+        files <- c("plugins.csv", "code.csv")
+        
+        tar(file, files)
+      }
+    )
     
   })
 }
