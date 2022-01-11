@@ -134,7 +134,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   if (grepl("^settings", id)){
     
     links_data_management <- list()
-    lapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page){
+    lapply(c("data_sources", "datamarts", "thesaurus"), function(page){
       links_data_management <<- rlist::list.append(links_data_management, list(name = translate(language, page, words),
         id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
     })
@@ -235,7 +235,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (!is.na(r$chosen_study) & r$chosen_study != input$study$key) r$chosen_study <- input$study$key
 
         # Subsets depending on the chosen study
-        subsets <- r$subsets %>% dplyr::filter(study_id == input$study$key)
+        update_r(r = r, table = "subsets")
 
         # Reset dropdowns & uiOutput
         shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL)
@@ -251,8 +251,13 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         output$patient_info <- renderUI("")
 
         # If subsets si empty
-        if (nrow(subsets) == 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available", r$words))
-        if (nrow(subsets) > 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(subsets, key_col = "id", text_col = "name", words = r$words), value = NULL)
+        if (nrow(r$subsets) == 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = translate(language, "no_subset_available", r$words))
+        if (nrow(r$subsets) > 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(r$subsets, key_col = "id", text_col = "name", words = r$words), value = NULL)
+        
+        # Load patients options
+        sql <- glue::glue_sql("SELECT * FROM patients_options WHERE study_id = {r$chosen_study}", .con = r$db)
+        r$patients_options <- DBI::dbGetQuery(r$db, sql)
+        
       })
       
       observeEvent(input$subset, {
@@ -270,11 +275,15 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         shinyjs::hide("exclusion_reason_div")
         output$patient_info <- renderUI("")
         
+        # Select patients belonging to subsets of this study
+        update_r(r = r, table = "subsets_patients")
+        
         # Select patients who belong to this subset
-        subset_patients <- r$subset_patients %>% dplyr::filter(subset_id == input$subset$key)
+        update_r(r = r, table = "subset_patients")
+        
         patients <- tibble::tribble()
-        if (nrow(subset_patients) > 0 & nrow(r$patients) > 0){
-          patients <- r$patients %>% dplyr::inner_join(subset_patients %>% dplyr::select(patient_id), by = "patient_id")
+        if (nrow(r$subset_patients) > 0 & nrow(r$patients) > 0){
+          patients <- r$patients %>% dplyr::inner_join(r$subset_patients %>% dplyr::select(patient_id), by = "patient_id")
         }
         
         if (nrow(patients) == 0){
@@ -318,12 +327,12 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         # Update patient status dropdown
         
         subsets_names <- ""
-        if (nrow(r$subset_patients) > 0){
-          r$subset_patients %>% 
+        if (nrow(r$subsets_patients) > 0){
+          r$subsets_patients %>% 
             # Filter on patient_id
             dplyr::filter(patient_id == input$patient$key) %>%
             # Subsets from chosen study
-            dplyr::inner_join(r$subsets %>% dplyr::filter(study_id == r$chosen_study) %>% dplyr::select(subset_id = id, name), by = "subset_id") -> subsets
+            dplyr::inner_join(r$subsets %>% dplyr::select(subset_id = id, name), by = "subset_id") -> subsets
           
           if (nrow(subsets) > 0) subsets %>% dplyr::pull(name) -> subsets_names
         }
@@ -369,11 +378,9 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
 
         # Get included_patients & excluded_patients subset IDs
 
-        subsets <- r$subsets %>% dplyr::filter(study_id == r$chosen_study)
-
-        included_patients_subset <- subsets %>%
+        included_patients_subset <- r$subsets %>%
           dplyr::filter(name %in% c(translate("FR", "subset_included_patients", words), translate("EN", "subset_included_patients", words))) %>% dplyr::pull(id)
-        excluded_patients_subset <- subsets %>%
+        excluded_patients_subset <- r$subsets %>%
           dplyr::filter(name %in% c(translate("FR", "subset_excluded_patients", words), translate("EN", "subset_excluded_patients", words))) %>% dplyr::pull(id)
 
         add_patients_subset_id <- NA_integer_
@@ -408,8 +415,9 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
             subset_id = subset_id, language = language)
         })
 
-        # Reload r$subset_patients
+        # Reload r$subset_patients & r$subsets_patients
         update_r(r = r, table = "subset_patients", language = language)
+        update_r(r = r, table = "subsets_patients", language = language)
 
         # If choice is excluded, update exclusion reason dropdown & show dropdown
         if (input$patient_status$key == "excluded"){
@@ -509,8 +517,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
 
       observeEvent(r$chosen_subset, {
         req(input$study$key)
-        subsets <- r$subsets %>% dplyr::filter(study_id == input$study$key)
-        shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(subsets, key_col = "id", text_col = "name", words = r$words),
+        shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(r$subsets, key_col = "id", text_col = "name", words = r$words),
           value = list(key = r$chosen_subset))
       })
     }

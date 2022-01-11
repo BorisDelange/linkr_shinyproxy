@@ -130,6 +130,8 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
     
     observeEvent(r$chosen_study, {
       
+      req(!is.na(r$chosen_study))
+      
       # Reset selected key
       r[[paste0(prefix, "_selected_module")]] <- NA_integer_
       
@@ -142,6 +144,11 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
       
       r[[paste0(prefix, "_load_ui")]] <- Sys.time()
       r[[paste0(prefix, "_load_server")]] <- Sys.time()
+      
+      # Load modules variables
+      update_r(r = r, table = paste0(prefix, "_modules_families"))
+      update_r(r = r, table = paste0(prefix, "_modules"))
+      update_r(r = r, table = paste0(prefix, "_modules_elements"))
       
     })
     

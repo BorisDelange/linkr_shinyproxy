@@ -298,7 +298,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 
   # Reset textfields
   if (table == "users") sapply(c("username", "firstname", "lastname", "password"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
-  else sapply(c("study_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
+  else sapply(c("plugin_name", "study_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
 ##########################################
@@ -1231,8 +1231,8 @@ update_settings_datatable <- function(input, r = shiny::reactiveValues(), ns = s
 #' save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datamarts", language = "EN")
 #' }
 
-save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), table = character(),
-  duplicates_allowed = FALSE, language = "EN"){
+save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), 
+  table = character(), r_table = character(), duplicates_allowed = FALSE, language = "EN"){
   
   # Make sure there's no duplicate in names, if duplicates_allowed is set to FALSE
   
@@ -1242,6 +1242,9 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
     duplicates_display_order <- 0
     module_is_its_own_parent <- 0
     loop_over_modules <- 0
+    
+    # If r_table is different than table
+    if (length(r_table) == 0) r_table <- table
     
     # For modules tables (patient_lvl & aggregated, modules / modules_families / modules_elements)
     # Duplicates names are grouped (by family for modules, by module for modules elements)
@@ -1282,10 +1285,10 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
     # For other tables
     if (!grepl("modules", table)){
       
-      if (table == "users") duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("username", tolower) %>%
+      if (table == "users") duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("username", tolower) %>%
           dplyr::group_by(username) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
       
-      if (table != "users") duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+      if (table != "users") duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
           dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
       
       if (duplicates_name > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", language)
@@ -1295,9 +1298,6 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   }
   
   # Save changes in database
-  
-  if (table == "thesaurus_items") r_table <- "datamart_thesaurus_items"
-  else r_table <- table
   
   ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
   DBI::dbSendStatement(r$db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
@@ -1615,7 +1615,7 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
     options('cli.num_colors' = NULL)
     
     # Display result
-    paste(captured_output, collapse = "\n") -> result
+    paste(strwrap(captured_output), collapse = "\n") -> result
   }
   
   # If code is not UI or server, capture the console output after replacing %% values
@@ -1638,7 +1638,7 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
     options('cli.num_colors' = NULL)
     
     # Display result
-    paste(captured_output, collapse = "\n") -> result
+    paste(strwrap(captured_output), collapse = "\n") -> result
   }
   
   result

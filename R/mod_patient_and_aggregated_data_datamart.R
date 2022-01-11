@@ -321,7 +321,7 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     # Action buttons for each module / page
     action_buttons <- c("delete")
     
-    editable_cols <- c("name", "description")
+    editable_cols <- c("name")
     sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
     column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
     centered_cols <- c("id", "creator", "datetime", "action")
@@ -529,7 +529,8 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     # Save updates
     observeEvent(input$save_thesaurus_items, {
       
-      save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", duplicates_allowed = TRUE, language = language)
+      save_settings_datatable_updates(output = output, r = r, ns = ns, 
+        table = "thesaurus_items", r_table = "datamart_thesaurus_items", duplicates_allowed = TRUE, language = language)
     })
     
   })

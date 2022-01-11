@@ -10,7 +10,7 @@
 #' }
 update_r <- function(r = shiny::reactiveValues(), table = character(), language = "EN"){
   tables <- c("users", "users_accesses", "users_statuses",
-    "data_sources", "datamarts", "studies", "subsets", "subset_patients", "thesaurus", "thesaurus_items",
+    "data_sources", "datamarts", "studies", "subsets", "subset_patients", "subsets_patients", "thesaurus", "thesaurus_items",
     "plugins", 
     "patient_lvl_modules_families", "patient_lvl_modules", "patient_lvl_modules_elements",
     "aggregated_modules_families", "aggregated_modules", "aggregated_modules_elements",
@@ -20,27 +20,77 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
   
   if (table %not_in% tables) stop(paste0(translate(language, "invalid_table_name"), ". ", translate(language, "tables_allowed"), " : ", toString(tables)))
   
-  new_table <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
-  
-  r[[table]] <- new_table
-  r[[paste0(table, "_temp")]] <- new_table %>% dplyr::mutate(modified = FALSE)
-  
-  # Access by table
-  
-  if (table %in% c("datamarts", "plugins")){
+  if (table %in% c("datamarts", "plugins", "data_sources", "thesaurus")){
+    
+    r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
+    
     if (paste0(table, "_see_all_data") %not_in% r$user_accesses){
       if (nrow(r[[table]] > 0)){
+        r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
         r[[table]] <- get_authorized_data(r = r, table = table)
         r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
       }
     }
   }
   
-  # Load studies from current loaded datamart
+  else if (grepl("modules", table)){
+    
+    if (table == "modules_elements_options"){
+      sql <- glue::glue_sql("SELECT * FROM modules_elements_options WHERE deleted IS FALSE AND study_id = {r$chosen_study}", .con = r$db)
+      r$modules_elements_options <- DBI::dbGetQuery(r$db, sql)
+    }
+    
+    else {
+      if (grepl("patient_lvl", table)) prefix <- "patient_lvl" else prefix <- "aggregated"
+      
+      if (grepl("families", table)){
+        family_id <- r$studies %>% dplyr::filter(id == r$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+        sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND id = {family_id}", .con = r$db)
+        r[[paste0(prefix, "_modules_families")]] <- DBI::dbGetQuery(r$db, sql)
+      }
+      
+      else if (grepl("elements", table)){
+        modules_ids <- r[[paste0(prefix, "_modules")]] %>% dplyr::pull(id)
+        sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND module_id IN ({modules_ids*})", .con = r$db)
+        r[[paste0(prefix, "_modules_elements")]] <- DBI::dbGetQuery(r$db, sql)
+      }
+      
+      else {
+        family_id <- r$studies %>% dplyr::filter(id == r$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+        sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND module_family_id = {family_id}", .con = r$db)
+        r[[paste0(prefix, "_modules")]] <- DBI::dbGetQuery(r$db, sql)
+      }
+      
+    }
+  }
   
-  if (table == "studies" & !is.na(r$chosen_datamart)){
-    sql <- glue::glue_sql("SELECT * FROM studies WHERE datamart_id = {r$chosen_datamart}", .con = r$db)
-    r$studies <- DBI::dbGetQuery(r$db, sql)
+  else if (table %in% c("studies", "subsets", "subset_patients", "subsets_patients", "patients_options")){
+    
+    if (table == "subsets_patients"){
+      
+      sql <- glue::glue_sql("SELECT * FROM subset_patients WHERE deleted IS FALSE AND subset_id IN ({r$subsets %>% dplyr::pull(id)*})", .con = r$db)
+      r$subsets_patients <- DBI::dbGetQuery(r$db, sql)
+    }
+    
+    else {
+      
+      tables <- tibble::tribble(~name, ~col_name, ~col_value,
+        "studies", "datamart_id", r$chosen_datamart,
+        "subsets", "study_id", r$chosen_study,
+        "subset_patients", "subset_id", r$chosen_subset,
+        "patients_options", "study_id", r$chosen_study)
+      
+      row <- tables %>% dplyr::filter(name == table)
+      
+      sql <- glue::glue_sql("SELECT * FROM {`row$name`} WHERE deleted IS FALSE AND {`row$col_name`} = {row$col_value}", .con = r$db)
+      r[[row$name]] <- DBI::dbGetQuery(r$db, sql)
+    }
+  }
+  
+  else {
+    
+    r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
+    r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
   }
   
   # if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
@@ -55,16 +105,6 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
   #     }
   #   }
   # }
-  
-  # Access by authorship
-  if (table %in% c("data_sources", "thesaurus")){
-    if (paste0(table, "_see_all_data") %not_in% r$user_accesses){
-      if (nrow(r[[table]] > 0)){
-        r[[table]] <- get_authorized_data(r = r, table = table)
-        r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-      }
-    }
-  }
   
   # Access by parent
   # if (table %in% c("patient_lvl_modules", "aggregated_modules", "patient_lvl_modules_elements", "aggregated_modules_elements")){
