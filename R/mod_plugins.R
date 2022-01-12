@@ -478,11 +478,15 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     observeEvent(input$options_chosen_plugin, {
 
       if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
-      else link_id <- input$code_chosen_plugin
-
-      options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-      value <- list(key = link_id, text = r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = link_id)
+      else link_id <- input$options_chosen_plugin
+      if (length(input$code_chosen_plugin) > 1) code_link_id <- input$code_chosen_plugin$key
+      else code_link_id <- input$code_chosen_plugin
+      
+      if (link_id != code_link_id){
+        options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+        value <- list(key = link_id, text = r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+        shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = link_id)
+      }
       
       # Plugin options
       
@@ -547,10 +551,14 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
       else link_id <- input$code_chosen_plugin
+      if (length(input$options_chosen_plugin) > 1) options_link_id <- input$options_chosen_plugin$key
+      else options_link_id <- input$options_chosen_plugin
       
-      options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-      value <- list(key = link_id, text = r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = link_id)
+      if (link_id != options_link_id){
+        options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+        value <- list(key = link_id, text = r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+        shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = link_id)
+      }
 
       # Get code from database
       code <- list()
@@ -561,9 +569,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       shinyAce::updateAceEditor(session, "ace_edit_code_server", value = code$server)
       
       # Render UI of this edit_code card
-      # output$edit_code_card <- renderUI({
-      #   render_settings_code_card(ns = ns, r = r, id = id, title = paste0("edit_plugins_code"), code = code, link_id = link_id, language = language)
-      # })
+      output$edit_code_card <- renderUI({
+        render_settings_code_card(ns = ns, r = r, id = id, title = paste0("edit_plugins_code"), code = code, link_id = link_id, language = language)
+      })
 
       # Reset code_result textOutput
       output$code_result_ui <- renderUI("")
@@ -897,8 +905,17 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         new_plugins <- data$plugins %>% dplyr::anti_join(all_plugins %>% dplyr::select(name, module_type_id), by = c("name", "module_type_id"))
         new_plugins_code <- data$code %>% dplyr::inner_join(new_plugins %>% dplyr::select(link_id = id), by = "link_id")
         
-        existing_plugins <- data$plugins %>% dplyr::inner_join(all_plugins %>% dplyr::select(new_id = id, name, module_type_id), by = c("name", "module_type_id"))
-        existing_plugins_code <- data$code %>% dplyr::inner_join(existing_plugins %>% dplyr::select(link_id = id), by = "link_id")
+        existing_plugins <- data$plugins %>% 
+          dplyr::inner_join(all_plugins %>% dplyr::select(new_id = id, name, module_type_id), by = c("name", "module_type_id"))
+        
+        existing_plugins_code <- data$code %>% 
+          dplyr::inner_join(existing_plugins %>% dplyr::select(link_id = id, new_link_id = new_id), by = "link_id") %>%
+          dplyr::select(-link_id) %>% dplyr::rename(link_id = new_link_id) %>% dplyr::relocate(link_id, .after = "category") %>%
+          dplyr::mutate(creator_id = r$user_id, datetime = as.character(Sys.time()))
+        
+        existing_plugins <- existing_plugins %>%
+          dplyr::select(-id) %>% dplyr::rename("id" = new_id) %>% dplyr::relocate(id) %>% 
+          dplyr::mutate(datetime = as.character(Sys.time()))
         
         # Add new plugins & code
         new_plugins <- new_plugins %>% 
@@ -912,14 +929,21 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         
         # Replace already existing plugins (based on module type & name)
         if (input$replace_already_existing_plugins){
-
-          # Replace description in plugins table
-          # Take original id
           
-          print(existing_plugins)
-          print(existing_plugins_code)
+          existing_plugins_code <- existing_plugins_code %>% dplyr::mutate(id = id + get_last_row(r$db, "code"))
           
-          # Replace 'code', 'creator_id' & 'datetime' cols in code table
+          # Delete old rows
+          sql <- glue::glue_sql("DELETE FROM plugins WHERE id IN ({existing_plugins %>% dplyr::pull(id)*})", .con = r$db)
+          DBI::dbSendStatement(r$db, sql) -> query
+          DBI::dbClearResult(query)
+          
+          sql <- glue::glue_sql("DELETE FROM code WHERE category IN ('plugin_ui', 'plugin_server') AND link_id IN ({existing_plugins %>% dplyr::pull(id)*})", .con = r$db)
+          DBI::dbSendStatement(r$db, sql) -> query
+          DBI::dbClearResult(query)
+          
+          # Insert new ones
+          DBI::dbAppendTable(r$db, "plugins", existing_plugins)
+          DBI::dbAppendTable(r$db, "code", existing_plugins_code)
         }
 
         # Remove temp dir
@@ -943,9 +967,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       # Get ID of chosen plugin
       link_id <- as.integer(substr(input$add_item, nchar("add_item_") + 1, nchar(input$add_item)))
-      
-      print(link_id)
-      
+
       # If this plugin is not already chosen, add it to the selected items dropdown
       
       value <- integer(1)

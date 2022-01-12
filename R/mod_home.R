@@ -9,7 +9,8 @@
 #' @importFrom shiny NS tagList 
 mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
-  div(
+  div(class = "main",
+      
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "get_started", text = translate(language, "get_started", words))
