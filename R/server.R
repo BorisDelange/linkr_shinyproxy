@@ -107,7 +107,6 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
 
       # Get user accesses
       r$user_accesses <- r$options %>% dplyr::filter(category == "users_accesses" & link_id == user_access_id & value_num == 1) %>% dplyr::pull(name)
-
     })
 
     # Route pages

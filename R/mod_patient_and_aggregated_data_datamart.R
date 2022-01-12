@@ -14,6 +14,14 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
   if (id == "patient_level_data_datamart") prefix <- "patient_lvl"
   if (id == "aggregated_data_datamart") prefix <- "aggregated"
   
+  cards <- c("datamarts_options_card", "datamarts_edit_code_card", "studies_creation_card", "studies_datatable_card",
+    "import_study_card", "export_study_card", "modules_families_card", "thesaurus_datamart_card")
+  
+  forbidden_cards <- tagList()
+  sapply(cards, function(card){
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, language = language, words = words))
+  })
+  
   div(
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("study_delete_confirm")),
@@ -22,18 +30,19 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
       list(key = "datamart_main", text = translate(language, "datamart", words))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
-      onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-datamart_current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "datamart_options_card", itemKey = "datamart_options", headerText = translate(language, "datamart_options", words)),
-      shiny.fluent::PivotItem(id = "edit_datamart_code_card", itemKey = "edit_datamart_code", headerText = translate(language, "edit_datamart_code", words)),
+      onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+      shiny.fluent::PivotItem(id = "datamarts_options_card", itemKey = "datamarts_options_card", headerText = translate(language, "datamart_options", words)),
+      shiny.fluent::PivotItem(id = "datamarts_edit_code_card", itemKey = "datamarts_edit_code_card", headerText = translate(language, "edit_datamart_code", words)),
       # shiny.fluent::PivotItem(id = "modules_families_card", itemKey = "modules_families", headerText = translate(language, "modules_families", words)),
-      shiny.fluent::PivotItem(id = "create_study_card", itemKey = "create_study", headerText = translate(language, "create_study", words)),
-      shiny.fluent::PivotItem(id = "studies_management_card", itemKey = "studies_management", headerText = translate(language, "studies_management", words)),
-      shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study", headerText = translate(language, "import_study", words)),
-      shiny.fluent::PivotItem(id = "export_study_card", itemKey = "export_study", headerText = translate(language, "export_study", words)),
-      shiny.fluent::PivotItem(id = "thesaurus_card", itemKey = "thesaurus", headerText = translate(language, "thesaurus", words))
+      shiny.fluent::PivotItem(id = "studies_creation_card", itemKey = "studies_creation_card", headerText = translate(language, "create_study", words)),
+      shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = translate(language, "studies_management", words)),
+      shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study_card", headerText = translate(language, "import_study", words)),
+      shiny.fluent::PivotItem(id = "export_study_card", itemKey = "export_study_card", headerText = translate(language, "export_study", words)),
+      shiny.fluent::PivotItem(id = "thesaurus_datamart_card", itemKey = "thesaurus_datamart_card", headerText = translate(language, "thesaurus", words))
     ),
+    forbidden_cards,
     div(
-      id = ns("datamart_options_card"),
+      id = ns("datamarts_options_card"),
       make_card(translate(language, "datamart_options", words),
         div(
           br(),
@@ -57,7 +66,7 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
     ),
     shinyjs::hidden(
       div(
-        id = ns("edit_datamart_code_card"),
+        id = ns("datamarts_edit_code_card"),
         make_card(translate(language, "edit_datamart_code", words),
           div(
             div(shinyAce::aceEditor(ns("datamart_ace_editor"), "", mode = "r", 
@@ -72,7 +81,7 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
     ),
     shinyjs::hidden(
       div(
-        id = ns("create_study_card"),
+        id = ns("studies_creation_card"),
         make_card(translate(language, "create_study", words), 
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
@@ -85,7 +94,7 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
     ),
     shinyjs::hidden(
       div(
-        id = ns("studies_management_card"),
+        id = ns("studies_datatable_card"),
         make_card(translate(language, "studies_management", words),
           div(
             DT::DTOutput(ns("studies_datatable")),
@@ -118,7 +127,7 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
     ),
     shinyjs::hidden(
       div(
-        id = ns("thesaurus_card"),
+        id = ns("thesaurus_datamart_card"),
         make_card(translate(language, "thesaurus", words),
           div(
             make_combobox(language = language, ns = ns, label = "thesaurus", width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
@@ -141,7 +150,25 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     # Prefix depending on page id
     if (id == "patient_level_data_datamart") prefix <- "patient_lvl"
     if (id == "aggregated_data_datamart") prefix <- "aggregated"
- 
+    
+    ##########################################
+    # Show or hide cards                     #
+    ##########################################
+    
+    cards <- c("datamarts_options_card", "datamarts_edit_code_card", "studies_creation_card", "studies_datatable_card",
+      "import_study_card", "export_study_card", "modules_families_card", "thesaurus_datamart_card")
+    show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
+
+    # Show first card
+    if ("datamarts_options_card" %in% r$user_accesses) shinyjs::show("datamarts_options_card")
+    else shinyjs::show("datamarts_options_card_forbidden")
+    
+    # observeEvent(input$current_tab, {
+    # 
+    #   sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
+    #   shinyjs::show(input$current_tab)
+    # })
+
     # When a datamart is chosen
     
     observeEvent(r$chosen_datamart, {
@@ -228,17 +255,6 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     
     # Show datamart UI, hide other UIs
     r$datamart_page <- Sys.time()
-    
-    # Show or hide datamart cards
-    
-    datamarts_cards <- c("datamart_options_card", "edit_datamart_code_card", "create_study_card", "studies_management_card",
-      "import_study_card", "export_study_card", "modules_families_card", "thesaurus_card")
-    
-    observeEvent(input$datamart_current_tab, {
-      
-      sapply(datamarts_cards %>% setdiff(., input$datamart_current_tab), shinyjs::hide)
-      shinyjs::show(input$datamart_current_tab)
-    })
     
     ##########################################
     # Datamart options                       #

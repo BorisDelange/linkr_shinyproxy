@@ -1652,8 +1652,8 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
     options('cli.num_colors' = NULL)
     
     # Display result
-    paste(captured_output, collapse = "\n") -> result
-    # paste(strwrap(captured_output), collapse = "\n") -> result
+    # paste(captured_output, collapse = "\n") -> result
+    paste(strwrap(captured_output), collapse = "\n") -> result
   }
   
   result
@@ -1741,10 +1741,11 @@ show_hide_cards_new <- function(r = shiny::reactiveValues(), session, input, tab
     if (length(table > 0)) card_user_access <- paste0(table, "_", input$current_tab)
     else card_user_access <- input$current_tab
     
-    if (card_user_access %in% r$user_accesses){
-      sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
-      shinyjs::show(input$current_tab)
-    }
+    sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
+    sapply(cards %>% setdiff(., input$current_tab), function(card) shinyjs::hide(paste0(card, "_forbidden")))
+    
+    if (card_user_access %in% r$user_accesses) shinyjs::show(input$current_tab)
+    else shinyjs::show(paste0(input$current_tab, "_forbidden"))
   })
 }
 

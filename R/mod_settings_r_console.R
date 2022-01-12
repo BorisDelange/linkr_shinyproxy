@@ -20,7 +20,7 @@ mod_settings_r_console_ui <- function(id = character(), language = "EN", words =
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
       shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = translate(language, "r_console", words))
     ),
-    
+    forbidden_card(ns = ns, name = "edit_code_card", language = language, words = words),
     shinyjs::hidden(
       div(id = ns("edit_code_card"),
         div(shinyAce::aceEditor(ns("ace_code"), "", mode = "r", 
@@ -46,28 +46,40 @@ mod_settings_r_console_server <- function(id = character(), r = shiny::reactiveV
     # R console / Show or hide cards         #
     ##########################################
     
-    cards <- "edit_code_card"
-    show_hide_cards_new(r = r, input = input, session = session, table = "r_console", id = id, cards = cards)
+    # cards <- "edit_code_card"
+    # show_hide_cards_new(r = r, input = input, session = session, table = "r_console", id = id, cards = cards)
+    
+    if ("r_console" %in% r$user_accesses){
+      shinyjs::show("edit_code_card")
+      shinyjs::hide("edit_code_card_forbidden") 
+    }
+    else {
+      shinyjs::show("edit_code_card_forbidden")
+      shinyjs::hide("edit_code_card")
+    }
     
     ##########################################
     # R console / Execute code               #
     ##########################################
     
-    observe({
-      shiny.router::get_query_param()
-      shinyjs::hide("edit_code_card")
-      shinyjs::show("edit_code_card")
-    })
-    
-    observeEvent(input$execute_code, {
-      # If user has access
-      req("r_console_edit_code_card" %in% r$user_accesses)
+    # Refresh reactivity
+    if ("r_console" %in% r$user_accesses){
       
-      edited_code <- isolate(input$ace_code %>% stringr::str_replace_all("\r", "\n"))
-      
-      output$code_result <- renderText(
-        execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
-          language = language, r = r, edited_code = edited_code, code_type = "server"))
+      observe({
+        shiny.router::get_query_param()
+        shinyjs::hide("edit_code_card")
+        shinyjs::show("edit_code_card")
       })
+    
+      observeEvent(input$execute_code, {
+        # If user has access
+        
+        edited_code <- isolate(input$ace_code %>% stringr::str_replace_all("\r", "\n"))
+        
+        output$code_result <- renderText(
+          execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
+            language = language, r = r, edited_code = edited_code, code_type = "server"))
+      })
+    }
   })
 }

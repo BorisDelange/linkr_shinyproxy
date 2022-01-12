@@ -528,22 +528,22 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
     # Settings                               #
     ##########################################
     
-    if (grepl("^settings", id)){
-
-      observeEvent(r$user_accesses, {
-        
-        # Hide links to pages that user doesn't have access
-        # Never hide General settings page (default when you click on settings on header page)
-        
-        pages <- c("app_db", "users", "r_console", "data_sources", "datamarts", "thesaurus", "log")
-        
-        sapply(pages, function(page) if (page %not_in% r$user_accesses) shinyjs::hide(page))
-        
-        if ("data_sources" %not_in% r$user_accesses & "datamarts" %not_in% r$user_accesses & "studies" %not_in% r$user_accesses &
-          "subsets" %not_in% r$user_accesses & "thesaurus" %not_in% r$user_accesses) shinyjs::hide("data_management")
-        
-        # if ("plugins" %not_in% r$user_accesses & "patient_lvl_modules" %not_in% r$user_accesses & "aggregated_modules" %not_in% r$user_accesses) shinyjs::hide("plugins_modules")
-      })
-    }
+    # if (grepl("^settings", id)){
+    # 
+    #   observeEvent(r$user_accesses, {
+    #     
+    #     # Hide links to pages that user doesn't have access
+    #     # Never hide General settings page (default when you click on settings on header page)
+    #     
+    #     pages <- c("app_db", "users", "r_console", "data_sources", "datamarts", "thesaurus", "log")
+    #     
+    #     sapply(pages, function(page) if (page %not_in% r$user_accesses) shinyjs::hide(page))
+    #     
+    #     if ("data_sources" %not_in% r$user_accesses & "datamarts" %not_in% r$user_accesses & "studies" %not_in% r$user_accesses &
+    #       "subsets" %not_in% r$user_accesses & "thesaurus" %not_in% r$user_accesses) shinyjs::hide("data_management")
+    #     
+    #     # if ("plugins" %not_in% r$user_accesses & "patient_lvl_modules" %not_in% r$user_accesses & "aggregated_modules" %not_in% r$user_accesses) shinyjs::hide("plugins_modules")
+    #   })
+    # }
   })
 }

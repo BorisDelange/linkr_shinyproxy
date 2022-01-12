@@ -24,18 +24,16 @@ mod_settings_general_ui <- function(id = character(), language = character(), wo
     ),
     # render_settings_toggle_card(language = language, ns = ns, cards = list(
     #   list(key = "change_password_card", label = "change_password")), words = words),
-    shinyjs::hidden(
-      div(id = ns("change_password_card"),
-        make_card(translate(language, "change_password", words),
-          div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_textfield(language = language, ns = ns, label = "old_password", type = "password", canRevealPassword = TRUE, width = "300px", words = words),
-              make_textfield(language = language, ns = ns, label = "new_password", type = "password", canRevealPassword = TRUE, width = "300px", words = words),
-              make_textfield(language = language, ns = ns, label = "new_password", id = "new_password_bis",
-                type = "password", canRevealPassword = TRUE, width = "300px", words = words)
-            ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save"), translate(language, "save", words))
-          )
+    div(id = ns("change_password_card"),
+      make_card(translate(language, "change_password", words),
+        div(
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+            make_textfield(language = language, ns = ns, label = "old_password", type = "password", canRevealPassword = TRUE, width = "300px", words = words),
+            make_textfield(language = language, ns = ns, label = "new_password", type = "password", canRevealPassword = TRUE, width = "300px", words = words),
+            make_textfield(language = language, ns = ns, label = "new_password", id = "new_password_bis",
+              type = "password", canRevealPassword = TRUE, width = "300px", words = words)
+          ), br(),
+          shiny.fluent::PrimaryButton.shinyInput(ns("save"), translate(language, "save", words))
         )
       )
     )

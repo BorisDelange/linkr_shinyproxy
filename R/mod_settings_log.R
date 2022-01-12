@@ -20,7 +20,7 @@ mod_settings_log_ui <- function(id = character(), language = "EN", words = tibbl
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
       shiny.fluent::PivotItem(id = "log_card", itemKey = "log_card", headerText = translate(language, "log", words))
     ),
-    
+    forbidden_card(ns = ns, name = "log_card", language = language, words = words),
     div(id = ns("log_card"),
       make_card(translate(language, "log"),
         uiOutput(ns("main"))
@@ -44,24 +44,26 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     # Depending on toggles activated
     
     # Reset toggles when we load the page (restart reactivity, sometimes frozen)
-    observeEvent(shiny.router::get_query_param(), {
-      shinyjs::hide("log_card")
-      shinyjs::show("log_card")
-      
-      # shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = FALSE)
-      # If this toggles was activated, reactivate it
-      # if (paste0(id, "log_card") %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = TRUE)
-    })
+    if ("log" %in% r$user_accesses){
+      observeEvent(shiny.router::get_query_param(), {
+        shinyjs::hide("log_card")
+        shinyjs::show("log_card")
+        
+        # shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = FALSE)
+        # If this toggles was activated, reactivate it
+        # if (paste0(id, "log_card") %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = TRUE)
+      })
+    }
       
     # If user has no access, hide card
-    observeEvent(r$user_accesses, if ("log" %not_in% r$user_accesses) shinyjs::hide("log_card")) 
-    
-    # If user has access, show or hide card when toggle is clicked
-    observeEvent(input$log_card_toggle, {
-      if ("log" %in% r$user_accesses){
-        shinyjs::show("log_card")
-      }
-    })
+    if ("log" %not_in% r$user_accesses){
+      shinyjs::hide("log_card")
+      shinyjs::show("log_card_forbidden")
+    }
+    else {
+      shinyjs::hide("log_card_forbidden")
+      shinyjs::show("log_card")
+    }
   
     ##########################################
     # Log / Render datatable                 #

@@ -168,7 +168,6 @@ insert_default_values <- function(output, r){
   
   options_toggles <- tibble::tribble(
     ~name, ~toggles,
-    "patient_lvl_data", c(""),
     "general_settings", "change_password_card",
     "app_db", c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card"),
     "users", c("users_delete_data", "users_creation_card", "users_management_card",
@@ -177,14 +176,17 @@ insert_default_values <- function(output, r){
     "r_console", "r_console_edit_code_card",
     "data_sources", c("data_sources_see_all_data", "data_sources_edit_data", "data_sources_delete_data", "data_sources_creation_card", "data_sources_datatable_card"),
     "datamarts", c("datamarts_see_all_data", "datamarts_edit_data", "datamarts_delete_data", "datamarts_creation_card", "datamarts_datatable_card", "datamarts_options_card", "datamarts_edit_code_card"),
-    "studies", c("studies_see_all_data", "studies_edit_data", "studies_delete_data", "studies_creation_card", "studies_datatable_card", "studies_options_card"),
+    "studies", c("studies_see_all_data", "studies_edit_data", "studies_delete_data", "studies_creation_card", "studies_datatable_card", "studies_options_card",
+      "import_study_card", "export_study_card"),
     "subsets", c("subsets_see_all_data", "subsets_edit_data", "subsets_delete_data", "subsets_creation_card", "subsets_datatable_card", "subsets_edit_code_card"),
-    "thesaurus", c("thesaurus_see_all_data", "thesaurus_edit_data", "thesaurus_delete_data", "thesaurus_creation_card", "thesaurus_datatable_card", "thesaurus_sub_datatable_card", "thesaurus_edit_code_card"),
-    "plugins", c("plugins_see_all_data", "plugins_edit_data", "plugins_delete_data", "plugins_description_card", "plugins_creation_card", "plugins_datatable_card", "plugins_options_card", "plugins_edit_code_card"),
+    "thesaurus", c("thesaurus_see_all_data", "thesaurus_edit_data", "thesaurus_delete_data", "thesaurus_creation_card", "thesaurus_datatable_card", "thesaurus_sub_datatable_card", "thesaurus_edit_code_card", "thesaurus_datamart_card"),
+    "plugins", c("all_plugins_card", "plugins_see_all_data", "plugins_edit_data", "plugins_delete_data", "plugins_description_card", "plugins_creation_card", "plugins_datatable_card",
+      "plugins_options_card", "plugins_edit_code_card", "import_plugin_card", "export_plugin_card"),
     "patient_lvl_modules", c("patient_lvl_modules_see_all_data", "patient_lvl_modules_edit_data", "patient_lvl_modules_delete_data", "patient_lvl_modules_creation_card", "patient_lvl_modules_management_card", "patient_lvl_modules_options_card"),
     "aggregated_modules", c("aggregated_modules_see_all_data", "aggregated_modules_edit_data", "aggregated_modules_delete_data", "aggregated_modules_creation_card", "aggregated_modules_management_card", "aggregated_modules_options_card"),
     "log", c("all_users", "only_me")
   )
+  
   
   if (insert_options_rows){
     

@@ -28,6 +28,18 @@ mod_settings_users_ui <- function(id = character(), language = "EN", words = tib
       div(id = ns(paste0(page, "_options_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_options"), language = language, words = words)))
   })
   
+  cards_names <- c(
+    "users_creation_card", "users_management_card", 
+    "users_accesses_creation_card", "users_accesses_management_card", "users_accesses_options_card",
+    "users_statuses_creation_card", "users_statuses_management_card")
+  
+  pivots <- tagList()
+  forbidden_cards <- tagList()
+  sapply(cards_names, function(card){
+    pivots <<- tagList(pivots, shiny.fluent::PivotItem(id = card, itemKey = card, headerText = translate(language, card, words)))
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, language = language, words = words))
+  })
+  
   div(class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
@@ -36,15 +48,10 @@ mod_settings_users_ui <- function(id = character(), language = "EN", words = tib
     div(id = ns("pivot"),
       shiny.fluent::Pivot(
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-        shiny.fluent::PivotItem(id = "users_creation_card", itemKey = "users_creation_card", headerText = translate(language, "users_creation_card", words)),
-        shiny.fluent::PivotItem(id = "users_management_card", itemKey = "users_management_card", headerText = translate(language, "users_management_card", words)),
-        shiny.fluent::PivotItem(id = "users_accesses_creation_card", itemKey = "users_accesses_creation_card", headerText = translate(language, "users_accesses_creation_card", words)),
-        shiny.fluent::PivotItem(id = "users_accesses_management_card", itemKey = "users_accesses_management_card", headerText = translate(language, "users_accesses_management_card", words)),
-        shiny.fluent::PivotItem(id = "users_accesses_options_card", itemKey = "users_accesses_options_card", headerText = translate(language, "users_accesses_options_card", words)),
-        shiny.fluent::PivotItem(id = "users_statuses_creation_card", itemKey = "users_statuses_creation_card", headerText = translate(language, "users_statuses_creation_card", words)),
-        shiny.fluent::PivotItem(id = "users_statuses_management_card", itemKey = "users_statuses_management_card", headerText = translate(language, "users_statuses_management_card", words))
+        pivots
       )
     ),
+    forbidden_cards,
     cards
   )
 }
@@ -75,7 +82,10 @@ mod_settings_sub_users_ui <- function(id = character(), language = "EN", words =
   }
   
   if (page == "users_accesses_options"){
-    uiOutput(ns("options_card")) -> result
+    tagList(
+      forbidden_card(ns = ns, name = "options_card", language = language, words = words),
+      uiOutput(ns("options_card"))
+    ) -> result
   }
   
   tagList(render_settings_default_elements(ns = ns), result)
@@ -94,6 +104,11 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       "users_statuses_creation_card", "users_statuses_management_card")
     
     sapply(cards, shinyjs::hide)
+    sapply(cards, function(card) shinyjs::hide(paste0(card, "_forbidden")))
+    
+    # Show first card
+    if ("users_creation_card" %in% r$user_accesses) shinyjs::show("users_creation_card")
+    else shinyjs::show("users_creation_card_forbidden")
     
     # Current page
     page <- substr(id, nchar("settings_users_") + 1, nchar(id))
@@ -135,20 +150,20 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
       
       # When a new user, a user status or a user access is added, close add card & show data management card
-      sapply(c("users", "users_accesses", "users_statuses"), function(page){
-        observeEvent(r[[paste0(page, "_toggle")]], {
-          if (r[[paste0(page, "_toggle")]] != 0){
-            shiny.fluent::updateToggle.shinyInput(session, paste0(page, "_creation_card_toggle"), value = FALSE)
-            shiny.fluent::updateToggle.shinyInput(session, paste0(page, "_management_card_toggle"), value = TRUE)}
-        })
-      })
+      # sapply(c("users", "users_accesses", "users_statuses"), function(page){
+      #   observeEvent(r[[paste0(page, "_toggle")]], {
+      #     if (r[[paste0(page, "_toggle")]] != 0){
+      #       shiny.fluent::updateToggle.shinyInput(session, paste0(page, "_creation_card_toggle"), value = FALSE)
+      #       shiny.fluent::updateToggle.shinyInput(session, paste0(page, "_management_card_toggle"), value = TRUE)}
+      #   })
+      # })
       
-      observeEvent(r$users_statuses_options, {
-        if (r$users_statuses_options > 0){
-          shinyjs::show("users_accesses_options_card")
-          # shiny.fluent::updateToggle.shinyInput(session, "users_accesses_options_card_toggle", value = TRUE)
-        }
-      })
+      # observeEvent(r$users_statuses_options, {
+      #   if (r$users_statuses_options > 0){
+      #     shinyjs::show("users_accesses_options_card")
+      #     # shiny.fluent::updateToggle.shinyInput(session, "users_accesses_options_card_toggle", value = TRUE)
+      #   }
+      # })
     }
     
     ##########################################
@@ -356,7 +371,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         # All toggles displayed
         options_toggles <- tibble::tribble(
           ~name, ~toggles,
-          "patient_lvl_data", c(""),
+          # "patient_lvl_data", c(""),
           "general_settings", "change_password_card",
           "app_db", c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card"),
           "users", c("users_delete_data", "users_creation_card", "users_management_card",
@@ -365,10 +380,12 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
           "r_console", "r_console_edit_code_card",
           "data_sources", c("data_sources_see_all_data", "data_sources_edit_data", "data_sources_delete_data", "data_sources_creation_card", "data_sources_datatable_card"),
           "datamarts", c("datamarts_see_all_data", "datamarts_edit_data", "datamarts_delete_data", "datamarts_creation_card", "datamarts_datatable_card", "datamarts_options_card", "datamarts_edit_code_card"),
-          "studies", c("studies_see_all_data", "studies_edit_data", "studies_delete_data", "studies_creation_card", "studies_datatable_card", "studies_options_card"),
+          "studies", c("studies_see_all_data", "studies_edit_data", "studies_delete_data", "studies_creation_card", "studies_datatable_card", "studies_options_card",
+            "import_study_card", "export_study_card"),
           "subsets", c("subsets_see_all_data", "subsets_edit_data", "subsets_delete_data", "subsets_creation_card", "subsets_datatable_card", "subsets_edit_code_card"),
-          "thesaurus", c("thesaurus_see_all_data", "thesaurus_edit_data", "thesaurus_delete_data", "thesaurus_creation_card", "thesaurus_datatable_card", "thesaurus_sub_datatable_card", "thesaurus_edit_code_card"),
-          "plugins", c("plugins_see_all_data", "plugins_edit_data", "plugins_delete_data", "plugins_description_card", "plugins_creation_card", "plugins_datatable_card", "plugins_options_card", "plugins_edit_code_card"),
+          "thesaurus", c("thesaurus_see_all_data", "thesaurus_edit_data", "thesaurus_delete_data", "thesaurus_creation_card", "thesaurus_datatable_card", "thesaurus_sub_datatable_card", "thesaurus_edit_code_card", "thesaurus_datamart_card"),
+          "plugins", c("all_plugins_card", "plugins_see_all_data", "plugins_edit_data", "plugins_delete_data", "plugins_description_card", "plugins_creation_card", "plugins_datatable_card",
+              "plugins_options_card", "plugins_edit_code_card", "import_plugin_card", "export_plugin_card"),
           "patient_lvl_modules", c("patient_lvl_modules_see_all_data", "patient_lvl_modules_edit_data", "patient_lvl_modules_delete_data", "patient_lvl_modules_creation_card", "patient_lvl_modules_management_card", "patient_lvl_modules_options_card"),
           "aggregated_modules", c("aggregated_modules_see_all_data", "aggregated_modules_edit_data", "aggregated_modules_delete_data", "aggregated_modules_creation_card", "aggregated_modules_management_card", "aggregated_modules_options_card"),
           "log", c("all_users", "only_me")

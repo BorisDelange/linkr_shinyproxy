@@ -405,3 +405,17 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
     )
   )
 }
+
+#' Forbidden card
+#' 
+
+forbidden_card <- function(ns = shiny::NS(), name = character(), language = "EN", words = tibble::tibble()){
+  shinyjs::hidden(
+    div(
+      id = ns(paste0(name, "_forbidden")),
+      make_card("",
+        div(shiny.fluent::MessageBar(translate(language, "unauthorized_access_page", words), messageBarType = 5), style = "margin-top:10px;")
+      )
+    )
+  )
+}

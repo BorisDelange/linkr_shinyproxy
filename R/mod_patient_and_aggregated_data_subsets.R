@@ -28,31 +28,31 @@ mod_patient_and_aggregated_data_subsets_ui <- function(id = character(), languag
     ),
     div(
       id = ns("subset_management_card"),
-      make_card(translate(language, "subset_management", words),
-        div("...")
+      make_card("",#translate(language, "subset_management", words),
+        div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
       )
     ),
     shinyjs::hidden(
       div(
         id = ns("subset_edit_code_card"),
-        make_card(translate(language, "edit_subset_code", words), 
-          div("...")
+        make_card("",#translate(language, "edit_subset_code", words), 
+          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
         )
       )
     ),
     shinyjs::hidden(
       div(
         id = ns("subset_creation_card"),
-        make_card(translate(language, "create_subset", words),
-          div("...")
+        make_card("",#translate(language, "create_subset", words),
+          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
         )
       )
     ),
     shinyjs::hidden(
       div(
         id = ns("subset_datatable_card"),
-        make_card(translate(language, "subsets_management", words),
-          div("...")
+        make_card("",#translate(language, "subsets_management", words),
+          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
         )
       )
     )

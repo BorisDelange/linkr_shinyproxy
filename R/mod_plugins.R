@@ -10,6 +10,14 @@
 mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   
+  cards <- c("all_plugins_card", "plugins_creation_card", "plugins_datatable_card", "plugins_edit_code_card",
+             "plugins_options_card", "import_plugin_card", "export_plugin_card")
+  
+  forbidden_cards <- tagList()
+  sapply(cards, function(card){
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, language = language, words = words))
+  })
+  
   thesaurus_items_div <- ""
   if (id == "plugins_patient_lvl"){
     thesaurus_items_div <- div(
@@ -35,64 +43,67 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
     # uiOutput(ns("plugins_pivot")),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "all_plugins_card", itemKey = "all_plugins", headerText = translate(language, "all_plugins", words)),
-      shiny.fluent::PivotItem(id = "create_plugin_card", itemKey = "create_plugin", headerText = translate(language, "create_plugin", words)),
-      shiny.fluent::PivotItem(id = "plugins_management_card", itemKey = "plugins_management", headerText = translate(language, "plugins_management", words)),
-      shiny.fluent::PivotItem(id = "edit_plugin_code_card", itemKey = "edit_plugin_code", headerText = translate(language, "edit_plugin_code", words)),
-      shiny.fluent::PivotItem(id = "plugin_options_card", itemKey = "plugin_options", headerText = translate(language, "plugin_options", words)),
-      shiny.fluent::PivotItem(id = "import_plugin_card", itemKey = "import_plugin", headerText = translate(language, "import_plugin", words)),
-      shiny.fluent::PivotItem(id = "export_plugin_card", itemKey = "export_plugin", headerText = translate(language, "export_plugin", words))
+      shiny.fluent::PivotItem(id = "all_plugins_card", itemKey = "all_plugins_card", headerText = translate(language, "all_plugins", words)),
+      shiny.fluent::PivotItem(id = "plugins_creation_card", itemKey = "plugins_creation_card", headerText = translate(language, "create_plugin", words)),
+      shiny.fluent::PivotItem(id = "plugins_datatable_card", itemKey = "plugins_datatable_card", headerText = translate(language, "plugins_management", words)),
+      shiny.fluent::PivotItem(id = "plugins_edit_code_card", itemKey = "plugins_edit_code_card", headerText = translate(language, "edit_plugin_code", words)),
+      shiny.fluent::PivotItem(id = "plugins_options_card", itemKey = "plugins_options_card", headerText = translate(language, "plugin_options", words)),
+      shiny.fluent::PivotItem(id = "import_plugin_card", itemKey = "import_plugin_card", headerText = translate(language, "import_plugin", words)),
+      shiny.fluent::PivotItem(id = "export_plugin_card", itemKey = "export_plugin_card", headerText = translate(language, "export_plugin", words))
     ),
-    div(
-      id = ns("all_plugins_card"),
-      make_card("",
-        div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
+    forbidden_cards,
+    shinyjs::hidden(
+      div(
+        id = ns("all_plugins_card"),
+        make_card("",
+          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
+        )
+        # make_card(translate(language, "all_plugins", words),
+        #   div(
+        #     br(),
+        #     shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+        #       shiny.fluent::DocumentCard(
+        #         shiny.fluent::DocumentCardPreview(previewImages = list(
+        #           list(
+        #             previewImageSrc = "https://cdn.thenewstack.io/media/2017/12/f67e69da-screen-shot-2017-12-28-at-4.17.36-pm.png",
+        #             width = 318,
+        #             height = 196
+        #           ))
+        #         ),
+        #         shiny.fluent::DocumentCardTitle(
+        #           title = "Dygraph",
+        #           shouldTruncate = TRUE
+        #         )#,
+        #         # shiny.fluent::DocumentCardActivity(
+        #         #   activity = "2020-05-21",
+        #         #   people = list(list(name = "John Doe"))
+        #         # )
+        #       ),
+        #       shiny.fluent::DocumentCard(
+        #         shiny.fluent::DocumentCardPreview(previewImages = list(
+        #           list(
+        #             previewImageSrc = "https://cran.r-project.org/web/packages/vistime/readme/man/figures/ward_movements.png",
+        #             width = 318,
+        #             height = 196
+        #           ))
+        #         ),
+        #         shiny.fluent::DocumentCardTitle(
+        #           title = "Vistime",
+        #           shouldTruncate = TRUE
+        #         ),
+        #         shiny.fluent::DocumentCardActivity(
+        #           activity = "2021-12-12",
+        #           people = list(list(name = "Boris Delange"))
+        #         )
+        #       )
+        #     )
+        #   )
+        # )
       )
-      # make_card(translate(language, "all_plugins", words),
-      #   div(
-      #     br(),
-      #     shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-      #       shiny.fluent::DocumentCard(
-      #         shiny.fluent::DocumentCardPreview(previewImages = list(
-      #           list(
-      #             previewImageSrc = "https://cdn.thenewstack.io/media/2017/12/f67e69da-screen-shot-2017-12-28-at-4.17.36-pm.png",
-      #             width = 318,
-      #             height = 196
-      #           ))
-      #         ),
-      #         shiny.fluent::DocumentCardTitle(
-      #           title = "Dygraph",
-      #           shouldTruncate = TRUE
-      #         )#,
-      #         # shiny.fluent::DocumentCardActivity(
-      #         #   activity = "2020-05-21",
-      #         #   people = list(list(name = "John Doe"))
-      #         # )
-      #       ),
-      #       shiny.fluent::DocumentCard(
-      #         shiny.fluent::DocumentCardPreview(previewImages = list(
-      #           list(
-      #             previewImageSrc = "https://cran.r-project.org/web/packages/vistime/readme/man/figures/ward_movements.png",
-      #             width = 318,
-      #             height = 196
-      #           ))
-      #         ),
-      #         shiny.fluent::DocumentCardTitle(
-      #           title = "Vistime",
-      #           shouldTruncate = TRUE
-      #         ),
-      #         shiny.fluent::DocumentCardActivity(
-      #           activity = "2021-12-12",
-      #           people = list(list(name = "Boris Delange"))
-      #         )
-      #       )
-      #     )
-      #   )
-      # )
     ),
     shinyjs::hidden(
       div(
-        id = ns("create_plugin_card"),
+        id = ns("plugins_creation_card"),
         make_card(translate(language, "create_plugin", words),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
@@ -105,7 +116,7 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
     ),
     shinyjs::hidden(
       div(
-        id = ns("plugins_management_card"),
+        id = ns("plugins_datatable_card"),
         make_card(translate(language, "plugins_management", words),
           div(
             DT::DTOutput(ns("plugins_datatable")),
@@ -116,7 +127,7 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
     ),
     shinyjs::hidden(
       div(
-        id = ns("edit_plugin_code_card"),
+        id = ns("plugins_edit_code_card"),
         make_card(translate(language, "edit_plugin_code", words),
           div(
             make_combobox(language = language, ns = ns, label = "plugin", id = "code_chosen_plugin",
@@ -152,7 +163,7 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
     ),
     shinyjs::hidden(
       div(
-        id = ns("plugin_options_card"),
+        id = ns("plugins_options_card"),
         make_card(translate(language, "plugin_options", words),
           div(
             make_combobox(language = language, ns = ns, label = "plugin", id = "options_chosen_plugin",
@@ -241,7 +252,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     r$plugins_selected_pivot <- "all_plugins_card"
     
     # observeEvent(r$end_load_modules, {
-    #   r$plugins_selected_pivot <- "create_plugin_card"
+    #   r$plugins_selected_pivot <- "plugins_creation_card"
     # })
     
     observeEvent(input$current_tab, r$plugins_selected_pivot <- input$current_tab)
@@ -253,10 +264,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     #     selectedKey = r$plugins_selected_pivot,
     #     onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
     #     shiny.fluent::PivotItem(id = "all_plugins_card", itemKey = "all_plugins_card", headerText = translate(language, "all_plugins", words)),
-    #     shiny.fluent::PivotItem(id = "create_plugin_card", itemKey = "create_plugin_card", headerText = translate(language, "create_plugin", words)),
-    #     shiny.fluent::PivotItem(id = "plugins_management_card", itemKey = "plugins_management_card", headerText = translate(language, "plugins_management", words)),
-    #     shiny.fluent::PivotItem(id = "edit_plugin_code_card", itemKey = "edit_plugin_code_card", headerText = translate(language, "edit_plugin_code", words)),
-    #     shiny.fluent::PivotItem(id = "plugin_options_card", itemKey = "plugin_options_card", headerText = translate(language, "plugin_options", words)),
+    #     shiny.fluent::PivotItem(id = "plugins_creation_card", itemKey = "plugins_creation_card", headerText = translate(language, "create_plugin", words)),
+    #     shiny.fluent::PivotItem(id = "plugins_datatable_card", itemKey = "plugins_datatable_card", headerText = translate(language, "plugins_management", words)),
+    #     shiny.fluent::PivotItem(id = "plugins_edit_code_card", itemKey = "plugins_edit_code_card", headerText = translate(language, "edit_plugin_code", words)),
+    #     shiny.fluent::PivotItem(id = "plugins_options_card", itemKey = "plugins_options_card", headerText = translate(language, "plugin_options", words)),
     #     shiny.fluent::PivotItem(id = "import_plugin_card", itemKey = "import_plugin_card", headerText = translate(language, "import_plugin", words)),
     #     shiny.fluent::PivotItem(id = "export_plugin_card", itemKey = "export_plugin_card", headerText = translate(language, "export_plugin", words))
     #   )
@@ -267,8 +278,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     # Show or hide cards                     #
     ##########################################
     
-    cards <- c("all_plugins_card", "create_plugin_card", "plugins_management_card", "edit_plugin_code_card",
-      "plugin_options_card", "import_plugin_card", "export_plugin_card")
+    cards <- c("all_plugins_card", "plugins_creation_card", "plugins_datatable_card", "plugins_edit_code_card",
+      "plugins_options_card", "import_plugin_card", "export_plugin_card")
+    show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
     
     # observeEvent(r$plugins_selected_pivot, {
     # 
@@ -276,11 +288,15 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     #   shinyjs::show(r$plugins_selected_pivot)
     # })
     
-    observeEvent(input$current_tab, {
-
-      sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
-      shinyjs::show(input$current_tab)
-    })
+    # Show first card
+    if ("all_plugins_card" %in% r$user_accesses) shinyjs::show("all_plugins_card")
+    else shinyjs::show("all_plugins_card_forbidden")
+    
+    # observeEvent(input$current_tab, {
+    # 
+    #   sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
+    #   shinyjs::show(input$current_tab)
+    # })
     
     ##########################################
     # Update dropdowns                       #
@@ -468,7 +484,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = value)
       
       # Change PivotItem
-      r$plugins_selected_pivot <- "edit_plugin_code_card"
+      r$plugins_selected_pivot <- "plugins_edit_code_card"
     })
     
     ##########################################

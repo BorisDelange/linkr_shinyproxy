@@ -24,6 +24,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
       shiny.fluent::PivotItem(id = "db_save_card", itemKey = "db_save_card", headerText = translate(language, "db_save_card", words)),
       shiny.fluent::PivotItem(id = "db_restore_card", itemKey = "db_restore_card", headerText = translate(language, "db_restore_card", words))
     ),
+    forbidden_card(ns = ns, name = "db_connection_infos_card", language = language, words = words),
     shinyjs::hidden(
       div(
         id = ns("db_connection_infos_card"),
@@ -68,6 +69,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
         )
       )
     ),
+    forbidden_card(ns = ns, name = "db_datatable_card", language = language, words = words),
     shinyjs::hidden(
       div(
         id = ns("db_datatable_card"),
@@ -83,6 +85,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
         )
       )
     ),
+    forbidden_card(ns = ns, name = "db_request_card", language = language, words = words),
     shinyjs::hidden(
       div(
         id = ns("db_request_card"),
@@ -103,6 +106,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
         )
       )
     ),
+    forbidden_card(ns = ns, name = "db_save_card", language = language, words = words),
     shinyjs::hidden(
       div(
         id = ns("db_save_card"),
@@ -119,6 +123,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
         )
       )
     ),
+    forbidden_card(ns = ns, name = "db_restore_card", language = language, words = words),
     shinyjs::hidden(
       div(
         id = ns("db_restore_card"),
@@ -182,6 +187,10 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     
     cards <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card")
     show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
+    
+    # Show first card
+    if ("db_connection_infos_card" %in% r$user_accesses) shinyjs::show("db_connection_infos_card")
+    else shinyjs::show("db_connection_infos_card_forbidden")
     
     ##########################################
     # Database connection                    #
