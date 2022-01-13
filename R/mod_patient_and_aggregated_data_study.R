@@ -1014,7 +1014,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
                 element_code <- div(id = ns(paste0(prefix, "_group_", group_id)),
                   make_card("",
                     div(eval(parse(text = code_ui_card)),
-                      actionButton(ns(paste0(prefix, "_settings_module_element_", group_id)), "", icon = icon("cog"), style = "position:absolute; top:8px; right: 41px;"),
+                      # actionButton(ns(paste0(prefix, "_settings_module_element_", group_id)), "", icon = icon("cog"), style = "position:absolute; top:8px; right: 41px;"),
                       actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"), style = "position:absolute; top:8px; right: 10px;")
                     ),
                     style = "position:relative;"

@@ -31,8 +31,8 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "datamarts_options_card", itemKey = "datamarts_options_card", headerText = translate(language, "datamart_options", words)),
-      shiny.fluent::PivotItem(id = "datamarts_edit_code_card", itemKey = "datamarts_edit_code_card", headerText = translate(language, "edit_datamart_code", words)),
+      # shiny.fluent::PivotItem(id = "datamarts_options_card", itemKey = "datamarts_options_card", headerText = translate(language, "datamart_options", words)),
+      # shiny.fluent::PivotItem(id = "datamarts_edit_code_card", itemKey = "datamarts_edit_code_card", headerText = translate(language, "edit_datamart_code", words)),
       # shiny.fluent::PivotItem(id = "modules_families_card", itemKey = "modules_families", headerText = translate(language, "modules_families", words)),
       shiny.fluent::PivotItem(id = "studies_creation_card", itemKey = "studies_creation_card", headerText = translate(language, "create_study", words)),
       shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = translate(language, "studies_management", words)),
@@ -41,28 +41,30 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
       shiny.fluent::PivotItem(id = "thesaurus_datamart_card", itemKey = "thesaurus_datamart_card", headerText = translate(language, "thesaurus", words))
     ),
     forbidden_cards,
-    div(
-      id = ns("datamarts_options_card"),
-      make_card(translate(language, "datamart_options", words),
-        div(
-          br(),
-          shiny.fluent::Stack(
-            horizontal = TRUE, tokens = list(childrenGap = 10),
-            make_toggle(language = language, ns = ns, label = "show_only_aggregated_data", inline = TRUE, words = words)
-          ), br(),
+    shinyjs::hidden(
+      div(
+        id = ns("datamarts_options_card"),
+        make_card(translate(language, "datamart_options", words),
           div(
-            div(class = "input_title", paste0(translate(language, "datamart_users_allowed_read", words), " :")),
-            shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
-              list(key = "everybody", text = translate(language, "everybody", words)),
-              list(key = "people_picker", text = translate(language, "people_picker", words))
-            ), className = "inline_choicegroup"),
-            conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
-              uiOutput(ns("users_allowed_read_div"))
-            )
-          ), br(),
-          shiny.fluent::PrimaryButton.shinyInput(ns("save_datamart_options"), translate(language, "save", words))
-        )
-      ), br()
+            br(),
+            shiny.fluent::Stack(
+              horizontal = TRUE, tokens = list(childrenGap = 10),
+              make_toggle(language = language, ns = ns, label = "show_only_aggregated_data", inline = TRUE, words = words)
+            ), br(),
+            div(
+              div(class = "input_title", paste0(translate(language, "datamart_users_allowed_read", words), " :")),
+              shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
+                list(key = "everybody", text = translate(language, "everybody", words)),
+                list(key = "people_picker", text = translate(language, "people_picker", words))
+              ), className = "inline_choicegroup"),
+              conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
+                uiOutput(ns("users_allowed_read_div"))
+              )
+            ), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_datamart_options"), translate(language, "save", words))
+          )
+        ), br()
+      )
     ),
     shinyjs::hidden(
       div(
@@ -160,8 +162,8 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
 
     # Show first card
-    if ("datamarts_options_card" %in% r$user_accesses) shinyjs::show("datamarts_options_card")
-    else shinyjs::show("datamarts_options_card_forbidden")
+    if ("studies_creation_card" %in% r$user_accesses) shinyjs::show("studies_creation_card")
+    else shinyjs::show("studies_creation_card_forbidden")
     
     # observeEvent(input$current_tab, {
     # 
@@ -353,23 +355,30 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     
     observeEvent(r$studies, {
       
-      r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)  %>% dplyr::mutate(modified = FALSE)
+      if(nrow(r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)) == 0){
+        render_datatable(output = output, r = r, ns = ns, language = language,
+          data = tibble::tribble(~name, ~creator_id, ~datetime, ~action), output_name = "studies_datatable")
+      }
       
+      req(nrow(r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)) > 0)
+
+      r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart) %>% dplyr::mutate(modified = FALSE)
+
       # Prepare data for datatable
-      
+
       r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-        table = "studies", factorize_cols = factorize_cols, action_buttons = action_buttons, 
+        table = "studies", factorize_cols = factorize_cols, action_buttons = action_buttons,
         data_input = r$studies_temp, words = r$words)
-      
+
       # Render datatable
-      
+
       render_datatable(output = output, r = r, ns = ns, language = language, data = r$studies_datatable_temp,
         output_name = "studies_datatable", col_names =  get_col_names(table_name = "studies", language = language, words = r$words),
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
         searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
-      
+
       # Create a proxy for datatable
-      
+
       r[[paste0(prefix, "_studies_datatable_proxy")]] <- DT::dataTableProxy("studies_datatable", deferUntilFlush = FALSE)
     })
     
@@ -398,6 +407,8 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     
     # Save updates
     observeEvent(input$save_studies_management, {
+      
+      req(nrow(r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)) > 0)
       
       save_settings_datatable_updates(output = output, r = r, ns = ns, table = "studies", language = language, duplicates_allowed = FALSE)
       
