@@ -20,10 +20,19 @@ mod_settings_log_ui <- function(id = character(), language = "EN", words = tibbl
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
       shiny.fluent::PivotItem(id = "log_card", itemKey = "log_card", headerText = translate(language, "log", words))
     ),
-    forbidden_card(ns = ns, name = "log_card", language = language, words = words),
-    div(id = ns("log_card"),
-      make_card(translate(language, "log"),
-        uiOutput(ns("main"))
+    shinyjs::hidden(
+      div(
+        id = ns("log_card_forbidden"),
+        make_card("",
+          div(shiny.fluent::MessageBar(translate(language, "unauthorized_access_page", words), messageBarType = 5), style = "margin-top:10px;")
+        )
+      )
+    ),
+    shinyjs::hidden(
+      div(id = ns("log_card"),
+        make_card(translate(language, "log"),
+          uiOutput(ns("main"))
+        )
       )
     )
   )
@@ -38,13 +47,14 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     ns <- session$ns
     
     ##########################################
-    # Log / Show or hide cards               #
+    # Log / Render datatable                 #
     ##########################################
-    
-    # Depending on toggles activated
-    
-    # Reset toggles when we load the page (restart reactivity, sometimes frozen)
+
     if ("log" %in% r$user_accesses){
+      
+      shinyjs::show("log_card")
+      shinyjs::hide("log_card_forbidden")
+      
       observeEvent(shiny.router::get_query_param(), {
         shinyjs::hide("log_card")
         shinyjs::show("log_card")
@@ -54,61 +64,48 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
         # if (paste0(id, "log_card") %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = TRUE)
       })
     }
-      
-    # If user has no access, hide card
-    if ("log" %not_in% r$user_accesses){
+    else {
       shinyjs::hide("log_card")
       shinyjs::show("log_card_forbidden")
     }
-    else {
-      shinyjs::hide("log_card_forbidden")
-      shinyjs::show("log_card")
-    }
-  
-    ##########################################
-    # Log / Render datatable                 #
-    ##########################################
     
-    observeEvent(r$user_accesses, {
+    output$main <- renderUI({
       
-      output$main <- renderUI({
+      result <- ""
+      
+      if ("all_users" %in% r$user_accesses){
+  
+        options <-
+          r$users %>%
+          dplyr::left_join(r$users_statuses %>% dplyr::select(user_status_id = id, user_status = name), by = "user_status_id") %>%
+          dplyr::transmute(
+            key = id, 
+            imageInitials = paste0(substr(firstname, 0, 1), substr(lastname, 0, 1)),
+            text = paste0(firstname, " ", lastname), 
+            secondaryText = user_status)
         
-        result <- ""
-        
-        if ("all_users" %in% r$user_accesses){
-    
-          options <-
-            r$users %>%
-            dplyr::left_join(r$users_statuses %>% dplyr::select(user_status_id = id, user_status = name), by = "user_status_id") %>%
-            dplyr::transmute(
-              key = id, 
-              imageInitials = paste0(substr(firstname, 0, 1), substr(lastname, 0, 1)),
-              text = paste0(firstname, " ", lastname), 
-              secondaryText = user_status)
-          
-          div(
-            shiny.fluent::ChoiceGroup.shinyInput(ns("see_log_of"), value = "only_me", options = list(
-              list(key = "only_me", text = translate(language, "only_me", words)),
-              list(key = "people_picker", text = translate(language, "people_picker", words))
-            ), className = "inline_choicegroup"),
-            conditionalPanel(condition = "input.see_log_of == 'people_picker'", ns = ns,
-              make_people_picker(language = language, ns = ns, label = "users", options = options, words = words)
-            ), br(),
-            DT::DTOutput(ns("datatable"))
-          ) -> result
-        }
-        
-        if ("all_users" %not_in% r$user_accesses & "only_me" %in% r$user_accesses){
-          div(
-            shiny.fluent::ChoiceGroup.shinyInput(ns("see_log_of"), value = "only_me", options = list(
-              list(key = "only_me", text = translate(language, "only_me", words))
-            ), className = "inline_choicegroup"),
-            DT::DTOutput(ns("datatable"))
-          )
-        }
-        
-        result
-      })
+        div(
+          shiny.fluent::ChoiceGroup.shinyInput(ns("see_log_of"), value = "only_me", options = list(
+            list(key = "only_me", text = translate(language, "only_me", words)),
+            list(key = "people_picker", text = translate(language, "people_picker", words))
+          ), className = "inline_choicegroup"),
+          conditionalPanel(condition = "input.see_log_of == 'people_picker'", ns = ns,
+            make_people_picker(language = language, ns = ns, label = "users", options = options, words = words)
+          ), br(),
+          DT::DTOutput(ns("datatable"))
+        ) -> result
+      }
+      
+      if ("all_users" %not_in% r$user_accesses & "only_me" %in% r$user_accesses){
+        div(
+          shiny.fluent::ChoiceGroup.shinyInput(ns("see_log_of"), value = "only_me", options = list(
+            list(key = "only_me", text = translate(language, "only_me", words))
+          ), className = "inline_choicegroup"),
+          DT::DTOutput(ns("datatable"))
+        )
+      }
+      
+      result
     })
     
     # When a user is chosen

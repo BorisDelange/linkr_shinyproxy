@@ -721,6 +721,8 @@ get_translations <- function(){
     "FR", "patient_lvl_module_element_deleted", "Item supprimé",
     "EN", "patient_lvl_module_element_group_deleted", "Module element deleted",
     "FR", "patient_lvl_module_element_group_deleted", "Figure supprimée",
+    "EN", "aggregated_module_element_group_deleted", "Module element deleted",
+    "FR", "aggregated_module_element_group_deleted", "Figure supprimée",
     "EN", "aggregated_modules_elements_delete", "Delete a module family element",
     "FR", "aggregated_modules_elements_delete", "Supprimer une figure",
     "EN", "aggregated_modules_elements_delete_subtext", "Do you want to delete this module element ?",

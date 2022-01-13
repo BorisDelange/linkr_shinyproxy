@@ -251,7 +251,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       # }
 
       if (perf_monitoring) print(paste0(Sys.time(), " _ log"))
-      if ("log" %in% r$user_accesses) mod_settings_log_server("settings_log", r, language, r$words)
+      mod_settings_log_server("settings_log", r, language, r$words)
       mod_page_sidenav_server("settings_log", r, language, r$words)
       
       if (perf_monitoring) print(paste0(Sys.time(), " _ END LOAD SERVER MODULES"))
