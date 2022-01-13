@@ -151,24 +151,23 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
           )
         )
       ),
-      # div(id = ns("sub_datatable_card"),
-      #   make_card(tagList(translate(language, "thesaurus_items_management", words), style = "font-size: 15px;"),
-      #     div(
-      #       shiny.fluent::Stack(
-      #         horizontal = TRUE, tokens = list(childrenGap = 50),
-      #         make_combobox(language = language, ns = ns, label = "thesaurus", id = "items_chosen",
-      #           width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE),
-      #         make_dropdown(language = language, ns = ns, label = "datamart", id = "thesaurus_datamart", width = "300px",
-      #           options = convert_tibble_to_list(data = datamarts, key_col = "id", text_col = "name", null_value = TRUE), value = "", words = words),
-      #         conditionalPanel(condition = "input.datamart != ''", ns = ns,
-      #           div(strong(translate(language, "show_only_used_items", words), style = "display:block; padding-bottom:12px;"),
-      #             shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
-      #       ),
-      #       DT::DTOutput(ns("sub_datatable")),
-      #       save_button
-      #     )
-      #   )
-      # ),
+      div(id = ns("sub_datatable_card"),
+        make_card(translate(language, "thesaurus_items_management", words),
+          div(
+            shiny.fluent::Stack(
+              horizontal = TRUE, tokens = list(childrenGap = 50),
+              make_combobox(language = language, ns = ns, label = "thesaurus", id = "items_chosen",
+                width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE),
+              make_dropdown(language = language, ns = ns, label = "datamart", id = "thesaurus_datamart", width = "300px", words = words),
+              conditionalPanel(condition = "input.datamart != ''", ns = ns,
+                div(strong(translate(language, "show_only_used_items", words), style = "display:block; padding-bottom:12px;"),
+                  shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
+            ),
+            DT::DTOutput(ns("sub_datatable")), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), translate(language, "save", words))
+          )
+        )
+      ),
       div(id = ns("edit_code_card"), 
         make_card(translate(language, "edit_thesaurus_code", words),
           div(
@@ -183,13 +182,6 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
           )
         ), br()
       ),
-      # render_settings_creation_card(
-      #   language = language, ns = ns, id = id, title = "create_thesaurus",
-      #   textfields = "name", textfields_width = "300px",
-      #   dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist(), dropdowns_width = "300px", words = words),
-      # uiOutput(ns("edit_code_card")),
-      # uiOutput(ns("options_card")),
-      # uiOutput(ns("sub_datatable_card")),
       render_settings_datatable_card(language = language, ns = ns, div_id = "datatable_card",
         output_id = "management_datatable", title = "thesaurus_management", words = words)
     ) -> result
@@ -231,6 +223,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         
         if (table == "datamarts") shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options)
+        if (table == "thesaurus") shiny.fluent::updateComboBox.shinyInput(session, "items_chosen", options = options)
         shiny.fluent::updateComboBox.shinyInput(session, "code_chosen", options = options)
       })
     }
@@ -448,7 +441,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (table == "subsets") duplicates_allowed <- TRUE
           save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language, duplicates_allowed = duplicates_allowed)
         })
-        observeEvent(input$sub_datatable_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", duplicates_allowed = TRUE, language = language))
+        observeEvent(input$sub_datatable_save, {
+          req(input$items_chosen)
+          save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", 
+            r_table = "sub_thesaurus_items", duplicates_allowed = TRUE, language = language)
+        })
     
       ##########################################
       # Delete a row in datatable              #
@@ -612,6 +609,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           shiny.fluent::updateComboBox.shinyInput(session, "code_chosen", options = options, value = value)
           if (table == "datamarts") shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
+          if (table == "thesaurus") shiny.fluent::updateComboBox.shinyInput(session, "items_chosen", options = options, value = value)
           
         })
         
@@ -628,6 +626,17 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
               options <- convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
               value <- list(key = link_id, text = r$datamarts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
               shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
+            }
+          }
+          
+          if (table == "thesaurus"){
+            if (length(input$items_chosen) > 1) items_link_id <- input$items_chosen$key
+            else items_link_id <- input$items_chosen
+            
+            if (link_id != items_link_id){
+              options <- convert_tibble_to_list(r$thesaurus %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+              value <- list(key = link_id, text = r$thesaurus %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+              shiny.fluent::updateComboBox.shinyInput(session, "items_chosen", options = options, value = value)
             }
           }
 
@@ -686,6 +695,27 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # Get link id
           link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
           
+          options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          value <- list(key = link_id, text = r[[table]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+          
+          shiny.fluent::updateComboBox.shinyInput(session, "items_chosen", options = options, value = value)
+          shiny.fluent::updateComboBox.shinyInput(session, "code_chosen", options = options, value = value)
+          
+        })
+        
+        observeEvent(input$items_chosen, {
+          
+          if (length(input$items_chosen) > 1) link_id <- input$items_chosen$key
+          else link_id <- input$items_chosen
+          if (length(input$code_chosen) > 1) code_link_id <- input$code_chosen$key
+          else code_link_id <- input$code_chosen
+
+          if (link_id != code_link_id){
+            options <- convert_tibble_to_list(r$thesaurus %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+            value <- list(key = link_id, text = r$thesaurus %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+            shiny.fluent::updateComboBox.shinyInput(session, "code_chosen", options = options, value = value)
+          }
+          
           # Create a r var to export value to other observers
           r$thesaurus_link_id <- link_id
           
@@ -693,9 +723,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
           datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
           
+          options <- convert_tibble_to_list(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_datamart", options = options)
+          
           # Set r$thesaurus_refresh_thesaurus_items to "all_items", cause we havn't chosen yet the thesaurus or the datamart
           r$thesaurus_refresh_thesaurus_items <- paste0(link_id, "all_items")
-          
         })
           
         observeEvent(input$show_only_used_items, {

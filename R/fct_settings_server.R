@@ -1242,15 +1242,15 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   
   # Make sure there's no duplicate in names, if duplicates_allowed is set to FALSE
   
+  # If r_table is different than table
+  if (length(r_table) == 0) r_table <- table
+  
   if (!duplicates_allowed){
 
     duplicates_name <- 0
     duplicates_display_order <- 0
     module_is_its_own_parent <- 0
     loop_over_modules <- 0
-    
-    # If r_table is different than table
-    if (length(r_table) == 0) r_table <- table
     
     # For modules tables (patient_lvl & aggregated, modules / modules_families / modules_elements)
     # Duplicates names are grouped (by family for modules, by module for modules elements)
