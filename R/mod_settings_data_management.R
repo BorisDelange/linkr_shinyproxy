@@ -391,6 +391,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         r[[paste0(table, "_datatable_proxy")]] <- DT::dataTableProxy("management_datatable", deferUntilFlush = FALSE)
         
         # Reload datatable
+        
+        observeEvent(r[[table]], {
+          r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
+        })
+        
         observeEvent(r[[paste0(table, "_temp")]], {
           
           # Reload datatable_temp variable
