@@ -310,194 +310,190 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shi
   action_buttons = character(), data_input = tibble::tibble(), data_output = tibble::tibble(), words = tibble::tibble()
 ){
   
+  req(nrow(data_input) > 0)
+  
   if (r$perf_monitoring) print(paste0(Sys.time(), " _ prepare data ", table))
   
-  reload <- TRUE
+  # Initiate data_output, starting from data_input
+  data_output <- data_input
   
-  # Else, reload data_output
-  if (reload) {
-    
-    # Initiate data_output, starting from data_input
-    data_output <- data_input
-    
-    # Add module family column for modules elements
-    if (grepl("modules_elements", table)){
-      if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
-      if (grepl("aggregated", table)) prefix <- "aggregated"
-      data_output <- data_output %>% dplyr::left_join(r[[paste0(prefix, "_modules")]] %>%
-        dplyr::select(module_id = id, module_family_id), by = "module_id") %>% dplyr::relocate(module_family_id, .after = name)
-    }
-    
-    # Add a column action in the DataTable
-    # Action column is already loaded for thesaurus_items (cache system)
-    if (!grepl("thesaurus_items", table) & length(action_buttons) != 0) data_output["action"] <- NA_character_
-    
-    # Dropdowns is a named character vector, with names corresponding to column names (eg data_source_id)
-    # and values corresponding to data_var / data variables names (eg data_sources)
-    
-    # Transform dropdowns columns in the dataframe to character
-    if (length(dropdowns) != 0) lapply(names(dropdowns), function(col_name) data_output %>% dplyr::mutate_at(col_name, as.character) ->> data_output)
-    
-    # For each row of the dataframe :
-    # - transform dropdowns columns to show dropdowns in Shiny app
-    # - add an Action column with delete action button (+/- options / edit code buttons)
-    # - show creator name
-    
-    # Loop over data only if necessary (eg not necessary for thesaurus_items, with a lot of rows...)
-    # Not necessary if no dropdowns, no action_buttons & no creator_id col
-    if (!grepl("thesaurus_items", table) & (length(dropdowns) != 0 | length(action_buttons) != 0 | "creator_id" %in% names(data_output))){
+  # Add module family column for modules elements
+  if (grepl("modules_elements", table)){
+    if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
+    if (grepl("aggregated", table)) prefix <- "aggregated"
+    data_output <- data_output %>% dplyr::left_join(r[[paste0(prefix, "_modules")]] %>%
+      dplyr::select(module_id = id, module_family_id), by = "module_id") %>% dplyr::relocate(module_family_id, .after = name)
+  }
+  
+  # Add a column action in the DataTable
+  # Action column is already loaded for thesaurus_items (cache system)
+  if (!grepl("thesaurus_items", table) & length(action_buttons) != 0) data_output["action"] <- NA_character_
+  
+  # Dropdowns is a named character vector, with names corresponding to column names (eg data_source_id)
+  # and values corresponding to data_var / data variables names (eg data_sources)
+  
+  # Transform dropdowns columns in the dataframe to character
+  if (length(dropdowns) != 0) lapply(names(dropdowns), function(col_name) data_output %>% dplyr::mutate_at(col_name, as.character) ->> data_output)
+  
+  # For each row of the dataframe :
+  # - transform dropdowns columns to show dropdowns in Shiny app
+  # - add an Action column with delete action button (+/- options / edit code buttons)
+  # - show creator name
+  
+  # Loop over data only if necessary (eg not necessary for thesaurus_items, with a lot of rows...)
+  # Not necessary if no dropdowns, no action_buttons & no creator_id col
+  if (!grepl("thesaurus_items", table) & (length(dropdowns) != 0 | length(action_buttons) != 0 | "creator_id" %in% names(data_output))){
 
-      for (i in 1:nrow(data_output)){
-        
-        #############
-        # DROPDOWNS #
-        #############
-        
-        if (length(dropdowns) != 0){
-          lapply(names(dropdowns), function(name){
-            
-            # name here is like "data_source_id"
-            # dropdowns[name] here is like "data_sources"
-            # so r[[dropdowns[[name]]]] is like r$data_sources, var containing data_sources data
-            
-            multiSelect = FALSE
-            null_value <- FALSE
+    for (i in 1:nrow(data_output)){
+      
+      #############
+      # DROPDOWNS #
+      #############
+      
+      if (length(dropdowns) != 0){
+        lapply(names(dropdowns), function(name){
+          
+          # name here is like "data_source_id"
+          # dropdowns[name] here is like "data_sources"
+          # so r[[dropdowns[[name]]]] is like r$data_sources, var containing data_sources data
+          
+          multiSelect = FALSE
+          null_value <- FALSE
 
-            # Put a null value in dropdowns
-            if (name %in% dropdowns_null_value) null_value <- TRUE
+          # Put a null value in dropdowns
+          if (name %in% dropdowns_null_value) null_value <- TRUE
+          
+          # If this is a multiselect dropdown, split results to integers
+          if (name %in% dropdowns_multiselect){
             
-            # If this is a multiselect dropdown, split results to integers
-            if (name %in% dropdowns_multiselect){
-              
-              multiSelect <- TRUE
-              value <- NULL
-              if (!(TRUE %in% grepl("[a-zA-Z]", stringr::str_split(data_output[[i, name]], ", ") %>% unlist()))){
-                value <- stringr::str_split(data_output[[i, name]], ", ") %>% unlist() %>% as.integer()
-              }
+            multiSelect <- TRUE
+            value <- NULL
+            if (!(TRUE %in% grepl("[a-zA-Z]", stringr::str_split(data_output[[i, name]], ", ") %>% unlist()))){
+              value <- stringr::str_split(data_output[[i, name]], ", ") %>% unlist() %>% as.integer()
             }
-            else value <- as.integer(data_output[[i, name]])
-            
-            options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = null_value, words = words) 
-            
-            # For dropdown parent_module in patient_lvl & aggregated_modules, need to select only modules depending on the same module family
-            
-            if (dropdowns[[name]] %in% c("patient_lvl_modules", "aggregated_modules")){
-              options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]] %>% dplyr::filter(module_family_id == data_output[[i, "module_family_id"]]),
-                key_col = "id", text_col = "name", null_value = null_value, words = words)
-            }
-              
-            data_output[i, name] <<- as.character(
-              div(
-                # ID is like "data_sources13" if ID = 13
-                shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[[name]], data_output[[i, "id"]])), options = options, value = value, multiSelect = multiSelect),
-                # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
-                onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[[name]], data_output[[i, "id"]]), "', {priority: 'event'})"),
-                style = "width:200px")
-            )
-            
-          })
-        }
-        
-        ##################
-        # ACTION BUTTONS #
-        ##################
-        
-        # Action buttons : if in action_buttons vector, add action button
-        actions <- tagList()
-        
-        # Add add_item button
-        if ("add" %in% action_buttons){
-          actions <- tagList(actions,
-            actionButton(paste0("add_item_", data_output[i, "id"]), "", icon = icon("plus"),
-              onclick = paste0("Shiny.setInputValue('", id, "-add_item", "', this.id, {priority: 'event'})")), "")}
-        
-        # Add options button
-        if ("options" %in% action_buttons){
-          actions <- tagList(actions,
-            actionButton(paste0("options_", data_output[i, "id"]), "", icon = icon("cog"),
-              onclick = paste0("Shiny.setInputValue('", id, "-options", "', this.id, {priority: 'event'})")), "")}
-        
-        # Add edit code button
-        if ("edit_code" %in% action_buttons){
-          actions <- tagList(actions,
-            actionButton(paste0("edit_code_", data_output[i, "id"]), "", icon = icon("file-code"),
-              onclick = paste0("Shiny.setInputValue('", id, "-edit_code", "', this.id, {priority: 'event'})")), "")}
-        
-        # Add sub datatable button
-        if ("sub_datatable" %in% action_buttons){
-          actions <- tagList(actions,
-            actionButton(paste0("sub_datatable_", data_output[i, "id"]), "", icon = icon("table"),
-              onclick = paste0("Shiny.setInputValue('", id, "-sub_datatable", "', this.id, {priority: 'event'})")), "")}
-        
-        # Add delete button
-        if ("delete" %in% action_buttons){
-          
-          # If row is deletable (we havn't made a function argument for deletable or not, only default subsets are not deletable)
-          # Could be changed later
-          
-          delete <- actionButton(paste0("delete_", data_output[i, "id"]), "", icon = icon("trash-alt"),
-            onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})"))
-          
-          # Default subsets are not deletable
-          if (id == "settings_subsets"){
-            if (data_output[i, "name"] %in% c(translate("EN", "subset_all_patients", r$words), translate("EN", "subset_included_patients", r$words), translate("EN", "subset_excluded_patients", r$words),
-              translate("FR", "subset_all_patients", r$words), translate("FR", "subset_included_patients", r$words), translate("FR", "subset_excluded_patients", r$words))) delete <- ""
           }
+          else value <- as.integer(data_output[[i, name]])
           
-          actions <- tagList(actions, delete)
-        }
-        
-        # Update action column in dataframe
-        if (length(action_buttons) != 0) data_output[i, "action"] <- as.character(div(actions))
-        
-        ################
-        # CREATOR NAME #
-        ################
-        
-        if ("creator_id" %in% names(data_output)){
-          if (nrow(r$users %>% dplyr::filter(id == data_output[[i, "creator_id"]])) > 0){
-            data_output[i, "creator_id"] <-
-              r$users %>% dplyr::filter(id == data_output[[i, "creator_id"]]) %>%
-              dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>%
-              dplyr::pull(creator)
+          options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = null_value, words = words) 
+          
+          # For dropdown parent_module in patient_lvl & aggregated_modules, need to select only modules depending on the same module family
+          
+          if (dropdowns[[name]] %in% c("patient_lvl_modules", "aggregated_modules")){
+            options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]] %>% dplyr::filter(module_family_id == data_output[[i, "module_family_id"]]),
+              key_col = "id", text_col = "name", null_value = null_value, words = words)
           }
-          else data_output[i, "creator_id"] <- translate(language, "deleted_user", r$words)
-        }
-        
-        # Get names for other columns if there are not dropdowns
-        
-        cols <- c("data_source_id" = "data_sources", "datamart_id" = "datamarts", "study_id" = "studies", "module_type_id" = "module_types")
-        sapply(names(cols), function(name){
-          if (name %in% names(data_output) & name %not_in% names(dropdowns)){
-            row_id <- data_output[[i, name]]
-            if (length(row_id) > 0) result <- r[[cols[[name]]]] %>% dplyr::filter(id == as.integer(row_id)) %>% dplyr::pull(name)
-            if (length(result) == 0) result <- ""
-            data_output[[i, name]] <<- result
-          }
-        })
-        
-        cols <- c("module_family_id" = "modules_families", "module_id" = "modules", "plugin_id" = "plugins")
-        sapply(names(cols), function(name){
-          if (name %in% names(data_output) & name %not_in% names(dropdowns)){
-            if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
-            if (grepl("aggregated", table)) prefix <- "aggregated_"
-            if (name == "plugin_id") prefix <- ""
             
-            row_id <- data_output[[i, name]]
-            if (length(row_id) > 0) result <- r[[paste0(prefix, cols[[name]])]] %>% dplyr::filter(id == as.integer(row_id)) %>% dplyr::pull(name)
-            if (length(result) == 0) result <- ""
-            data_output[[i, name]] <<- result
-          }
+          data_output[i, name] <<- as.character(
+            div(
+              # ID is like "data_sources13" if ID = 13
+              shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[[name]], data_output[[i, "id"]])), options = options, value = value, multiSelect = multiSelect),
+              # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
+              onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[[name]], data_output[[i, "id"]]), "', {priority: 'event'})"),
+              style = "width:200px")
+          )
+          
         })
       }
+      
+      ##################
+      # ACTION BUTTONS #
+      ##################
+      
+      # Action buttons : if in action_buttons vector, add action button
+      actions <- tagList()
+      
+      # Add add_item button
+      if ("add" %in% action_buttons){
+        actions <- tagList(actions,
+          actionButton(paste0("add_item_", data_output[i, "id"]), "", icon = icon("plus"),
+            onclick = paste0("Shiny.setInputValue('", id, "-add_item", "', this.id, {priority: 'event'})")), "")}
+      
+      # Add options button
+      if ("options" %in% action_buttons){
+        actions <- tagList(actions,
+          actionButton(paste0("options_", data_output[i, "id"]), "", icon = icon("cog"),
+            onclick = paste0("Shiny.setInputValue('", id, "-options", "', this.id, {priority: 'event'})")), "")}
+      
+      # Add edit code button
+      if ("edit_code" %in% action_buttons){
+        actions <- tagList(actions,
+          actionButton(paste0("edit_code_", data_output[i, "id"]), "", icon = icon("file-code"),
+            onclick = paste0("Shiny.setInputValue('", id, "-edit_code", "', this.id, {priority: 'event'})")), "")}
+      
+      # Add sub datatable button
+      if ("sub_datatable" %in% action_buttons){
+        actions <- tagList(actions,
+          actionButton(paste0("sub_datatable_", data_output[i, "id"]), "", icon = icon("table"),
+            onclick = paste0("Shiny.setInputValue('", id, "-sub_datatable", "', this.id, {priority: 'event'})")), "")}
+      
+      # Add delete button
+      if ("delete" %in% action_buttons){
+        
+        # If row is deletable (we havn't made a function argument for deletable or not, only default subsets are not deletable)
+        # Could be changed later
+        
+        delete <- actionButton(paste0("delete_", data_output[i, "id"]), "", icon = icon("trash-alt"),
+          onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})"))
+        
+        # Default subsets are not deletable
+        if (id == "settings_subsets"){
+          if (data_output[i, "name"] %in% c(translate("EN", "subset_all_patients", r$words), translate("EN", "subset_included_patients", r$words), translate("EN", "subset_excluded_patients", r$words),
+            translate("FR", "subset_all_patients", r$words), translate("FR", "subset_included_patients", r$words), translate("FR", "subset_excluded_patients", r$words))) delete <- ""
+        }
+        
+        actions <- tagList(actions, delete)
+      }
+      
+      # Update action column in dataframe
+      if (length(action_buttons) != 0) data_output[i, "action"] <- as.character(div(actions))
+      
+      ################
+      # CREATOR NAME #
+      ################
+      
+      if ("creator_id" %in% names(data_output)){
+        if (nrow(r$users %>% dplyr::filter(id == data_output[[i, "creator_id"]])) > 0){
+          data_output[i, "creator_id"] <-
+            r$users %>% dplyr::filter(id == data_output[[i, "creator_id"]]) %>%
+            dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>%
+            dplyr::pull(creator)
+        }
+        else data_output[i, "creator_id"] <- translate(language, "deleted_user", r$words)
+      }
+      
+      # Get names for other columns if there are not dropdowns
+      
+      cols <- c("data_source_id" = "data_sources", "datamart_id" = "datamarts", "study_id" = "studies", "module_type_id" = "module_types")
+      sapply(names(cols), function(name){
+        if (name %in% names(data_output) & name %not_in% names(dropdowns)){
+          row_id <- data_output[[i, name]]
+          if (length(row_id) > 0) result <- r[[cols[[name]]]] %>% dplyr::filter(id == as.integer(row_id)) %>% dplyr::pull(name)
+          if (length(result) == 0) result <- ""
+          data_output[[i, name]] <<- result
+        }
+      })
+      
+      cols <- c("module_family_id" = "modules_families", "module_id" = "modules", "plugin_id" = "plugins")
+      sapply(names(cols), function(name){
+        if (name %in% names(data_output) & name %not_in% names(dropdowns)){
+          if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
+          if (grepl("aggregated", table)) prefix <- "aggregated_"
+          if (name == "plugin_id") prefix <- ""
+          
+          row_id <- data_output[[i, name]]
+          if (length(row_id) > 0) result <- r[[paste0(prefix, cols[[name]])]] %>% dplyr::filter(id == as.integer(row_id)) %>% dplyr::pull(name)
+          if (length(result) == 0) result <- ""
+          data_output[[i, name]] <<- result
+        }
+      })
     }
-    
-    # Factorize cols
-    
-    data_output <- data_output %>% dplyr::mutate_at(factorize_cols, as.factor)
-    
-    data_output
   }
+  
+  # Factorize cols
+  
+  data_output <- data_output %>% dplyr::mutate_at(factorize_cols, as.factor)
+  
+  data_output
 }
   
 

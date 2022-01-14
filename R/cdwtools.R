@@ -82,12 +82,7 @@ cdwtools <- function(
     shiny.router::route("settings/r_console", make_layout(language = language, page = "settings/r_console", words = words)),
     shiny.router::route("settings/data_sources", make_layout(language = language, page = "settings/data_sources", words = words)),
     shiny.router::route("settings/datamarts", make_layout(language = language, page = "settings/datamarts", words = words)),
-    shiny.router::route("settings/studies", make_layout(language = language, page = "settings/studies", words = words)),
-    shiny.router::route("settings/subsets", make_layout(language = language, page = "settings/subsets", words = words)),
     shiny.router::route("settings/thesaurus", make_layout(language = language, page = "settings/thesaurus", words = words)),
-    shiny.router::route("settings/plugins", make_layout(language = language, page = "settings/plugins", words = words)),
-    shiny.router::route("settings/patient_lvl_modules", make_layout(language = language, page = "settings/patient_lvl_modules", words = words)),
-    shiny.router::route("settings/aggregated_modules", make_layout(language = language, page = "settings/aggregated_modules", words = words)),
     shiny.router::route("settings/log", make_layout(language = language, page = "settings/log", words = words))
   ) -> page
   

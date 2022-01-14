@@ -117,16 +117,13 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
 
     # Load modules
     # Don't load modules user has no access to
-
+    
     observeEvent(r$user_accesses, {
-
+      
       ##########################################
       # Keep data user has access to          #
       ##########################################
-
-      # Thesaurus & data_sources tables are visible for everybody
-
-      # Access by options => user access list
+      
       sapply(c("datamarts", "plugins"), function(table){
         if (paste0(table, "_see_all_data") %not_in% r$user_accesses){
           if (nrow(r[[table]] > 0)){
@@ -135,52 +132,11 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
           }
         }
       })
-      # sapply(c("patient_lvl_modules_families", "aggregated_modules_families"), function(table){
-      # 
-      #   if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
-      #   if (grepl("aggregated", table)) prefix <- "aggregated_"
-      # 
-      #   if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
-      #     if (nrow(r[[table]] > 0)){
-      #       r[[table]] <- get_authorized_data(r = r, table = table)
-      #       r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-      #     }
-      #   }
-      # })
-
-      # Access by parent
-
-      # if ("subsets_see_all_data" %not_in% r$user_accesses){
-      #   if (nrow(r$subsets > 0)){
-      #     studies_ids <- r$studies %>% dplyr::pull(id)
-      #     r$subsets <- r$subsets %>% dplyr::filter(study_id %in% studies_ids)
-      #     r$subsets_temp <- r$subsets %>% dplyr::mutate(modified = FALSE)
-      #   }
-      # }
-
-      # sapply(c("patient_lvl_modules", "aggregated_modules", "patient_lvl_modules_elements", "aggregated_modules_elements"), function(table){
-      # 
-      #   if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
-      #   if (grepl("aggregated", table)) prefix <- "aggregated_"
-      # 
-      #   if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
-      #     modules_families_ids <- get_authorized_data(r = r, table = paste0(prefix, "modules_families")) %>% dplyr::pull(id)
-      #     if (nrow(r[[paste0(prefix, "modules")]]) > 0) modules_ids <- r[[paste0(prefix, "modules")]] %>%
-      #       dplyr::filter(module_family_id %in% modules_families_ids) %>% dplyr::pull(id)
-      # 
-      #     if (nrow(r[[table]]) > 0){
-      #       if (grepl("modules$", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_family_id %in% modules_families_ids)
-      #       if (grepl("modules_elements", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_id %in% modules_ids)
-      #     }
-      # 
-      #     r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-      #   }
-      # })
 
       ##########################################
       # Load server modules                    #
       ##########################################
-
+    
       if (perf_monitoring) print(paste0(Sys.time(), " _ START LOAD SERVER MODULES"))
       
       mod_home_server("home", r, language, r$words)
@@ -198,58 +154,35 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       if (perf_monitoring) print(paste0(Sys.time(), " _ plugins"))
       mod_plugins_server("plugins_patient_lvl", r, language, r$words)
       mod_plugins_server("plugins_aggregated", r, language, r$words)
-
+    
       if (perf_monitoring) print(paste0(Sys.time(), " _ general"))
       mod_settings_general_server("settings_general_settings", r, language, r$words)
       mod_page_sidenav_server("settings_general_settings", r, language, r$words)
-
+    
       if (perf_monitoring) print(paste0(Sys.time(), " _ app_db"))
-      if ("app_db" %in% r$user_accesses) mod_settings_app_database_server("settings_app_db", r, language, r$words)
+      mod_settings_app_database_server("settings_app_db", r, language, r$words)
       mod_page_sidenav_server("settings_app_db", r, language, r$words)
-
+    
       if (perf_monitoring) print(paste0(Sys.time(), " _ users"))
-      if ("users" %in% r$user_accesses) mod_settings_users_server("settings_users", r, language, r$words)
+      mod_settings_users_server("settings_users", r, language, r$words)
       mod_page_sidenav_server("settings_users", r, language, r$words)
-
+    
       sapply(c("users", "users_statuses", "users_accesses"), function(page){
-        if ("users" %in% r$user_accesses) mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language, r$words)
-        if ("users" %in% r$user_accesses) mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language, r$words)
-        if ("users" %in% r$user_accesses & page == "users_accesses") mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language, r$words)
+        mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language, r$words)
+        mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language, r$words)
+        mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language, r$words)
       })
-
+    
       if (perf_monitoring) print(paste0(Sys.time(), " _ data_management"))
-      if ("r_console" %in% r$user_accesses) mod_settings_r_console_server("settings_r_console", r, language, r$words)
+      mod_settings_r_console_server("settings_r_console", r, language, r$words)
       mod_page_sidenav_server("settings_r_console", r, language, r$words)
-
+    
       if (perf_monitoring) print(paste0(Sys.time(), " _ data_management"))
       sapply(c("data_sources", "datamarts", "thesaurus"), function(page){
-        if (page %in% r$user_accesses) mod_settings_data_management_server(paste0("settings_", page), r, language, r$words)
+        mod_settings_data_management_server(paste0("settings_", page), r, language, r$words)
         mod_page_sidenav_server(paste0("settings_", page), r, language, r$words)
       })
-
-      # if (perf_monitoring) print(paste0(Sys.time(), " _ plugins"))
-      # if ("plugins" %in% r$user_accesses) mod_settings_plugins_server("settings_plugins", r, language, r$words)
-      # mod_page_sidenav_server("settings_plugins", r, language, r$words)
-
-      # if (perf_monitoring) print(paste0(Sys.time(), " _ modules"))
-      # sapply(c("patient_lvl_modules", "aggregated_modules"), function(page){
-      #   if (page %in% r$user_accesses) mod_settings_modules_server(paste0("settings_", page), r, language, r$words)
-      #   if (perf_monitoring) print(paste0(Sys.time(), " _ ", page))
-      #   mod_page_sidenav_server(paste0("settings_", page), r, language, r$words)
-      # })
-
-      # Patient-lvl & aggregated modules page sub modules
-      # if ("patient_lvl_modules" %in% r$user_accesses | "aggregated_modules" %in% r$user_accesses){
-      #   sapply(c("patient_lvl", "aggregated"), function(prefix){
-      #     sapply(c("modules", "modules_families", "modules_elements"), function(page){
-      #       if (perf_monitoring) print(paste0(Sys.time(), " _ ", page))
-      #       mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_creation"), r, language, r$words)
-      #       mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_management"), r, language, r$words)
-      #       if (page == "modules_families") mod_settings_modules_server(paste0("settings_modules_", prefix, "_", page, "_options"), r, language, r$words)
-      #     })
-      #   })
-      # }
-
+    
       if (perf_monitoring) print(paste0(Sys.time(), " _ log"))
       mod_settings_log_server("settings_log", r, language, r$words)
       mod_page_sidenav_server("settings_log", r, language, r$words)
@@ -257,8 +190,6 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       if (perf_monitoring) print(paste0(Sys.time(), " _ END LOAD SERVER MODULES"))
       
       r$end_load_modules <- TRUE
-
     })
-    
   }
 }

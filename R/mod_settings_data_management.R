@@ -314,7 +314,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
       table <- paste0(substr(id, nchar("settings_") + 1, nchar(id)))
     
-      if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- BEGIN load", table, " management datatable"))
+      if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- BEGIN load ", table, " management datatable"))
       
       # observeEvent(r[[table]], {
         

@@ -94,7 +94,7 @@ get_translations <- function(){
     "EN", "thesaurus_options", "Thesaurus options",
     "FR", "thesaurus_options", "Paramètres du thésaurus",
     "EN", "thesaurus_datamart_card", "Datamart's thesaurus",
-    "FR", "thesaurus_datamart_card", "Datamart du thésaurus",
+    "FR", "thesaurus_datamart_card", "Thésaurus du datamart",
     "EN", "patient_lvl_module_family", "Patient-level data module family",
     "FR", "patient_lvl_module_family", "Données individuelles - groupe de modules",
     "EN", "aggregated_module_family", "Aggregated data module family",
