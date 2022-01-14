@@ -664,7 +664,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
           # Get plugin code
           
           code_server_card <- r$code %>%
-            dplyr::filter(link_id == input$plugin, category == "plugin_server") %>%
+            dplyr::filter(link_id == input$plugin$key, category == "plugin_server") %>%
             dplyr::pull(code) %>%
             stringr::str_replace_all("%module_id%", as.character(r[[paste0(prefix, "_selected_module")]])) %>%
             stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
