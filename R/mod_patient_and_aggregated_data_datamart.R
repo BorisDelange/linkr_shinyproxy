@@ -559,6 +559,8 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     # Save updates
     observeEvent(input$save_thesaurus_items, {
       
+      req(input$thesaurus)
+      
       save_settings_datatable_updates(output = output, r = r, ns = ns, 
         table = "thesaurus_items", r_table = "datamart_thesaurus_items", duplicates_allowed = TRUE, language = language)
     })

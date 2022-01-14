@@ -501,7 +501,19 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = value)
       
       # Change PivotItem
-      r$plugins_selected_pivot <- "plugins_edit_code_card"
+      # r$plugins_selected_pivot <- "plugins_edit_code_card"
+    })
+    
+    observeEvent(input$options, {
+      
+      # Get link_id variable, to update options div
+      link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
+      
+      options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      value <- list(key = link_id, text = r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+      
+      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = value)
     })
     
     ##########################################
@@ -518,7 +530,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       if (link_id != code_link_id){
         options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = link_id, text = r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-        shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = link_id)
+        shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = value)
       }
       
       # Plugin options
@@ -590,7 +602,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       if (link_id != options_link_id){
         options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = link_id, text = r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-        shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = link_id)
+        shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = value)
       }
 
       # Get code from database
