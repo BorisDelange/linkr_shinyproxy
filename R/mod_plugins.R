@@ -982,10 +982,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
                 dplyr::relocate(link_id, .after = "category")
             )
           
-          print(new_plugins)
-          print(new_plugins_code)
-          print(new_plugins_options)
-          
           DBI::dbAppendTable(r$db, "plugins", new_plugins)
           DBI::dbAppendTable(r$db, "code", new_plugins_code)
           DBI::dbAppendTable(r$db, "options", new_plugins_options)
