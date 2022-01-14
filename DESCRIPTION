@@ -1,6 +1,6 @@
 Package: cdwtools
 Title: Clinical Data Warehouses Tools
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person('Boris', 'Delange', email = 'boris.delange@gmail.com', role = c('cre', 'aut', 'cph'))
 Description: CDW Tools package gives some tools to help clinicians without advanced programmation skills, 
   statisticiants and data scientists use their clinical data warehouse, from patient-level data visualization 
