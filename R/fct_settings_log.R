@@ -33,6 +33,8 @@ add_log_entry <- function(r, category, name, value){
 report_bug <- function(r = shiny::reactiveValues(), output, error_message = character(), 
   error_name = character(), category = character(), error_report = character(), language = "EN"){
   
+  print(error_report)
+  
   # Notification to user
   show_message_bar(output, 3, error_message, "severeWarning", language)
   

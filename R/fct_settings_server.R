@@ -169,13 +169,13 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   if (id == "settings_plugins"){
 
     # Add options rows
-    value <- paste0("- **Version** : 0.0.1\n- **Libraries** : *put libraries needed here*\n- **Data allowed** : *put data allowed here*\n",
-      "- **Previous plugin needed first** : *put previous plugins needed here*\n\n*Put full description here*")
+    # value <- paste0("- **Version** : 0.0.1\n- **Libraries** : *put libraries needed here*\n- **Data allowed** : *put data allowed here*\n",
+    #   "- **Previous plugin needed first** : *put previous plugins needed here*\n\n*Put full description here*")
     
     new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row_options + 1, "plugin", last_row + 1, "markdown_description", value, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 2, "plugin", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 3, "plugin", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      # last_row_options + 1, "plugin", last_row + 1, "markdown_description", value, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row_options + 1, "plugin", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row_options + 2, "plugin", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "options", new_options)
     update_r(r = r, table = "options", language = language)
     
@@ -310,9 +310,9 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shi
   action_buttons = character(), data_input = tibble::tibble(), data_output = tibble::tibble(), words = tibble::tibble()
 ){
   
-  req(nrow(data_input) > 0)
+  # req(nrow(data_input) > 0)
   
-  if (r$perf_monitoring) print(paste0(Sys.time(), " _ prepare data ", table))
+  if (r$perf_monitoring) print(paste0(Sys.time(), " _ prepare data _ table = ", table))
   
   # Initiate data_output, starting from data_input
   data_output <- data_input
@@ -1394,16 +1394,20 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
   # If we delete a datamart, delete all studies & subsets associated
   if (table == "datamarts"){
     
-    studies <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM studies WHERE datamart_id = ", row_deleted)) %>% dplyr::pull()
+    studies <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM studies WHERE datamart_id = ", row_deleted))
     
-    DBI::dbSendStatement(r$db, paste0("UPDATE studies SET deleted = TRUE WHERE datamart_id = ", row_deleted)) -> query
-    DBI::dbClearResult(query)
-    
-    DBI::dbSendStatement(r$db, paste0("UPDATE subsets SET deleted = TRUE WHERE study_id IN (", paste(studies, collapse = ","), ")")) -> query
-    DBI::dbClearResult(query)
-    
-    update_r(r = r, table = "studies")
-    update_r(r = r, table = "subsets")
+    if(nrow(studies) > 0){
+      studies <- studies %>% dplyr::pull()
+      
+      DBI::dbSendStatement(r$db, paste0("UPDATE studies SET deleted = TRUE WHERE datamart_id = ", row_deleted)) -> query
+      DBI::dbClearResult(query)
+      
+      DBI::dbSendStatement(r$db, paste0("UPDATE subsets SET deleted = TRUE WHERE study_id IN (", paste(studies, collapse = ","), ")")) -> query
+      DBI::dbClearResult(query)
+      
+      update_r(r = r, table = "studies")
+      update_r(r = r, table = "subsets")
+    }
   }
   
   # If we delete a study, delete all subsets associated

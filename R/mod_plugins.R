@@ -245,6 +245,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       module_type_id <- 2
     }
     
+    r[[paste0(prefix, "_plugins_datatable_loaded")]] <- FALSE
+    
     ##########################################
     # Pivot menu                             #
     ##########################################
@@ -350,47 +352,62 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     observeEvent(r$plugins, {
       
-      r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>%
+      if (nrow(r$plugins) == 0){
+        r[[paste0(prefix, "_plugins_temp")]] <- tibble::tibble()
+        r[[paste0(prefix, "_plugins_datatable_loaded")]] <- FALSE 
+      }
+      else r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>%
         dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
-      r[[paste0(prefix, "_export_plugins_temp")]] <- r[[paste0(prefix, "_plugins_temp")]]
-      r[[paste0(prefix, "_export_plugins_selected")]] <- r[[paste0(prefix, "_export_plugins_temp")]] %>% dplyr::slice(0)
       
-      # Prepare data for datatables
+    })
+    
+    observeEvent(r[[paste0(prefix, "_plugins_temp")]], {
       
-      r[[paste0(prefix, "_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-        table = "plugins", action_buttons = action_buttons_plugins_management, data_input = r[[paste0(prefix, "_plugins_temp")]], words = r$words)
-      
-      r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-        table = "plugins", action_buttons = action_buttons_export_plugins, data_input = r[[paste0(prefix, "_export_plugins_temp")]], words = r$words)
-      
-      # Render datatables
-      
-      render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(prefix, "_plugins_datatable_temp")]],
+      if (nrow(r[[paste0(prefix, "_plugins_temp")]]) == 0) render_datatable(output = output, r = r, ns = ns, language = language, data = tibble::tibble(),
         output_name = "plugins_datatable", col_names =  get_col_names(table_name = "plugins", language = language, words = r$words),
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
         searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
       
-      render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(prefix, "_export_plugins_datatable_temp")]],
-        output_name = "plugins_to_export_datatable", col_names =  get_col_names(table_name = "plugins", language = language, words = r$words),
-        editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
-      
-      # Create a proxy for datatable
-      
-      r[[paste0(prefix, "_plugins_datatable_proxy")]] <- DT::dataTableProxy("plugins_datatable", deferUntilFlush = FALSE)
-    })
-    
-    # Reload datatables
-    observeEvent(r[[paste0(prefix, "_plugins_temp")]], {
-      
-      # Reload datatable_temp variable
+      req(nrow(r[[paste0(prefix, "_plugins_temp")]]) > 0)
+
+      r[[paste0(prefix, "_export_plugins_temp")]] <- r[[paste0(prefix, "_plugins_temp")]]
+      r[[paste0(prefix, "_export_plugins_selected")]] <- r[[paste0(prefix, "_export_plugins_temp")]] %>% dplyr::slice(0)
+
+      # Prepare data for datatables
+
       r[[paste0(prefix, "_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-        table = "plugins", action_buttons = action_buttons_plugins_management, 
-        data_input = r[[paste0(prefix, "_plugins_temp")]], words = r$words)
+        table = "plugins", action_buttons = action_buttons_plugins_management, data_input = r[[paste0(prefix, "_plugins_temp")]], words = r$words)
+
+      r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+        table = "plugins", action_buttons = action_buttons_export_plugins, data_input = r[[paste0(prefix, "_export_plugins_temp")]], words = r$words)
+
+      # Render datatables
       
-      # Reload data of datatable
-      if (length(r[[paste0(prefix, "_plugins_datatable_proxy")]]) > 0) DT::replaceData(r[[paste0(prefix, "_plugins_datatable_proxy")]], 
-        r[[paste0(prefix, "_plugins_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
+      if (!r[[paste0(prefix, "_plugins_datatable_loaded")]]){
+
+        render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(prefix, "_plugins_datatable_temp")]],
+          output_name = "plugins_datatable", col_names =  get_col_names(table_name = "plugins", language = language, words = r$words),
+          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+          searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
+  
+        render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(prefix, "_export_plugins_datatable_temp")]],
+          output_name = "plugins_to_export_datatable", col_names =  get_col_names(table_name = "plugins", language = language, words = r$words),
+          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+          searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
+  
+        # Create a proxy for datatable
+  
+        r[[paste0(prefix, "_plugins_datatable_proxy")]] <- DT::dataTableProxy("plugins_datatable", deferUntilFlush = FALSE)
+
+        # Indicate that datatable has been loaded
+        r[[paste0(prefix, "_plugins_datatable_loaded")]] <- TRUE
+      }
+      
+      else {
+        # Reload data of datatable
+          if (length(r[[paste0(prefix, "_plugins_datatable_proxy")]]) > 0) DT::replaceData(r[[paste0(prefix, "_plugins_datatable_proxy")]],
+            r[[paste0(prefix, "_plugins_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
+      }
     })
     
     observeEvent(r[[paste0(prefix, "_export_plugins_temp")]], {
@@ -921,6 +938,23 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         new_plugins <- data$plugins %>% dplyr::anti_join(all_plugins %>% dplyr::select(name, module_type_id), by = c("name", "module_type_id"))
         new_plugins_code <- data$code %>% dplyr::inner_join(new_plugins %>% dplyr::select(link_id = id), by = "link_id")
         
+        last_row_options <- get_last_row(r$db, "options")
+        
+        new_plugins_options <- new_plugins %>% dplyr::select(link_id = id) %>% 
+          dplyr::mutate(id = 1:dplyr::n() + last_row_options, category = "plugin", name = "users_allowed_read_group", value = "everybody", value_num = 1, 
+            creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE) %>% 
+          dplyr::relocate(link_id, .after = "category")
+        
+        last_row_options <- last_row_options + nrow(new_plugins_options)
+        
+        new_plugins_options <- new_plugins_options %>% 
+          dplyr::bind_rows(
+            new_plugins %>% dplyr::select(link_id = id) %>% 
+              dplyr::mutate(id = 1:dplyr::n() + last_row_options, category = "plugin", name = "user_allowed_read", value = "", value_num = r$user_id, 
+                creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE) %>% 
+              dplyr::relocate(link_id, .after = "category")
+          )
+        
         existing_plugins <- data$plugins %>% 
           dplyr::inner_join(all_plugins %>% dplyr::select(new_id = id, name, module_type_id), by = c("name", "module_type_id"))
         
@@ -942,6 +976,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         
         DBI::dbAppendTable(r$db, "plugins", new_plugins)
         DBI::dbAppendTable(r$db, "code", new_plugins_code)
+        DBI::dbAppendTable(r$db, "options", new_plugins_options)
         
         # Replace already existing plugins (based on module type & name)
         if (input$replace_already_existing_plugins){
@@ -970,7 +1005,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
 
         show_message_bar(output, 3, "plugin_imported", "success", language, time = 15000)
       },
-      error = function(e) report_bug(r = r, output = output, error_message = "error_importing_plugins", 
+      error = function(e) report_bug(r = r, output = output, error_message = "error_importing_plugins",
         error_name = paste0(id, " - import plugins"), category = "Error", error_report = e, language = language))
     })
     

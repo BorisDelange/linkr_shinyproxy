@@ -213,6 +213,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Table name
     table <- substr(id, nchar("settings_") + 1, nchar(id))
     
+    r[[paste0(table, "_datatable_loaded")]] <- FALSE
+    
     ##########################################
     # Update dropdowns                       #
     ##########################################
@@ -279,7 +281,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     observeEvent(input$add, {
       
       # If user has access
-      req(paste0(table, "_creation_card") %in% r$user_accesses)
+      # req(paste0(table, "_creation_card") %in% r$user_accesses)
       
       # Create a list with new data
       # If page = thesaurus, data_source is character, not integer (multiple choices)
@@ -370,43 +372,52 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       
       hidden_cols <- c("id", "description", "deleted", "modified")
       
-      # observeEvent(r[[table]], {
+      # Reload datatable
+      
+      observeEvent(r[[table]], {
+        if (nrow(r[[table]]) == 0){
+          r[[paste0(table, "_temp")]] <- tibble::tibble()
+          r[[paste0(table, "_datatable_loaded")]] <- FALSE 
+        }
+        else r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
+      })
+      
+      observeEvent(r[[paste0(table, "_temp")]], {
         
-        # If r variable already created, or not
-        if (length(r[[paste0(table, "_datatable_temp")]]) == 0) data_output <- tibble::tibble()
-        else data_output <- r[[paste0(table, "_datatable_temp")]]
-        
-        # Prepare data for datatable (add code for dropdowns etc)
-        r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-          table = table, dropdowns = dropdowns_datatable, dropdowns_multiselect = dropdowns_multiselect, factorize_cols = factorize_cols,
-          action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
-        
-        # Render datatable
-        render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(table, "_datatable_temp")]],
+        if (nrow(r[[paste0(table, "_temp")]]) == 0) render_datatable(output = output, r = r, ns = ns, language = language, data = tibble::tibble(),
           output_name = "management_datatable", col_names =  get_col_names(table_name = table, language = language, words = r$words),
           editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
           searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
         
-        # Create a proxy for datatatable
-        r[[paste0(table, "_datatable_proxy")]] <- DT::dataTableProxy("management_datatable", deferUntilFlush = FALSE)
+        req(nrow(r[[paste0(table, "_temp")]]) > 0)
         
-        # Reload datatable
-        
-        observeEvent(r[[table]], {
-          r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-        })
-        
-        observeEvent(r[[paste0(table, "_temp")]], {
+        # Prepare data for datatable (add code for dropdowns etc)
+        r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+          table = table, dropdowns = dropdowns_datatable, dropdowns_multiselect = dropdowns_multiselect, factorize_cols = factorize_cols,
+          action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], words = r$words)
+      
+        if (!r[[paste0(table, "_datatable_loaded")]]){
           
-          # Reload datatable_temp variable
-          r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-            table = table, dropdowns = dropdowns_datatable, dropdowns_multiselect = dropdowns_multiselect, factorize_cols = factorize_cols,
-            action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
+          # Render datatable
+          render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(table, "_datatable_temp")]],
+            output_name = "management_datatable", col_names =  get_col_names(table_name = table, language = language, words = r$words),
+            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+            searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+          
+          # Create a proxy for datatatable
+          r[[paste0(table, "_datatable_proxy")]] <- DT::dataTableProxy("management_datatable", deferUntilFlush = FALSE)
+          
+          r[[paste0(table, "_datatable_loaded")]] <- TRUE
+        }
+        
+        else {
           
           # Reload data of datatable
           DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
-        })
-      # })
+        }
+        
+      })
+        
       
       if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- END load ", table, " management datatable"))
     
@@ -600,7 +611,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       ##########################################
       # Edit code by selecting a row           #
       ##########################################
-      
+        
       if (table %in% c("datamarts", "thesaurus")){
         
         # Button "Edit code" is clicked on the datatable
@@ -689,7 +700,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       ##############################################
       # Generate sub datatable with action button  #
       ##############################################
-      
+        
       if (table == "thesaurus"){
           
         # Sub datatable is a datatable in thesaurus page, when we click on the subdatatable button of a thesaurus row

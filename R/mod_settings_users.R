@@ -243,7 +243,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       # Only for data management subpages
       if (grepl("management", id)){
         
-        if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- BEGIN load", table, " management datatable"))
+        if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- BEGIN load ", table, " management datatable"))
         
         # Dropdowns for each module / page
         dropdowns_datatable <- switch(table, "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
