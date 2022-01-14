@@ -28,7 +28,8 @@ Imports:
     shinyjs (>= 2.0.0),
     stringr (>= 1.4.0),
     tidyr (>= 1.1.4),
-    pkgload
+    pkgload (>= 1.2.3),
+    zip (>= 2.2.0)
 Suggests:
     clipr (>= 0.7.1),
     dygraphs (>= 1.1.1.6),

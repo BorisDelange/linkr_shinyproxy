@@ -191,10 +191,10 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), 
               make_toggle(language = language, ns = ns, label = "replace_already_existing_plugins", inline = TRUE, words = words)), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::DefaultButton.shinyInput(ns("import_plugins_browse"), translate(language, "choose_tar_file", words)),
+              shiny.fluent::DefaultButton.shinyInput(ns("import_plugins_browse"), translate(language, "choose_zip_file", words)),
               uiOutput(ns("import_plugins_status"))), br(),
             shiny.fluent::PrimaryButton.shinyInput(ns("import_plugins_button"), translate(language, "import_plugin", words), iconProps = list(iconName = "Upload")),
-            div(style = "display:none;", fileInput(ns("import_plugins_upload"), label = "", multiple = FALSE, accept = ".tar"))
+            div(style = "display:none;", fileInput(ns("import_plugins_upload"), label = "", multiple = FALSE, accept = ".zip"))
           )
         ), br()
       )
@@ -524,8 +524,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
 
       if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
       else link_id <- input$options_chosen_plugin
-      if (length(input$code_chosen_plugin) > 1) code_link_id <- input$code_chosen_plugin$key
-      else code_link_id <- input$code_chosen_plugin
+      if (length(input$code_chosen_plugin) > 0){
+        if (length(input$code_chosen_plugin) > 1) code_link_id <- input$code_chosen_plugin$key
+        else code_link_id <- input$code_chosen_plugin
+      }
+      else code_link_id <- 0L
       
       if (link_id != code_link_id){
         options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
@@ -596,8 +599,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
       else link_id <- input$code_chosen_plugin
-      if (length(input$options_chosen_plugin) > 1) options_link_id <- input$options_chosen_plugin$key
-      else options_link_id <- input$options_chosen_plugin
+      if (length(input$options_chosen_plugin) > 0){
+        if (length(input$options_chosen_plugin) > 1) options_link_id <- input$options_chosen_plugin$key
+        else options_link_id <- input$options_chosen_plugin
+      }
+      else options_link_id <- 0L
       
       if (link_id != options_link_id){
         options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
@@ -926,12 +932,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         dir.create(paste0(find.package("cdwtools"), "/data/temp/"), showWarnings = FALSE)
         dir.create(exdir)
 
-        untar(input$import_plugins_upload$datapath, exdir = exdir)
-        csv_files <- untar(input$import_plugins_upload$datapath, list = TRUE)
+        zip::unzip(input$import_plugins_upload$datapath, exdir = exdir)
+        csv_files <- zip::zip_list(input$import_plugins_upload$datapath)
         
         data <- list()
 
-        lapply(csv_files, function(file_name){
+        lapply(csv_files$filename, function(file_name){
 
           # Name of the table
           table <- substr(file_name, 1, nchar(file_name) - 4)
@@ -950,63 +956,73 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         new_plugins <- data$plugins %>% dplyr::anti_join(all_plugins %>% dplyr::select(name, module_type_id), by = c("name", "module_type_id"))
         new_plugins_code <- data$code %>% dplyr::inner_join(new_plugins %>% dplyr::select(link_id = id), by = "link_id")
         
-        last_row_options <- get_last_row(r$db, "options")
-        
-        new_plugins_options <- new_plugins %>% dplyr::select(link_id = id) %>% 
-          dplyr::mutate(id = 1:dplyr::n() + last_row_options, category = "plugin", name = "users_allowed_read_group", value = "everybody", value_num = 1, 
-            creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE) %>% 
-          dplyr::relocate(link_id, .after = "category")
-        
-        last_row_options <- last_row_options + nrow(new_plugins_options)
-        
-        new_plugins_options <- new_plugins_options %>% 
-          dplyr::bind_rows(
-            new_plugins %>% dplyr::select(link_id = id) %>% 
-              dplyr::mutate(id = 1:dplyr::n() + last_row_options, category = "plugin", name = "user_allowed_read", value = "", value_num = r$user_id, 
-                creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE) %>% 
-              dplyr::relocate(link_id, .after = "category")
-          )
+        if (nrow(new_plugins) > 0){
+          
+          # Add new plugins & code
+          new_plugins <- new_plugins %>% 
+            dplyr::mutate(id = id + get_last_row(r$db, "plugins"), datetime = as.character(Sys.time()))
+          new_plugins_code <- new_plugins_code %>% 
+            dplyr::mutate(id = id + get_last_row(r$db, "code"), link_id = link_id + get_last_row(r$db, "plugins"),
+              creator_id = r$user_id, datetime = as.character(Sys.time()))
+          
+          last_row_options <- get_last_row(r$db, "options")
+          
+          new_plugins_options <- new_plugins %>% dplyr::select(link_id = id) %>% 
+            dplyr::mutate(id = 1:dplyr::n() + last_row_options, category = "plugin", name = "users_allowed_read_group", value = "everybody", value_num = 1, 
+                          creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE) %>% 
+            dplyr::relocate(link_id, .after = "category")
+          
+          last_row_options <- last_row_options + nrow(new_plugins_options)
+          
+          new_plugins_options <- new_plugins_options %>% 
+            dplyr::bind_rows(
+              new_plugins %>% dplyr::select(link_id = id) %>% 
+                dplyr::mutate(id = 1:dplyr::n() + last_row_options, category = "plugin", name = "user_allowed_read", value = "", value_num = r$user_id, 
+                  creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE) %>% 
+                dplyr::relocate(link_id, .after = "category")
+            )
+          
+          print(new_plugins)
+          print(new_plugins_code)
+          print(new_plugins_options)
+          
+          DBI::dbAppendTable(r$db, "plugins", new_plugins)
+          DBI::dbAppendTable(r$db, "code", new_plugins_code)
+          DBI::dbAppendTable(r$db, "options", new_plugins_options)
+        }
         
         existing_plugins <- data$plugins %>% 
           dplyr::inner_join(all_plugins %>% dplyr::select(new_id = id, name, module_type_id), by = c("name", "module_type_id"))
         
-        existing_plugins_code <- data$code %>% 
-          dplyr::inner_join(existing_plugins %>% dplyr::select(link_id = id, new_link_id = new_id), by = "link_id") %>%
-          dplyr::select(-link_id) %>% dplyr::rename(link_id = new_link_id) %>% dplyr::relocate(link_id, .after = "category") %>%
-          dplyr::mutate(creator_id = r$user_id, datetime = as.character(Sys.time()))
-        
-        existing_plugins <- existing_plugins %>%
-          dplyr::select(-id) %>% dplyr::rename("id" = new_id) %>% dplyr::relocate(id) %>% 
-          dplyr::mutate(datetime = as.character(Sys.time()))
-        
-        # Add new plugins & code
-        new_plugins <- new_plugins %>% 
-          dplyr::mutate(id = id + get_last_row(r$db, "plugins"), datetime = as.character(Sys.time()))
-        new_plugins_code <- new_plugins_code %>% 
-          dplyr::mutate(id = id + get_last_row(r$db, "code"), link_id = link_id + get_last_row(r$db, "plugins"),
-            creator_id = r$user_id, datetime = as.character(Sys.time()))
-        
-        DBI::dbAppendTable(r$db, "plugins", new_plugins)
-        DBI::dbAppendTable(r$db, "code", new_plugins_code)
-        DBI::dbAppendTable(r$db, "options", new_plugins_options)
-        
-        # Replace already existing plugins (based on module type & name)
-        if (input$replace_already_existing_plugins){
+        if (nrow(existing_plugins) > 0){
           
-          existing_plugins_code <- existing_plugins_code %>% dplyr::mutate(id = id + get_last_row(r$db, "code"))
+          existing_plugins_code <- data$code %>% 
+            dplyr::inner_join(existing_plugins %>% dplyr::select(link_id = id, new_link_id = new_id), by = "link_id") %>%
+            dplyr::select(-link_id) %>% dplyr::rename(link_id = new_link_id) %>% dplyr::relocate(link_id, .after = "category") %>%
+            dplyr::mutate(creator_id = r$user_id, datetime = as.character(Sys.time()))
           
-          # Delete old rows
-          sql <- glue::glue_sql("DELETE FROM plugins WHERE id IN ({existing_plugins %>% dplyr::pull(id)*})", .con = r$db)
-          DBI::dbSendStatement(r$db, sql) -> query
-          DBI::dbClearResult(query)
+          existing_plugins <- existing_plugins %>%
+            dplyr::select(-id) %>% dplyr::rename("id" = new_id) %>% dplyr::relocate(id) %>% 
+            dplyr::mutate(datetime = as.character(Sys.time()))
           
-          sql <- glue::glue_sql("DELETE FROM code WHERE category IN ('plugin_ui', 'plugin_server') AND link_id IN ({existing_plugins %>% dplyr::pull(id)*})", .con = r$db)
-          DBI::dbSendStatement(r$db, sql) -> query
-          DBI::dbClearResult(query)
-          
-          # Insert new ones
-          DBI::dbAppendTable(r$db, "plugins", existing_plugins)
-          DBI::dbAppendTable(r$db, "code", existing_plugins_code)
+          # Replace already existing plugins (based on module type & name)
+          if (input$replace_already_existing_plugins){
+            
+            existing_plugins_code <- existing_plugins_code %>% dplyr::mutate(id = id + get_last_row(r$db, "code"))
+            
+            # Delete old rows
+            sql <- glue::glue_sql("DELETE FROM plugins WHERE id IN ({existing_plugins %>% dplyr::pull(id)*})", .con = r$db)
+            DBI::dbSendStatement(r$db, sql) -> query
+            DBI::dbClearResult(query)
+            
+            sql <- glue::glue_sql("DELETE FROM code WHERE category IN ('plugin_ui', 'plugin_server') AND link_id IN ({existing_plugins %>% dplyr::pull(id)*})", .con = r$db)
+            DBI::dbSendStatement(r$db, sql) -> query
+            DBI::dbClearResult(query)
+            
+            # Insert new ones
+            DBI::dbAppendTable(r$db, "plugins", existing_plugins)
+            DBI::dbAppendTable(r$db, "code", existing_plugins_code)
+          }
         }
 
         # Remove temp dir
@@ -1072,7 +1088,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     output$export_plugins_download <- downloadHandler(
       
-      filename = function() paste0("cdwtools_plugins_", as.character(Sys.Date()), ".tar"),
+      filename = function() paste0("cdwtools_plugins_", as.character(Sys.Date()), ".zip"),
       
       content = function(file){
         
@@ -1101,7 +1117,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         
         files <- c("plugins.csv", "code.csv")
         
-        tar(file, files)
+        zip::zipr(file, files, include_directories = FALSE)
       }
     )
     

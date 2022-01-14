@@ -135,10 +135,10 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               make_toggle(language = language, ns = ns, label = "db_import_log", value = FALSE, inline = TRUE, words = words)), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::DefaultButton.shinyInput(ns("db_restore_browse"), translate(language, "choose_tar_file", words)),
+              shiny.fluent::DefaultButton.shinyInput(ns("db_restore_browse"), translate(language, "choose_zip_file", words)),
               uiOutput(ns("db_restore_status"))), br(),
             shiny.fluent::PrimaryButton.shinyInput(ns("db_restore_button"), translate(language, "restore_db", words), iconProps = list(iconName = "Upload")),
-            div(style = "display:none;", fileInput(ns("db_restore"), label = "", multiple = FALSE, accept = ".tar"))
+            div(style = "display:none;", fileInput(ns("db_restore"), label = "", multiple = FALSE, accept = ".zip"))
           )
         )
       )
@@ -446,11 +446,11 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       
     })
     
-    # Download all tables in one tar file
+    # Download all tables in one zip file
     
     output$db_save <- downloadHandler(
       
-      filename = function() paste0("cdwtools_svg_", as.character(Sys.Date()), ".tar"),
+      filename = function() paste0("cdwtools_svg_", as.character(Sys.Date()), ".zip"),
       
       content = function(file){
         
@@ -474,8 +474,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           }
         }
         
-        tar(file, files)
-        # Sometimes, zip(file, files) works better (tar didn't work in Rstudio server when I tested)
+        zip::zipr(file, files, include_directories = FALSE)
       }
     )
     
@@ -517,10 +516,10 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         dir.create(paste0(find.package("cdwtools"), "/data/temp/"), showWarnings = FALSE)
         dir.create(exdir)
         
-        untar(input$db_restore$datapath, exdir = exdir)
-        csv_files <- untar(input$db_restore$datapath, list = TRUE)
+        zip::unzip(input$db_restore$datapath, exdir = exdir)
+        csv_files <- zip::zip_list(input$db_restore$datapath)
         
-        lapply(csv_files, function(file_name){
+        lapply(csv_files$filename, function(file_name){
           
           # Name of the table
           table <- substr(file_name, 1, nchar(file_name) - 4)
