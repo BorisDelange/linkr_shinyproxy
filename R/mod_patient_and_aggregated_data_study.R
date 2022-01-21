@@ -663,19 +663,25 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
           
           # Get plugin code
           
-          code_server_card <- r$code %>%
-            dplyr::filter(link_id == input$plugin$key, category == "plugin_server") %>%
-            dplyr::pull(code) %>%
-            stringr::str_replace_all("%module_id%", as.character(r[[paste0(prefix, "_selected_module")]])) %>%
-            stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-            stringr::str_replace_all("\r", "\n")
+          # Check if plugin has been deleted
+          check_deleted_plugin <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM plugins WHERE id = ", input$plugin$key)) %>% dplyr::pull(deleted)
+          if (!check_deleted_plugin){
+            
+            code_server_card <- r$code %>%
+              dplyr::filter(link_id == input$plugin$key, category == "plugin_server") %>%
+              dplyr::pull(code) %>%
+              stringr::str_replace_all("%module_id%", as.character(r[[paste0(prefix, "_selected_module")]])) %>%
+              stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+              stringr::str_replace_all("\r", "\n")
           
-          # If it is an aggregated plugin, change %study_id% with current chosen study
-          if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
-          
+            # If it is an aggregated plugin, change %study_id% with current chosen study
+            if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
+          }
+          else code_server_card <- ""
+            
           tryCatch(eval(parse(text = code_server_card)),
             error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
-              error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language)
+              error_name = paste0(id, " - run server code - ", group_id), category = "Error", error_report = e, language = language)
           )
           
           # Code for toggle reactivity
@@ -987,6 +993,12 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
                 code_ui_card <- isolate(r$code) %>% dplyr::filter(link_id == plugin_id, category == "plugin_ui") %>% dplyr::pull(code)
               }
               
+              # Check if plugin has been deleted
+              check_deleted_plugin <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM plugins WHERE id = ", plugin_id)) %>% dplyr::pull(deleted)
+              if (check_deleted_plugin){
+                code_ui_card <- paste0("div(shiny.fluent::MessageBar('", translate(language, "plugin_deleted", r$words), "', messageBarType = 3), style = 'margin-top:10px;')")
+              }
+              
               # Get name of module element
               
               module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
@@ -1027,7 +1039,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
               },
               error = function(e){
                 report_bug(r = r, output = output, error_message = translate(language, "error_run_plugin_ui_code", words),
-                  error_name = paste0(id, " - run ui code"), category = "Error", error_report = e, language = language)
+                  error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, language = language)
               })
             })
           }
@@ -1188,19 +1200,25 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
             
             ids <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::select(plugin_id, module_id)
             
-            code_server_card <- r$code %>%
-              dplyr::filter(link_id == ids$plugin_id, category == "plugin_server") %>%
-              dplyr::pull(code) %>%
-              stringr::str_replace_all("%module_id%", as.character(ids$module_id)) %>%
-              stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-              stringr::str_replace_all("\r", "\n")
-            
-            # If it is an aggregated plugin, change %study_id% with current chosen study
-            if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
-            
+            # Check if plugin has been deleted
+            check_deleted_plugin <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM plugins WHERE id = ", ids$plugin_id)) %>% dplyr::pull(deleted)
+            if (!check_deleted_plugin){
+                
+              code_server_card <- r$code %>%
+                dplyr::filter(link_id == ids$plugin_id, category == "plugin_server") %>%
+                dplyr::pull(code) %>%
+                stringr::str_replace_all("%module_id%", as.character(ids$module_id)) %>%
+                stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+                stringr::str_replace_all("\r", "\n")
+              
+              # If it is an aggregated plugin, change %study_id% with current chosen study
+              if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
+            }
+            else code_server_card <- ""
+              
             tryCatch(eval(parse(text = code_server_card)),
               error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
-                error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language)
+                error_name = paste0(id, " - run server code - ", group_id), category = "Error", error_report = e, language = language)
             )
             
             ##########################################

@@ -38,7 +38,7 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("plugin_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = id, text = translate(language, id, words))
+      list(key = id, text = translate(language, paste0(id, "_breadcrumb"), words))
     ), maxDisplayedItems = 3),
     # uiOutput(ns("plugins_pivot")),
     shiny.fluent::Pivot(
@@ -130,8 +130,14 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
         id = ns("plugins_edit_code_card"),
         make_card(translate(language, "edit_plugin_code", words),
           div(
-            make_combobox(language = language, ns = ns, label = "plugin", id = "code_chosen_plugin",
-              width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+              make_combobox(language = language, ns = ns, label = "plugin", id = "code_chosen_plugin",
+                width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE),
+              div(
+                div(class = "input_title", translate(language, "group_id", words)),
+                div(shiny.fluent::SpinButton.shinyInput(ns("group_id"), min = 1, max = 100000000, step = 1), style = "width:300px;")
+              )
+            ),
             
             thesaurus_items_div, br(),
             
@@ -359,6 +365,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       else r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>%
         dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
+      # Reload group_id spinButton
+      shiny.fluent::updateSpinButton.shinyInput(session, "group_id", value = get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10000000)
     })
     
     observeEvent(r[[paste0(prefix, "_plugins_temp")]], {
@@ -487,7 +495,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
 
       # Reload datatable
       r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)  %>% dplyr::mutate(modified = FALSE)
-
     })
     
     observeEvent(input$edit_code, {
@@ -826,10 +833,14 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       if (prefix == "patient_lvl"){
         
-        # Get thesaurus items with thesaurus own item_id
-        thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
-          dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
-            thesaurus_item_unit, colour = thesaurus_item_colour)
+        # Check if some thesaurus items selected (not necessary)
+        if (length(r$plugin_thesaurus_selected_items) > 0){
+          
+          # Get thesaurus items with thesaurus own item_id
+          thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
+            dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
+              thesaurus_item_unit, colour = thesaurus_item_colour)
+        }
       }
       
       if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
@@ -839,9 +850,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       server_code <- input$ace_edit_code_server
       
       # Replace %group_id% in ui_code with 1 for our example
+      
+      group_id <- get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10000000
+      if (length(input$group_id) > 0) group_id <- input$group_id
+      
       ui_code <- ui_code %>% 
         stringr::str_replace_all("%module_id%", "1") %>%
-        stringr::str_replace_all("%group_id%", as.character(get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10000000)) %>%
+        stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
         stringr::str_replace_all("%study_id%", as.character(r$chosen_study)) %>%
         stringr::str_replace_all("\r", "\n")
       
@@ -849,7 +864,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       server_code <- server_code %>% 
         stringr::str_replace_all("%module_id%", "1") %>%
-        stringr::str_replace_all("%group_id%", as.character(get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10000000)) %>%
+        stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
         stringr::str_replace_all("%study_id%", as.character(r$chosen_study)) %>%
         stringr::str_replace_all("\r", "\n")
       
@@ -858,6 +873,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       output$code_result_ui <- renderUI(make_card("", tryCatch(result <- eval(parse(text = ui_code)), error = function(e) stop(e), warning = function(w) stop(w))))
       
       output$code_result_server <- renderText({
+        
+        print(paste0(Sys.time(), " _ code executed"))
         
         options('cli.num_colors' = 1)
         

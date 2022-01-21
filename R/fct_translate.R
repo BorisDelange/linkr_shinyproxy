@@ -187,6 +187,10 @@ get_translations <- function(){
     "FR", "plugins_patient_lvl", "Données individuelles",
     "EN", "plugins_aggregated", "Aggregated data",
     "FR", "plugins_aggregated", "Données agrégées",
+    "EN", "plugins_patient_lvl_breadcrumb", "Patient-level data plugins",
+    "FR", "plugins_patient_lvl_breadcrumb", "Plugins - Données individuelles",
+    "EN", "plugins_aggregated_breadcrumb", "Aggregated data plugins",
+    "FR", "plugins_aggregated_breadcrumb", "Plugins - Données agrégées",
     "EN", "modules_patient_lvl", "Modules patient-level data",
     "FR", "modules_patient_lvl", "Modules données individuelles",
     "EN", "modules_aggregated", "Modules aggregated data",
@@ -675,6 +679,8 @@ get_translations <- function(){
     "FR", "new_module_element", "Figure",
     "EN", "add_module_element", "Add a module element",
     "FR", "add_module_element", "Nouvelle figure",
+    "EN", "figure", "Figure",
+    "FR", "figure", "Figure",
     "EN", "req_module_family", "Need to create at least one module family before creating a module",
     "FR", "req_module_family", "Il faut créer au moins une familly de module avant de créer un module",
     "EN", "patient_lvl_modules", "Patient-level modules",
@@ -713,6 +719,8 @@ get_translations <- function(){
     "FR", "aggregated_modules_elements_group_delete", "Supprimer une figure",
     "EN", "aggregated_modules_elements_group_delete_subtext", "Do you want to delete this module element ?",
     "FR", "aggregated_modules_elements_group_delete_subtext", "Confirmer la suppression de cette figure ?",
+    "EN"," group_id", "Group ID",
+    "FR", "group_id", "Group ID",
     "EN", "patient_lvl_modules_elements_group_delete", "Delete a module element",
     "FR", "patient_lvl_modules_elements_group_delete", "Supprimer une figure",
     "EN", "patient_lvl_modules_elements_group_delete_subtext", "Do you want to delete this module element ?",
@@ -1102,7 +1110,17 @@ get_translations <- function(){
     "EN", "export_plugins", "Export plugins",
     "FR", "export_plugins", "Exporter les plugins",
     "EN", "unauthorized_access_page", "Unauthorized access to this page",
-    "FR", "unauthorized_access_page", "Accès non autorisé à cette page"
+    "FR", "unauthorized_access_page", "Accès non autorisé à cette page",
+    "EN", "no_data_patient_labs_vitals", "No patient's labs / vitals data available",
+    "FR", "no_data_patient_labs_vitals", "Pas de données labo / constantes disponibles pour ce patient",
+    "EN", "no_data_stay_labs_vitals", "No stay's labs / vitals data available",
+    "FR", "no_data_stay_labs_vitals", "Pas de données labo / constantes disponibles pour ce séjour",
+    "EN", "all_stays", "All stays",
+    "FR", "all_stays", "Tous les séjours",
+    "EN", "current_stay", "Current stay",
+    "FR", "current_stay", "Séjour sélectionné",
+    "EN", "select_a_subset", "Please select a subset",
+    "FR", "select_a_subset", "Sélectionner un subset"
     ) -> data
   data
 }

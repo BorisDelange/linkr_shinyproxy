@@ -63,6 +63,15 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         
         r$data_patient <- list()
         
+        # Reset variables
+        r$data_patient$stays <- tibble::tibble()
+        r$data_patient$labs_vitals <- tibble::tibble()
+        r$data_patient$text <- tibble::tibble()
+        r$data_patient$orders <- tibble::tibble()
+        r$data_stay$labs_vitals_stay <- tibble::tibble()
+        r$data_stay$text_stay <- tibble::tibble()
+        r$data_stay$orders_stay <- tibble::tibble()
+        
         if (length(r$chosen_patient) > 0){
           if (!is.na(r$chosen_patient) & r$chosen_patient != ""){
             if (nrow(r$stays) > 0) r$data_patient$stays <- r$stays %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::arrange(admission_datetime)
@@ -105,11 +114,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         
         if (nrow(patients) > 0){
           patients <- patients %>% dplyr::select(patient_id)
-          if (nrow(r$patients) > 0) r$data_subset$patients_subset <- r$patients %>% dplyr::inner_join(patients, by = "patient_id")
-          if (nrow(r$stays) > 0) r$data_subset$stays_subset <- r$stays %>% dplyr::inner_join(patients, by = "patient_id")
-          if (nrow(r$labs_vitals) > 0) r$data_subset$labs_vitals_subset <- r$labs_vitals %>% dplyr::inner_join(patients, by = "patient_id")
-          if (nrow(r$text) > 0) r$data_subset$text_subset <- r$text %>% dplyr::inner_join(patients, by = "patient_id")
-          if (nrow(r$orders) > 0) r$data_subset$orders_subset <- r$orders %>% dplyr::inner_join(patients, by = "patient_id")
+          if (nrow(r$patients) > 0) r$data_subset$patients <- r$patients %>% dplyr::inner_join(patients, by = "patient_id")
+          if (nrow(r$stays) > 0) r$data_subset$stays <- r$stays %>% dplyr::inner_join(patients, by = "patient_id")
+          if (nrow(r$labs_vitals) > 0) r$data_subset$labs_vitals <- r$labs_vitals %>% dplyr::inner_join(patients, by = "patient_id")
+          if (nrow(r$text) > 0) r$data_subset$text <- r$text %>% dplyr::inner_join(patients, by = "patient_id")
+          if (nrow(r$orders) > 0) r$data_subset$orders <- r$orders %>% dplyr::inner_join(patients, by = "patient_id")
         }
       })
     }
