@@ -226,6 +226,22 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         sapply(c("study"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         
         # Update Dropdowns AFTER having executing datamart code (prevents a bug, where UI displays and disappears)
+        
+        # Reset data variables
+        r$data_patient$stays <- tibble::tibble()
+        r$data_patient$labs_vitals <- tibble::tibble()
+        r$data_patient$text <- tibble::tibble()
+        r$data_patient$orders <- tibble::tibble()
+        
+        r$data_stay$labs_vitals_stay <- tibble::tibble()
+        r$data_stay$text_stay <- tibble::tibble()
+        r$data_stay$orders_stay <- tibble::tibble()
+        
+        r$data_subset$patients <- tibble::tibble()
+        r$data_subset$stays <- tibble::tibble()
+        r$data_subset$labs_vitals <- tibble::tibble()
+        r$data_subset$test <- tibble::tibble()
+        r$data_subset$orders <- tibble::tibble()
       })
       
       observeEvent(input$study, {

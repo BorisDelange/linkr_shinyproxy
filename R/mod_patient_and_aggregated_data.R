@@ -108,6 +108,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         r$data_subset <- list()
         patients <- tibble::tibble()
         
+        # Reset variables
+        r$data_subset$patients <- tibble::tibble()
+        r$data_subset$stays <- tibble::tibble()
+        r$data_subset$labs_vitals <- tibble::tibble()
+        r$data_subset$test <- tibble::tibble()
+        r$data_subset$orders <- tibble::tibble()
+        
         if (length(r$chosen_subset) > 0){
           if (!is.na(r$chosen_subset) & r$chosen_subset != "") patients <- r$subset_patients %>% dplyr::filter(subset_id == r$chosen_subset)
         }
