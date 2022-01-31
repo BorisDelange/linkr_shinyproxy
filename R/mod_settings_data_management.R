@@ -60,7 +60,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
         list(key = "datamarts", text = translate(language, "datamarts", words))
       ), maxDisplayedItems = 3),
       shiny.fluent::Pivot(
-        id = "datamarts_pivot",
+        id = ns("datamarts_pivot"),
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
         shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = translate(language, "create_datamart", words)),
         shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = translate(language, "datamarts_management", words)),
@@ -133,7 +133,7 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
         list(key = "thesaurus", text = translate(language, "thesaurus", words))
       ), maxDisplayedItems = 3),
       shiny.fluent::Pivot(
-        id = "thesaurus_pivot",
+        id = ns("thesaurus_pivot"),
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
         shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = translate(language, "create_thesaurus", words)),
         shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = translate(language, "thesaurus_management_card", words)),
@@ -537,7 +537,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
           
           # Set current pivot to options_card
-          shinyjs::runjs(glue::glue("$('#datamarts_pivot button[name=\"{translate(language, 'datamart_options', r$words)}\"]').click();"))
+          shinyjs::runjs(glue::glue("$('#{id}-datamarts_pivot button[name=\"{translate(language, 'datamart_options', r$words)}\"]').click();"))
         })
         
         observeEvent(input$options_chosen, {
@@ -636,7 +636,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (table == "thesaurus") shiny.fluent::updateComboBox.shinyInput(session, "items_chosen", options = options, value = value)
           
           # Set current pivot to edit_code_card
-          shinyjs::runjs(glue::glue("$('#{paste0(table, '_pivot')} button[name=\"{translate(language, paste0('edit_', get_singular(table), '_code'), r$words)}\"]').click();"))
+          shinyjs::runjs(glue::glue("$('#{id}-{paste0(table, '_pivot')} button[name=\"{translate(language, paste0('edit_', get_singular(table), '_code'), r$words)}\"]').click();"))
           
         })
         
@@ -735,7 +735,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           shiny.fluent::updateComboBox.shinyInput(session, "code_chosen", options = options, value = value)
           
           # Set current pivot to edit_code_card
-          shinyjs::runjs(glue::glue("$('#thesaurus_pivot button[name=\"{translate(language, 'thesaurus_items_management_card', r$words)}\"]').click();"))
+          shinyjs::runjs(glue::glue("$('#{id}-thesaurus_pivot button[name=\"{translate(language, 'thesaurus_items_management_card', r$words)}\"]').click();"))
         })
         
         observeEvent(input$items_chosen, {

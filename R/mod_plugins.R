@@ -42,6 +42,7 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
     ), maxDisplayedItems = 3),
     # uiOutput(ns("plugins_pivot")),
     shiny.fluent::Pivot(
+      id = ns("plugins_pivot"),
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
       shiny.fluent::PivotItem(id = "all_plugins_card", itemKey = "all_plugins_card", headerText = translate(language, "all_plugins", words)),
       shiny.fluent::PivotItem(id = "plugins_creation_card", itemKey = "plugins_creation_card", headerText = translate(language, "create_plugin", words)),
@@ -507,8 +508,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = value)
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = value)
       
-      # Change PivotItem
-      # r$plugins_selected_pivot <- "plugins_edit_code_card"
+      # Set current pivot to edit_plugins_code
+      shinyjs::runjs(glue::glue("$('#{id}-plugins_pivot button[name=\"{translate(language, 'edit_plugin_code', r$words)}\"]').click();"))
     })
     
     observeEvent(input$options, {
@@ -521,6 +522,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = value)
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = value)
+      
+      # Set current pivot to edit_plugins_code
+      shinyjs::runjs(glue::glue("$('#{id}-plugins_pivot button[name=\"{translate(language, 'plugin_options', r$words)}\"]').click();"))
     })
     
     ##########################################
@@ -634,6 +638,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       # Reset code_result textOutput
       output$code_result_ui <- renderUI("")
       output$code_result_server <- renderText("")
+      
     })
     
     # Load thesaurus items
