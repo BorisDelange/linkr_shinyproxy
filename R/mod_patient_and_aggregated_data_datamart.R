@@ -485,8 +485,12 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     
     observeEvent(input$thesaurus, {
       
-      r$datamart_thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus$key, category = "delete")
-      
+      r$datamart_thesaurus_items <- DBI::dbGetQuery(r$db, paste0(
+        "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted,
+          FROM thesaurus_items t
+          WHERE t.thesaurus_id = ", input$thesaurus$key, " AND t.deleted IS FALSE
+          ORDER BY t.id")) %>% tibble::as_tibble() %>% dplyr::mutate(action = "")
+
       count_items_rows <- tibble::tibble()
       count_patients_rows <- tibble::tibble()
       

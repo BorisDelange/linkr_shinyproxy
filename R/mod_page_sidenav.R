@@ -86,7 +86,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       dropdowns("patient_status", arrows = FALSE), br(),
       div(id = ns("exclusion_reason_div"),
         div(class = "input_title", translate(language, "exclusion_reason", words)),
-        div(shiny.fluent::Dropdown.shinyInput(ns("exclusion_reason"), value = NULL, options = list()))), br(),
+        div(shiny.fluent::ComboBox.shinyInput(ns("exclusion_reason"), value = NULL, options = list()))), br(),
       uiOutput(ns("patient_info"))
     ) -> result
   }
@@ -314,7 +314,11 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           
           # Update patients dropdown
           shiny.fluent::updateComboBox.shinyInput(session, "patient", 
-          options = convert_tibble_to_list(data = patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender, " - ", age, " ", translate(language, "years", words))), 
+          options = convert_tibble_to_list(data = patients %>%                           
+            dplyr::mutate(name_display = dplyr::case_when(
+              age > 2 ~ paste0(patient_id, " - ", gender, " - ", age, " ", translate(language, "years", words)),
+              age <= 2 ~ paste0(patient_id, " - ", gender, " - ", round(age * 12, 0), " ", translate(language, "months", words))
+              )), 
             key_col = "patient_id", text_col = "name_display"), words = r$words)
         }
       })
@@ -337,7 +341,12 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         style <- "display:inline-block; width:60px; font-weight:bold;"
         output$patient_info <- renderUI({
-          tagList(span(translate(language, "age", words), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(age), " ", translate(language, "years", words), br(),
+          
+          age <- r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(age)
+          if (age > 2) age_div <- tagList(age, " ", translate(language, "years", words))
+          else age_div <- tagList(round(age * 12, 0), " ", translate(language, "months", words))
+          
+          tagList(span(translate(language, "age", words), style = style), age_div, br(),
           span(translate(language, "gender", words), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(gender))
         })
         
@@ -381,8 +390,13 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         # Update patient informations on sidenav
 
         style <- "display:inline-block; width:60px; font-weight:bold;"
+        
+        age <- r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(age)
+        if (age > 2) age_div <- tagList(age, " ", translate(language, "years", words))
+        else age_div <- tagList(round(age * 12, 0), " ", translate(language, "months", words))
+        
         output$patient_info <- renderUI({
-          tagList(span(translate(language, "age", words), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(age), " ", translate(language, "years"), br(),
+          tagList(span(translate(language, "age", words), style = style), age_div, br(),
             span(translate(language, "gender", words), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(gender) , br(), br(),
             span(translate(language, "unit", words), style = style), r$stays %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(unit_name), br(),
             span(translate(language, "from", words), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(admission_datetime), br(),
@@ -458,8 +472,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
       
       observeEvent(input$exclusion_reason, {
-
-        if (length(input$exclusion_reason$key) != 0){
+        
+        if (length(input$exclusion_reason$key) > 0){
 
           # If already a row, get its ID
           id <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM patients_options

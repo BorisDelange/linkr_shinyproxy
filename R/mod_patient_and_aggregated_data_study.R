@@ -745,7 +745,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         
         # Load modules belonging to this module family
         display_modules <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, "_modules WHERE module_family_id = ",
-                                                        study_infos[[paste0(prefix, "_module_family_id")]], " AND deleted IS FALSE"))
+          study_infos[[paste0(prefix, "_module_family_id")]], " AND deleted IS FALSE"))
         
         # Modules without parent are set to level 1
         display_modules <- display_modules %>% 
@@ -771,7 +771,9 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         
         # Now we have a level for each module, order them by display order
         r[[paste0(prefix, "_display_modules")]] <- display_modules %>% dplyr::arrange(level, display_order)
-        r[[paste0(prefix, "_load_ui_cards")]] <- Sys.time()
+        
+        # If this is not just a change of pivot order
+        if (!grepl("change_pivot_order", r[[paste0(prefix, "_load_ui")]])) r[[paste0(prefix, "_load_ui_cards")]] <- Sys.time()
         
       })
       
@@ -782,7 +784,8 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
       # Render menu
       output$study_menu <- renderUI({
         
-        req(r[[paste0(prefix, "_display_modules")]])
+        req(isolate(r[[paste0(prefix, "_display_modules")]]))
+        r[[paste0(prefix, "_load_ui_cards")]]
         
         # Check if users has access only to aggregated data
         r$options %>% dplyr::filter(category == "datamart" & link_id == r$chosen_datamart & name == "show_only_aggregated_data") %>%
@@ -791,7 +794,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         if (prefix == "patient_lvl" & show_only_aggregated_data == 1) show_message_bar(output, 1, "only_aggregated_data_authorized", "severeWarning", language)
         req((prefix == "patient_lvl" & show_only_aggregated_data != 1) | prefix == "aggregated")
         
-        display_modules <- r[[paste0(prefix, "_display_modules")]]
+        display_modules <- isolate(r[[paste0(prefix, "_display_modules")]])
         
         # If no module to show, notificate user
         if (nrow(display_modules) == 0 | "level" %not_in% names(display_modules)){
@@ -940,10 +943,14 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         tagList(
           shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
           shiny.fluent::Pivot(
+            id = "study_pivot",
             onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', item.props.id)")),
             selectedKey = r[[paste0(prefix, "_selected_module")]],
             shown_tabs
-          )
+          ),
+          # A script to use sortable with PivotItems
+          tags$script('$("#study_pivot").children().first().attr("id", "pivot_tabs");'),
+          sortable::sortable_js("pivot_tabs", options = sortable::sortable_options(onUpdate = htmlwidgets::JS(paste0("function(evt) { Shiny.setInputValue('", id, "-study_pivot_order', evt.from.innerText);}"))))
         )
         
       })
@@ -954,12 +961,12 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
       
       output$study_cards <- renderUI({
         
-        req(r[[paste0(prefix, "_display_modules")]])
+        req(isolate(r[[paste0(prefix, "_display_modules")]]))
         r[[paste0(prefix, "_load_ui_cards")]]
         
         r[[paste0(prefix, "_cards")]] <- character()
         
-        distinct_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::pull(id)
+        distinct_modules <- isolate(r[[paste0(prefix, "_display_modules")]]) %>% dplyr::pull(id)
         
         code_ui <- tagList("")
         
@@ -1108,7 +1115,36 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         
       })
     
+      ############################################
+      # Sortable / change PivotItems order       #
+      ############################################
     
+      observeEvent(input$study_pivot_order, {
+        
+        new_pivot_order <- tibble::tibble(name = stringr::str_split(input$study_pivot_order, "\n") %>% unlist()) %>%
+          dplyr::mutate(display_order = 1:dplyr::n())
+        
+        table <- paste0(prefix, "_modules")
+        sql <- glue::glue_sql("SELECT module_family_id FROM {`table`} WHERE id = {r[[paste0(prefix, '_selected_module')]]}", .con = r$db)
+        module_family_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
+        
+        if (is.na(module_family_id)) sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE module_family_id IS NULL AND deleted IS FALSE", .con = r$db)
+        else sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE module_family_id = {module_family_id} AND deleted IS FALSE", .con = r$db)
+        
+        all_modules <- DBI::dbGetQuery(r$db, sql) %>%
+          dplyr::select(-display_order) %>%
+          dplyr::inner_join(new_pivot_order, by = "name") %>%
+          dplyr::relocate(display_order, .after = "parent_module_id")
+        
+        sql <- glue::glue_sql("DELETE FROM {`table`} WHERE id IN ({all_modules %>% dplyr::pull(id)*})", .con = r$db)
+        query <- DBI::dbSendStatement(r$db, sql)
+        DBI::dbClearResult(query)
+        
+        DBI::dbAppendTable(r$db, table, all_modules)
+        update_r(r = r, table = table)
+        
+        r[[paste0(prefix, "_load_ui")]] <- paste0("change_pivot_order_", Sys.time())
+      })
     
     
     ##########################################

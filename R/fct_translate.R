@@ -953,6 +953,8 @@ get_translations <- function(){
     "FR", "gender", "Sexe",
     "EN", "years", "years",
     "FR", "years", "ans",
+    "EN", "months", "months",
+    "FR", "months", "mois",
     "EN", "patient_status", "Patient status",
     "FR", "patient_status", "Statut du patient",
     "EN", "from", "From",
