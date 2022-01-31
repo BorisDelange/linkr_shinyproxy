@@ -537,7 +537,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
           
           # Set current pivot to options_card
-          shinyjs::runjs(glue::glue("$('#datamarts_pivot button[name=\"{translate(language, 'options_card', r$words)}\"]').click();"))
+          shinyjs::runjs(glue::glue("$('#datamarts_pivot button[name=\"{translate(language, 'datamart_options', r$words)}\"]').click();"))
         })
         
         observeEvent(input$options_chosen, {
@@ -636,7 +636,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (table == "thesaurus") shiny.fluent::updateComboBox.shinyInput(session, "items_chosen", options = options, value = value)
           
           # Set current pivot to edit_code_card
-          shinyjs::runjs(glue::glue("$('#{paste0(table, '_pivot')} button[name=\"{translate(language, paste0('edit_', table, '_code'), r$words)}\"]').click();"))
+          shinyjs::runjs(glue::glue("$('#{paste0(table, '_pivot')} button[name=\"{translate(language, paste0('edit_', get_singular(table), '_code'), r$words)}\"]').click();"))
           
         })
         
