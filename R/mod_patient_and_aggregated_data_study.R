@@ -943,14 +943,14 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         tagList(
           shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
           shiny.fluent::Pivot(
-            id = "study_pivot",
+            id = paste0(prefix, "_study_pivot"),
             onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', item.props.id)")),
             selectedKey = r[[paste0(prefix, "_selected_module")]],
             shown_tabs
           ),
           # A script to use sortable with PivotItems
-          tags$script('$("#study_pivot").children().first().attr("id", "pivot_tabs");'),
-          sortable::sortable_js("pivot_tabs", options = sortable::sortable_options(onUpdate = htmlwidgets::JS(paste0("function(evt) { Shiny.setInputValue('", id, "-study_pivot_order', evt.from.innerText);}"))))
+          tags$script(paste0('$("#', prefix, '_study_pivot").children().first().attr("id", "', prefix, '_pivot_tabs");')),
+          sortable::sortable_js(paste0(prefix, "_pivot_tabs"), options = sortable::sortable_options(onUpdate = htmlwidgets::JS(paste0("function(evt) { Shiny.setInputValue('", id, "-study_pivot_order', evt.from.innerText);}"))))
         )
         
       })
