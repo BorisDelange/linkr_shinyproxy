@@ -398,7 +398,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         output$patient_info <- renderUI({
           tagList(span(translate(language, "age", words), style = style), age_div, br(),
             span(translate(language, "gender", words), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(gender) , br(), br(),
-            span(translate(language, "unit", words), style = style), r$stays %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(unit_name), br(),
+            span(translate(language, "unit", words), style = style), r$stays %>% dplyr::filter(patient_id == r$chosen_patient & stay_id == r$chosen_stay) %>% dplyr::pull(unit_name), br(),
             span(translate(language, "from", words), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(admission_datetime), br(),
             span(translate(language, "to", words), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(discharge_datetime))
         })
