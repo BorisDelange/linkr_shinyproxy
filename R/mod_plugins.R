@@ -325,6 +325,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         # Create a proxy for datatable
   
         r[[paste0(prefix, "_plugins_datatable_proxy")]] <- DT::dataTableProxy("plugins_datatable", deferUntilFlush = FALSE)
+        r[[paste0(prefix, "_plugins_to_export_datatable_proxy")]] <- DT::dataTableProxy("plugins_to_export_datatable", deferUntilFlush = FALSE)
 
         # Indicate that datatable has been loaded
         r[[paste0(prefix, "_plugins_datatable_loaded")]] <- TRUE
@@ -332,8 +333,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       else {
         # Reload data of datatable
-          if (length(r[[paste0(prefix, "_plugins_datatable_proxy")]]) > 0) DT::replaceData(r[[paste0(prefix, "_plugins_datatable_proxy")]],
-            r[[paste0(prefix, "_plugins_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
+          if (length(r[[paste0(prefix, "_plugins_datatable_proxy")]]) > 0){
+            DT::replaceData(r[[paste0(prefix, "_plugins_datatable_proxy")]], r[[paste0(prefix, "_plugins_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
+            DT::replaceData(r[[paste0(prefix, "_plugins_to_export_datatable_proxy")]], r[[paste0(prefix, "_export_plugins_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
+          }
       }
     })
     
@@ -823,20 +826,15 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       req(!is.null(link_id))
       
       # Update code
+      # DON'T USE glue_sql, it adds some quotes in the code
       
       ui_code_id <- r$code %>% dplyr::filter(category == "plugin_ui" & link_id == !!link_id) %>% dplyr::pull(id)
       server_code_id <- r$code %>% dplyr::filter(category == "plugin_server" & link_id == !!link_id) %>% dplyr::pull(id)
       
-      ui_code <- stringr::str_replace_all(input$ace_edit_code_ui, "'", "''")
-      sql <- glue::glue_sql("UPDATE code SET code = {ui_code}, datetime = {as.character(Sys.time())} WHERE id = {ui_code_id}", .con = r$db)
-      
-      DBI::dbSendStatement(r$db, sql) -> query
+      DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code_ui, "'", "''"), "' WHERE id = ", ui_code_id)) -> query
       DBI::dbClearResult(query)
       
-      server_code <- stringr::str_replace_all(input$ace_edit_code_server, "'", "''")
-      sql <- glue::glue_sql("UPDATE code SET code = {server_code}, datetime = {as.character(Sys.time())} WHERE id = {server_code_id}", .con = r$db)
-      
-      DBI::dbSendStatement(r$db, sql) -> query
+      DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code_server, "'", "''"), "' WHERE id = ", server_code_id)) -> query
       DBI::dbClearResult(query)
       
       # Update datetime in plugins table
