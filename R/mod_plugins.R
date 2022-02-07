@@ -59,47 +59,6 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
         make_card("",
           div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
         )
-        # make_card(translate(language, "all_plugins", words),
-        #   div(
-        #     br(),
-        #     shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-        #       shiny.fluent::DocumentCard(
-        #         shiny.fluent::DocumentCardPreview(previewImages = list(
-        #           list(
-        #             previewImageSrc = "https://cdn.thenewstack.io/media/2017/12/f67e69da-screen-shot-2017-12-28-at-4.17.36-pm.png",
-        #             width = 318,
-        #             height = 196
-        #           ))
-        #         ),
-        #         shiny.fluent::DocumentCardTitle(
-        #           title = "Dygraph",
-        #           shouldTruncate = TRUE
-        #         )#,
-        #         # shiny.fluent::DocumentCardActivity(
-        #         #   activity = "2020-05-21",
-        #         #   people = list(list(name = "John Doe"))
-        #         # )
-        #       ),
-        #       shiny.fluent::DocumentCard(
-        #         shiny.fluent::DocumentCardPreview(previewImages = list(
-        #           list(
-        #             previewImageSrc = "https://cran.r-project.org/web/packages/vistime/readme/man/figures/ward_movements.png",
-        #             width = 318,
-        #             height = 196
-        #           ))
-        #         ),
-        #         shiny.fluent::DocumentCardTitle(
-        #           title = "Vistime",
-        #           shouldTruncate = TRUE
-        #         ),
-        #         shiny.fluent::DocumentCardActivity(
-        #           activity = "2021-12-12",
-        #           people = list(list(name = "Boris Delange"))
-        #         )
-        #       )
-        #     )
-        #   )
-        # )
       )
     ),
     shinyjs::hidden(
@@ -253,35 +212,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     }
     
     r[[paste0(prefix, "_plugins_datatable_loaded")]] <- FALSE
-    
-    ##########################################
-    # Pivot menu                             #
-    ##########################################
-    
-    r$plugins_selected_pivot <- "all_plugins_card"
-    
-    # observeEvent(r$end_load_modules, {
-    #   r$plugins_selected_pivot <- "plugins_creation_card"
-    # })
-    
-    observeEvent(input$current_tab, r$plugins_selected_pivot <- input$current_tab)
-    
-    # observeEvent(r$plugins_selected_pivot, {
-      
-    # output$plugins_pivot <- renderUI({
-    #   shiny.fluent::Pivot(
-    #     selectedKey = r$plugins_selected_pivot,
-    #     onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-    #     shiny.fluent::PivotItem(id = "all_plugins_card", itemKey = "all_plugins_card", headerText = translate(language, "all_plugins", words)),
-    #     shiny.fluent::PivotItem(id = "plugins_creation_card", itemKey = "plugins_creation_card", headerText = translate(language, "create_plugin", words)),
-    #     shiny.fluent::PivotItem(id = "plugins_datatable_card", itemKey = "plugins_datatable_card", headerText = translate(language, "plugins_management", words)),
-    #     shiny.fluent::PivotItem(id = "plugins_edit_code_card", itemKey = "plugins_edit_code_card", headerText = translate(language, "edit_plugin_code", words)),
-    #     shiny.fluent::PivotItem(id = "plugins_options_card", itemKey = "plugins_options_card", headerText = translate(language, "plugin_options", words)),
-    #     shiny.fluent::PivotItem(id = "import_plugin_card", itemKey = "import_plugin_card", headerText = translate(language, "import_plugin", words)),
-    #     shiny.fluent::PivotItem(id = "export_plugin_card", itemKey = "export_plugin_card", headerText = translate(language, "export_plugin", words))
-    #   )
-    # })
-    # })
  
     ##########################################
     # Show or hide cards                     #
@@ -291,21 +221,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       "plugins_options_card", "import_plugin_card", "export_plugin_card")
     show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
     
-    # observeEvent(r$plugins_selected_pivot, {
-    # 
-    #   sapply(cards %>% setdiff(., r$plugins_selected_pivot), shinyjs::hide)
-    #   shinyjs::show(r$plugins_selected_pivot)
-    # })
-    
     # Show first card
     if ("all_plugins_card" %in% r$user_accesses) shinyjs::show("all_plugins_card")
     else shinyjs::show("all_plugins_card_forbidden")
-    
-    # observeEvent(input$current_tab, {
-    # 
-    #   sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
-    #   shinyjs::show(input$current_tab)
-    # })
     
     ##########################################
     # Update dropdowns                       #
@@ -904,18 +822,33 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
       req(!is.null(link_id))
       
+      # Update code
+      
       ui_code_id <- r$code %>% dplyr::filter(category == "plugin_ui" & link_id == !!link_id) %>% dplyr::pull(id)
       server_code_id <- r$code %>% dplyr::filter(category == "plugin_server" & link_id == !!link_id) %>% dplyr::pull(id)
       
-      DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code_ui, "'", "''"), "' WHERE id = ", ui_code_id)) -> query
+      ui_code <- stringr::str_replace_all(input$ace_edit_code_ui, "'", "''")
+      sql <- glue::glue_sql("UPDATE code SET code = {ui_code}, datetime = {as.character(Sys.time())} WHERE id = {ui_code_id}", .con = r$db)
+      
+      DBI::dbSendStatement(r$db, sql) -> query
       DBI::dbClearResult(query)
       
-      DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code_server, "'", "''"), "' WHERE id = ", server_code_id)) -> query
+      server_code <- stringr::str_replace_all(input$ace_edit_code_server, "'", "''")
+      sql <- glue::glue_sql("UPDATE code SET code = {server_code}, datetime = {as.character(Sys.time())} WHERE id = {server_code_id}", .con = r$db)
+      
+      DBI::dbSendStatement(r$db, sql) -> query
+      DBI::dbClearResult(query)
+      
+      # Update datetime in plugins table
+      
+      sql <- glue::glue_sql("UPDATE plugins SET datetime = {as.character(Sys.time())} WHERE id = {link_id}", .con = r$db)
+      DBI::dbSendStatement(r$db, sql) -> query
       DBI::dbClearResult(query)
       
       update_r(r = r, table = "code")
+      update_r(r = r, table = "plugins")
       
-      # Notification to user
+      # Notify user
       show_message_bar(output, 4, "modif_saved", "success", language)
       
     })
@@ -1106,7 +1039,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     output$export_plugins_download <- downloadHandler(
       
-      filename = function() paste0("cdwtools_plugins_", as.character(Sys.Date()), ".zip"),
+      filename = function() paste0("cdwtools_plugins_", prefix, "_", as.character(Sys.Date()), ".zip"),
       
       content = function(file){
         

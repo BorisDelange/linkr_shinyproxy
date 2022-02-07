@@ -1122,7 +1122,9 @@ get_translations <- function(){
     "EN", "current_stay", "Current stay",
     "FR", "current_stay", "Séjour sélectionné",
     "EN", "select_a_subset", "Please select a subset",
-    "FR", "select_a_subset", "Sélectionner un subset"
+    "FR", "select_a_subset", "Sélectionner un subset",
+    "EN", "last_update", "Last update",
+    "FR", "last_update", "Dernière modification"
     ) -> data
   data
 }

@@ -218,7 +218,7 @@ get_col_names <- function(table_name = character(), language = "EN", words = tib
   
   if (table_name == "plugins"){
     result <- c(translate(language, "id", words), translate(language, "name", words), translate(language, "description", words), translate(language, "module_type", words), 
-      translate(language, "datetime", words),  translate(language, "deleted", words), translate(language, "modified", words), translate(language, "action", words))
+      translate(language, "last_update", words),  translate(language, "deleted", words), translate(language, "modified", words), translate(language, "action", words))
   }
   
   if (table_name == "users"){
