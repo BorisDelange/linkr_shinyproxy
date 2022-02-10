@@ -108,9 +108,6 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
         make_card("",
           div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
         )
-        # make_card(translate(language, "import_study", words),
-        #   div("...")
-        # ), br()
       )
     ),
     shinyjs::hidden(
@@ -119,9 +116,6 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
         make_card("",
           div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
         )
-        # make_card(translate(language, "export_study", words),
-        #   div("...")
-        # ), br()
       )
     ),
     shinyjs::hidden(
@@ -131,7 +125,9 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
           div(
             make_combobox(language = language, ns = ns, label = "thesaurus", width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
             DT::DTOutput(ns("thesaurus_items")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), translate(language, "save", words))
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), translate(language, "save", words)),
+            br(),
+            uiOutput(ns("thesaurus_selected_item"))
           )
         ), br()
       )
@@ -478,6 +474,8 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
       
       if (length(r$datamart_thesaurus_items_temp) > 0) r$datamart_thesaurus_items_temp <- r$datamart_thesaurus_items_temp %>% dplyr::slice(0)
       
+      # Reset UI of selected item
+      output$thesaurus_selected_item <- renderUI("")
     })
     
     observeEvent(input$thesaurus, {
@@ -564,6 +562,50 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
       
       save_settings_datatable_updates(output = output, r = r, ns = ns, 
         table = "thesaurus_items", r_table = "datamart_thesaurus_items", duplicates_allowed = TRUE, language = language)
+    })
+    
+    # When a row is selected
+    observeEvent(input$thesaurus_items_rows_selected, {
+      
+      style <- "display:inline-block; width:200px; font-weight:bold;"
+      
+      thesaurus_item <- r$datamart_thesaurus_items_temp[input$thesaurus_items_rows_selected, ] %>% dplyr::mutate_at("item_id", as.integer)
+      
+      thesaurus_name <- r$thesaurus %>% dplyr::filter(id == thesaurus_item$thesaurus_id) %>% dplyr::pull(name)
+      
+      all_values <- r$labs_vitals %>% dplyr::filter(thesaurus_name == !!thesaurus_name) %>%
+        dplyr::inner_join(thesaurus_item %>% dplyr::select(item_id), by = "item_id") %>% dplyr::select(value, value_num)
+      values_num <- suppressMessages(all_values %>% dplyr::filter(!is.na(value_num)) %>% dplyr::top_n(10, wt = "value_num") %>% dplyr::pull(value_num))
+      values <- suppressMessages(all_values %>% dplyr::filter(!is.na(value)) %>% dplyr::top_n(10, wt = "value") %>% dplyr::pull(value))
+      values_text <- tagList(
+        span(translate(language, "values", r$words), style = style), paste(values, collapse = " || "), br(),
+        span(translate(language, "numeric_values", r$words), style = style), paste(values_num, collapse = " || "), br()
+      )
+      
+      if (nrow(all_values) == 0){
+        
+        all_values <- r$orders %>% dplyr::filter(thesaurus_name == !!thesaurus_name) %>%
+          dplyr::inner_join(thesaurus_item %>% dplyr::select(item_id), by = "item_id") %>% 
+          dplyr::mutate(amount_text = paste0(amount, " ", amount_unit), rate_text = paste0(rate, " ", rate_unit)) %>%
+          dplyr::select(amount, amount_text, rate, rate_text)
+        amount <- suppressMessages(all_values %>% dplyr::filter(!is.na(amount)) %>% dplyr::top_n(5) %>% dplyr::pull(amount_text))
+        rate <- suppressMessages(all_values %>% dplyr::filter(!is.na(rate)) %>% dplyr::top_n(5) %>% dplyr::pull(rate_text))
+        
+        values_text <- tagList(
+          span(translate(language, "rate_values", r$words), style = style), paste(rate, collapse = " || "), br(),
+          span(translate(language, "amount_values", r$words), style = style), paste(amount, collapse = " || "), br()
+        )
+        
+        if (nrow(all_values) == 0) values_text <- ""
+      }
+      
+      output$thesaurus_selected_item <- renderUI(tagList(br(), div(
+        span(translate(language, "display_name", r$words), style = style), thesaurus_item$display_name, br(),
+        span(translate(language, "thesaurus_id", r$words), style = style), thesaurus_item$thesaurus_id, br(),
+        span(translate(language, "item_id", r$words), style = style), thesaurus_item$item_id, br(),
+        values_text,
+        style = "border:dashed 1px; padding:10px;"
+      )))
     })
     
   })

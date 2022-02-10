@@ -86,10 +86,11 @@ mod_patient_and_aggregated_data_study_ui <- function(id = character(), language 
   
   div(
     div(
+      class = "message_bars",
       shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
-      shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")), 
-      shiny.fluent::reactOutput(ns("module_delete_confirm")), shiny.fluent::reactOutput(ns("module_element_delete_confirm")),
-      style = "overflow-y:scroll; width: 100%; position: fixed; z-index:100;"),
+      shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5"))
+    ), 
+    shiny.fluent::reactOutput(ns("module_delete_confirm")), shiny.fluent::reactOutput(ns("module_element_delete_confirm")),
     uiOutput(ns("study_menu")),
     uiOutput(ns("study_cards")),
     shinyjs::hidden(

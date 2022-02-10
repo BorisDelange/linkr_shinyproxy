@@ -155,6 +155,7 @@ a:hover {
   background-color: transparent;
   border-radius: 0;
 }
+
 .markdown code {
   padding: 2px 4px;
   font-size: 90%;
@@ -162,6 +163,7 @@ a:hover {
   background-color: #f9f2f4;
   border-radius: 4px;
 }
+
 .markdown pre {
     display: block;
     padding: 9.5px;
@@ -175,3 +177,14 @@ a:hover {
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
+.message_bars {
+  overflow-y: scroll; 
+  width: 100%; 
+  position: fixed; 
+  z-index: 100;
+}
+
+/*.message_bars:hover {
+  display: none;
+}*/
