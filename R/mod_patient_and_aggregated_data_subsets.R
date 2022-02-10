@@ -17,7 +17,7 @@ mod_patient_and_aggregated_data_subsets_ui <- function(id = character(), languag
   div(
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "subset_main", text = translate(language, "subsets", words))
+      list(key = "subset_main", text = paste0(translate(language, paste0(prefix, "_data"), words), " - ", translate(language, "subsets", words)))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-subsets_current_tab', item.props.id)")),

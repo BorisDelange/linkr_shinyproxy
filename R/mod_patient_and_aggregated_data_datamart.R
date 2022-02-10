@@ -27,13 +27,10 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
     shiny.fluent::reactOutput(ns("study_delete_confirm")),
     shiny.fluent::reactOutput(ns("thesaurus_item_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "datamart_main", text = translate(language, "datamart", words))
+      list(key = "datamart_main", text = paste0(translate(language, paste0(prefix, "_data"), words), " - ", translate(language, "datamart", words)))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      # shiny.fluent::PivotItem(id = "datamarts_options_card", itemKey = "datamarts_options_card", headerText = translate(language, "datamart_options", words)),
-      # shiny.fluent::PivotItem(id = "datamarts_edit_code_card", itemKey = "datamarts_edit_code_card", headerText = translate(language, "edit_datamart_code", words)),
-      # shiny.fluent::PivotItem(id = "modules_families_card", itemKey = "modules_families", headerText = translate(language, "modules_families", words)),
       shiny.fluent::PivotItem(id = "studies_creation_card", itemKey = "studies_creation_card", headerText = translate(language, "create_study", words)),
       shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = translate(language, "studies_management", words)),
       shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study_card", headerText = translate(language, "import_study", words)),
@@ -486,7 +483,7 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     observeEvent(input$thesaurus, {
       
       r$datamart_thesaurus_items <- DBI::dbGetQuery(r$db, paste0(
-        "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted,
+        "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted
           FROM thesaurus_items t
           WHERE t.thesaurus_id = ", input$thesaurus$key, " AND t.deleted IS FALSE
           ORDER BY t.id")) %>% tibble::as_tibble() %>% dplyr::mutate(action = "")

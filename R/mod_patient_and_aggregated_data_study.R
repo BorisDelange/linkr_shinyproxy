@@ -85,9 +85,11 @@ mod_patient_and_aggregated_data_study_ui <- function(id = character(), language 
   }
   
   div(
-    shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
-    shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")), 
-    shiny.fluent::reactOutput(ns("module_delete_confirm")), shiny.fluent::reactOutput(ns("module_element_delete_confirm")),
+    div(
+      shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
+      shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")), 
+      shiny.fluent::reactOutput(ns("module_delete_confirm")), shiny.fluent::reactOutput(ns("module_element_delete_confirm")),
+      style = "overflow-y:scroll; width: 100%; position: fixed; z-index:100;"),
     uiOutput(ns("study_menu")),
     uiOutput(ns("study_cards")),
     shinyjs::hidden(
@@ -800,7 +802,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         if (nrow(display_modules) == 0 | "level" %not_in% names(display_modules)){
           return(tagList(
             shiny.fluent::Breadcrumb(items = list(
-              list(key = "main", text = translate(language, id, words), href = paste0("#!/", page_name), isCurrentItem = TRUE,
+              list(key = "main", text = paste0(translate(language, paste0(prefix, "_data"), words), " - ", translate(language, "study", words)), href = paste0("#!/", page_name), isCurrentItem = TRUE,
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', 0)")))),
               maxDisplayedItems = 3),
             shiny.fluent::Pivot(

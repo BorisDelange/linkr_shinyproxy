@@ -47,6 +47,8 @@ get_translations <- function(){
     "FR", "home", "Accueil",
     "EN", "patient_level_data", "Patient-level data",
     "FR", "patient_level_data", "Données individuelles",
+    "EN", "patient_lvl_data", "Patient-level data",
+    "FR", "patient_lvl_data", "Données individuelles",
     "EN", "aggregated_data", "Aggregated data",
     "FR", "aggregated_data", "Données agrégées",
     "EN", "settings", "Settings",
