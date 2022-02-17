@@ -1111,14 +1111,23 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         
         sapply(distinct_groups, function(group_id){
           
-          # Activate toggles
-          shiny.fluent::updateToggle.shinyInput(session, paste0(paste0(prefix, "_group_", group_id), "_toggle"), value = TRUE)
+          # If toggle is ON
+          if (length(input[[paste0(paste0(prefix, "_group_", group_id), "_toggle")]]) > 0){
+            
+            if (input[[paste0(paste0(prefix, "_group_", group_id), "_toggle")]]){
+            
+              # Show card
+              shinyjs::show(paste0(prefix, "_group_", group_id))
+            
+              # Add to the list of open cards
+              r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_group_", group_id))
+            }
+          }
+          else {
+            shinyjs::show(paste0(prefix, "_group_", group_id))
+            r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_group_", group_id))
+          }
           
-          # Show card
-          shinyjs::show(paste0(prefix, "_group_", group_id))
-          
-          # Add to the list of open cards
-          r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_group_", group_id))
         })
         
       })
