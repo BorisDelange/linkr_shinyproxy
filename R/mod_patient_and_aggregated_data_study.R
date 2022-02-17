@@ -968,6 +968,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         r[[paste0(prefix, "_load_ui_cards")]]
         
         r[[paste0(prefix, "_cards")]] <- character()
+        r[[paste0(prefix, "_cards_to_open")]] <- character()
         
         distinct_modules <- isolate(r[[paste0(prefix, "_display_modules")]]) %>% dplyr::pull(id)
         
@@ -1043,7 +1044,8 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
                   )
                 )
                 
-                if (module_id != selected_module) element_code <- shinyjs::hidden(element_code)
+                if (!is.na(selected_module)) if (module_id == selected_module) r[[paste0(prefix, "_cards_to_open")]] <- 
+                  c(isolate(r[[paste0(prefix, "_cards_to_open")]]), paste0(prefix, "_group_", group_id))
                 
                 code_ui <<- tagList(code_ui, element_code)
               },
@@ -1069,11 +1071,14 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
             )
           )
           
-          if (!is.na(selected_module)) if (module_id != selected_module) toggles_div <- shinyjs::hidden(toggles_div)
+          if (!is.na(selected_module)) if (module_id == selected_module) r[[paste0(prefix, "_cards_to_open")]] <- 
+            c(isolate(r[[paste0(prefix, "_cards_to_open")]]), paste0(prefix, "_toggles_", module_id))
           
           code_ui <<- tagList(toggles_div, code_ui)
           
         })
+        
+        r[[paste0(prefix, "_hide_all_cards")]] <- Sys.time()
         
         # Final result
         code_ui
@@ -1281,16 +1286,29 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         
         if (length(toggles) > 0){
           # Load toggles server code  
-          shinyjs::delay(10000, {
+          # shinyjs::delay(10000, {
             sapply(toggles, function(toggle){
               observeEvent(input[[paste0(toggle, "_toggle")]], {
                 if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle)
                 else shinyjs::hide(toggle)
               }, ignoreInit = TRUE)
             })
-          })
+          # })
+            r[[paste0(prefix, "_hide_all_cards")]] <- Sys.time()
         }
       }
+      
     })
+    
+    observeEvent(r[[paste0(prefix, "_hide_all_cards")]], {
+      shinyjs::delay(100, {
+        sapply(r[[paste0(prefix, "_cards")]], shinyjs::hide)
+        if (length(r[[paste0(prefix, "_cards")]]) > 0) r[[paste0(prefix, "reopen_cards")]] <- Sys.time()
+      })
+    })
+    
+    observeEvent(r[[paste0(prefix, "reopen_cards")]], shinyjs::delay(1000, {
+      sapply(r[[paste0(prefix, "_cards_to_open")]], shinyjs::show)
+    }))
   })
 }

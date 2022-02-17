@@ -291,18 +291,17 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
     emptyTable = translate(language, "DT_empty", r$words))
   
   # If no row in dataframe, stop here
-  if (nrow(data) == 0) return({
-    if (length(names(default_tibble)) > 0){
-      data <- default_tibble
-      if (length(col_names) == length(names(data))) names(data) <- col_names
-    }
-    else {
+  if (nrow(data) == 0){
+    
+    if (length(names(default_tibble)) == 0) return({
       data <- tibble::tribble(~id, ~datetime)
       names(data) <- c(translate(language, "id", r$words), translate(language, "datetime", r$words))
-    }
-    output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom), 
-      rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,)
-  })
+      output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom), 
+        rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
+    })
+    
+    if (length(names(default_tibble)) > 0) data <- default_tibble
+  }
 
   
   # Which columns are non editable

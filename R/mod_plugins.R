@@ -285,7 +285,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       # Reload group_id spinButton
-      shiny.fluent::updateSpinButton.shinyInput(session, "group_id", value = get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10000000)
+      if (length(input$group_id) == 0) shiny.fluent::updateSpinButton.shinyInput(session,
+        "group_id", value = get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10000000)
     })
     
     observeEvent(r[[paste0(prefix, "_plugins_temp")]], {
@@ -799,8 +800,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       output$code_result_ui <- renderUI(make_card("", tryCatch(result <- eval(parse(text = ui_code)), error = function(e) stop(e), warning = function(w) stop(w))))
       
       output$code_result_server <- renderText({
-        
-        print(paste0(Sys.time(), " _ code executed"))
         
         options('cli.num_colors' = 1)
         

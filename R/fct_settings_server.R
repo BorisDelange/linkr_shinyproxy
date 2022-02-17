@@ -926,7 +926,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   if (table == "thesaurus_items") r$datamart_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
   else update_r(r = r, table = table, language = language)
   
-  # Notification to user
+  # Notify user
   show_message_bar(output, 2, "modif_saved", "success", language)
 }
   
