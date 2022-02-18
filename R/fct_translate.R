@@ -957,6 +957,8 @@ get_translations <- function(){
     "FR", "r_console_edit_code_card", "Editer le code",
     "EN", "creating_cache", "First load of thesaurus items : creating cache, may take a few seconds",
     "FR", "creating_cache", "Premier chargement des items de ce thésaurus : création du cache, peut prendre quelques secondes",
+    "EN", "reload_cache", "Reload cache",
+    "FR", "reload_cache", "Recharger le cache",
     "EN", "age", "Age",
     "FR", "age", "Age",
     "EN", "gender", "Gender",

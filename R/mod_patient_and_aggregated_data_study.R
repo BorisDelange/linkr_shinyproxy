@@ -1034,13 +1034,15 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
                 
                 # Module element card
                 
-                element_code <- div(id = ns(paste0(prefix, "_group_", group_id)),
-                  make_card("",
-                    div(eval(parse(text = code_ui_card)),
-                      # actionButton(ns(paste0(prefix, "_settings_module_element_", group_id)), "", icon = icon("cog"), style = "position:absolute; top:8px; right: 41px;"),
-                      actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"), style = "position:absolute; top:8px; right: 10px;")
-                    ),
-                    style = "position:relative;"
+                element_code <- shinyjs::hidden(
+                  div(id = ns(paste0(prefix, "_group_", group_id)),
+                    make_card("",
+                      div(eval(parse(text = code_ui_card)),
+                        # actionButton(ns(paste0(prefix, "_settings_module_element_", group_id)), "", icon = icon("cog"), style = "position:absolute; top:8px; right: 41px;"),
+                        actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"), style = "position:absolute; top:8px; right: 10px;")
+                      ),
+                      style = "position:relative;"
+                    )
                   )
                 )
                 
@@ -1060,13 +1062,15 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
           
           r[[paste0(prefix, "_cards")]] <- c(isolate(r[[paste0(prefix, "_cards")]]), paste0(prefix, "_toggles_", module_id))
           
-          toggles_div <- div(id = ns(paste0(prefix, "_toggles_", module_id)),
-            make_card("",
-              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
-                div(style = "width:20px;"),
-                toggles
+          toggles_div <- shinyjs::hidden(
+            div(id = ns(paste0(prefix, "_toggles_", module_id)),
+              make_card("",
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+                  div(style = "width:20px;"),
+                  toggles
+                )
               )
             )
           )
@@ -1081,7 +1085,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         r[[paste0(prefix, "_hide_all_cards")]] <- Sys.time()
         
         # Final result
-        code_ui
+        tagList(code_ui, br())
       })
       
       ############################################

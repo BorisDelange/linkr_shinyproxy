@@ -125,7 +125,8 @@ mod_patient_and_aggregated_data_datamart_ui <- function(id = character(), langua
           div(
             make_combobox(language = language, ns = ns, label = "thesaurus", width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
             DT::DTOutput(ns("thesaurus_items")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), translate(language, "save", words)),
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), translate(language, "save", words)), " ",
+            shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), translate(language, "reload_cache", words)),
             br(),
             uiOutput(ns("thesaurus_selected_item"))
           )
@@ -480,6 +481,13 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
     
     observeEvent(input$thesaurus, {
       
+      r$reload_thesaurus_datatable <- Sys.time()
+    })
+    
+    observeEvent(r$reload_thesaurus_datatable, {
+      
+      req(length(input$thesaurus$key) > 0)
+      
       r$datamart_thesaurus_items <- DBI::dbGetQuery(r$db, paste0(
         "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted
           FROM thesaurus_items t
@@ -536,6 +544,25 @@ mod_patient_and_aggregated_data_datamart_server <- function(id = character(), r,
       
       # Create a proxy for datatatable
       r[[paste0(prefix, "_datamart_thesaurus_items_datatable_proxy")]] <- DT::dataTableProxy("thesaurus_items", deferUntilFlush = FALSE)
+    })
+    
+    # Reload thesarus cache
+    
+    observeEvent(input$reload_thesaurus_cache, {
+      
+      req(length(input$thesaurus$key) > 0)
+      
+      # Delete old cache
+      
+      sql <- glue::glue_sql("SELECT t.id FROM thesaurus_items t WHERE t.thesaurus_id = {input$thesaurus$key} AND t.deleted IS FALSE" , .con = r$db)
+      ids_to_del <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
+      
+      sql <- glue::glue_sql("DELETE FROM cache WHERE category IN ('count_patients_rows', 'count_items_rows') 
+        AND link_id IN ({ids_to_del*}) AND link_id_bis = {r$chosen_datamart}", .con = r$db)
+      DBI::dbSendStatement(r$db, sql) -> query
+      DBI::dbClearResult(query)
+      
+      r$reload_thesaurus_datatable <- Sys.time()
     })
     
     # Reload datatable
