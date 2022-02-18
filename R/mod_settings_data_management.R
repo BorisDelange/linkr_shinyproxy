@@ -742,8 +742,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           if (length(input$items_chosen) > 1) link_id <- input$items_chosen$key
           else link_id <- input$items_chosen
-          if (length(input$code_chosen) > 1) code_link_id <- input$code_chosen$key
-          else code_link_id <- input$code_chosen
+          if (length(input$code_chosen) > 0){
+            if (length(input$code_chosen) > 1) code_link_id <- input$code_chosen$key
+            else code_link_id <- input$code_chosen
+          }
+          else code_link_id <- 0L
 
           if (link_id != code_link_id){
             options <- convert_tibble_to_list(r$thesaurus %>% dplyr::arrange(name), key_col = "id", text_col = "name")
