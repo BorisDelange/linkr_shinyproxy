@@ -45,6 +45,15 @@ golem_add_external_resources <- function(css){
     marker::useMarker(),
     
     # Shinybusy is used to add a busy bar on top of the page, when there are loading times
-    shinybusy::add_busy_bar(timeout = 1000, color = "#0D98FF", height = "3px")
+    shinybusy::add_busy_bar(timeout = 1000, color = "#0D98FF", height = "3px"),
+    
+    # A function to make info button works, on the header
+    tags$script(
+      "$(function() {
+          $('.ms-Button--commandBar').on('click', function() {
+            Shiny.setInputValue('header_active_page', $(this).attr('id'));
+          })
+        })"
+    )
   )
 }

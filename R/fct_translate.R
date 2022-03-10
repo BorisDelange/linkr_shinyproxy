@@ -45,6 +45,10 @@ get_translations <- function(){
     "FR", "blank", "",
     "EN", "home", "Home",
     "FR", "home", "Accueil",
+    "EN", "my_studies", "My studies",
+    "FR", "my_studies", "Mes études",
+    "EN", "my_subsets", "My subsets",
+    "FR", "my_subsets", "Mes subsets",
     "EN", "patient_level_data", "Patient-level data",
     "FR", "patient_level_data", "Données individuelles",
     "EN", "patient_lvl_data", "Patient-level data",
@@ -1136,7 +1140,11 @@ get_translations <- function(){
     "EN", "select_a_subset", "Please select a subset",
     "FR", "select_a_subset", "Sélectionner un subset",
     "EN", "last_update", "Last update",
-    "FR", "last_update", "Dernière modification"
+    "FR", "last_update", "Dernière modification",
+    "EN", "choose_a_datamart", "Choose a damatart in the dropdown on the left-side of the page",
+    "FR", "choose_a_datamart", "Choisissez un datamart dans le menu déroulant à gauche de l'écran",
+    "EN", "choose_a_study", "Choose a damatart & a study in the dropdown on the left-side of the page",
+    "FR", "choose_a_study", "Choisissez un datamart & une étude dans le menu déroulant à gauche de l'écran"
     ) -> data
   data
 }

@@ -21,6 +21,19 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   }
   
   ##########################################
+  # My studies & subsets                   #
+  ##########################################
+  
+  if (id == "my_studies") mod_my_studies_ui(id = "my_studies", language = language, words = words) -> result
+  if (id == "my_subsets") mod_my_subsets_ui(id = "my_subsets", language = language, words = words) -> result
+  
+  ##########################################
+  # Thesaurus                              #
+  ##########################################
+  
+  if (id == "thesaurus") mod_thesaurus_ui(id = "thesaurus", language = language, words = words) -> result
+  
+  ##########################################
   # Patient-lvl & aggregated data pages    #
   ##########################################
   

@@ -43,7 +43,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   # Patient-level & aggregated data        #
   ##########################################
   
-  if (id %in% c("patient_level_data", "aggregated_data")){
+  if (id %in% c("my_studies", "my_subsets", "thesaurus", "patient_level_data", "aggregated_data")){
     
     dropdowns <- function(names, arrows = TRUE){
       
@@ -51,20 +51,20 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       
       sapply(names, function(name){
         
-        action_button <- ""
+        # action_button <- ""
         width <- "250px"
         
-        if (arrows){
-          action_button <- actionButton(ns(paste0(name, "_page")), "", icon = icon("arrow-right"),
-            style = "background-color:white; border-width:1px; height:32px;")
-          width <- "220px"
-        }
+        # if (arrows){
+        #   action_button <- actionButton(ns(paste0(name, "_page")), "", icon = icon("arrow-right"),
+        #     style = "background-color:white; border-width:1px; height:32px;")
+        #   width <- "220px"
+        # }
         
         result <<- tagList(result,
           div(id = ns(paste0(name, "_title")), class = "input_title", translate(language, name, words)),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 5),
-            div(shiny.fluent::ComboBox.shinyInput(ns(name), allowFreeForm = FALSE, autoComplete = "on"), style = paste0("min-width:", width, "; max-width:", width, ";")),
-            action_button
+            div(shiny.fluent::ComboBox.shinyInput(ns(name), allowFreeForm = FALSE, autoComplete = "on"), style = paste0("min-width:", width, "; max-width:", width, ";"))#,
+            # action_button
           )
         )
       })
@@ -72,6 +72,24 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       result
     }
   }
+  
+  ##########################################
+  # My studies                             #
+  ##########################################
+  
+  if (id == "my_studies") div(class = "sidenav", dropdowns(c("datamart"))) -> result
+  
+  ##########################################
+  # My subsets                             #
+  ##########################################
+  
+  if (id == "my_subsets") div(class = "sidenav", dropdowns(c("datamart", "study", "subset"))) -> result
+  
+  ##########################################
+  # Thesaurus                              #
+  ##########################################
+  
+  if (id == "thesaurus") div(class = "sidenav", dropdowns(c("datamart"))) -> result
   
   ##########################################
   # Patient-level data                     #
@@ -95,10 +113,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   # Aggregated data                        #
   ##########################################
   
-  if (id == "aggregated_data"){
-    
-    div(class = "sidenav", dropdowns(c("datamart", "study", "subset"))) -> result
-  }
+  if (id == "aggregated_data") div(class = "sidenav", dropdowns(c("datamart", "study", "subset"))) -> result
   
   ##########################################
   # Plugins                                #
@@ -188,7 +203,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    if (id %in% c("patient_level_data", "aggregated_data")){
+    if (id %in% c("my_studies", "my_subsets", "thesaurus", "patient_level_data", "aggregated_data")){
       
       ##########################################
       # Patient-level & aggregated data        #
@@ -196,7 +211,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       
       # Show or hide main UI
       
-      sapply(c("datamart", "study", "subset"), function(name) observeEvent(input[[paste0(name, "_page")]], r[[paste0(name, "_page")]] <- Sys.time()))
+      # sapply(c("datamart", "study", "subset"), function(name) observeEvent(input[[paste0(name, "_page")]], r[[paste0(name, "_page")]] <- Sys.time()))
       
       observeEvent(r$datamarts, {
         

@@ -155,14 +155,14 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
       
     })
     
-    observeEvent(r$study_page, {
-      
-      req(!is.na(r$chosen_study))
-      
-      # Show datamart UI, hide other UIs
-      shinyjs::show("study_main")
-      sapply(c("datamart_main", "subset_main"), shinyjs::hide)
-    })
+    # observeEvent(r$study_page, {
+    #   
+    #   req(!is.na(r$chosen_study))
+    #   
+    #   # Show datamart UI, hide other UIs
+    #   shinyjs::show("study_main")
+    #   sapply(c("datamart_main", "subset_main"), shinyjs::hide)
+    # })
     
     ##########################################
     # DELETE A MODULE                        #
@@ -740,7 +740,7 @@ mod_patient_and_aggregated_data_study_server <- function(id = character(), r, la
         req(!is.na(r$chosen_study))
         
         # Show study UI, hide other UIs
-        r$study_page <- Sys.time()
+        # r$study_page <- Sys.time()
         
         # Load study informations
         # For one study, you choose ONE patient_lvl or aggregated data module family
