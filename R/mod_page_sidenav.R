@@ -54,12 +54,6 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
         # action_button <- ""
         width <- "250px"
         
-        # if (arrows){
-        #   action_button <- actionButton(ns(paste0(name, "_page")), "", icon = icon("arrow-right"),
-        #     style = "background-color:white; border-width:1px; height:32px;")
-        #   width <- "220px"
-        # }
-        
         result <<- tagList(result,
           div(id = ns(paste0(name, "_title")), class = "input_title", translate(language, name, words)),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 5),
@@ -97,6 +91,13 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   
   if (id == "patient_level_data"){
     div(class = "sidenav",
+      div(translate(language, "data", words), class = "input_title", style = "font-size:14.5px;"),
+      div(
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
+          shiny.fluent::PrimaryButton.shinyInput(ns("data_page_ind"), translate(language, "individual", words), style = "width:125px;"), 
+          shiny.fluent::DefaultButton.shinyInput(ns("data_page_agg"), translate(language, "aggregated", words), style = "width:125px;")
+        ), style = "width:250px;"
+      ),
       dropdowns(c("datamart", "study", "subset")),
       br(), div(id = ns("hr1"), hr()),
       dropdowns(c("patient", "stay"), arrows = FALSE),
@@ -113,7 +114,17 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   # Aggregated data                        #
   ##########################################
   
-  if (id == "aggregated_data") div(class = "sidenav", dropdowns(c("datamart", "study", "subset"))) -> result
+  if (id == "aggregated_data") div(
+    class = "sidenav", 
+    div(translate(language, "data", words), class = "input_title", style = "font-size:14.5px;"),
+    div(
+      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
+        shiny.fluent::DefaultButton.shinyInput(ns("data_page_ind"), translate(language, "individual", words), style = "width:125px;"), 
+        shiny.fluent::PrimaryButton.shinyInput(ns("data_page_agg"), translate(language, "aggregated", words), style = "width:125px;")
+      ), style = "width:250px;"
+    ),                               
+    dropdowns(c("datamart", "study", "subset"))
+  ) -> result
   
   ##########################################
   # Plugins                                #
@@ -208,6 +219,19 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       ##########################################
       # Patient-level & aggregated data        #
       ##########################################
+      
+      # Changing page between patient-lvl & aggregated data
+      
+      r$data_page <- "patient_level_data"
+      
+      if (id == "patient_level_data") observeEvent(input$data_page_agg, {
+        shiny.router::change_page("aggregated_data")
+        r$data_page <- "aggregated_data"
+      })
+      if (id == "aggregated_data") observeEvent(input$data_page_ind, {
+        shiny.router::change_page("patient_level_data")
+        r$data_page <- "patient_level_data"
+      })
       
       # Show or hide main UI
       

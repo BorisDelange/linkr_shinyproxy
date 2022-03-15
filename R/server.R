@@ -112,6 +112,25 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
     # Route pages
     router$server(input, output, session)
     
+    # Load header
+    # r$data_page <- "patient_level_data"
+    # observeEvent(r$data_page, {
+      # header_items <-
+        
+      # output$header_commandbar <- renderUI(
+      #   shiny.fluent::CommandBar(
+      #     items = list(
+      #       shiny.fluent::CommandBarItem(translate(language, "home", words), "Home", href = shiny.router::route_link("home/get_started")),
+      #       shiny.fluent::CommandBarItem(translate(language, "my_studies", words), "CustomList", href = shiny.router::route_link("my_studies")),
+      #       shiny.fluent::CommandBarItem(translate(language, "my_subsets", words), "People", href = shiny.router::route_link("my_subsets")),
+      #       shiny.fluent::CommandBarItem(translate(language, "thesaurus", words), "AllApps", href = shiny.router::route_link("thesaurus")),
+      #       shiny.fluent::CommandBarItem(translate(language, "data", words), "BIDashboard", href = shiny.router::route_link("patient_level_data")),
+      #       shiny.fluent::CommandBarItem(translate(language, "plugins", words), "Code", href = shiny.router::route_link("plugins/patient_lvl"))
+      #     )
+      #   )
+      # )
+    # })
+    
     # Keep trace of loaded observers (not to have multiple identical observers)
     r$loaded_observers <- ""
 
@@ -142,7 +161,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       mod_home_server("home", r, language, r$words)
       
       observeEvent(input$header_active_page, {
-        r$header_active_page <- paste0(input$header_active_page, "_", Sys.time())
+        if (input$header_active_page == "help") r$help_on_page <- Sys.time()
       })
       
       if (perf_monitoring) print(paste0(Sys.time(), " _ data_pages"))

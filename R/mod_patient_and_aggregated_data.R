@@ -89,6 +89,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
   div(
     class = "main",
     render_settings_default_elements(ns = ns),
+    shiny.fluent::reactOutput(ns("react_panel")),
     shiny.fluent::reactOutput(ns("module_delete_confirm")), shiny.fluent::reactOutput(ns("module_element_delete_confirm")),
     div(id = ns("initial_breadcrumb"),
       shiny.fluent::Breadcrumb(items = list(
@@ -131,6 +132,15 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       prefix <- "aggregated"
       page_name <- "aggregated_data"
     }
+    
+    r[[paste0(id, "_open_react_panel")]] <- FALSE
+    
+    # Load page from header
+    
+    observe({
+      if (prefix == "aggregated" & shiny.router::get_page() == "data" & r$data_page == "patient_level_data") shiny.router::change_page("patient_level_data")
+      else if (prefix == "patient_lvl" & shiny.router::get_page() == "data" & r$data_page == "aggregated_data") shiny.router::change_page("aggregated_data")
+    })
     
     ##########################################
     # LOAD DATA                              #
@@ -208,6 +218,26 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         }
       })
     }
+    
+    ##########################################
+    # HELP ON THIS PAGE                      #
+    ##########################################
+    
+    # output$react_panel <- shiny.fluent::renderReact({
+    #   shiny.fluent::Panel(
+    #     headerText = "Help on this page",
+    #     isOpen = r[[paste0(id, "_open_react_panel")]], br(),
+    #     "Content goes here.", br(), br(),
+    #     shiny.fluent::Link("Charger des données", onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-test1', Math.random()); }"))), br(), br(),
+    #     shiny.fluent::Link("Ajouter un module", onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-test2', Math.random()); }"))),
+    #     isLightDismiss = TRUE,
+    #     onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_panel', Math.random()); }")),
+    #     onLightDismissClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_panel', Math.random()); }"))
+    #   )
+    # })
+    
+    observeEvent(r$help_on_page, r[[paste0(id, "_open_react_panel")]] <- TRUE)
+    observeEvent(input$hide_panel, r[[paste0(id, "_open_react_panel")]] <- FALSE)
     
     ##########################################
     # STUDY - INITIATE UI                    #
