@@ -99,7 +99,7 @@ mod_my_subsets_server <- function(id = character(), r, language = "EN", words = 
       
       req(!is.na(r$chosen_study))
       
-      # Show first card & hide "choose a datamart" card
+      # Show first card & hide "choose a study" card
       shinyjs::hide("choose_a_study_card")
       shinyjs::show("menu")
       if (length(input$current_tab) == 0){
