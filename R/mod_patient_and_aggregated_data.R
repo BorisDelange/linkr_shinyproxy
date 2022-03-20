@@ -1003,7 +1003,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
 
           toggles <- tagList()
 
-          module_elements <- isolate(r[[paste0(prefix, "_modules_elements")]]) %>% dplyr::filter(module_id == !!module_id) %>% dplyr::arrange(desc(display_order))
+          module_elements <- isolate(r[[paste0(prefix, "_modules_elements")]]) %>% dplyr::filter(module_id == !!module_id) %>% dplyr::arrange(display_order)
 
           if (nrow(module_elements) > 0){
 
