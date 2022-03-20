@@ -2085,7 +2085,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         # Remove UI card
         removeUI(selector = paste0("#", ns(paste0(prefix, "_group_", r[[paste0(prefix, "_module_element_deleted")]]))))
         
-        sql <- glue::glue_sql("SELECT DISTINCT(module_id) FROM {paste0(prefix, '_modules_elements')} WHERE group_id = {group_id}", .con = r$db)
+        sql <- glue::glue_sql("SELECT DISTINCT(module_id) FROM {`paste0(prefix, '_modules_elements')`} WHERE group_id = {group_id}", .con = r$db)
         module_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
 
         # Remove toggles UI for this module
