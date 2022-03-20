@@ -103,7 +103,6 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
     ),
     uiOutput(ns("study_menu")),
     div(id = ns("study_cards")),
-    # uiOutput(ns("study_cards")),
     shinyjs::hidden(
       div(
         id = ns(paste0(prefix, "_add_module_element")),
@@ -181,6 +180,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       # Close help pages when page changes
       r[[paste0(prefix, "_open_help_panel")]] <- FALSE
       r[[paste0(prefix, "_open_help_modal")]] <- FALSE
+    })
+    
+    # Refresh reactivity
+    observe({
+      shiny.router::get_query_param()
+      shinyjs::hide("study_cards")
+      shinyjs::show("study_cards")
     })
     
     ##########################################
