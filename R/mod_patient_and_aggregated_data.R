@@ -1556,7 +1556,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", deleted_module_id))))
         
         # Check if parent module still have children and reload toggles div if not
-        sql <- glue::glue_sql("SELECT parent_module_id FROM {paste0(prefix, '_modules')} WHERE id = {deleted_module_id}", .con = r$db)
+        sql <- glue::glue_sql("SELECT parent_module_id FROM {`paste0(prefix, '_modules')`} WHERE id = {deleted_module_id}", .con = r$db)
         parent_module_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(parent_module_id)
         if (!is.na(parent_module_id)){
           
