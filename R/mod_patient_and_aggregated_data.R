@@ -177,6 +177,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observe({
       if (prefix == "aggregated" & shiny.router::get_page() == "data" & r$data_page == "patient_level_data") shiny.router::change_page("patient_level_data")
       else if (prefix == "patient_lvl" & shiny.router::get_page() == "data" & r$data_page == "aggregated_data") shiny.router::change_page("aggregated_data")
+      
+      # Close help pages when page changes
+      r[[paste0(prefix, "_open_help_panel")]] <- FALSE
+      r[[paste0(prefix, "_open_help_modal")]] <- FALSE
     })
     
     ##########################################
@@ -363,10 +367,17 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         
         r[[paste0(prefix, "_help_modal_text")]] <- div(
           p("Vous pouvez choisir dans le menu à gauche de charger les données individuelles ou agrégées."),
+          p(strong("1) Modules & plugins différents")),
+          p("Selon que vous choisissiez les données individuelles ou agrégées, les modules & plugins chargés diffèrent."),
+          p("Lorsque vous chargez une étude, vous chargez :"),
+          tags$ul(
+            tags$li("D'un côté les modules de données individuelles, permettant de ", strong("visualiser les données patient par patient")),
+            tags$li("De l'autre côté les modules de données agrégées, permettant de ", strong("visualiser les données sur l'ensemble des patients ou sur le subset sélectionné"))
+          ),
           p("En pratique, cela crée de ", strong("nouvelles variables"), " filtrant les variables générales sur ", 
             strong("le subset, le patient ou sur le séjour sélectionné"), "."),
-          p(strong("1) Données agrégées - Variables du subset sélectionné")),
-          p("Lorsque vous sélectionnez un subset, les variables suivantes sont créées, avec la même structure que détaillée dans 'Comprendre le modèle de données' :"),
+          p(strong("2) Données agrégées - Variables du subset sélectionné")),
+          p("Lorsque vous sélectionnez un subset, les variables suivantes sont créées, avec la même structure que détaillée dans ", tags$em("Comprendre le modèle de données"), " :"),
           tags$ul(
             tags$li(strong("r$data_subset$patients")),
             tags$li(strong("r$data_subset$stays")),
@@ -374,7 +385,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             tags$li(strong("r$data_subset$orders")),
             tags$li(strong("r$data_subset$text"))
           ),
-          p(strong("2) Données individuelles - Variables du patient sélectionné")),
+          p(strong("3) Données individuelles - Variables du patient sélectionné")),
           p("Lorsque vous sélectionnez un patient, les variables suivantes sont créées :"),
           tags$ul(
             tags$li(strong("r$data_patient$stays")),
@@ -382,19 +393,12 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             tags$li(strong("r$data_patient$orders")),
             tags$li(strong("r$data_patient$text"))
           ),
-          p(strong("3) Données individuelles - Variables du séjour sélectionné")),
+          p(strong("4) Données individuelles - Variables du séjour sélectionné")),
           p("De la même façon, lorsque vous sélectionnez un séjour, les variables suivantes sont créées :"),
           tags$ul(
             tags$li(strong("r$data_stay$labs_vitals")),
             tags$li(strong("r$data_stay$orders")),
             tags$li(strong("r$data_stay$text"))
-          ),
-          p(strong("4) Modules & plugins différents")),
-          p("La deuxième différence réside dans les modules crées et les plugins utilisés."),
-          p("Lorsque vous chargez une étude, vous chargez :"),
-          tags$ul(
-            tags$li("D'un côté les modules de données individuelles, permettant de ", strong("visualiser les données patient par patient")),
-            tags$li("De l'autre côté les modules de données agrégées, permettant de ", strong("visualiser les données sur l'ensemble des patients ou sur le subset sélectionné"))
           )
         )
       }
@@ -550,6 +554,18 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             tags$li(strong("Sélectionner un thésaurus"), " : un thésaurus est un dictionnaire de concepts utilisés par un datamart."),
             tags$li(strong("Sélectionner les items "), " que vous souhaitez utiliser pour cet encart, avec le plugin sélectionné.")
           ),
+          p("Lorsque le tableau des ", strong("items du thésaurus"), " est chargé, vous pouvez filtrer les données pour trouver les items qui vous intéresent :"),
+          tags$ul(
+            tags$li(strong("Nom d'affichage"), " : cherchez dans la barre de texte les items. En double-cliquant sur un nom, vous pouvez le changer : il sera affiché avec ce nouveau nom."),
+            tags$li(strong("Catégorie"), " : filtrez les données sur les catégories, plusieurs catégories peuvent être sélectionnées à la fois."),
+            tags$li(strong("Unité"), " : utile essentiellement pour changer l'affichage de l'unité."),
+            tags$li(strong("Couleur de l'item"), " : utile pour différencier les items sur un graphique par ex."),
+            tags$li(strong("Patients"), " : affiche le nombre total de patients ayant au moins une fois l'item."),
+            tags$li(strong("Lignes"), " : nombre d'occurences de l'item dans le datamart, tous patients confondus.")
+          ),
+          p("Ajouter ensuite les items en cliquant sur l'icône "),
+          div(actionButton(ns(paste0(prefix, "_add_thesaurus_item_help")), "", icon = icon("plus"))),
+          p(" dans la dernière colonne du tableau."),
           p("Lorsque l'encart ", tags$em("Nouvel encart"), " est ouvert, cliquez sur la croix à droite de l'encart pour retourner aux modules.")
           
         )
