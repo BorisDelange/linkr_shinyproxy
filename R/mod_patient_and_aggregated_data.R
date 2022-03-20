@@ -248,13 +248,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       if (language == "FR"){
         r[[paste0(prefix, "_help_modal_title")]] <- "Charger des données"
         
-        patient_lvl_help_1_text <- ""
-        if (prefix == "patient_lvl") patient_lvl_help_1_text <- tagList(
-          p(strong("4) Choisir un patient & un séjour")),
-          p("En chargeant un subset, la liste des patients appartenant à ce subset est chargée dans le menu déroulant 'Patient'."),
-          p("Les encarts se ", strong("mettent en jour"), " à chaque changement de patient & de séjour.")
-        )
-        
         r[[paste0(prefix, "_help_modal_text")]] <- div(
           p(strong("1) Choisir un datamart")),
           p("Un datamart est un ", strong("set de données"), ", auquel vous avez accès. Il contient les données d'un ", strong("groupe de patients"), "."),
@@ -270,8 +263,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             tags$li("Patients inclus"),
             tags$li("Patients exclus")
           ),
-          p("Il est possible de ", strong("créer d'autres subsets"), " dans l'onglet 'Mes subsets' en haut de l'écran."),
-          patient_lvl_help_1_text
+          p("Il est possible de ", strong("créer d'autres subsets"), " dans l'onglet ", tags$em("Mes subsets"), " en haut de l'écran."),
+          p(strong("4) Choisir un patient & un séjour")),
+          p("En chargeant un subset, la liste des patients appartenant à ce subset est chargée dans le menu déroulant ", tags$em("Patient"), 
+            ", seulement si l'on se trouve dans les ", tags$em("Données individuelles"), "."),
+          p("Les encarts se ", strong("mettent en jour"), " à chaque changement de patient & de séjour.")
         )
       }
       
@@ -360,6 +356,237 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       
     })
     
+    observeEvent(input$help_3, {
+      
+      if (language == "FR"){
+        r[[paste0(prefix, "_help_modal_title")]] <- "Données individuelles ou agrégées ?"
+        
+        r[[paste0(prefix, "_help_modal_text")]] <- div(
+          p("Vous pouvez choisir dans le menu à gauche de charger les données individuelles ou agrégées."),
+          p("En pratique, cela crée de ", strong("nouvelles variables"), " filtrant les variables générales sur ", 
+            strong("le subset, le patient ou sur le séjour sélectionné"), "."),
+          p(strong("1) Données agrégées - Variables du subset sélectionné")),
+          p("Lorsque vous sélectionnez un subset, les variables suivantes sont créées, avec la même structure que détaillée dans 'Comprendre le modèle de données' :"),
+          tags$ul(
+            tags$li(strong("r$data_subset$patients")),
+            tags$li(strong("r$data_subset$stays")),
+            tags$li(strong("r$data_subset$labs_vitals")),
+            tags$li(strong("r$data_subset$orders")),
+            tags$li(strong("r$data_subset$text"))
+          ),
+          p(strong("2) Données individuelles - Variables du patient sélectionné")),
+          p("Lorsque vous sélectionnez un patient, les variables suivantes sont créées :"),
+          tags$ul(
+            tags$li(strong("r$data_patient$stays")),
+            tags$li(strong("r$data_patient$labs_vitals")),
+            tags$li(strong("r$data_patient$orders")),
+            tags$li(strong("r$data_patient$text"))
+          ),
+          p(strong("3) Données individuelles - Variables du séjour sélectionné")),
+          p("De la même façon, lorsque vous sélectionnez un séjour, les variables suivantes sont créées :"),
+          tags$ul(
+            tags$li(strong("r$data_stay$labs_vitals")),
+            tags$li(strong("r$data_stay$orders")),
+            tags$li(strong("r$data_stay$text"))
+          ),
+          p(strong("4) Modules & plugins différents")),
+          p("La deuxième différence réside dans les modules crées et les plugins utilisés."),
+          p("Lorsque vous chargez une étude, vous chargez :"),
+          tags$ul(
+            tags$li("D'un côté les modules de données individuelles, permettant de ", strong("visualiser les données patient par patient")),
+            tags$li("De l'autre côté les modules de données agrégées, permettant de ", strong("visualiser les données sur l'ensemble des patients ou sur le subset sélectionné"))
+          )
+        )
+      }
+      
+      else if (language == "EN"){
+        r[[paste0(prefix, "_help_modal_title")]] <- ""
+        r[[paste0(prefix, "_help_modal_text")]] <- div()
+      }
+      
+      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+      
+    })
+    
+    observeEvent(input$help_4, {
+      
+      if (language == "FR"){
+        r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un module ?"
+        
+        r[[paste0(prefix, "_help_modal_text")]] <- div(
+          p("Une étude est ", strong("structurée autour de modules"), ", qui sont en quelque sorte des ", strong("pages personnalisées"),
+            " sur lesquelles je choisis ", strong("quelles données afficher et sous quelle forme"), "."),
+          p(strong("1) Modules de données individuelles")),
+          p("Les modules de données individuelles ", strong("reproduisent un dossier clinique"), "."),
+          p("Par exemple, si je fais une étude sur le choc septique, je crée un module de données individuelles ", tags$em("Hémodynamique"),
+              " où j'affiche la FC, la PAs, la PAd, la PAm & les doses reçues de Noradrénaline."),
+          p(strong("2) Modules de données agrégées")),
+          p("Les modules de données agrégées ", strong("permettent de conduire une étude"), " sur mes données."),
+          p("Sur cette même étude, je choisis de créer un module ", tags$em("Critères d'exclusion"), " où je vais créer mes critères ",
+            "d'exclusion et les appliquer à mes patients."),
+          p("Je peux également créer un module ", tags$em("Flowchart"), " pour afficher le flowchart de mon étude.")
+        )
+      }
+      
+      else if (language == "EN"){
+        r[[paste0(prefix, "_help_modal_title")]] <- ""
+        r[[paste0(prefix, "_help_modal_text")]] <- div()
+      }
+      
+      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+      
+    })
+    
+    observeEvent(input$help_5, {
+      
+      if (language == "FR"){
+        r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un module"
+        
+        r[[paste0(prefix, "_help_modal_text")]] <- div(
+          p("Pour ajouter un module, il faut ", strong("avoir chargé une étude"), " dans le menu déroulant à gauche de l'écran."),
+          p("Il faut ensuite cliquer sur l'icône :"),
+          div(shiny.fluent::Icon(iconName = "Add")), 
+          p("Elle se trouve sous le titre (", tags$em("Données individuelles"), " ou ",
+            tags$em("Données agrégées"), ")."),
+          p("Ensuite, :"),
+          tags$ul(
+            tags$li(strong("Choisissez un nom"), " pour ce module"),
+            tags$li(strong("Choisissez le niveau "), "du module. Faut-il qu'il soit au même niveau que le niveau actuel,",
+              " ou est-ce un sous-module du module actuellement sélectionné ?")
+          ),
+          p("Lorsque l'encart ", tags$em("Ajouter un module"), " est ouvert, cliquez sur la croix à droite de l'encart pour retourner aux modules.")
+        )
+      }
+      
+      else if (language == "EN"){
+        r[[paste0(prefix, "_help_modal_title")]] <- ""
+        r[[paste0(prefix, "_help_modal_text")]] <- div()
+      }
+      
+      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+      
+    })
+    
+    observeEvent(input$help_6, {
+      
+      if (language == "FR"){
+        r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un module"
+        
+        r[[paste0(prefix, "_help_modal_text")]] <- div(
+          p("Pour supprimer un module, ", strong("cliquez sur le module en question"), " puis cliquez sur :"),
+          div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_help")), 
+            translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete"))),
+          p("Supprimer un module supprime ", strong("tous les encarts situés dans ce module"),
+            ", ainsi que ", strong("tous les modules situés sous ce module"), ".")
+        )
+      }
+      
+      else if (language == "EN"){
+        r[[paste0(prefix, "_help_modal_title")]] <- ""
+        r[[paste0(prefix, "_help_modal_text")]] <- div()
+      }
+      
+      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+      
+    })
+    
+    observeEvent(input$help_7, {
+      
+      if (language == "FR"){
+        r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un encart ?"
+        
+        r[[paste0(prefix, "_help_modal_text")]] <- div(
+          p("Un module est ", strong("composé d'encarts"), ", qui sont des plugins appliqués à des données."),
+          p(strong("1) Plugins")),
+          p("Les plugins sont des scripts écrits en R - Shiny, permettant ", strong("d'ajouter une fonctionnalité à l'application"), "."),
+          p("Quelques exemples :"),
+          tags$ul(
+            tags$li(strong("Plugin Datatable"), " : permet d'afficher des données sous forme de tableau."),
+            tags$li(strong("Plugin Timeline"), " : permet d'afficher les données sous forme de timeline, utile pour les prescriptions par exemple."),
+            tags$li(strong("Plugin Flowchart"), " : permet de créer un Flowchart à partir des données d'une étude.")
+          ),
+          p("L'application a vocation à s'enrichir au fur et à mesure par la ", strong("création de nouveaux plugins"), "."),
+          p("Les plugins des données individuelles ou agrégées ne sont pas les mêmes."),
+          p(strong("2) Encarts")),
+          p("Un encart est donc un plugin appliqué à des données."),
+          p("Je choisis un plugin, quelles données vont être utilisées par ce plugin, puis le ",
+            strong("plugin affiche ces données sous la forme désirée"), " (timeline pour le plugin timeline etc).")
+        )
+      }
+      
+      else if (language == "EN"){
+        r[[paste0(prefix, "_help_modal_title")]] <- ""
+        r[[paste0(prefix, "_help_modal_text")]] <- div()
+      }
+      
+      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+      
+    })
+    
+    observeEvent(input$help_8, {
+      
+      if (language == "FR"){
+        r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un encart"
+        
+        r[[paste0(prefix, "_help_modal_text")]] <- div(
+          p("Pour ajouter un encart, il faut ", strong("avoir chargé une étude "), " dans le menu déroulant à gauche de l'écran puis ",
+            strong("avoir sélectionné un module"), "."),
+          p("Il faut ensuite cliquer sur :"),
+            div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_help")), 
+              translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add"))),
+          p("Ensuite, :"),
+          tags$ul(
+            tags$li(strong("Choisissez un nom"), " pour cet encart"),
+            tags$li(strong("Choisissez le plugin "), " que vous souhaitez utiliser pour cet encart.")
+          ),
+          p("S'il s'agit d'un encart de données agrégées, cliquez sur Ajouter et c'est terminé."),
+          p("S'il s'agit d'un encart de données individuelles, vous devez :"),
+          tags$ul(
+            tags$li(strong("Sélectionner un thésaurus"), " : un thésaurus est un dictionnaire de concepts utilisés par un datamart."),
+            tags$li(strong("Sélectionner les items "), " que vous souhaitez utiliser pour cet encart, avec le plugin sélectionné.")
+          ),
+          p("Lorsque l'encart ", tags$em("Nouvel encart"), " est ouvert, cliquez sur la croix à droite de l'encart pour retourner aux modules.")
+          
+        )
+      }
+      
+      else if (language == "EN"){
+        r[[paste0(prefix, "_help_modal_title")]] <- ""
+        r[[paste0(prefix, "_help_modal_text")]] <- div()
+      }
+      
+      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+      
+    })
+    
+    observeEvent(input$help_9, {
+      
+      if (language == "FR"){
+        r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un encart"
+        
+        r[[paste0(prefix, "_help_modal_text")]] <- div(
+          p("Pour supprimer un encart, ", strong("cliquez sur "), " :"),
+          div(actionButton(ns(paste0(prefix, "_remove_module_element_help")), "", icon = icon("trash-alt"))),
+          p("Cette icône se trouve en haut à droite de l'encart.")
+        )
+      }
+      
+      else if (language == "EN"){
+        r[[paste0(prefix, "_help_modal_title")]] <- ""
+        r[[paste0(prefix, "_help_modal_text")]] <- div()
+      }
+      
+      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+      
+    })
+    
     output$help_modal <- shiny.fluent::renderReact({
       
       shiny.fluent::Modal(
@@ -394,9 +621,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         r$data_patient$labs_vitals <- tibble::tibble()
         r$data_patient$text <- tibble::tibble()
         r$data_patient$orders <- tibble::tibble()
-        r$data_stay$labs_vitals_stay <- tibble::tibble()
-        r$data_stay$text_stay <- tibble::tibble()
-        r$data_stay$orders_stay <- tibble::tibble()
+        r$data_stay$labs_vitals <- tibble::tibble()
+        r$data_stay$text <- tibble::tibble()
+        r$data_stay$orders <- tibble::tibble()
         
         if (length(r$chosen_patient) > 0){
           if (!is.na(r$chosen_patient) & r$chosen_patient != ""){
@@ -419,9 +646,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             
             r$data_stay$stay <- r$data_patient$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
             
-            if (nrow(r$data_patient$labs_vitals) > 0) r$data_stay$labs_vitals_stay <- r$data_patient$labs_vitals %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
-            if (nrow(r$data_patient$text) > 0) r$data_stay$text_stay <- r$data_patient$text %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
-            if (nrow(r$data_patient$orders) > 0) r$data_stay$orders_stay <- r$data_patient$orders %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
+            if (nrow(r$data_patient$labs_vitals) > 0) r$data_stay$labs_vitals <- r$data_patient$labs_vitals %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
+            if (nrow(r$data_patient$text) > 0) r$data_stay$text <- r$data_patient$text %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
+            if (nrow(r$data_patient$orders) > 0) r$data_stay$orders <- r$data_patient$orders %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
           }
         }
       })
@@ -438,7 +665,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         r$data_subset$patients <- tibble::tibble()
         r$data_subset$stays <- tibble::tibble()
         r$data_subset$labs_vitals <- tibble::tibble()
-        r$data_subset$test <- tibble::tibble()
+        r$data_subset$text <- tibble::tibble()
         r$data_subset$orders <- tibble::tibble()
         
         if (length(r$chosen_subset) > 0){
