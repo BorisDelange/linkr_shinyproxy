@@ -760,7 +760,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
 
           toggles <- tagList()
 
-          module_elements <- isolate(r[[paste0(prefix, "_modules_elements")]]) %>% dplyr::filter(module_id == !!module_id) %>% dplyr::arrange(display_order)
+          module_elements <- isolate(r[[paste0(prefix, "_modules_elements")]]) %>% dplyr::filter(module_id == !!module_id) %>% dplyr::arrange(desc(display_order))
 
           if (nrow(module_elements) > 0){
 
@@ -807,21 +807,22 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
 
                 # Module element card
 
-                element_code <- 
-                  div(id = ns(paste0(prefix, "_group_", group_id)),
-                    make_card("",
-                      div(eval(parse(text = code_ui_card)),
-                        actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"), style = "position:absolute; top:8px; right: 10px;")
-                      ),
-                      style = "position:relative;"
-                    )
+                element_code <- div(
+                  make_card("",
+                    div(eval(parse(text = code_ui_card)),
+                      actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"), style = "position:absolute; top:8px; right: 10px;")
+                    ),
+                    style = "position:relative;"
                   )
+                )
                 
+                ui_output <- uiOutput(ns(paste0(prefix, "_group_", group_id)))
                 hide_div <- TRUE
                 if (!is.na(selected_module)) if (module_id == selected_module) hide_div <- FALSE
-                if (hide_div) element_code <- shinyjs::hidden(element_code)
+                if (hide_div) ui_output <- shinyjs::hidden(ui_output)
 
-                code_ui <<- tagList(code_ui, element_code)
+                insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = ui_output)
+                output[[paste0(prefix, "_group_", group_id)]] <- renderUI(element_code)
               },
               error = function(e){
                 report_bug(r = r, output = output, error_message = translate(language, "error_run_plugin_ui_code", words),
@@ -834,27 +835,36 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
 
           r[[paste0(prefix, "_cards")]] <- c(isolate(r[[paste0(prefix, "_cards")]]), paste0(prefix, "_toggles_", module_id))
 
-          toggles_div <-
-            div(id = ns(paste0(prefix, "_toggles_", module_id)),
-              make_card("",
-                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
-                  div(style = "width:20px;"),
-                  toggles
-                )
+          # Does this module have sub-modules ?
+          if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
+            make_card("",
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+                div(shiny.fluent::MessageBar(translate(language, "module_contains_sub_modules", words), messageBarType = 5), style = "margin-top:4px;")
               )
             )
+          )
           
+          else toggles_div <- div(
+            make_card("",
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+                div(style = "width:20px;"),
+                toggles
+              )
+            )
+          )
+          
+          ui_output <- uiOutput(ns(paste0(prefix, "_toggles_", module_id)))
           hide_div <- TRUE
           if (!is.na(selected_module)) if (module_id == selected_module) hide_div <- FALSE
-          if (hide_div) toggles_div <- shinyjs::hidden(toggles_div)
+          if (hide_div) ui_output <- shinyjs::hidden(ui_output)
           
-          code_ui <<- tagList(toggles_div, code_ui)
-
+          insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = ui_output)
+          output[[paste0(prefix, "_toggles_", module_id)]] <- renderUI(toggles_div)
+          
         })
-        
-        insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = code_ui)
         
         # Reload UI menu (problem for displaying cards : blanks if we do not do that)
         shinyjs::delay(100, r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time())
@@ -995,12 +1005,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             # Delete a module element                #
             ##########################################
             
-            # observeEvent(input[[paste0(prefix, "_remove_module_element_", group_id)]], {
-            # 
-            #   print("test1")
-            #   # r[[paste0(prefix, "_selected_module_element")]] <- group_id
-            #   # r[[module_element_delete_variable]] <- TRUE
-            # })
+            observeEvent(input[[paste0(prefix, "_remove_module_element_", group_id)]], {
+              r[[paste0(prefix, "_selected_module_element")]] <- group_id
+              r[[module_element_delete_variable]] <- TRUE
+            })
             
           }
         })
@@ -1180,18 +1188,37 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         
         # Add Toggles div
         
-        toggles_div <-
-          div(id = ns(paste0(prefix, "_toggles_", module_id)),
+        toggles_div <- div(
+          make_card("",
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+              div(style = "width:20px;")
+            )
+          )
+        )
+      
+        insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = uiOutput(ns(paste0(prefix, "_toggles_", module_id))))
+        output[[paste0(prefix, "_toggles_", module_id)]] <- renderUI(toggles_div)
+        
+        # If this is a sub-module, change toggles div of parent module also
+        parent_module_id <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == module_id) %>% dplyr::pull(parent_module_id)
+        if(!is.na(parent_module_id)){
+          
+          removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", parent_module_id))))
+          
+          parent_toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
-                div(style = "width:20px;")
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+                div(shiny.fluent::MessageBar(translate(language, "module_contains_sub_modules", words), messageBarType = 5), style = "margin-top:4px;")
               )
             )
           )
-      
-        insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = toggles_div)
+          
+          insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = shinyjs::hidden(uiOutput(ns(paste0(prefix, "_toggles_", parent_module_id)))))
+          output[[paste0(prefix, "_toggles_", parent_module_id)]] <- renderUI(parent_toggles_div)
+        }
         
         # Add toggles div to vector of cards
         r[[paste0(prefix, "_cards")]] <- c(isolate(r[[paste0(prefix, "_cards")]]), paste0(prefix, "_toggles_", module_id))
@@ -1241,6 +1268,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         information_variable = module_information_variable)
 
       # When a module is deleted, change current module variable
+      # Reload toggles if necessary
+      # Delete sub-modules either
 
       observeEvent(r[[module_information_variable]], {
 
@@ -1279,6 +1308,62 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
 
         # Reload UI menu
         r[[paste0(prefix, "_load_display_modules")]] <- Sys.time()
+        
+        # Remove toggles UI of this module
+        # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", deleted_module_id))))
+        
+        # Check if parent module still have children and reload toggles div if not
+        sql <- glue::glue_sql("SELECT parent_module_id FROM {paste0(prefix, '_modules')} WHERE id = {deleted_module_id}", .con = r$db)
+        parent_module_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(parent_module_id)
+        if (!is.na(parent_module_id)){
+          
+          has_children <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == !!parent_module_id) %>% nrow()
+          if(has_children == 0){
+            
+            removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", parent_module_id))))
+            
+            parent_toggles_div <- div(
+              make_card("",
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", parent_module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+                  div(style = "width:20px;")
+                )
+              )
+            )
+            
+            insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = uiOutput(ns(paste0(prefix, "_toggles_", parent_module_id))))
+            output[[paste0(prefix, "_toggles_", parent_module_id)]] <- renderUI(parent_toggles_div)
+          }
+        }
+        
+        
+        # Delete children modules of deleted module
+        # has_children <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == deleted_module_id) %>% nrow()
+        # parent_module_id <- deleted_module_id
+        
+        
+        
+        # delete_children <- function(module_id){
+        #   children_ids <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == !!module_id) %>% dplyr::pull(id)
+        #   sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_modules')`} SET deleted = TRUE WHERE id IN ({children_ids*})" , .con = r$db)
+        #   DBI::dbSendStatement(r$db, sql) -> query
+        #   DBI::dbClearResult(query)
+        # }
+        # 
+        # 
+        # while(has_children > 0){
+        #   
+        #   delete_children(module_id)
+        #   children_ids <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == !!parent_module_id) %>% dplyr::pull(id)
+        #   
+        #   
+        #   has_children <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == !!parent_module_id) %>% nrow()
+        # }
+        
+        # update_r(r = r, table = module_table)
+        
+        # TO DO : loop to delete also sub-sub-modules...
       })
 
       ##########################################
@@ -1620,11 +1705,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
 
           # Code for removing module element
 
-          # observeEvent(input[[paste0(prefix, "_remove_module_element_", group_id)]], {
-          #   # r[[paste0(prefix, "_selected_module_element")]] <- group_id
-          #   # r[[module_element_delete_variable]] <- TRUE
-          #   print("test2")
-          # })
+          observeEvent(input[[paste0(prefix, "_remove_module_element_", group_id)]], {
+            r[[paste0(prefix, "_selected_module_element")]] <- group_id
+            r[[module_element_delete_variable]] <- TRUE
+          })
 
         }
 
@@ -1642,7 +1726,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             stringr::str_replace_all("\r", "\n") %>%
             stringr::str_replace_all("%study_id%", as.character(isolate(r$chosen_study)))
           
-          element_code <- div(id = ns(paste0(prefix, "_group_", group_id)),
+          element_code <- div(
             make_card("",
               div(eval(parse(text = code_ui_card)),
                 actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"), style = "position:absolute; top:8px; right: 10px;")
@@ -1686,7 +1770,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_group_", group_id))
         })
         
-        toggles_div <- div(id = ns(paste0(prefix, "_toggles_", module_id)),
+        toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
@@ -1702,10 +1786,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         # Show opened cards
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
         
-        insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = toggles_div)
+        # Add module toggles UI
+        insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = uiOutput(ns(paste0(prefix, "_toggles_", module_id))))
+        output[[paste0(prefix, "_toggles_", module_id)]] <- renderUI(toggles_div)
 
         # Add module element UI
-        insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = element_code)
+        insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = uiOutput(ns(paste0(prefix, "_group_", group_id))))
+        output[[paste0(prefix, "_group_", group_id)]] <- renderUI(element_code)
         
         # Hide Add module element div
         shinyjs::hide(paste0(prefix, "_add_module_element"))
@@ -1734,11 +1821,89 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       module_element_delete_message <- paste0(prefix, "_module_element_group_deleted")
       module_element_reload_variable <- paste0(prefix, "_load_ui")
       module_element_delete_variable <- paste0(module_element_delete_prefix, "_open_dialog")
+      module_element_information_variable <- paste0(prefix, "_module_element_deleted")
 
       delete_element(r = r, input = input, output = output, session = session, ns = ns, language = language,
         delete_prefix = module_element_delete_prefix, dialog_title = module_element_dialog_title, dialog_subtext = module_element_dialog_subtext,
         react_variable = module_element_react_variable, table = module_element_table, id_var_sql = module_element_id_var_sql, id_var_r = module_element_id_var_r,
-        delete_message = module_element_delete_message, translation = TRUE, reload_variable = module_element_reload_variable)
+        delete_message = module_element_delete_message, translation = TRUE, reload_variable = module_element_reload_variable,
+        information_variable = module_element_information_variable)
+      
+      # When a module is element deleted, remove UI and reload toggles UI
+      observeEvent(r[[module_element_information_variable]], {
+        
+        # table <- paste0(prefix, "_modules")
+        # deleted_module_id <- r[[paste0(prefix, "_module_element_group_deleted")]]
+        # sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE id = {deleted_module_id}", .con = r$db)
+        # module_deleted <- DBI::dbGetQuery(r$db, sql)
+        
+        group_id <- r[[paste0(prefix, "_module_element_deleted")]]
+        
+        # Remove UI card
+        removeUI(selector = paste0("#", ns(paste0(prefix, "_group_", r[[paste0(prefix, "_module_element_deleted")]]))))
+        
+        sql <- glue::glue_sql("SELECT DISTINCT(module_id) FROM {paste0(prefix, '_modules_elements')} WHERE group_id = {group_id}", .con = r$db)
+        module_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
 
+        # Remove toggles UI for this module
+        removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", module_id))))
+
+        # Add the new toggles UI for this module
+
+        toggles <- tagList()
+        update_r(r = r, table = paste0(prefix, "_modules_elements"))
+        module_elements <- isolate(r[[paste0(prefix, "_modules_elements")]]) %>% dplyr::filter(module_id == !!module_id) %>% dplyr::arrange(display_order)
+
+        # Get module element group_id
+        distinct_groups <- unique(module_elements$group_id)
+
+        # Reset opened cards
+        r[[paste0(prefix, "_opened_cards")]] <- ""
+
+        # Loop over distinct cards (modules elements), for this module
+
+        sapply(distinct_groups, function(group_id){
+
+          # Get name of module element
+          module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
+
+          toggles <<- tagList(toggles,
+            shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_group_", group_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
+            div(class = "toggle_title", module_element_name, style = "padding-top:12px;"))
+
+          # Add to the list of opened cards
+          r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_group_", group_id))
+        })
+
+        # Does this module have sub-modules ?
+        if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
+          make_card("",
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+              div(shiny.fluent::MessageBar(translate(language, "module_contains_sub_modules", words), messageBarType = 5), style = "margin-top:4px;")
+            )
+          )
+        )
+        
+        else toggles_div <- div(
+          make_card("",
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+              div(style = "width:20px;"),
+              toggles
+            )
+          )
+        )
+
+        r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_toggles_", module_id))
+
+        # Show opened cards
+        sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
+
+        # Add module toggles UI
+        insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = uiOutput(ns(paste0(prefix, "_toggles_", module_id))))
+        output[[paste0(prefix, "_toggles_", module_id)]] <- renderUI(toggles_div)
+      })
   })
 }

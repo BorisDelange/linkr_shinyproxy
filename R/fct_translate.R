@@ -379,6 +379,8 @@ get_translations <- function(){
     "FR", "module_access_people", "Donner l'accès à",
     "EN", "parent_module_is_itself", "A module can't be its own parent",
     "FR", "parent_module_is_itself", "Un module ne peut être son propre parent",
+    "EN", "module_contains_sub_modules", "This module contains sub-modules. Click on the module to access sub-modules.",
+    "FR", "module_contains_sub_modules", "Ce module comporte des sous-modules. Cliquer de nouveau sur le module pour y accéder.",
     "EN", "log_filters", "Log filters",
     "FR", "log_filters", "Filtrer l'historique",
     "EN", "log_details", "Log details",

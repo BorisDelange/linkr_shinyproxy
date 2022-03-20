@@ -35,7 +35,7 @@ mod_page_header_ui <- function(id = character(), language = "EN", words = tibble
       shiny.fluent::Stack(horizontal = TRUE, tokens = (childrenGap = 0),
         shiny.fluent::CommandBar(),
         shiny.fluent::CommandBarButton.shinyInput(ns("help"), iconProps = list("iconName" = "Help")),
-        shiny.fluent::CommandBarButton.shinyInput("github_ref", iconProps = list("iconName" = "Info"), href = "https://borisdelange.github.io/cdwtools/articles/", target = "_blank"),
+        # shiny.fluent::CommandBarButton.shinyInput("github_ref", iconProps = list("iconName" = "Info"), href = "https://borisdelange.github.io/cdwtools/articles/", target = "_blank"),
         shiny.fluent::CommandBarButton.shinyInput("settings", iconProps = list("iconName" = "Settings"), href = shiny.router::route_link("settings/general_settings")),
         shiny.fluent::CommandBarButton.shinyInput(".shinymanager_logout", iconProps = list("iconName" = "PowerButton"))
       )
