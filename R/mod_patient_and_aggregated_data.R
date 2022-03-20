@@ -187,7 +187,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     # HELP ON THIS PAGE                      #
     ##########################################
     
-    # Help panel 
+    # Help panel
     
     observeEvent(input$help, if (id == shiny.router::get_page()) r[[paste0(prefix, "_open_help_panel")]] <- TRUE)
     observeEvent(input$hide_panel, r[[paste0(prefix, "_open_help_panel")]] <- FALSE)
