@@ -212,13 +212,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       "EN", "delete_module", "Delete a module",
       "FR", "delete_module", "Supprimer un module",
       "EN", "modules_elements", "Modules elements",
-      "FR", "modules_elements", "Encarts",
+      "FR", "modules_elements", "Eléments de module",
       "EN", "whats_a_module_element", "What is a module element ?",
-      "FR", "whats_a_module_element", "Qu'est ce qu'un encart ?",
+      "FR", "whats_a_module_element", "Qu'est ce qu'un élément de module ?",
       "EN", "add_module_element", "Add a module element",
-      "FR", "add_module_element", "Ajouter un encart",
+      "FR", "add_module_element", "Ajouter un élément de module",
       "EN", "delete_modul_elemente", "Delete a module element",
-      "FR", "delete_module_element", "Supprimer un encart"
+      "FR", "delete_module_element", "Supprimer un élément de module"
     )
     
     output$help_panel <- shiny.fluent::renderReact({
@@ -277,7 +277,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           p(strong("4) Choisir un patient & un séjour")),
           p("En chargeant un subset, la liste des patients appartenant à ce subset est chargée dans le menu déroulant ", tags$em("Patient"), 
             ", seulement si l'on se trouve dans les ", tags$em("Données individuelles"), "."),
-          p("Les encarts se ", strong("mettent en jour"), " à chaque changement de patient & de séjour.")
+          p("Les éléments de module se ", strong("mettent en jour"), " à chaque changement de patient & de séjour.")
         )
       }
       
@@ -466,7 +466,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             tags$li(strong("Choisissez le niveau "), "du module. Faut-il qu'il soit au même niveau que le niveau actuel,",
               " ou est-ce un sous-module du module actuellement sélectionné ?")
           ),
-          p("Lorsque l'encart ", tags$em("Ajouter un module"), " est ouvert, cliquez sur la croix à droite de l'encart pour retourner aux modules.")
+          p("Lorsque le menu ", tags$em("Ajouter un module"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules.")
         )
       }
       
@@ -489,7 +489,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           p("Pour supprimer un module, ", strong("cliquez sur le module en question"), " puis cliquez sur :"),
           div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_help")), 
             translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete"))),
-          p("Supprimer un module supprime ", strong("tous les encarts situés dans ce module"),
+          p("Supprimer un module supprime ", strong("tous les éléments de module situés dans ce module"),
             ", ainsi que ", strong("tous les modules situés sous ce module"), ".")
         )
       }
@@ -507,10 +507,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(input$help_7, {
       
       if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un encart ?"
+        r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un élément de module ?"
         
         r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Un module est ", strong("composé d'encarts"), ", qui sont des plugins appliqués à des données."),
+          p("Un module est ", strong("composé d'éléments de module"), ", qui sont des plugins appliqués à des données."),
           p(strong("1) Plugins")),
           p("Les plugins sont des scripts écrits en R - Shiny, permettant ", strong("d'ajouter une fonctionnalité à l'application"), "."),
           p("Quelques exemples :"),
@@ -521,8 +521,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           ),
           p("L'application a vocation à s'enrichir au fur et à mesure par la ", strong("création de nouveaux plugins"), "."),
           p("Les plugins des données individuelles ou agrégées ne sont pas les mêmes."),
-          p(strong("2) Encarts")),
-          p("Un encart est donc un plugin appliqué à des données."),
+          p(strong("2) Eléments de module")),
+          p("Un élément de module est donc un plugin appliqué à des données."),
           p("Je choisis un plugin, quelles données vont être utilisées par ce plugin, puis le ",
             strong("plugin affiche ces données sous la forme désirée"), " (timeline pour le plugin timeline etc).")
         )
@@ -541,24 +541,24 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(input$help_8, {
       
       if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un encart"
+        r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un élément de module"
         
         r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Pour ajouter un encart, il faut ", strong("avoir chargé une étude "), " dans le menu déroulant à gauche de l'écran puis ",
+          p("Pour ajouter un élément de module, il faut ", strong("avoir chargé une étude "), " dans le menu déroulant à gauche de l'écran puis ",
             strong("avoir sélectionné un module"), "."),
           p("Il faut ensuite cliquer sur :"),
             div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_help")), 
               translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add"))),
           p("Ensuite, :"),
           tags$ul(
-            tags$li(strong("Choisissez un nom"), " pour cet encart"),
-            tags$li(strong("Choisissez le plugin "), " que vous souhaitez utiliser pour cet encart.")
+            tags$li(strong("Choisissez un nom"), " pour cet élément de module"),
+            tags$li(strong("Choisissez le plugin "), " que vous souhaitez utiliser pour cet élément de module")
           ),
-          p("S'il s'agit d'un encart de données agrégées, cliquez sur Ajouter et c'est terminé."),
-          p("S'il s'agit d'un encart de données individuelles, vous devez :"),
+          p("S'il s'agit d'un élément de module de données agrégées, cliquez sur Ajouter et c'est terminé."),
+          p("S'il s'agit d'un élément de module de données individuelles, vous devez :"),
           tags$ul(
             tags$li(strong("Sélectionner un thésaurus"), " : un thésaurus est un dictionnaire de concepts utilisés par un datamart."),
-            tags$li(strong("Sélectionner les items "), " que vous souhaitez utiliser pour cet encart, avec le plugin sélectionné.")
+            tags$li(strong("Sélectionner les items "), " que vous souhaitez utiliser pour cet élément de module, avec le plugin sélectionné.")
           ),
           p("Lorsque le tableau des ", strong("items du thésaurus"), " est chargé, vous pouvez filtrer les données pour trouver les items qui vous intéresent :"),
           tags$ul(
@@ -572,7 +572,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           p("Ajouter ensuite les items en cliquant sur l'icône "),
           div(actionButton(ns(paste0(prefix, "_add_thesaurus_item_help")), "", icon = icon("plus"))),
           p(" dans la dernière colonne du tableau."),
-          p("Lorsque l'encart ", tags$em("Nouvel encart"), " est ouvert, cliquez sur la croix à droite de l'encart pour retourner aux modules.")
+          p("Lorsque le menu ", tags$em("Nouvel élément de module"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules.")
           
         )
       }
@@ -590,12 +590,12 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(input$help_9, {
       
       if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un encart"
+        r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un élément de module"
         
         r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Pour supprimer un encart, ", strong("cliquez sur "), " :"),
+          p("Pour supprimer un élément de module, ", strong("cliquez sur "), " :"),
           div(actionButton(ns(paste0(prefix, "_remove_module_element_help")), "", icon = icon("trash-alt"))),
-          p("Cette icône se trouve en haut à droite de l'encart.")
+          p("Cette icône se trouve en haut à droite de l'élément de module.")
         )
       }
       
