@@ -788,7 +788,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       display_modules <- display_modules %>% dplyr::arrange(level, display_order)
       
       # Calculate first module shown in the menu
-      if(nrow(display_modules > 0) & "level" %in% names(display_modules) & !is.na(r$chosen_study)){
+      if(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(r$chosen_study)){
         
         # First module shown
         first_module_shown <- display_modules %>% dplyr::filter(level == 1) %>% dplyr::slice(1)
@@ -851,7 +851,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           ))
         }
         
-        req(nrow(display_modules > 0) & "level" %in% names(display_modules) & !is.na(r$chosen_study))
+        req(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(r$chosen_study))
         
         # First module shown
         first_module_shown <- isolate(r[[paste0(prefix, "_first_module_shown")]])

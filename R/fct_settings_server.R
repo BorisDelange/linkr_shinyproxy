@@ -259,12 +259,9 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     tryCatch({
       patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
       add_patients_to_subset(output, r, patients, last_row_subsets + 1)
-      update_r(r = r, table = "subset_patients")
     }, 
     error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
-      error_name = paste0("add study - add_patients_to_subsets - id = ", last_row_subsets + 1), category = "Error", error_report = toString(e), language = language),
-    warning = function(w) if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
-      error_name = paste0("add study - add_patients_to_subsets - id = ", last_row_subsets + 1), category = "Warning", error_report = toString(w), language = language))
+      error_name = paste0("add study - add_patients_to_subsets - id = ", last_row_subsets + 1), category = "Error", error_report = toString(e), language = language))
     
     # Update sidenav dropdown with the new study
     r$studies_choices <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE datamart_id = ", data$datamart))
