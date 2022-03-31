@@ -62,7 +62,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
           horizontal = TRUE, tokens = list(childrenGap = 20),
           make_dropdown(language = language, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
             multiSelect = TRUE, width = "650px", words = words),
-          div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset", words)), style = "margin-top:38px;")
+          div(shiny.fluent::DefaultButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset", words)), style = "margin-top:38px;")
         ),
         div(DT::DTOutput(ns("module_element_thesaurus_items")), class = "thesaurus_table"), br(),
         shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), translate(language, "add", words)), br(),
@@ -205,20 +205,20 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       "FR", "data_model", "Comprendre le modèle de données",
       "EN", "ind_or_agg_data", "Individual or aggregated data ?",
       "FR", "ind_or_agg_data", "Données individuelles ou agrégées ?",
-      "EN", "whats_a_module", "What is a module ?",
-      "FR", "whats_a_module", "Qu'est ce qu'un module ?",
-      "EN", "add_module", "Add a module",
-      "FR", "add_module", "Ajouter un module",
-      "EN", "delete_module", "Delete a module",
-      "FR", "delete_module", "Supprimer un module",
-      "EN", "modules_elements", "Modules elements",
-      "FR", "modules_elements", "Eléments de module",
-      "EN", "whats_a_module_element", "What is a module element ?",
-      "FR", "whats_a_module_element", "Qu'est ce qu'un élément de module ?",
-      "EN", "add_module_element", "Add a module element",
-      "FR", "add_module_element", "Ajouter un élément de module",
-      "EN", "delete_modul_elemente", "Delete a module element",
-      "FR", "delete_module_element", "Supprimer un élément de module"
+      "EN", "whats_a_module", "What is a tab ?",
+      "FR", "whats_a_module", "Qu'est ce qu'un onglet ?",
+      "EN", "add_module", "Add a tab",
+      "FR", "add_module", "Ajouter un onglet",
+      "EN", "delete_module", "Delete a tab",
+      "FR", "delete_module", "Supprimer un onglet",
+      "EN", "modules_elements", "Modules",
+      "FR", "modules_elements", "Modules",
+      "EN", "whats_a_module_element", "What is a module ?",
+      "FR", "whats_a_module_element", "Qu'est ce qu'un module ?",
+      "EN", "add_module_element", "Add a module",
+      "FR", "add_module_element", "Ajouter un module",
+      "EN", "delete_modul_elemente", "Delete a module",
+      "FR", "delete_module_element", "Supprimer un module"
     )
     
     output$help_panel <- shiny.fluent::renderReact({
@@ -277,7 +277,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           p(strong("4) Choisir un patient & un séjour")),
           p("En chargeant un subset, la liste des patients appartenant à ce subset est chargée dans le menu déroulant ", tags$em("Patient"), 
             ", seulement si l'on se trouve dans les ", tags$em("Données individuelles"), "."),
-          p("Les éléments de module se ", strong("mettent en jour"), " à chaque changement de patient & de séjour.")
+          p("Les modules se ", strong("mettent en jour"), " à chaque changement de patient & de séjour.")
         )
       }
       
@@ -377,8 +377,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           p("Selon que vous choisissiez les données individuelles ou agrégées, les modules & plugins chargés diffèrent."),
           p("Lorsque vous chargez une étude, vous chargez :"),
           tags$ul(
-            tags$li("D'un côté les modules de données individuelles, permettant de ", strong("visualiser les données patient par patient")),
-            tags$li("De l'autre côté les modules de données agrégées, permettant de ", strong("visualiser les données sur l'ensemble des patients ou sur le subset sélectionné"))
+            tags$li("D'un côté les onglets & modules de données individuelles, permettant de ", strong("visualiser les données patient par patient")),
+            tags$li("De l'autre côté les onglets & modules de données agrégées, permettant de ", strong("visualiser les données sur l'ensemble des patients ou sur le subset sélectionné"))
           ),
           p("En pratique, cela crée de ", strong("nouvelles variables"), " filtrant les variables générales sur ", 
             strong("le subset, le patient ou sur le séjour sélectionné"), "."),
@@ -422,20 +422,20 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(input$help_4, {
       
       if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un module ?"
+        r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un onglet ?"
         
         r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Une étude est ", strong("structurée autour de modules"), ", qui sont en quelque sorte des ", strong("pages personnalisées"),
+          p("Une étude est ", strong("structurée autour d'onglets"), ", qui sont en quelque sorte des ", strong("pages personnalisées"),
             " sur lesquelles je choisis ", strong("quelles données afficher et sous quelle forme"), "."),
-          p(strong("1) Modules de données individuelles")),
-          p("Les modules de données individuelles ", strong("reproduisent un dossier clinique"), "."),
-          p("Par exemple, si je fais une étude sur le choc septique, je crée un module de données individuelles ", tags$em("Hémodynamique"),
+          p(strong("1) Onglets de données individuelles")),
+          p("Les onglets de données individuelles ", strong("reproduisent un dossier clinique"), "."),
+          p("Par exemple, si je fais une étude sur le choc septique, je crée un onglet de données individuelles ", tags$em("Hémodynamique"),
               " où j'affiche la FC, la PAs, la PAd, la PAm & les doses reçues de Noradrénaline."),
-          p(strong("2) Modules de données agrégées")),
-          p("Les modules de données agrégées ", strong("permettent de conduire une étude"), " sur mes données."),
-          p("Sur cette même étude, je choisis de créer un module ", tags$em("Critères d'exclusion"), " où je vais créer mes critères ",
+          p(strong("2) Onglets de données agrégées")),
+          p("Les onglets de données agrégées ", strong("permettent de conduire une étude"), " sur mes données."),
+          p("Sur cette même étude, je choisis de créer un onglet ", tags$em("Critères d'exclusion"), " où je vais créer mes critères ",
             "d'exclusion et les appliquer à mes patients."),
-          p("Je peux également créer un module ", tags$em("Flowchart"), " pour afficher le flowchart de mon étude.")
+          p("Je peux également créer un onglet ", tags$em("Flowchart"), " pour afficher le flowchart de mon étude.")
         )
       }
       
@@ -452,21 +452,21 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(input$help_5, {
       
       if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un module"
+        r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un onglet"
         
         r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Pour ajouter un module, il faut ", strong("avoir chargé une étude"), " dans le menu déroulant à gauche de l'écran."),
+          p("Pour ajouter un onglet, il faut ", strong("avoir chargé une étude"), " dans le menu déroulant à gauche de l'écran."),
           p("Il faut ensuite cliquer sur l'icône :"),
-          div(shiny.fluent::Icon(iconName = "Add")), 
+          div(shiny.fluent::Icon(iconName = "Add"), span(translate(language, "add_module", r$words), style = "padding:0px 0px 10px 10px;")), 
           p("Elle se trouve sous le titre (", tags$em("Données individuelles"), " ou ",
             tags$em("Données agrégées"), ")."),
           p("Ensuite, :"),
           tags$ul(
-            tags$li(strong("Choisissez un nom"), " pour ce module"),
-            tags$li(strong("Choisissez le niveau "), "du module. Faut-il qu'il soit au même niveau que le niveau actuel,",
-              " ou est-ce un sous-module du module actuellement sélectionné ?")
+            tags$li(strong("Choisissez un nom"), " pour cet onglet"),
+            tags$li(strong("Choisissez le niveau "), "de l'onglet. Faut-il qu'il soit au même niveau que l'onglet actuel,",
+              " ou est-ce un sous-onglet de l'onglet actuellement sélectionné ?")
           ),
-          p("Lorsque le menu ", tags$em("Ajouter un module"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules.")
+          p("Lorsque le menu ", tags$em("Ajouter un onglet"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules.")
         )
       }
       
@@ -483,14 +483,14 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(input$help_6, {
       
       if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un module"
+        r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un onglet"
         
         r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Pour supprimer un module, ", strong("cliquez sur le module en question"), " puis cliquez sur :"),
+          p("Pour supprimer un onglet, ", strong("cliquez sur l'onglet en question"), " puis cliquez sur :"),
           div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_help")), 
             translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete"))),
-          p("Supprimer un module supprime ", strong("tous les éléments de module situés dans ce module"),
-            ", ainsi que ", strong("tous les modules situés sous ce module"), ".")
+          p("Supprimer un onglet supprime ", strong("tous les modules situés dans cet onglet"),
+            ", ainsi que ", strong("tous les onglets situés sous cet onglet"), ".")
         )
       }
       
@@ -507,10 +507,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(input$help_7, {
       
       if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un élément de module ?"
+        r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un module ?"
         
         r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Un module est ", strong("composé d'éléments de module"), ", qui sont des plugins appliqués à des données."),
+          p("Un onglet est ", strong("composé de modules"), ", qui sont des plugins appliqués à des données."),
           p(strong("1) Plugins")),
           p("Les plugins sont des scripts écrits en R - Shiny, permettant ", strong("d'ajouter une fonctionnalité à l'application"), "."),
           p("Quelques exemples :"),
@@ -521,8 +521,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           ),
           p("L'application a vocation à s'enrichir au fur et à mesure par la ", strong("création de nouveaux plugins"), "."),
           p("Les plugins des données individuelles ou agrégées ne sont pas les mêmes."),
-          p(strong("2) Eléments de module")),
-          p("Un élément de module est donc un plugin appliqué à des données."),
+          p(strong("2) Modules")),
+          p("Un module est donc un plugin appliqué à des données."),
           p("Je choisis un plugin, quelles données vont être utilisées par ce plugin, puis le ",
             strong("plugin affiche ces données sous la forme désirée"), " (timeline pour le plugin timeline etc).")
         )
@@ -541,21 +541,21 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(input$help_8, {
       
       if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un élément de module"
+        r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un module"
         
         r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Pour ajouter un élément de module, il faut ", strong("avoir chargé une étude "), " dans le menu déroulant à gauche de l'écran puis ",
-            strong("avoir sélectionné un module"), "."),
+          p("Pour ajouter un module, il faut ", strong("avoir chargé une étude "), " dans le menu déroulant à gauche de l'écran puis ",
+            strong("avoir sélectionné un onglet"), "."),
           p("Il faut ensuite cliquer sur :"),
             div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_help")), 
               translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add"))),
           p("Ensuite, :"),
           tags$ul(
-            tags$li(strong("Choisissez un nom"), " pour cet élément de module"),
-            tags$li(strong("Choisissez le plugin "), " que vous souhaitez utiliser pour cet élément de module")
+            tags$li(strong("Choisissez un nom"), " pour ce module"),
+            tags$li(strong("Choisissez le plugin "), " que vous souhaitez utiliser pour ce module")
           ),
-          p("S'il s'agit d'un élément de module de données agrégées, cliquez sur Ajouter et c'est terminé."),
-          p("S'il s'agit d'un élément de module de données individuelles, vous devez :"),
+          p("S'il s'agit d'un module de données agrégées, cliquez sur Ajouter et c'est terminé."),
+          p("S'il s'agit d'un module de données individuelles, vous devez :"),
           tags$ul(
             tags$li(strong("Sélectionner un thésaurus"), " : un thésaurus est un dictionnaire de concepts utilisés par un datamart."),
             tags$li(strong("Sélectionner les items "), " que vous souhaitez utiliser pour cet élément de module, avec le plugin sélectionné.")
@@ -572,7 +572,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           p("Ajouter ensuite les items en cliquant sur l'icône "),
           div(actionButton(ns(paste0(prefix, "_add_thesaurus_item_help")), "", icon = icon("plus"))),
           p(" dans la dernière colonne du tableau."),
-          p("Lorsque le menu ", tags$em("Nouvel élément de module"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules.")
+          p("Lorsque le menu ", tags$em("Nouveau module"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules.")
           
         )
       }
@@ -590,12 +590,12 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(input$help_9, {
       
       if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un élément de module"
+        r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un module"
         
         r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Pour supprimer un élément de module, ", strong("cliquez sur "), " :"),
+          p("Pour supprimer un module, ", strong("cliquez sur "), " :"),
           div(actionButton(ns(paste0(prefix, "_remove_module_element_help")), "", icon = icon("trash-alt"))),
-          p("Cette icône se trouve en haut à droite de l'élément de module.")
+          p("Cette icône se trouve en haut à droite du module.")
         )
       }
       
@@ -846,7 +846,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             shiny.fluent::Pivot(
               onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', item.props.id)")),
               selectedKey = isolate(r[[paste0(prefix, "_selected_module")]]),
-              shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", 0), itemIcon = "Add")
+              shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", 0), headerText = span(translate(language, "add_module", r$words), style = "padding-left:5px;"), itemIcon = "Add")
             )
           ))
         }
@@ -970,7 +970,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         })
         
         # Add an add button, to add a new module
-        shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", isolate(r[[paste0(prefix, "_selected_module")]])), itemIcon = "Add"))
+        shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", isolate(r[[paste0(prefix, "_selected_module")]])), headerText = span(translate(language, "add_module", r$words), style = "padding-left:5px;"), itemIcon = "Add"))
         
         tagList(
           shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),

@@ -1,6 +1,8 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-<!--# cdwtools <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="man/figures/hex-cdwtools.png" align="right" height="90px" /></a>-->
+
+# cdwtools <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex-cdwtools.png" align="right" height="90" /></a>
+
 <!-- badges: start -->
 
 [![Lifecycle:
@@ -14,7 +16,7 @@ to help clinicians, statisticians & data scientists work with CDW data,
 with data visualization, data cleaning, exploratory data analysis &
 model building tools, using a **Shiny web application**.
 
-<img src="man/figures/get_started/patient_lvl_first_connection.png" width="100%" />
+<img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.png?raw=true" width="100%" />
 
 <br /> For your **first connection**, [follow this
 guide](https://borisdelange.github.io/cdwtools/articles/cdwtools.html).

@@ -230,8 +230,12 @@ mod_thesaurus_server <- function(id = character(), r, language = "EN", words = t
       
       all_values <- r$labs_vitals %>% dplyr::filter(thesaurus_name == !!thesaurus_name) %>%
         dplyr::inner_join(thesaurus_item %>% dplyr::select(item_id), by = "item_id") %>% dplyr::select(value, value_num)
-      values_num <- suppressMessages(all_values %>% dplyr::filter(!is.na(value_num)) %>% dplyr::slice_sample(n = 5) %>% dplyr::pull(value_num))
-      values <- suppressMessages(all_values %>% dplyr::filter(!is.na(value)) %>% dplyr::slice_sample(n = 5) %>% dplyr::pull(value))
+      values_num <- numeric(0)
+      if (nrow(all_values %>% dplyr::filter(!is.na(value_num))) > 0) values_num <- suppressMessages(all_values %>% dplyr::filter(!is.na(value_num)) %>% 
+        dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(value_num))
+      values <- character(0)
+      if (nrow(all_values %>% dplyr::filter(!is.na(value))) > 0) values <- suppressMessages(all_values %>% dplyr::filter(!is.na(value)) %>% 
+        dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(value))
       values_text <- tagList(
         span(translate(language, "values", r$words), style = style), paste(values, collapse = " || "), br(),
         span(translate(language, "numeric_values", r$words), style = style), paste(values_num, collapse = " || "), br()
@@ -243,8 +247,12 @@ mod_thesaurus_server <- function(id = character(), r, language = "EN", words = t
           dplyr::inner_join(thesaurus_item %>% dplyr::select(item_id), by = "item_id") %>% 
           dplyr::mutate(amount_text = paste0(amount, " ", amount_unit), rate_text = paste0(rate, " ", rate_unit)) %>%
           dplyr::select(amount, amount_text, rate, rate_text)
-        amount <- suppressMessages(all_values %>% dplyr::filter(!is.na(amount)) %>% dplyr::slice_sample(n = 5) %>% dplyr::pull(amount_text))
-        rate <- suppressMessages(all_values %>% dplyr::filter(!is.na(rate)) %>% dplyr::slice_sample(n = 5) %>% dplyr::pull(rate_text))
+        amount <- numeric(0)
+        if (nrow(all_values %>% dplyr::filter(!is.na(amount))) > 0) amount <- suppressMessages(all_values %>% dplyr::filter(!is.na(amount)) %>% 
+          dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(amount_text))
+        rate <- numeric(0)
+        if (nrow(all_values %>% dplyr::filter(!is.na(rate))) > 0) rate <- suppressMessages(all_values %>% dplyr::filter(!is.na(rate)) %>% 
+          dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(rate_text))
         
         values_text <- tagList(
           span(translate(language, "rate_values", r$words), style = style), paste(rate, collapse = " || "), br(),
