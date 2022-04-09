@@ -8,7 +8,8 @@ run_datamart_code(
   output,
   r = shiny::reactiveValues(),
   datamart_id = integer(),
-  language = "EN"
+  language = "EN",
+  quiet = FALSE
 )
 }
 \arguments{

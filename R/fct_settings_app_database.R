@@ -69,13 +69,14 @@ db_create_tables <- function(db){
     tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 
       datetime = character(), deleted = logical()))
   
-  db_create_table(db, "plugins_options",
-    tibble::tibble(id = integer(), plugin_id = integer(), module_id = integer(), group_id = integer(), category = character(), link_id = integer(),
-    value = character(), valuenum = numeric(), creator_id = integer(), datetime = character(), deleted = logical()))
-
   db_create_table(db, "patients_options",
     tibble::tibble(id = integer(), datamart_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
       category = character(), link_id = integer(), name = character(), value = character(), value_num = numeric(), 
+      creator_id = integer(), datetime = character(), deleted = logical()))
+  
+  db_create_table(db, "modules_elements_options",
+    tibble::tibble(id = integer(), group_id = integer(), study_id = integer(), patient_id = integer(), link_id = integer(),
+      category = character(), name = character(), value = character(), value_num = numeric(),
       creator_id = integer(), datetime = character(), deleted = logical()))
   
   db_create_table(db, "patient_lvl_modules_families",
@@ -114,6 +115,19 @@ db_create_tables <- function(db){
   db_create_table(db, "cache",
     tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
   
+  # db_create_table(db, "cache_for_settings",
+  #   tibble::tibble(id = integer(), table_name = character(), link_id = integer(), name = character(), description = character(),
+  #     username = character(), firstname = character(), lastname = character(), password = character(),
+  #     user_access_id = character(), user_status_id = character(),
+  #     data_source_id = character(), data_source_id_thesaurus = character(), datamart_id = character(), 
+  #     patient_lvl_module_family_id = character(), aggregated_module_family_id = character(),
+  #     study_id = character(), module_type_id = character(), module_family_id = character(), parent_module_id = character(),
+  #     group_id = integer(), module_id = character(), plugin_id = character(),
+  #     thesaurus_name = character(), thesaurus_item_id = character(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+  #     thesaurus_item_colour = character(), display_order = character(),
+  #     action = character(), creator_id = character(), datetime = character(), deleted = logical())
+  #   )
+  
   db_create_table(db, "log",
     tibble::tibble(id = integer(), category = character(), name = character(), value = character(), creator_id = integer(), datetime = character()))
 }
@@ -124,11 +138,14 @@ db_create_tables <- function(db){
 #' (with db_create_tables function). It uses RSQLite library.
 #' It also adds distant database connection informations in the options table, if they do not already exist.
 
-get_local_db <- function(){
+get_local_db <- function(app_db_folder = character()){
   
   # Connect to local database
-  # db <- DBI::dbConnect(RSQLite::SQLite(), paste0(path.expand('~'), "/cdwtools"))
-  db <- DBI::dbConnect(RSQLite::SQLite(), "cdwtools")
+  # If r$default_folder is not null, take this folder
+  # Else, take home folder
+  
+  if (length(app_db_folder) > 0) db <- DBI::dbConnect(RSQLite::SQLite(), paste0(app_db_folder, "/cdwtools"))
+  else db <- DBI::dbConnect(RSQLite::SQLite(), paste0(path.expand('~'), "/cdwtools"))
   
   db_create_tables(db)
   
@@ -178,7 +195,7 @@ test_distant_db <- function(local_db, language = "EN", words = tibble::tibble())
       port = db_info$port, user = db_info$user, password = db_info$password)
     
     # SQLite
-    if (db_info$sql_lib == "sqlite") DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$dbname, host = db_info$host,
+    if (db_info$sql_lib == "postgres") DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$dbname, host = db_info$host,
       port = db_info$port, user = db_info$user, password = db_info$password)
     result <- "success"
   },
@@ -239,11 +256,11 @@ get_distant_db <- function(local_db, db_info = list(), language = "EN", words = 
 #' @param db_info DB informations given in cdwtools function
 #' @param language Language used to display messages (character)
 
-get_db <- function(db_info = list(), language = "EN"){
+get_db <- function(db_info = list(), app_db_folder = character(), language = "EN"){
   
   # First, get local database connection
   
-  db <- get_local_db()
+  db <- get_local_db(app_db_folder = app_db_folder)
   
   # Second, if db_info is not empty, try this connection
   
@@ -262,6 +279,31 @@ get_db <- function(db_info = list(), language = "EN"){
   
   # Returns distant db connection if succesfully loaded, returns local db connection else
   db
+}
+
+
+#' Load database
+#' 
+#' @param r Shiny r reactive value, used to communicate between modules
+
+load_database <- function(r = shiny::reactiveValues(), language = "EN"){
+  
+  # Database tables to load
+  tables <- c(
+    "users", "users_accesses", "users_statuses",
+    "data_sources", "datamarts", "thesaurus",
+    "plugins", 
+    "code", 
+    "options"
+    )
+  
+  sapply(tables, function(table){
+    r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
+    r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
+  })
+  
+  # Add a module_types variable, for settings/plugins dropdown
+  r$module_types <- tibble::tribble(~id, ~name, 1, translate(language, "patient_level_data"), 2, translate(language, "aggregated_data"))
 }
 
 

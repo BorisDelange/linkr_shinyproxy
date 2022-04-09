@@ -4,7 +4,7 @@
 \alias{get_db}
 \title{Get database DBI object}
 \usage{
-get_db(db_info = list(), language = "EN")
+get_db(db_info = list(), app_db_folder = character(), language = "EN")
 }
 \arguments{
 \item{db_info}{DB informations given in cdwtools function}

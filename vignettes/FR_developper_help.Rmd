@@ -2,7 +2,7 @@
 title: "Aide aux développeurs"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{FR_developper_help}
+  %\VignetteIndexEntry{Aide aux développeurs}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

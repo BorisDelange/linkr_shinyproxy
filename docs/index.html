@@ -21,6 +21,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -33,18 +35,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">cdwtools</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.2</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="articles/cdwtools.html">Get started</a>
 </li>
@@ -59,7 +55,8 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li class="divider">
-    <li class="dropdown-header">FR - Aide</li>
+    </li>
+<li class="dropdown-header">FR - Aide</li>
     <li>
       <a href="articles/FR_user_help.html">Aide aux utilisateurs</a>
     </li>
@@ -73,7 +70,8 @@
       <a href="articles/FR_deploy_shiny_proxy.html">Déployer avec ShinyProxy</a>
     </li>
     <li class="divider">
-    <li class="dropdown-header">EN - Help</li>
+    </li>
+<li class="dropdown-header">EN - Help</li>
     <li>
       <a href="articles/EN_user_help.html">User help</a>
     </li>
@@ -87,7 +85,8 @@
       <a href="articles/EN_deploy_shiny_proxy.html">Deploy with ShinyProxy</a>
     </li>
     <li class="divider">
-    <li class="dropdown-header">Plugins</li>
+    </li>
+<li class="dropdown-header">Plugins</li>
     <li>
       <a href="articles/patient_lvl_data_plugins.html">Patient-level data plugins</a>
     </li>
@@ -102,7 +101,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/BorisDelange/cdwtools/">
+  <a href="https://github.com/BorisDelange/cdwtools/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -119,18 +118,14 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="cdwtools-" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#cdwtools-" class="anchor"></a>cdwtools <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex-cdwtools.png" align="right" height="90"></a>
-</h1></div>
-<!-- badges: start -->
 
-<div id="overview" class="section level2">
-<h2 class="hasAnchor">
-<a href="#overview" class="anchor"></a>Overview</h2>
+
+<div class="section level2">
+<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h2>
 <p>cdwtools stands for <strong>Clinical Data Warehouse tools</strong>. This package aims to help clinicians, statisticians &amp; data scientists work with CDW data, with data visualization, data cleaning, exploratory data analysis &amp; model building tools, using a <strong>Shiny web application</strong>.</p>
-<p><img src="https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.png?raw=true" width="100%"></p>
-<p><br> For your <strong>first connection</strong>, <a href="https://borisdelange.github.io/cdwtools/articles/cdwtools.html">follow this guide</a>.</p>
+<p><img src="reference/figures/get_started/patient_lvl_first_connection.png" width="100%"></p>
+<p><br> For your <strong>first connection</strong>, <a href="https://borisdelange.github.io/cdwtools/articles/cdwtools.html" class="external-link">follow this guide</a>.</p>
 <p>The application contains a <strong>data management section</strong>, which allows the import of datamarts &amp; thesaurus, the creation of studies &amp; subsets. You choose who has access to which part of the app in the <strong>users management section</strong>.</p>
 <p>The core principle of the app is the <strong>modularity</strong> : each user chooses :</p>
 <ul>
@@ -152,9 +147,9 @@
 </ul>
 <p>A <strong>plugin</strong> is a Shiny code used to render and manipulate data. Some plugins are available in the <strong>Articles section</strong> of this website. You can <strong>create new plugins</strong> and share them.</p>
 </div>
-<div id="installation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h2>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
 <!--You can install the released version of cdwtools from [CRAN](https://CRAN.R-project.org) with:
 
 ``` r
@@ -163,72 +158,83 @@ install.packages("cdwtools")
 -->
 <p>You can install the development version from Github, with :</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"BorisDelange/cdwtools"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"BorisDelange/cdwtools"</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="deployment" class="section level2">
-<h2 class="hasAnchor">
-<a href="#deployment" class="anchor"></a>Deployment</h2>
+<div class="section level2">
+<h2 id="deployment">Deployment<a class="anchor" aria-label="anchor" href="#deployment"></a>
+</h2>
 <p>The App can be deployed <strong>locally</strong> or installed on a <strong>server</strong>. See <em>Deploy the App on ShinyProxy</em> in Articles section for more details.</p>
 </div>
-<div id="security" class="section level2">
-<h2 class="hasAnchor">
-<a href="#security" class="anchor"></a>Security</h2>
-<p>The App uses <a href="https://github.com/datastorm-open/shinymanager">Shiny Manager</a> to secure the access. In the developper mode, you have direct access to the R environment and the database, so developper access has to be used carefully. It is recommended to install the App on a secure local server, as health data will be handled.</p>
+<div class="section level2">
+<h2 id="security">Security<a class="anchor" aria-label="anchor" href="#security"></a>
+</h2>
+<p>The App uses <a href="https://github.com/datastorm-open/shinymanager" class="external-link">Shiny Manager</a> to secure the access. In the developper mode, you have direct access to the R environment and the database, so developper access has to be used carefully. It is recommended to install the App on a secure local server, as health data will be handled.</p>
 </div>
-<div id="development" class="section level2">
-<h2 class="hasAnchor">
-<a href="#development" class="anchor"></a>Development</h2>
-<p>The app has been developed with the <a href="https://www.ltsi.univ-rennes1.fr/">LTSI lab - DMS unit</a> of the university of Rennes - France, which is behind the <a href="https://centrededonneescliniques.univ-rennes1.fr/ehop">eHOP clinical data warehouse</a>.</p>
+<div class="section level2">
+<h2 id="development">Development<a class="anchor" aria-label="anchor" href="#development"></a>
+</h2>
+<p>The app has been developed with the <a href="https://www.ltsi.univ-rennes1.fr/" class="external-link">LTSI lab - DMS unit</a> of the university of Rennes - France, which is behind the <a href="https://centrededonneescliniques.univ-rennes1.fr/ehop" class="external-link">eHOP clinical data warehouse</a>.</p>
 </div>
-</div>
+
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Browse source code at <br><a href="https://github.com/BorisDelange/cdwtools/">https://​github.com/​BorisDelange/​cdwtools/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/BorisDelange/cdwtools/issues">https://​github.com/​BorisDelange/​cdwtools/​issues</a>
-</li>
+<li><a href="https://github.com/BorisDelange/cdwtools/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/BorisDelange/cdwtools/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li><a href="LICENSE.html">Full license</a></li>
-<li><small>GPL (&gt;= 3)</small></li>
+<li><small>file License</small></li>
 </ul>
 </div>
+
 <div class="community">
-<h2>Community</h2>
+<h2 data-toc-skip>Community</h2>
 <ul class="list-unstyled">
 <li><a href="CODE_OF_CONDUCT.html">Code of conduct</a></li>
 </ul>
 </div>
-<div class="developers">
-<h2>Developers</h2>
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li>Boris Delange <br><small class="roles"> Maintainer, author </small>  </li>
+<li><a href="authors.html#citation">Citing cdwtools</a></li>
 </ul>
 </div>
 
-  <div class="dev-status">
-<h2>Dev status</h2>
+<div class="developers">
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
+<li>Boris Delange <br><small class="roles"> Maintainer, author, copyright holder </small>  </li>
 </ul>
 </div>
+
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
+</ul>
 </div>
+
+  </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Boris Delange.</p>
+  <p></p>
+<p>Developed by Boris Delange.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -236,6 +242,8 @@ install.packages("cdwtools")
 
   
 
+
+  
 
   </body>
 </html>

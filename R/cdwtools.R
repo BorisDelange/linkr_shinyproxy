@@ -16,7 +16,9 @@
 #' @param options A list of options that could be passed to shiny::shinyApp() function (list)
 #' @param language Default language to use in the App (character)
 #' @param db_info Database connection informations, if it is needed to connect a distant db (list).
-#' @param default_folder Default folder where to save datamarts CSV files (character)
+#' @param datamarts_folder Folder where to save datamarts CSV files (character)
+#' @param app_db_folder Folder where to save local database file (character)
+#' @param perf_monitoring Monitore app performances print timestamps step by step (boolean)
 #' @param ... arguments to pass to golem_opts. 
 #' @examples 
 #' \dontrun{
@@ -28,7 +30,9 @@
 #'   user = "admin",
 #'   passord = "admin"
 #' )
-#' cdwtools(language = "EN", db_info = db_info)
+#' datamarts_folder <- "C:/Users/John/My CDW project/data"
+#' app_db_folder <- "C:/Users/John/My CDW project"
+#' cdwtools(language = "EN", db_info = db_info, datamarts_folder = datamarts_folder, app_db_folder = app_db_folder)
 #' }
 #' See `?golem::get_golem_options` for more details.
 #' @inheritParams shiny::shinyApp
@@ -41,52 +45,49 @@
 cdwtools <- function(
   language = "EN",
   db_info = list(),
-  default_folder = character(),
+  app_db_folder = character(),
+  datamarts_folder = character(),
+  perf_monitoring = FALSE,
   options = list(),
   ...
 ) {
   
   # Maximum size for uploaded data (500 MB)
   # Used to restore database
+  # shiny.launch.browser to automatically open browser
   
-  options(shiny.maxRequestSize = 500*1024^2)
+  options(shiny.maxRequestSize = 500*1024^2, shiny.launch.browser = TRUE)
+  
+  # Initial wd
+  # initial_wd <- getwd()
   
   # Set wd to app wd
-  # setwd(paste0(.libPaths()[1], "/cdwtools"))
+  # setwd(find.package("cdwtools"))
   
   # Load translations
   
   words <- get_translations()
 
   css <- "fluent_style.css"
-   
-  shiny.router::make_router(
-    shiny.router::route("home", make_layout(language = language, page = "home", words = words)),
-    shiny.router::route("patient_level_data", make_layout(language = language, page = "patient_level_data", words = words)),
-    shiny.router::route("aggregated_data", make_layout(language = language, page = "aggregated_data", words = words)),
-    shiny.router::route("settings/general_settings", make_layout(language = language, page = "settings/general_settings", words = words)),
-    shiny.router::route("settings/app_db", make_layout(language = language, page = "settings/app_db", words = words)),
-    shiny.router::route("settings/users", make_layout(language = language, page = "settings/users", words = words)),
-    shiny.router::route("settings/r_console", make_layout(language = language, page = "settings/r_console", words = words)),
-    shiny.router::route("settings/data_sources", make_layout(language = language, page = "settings/data_sources", words = words)),
-    shiny.router::route("settings/datamarts", make_layout(language = language, page = "settings/datamarts", words = words)),
-    shiny.router::route("settings/studies", make_layout(language = language, page = "settings/studies", words = words)),
-    shiny.router::route("settings/subsets", make_layout(language = language, page = "settings/subsets", words = words)),
-    shiny.router::route("settings/thesaurus", make_layout(language = language, page = "settings/thesaurus", words = words)),
-    shiny.router::route("settings/plugins", make_layout(language = language, page = "settings/plugins", words = words)),
-    shiny.router::route("settings/patient_lvl_modules", make_layout(language = language, page = "settings/patient_lvl_modules", words = words)),
-    shiny.router::route("settings/aggregated_modules", make_layout(language = language, page = "settings/aggregated_modules", words = words)),
-    shiny.router::route("settings/log", make_layout(language = language, page = "settings/log", words = words))
-  ) -> page
+  
+  pages <- c("home/get_started", "my_studies", "my_subsets", "thesaurus", "data", "patient_level_data", "aggregated_data",
+             "plugins/patient_lvl", "plugins/aggregated",
+             "settings/general_settings", "settings/app_db", "settings/users", "settings/r_console", "settings/data_sources",
+             "settings/datamarts", "settings/thesaurus", "settings/log")
+  
+  do.call(shiny.router::make_router, lapply(pages, function(page) shiny.router::route(page, 
+    make_layout(language = language, page = page, words = words)))) -> page
   
   # Load UI & server
     
   with_golem_options(
     app = shinyApp(
       ui = app_ui(css = css, page = page, language = language),
-      server = app_server(router = page, language = language, db_info = db_info, default_folder = default_folder),
+      server = app_server(router = page, language = language, db_info = db_info, 
+        datamarts_folder = datamarts_folder, app_db_folder = app_db_folder,# initial_wd = initial_wd, 
+        perf_monitoring = perf_monitoring),
       options = options
     ), 
-    golem_opts = list(...)
+    golem_opts = list()
   )
 }

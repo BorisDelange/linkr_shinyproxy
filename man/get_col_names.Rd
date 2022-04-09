@@ -4,7 +4,11 @@
 \alias{get_col_names}
 \title{Get column names}
 \usage{
-get_col_names(table_name = character(), language = "EN")
+get_col_names(
+  table_name = character(),
+  language = "EN",
+  words = tibble::tibble()
+)
 }
 \arguments{
 \item{table_name}{Name of the table (character)}

@@ -2,7 +2,7 @@
 title: "Déployer avec ShinyProxy"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{FR_deploy_shiny_proxy}
+  %\VignetteIndexEntry{Déployer avec ShinyProxy}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

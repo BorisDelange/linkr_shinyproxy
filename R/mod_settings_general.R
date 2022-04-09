@@ -15,8 +15,15 @@ mod_settings_general_ui <- function(id = character(), language = character(), wo
     # Hidden aceEditor, allows the other to be displayed...
     div(shinyAce::aceEditor("hidden"), style = "display: none;"),
     render_settings_default_elements(ns = ns),
-    render_settings_toggle_card(language = language, ns = ns, cards = list(
-      list(key = "change_password_card", label = "change_password"))),
+    shiny.fluent::Breadcrumb(items = list(
+      list(key = "general_settings", text = translate(language, "general_settings", words))
+    ), maxDisplayedItems = 3),
+    shiny.fluent::Pivot(
+      onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+      shiny.fluent::PivotItem(id = "change_password_card", itemKey = "change_password", headerText = translate(language, "change_password", words))
+    ),
+    # render_settings_toggle_card(language = language, ns = ns, cards = list(
+    #   list(key = "change_password_card", label = "change_password")), words = words),
     div(id = ns("change_password_card"),
       make_card(translate(language, "change_password", words),
         div(
@@ -41,27 +48,19 @@ mod_settings_general_server <- function(id = character(), r = shiny::reactiveVal
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    # Toggles IDs
-    toggles <- c("change_password_card")
-    
     ##########################################
     # Data management / Show or hide cards   #
     ##########################################
-
-    # Depending on toggles activated
-    sapply(toggles, function(toggle){
-      
-      # If user has no access, hide card
-      observeEvent(r$user_accesses, if ("change_password_card" %not_in% r$user_accesses) shinyjs::hide(toggle))
-      
-      # If user has access, show or hide card when toggle is clicked
-      observeEvent(input[[paste0(toggle, "_toggle")]], {
-        if (toggle %in% r$user_accesses){
-          if(input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) 
-          else shinyjs::hide(toggle)
-        }
-      })
-    })
+    
+    
+    cards <- c("change_password_card")
+    
+    show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
+    
+    # Toggles IDs
+    # toggles <- c("change_password_card")
+    # 
+    # show_hide_cards(r = r, input = input, session = session, id = id, toggles = toggles)
     
     ##########################################
     # Change password                        #

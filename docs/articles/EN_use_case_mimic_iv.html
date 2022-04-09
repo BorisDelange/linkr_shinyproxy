@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,18 +33,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">cdwtools</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.2</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../articles/cdwtools.html">Get started</a>
 </li>
@@ -57,7 +53,8 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li class="divider">
-    <li class="dropdown-header">FR - Aide</li>
+    </li>
+<li class="dropdown-header">FR - Aide</li>
     <li>
       <a href="../articles/FR_user_help.html">Aide aux utilisateurs</a>
     </li>
@@ -71,7 +68,8 @@
       <a href="../articles/FR_deploy_shiny_proxy.html">Déployer avec ShinyProxy</a>
     </li>
     <li class="divider">
-    <li class="dropdown-header">EN - Help</li>
+    </li>
+<li class="dropdown-header">EN - Help</li>
     <li>
       <a href="../articles/EN_user_help.html">User help</a>
     </li>
@@ -85,7 +83,8 @@
       <a href="../articles/EN_deploy_shiny_proxy.html">Deploy with ShinyProxy</a>
     </li>
     <li class="divider">
-    <li class="dropdown-header">Plugins</li>
+    </li>
+<li class="dropdown-header">Plugins</li>
     <li>
       <a href="../articles/patient_lvl_data_plugins.html">Patient-level data plugins</a>
     </li>
@@ -100,7 +99,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/BorisDelange/cdwtools/">
+  <a href="https://github.com/BorisDelange/cdwtools/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -115,13 +114,13 @@
 
       
 
-      </header><script src="EN_use_case_mimic_iv_files/header-attrs-2.11/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Use case with MIMIC-IV</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/BorisDelange/cdwtools/blob/master/vignettes/EN_use_case_mimic_iv.Rmd"><code>vignettes/EN_use_case_mimic_iv.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/BorisDelange/cdwtools/blob/HEAD/vignettes/EN_use_case_mimic_iv.Rmd" class="external-link"><code>vignettes/EN_use_case_mimic_iv.Rmd</code></a></small>
       <div class="hidden name"><code>EN_use_case_mimic_iv.Rmd</code></div>
 
     </div>
@@ -129,249 +128,329 @@
     
     
 <blockquote>
-<p>A complete use case with data from the <a href="https://mimic.mit.edu/">MIMIC-IV database</a>.</p>
+<p>A complete use case with data coming from the <a href="https://mimic.mit.edu/" target="_blank" class="external-link">MIMIC-IV database</a>.</p>
 </blockquote>
-<div id="ask-access-to-mimic-iv-data" class="section level2">
-<h2 class="hasAnchor">
-<a href="#ask-access-to-mimic-iv-data" class="anchor"></a>Ask access to MIMIC-IV data</h2>
-<p>…</p>
-<p>You can see database’s tables strucutre <a href="https://mimic.mit.edu/docs/iv/modules/core/admissions/">here</a>.</p>
+<div class="section level2">
+<h2 id="ask-access-to-mimic-iv-data">Ask access to MIMIC-IV data<a class="anchor" aria-label="anchor" href="#ask-access-to-mimic-iv-data"></a>
+</h2>
+<p>To have access to the MIMIC-IV database, <a href="https://physionet.org/content/mimiciv/1.0/" target="_blank" class="external-link">click on this link</a> and go on the bottom of the page.</p>
+<p>You have to :</p>
+<ul>
+<li><a href="https://physionet.org/settings/credentialing/" target="_blank" class="external-link">Create an account here</a></li>
+<li><a href="https://physionet.org/sign-dua/mimiciv/1.0/" target="_blank" class="external-link">Sign the data use agreement</a></li>
+</ul>
+<p>You can see database’s <a href="https://mimic.mit.edu/docs/iv/modules/core/admissions/" target="_blank" class="external-link">tables structure here</a>.</p>
 </div>
-<div id="data-source-datamart" class="section level2">
-<h2 class="hasAnchor">
-<a href="#data-source-datamart" class="anchor"></a>Data source &amp; datamart</h2>
+<div class="section level2">
+<h2 id="launch-the-app">Launch the app<a class="anchor" aria-label="anchor" href="#launch-the-app"></a>
+</h2>
+<p>In RStudio, run the Shiny application with :</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">app_db_folder</span> <span class="op">&lt;-</span> <span class="st">"C:/Users/John/My cdwtools project"</span>
+<span class="va">datamarts_folder</span> <span class="op">&lt;-</span> <span class="st">"C:/Users/John/My cdwtools project/data"</span>
+<span class="fu">cdwtools</span><span class="fu">::</span><span class="fu"><a href="../reference/cdwtools.html">cdwtools</a></span><span class="op">(</span>language <span class="op">=</span> <span class="st">"EN"</span>, app_db_folder <span class="op">=</span> <span class="va">app_db_folder</span>, datamarts_folder <span class="op">=</span> <span class="va">datamarts_folder</span><span class="op">)</span></code></pre></div>
+<p>See <a href="https://borisdelange.github.io/cdwtools/articles/cdwtools.html%20" target="_blank" class="external-link">Get started</a> page for more informations about <code>app_db_folder  &amp;</code>datamarts_folder` arguments.</p>
+</div>
+<div class="section level2">
+<h2 id="data-source-datamart">Data source &amp; datamart<a class="anchor" aria-label="anchor" href="#data-source-datamart"></a>
+</h2>
 <p>First, create a <em>Data source</em> called <em>MIMIC-IV</em> in Settings/Data management/Data sources.</p>
-<p>Then, create a <em>Datamart</em> called <em>MIMIC-IV tutorial datamart</em>. Don’t forget to attribute access to some users.</p>
-<p><strong>Edit the code</strong> of your datamart, enter this code, after having modified <code>dbConnect</code> informations.</p>
-<p>First, let’s import <strong>patients data</strong> (from table <a href="https://mimic.mit.edu/docs/iv/modules/core/patients/"><em>admissions</em></a>).<br>
-See <code>import_datamart</code> documentation to know which columns &amp; which data type is required (<code><a href="../reference/import_datamart.html">?import_datamart</a></code>).</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Connection to the database, from where we extract data</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RPostgres<span class="sc">::</span><span class="fu">Postgres</span>(), <span class="at">dbname =</span> <span class="st">"mimic-iv"</span>, <span class="at">host =</span> <span class="st">"localhost"</span>,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">port =</span> <span class="dv">5432</span>, <span class="at">user =</span> <span class="st">"admin"</span>, <span class="at">password =</span> <span class="st">"admin"</span>)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a patients function which, when executed, gets patients data</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>patients <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"SELECT icu.subject_id AS patient_id, p.gender, p.anchor_age AS age, p.dod</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.icustays icu </span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="st">        INNER JOIN mimic_core.patients p ON icu.subject_id = p.subject_id</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="st">        LIMIT 10"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer) <span class="sc">%&gt;%</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"dod"</span>, lubridate<span class="sc">::</span>ymd_hms)}</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Run import_datamart function, with patients function as data argument</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">patients</span>(), <span class="at">type =</span> <span class="st">"patients"</span>, </span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a patients_list function, which facilitates next SQL queries</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>patients_list <span class="ot">&lt;-</span> <span class="cf">function</span>() <span class="fu">paste</span>(<span class="fu">patients</span>() <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(patient_id), <span class="at">collapse =</span> <span class="st">","</span>)</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Disconnect from the DB</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
-<p><strong>Error messages</strong> are printed in box, below the editor.</p>
+<p><img src="../reference/figures/mimic_iv_tutorial/EN_create_data_source.png" width="606"></p>
+<p>Then, create a <em>Datamart</em> called <em>MIMIC-IV tutorial datamart</em>. By default, everybody has access to this datamart. You can <strong>change the visibility</strong> of this datamart on Datamarts management &gt; Settings (on the Action column) &gt; Grant access to.</p>
+<p><strong>Edit the code</strong> of your datamart (Datamarts management &gt; Edit code (on the Action column)), enter this code, after having modified <code>dbConnect</code> informations.</p>
+<p>First, let’s import <strong>patients data</strong> (from table <strong><a href="https://mimic.mit.edu/docs/iv/modules/core/patients/" target="_blank" class="external-link">patients</a></strong>).<br>
+See <code>import_datamart</code> documentation to know which columns &amp; which data type is required (<code><a href="../reference/import_datamart.html">?import_datamart</a></code>). Let’s select only 10 patients.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Connection to the database, from where we extract data</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RPostgres<span class="sc">::</span><span class="fu">Postgres</span>(), <span class="at">dbname =</span> <span class="st">"mimic-iv"</span>, <span class="at">host =</span> <span class="st">"localhost"</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">port =</span> <span class="dv">5432</span>, <span class="at">user =</span> <span class="st">"admin"</span>, <span class="at">password =</span> <span class="st">"admin"</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a patients function which, when executed, gets patients data</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>patients <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"SELECT icu.subject_id AS patient_id, p.gender, p.anchor_age AS age, p.dod</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.icustays icu </span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="st">        INNER JOIN mimic_core.patients p ON icu.subject_id = p.subject_id</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="st">        LIMIT 10"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer) <span class="sc">%&gt;%</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"dod"</span>, lubridate<span class="sc">::</span>ymd_hms)}</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Run import_datamart function, with patients function as data argument</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">patients</span>(), <span class="at">type =</span> <span class="st">"patients"</span>, </span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a patients_list function, which facilitates next SQL queries</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>patients_list <span class="ot">&lt;-</span> <span class="cf">function</span>() <span class="fu">paste</span>(<span class="fu">patients</span>() <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(patient_id), <span class="at">collapse =</span> <span class="st">","</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Disconnect from the DB</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
+<p><strong>Error messages</strong> are printed in the box below the editor.</p>
 <p>If you want to check the data before running <code>import_datamart</code>, you can print it in the console with :</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html">dbConnect</a></span><span class="op">(</span><span class="fu">RPostgres</span><span class="fu">::</span><span class="fu"><a href="https://rpostgres.r-dbi.org/reference/Postgres.html">Postgres</a></span><span class="op">(</span><span class="op">)</span>, dbname <span class="op">=</span> <span class="st">"mimic-iv"</span>, host <span class="op">=</span> <span class="st">"localhost"</span>,
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu">RPostgres</span><span class="fu">::</span><span class="fu"><a href="https://rpostgres.r-dbi.org/reference/Postgres.html" class="external-link">Postgres</a></span><span class="op">(</span><span class="op">)</span>, dbname <span class="op">=</span> <span class="st">"mimic-iv"</span>, host <span class="op">=</span> <span class="st">"localhost"</span>,
   port <span class="op">=</span> <span class="fl">5432</span>, user <span class="op">=</span> <span class="st">"admin"</span>, password <span class="op">=</span> <span class="st">"admin"</span><span class="op">)</span>
 <span class="va">patients</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span><span class="op">{</span>
-    <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbGetQuery.html">dbGetQuery</a></span><span class="op">(</span><span class="va">con</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"SELECT * FROM mimic_core.patients p LIMIT 10"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span>patient_id <span class="op">=</span> <span class="va">subject_id</span>, <span class="va">gender</span>, age <span class="op">=</span> <span class="va">anchor_age</span>, <span class="va">dod</span><span class="op">)</span><span class="op">}</span>
+    <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbGetQuery.html" class="external-link">dbGetQuery</a></span><span class="op">(</span><span class="va">con</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"SELECT * FROM mimic_core.patients p LIMIT 10"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>patient_id <span class="op">=</span> <span class="va">subject_id</span>, <span class="va">gender</span>, age <span class="op">=</span> <span class="va">anchor_age</span>, <span class="va">dod</span><span class="op">)</span><span class="op">}</span>
 
-<span class="co"># Prints the dataframe</span>
-<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu">patients</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
+<span class="co"># Show the dataframe</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">patients</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
 
-<span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></code></pre></div>
-<p>We then create <strong>stays data</strong>, containing informations on distinct hospital stays (from table <a href="https://mimic.mit.edu/docs/iv/modules/core/admissions/"><em>admissions</em></a>).</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RPostgres<span class="sc">::</span><span class="fu">Postgres</span>(), <span class="at">dbname =</span> <span class="st">"mimic-iv"</span>, <span class="at">host =</span> <span class="st">"localhost"</span>,</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">port =</span> <span class="dv">5432</span>, <span class="at">user =</span> <span class="st">"admin"</span>, <span class="at">password =</span> <span class="st">"admin"</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a stays function &amp; import this data</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>stays <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(<span class="st">"</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT subject_id AS patient_id, hadm_id AS stay_id, 'Un service' AS unit_name, </span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="st">        admittime AS admission_datetime, dischtime AS discharge_datetime</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_core.admissions </span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer)}</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">stays</span>(), <span class="at">type =</span> <span class="st">"stays"</span>,</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
-<p>Import <strong>labs_vitals</strong>, containing labs data (from <a href="https://mimic.mit.edu/docs/iv/modules/hosp/labevents/"><em>labevents</em></a> table), vitals (from <a href="https://mimic.mit.edu/docs/iv/modules/icu/chartevents/"><em>chartevents</em></a> table) and other informations like output events (table <a href="https://mimic.mit.edu/docs/iv/modules/icu/outputevents/"><em>outputevents</em></a>) &amp; datetime events (table <a href="https://mimic.mit.edu/docs/iv/modules/icu/datetimesevents/"><em>datetimeevents</em></a>).</p>
+<span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></code></pre></div>
+<p>We then create <strong>stays data</strong>, containing informations on distinct hospital stays (from table <strong><a href="https://mimic.mit.edu/docs/iv/modules/core/admissions/" target="_blank" class="external-link">admissions</a></strong>).</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RPostgres<span class="sc">::</span><span class="fu">Postgres</span>(), <span class="at">dbname =</span> <span class="st">"mimic-iv"</span>, <span class="at">host =</span> <span class="st">"localhost"</span>,</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">port =</span> <span class="dv">5432</span>, <span class="at">user =</span> <span class="st">"admin"</span>, <span class="at">password =</span> <span class="st">"admin"</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Do the same with labs_vitals data</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>labs_vitals <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">"SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, </span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.chartevents</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, </span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_hosp.labevents</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, CAST(value AS VARCHAR(255)) AS value, </span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS value_num, valueuom AS unit, '' AS comments</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.datetimeevents</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, '' AS value, value AS value_num, </span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.outputevents</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="st">        "</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer) <span class="sc">%&gt;%</span></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"value"</span>, as.character) <span class="sc">%&gt;%</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"value_num"</span>, as.numeric) <span class="sc">%&gt;%</span></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"datetime_stop"</span>, lubridate<span class="sc">::</span>ymd_hms)}</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">labs_vitals</span>(), </span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"labs_vitals"</span>, <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
-<p>For now, we do not have access to clinical notes from the MIMIC-IV database, we <strong>do not import text data</strong>.</p>
-<p>Finally, let’s import <strong>orders data</strong> (we use only table <a href="https://mimic.mit.edu/docs/iv/modules/icu/inputevents/"><em>inputevents</em></a>)</p>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a stays function &amp; import this data</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>stays <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(<span class="st">"</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT subject_id AS patient_id, hadm_id AS stay_id, 'Random unit' AS unit_name, </span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="st">        admittime AS admission_datetime, dischtime AS discharge_datetime</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_core.admissions </span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer)}</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">stays</span>(), <span class="at">type =</span> <span class="st">"stays"</span>,</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
+<p>Import <strong>labs_vitals</strong>, containing labs data (from <strong><a href="https://mimic.mit.edu/docs/iv/modules/hosp/labevents/" target="_blank" class="external-link">labevents</a></strong> table), vitals (from <strong><a href="https://mimic.mit.edu/docs/iv/modules/icu/chartevents/" target="_blank" class="external-link">chartevents</a></strong>) table) and other informations like output events (table <strong><a href="https://mimic.mit.edu/docs/iv/modules/icu/outputevents/" target="_blank" class="external-link">outputevents</a></strong>) &amp; datetime events (table <strong><a href="https://mimic.mit.edu/docs/iv/modules/icu/datetimesevents/" target="_blank" class="external-link">datetimeevents</a></strong>).</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RPostgres<span class="sc">::</span><span class="fu">Postgres</span>(), <span class="at">dbname =</span> <span class="st">"mimic-iv"</span>, <span class="at">host =</span> <span class="st">"localhost"</span>,</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">port =</span> <span class="dv">5432</span>, <span class="at">user =</span> <span class="st">"admin"</span>, <span class="at">password =</span> <span class="st">"admin"</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>orders <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(<span class="st">"</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="st">        starttime AS datetime_start, endtime AS datetime_stop, '' AS route,</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS continuous, amount, amountuom AS amount_unit, rate, rateuom AS rate_unit, </span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS concentration, '' AS concentration_unit, '' AS comments</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.inputevents</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer) <span class="sc">%&gt;%</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"continuous"</span>, as.integer) <span class="sc">%&gt;%</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"concentration"</span>, as.numeric)}</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">orders</span>(), <span class="at">type =</span> <span class="st">"orders"</span>, </span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
-<p><strong>Put it all together</strong> (copy and paste the entire code in your App and Save) :</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Connection to the database, from where we extract data</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RPostgres<span class="sc">::</span><span class="fu">Postgres</span>(), <span class="at">dbname =</span> <span class="st">"mimic-iv"</span>, <span class="at">host =</span> <span class="st">"localhost"</span>, <span class="at">port =</span> <span class="dv">5432</span>, </span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">user =</span> <span class="st">"admin"</span>, <span class="at">password =</span> <span class="st">"admin"</span>)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="do">########## PATIENTS ##########</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>patients <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"SELECT icu.subject_id AS patient_id, p.gender, p.anchor_age AS age, p.dod</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.icustays icu </span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="st">        INNER JOIN mimic_core.patients p ON icu.subject_id = p.subject_id</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="st">        LIMIT 10"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Do the same with labs_vitals data</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>labs_vitals <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">"SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, </span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.chartevents</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, </span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_hosp.labevents</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, CAST(value AS VARCHAR(255)) AS value, </span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS value_num, valueuom AS unit, '' AS comments</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.datetimeevents</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, '' AS value, value AS value_num, </span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.outputevents</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="st">        "</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer) <span class="sc">%&gt;%</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"value"</span>, as.character) <span class="sc">%&gt;%</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"value_num"</span>, as.numeric) <span class="sc">%&gt;%</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"datetime_stop"</span>, lubridate<span class="sc">::</span>ymd_hms)}</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">labs_vitals</span>(), </span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"labs_vitals"</span>, <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
+<p>For now, we do not have access to clinical notes from the MIMIC-IV database, we <strong>do not import text data</strong>.</p>
+<p>Finally, let’s import <strong>orders data</strong> (we use only table <strong><a href="https://mimic.mit.edu/docs/iv/modules/icu/inputevents/" target="_blank" class="external-link">inputevents</a></strong>)</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RPostgres<span class="sc">::</span><span class="fu">Postgres</span>(), <span class="at">dbname =</span> <span class="st">"mimic-iv"</span>, <span class="at">host =</span> <span class="st">"localhost"</span>,</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">port =</span> <span class="dv">5432</span>, <span class="at">user =</span> <span class="st">"admin"</span>, <span class="at">password =</span> <span class="st">"admin"</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>orders <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(<span class="st">"</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="st">        starttime AS datetime_start, endtime AS datetime_stop, '' AS route,</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS continuous, amount, amountuom AS amount_unit, rate, rateuom AS rate_unit, </span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS concentration, '' AS concentration_unit, '' AS comments</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.inputevents</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")"</span>)) <span class="sc">%&gt;%</span></span>
 <span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer) <span class="sc">%&gt;%</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"dod"</span>, lubridate<span class="sc">::</span>ymd_hms)}</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">patients</span>(), <span class="at">type =</span> <span class="st">"patients"</span>, </span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>patients_list <span class="ot">&lt;-</span> <span class="cf">function</span>() <span class="fu">paste</span>(<span class="fu">patients</span>() <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(patient_id), <span class="at">collapse =</span> <span class="st">","</span>)</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="do">########## STAYS ##########</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>stays <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(<span class="st">"</span></span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT subject_id AS patient_id, hadm_id AS stay_id, 'Un service' AS unit_name, </span></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="st">        admittime AS admission_datetime, dischtime AS discharge_datetime</span></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_core.admissions </span></span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer)}</span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">stays</span>(), <span class="at">type =</span> <span class="st">"stays"</span>,</span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="do">########## STAYS_VITALS ##########</span></span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>labs_vitals <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(</span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>        <span class="st">"SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, </span></span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.chartevents</span></span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, </span></span>
-<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
-<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_hosp.labevents</span></span>
-<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
-<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
-<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, CAST(value AS VARCHAR(255)) AS value, </span></span>
-<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS value_num, valueuom AS unit, '' AS comments</span></span>
-<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.datetimeevents</span></span>
-<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
-<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
-<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, '' AS value, value AS value_num, </span></span>
-<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
-<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.outputevents</span></span>
-<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
-<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a><span class="st">        "</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer) <span class="sc">%&gt;%</span></span>
-<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"value"</span>, as.character) <span class="sc">%&gt;%</span></span>
-<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"value_num"</span>, as.numeric) <span class="sc">%&gt;%</span></span>
-<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"datetime_stop"</span>, lubridate<span class="sc">::</span>ymd_hms)}</span>
-<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">labs_vitals</span>(), </span>
-<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"labs_vitals"</span>, <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
-<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a><span class="do">########## ORDERS ##########</span></span>
-<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a>orders <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
-<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(<span class="st">"</span></span>
-<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
-<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a><span class="st">        starttime AS datetime_start, endtime AS datetime_stop, '' AS route,</span></span>
-<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS continuous, amount, amountuom AS amount_unit, rate, rateuom AS rate_unit, </span></span>
-<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS concentration, '' AS concentration_unit, '' AS comments</span></span>
-<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.inputevents</span></span>
-<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer) <span class="sc">%&gt;%</span></span>
-<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"continuous"</span>, as.integer) <span class="sc">%&gt;%</span></span>
-<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"concentration"</span>, as.numeric)}</span>
-<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">orders</span>(), <span class="at">type =</span> <span class="st">"orders"</span>, </span>
-<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
-<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a><span class="co"># Disconnect from the DB</span></span>
-<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"continuous"</span>, as.integer) <span class="sc">%&gt;%</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"concentration"</span>, as.numeric)}</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">orders</span>(), <span class="at">type =</span> <span class="st">"orders"</span>, </span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
+<p><strong>Put it all together</strong> (copy and paste the entire code in your App and Save) :</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Connection to the database, from where we extract data</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RPostgres<span class="sc">::</span><span class="fu">Postgres</span>(), <span class="at">dbname =</span> <span class="st">"mimic-iv"</span>, <span class="at">host =</span> <span class="st">"localhost"</span>, <span class="at">port =</span> <span class="dv">5432</span>, </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">user =</span> <span class="st">"admin"</span>, <span class="at">password =</span> <span class="st">"admin"</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="do">########## PATIENTS ##########</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>patients <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"SELECT icu.subject_id AS patient_id, p.gender, p.anchor_age AS age, p.dod</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.icustays icu </span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="st">        INNER JOIN mimic_core.patients p ON icu.subject_id = p.subject_id</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="st">        LIMIT 10"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer) <span class="sc">%&gt;%</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"dod"</span>, lubridate<span class="sc">::</span>ymd_hms)}</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">patients</span>(), <span class="at">type =</span> <span class="st">"patients"</span>, </span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>patients_list <span class="ot">&lt;-</span> <span class="cf">function</span>() <span class="fu">paste</span>(<span class="fu">patients</span>() <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(patient_id), <span class="at">collapse =</span> <span class="st">","</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="do">########## STAYS ##########</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>stays <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(<span class="st">"</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT subject_id AS patient_id, hadm_id AS stay_id, 'Random unit' AS unit_name, </span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="st">        admittime AS admission_datetime, dischtime AS discharge_datetime</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_core.admissions </span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer)}</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">stays</span>(), <span class="at">type =</span> <span class="st">"stays"</span>,</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a><span class="do">########## STAYS_VITALS ##########</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>labs_vitals <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>        <span class="st">"SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, </span></span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.chartevents</span></span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, value, valuenum AS value_num, </span></span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_hosp.labevents</span></span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, CAST(value AS VARCHAR(255)) AS value, </span></span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS value_num, valueuom AS unit, '' AS comments</span></span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.datetimeevents</span></span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a><span class="st">  UNION SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a><span class="st">        charttime AS datetime_start, '' AS datetime_stop, '' AS value, value AS value_num, </span></span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a><span class="st">        valueuom AS unit, '' AS comments</span></span>
+<span id="cb7-50"><a href="#cb7-50" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.outputevents</span></span>
+<span id="cb7-51"><a href="#cb7-51" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")</span></span>
+<span id="cb7-52"><a href="#cb7-52" aria-hidden="true" tabindex="-1"></a><span class="st">        "</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb7-53"><a href="#cb7-53" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer) <span class="sc">%&gt;%</span></span>
+<span id="cb7-54"><a href="#cb7-54" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"value"</span>, as.character) <span class="sc">%&gt;%</span></span>
+<span id="cb7-55"><a href="#cb7-55" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"value_num"</span>, as.numeric) <span class="sc">%&gt;%</span></span>
+<span id="cb7-56"><a href="#cb7-56" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"datetime_stop"</span>, lubridate<span class="sc">::</span>ymd_hms)}</span>
+<span id="cb7-57"><a href="#cb7-57" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">labs_vitals</span>(), </span>
+<span id="cb7-58"><a href="#cb7-58" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"labs_vitals"</span>, <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
+<span id="cb7-59"><a href="#cb7-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-60"><a href="#cb7-60" aria-hidden="true" tabindex="-1"></a><span class="do">########## ORDERS ##########</span></span>
+<span id="cb7-61"><a href="#cb7-61" aria-hidden="true" tabindex="-1"></a>orders <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
+<span id="cb7-62"><a href="#cb7-62" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="fu">paste0</span>(<span class="st">"</span></span>
+<span id="cb7-63"><a href="#cb7-63" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT subject_id AS patient_id, 'MIMIC-IV' AS thesaurus_name, itemid AS item_id, </span></span>
+<span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a><span class="st">        starttime AS datetime_start, endtime AS datetime_stop, '' AS route,</span></span>
+<span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS continuous, amount, amountuom AS amount_unit, rate, rateuom AS rate_unit, </span></span>
+<span id="cb7-66"><a href="#cb7-66" aria-hidden="true" tabindex="-1"></a><span class="st">        NULL AS concentration, '' AS concentration_unit, '' AS comments</span></span>
+<span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a><span class="st">        FROM mimic_icu.inputevents</span></span>
+<span id="cb7-68"><a href="#cb7-68" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE subject_id IN ("</span>, <span class="fu">patients_list</span>(), <span class="st">")"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb7-69"><a href="#cb7-69" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"patient_id"</span>, as.integer) <span class="sc">%&gt;%</span></span>
+<span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"continuous"</span>, as.integer) <span class="sc">%&gt;%</span></span>
+<span id="cb7-71"><a href="#cb7-71" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"concentration"</span>, as.numeric)}</span>
+<span id="cb7-72"><a href="#cb7-72" aria-hidden="true" tabindex="-1"></a><span class="fu">import_datamart</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>, <span class="at">data =</span> <span class="fu">orders</span>(), <span class="at">type =</span> <span class="st">"orders"</span>, </span>
+<span id="cb7-73"><a href="#cb7-73" aria-hidden="true" tabindex="-1"></a>  <span class="at">save_as_csv =</span> <span class="cn">TRUE</span>, <span class="at">rewrite =</span> <span class="cn">FALSE</span>, <span class="at">language =</span> <span class="st">"EN"</span>)</span>
+<span id="cb7-74"><a href="#cb7-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-75"><a href="#cb7-75" aria-hidden="true" tabindex="-1"></a><span class="co"># Disconnect from the DB</span></span>
+<span id="cb7-76"><a href="#cb7-76" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
+<p><strong>Run the code</strong> with the Run code button.</p>
+<p>This may take a <strong>few minutes</strong>, depending on the server where MIMIC-IV data are hosted and if SQL indexes have been made.</p>
+<p>You should have this screen, confirming everything went fine :</p>
+<p><img src="../reference/figures/mimic_iv_tutorial/EN_import_datamart.png" width="660"></p>
 </div>
-<div id="thesaurus" class="section level2">
-<h2 class="hasAnchor">
-<a href="#thesaurus" class="anchor"></a>Thesaurus</h2>
+<div class="section level2">
+<h2 id="thesaurus">Thesaurus<a class="anchor" aria-label="anchor" href="#thesaurus"></a>
+</h2>
 <p>Let’s now <strong>import the thesaurus</strong>.</p>
-<p>Go to <strong>settings/thesaurus</strong> and create a new thesaurus.</p>
+<p>Go to <strong>Settings &gt; thesaurus</strong> and create a new thesaurus.</p>
 <p>As you’ve seen in previous section, we have called the thesaurus ‘MIMIC-IV’, so we need to call our thesaurus ‘MIMIV-IV’ here too.</p>
 <p>Then, <strong>edit the code</strong> of the thesaurus you’ve just created.</p>
-<p>MIMIC-IV thesaurus can be found in these tables : <a href="https://mimic.mit.edu/docs/iv/modules/icu/d_items/"><em>d_items</em></a> and <a href="https://mimic.mit.edu/docs/iv/modules/hosp/d_labitems/"><em>d_labitems</em></a>.</p>
-<p>Let’s see documentation with <code><a href="../reference/import_thesaurus.html">?import_thesaurus</a></code>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Connection to the database, from where we extract data</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RPostgres<span class="sc">::</span><span class="fu">Postgres</span>(), <span class="at">dbname =</span> <span class="st">"mimic-iv"</span>, <span class="at">host =</span> <span class="st">"localhost"</span>,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">port =</span> <span class="dv">5432</span>, <span class="at">user =</span> <span class="st">"admin"</span>, <span class="at">password =</span> <span class="st">"admin"</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a function which, when executed, gets thesaurus data</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>thesaurus <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, </span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>      <span class="st">"SELECT itemid AS item_id, label AS name, '' AS display_name, category, unitname AS unit </span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="st">      FROM mimic_icu.d_items</span></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="st">UNION SELECT itemid AS item_id, label AS name, '' AS display_name, category, '' AS unit</span></span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="st">      FROM mimic_hosp.d_labitems"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"item_id"</span>, as.integer)</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Run import_thesaurus function</span></span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="fu">import_thesaurus</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">thesaurus_id =</span> <span class="sc">%thesaurus_id%</span>, <span class="at">thesaurus =</span> <span class="fu">thesaurus</span>(), <span class="at">language =</span> language)</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Disconnect</span></span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
+<p>MIMIC-IV thesaurus can be found in these tables : <strong><a href="https://mimic.mit.edu/docs/iv/modules/icu/d_items/%20" target="_blank" class="external-link">d_items</a></strong> and <strong><a href="https://mimic.mit.edu/docs/iv/modules/hosp/d_labitems/" target="_blank" class="external-link">d_labitems</a></strong>.</p>
+<p>See documentation with <code><a href="../reference/import_thesaurus.html">?import_thesaurus</a></code>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Connection to the database, from where we extract data</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RPostgres<span class="sc">::</span><span class="fu">Postgres</span>(), <span class="at">dbname =</span> <span class="st">"mimic-iv"</span>, <span class="at">host =</span> <span class="st">"localhost"</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">port =</span> <span class="dv">5432</span>, <span class="at">user =</span> <span class="st">"admin"</span>, <span class="at">password =</span> <span class="st">"admin"</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a function which, when executed, gets thesaurus data</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>thesaurus <span class="ot">&lt;-</span> <span class="cf">function</span>(){</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, </span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>      <span class="st">"SELECT itemid AS item_id, label AS name, '' AS display_name, category, unitname AS unit </span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="st">      FROM mimic_icu.d_items</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="st">UNION SELECT itemid AS item_id, label AS name, '' AS display_name, category, '' AS unit</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="st">      FROM mimic_hosp.d_labitems"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">"item_id"</span>, as.integer)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Run import_thesaurus function</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="fu">import_thesaurus</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">thesaurus_id =</span> <span class="sc">%thesaurus_id%</span>, <span class="at">thesaurus =</span> <span class="fu">thesaurus</span>(), <span class="at">language =</span> language)</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Disconnect</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
+<p>You can now <strong>load the thesaurus items</strong> with the <strong>Table button</strong> on the Action column of Thesaurus management card.</p>
+<p>The first time you load the thesaurus, it may take a few seconds. Data are saved in the cache table, so refresh the page, reconnect and reload thesaurus items, it should take <strong>less than one second</strong>.</p>
+<p>You can <strong>edit</strong> display names &amp; units of the thesaurus items.</p>
+<p>If you choose the <strong>MIMIC-IV tutorial datamart</strong> in the dropdown, and click on <strong>Show only used items in this datamart</strong>.</p>
+<p>You should see two new columns in the datatable, a column <strong>Nb of patients</strong>, telling you the number of patients of you datamart who actually have at least one time this item in their data, and a column <strong>Nb of rows</strong> indicating the total number of occurences of this items, in the whole datamart.</p>
+<p>Let’s <strong>order our data by Nb of rows</strong> to see the most used items.</p>
+<p>You should have this screen :</p>
+<p><img src="../reference/figures/mimic_iv_tutorial/EN_thesaurus_items_datatable.png" width="742"></p>
 </div>
-<div id="modules-plugins" class="section level2">
-<h2 class="hasAnchor">
-<a href="#modules-plugins" class="anchor"></a>Modules &amp; plugins</h2>
-<p><em>Import plugins from the website</em> <em>Create modules</em></p>
+<div class="section level2">
+<h2 id="modules-plugins">Modules &amp; plugins<a class="anchor" aria-label="anchor" href="#modules-plugins"></a>
+</h2>
+<p>In this section, we will create : - A module family - Some modules - Somes modules elements</p>
+<p>A module family is a group of modules, which can be shared with other users (for example, the <em>MIMIC-IV default</em> module family we will create can be shared). A module is a page containing multiple modules elements. A module element is a chart, used to visualize data.</p>
+<div class="section level3">
+<h3 id="patient-level-modules">Patient-level modules<a class="anchor" aria-label="anchor" href="#patient-level-modules"></a>
+</h3>
+<p>We will first create some patient-level modules, similar to those you can see with demo data.</p>
+<p>Go to <strong>Patient-level modules</strong> page, click on <strong>New module family</strong>, create a module family named <em>MIMIC-IV default</em>.</p>
+<p>Now, click on <strong>New module</strong>, create a <em>Haemodynamics</em> module, under the module family we’ve just created.</p>
+<p>Notice that you can choose a <strong>parent module</strong>, if you do so, the current module will be a sub-category of the parent module.</p>
+<p>Now you’ve created a module family and a first module, you can create some <strong>modules elements</strong>.</p>
+<p>Go to <strong>New module element</strong>, select our module family called <em>MIMIC-IV default</em>, our first module called <em>Haemodynamics</em>.</p>
+<p>Now, choose the <strong>Dygraph</strong> plugin. Notice that you can see descriptions of the plugins in the <strong>Plugins section</strong>.</p>
+<p>Choose the <em>MIMIC-IV thesaurus</em>, the <em>MIMIC-IV tutorial datamart</em>.</p>
+<p>Once again, it may take a few minutes : the application is creating some cache data.</p>
+<p>Choose a name for your Module element, like <em>Haemodynamic vitals</em>.</p>
+<p>A dataframe with the <strong>thesaurus items</strong> should appear :</p>
+<p><img src="../reference/figures/mimic_iv_tutorial/EN_thesaurus_items_module_element_datatable.png" width="755"></p>
+<p><strong>Arrange</strong> your items by <em>Nb of rows</em>.</p>
+<p>Select the colour of your items and click on the plus button.</p>
+<p>For example, add the <em>Heart rate</em> item &amp; <em>Non invasive Blood Pressure mean</em>.</p>
+<p>Notice that you can change the <strong>display name</strong>, it will be the name of the item displayed in the chart.</p>
+<p>When you add an item, it is added in the dropdown <em>Items selected</em>. You can unselect items or reset the dropdown.</p>
+<p>Once you’ve selected your items, click on <strong>Add</strong>.</p>
+<p>That’s it, you’ve created your first module element.</p>
+<p>You can’t go to Patient-level page and see your data, cause you first need to create at least an aggregated module family, and then <strong>create a study</strong>.</p>
 </div>
-<div id="manipulate-data" class="section level2">
-<h2 class="hasAnchor">
-<a href="#manipulate-data" class="anchor"></a>Manipulate data</h2>
-<p><em>Patient-lvl data</em> <em>Aggregated data</em></p>
+<div class="section level3">
+<h3 id="aggregated-modules">Aggregated modules<a class="anchor" aria-label="anchor" href="#aggregated-modules"></a>
+</h3>
+<p>With the same principle, create an aggregated module family, called <em>MIMIC-IV default</em>.</p>
+<p>Create a module called <em>Patients management</em>.</p>
+<p>Create two modules under this first module (by selected this last one as a parent of the new modules) : <em>Exclusion criteria</em> &amp; <em>Flowchart</em>.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="create-a-study">Create a study<a class="anchor" aria-label="anchor" href="#create-a-study"></a>
+</h2>
+<p>Go to the <strong>Studies</strong> page. Create a study named <em>My study</em>. Select your datamart &amp; the modules families you’ve created.</p>
+<p>By default, <strong>three subsets are created</strong> :</p>
+<ul>
+<li>All patients</li>
+<li>Included patients</li>
+<li>Excluded patients</li>
+</ul>
+<p>You can see the code of <em>All patients</em> subset in the <strong>Subsets</strong> page, by clicking on the Edit code button, on the Action column.</p>
+<p>This code adds all the patients of the datamart in this subset.</p>
+</div>
+<div class="section level2">
+<h2 id="manipulate-data">Manipulate data<a class="anchor" aria-label="anchor" href="#manipulate-data"></a>
+</h2>
+<p>Go back to <strong>Patient-level data</strong> page, you should have this screen :</p>
+<p><img src="../reference/figures/mimic_iv_tutorial/EN_patient_lvl_data.png" width="938"></p>
+<p>Try to change the patient, the current stay : charts are <strong>updated with new data</strong>.</p>
+</div>
+<div class="section level2">
+<h2 id="get-new-plugins">Get new plugins<a class="anchor" aria-label="anchor" href="#get-new-plugins"></a>
+</h2>
+<p>…</p>
 </div>
   </div>
 
@@ -386,11 +465,13 @@ See <code>import_datamart</code> documentation to know which columns &amp; which
 
 
       <footer><div class="copyright">
-  <p>Developed by Boris Delange.</p>
+  <p></p>
+<p>Developed by Boris Delange.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -398,6 +479,8 @@ See <code>import_datamart</code> documentation to know which columns &amp; which
 
   
 
+
+  
 
   </body>
 </html>

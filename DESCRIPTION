@@ -1,47 +1,53 @@
 Package: cdwtools
 Title: Clinical Data Warehouses Tools
-Version: 0.0.1
-Authors@R: person('Boris', 'Delange', email = 'boris.delange@gmail.com', role = c('cre', 'aut'))
+Version: 0.1.2
+Authors@R: person('Boris', 'Delange', email = 'boris.delange@gmail.com', role = c('cre', 'aut', 'cph'))
 Description: CDW Tools package gives some tools to help clinicians without advanced programmation skills, 
   statisticiants and data scientists use their clinical data warehouse, from patient-level data visualization 
   to pooled patient data analytics, using a web application created with {shiny}.
-License: file License
+License: file LICENCE
 Imports: 
-    DBI,
-    dplyr,
-    DT,
-    dygraphs,
-    ggplot2,
-    golem,
-    glue,
-    knitr,
-    magrittr,
-    readr,
-    RPostgres,
-    RSQLite,
-    rlang,
-    rmarkdown,
-    rlist,
+    DBI (>= 1.1.1),
+    dplyr (>= 1.0.7),
+    DT (>= 0.19),
+    golem (>= 0.3.1),
+    glue (>= 1.4.2),
+    magrittr (>= 2.0.1),
+    marker (>= 0.1.1),
+    readr (>= 2.0.2),
+    RPostgres (>= 1.4.1),
+    RSQLite (>= 2.2.8),
+    rlang (>= 0.4.12),
+    rlist (>= 0.4.6.2),
     shiny (>= 1.6.0),
-    shinyFeedback,
-    shiny.fluent,
-    shinymanager,
-    shiny.react,
-    shiny.router,
-    shinyAce,
-    shinybusy,
-    shinyjs,
-    stringr,
-    tidyr,
-    vistime,
-    xts
+    shiny.fluent (>= 0.2.1),
+    shinymanager (>= 1.0.400),
+    shiny.react (>= 0.2.3),
+    shiny.router (>= 0.2.2),
+    shinyAce (>= 0.4.1),
+    shinybusy (>= 0.2.2),
+    shinyjs (>= 2.0.0),
+    sortable(>= 0.4.5),
+    stringr (>= 1.4.0),
+    tidyr (>= 1.1.4),
+    pkgload (>= 1.2.3),
+    zip (>= 2.2.0)
+Suggests:
+    clipr (>= 0.7.1),
+    dygraphs (>= 1.1.1.6),
+    ggplot2 (>= 3.3.5),
+    knitr (>= 1.36),
+    rmarkdown (>= 2.11),
+    vistime (>= 1.2.1),
+    xts (>= 0.12.1)
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 URL: https://github.com/BorisDelange/cdwtools
 BugReports: https://github.com/BorisDelange/cdwtools/issues
 Language: en-US
 Remotes: 
     Appsilon/shiny.react,
-    Appsilon/shiny.fluent
+    Appsilon/shiny.fluent,
+    JohnCoene/marker
 VignetteBuilder: knitr

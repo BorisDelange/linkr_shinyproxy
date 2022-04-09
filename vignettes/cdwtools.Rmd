@@ -2,7 +2,7 @@
 title: "Get started"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{cdwtools}
+  %\VignetteIndexEntry{Get started}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -19,21 +19,29 @@ knitr::opts_chunk$set(
 Once cdwtools package is installed, run the Shiny application with :
 
 ```r
-setwd(paste0(.libPaths()[1], "/cdwtools"))
-cdwtools::cdwtools(language = "EN")
+library(cdwtools)
+cdwtools(language = "EN")
 ```
-
-The first line set the working directory to the directory of the application.
-It is **necessary** for the application to work.
 
 Available languages are 'EN' & 'FR'.
 
-The first time you launch the application, a **local database** is created, on the library directory.
+The first time you launch the application, a **local database** is created, on the your RStudio home directory.
 
 Two users are created :
 
 - an **admin** user, with login = 'admin' & password = 'admin'
 - a **test** user, with login = 'test' & password = 'test'
+
+You can change the **folder where the local database** will be created, using the app_db_folder argument.
+You can also change the **folder where the datamats** will be saved, if you choose to save CSV files, using the datamarts_folder argument.
+
+By **default**, the local **database** & the **datamarts** are **saved in your RStudio home folder** (with `path.expand('~')` command).
+
+```r
+app_db_folder <- "C:/Users/John/My cdwtools project"
+datamarts_folder <- "C:/Users/John/My cdwtools project/data"
+cdwtools(language = "EN", app_db_folder = app_db_folder, datamarts_folder = datamarts_folder)
+```
 
 First, try to **connect with the test user**.
 
@@ -47,7 +55,7 @@ With the **dropdowns on the left side** of the page, select the **datamart** *In
 
 <br />
 ```{r, echo=FALSE, out.width="100%"}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_first_connection.png?raw=true")
+knitr::include_graphics("../inst/app/www/get_started/patient_lvl_first_connection.png?raw=true")
 ```
 
 <br />
@@ -85,7 +93,7 @@ You should have this screen :
 
 <br />
 ```{r, echo=FALSE, out.width="100%"}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_create_module.png?raw=true")
+knitr::include_graphics("../inst/app/www/get_started/patient_lvl_create_module.png?raw=true")
 ```
 
 <br />
@@ -98,7 +106,7 @@ You should have this screen :
 
 <br />
 ```{r, echo=FALSE, out.width="100%"}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_create_module_element.png?raw=true")
+knitr::include_graphics("../inst/app/www/get_started/patient_lvl_create_module_element.png?raw=true")
 ```
 
 <br />
@@ -111,7 +119,7 @@ Click on the **add button** on the right side of the screen, then click on **Add
 
 <br />
 ```{r, echo=FALSE, out.width="100%"}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_create_module_element2.png?raw=true")
+knitr::include_graphics("../inst/app/www/get_started/patient_lvl_create_module_element2.png?raw=true")
 ```
 
 <br />
@@ -124,7 +132,7 @@ You should now see your module appear.
 
 <br />
 ```{r, echo=FALSE, out.width="100%"}
-knitr::include_graphics("https://github.com/BorisDelange/cdwtools/blob/master/inst/app/www/get_started/patient_lvl_create_module_element3.png?raw=true")
+knitr::include_graphics("../inst/app/www/get_started/patient_lvl_create_module_element3.png?raw=true")
 ```
 
 ### Plugins

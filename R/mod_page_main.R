@@ -17,24 +17,21 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   ##########################################
   
   if (grepl("^home", id)){
-    div(class = "main",
-      make_card(
-        translate(language, "cdwtools", words),
-        div(br(),
-          strong("Clinical Data Warehouse tools"), " is a R Shiny web application.", br(), br(),
-          "It aims to help clinicians, statisticians & data scientists work with CDW data, with ", 
-          strong("data visualization, data cleaning, exploratory data analysis & model building tools"), "."
-        )
-      ),
-      make_card(
-        translate(language, "get_started", words),
-        div(br(),
-          "If this is your first connection, visit the ", 
-          tags$a("Get started", href = "https://borisdelange.github.io/cdwtools/articles/cdwtools.html", target="_blank"), " section of the documentation."
-        )
-      )
-    ) -> result
+    mod_home_ui(id = "home", language = language, words = words) -> result
   }
+  
+  ##########################################
+  # My studies & subsets                   #
+  ##########################################
+  
+  if (id == "my_studies") mod_my_studies_ui(id = "my_studies", language = language, words = words) -> result
+  if (id == "my_subsets") mod_my_subsets_ui(id = "my_subsets", language = language, words = words) -> result
+  
+  ##########################################
+  # Thesaurus                              #
+  ##########################################
+  
+  if (id == "thesaurus") mod_thesaurus_ui(id = "thesaurus", language = language, words = words) -> result
   
   ##########################################
   # Patient-lvl & aggregated data pages    #
@@ -42,6 +39,13 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   
   if (id == "patient_level_data") mod_patient_and_aggregated_data_ui(id = "patient_level_data", language = language, words = words) -> result
   if (id == "aggregated_data") mod_patient_and_aggregated_data_ui(id = "aggregated_data", language = language, words = words) -> result
+  
+  ##########################################
+  # Plugins page                           #
+  ##########################################
+  
+  if (id == "plugins_patient_lvl") mod_plugins_ui(id = "plugins_patient_lvl", language = language, words = words) -> result
+  if (id == "plugins_aggregated") mod_plugins_ui(id = "plugins_aggregated", language = language, words = words) -> result
   
   ##########################################
   # Settings pages                         #

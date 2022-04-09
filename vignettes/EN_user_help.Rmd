@@ -2,7 +2,7 @@
 title: "User help"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{EN_user_help}
+  %\VignetteIndexEntry{User help}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

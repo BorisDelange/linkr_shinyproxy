@@ -12,16 +12,18 @@ render_datatable(
   data = tibble::tibble(),
   output_name = character(),
   col_names = character(),
-  datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>",
+  datatable_dom = "<'datatable_length'l><'top't><'bottom'p>",
   page_length = 10,
-  start = 1,
+  start = 0,
   editable_cols = character(),
   sortable_cols = character(),
   centered_cols = character(),
   searchable_cols = character(),
   filter = FALSE,
   factorize_cols = character(),
-  column_widths = character()
+  column_widths = character(),
+  hidden_cols = character(),
+  default_tibble = tibble::tibble()
 )
 }
 \arguments{

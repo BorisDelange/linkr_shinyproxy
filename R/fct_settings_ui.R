@@ -12,8 +12,13 @@
 #' render_settings_default_elements(ns = NS("settings_datamart"))
 
 render_settings_default_elements <- function(ns = shiny::NS()){
-  tagList(shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
-    shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")), shiny.fluent::reactOutput(ns("delete_confirm")))
+  div(
+    div(class = "message_bars",
+      shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
+      shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5"))
+    ), 
+    shiny.fluent::reactOutput(ns("delete_confirm"))
+  )
 }
 
 ##########################################
@@ -35,7 +40,7 @@ render_settings_default_elements <- function(ns = shiny::NS()){
 #'   list(key = "edit_code_card", label = "edit_datamart_code"))
 #' settings_toggle_card(ns = NS("settings_datamart"), cards = cards, activated = c("creation_card", "datatable_card"), language = "EN")
 
-render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list(), activated = "", translate = TRUE, words = tibble::tibble()){
+render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards = list(), activated = "", translate = TRUE, div_id = "toggles", words = tibble::tibble()){
   
   toggles <- tagList()
   # For each card, create a toggle
@@ -44,8 +49,8 @@ render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards
       make_toggle(language, ns, label = card$label, 
         id = paste0(card$key, "_toggle"), value = ifelse(card$key %in% activated, TRUE, FALSE), inline = TRUE, translate = translate, words = words))
   })
-  # Render card with distinct togglesmo
-  div(id = ns("toggles"),
+  # Render card with distinct toggles
+  div(id = ns(div_id),
     make_card("",
       shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 10), toggles
@@ -334,6 +339,7 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
           make_dropdown(language = language, ns = ns, label = "datamart", width = "300px",
             options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name"), words = words),
+          make_dropdown(language = language, ns = ns, label = "study", width = "300px", words = words),
           make_dropdown(language = language, ns = ns, label = "patient", width = "300px", words = words),
           make_dropdown(language = language, ns = ns, label = "stay", width = "300px", words = words)),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
@@ -362,10 +368,14 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
     }
     
     # Toggle for choice of UI or server code
-    shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
-      list(key = "ui", text = translate(language, "ui", words)),
-      list(key = "server", text = translate(language, "server", words))
-    ), className = "inline_choicegroup") -> choice_ui_server
+    shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+      shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
+        list(key = "ui", text = translate(language, "ui", words)),
+        list(key = "server", text = translate(language, "server", words))
+      ), className = "inline_choicegroup"),
+      div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
+      div(translate(language, "hide_editor", words), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+    ) -> choice_ui_server
     
     # Ace editors
     tagList(
@@ -380,7 +390,7 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
     # UI output to render UI code of the plugin and text output to render server error messages
     output_div <- tagList(
       shiny::uiOutput(ns("code_result_ui")), br(),
-      div(shiny::verbatimTextOutput(ns("code_result_server")), 
+      div(verbatimTextOutput(ns("code_result_server")), 
           style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
   }
   
@@ -392,9 +402,23 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
         choice_ui_server,
         ace_editor,
         shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), translate(language, "save", words)), " ",
-        shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), translate(language, "execute_code", words)), 
+        shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), translate(language, "execute_code", words)), 
         br(), br(),
         output_div
+      )
+    )
+  )
+}
+
+#' Forbidden card
+#' 
+
+forbidden_card <- function(ns = shiny::NS(), name = character(), language = "EN", words = tibble::tibble()){
+  shinyjs::hidden(
+    div(
+      id = ns(paste0(name, "_forbidden")),
+      make_card("",
+        div(shiny.fluent::MessageBar(translate(language, "unauthorized_access_page", words), messageBarType = 5), style = "margin-top:10px;")
       )
     )
   )

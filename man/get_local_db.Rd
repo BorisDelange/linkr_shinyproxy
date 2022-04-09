@@ -4,7 +4,7 @@
 \alias{get_local_db}
 \title{Connection to local database}
 \usage{
-get_local_db()
+get_local_db(app_db_folder = character())
 }
 \description{
 Get a connection to local application database. If tables do not already exist, there are created

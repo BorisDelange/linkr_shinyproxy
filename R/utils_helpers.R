@@ -5,16 +5,17 @@
 #' @param text_col name of the column containing the text (character)
 #' @param null_value add a null value (logical)
 #' @param language language used (character)
+#' @param words words used for translations (tibble)
 #' @return A list with this structure : list(list(key = "my_key1", text = "my_text1"), list(key = "my_key2", text = "my_text2"))
 #' @examples
 #' data <- tibble::tribble(~key, ~text, "my_key1", "my_text1", "my_key2", "my_text2")
 #' my_list <- convert_tibble_to_list(data = data, key_col = "key", text_col = "text", null_value = TRUE, language = "EN")
 #' print(my_list)
 
-convert_tibble_to_list <- function(data = tibble::tibble(), key_col = character(), text_col = character(), null_value = FALSE, language = "EN"){
+convert_tibble_to_list <- function(data = tibble::tibble(), key_col = character(), text_col = character(), null_value = FALSE, language = "EN", words = tibble::tibble()){
 
   # Create a null / an empty value (used in dropdowns)
-  if (null_value) my_list <- list(list(key = "", text = translate(language, "none")))
+  if (null_value) my_list <- list(list(key = "", text = translate(language, "none", words)))
   if (!null_value) my_list <- list()
   
   # If our data is not empty, for each row append the list
@@ -24,21 +25,6 @@ convert_tibble_to_list <- function(data = tibble::tibble(), key_col = character(
     }
   }
   my_list
-}
-
-# Delete asap
-tibble_to_list <- function(data, key_col, text_col, rm_deleted_rows = FALSE, null_value = FALSE, language = "EN"){
-  if (null_value) my_list <- list(list(key = "", text = translate(language, "none")))
-  if (!null_value) my_list <- list()
-  if (nrow(data) != 0){
-    if (rm_deleted_rows) data <- data %>% dplyr::filter(!deleted)
-    if (nrow(data) != 0){
-      for (i in 1:nrow(data)){
-        my_list <- rlist::list.append(my_list, list(key = data[[i, key_col]], text = data[[i, text_col]]))
-      }
-    }
-  }
-  return(my_list)
 }
 
 # Delete asap

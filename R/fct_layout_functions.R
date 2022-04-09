@@ -43,7 +43,7 @@ make_page <- function (title = character(), subtitle = character(), contents = c
 #' Make a complete layout with header, sidenav, main & footer
 make_layout <- function(language = "EN", page = character(), words = tibble::tibble()){
   div(class = "grid-container",
-    mod_page_header_ui(language = language, words = words),
+    mod_page_header_ui(id = stringr::str_replace(page, "/", "_"), language = language, words = words),
     mod_page_sidenav_ui(id = stringr::str_replace(page, "/", "_"), language = language, words = words),
     mod_page_main_ui(id = stringr::str_replace(page, "/", "_"), language = language, words = words),
     mod_page_footer_ui(words = words)
@@ -95,7 +95,7 @@ make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character()
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
   div(
-    div(class = "input_title", translate(language, label, words)),
+    div(id = ns(paste0(id, "_title")), class = "input_title", translate(language, label, words)),
     div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect), style = style)
   )
 }
@@ -112,7 +112,7 @@ make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character()
 #' @param width Width of the dropdown, CSS code so "300px" or "100\%" are accepted
 #' @param allowFreeForm Allows user to enter free text, not provided by options (logical)
 
-make_combobox <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = TRUE,
+make_combobox <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
   allowFreeform = FALSE, autoComplete = "on", id = NA_character_, value = NULL, width = NULL, words = tibble::tibble()){
   
   if (is.na(id)) id <- label
@@ -153,6 +153,9 @@ make_combobox <- function(language = "EN", ns = shiny::NS(), label = character()
 make_people_picker <- function(language = "EN", ns = shiny::NS(), id = NA_character_, label = character(), 
   options = tibble::tibble(), value = NULL, width = NULL, style = character(), words = tibble::tibble()){
   
+  if (!is.null(value)) default_selected_items <- options %>% dplyr::filter(key %in% value)
+  else default_selected_items <- NULL
+  
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width)
   if (is.na(id)) id <- label
@@ -166,7 +169,7 @@ make_people_picker <- function(language = "EN", ns = shiny::NS(), id = NA_charac
         noResultsFoundText = translate(language, "no_results_found", words),
         showRemoveButtons = TRUE
       ),
-      defaultSelectedItems = options %>% dplyr::filter(key %in% value),
+      defaultSelectedItems = default_selected_items,
       value = value),
       style = style
     )
@@ -226,7 +229,12 @@ show_message_bar <- function(output, id = integer(), message = character(), type
   type <- switch(type, "info" = 0, "error" = 1, "blocked" = 2, "severeWarning" = 3, "success" = 4, "warning" = 5)
   shinyjs::show(paste0("message_bar", id))
   shinyjs::delay(time, shinyjs::hide(paste0("message_bar", id)))
-  output[[paste0("message_bar", id)]] <- renderUI(div(shiny.fluent::MessageBar(translate(language, message, words), messageBarType = type), style = "margin-top:10px;"))
+  
+  # If translation of the message doesn't exist, return raw message
+  output_message <- translate(language, message, words)
+  if (output_message == "") output_message <- message
+  
+  output[[paste0("message_bar", id)]] <- renderUI(div(shiny.fluent::MessageBar(output_message, messageBarType = type), style = "margin-top:10px;"))
 }
 
 #' Make a shiny.fluent choiceGroup
@@ -269,9 +277,10 @@ make_choicegroup <- function(language = "EN", ns = shiny::NS(), label = characte
 #' @param column_widths Columns widths (named character vector)
 
 render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", data = tibble::tibble(),
-  output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top'ft><'bottom'p>", page_length = 10, start = 1,
+  output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top't><'bottom'p>", page_length = 10, start = 0,
   editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
-  filter = FALSE, factorize_cols = character(), column_widths = character()
+  filter = FALSE, factorize_cols = character(), column_widths = character(), hidden_cols = character(), truncated_cols = character(),
+  default_tibble = tibble::tibble()
 ){
   
   # Translation for datatable
@@ -282,11 +291,17 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
     emptyTable = translate(language, "DT_empty", r$words))
   
   # If no row in dataframe, stop here
-  if (nrow(data) == 0) return({
-    data <- tibble::tribble(~id, ~datetime)
-    names(data) <- c(translate(language, "id", r$words), translate(language, "datetime", r$words))
-    output[[output_name]] <- DT::renderDT(data, options = list(dom = 'tp'))
-  })
+  if (nrow(data) == 0){
+    
+    if (length(names(default_tibble)) == 0) return({
+      data <- tibble::tribble(~id, ~datetime)
+      names(data) <- c(translate(language, "id", r$words), translate(language, "datetime", r$words))
+      output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom), 
+        rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
+    })
+    
+    if (length(names(default_tibble)) > 0) data <- default_tibble
+  }
 
   
   # Which columns are non editable
@@ -311,12 +326,24 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
     centered_cols_vec <<- c(centered_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   
+  # Which cols are hidden
+  hidden_cols_vec <- integer()
+  sapply(hidden_cols, function(col){
+    hidden_cols_vec <<- c(hidden_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  
   # Which cols are searchable
   searchable_cols_vec <- integer()
   sapply(searchable_cols, function(col){
     searchable_cols_vec <<- c(searchable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   non_searchable_cols_vec <- cols[!cols %in% searchable_cols_vec]
+  
+  # Which cols are truncated
+  truncated_cols_vec <- integer()
+  sapply(truncated_cols, function(col){
+    truncated_cols_vec <<- c(truncated_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
   
   # If filter is TRUE
   if (filter) filter_list <- list(position = "top")
@@ -330,11 +357,21 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
   # Add centered_cols to column_defs
   column_defs <- rlist::list.append(column_defs, list(className = "dt-body-center", targets = centered_cols_vec))
   
+  # Add hidden_cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(visible = FALSE, targets = hidden_cols_vec))
+  
   # Add sortables cols to column_defs
   column_defs <- rlist::list.append(column_defs, list(sortable = FALSE, targets = non_sortable_cols_vec))
   
   # Add searchable cols to column_defs
   column_defs <- rlist::list.append(column_defs, list(searchable = FALSE, targets = non_searchable_cols_vec))
+  
+  # Truncate long text
+  column_defs <- rlist::list.append(column_defs, list(render = htmlwidgets::JS(
+    "function(data, type, row, meta) {",
+    "return type === 'display' && data != null && data.length > 30 ?",
+    "'<span title=\"' + data + '\">' + data.substr(0, 30) + '...</span>' : data;",
+    "}"), targets = truncated_cols_vec))
   
   # Transform searchable cols to factor
   sapply(factorize_cols, function(col) data <<- data %>% dplyr::mutate_at(col, as.factor))
@@ -351,15 +388,24 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
     # Options of the datatable
     options = list(
       dom = datatable_dom,
-      stateSave = TRUE, stateDuration = 30,
       pageLength = page_length, displayStart = start,
       columnDefs = column_defs,
-      language = dt_translation
+      language = dt_translation,
+      compact = TRUE, hover = TRUE
     ),
     editable = list(target = "cell", disable = list(columns = non_editable_cols_vec)),
     filter = filter_list,
     
     # Default options
-    rownames = FALSE, selection = "single", escape = FALSE, server = TRUE
+    rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
+    
+    # Javascript code allowing to have dropdowns & actionButtons on the DataTable
+    callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
+      var $this = $(this.node());
+      $this.attr('id', this.data()[0]);
+      $this.addClass('shiny-input-container');
+      });
+      Shiny.unbindAll(table.table().node());
+      Shiny.bindAll(table.table().node());")
   )
 }

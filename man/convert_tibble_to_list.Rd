@@ -9,7 +9,8 @@ convert_tibble_to_list(
   key_col = character(),
   text_col = character(),
   null_value = FALSE,
-  language = "EN"
+  language = "EN",
+  words = tibble::tibble()
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ convert_tibble_to_list(
 \item{null_value}{add a null value (logical)}
 
 \item{language}{language used (character)}
+
+\item{words}{words used for translations (tibble)}
 }
 \value{
 A list with this structure : list(list(key = "my_key1", text = "my_text1"), list(key = "my_key2", text = "my_text2"))
