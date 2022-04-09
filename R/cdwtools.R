@@ -70,7 +70,8 @@ cdwtools <- function(
 
   css <- "fluent_style.css"
   
-  pages <- c("home/get_started", "my_studies", "my_subsets", "thesaurus", "data", "patient_level_data", "aggregated_data",
+  pages <- c("home", "home/get_started", "home/tutorials", "home/resources", "home/dev",
+            "my_studies", "my_subsets", "thesaurus", "data", "patient_level_data", "aggregated_data",
              "plugins/patient_lvl", "plugins/aggregated",
              "settings/general_settings", "settings/app_db", "settings/users", "settings/r_console", "settings/data_sources",
              "settings/datamarts", "settings/thesaurus", "settings/log")

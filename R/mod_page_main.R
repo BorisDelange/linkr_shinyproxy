@@ -17,7 +17,9 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   ##########################################
   
   if (grepl("^home", id)){
-    mod_home_ui(id = "home", language = language, words = words) -> result
+    sapply(c("home", "home_get_started", "home_tutorials", "home_resources", "home_dev"), function(page){
+      if (id == page) mod_home_ui(id = page, language = language, words = words) ->> result
+    }) 
   }
   
   ##########################################

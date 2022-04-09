@@ -21,13 +21,16 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       shiny.fluent::Nav(
         groups = list(
           list(links = list(
-            list(name = translate(language, "get_started", words), key = "get_started",
-              url = shiny.router::route_link("home/get_started"))
+            list(name = translate(language, "home", words), key = "home", url = shiny.router::route_link("home")),
+            list(name = translate(language, "get_started", words), key = "home_get_started", url = shiny.router::route_link("home/get_started")),
+            list(name = translate(language, "tutorials", words), key = "home_tutorials", url = shiny.router::route_link("home/tutorials")),
+            list(name = translate(language, "resources", words), key = "home_resources", url = shiny.router::route_link("home/resources")),
+            list(name = translate(language, "dev", words), key = "home_dev", url = shiny.router::route_link("home/dev"))
             )
           )
         ),
-        initialSelectedKey = "get_started",
-        selectedKey = "get_started",
+        initialSelectedKey = id,
+        selectedKey = id,
         styles = list(
           root = list(
             height = "100%",
@@ -38,6 +41,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       )
     ) -> result
   }
+
   
   ##########################################
   # Patient-level & aggregated data        #

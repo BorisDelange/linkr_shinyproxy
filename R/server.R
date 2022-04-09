@@ -107,6 +107,10 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
 
       # Get user accesses
       r$user_accesses <- r$options %>% dplyr::filter(category == "users_accesses" & link_id == user_access_id & value_num == 1) %>% dplyr::pull(name)
+      
+      # Show username on top of the page
+      r$username <- r$users %>% dplyr::filter(id == r$user_id)
+      r$username <- paste0(r$username$firstname, " ", r$username$lastname)
     })
 
     # Route pages
@@ -139,12 +143,16 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
     
       if (perf_monitoring) print(paste0(Sys.time(), " _ START LOAD SERVER MODULES"))
       
-      mod_home_server("home", r, language, r$words)
-      
+      sapply(c("home", "home_get_started", "home_tutorials", "home_resources", "home_dev"), function(page){
+        mod_home_server(page, r, language, r$words)
+        mod_page_header_server(page, r, language, r$words)
+      })
+     
       if (perf_monitoring) print(paste0(Sys.time(), " _ data_pages"))
       sapply(c("patient_level_data", "aggregated_data"), function(page){
         mod_patient_and_aggregated_data_server(page, r, language, r$words)
         mod_page_sidenav_server(page, r, language, r$words)
+        mod_page_header_server(page, r, language, r$words)
       })
       
       mod_my_studies_server("my_studies", r, language, r$words)
@@ -153,23 +161,29 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       
       sapply(c("my_studies", "my_subsets", "thesaurus"), function(page){
         mod_page_sidenav_server(page, r, language, r$words)
+        mod_page_header_server(page, r, language, r$words)
       })
       
       if (perf_monitoring) print(paste0(Sys.time(), " _ plugins"))
-      mod_plugins_server("plugins_patient_lvl", r, language, r$words)
-      mod_plugins_server("plugins_aggregated", r, language, r$words)
+      sapply(c("plugins_patient_lvl", "plugins_aggregated"), function(page){
+        mod_plugins_server(page, r, language, r$words)
+        mod_page_header_server(page, r, language, r$words)
+      })
     
       if (perf_monitoring) print(paste0(Sys.time(), " _ general"))
       mod_settings_general_server("settings_general_settings", r, language, r$words)
       mod_page_sidenav_server("settings_general_settings", r, language, r$words)
+      mod_page_header_server("settings_general_settings", r, language, r$words)
     
       if (perf_monitoring) print(paste0(Sys.time(), " _ app_db"))
       mod_settings_app_database_server("settings_app_db", r, language, r$words)
       mod_page_sidenav_server("settings_app_db", r, language, r$words)
+      mod_page_header_server("settings_app_db", r, language, r$words)
     
       if (perf_monitoring) print(paste0(Sys.time(), " _ users"))
       mod_settings_users_server("settings_users", r, language, r$words)
       mod_page_sidenav_server("settings_users", r, language, r$words)
+      mod_page_header_server("settings_users", r, language, r$words)
     
       sapply(c("users", "users_statuses", "users_accesses"), function(page){
         mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language, r$words)
@@ -180,16 +194,19 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       if (perf_monitoring) print(paste0(Sys.time(), " _ data_management"))
       mod_settings_r_console_server("settings_r_console", r, language, r$words)
       mod_page_sidenav_server("settings_r_console", r, language, r$words)
+      mod_page_header_server("settings_r_console", r, language, r$words)
     
       if (perf_monitoring) print(paste0(Sys.time(), " _ data_management"))
       sapply(c("data_sources", "datamarts", "thesaurus"), function(page){
         mod_settings_data_management_server(paste0("settings_", page), r, language, r$words)
         mod_page_sidenav_server(paste0("settings_", page), r, language, r$words)
+        mod_page_header_server(paste0("settings_", page), r, language, r$words)
       })
     
       if (perf_monitoring) print(paste0(Sys.time(), " _ log"))
       mod_settings_log_server("settings_log", r, language, r$words)
       mod_page_sidenav_server("settings_log", r, language, r$words)
+      mod_page_header_server("settings_log", r, language, r$words)
       
       if (perf_monitoring) print(paste0(Sys.time(), " _ END LOAD SERVER MODULES"))
       
