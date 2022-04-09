@@ -33,8 +33,8 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
     )
   }
 
-  div(class = "main",
-      
+  div(
+    class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("plugin_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
@@ -57,7 +57,38 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
       div(
         id = ns("all_plugins_card"),
         make_card("",
-          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
+          div(
+            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p("Créer des vignettes présentant les différents plugins."),
+                p("Proposer :",
+                  tags$ul(
+                    tags$li("Une description de chaque plugin"),
+                    tags$li("Télécharger le plugin si non installé"),
+                    tags$li("Mettre à jour le plugin")
+                  )  
+                ),
+                p("Pour cela :",
+                  tags$ul(
+                    tags$li("Prendre le champ description de la BDD de l'appli"),
+                    tags$li("Stocker un XML avec les champs :",
+                      tags$ul(
+                        tags$li("Identifiant unique du plugin"),
+                        tags$li("Version"),
+                        tags$li("Description")
+                      )  
+                    )
+                  )
+                ),
+                p("Tout ceci depuis Github."),
+                p("Un fichier XML recensant les différents plugins ?"),
+                p("Un dossier par plugin, avec ui.R & server.R ?")
+              ),
+              messageBarType = 0)
+            )
+          )
         )
       )
     ),

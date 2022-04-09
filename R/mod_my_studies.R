@@ -19,6 +19,7 @@ mod_my_studies_ui <- function(id = character(), language = "EN", words = tibble:
   })
   
   div(
+    class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("study_delete_confirm")),
     shiny.fluent::reactOutput(ns("thesaurus_item_delete_confirm")),
@@ -109,7 +110,23 @@ mod_my_studies_ui <- function(id = character(), language = "EN", words = tibble:
       div(
         id = ns("import_study_card"),
         make_card("",
-          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
+          div(
+            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p("Importer une étude nécessite d'importer :",
+                  tags$ul(
+                    tags$li("Importer l'étude en elle-même (table études de la BDD)"),
+                    tags$li("Importer les données relatives à l'étude (modules, données modifiées sur patients et sur modules)"),
+                    tags$li("S'assurer que les plugins sont tous installés et à la bonne version")
+                  )
+                ),
+                p("Comment faire pour les correspondances entre membres ?")
+              ),
+              messageBarType = 0)
+            )
+          )
         )
       )
     ),
@@ -117,7 +134,16 @@ mod_my_studies_ui <- function(id = character(), language = "EN", words = tibble:
       div(
         id = ns("export_study_card"),
         make_card("",
-          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
+          div(
+            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p("Même principe que pour l'import d'une étude")
+              ),
+              messageBarType = 0)
+            )
+          )
         )
       )
     )

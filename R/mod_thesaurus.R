@@ -18,6 +18,7 @@ mod_thesaurus_ui <- function(id = character(), language = "EN", words = tibble::
   })
   
   div(
+    class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "thesaurus_main", text = translate(language, "thesaurus", words))
@@ -26,7 +27,10 @@ mod_thesaurus_ui <- function(id = character(), language = "EN", words = tibble::
       div(id = ns("menu"),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "thesaurus_items_card", itemKey = "thesaurus_items_card", headerText = translate(language, "thesaurus_items", words))
+          shiny.fluent::PivotItem(id = "items_card", itemKey = "items_card", headerText = translate(language, "all_items", words)),
+          shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = translate(language, "categories", words)),
+          shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = translate(language, "conversions", words)),
+          shiny.fluent::PivotItem(id = "create_items_card", itemKey = "create_items_card", headerText = translate(language, "create_items", words))
         )
       )
     ),
@@ -37,15 +41,97 @@ mod_thesaurus_ui <- function(id = character(), language = "EN", words = tibble::
     ),
     shinyjs::hidden(
       div(
-        id = ns("thesaurus_items_card"),
-        make_card(translate(language, "thesaurus", words),
+        id = ns("items_card"),
+        make_card(translate(language, "items", words),
           div(
-            make_combobox(language = language, ns = ns, label = "thesaurus", width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
-            DT::DTOutput(ns("thesaurus_items")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), translate(language, "save", words)), " ",
-            shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), translate(language, "reload_cache", words)),
-            br(),
-            uiOutput(ns("thesaurus_selected_item"))
+            div(
+              make_combobox(language = language, ns = ns, label = "thesaurus", width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
+              DT::DTOutput(ns("thesaurus_items")),
+              shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), translate(language, "save", words)), " ",
+              shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), translate(language, "reload_cache", words)),
+              br(),
+              uiOutput(ns("thesaurus_selected_item"))
+            ), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                tags$ul(
+                  tags$li("Mettre une confirmation pour la recharge du cache"),
+                  tags$li("Créer un cache pour la prévisualisation des données"),
+                  tags$li("Faire en sorte que les modifications de nom d'affichage et d'unité ne concernent que ce datamart"),
+                  tags$li("Les modifications globales de nom et d'unité se font dans les paramètres, par Thésaurus, hors Datamart")
+                )
+              ),
+              messageBarType = 0)
+            )
+          )
+        ), br()
+      )
+    ),
+    shinyjs::hidden(
+      div(
+        id = ns("categories_card"),
+        make_card(translate(language, "categories", words),
+          div(
+            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p("Plusieurs choses seront possibles ici :",
+                  tags$ul(
+                    tags$li("Créer de nouvelles catégories"),
+                    tags$li("Renommer les catégories existantes"),
+                    tags$li("Changer les items de catégorie")
+                  )  
+                )
+              ),
+              messageBarType = 0)
+            )
+          )
+        ), br()
+      )
+    ),
+    shinyjs::hidden(
+      div(
+        id = ns("conversions_card"),
+        make_card(translate(language, "conversions", words),
+          div(
+            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p("Il sera possible de convertir les variables dans différentes unités"),
+                p("Faut-il laisser possible le changement de l'unité, en changeant le texte, dans \"Tous les items\" ?")
+              ),
+              messageBarType = 0)
+            )
+          )
+        ), br()
+      )
+    ),
+    shinyjs::hidden(
+      div(
+        id = ns("create_items_card"),
+        make_card(translate(language, "create_items", words),
+          div(
+            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p("Le principe ici est de créer de nouveaux items à partir des items existants."),
+                p("Par exemple, l'item diurèse est rarement disponible, on doit rassembler différents items tels que \"diurèse sur SUD\", \"néphrostomie\" etc"),
+                p("Il nous faudra :",
+                  tags$ul(
+                    tags$li("Un éditeur pour créer les scripts, les enregistrer"),
+                    tags$li("Un tableau pour gérer les scripts (supprimer, changer de nom)"),
+                    tags$li("Un éxécuteur pour tester les scripts"),
+                    tags$li("Si un script fonctionne, il sera lancé au chargement du datamart, et le nouvel item sera ajouté aux items classiques"),
+                    tags$li("Tout ceci nécessite de créer une nouvelle table dans la BDD de l'appli")
+                  )
+                )
+              ),
+              messageBarType = 0)
+            )
           )
         ), br()
       )
@@ -64,7 +150,7 @@ mod_thesaurus_server <- function(id = character(), r, language = "EN", words = t
     # Show or hide cards                     #
     ##########################################
     
-    cards <- c("thesaurus_items_card")
+    cards <- c("items_card", "categories_card", "conversions_card", "create_items_card")
     # show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
     
     ##########################################
@@ -88,7 +174,8 @@ mod_thesaurus_server <- function(id = character(), r, language = "EN", words = t
       if (length(input$current_tab) == 0){
         # if ("thesaurus_items_card" %in% r$user_accesses) shinyjs::show("thesaurus_items_card")
         # else shinyjs::show("thesaurus_items_card_forbidden")
-        shinyjs::show("thesaurus_items_card")
+        shinyjs::show("items_card")
+        sapply(c("categories_card", "conversions_card", "create_items_card"), shinyjs::hide)
       }
       
       data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)

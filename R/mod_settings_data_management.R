@@ -38,7 +38,8 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = translate(language, "create_data_source", words)),
-          shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = translate(language, "data_sources_management", words))
+          shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = translate(language, "data_sources_management", words)),
+          shiny.fluent::PivotItem(id = "create_items_card", itemKey = "create_items_card", headerText = translate(language, "create_items", words))
         ),
         forbidden_cards,
         render_settings_creation_card(
@@ -137,8 +138,11 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
         shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = translate(language, "create_thesaurus", words)),
         shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = translate(language, "thesaurus_management_card", words)),
-        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = translate(language, "thesaurus_items_management_card", words)),
-        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = translate(language, "edit_thesaurus_code", words))
+        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = translate(language, "edit_thesaurus_code", words)),
+        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = translate(language, "all_items", words)),
+        shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = translate(language, "categories", words)),
+        shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = translate(language, "conversions", words)),
+        shiny.fluent::PivotItem(id = "mapping_card", itemKey = "mapping_card", headerText = translate(language, "mapping", words)),
       ),
       forbidden_cards,
       div(id = ns("creation_card"),
@@ -237,7 +241,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     ##########################################
     
     # Toggles IDs
-    cards <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card")
+    cards <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card", "create_items_card")
     sapply(cards, shinyjs::hide)
     
     show_hide_cards_new(r = r, input = input, session = session, table = table, id = id, cards = cards)

@@ -10,7 +10,7 @@
 mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
   ns <- NS(id)
   
-  cards <- c("subset_datatable_card", "subset_creation_card", "subset_management_card", "subset_edit_code_card")
+  cards <- c("datatable_card", "creation_card", "management_card", "edit_code_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
@@ -18,6 +18,7 @@ mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble:
   })
   
   div(
+    class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "subset_main", text = translate(language, "my_subsets", words))
@@ -26,10 +27,10 @@ mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble:
       div(id = ns("menu"),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "subset_datatable_card", itemKey = "subset_datatable_card", headerText = translate(language, "subsets_management", words)),
-          shiny.fluent::PivotItem(id = "subset_creation_card", itemKey = "subset_creation_card", headerText = translate(language, "create_subset", words)),
-          shiny.fluent::PivotItem(id = "subset_management_card", itemKey = "subset_management_card", headerText = translate(language, "subset_management", words)),
-          shiny.fluent::PivotItem(id = "subset_edit_code_card", itemKey = "subset_edit_code_card", headerText = translate(language, "edit_subset_code", words))
+          shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = translate(language, "subsets_management", words)),
+          shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = translate(language, "create_subset", words)),
+          shiny.fluent::PivotItem(id = "management_card", itemKey = "management_card", headerText = translate(language, "subset_management", words)),
+          shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = translate(language, "edit_subset_code", words))
         )
       )
     ),
@@ -40,33 +41,76 @@ mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble:
     ),
     shinyjs::hidden(
       div(
-        id = ns("subset_management_card"),
-        make_card("",#translate(language, "subset_management", words),
-          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
+        id = ns("datatable_card"),
+        make_card(translate(language, "subsets_management", words),
+          div(
+            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;"), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p("Créer un datatable pour changer le nom, supprimer les subsets du datamart")
+              ),
+              messageBarType = 0)
+            )
+          )
         )
       )
     ),
     shinyjs::hidden(
       div(
-        id = ns("subset_edit_code_card"),
-        make_card("",#translate(language, "edit_subset_code", words), 
-          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
+        id = ns("creation_card"),
+        make_card(translate(language, "create_subset", words), 
+          div(
+            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;"), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p("Création d'un subset, en choisissant le nom, vérifier qu'il n'est pas utilisé.")
+              ),
+              messageBarType = 0)
+            )
+          )
         )
       )
     ),
     shinyjs::hidden(
       div(
-        id = ns("subset_creation_card"),
-        make_card("",#translate(language, "create_subset", words),
-          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
+        id = ns("management_card"),
+        make_card(translate(language, "subset_management", words),
+          div(
+            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;"), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p("On choisit un subset."),
+                p("On peut :",
+                  tags$ul(
+                    tags$li("Filter des patients sur des paramètres"),
+                    tags$li("Ajouter des patients"),
+                    tags$li("Supprimer des patients")
+                  )
+                )
+              ),
+              messageBarType = 0)
+            )
+          )
         )
       )
     ),
     shinyjs::hidden(
       div(
-        id = ns("subset_datatable_card"),
-        make_card("",#translate(language, "subsets_management", words),
-          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;")
+        id = ns("edit_code_card"),
+        make_card(translate(language, "edit_subset_code", words),
+          div(
+            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;"), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p("Création de subsets avec du code, directement.")
+              ),
+              messageBarType = 0)
+            )
+          )
         )
       )
     )
@@ -88,8 +132,12 @@ mod_my_subsets_server <- function(id = character(), r, language = "EN", words = 
     # Show or hide cards                     #
     ##########################################
     
-    cards <- c("subset_management_card", "subset_edit_code_card", "subset_creation_card", "subset_datatable_card")
-    show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
+    cards <- c("management_card", "edit_code_card", "creation_card", "datatable_card")
+    # show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
+    observeEvent(input$current_tab, {
+      sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
+      shinyjs::show(input$current_tab)
+    })
  
     ##########################################
     # Render subsets UI                      #
@@ -103,8 +151,9 @@ mod_my_subsets_server <- function(id = character(), r, language = "EN", words = 
       shinyjs::hide("choose_a_study_card")
       shinyjs::show("menu")
       if (length(input$current_tab) == 0){
-        if ("subset_datatable_card" %in% r$user_accesses) shinyjs::show("subset_datatable_card")
-        else shinyjs::show("subset_datatable_card_forbidden")
+        shinyjs::show("datatable_card")
+        # if ("subset_datatable_card" %in% r$user_accesses) shinyjs::show("subset_datatable_card")
+        # else shinyjs::show("subset_datatable_card_forbidden")
       }
       
     })
