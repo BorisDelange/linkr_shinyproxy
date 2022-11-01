@@ -76,13 +76,9 @@ mod_settings_r_console_server <- function(id = character(), r = shiny::reactiveV
         
         edited_code <- isolate(input$ace_code %>% stringr::str_replace_all("\r", "\n"))
         
-        options('cli.num_colors' = 1)
-        
         output$code_result <- renderText(
           execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
             language = language, r = r, edited_code = edited_code, code_type = "server"))
-        
-        options('cli.num_colors' = NULL)
       })
     }
   })

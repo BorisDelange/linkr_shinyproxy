@@ -243,9 +243,9 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       
       r$end_load_modules <- TRUE
       
-      r$perf_monitoring_table <- 
-        r$perf_monitoring_table %>%
-        dplyr::mutate(elapsed_time = datetime_stop - datetime_start)
+      # r$perf_monitoring_table <- 
+      #   r$perf_monitoring_table %>%
+      #   dplyr::mutate(elapsed_time = datetime_stop - datetime_start)
     })
   }
 }

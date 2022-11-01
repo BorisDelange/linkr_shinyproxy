@@ -21,11 +21,11 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       shiny.fluent::Nav(
         groups = list(
           list(links = list(
-            list(name = translate(language, "home", words), key = "home", url = shiny.router::route_link("home")),
-            list(name = translate(language, "get_started", words), key = "home_get_started", url = shiny.router::route_link("home/get_started")),
-            list(name = translate(language, "tutorials", words), key = "home_tutorials", url = shiny.router::route_link("home/tutorials")),
-            list(name = translate(language, "resources", words), key = "home_resources", url = shiny.router::route_link("home/resources")),
-            list(name = translate(language, "dev", words), key = "home_dev", url = shiny.router::route_link("home/dev"))
+            list(name = i18n$t("Home"), key = "home", url = shiny.router::route_link("home")),
+            list(name = i18n$t("Get started"), key = "home_get_started", url = shiny.router::route_link("home/get_started")),
+            list(name = i18n$t("Tutorials"), key = "home_tutorials", url = shiny.router::route_link("home/tutorials")),
+            list(name = i18n$t("Resources"), key = "home_resources", url = shiny.router::route_link("home/resources")),
+            list(name = i18n$t("Dev"), key = "home_dev", url = shiny.router::route_link("home/dev"))
             )
           )
         ),
@@ -95,7 +95,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   
   if (id == "patient_level_data"){
     div(class = "sidenav",
-      div(translate(language, "data", words), class = "input_title", style = "font-size:14.5px;"),
+      div(i18n$t("Data"), class = "input_title", style = "font-size:14.5px;"),
       div(
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
           shiny.fluent::PrimaryButton.shinyInput(ns("data_page_ind"), translate(language, "individual", words), style = "width:125px;"), 
