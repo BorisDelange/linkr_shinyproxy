@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_settings_users_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
+mod_settings_users_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
   # Three distinct pages in the settings/users page : users, accesses & statuses
@@ -21,11 +21,11 @@ mod_settings_users_ui <- function(id = character(), language = "EN", words = tib
   sapply(pages, function(page){
     
     cards <<- tagList(cards,
-      div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_creation"), language = language, words = words)),
-      div(id = ns(paste0(page, "_management_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_management"), language = language, words = words)))
+      div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_creation"), i18n = i18n)),
+      div(id = ns(paste0(page, "_management_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_management"), i18n = i18n)))
     
     if (page == "users_accesses") cards <<- tagList(cards,
-      div(id = ns(paste0(page, "_options_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_options"), language = language, words = words)))
+      div(id = ns(paste0(page, "_options_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_options"), i18n = i18n)))
   })
   
   cards_names <- c(
@@ -36,14 +36,18 @@ mod_settings_users_ui <- function(id = character(), language = "EN", words = tib
   pivots <- tagList()
   forbidden_cards <- tagList()
   sapply(cards_names, function(card){
-    pivots <<- tagList(pivots, shiny.fluent::PivotItem(id = card, itemKey = card, headerText = translate(language, card, words)))
+    card_name <- switch(card, "users_creation_card" = "Add new user", "users_management_card" = "Users mngmt", 
+      "users_accesses_creation_card" = "Add access", "users_accesses_management_card" = "Accesses mngmt", 
+      "users_accesses_options_card" = "Accesses opts", "users_statuses_creation_card" = "Add status", 
+      "users_statuses_management_card" = "Statuses mngmt")
+    pivots <<- tagList(pivots, shiny.fluent::PivotItem(id = card, itemKey = card, headerText = i18n$t(card_name)))
     forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, language = language, words = words))
   })
   
   div(class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "users", text = translate(language, "users", words))
+      list(key = "users", text = i18n$t("Users"))
     ), maxDisplayedItems = 3),
     div(id = ns("pivot"),
       shiny.fluent::Pivot(
@@ -56,7 +60,7 @@ mod_settings_users_ui <- function(id = character(), language = "EN", words = tib
   )
 }
 
-mod_settings_sub_users_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
+mod_settings_sub_users_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
   page <- substr(id, nchar("settings_users_") + 1, nchar(id))
@@ -85,15 +89,15 @@ mod_settings_sub_users_ui <- function(id = character(), language = "EN", words =
     tagList(
       forbidden_card(ns = ns, name = "options_card", language = language, words = words),
       div(id = ns("options_card"),
-        make_card(translate(language, "users_accesses_options", words),
+        make_card(i18n$t("Accesses opts"),
           div(
             make_combobox(language = language, ns = ns, label = "user_access", id = "options_chosen",
               width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
             uiOutput(ns("options_toggles_result")), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              shiny.fluent::DefaultButton.shinyInput(ns("select_all"), translate(language, "select_all", words)),
-              shiny.fluent::DefaultButton.shinyInput(ns("unselect_all"), translate(language, "unselect_all", words)),
-              shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), translate(language, "save", words)))
+              shiny.fluent::DefaultButton.shinyInput(ns("select_all"), i18n$t("Select all")),
+              shiny.fluent::DefaultButton.shinyInput(ns("unselect_all"), i18n$t("Unselect all")),
+              shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("Save")))
           )
         )    
       )
@@ -391,6 +395,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         "thesaurus", c("thesaurus_see_all_data", "thesaurus_edit_data", "thesaurus_delete_data", "thesaurus_creation_card", "thesaurus_datatable_card", "thesaurus_sub_datatable_card", "thesaurus_edit_code_card", "thesaurus_datamart_card"),
         "plugins", c("all_plugins_card", "plugins_see_all_data", "plugins_edit_data", "plugins_delete_data", "plugins_description_card", "plugins_creation_card", "plugins_datatable_card",
           "plugins_options_card", "plugins_edit_code_card", "import_plugin_card", "export_plugin_card"),
+        "scripts", c("scripts_datatable_card", "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card", "scripts_thesaurus_card"),
         # "patient_lvl_modules", c("patient_lvl_modules_see_all_data", "patient_lvl_modules_edit_data", "patient_lvl_modules_delete_data", "patient_lvl_modules_creation_card", "patient_lvl_modules_management_card", "patient_lvl_modules_options_card"),
         # "aggregated_modules", c("aggregated_modules_see_all_data", "aggregated_modules_edit_data", "aggregated_modules_delete_data", "aggregated_modules_creation_card", "aggregated_modules_management_card", "aggregated_modules_options_card"),
         "log", c("all_users", "only_me")

@@ -105,7 +105,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       div(
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
           shiny.fluent::PrimaryButton.shinyInput(ns("data_page_ind"), i18n$t("Individual"), style = "width:125px;"), 
-          shiny.fluent::DefaultButton.shinyInput(ns("data_page_agg"), i18n$t("Agregated"), style = "width:125px;")
+          shiny.fluent::DefaultButton.shinyInput(ns("data_page_agg"), i18n$t("Aggregated"), style = "width:125px;")
         ), style = "width:250px;"
       ),
       dropdowns(c("datamart", "study", "subset")),
@@ -130,7 +130,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
     div(
       shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
         shiny.fluent::DefaultButton.shinyInput(ns("data_page_ind"), i18n$t("Individual"), style = "width:125px;"), 
-        shiny.fluent::PrimaryButton.shinyInput(ns("data_page_agg"), i18n$t("Agregated"), style = "width:125px;")
+        shiny.fluent::PrimaryButton.shinyInput(ns("data_page_agg"), i18n$t("Aggregated"), style = "width:125px;")
       ), style = "width:250px;"
     ),                               
     dropdowns(c("datamart", "study", "subset"))
