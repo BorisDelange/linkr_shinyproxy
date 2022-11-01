@@ -54,6 +54,7 @@ make_layout <- function(language = "EN", page = character(), words = tibble::tib
 #' 
 #' @return Shiny UI elements / HTML code
 #' @examples
+#' 
 make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(), id = NA_character_, 
   value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, 
   margin_right = NULL, words = tibble::tibble()){

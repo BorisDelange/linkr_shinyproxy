@@ -11,7 +11,8 @@ save_settings_options(
   category = character(),
   code_id_input = integer(),
   data = data,
-  language = "EN"
+  language = "EN",
+  page_options = character()
 )
 }
 \arguments{

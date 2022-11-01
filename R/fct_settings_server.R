@@ -1253,7 +1253,7 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
     options('cli.num_colors' = NULL)
     
     # Display result
-    paste(strwrap(captured_output), collapse = "\n") -> result
+    paste(paste(captured_output), collapse = "\n") -> result
   }
   
   # If code is not UI or server, capture the console output after replacing %% values

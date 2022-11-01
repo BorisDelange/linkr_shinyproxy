@@ -12,7 +12,8 @@ import_datamart(
   type = "patients",
   save_as_csv = TRUE,
   rewrite = FALSE,
-  language = "EN"
+  language = "EN",
+  quiet = FALSE
 )
 }
 \arguments{
@@ -52,7 +53,8 @@ Columns needed for each data type :\cr\cr
 \itemize{
 \item{patient_id = integer}
 \item{stay_id = integer}
-\item{unit_name = character}
+\item{thesaurus_name = character}
+\item{item_id = integer}
 \item{admission_datetime = datetime}
 \item{discharge_datetime = datetime}
 }

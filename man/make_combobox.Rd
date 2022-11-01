@@ -9,7 +9,7 @@ make_combobox(
   ns = shiny::NS(),
   label = character(),
   options = list(),
-  multiSelect = TRUE,
+  multiSelect = FALSE,
   allowFreeform = FALSE,
   autoComplete = "on",
   id = NA_character_,

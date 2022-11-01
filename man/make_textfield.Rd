@@ -25,3 +25,6 @@ Shiny UI elements / HTML code
 \description{
 Make a shiny.fluent textfield
 }
+\examples{
+
+}

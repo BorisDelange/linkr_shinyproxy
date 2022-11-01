@@ -10,6 +10,7 @@ render_settings_toggle_card(
   cards = list(),
   activated = "",
   translate = TRUE,
+  div_id = "toggles",
   words = tibble::tibble()
 )
 }

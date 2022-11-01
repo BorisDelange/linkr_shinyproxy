@@ -23,6 +23,7 @@ render_datatable(
   factorize_cols = character(),
   column_widths = character(),
   hidden_cols = character(),
+  truncated_cols = character(),
   default_tibble = tibble::tibble()
 )
 }

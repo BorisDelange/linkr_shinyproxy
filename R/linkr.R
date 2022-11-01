@@ -35,7 +35,6 @@
 #' cdwtools(language = "EN", db_info = db_info, datamarts_folder = datamarts_folder, app_db_folder = app_db_folder)
 #' }
 #' See `?golem::get_golem_options` for more details.
-#' @inheritParams shiny::shinyApp
 #'
 #' @export
 #' @importFrom shiny shinyApp

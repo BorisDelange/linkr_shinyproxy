@@ -4,7 +4,12 @@
 \alias{make_layout}
 \title{Make a complete layout with header, sidenav, main & footer}
 \usage{
-make_layout(language = "EN", page = character(), words = tibble::tibble())
+make_layout(
+  language = "EN",
+  page = character(),
+  words = tibble::tibble(),
+  i18n = R6::R6Class()
+)
 }
 \description{
 Make a complete layout with header, sidenav, main & footer

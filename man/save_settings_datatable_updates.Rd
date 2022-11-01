@@ -9,6 +9,7 @@ save_settings_datatable_updates(
   r = shiny::reactiveValues(),
   ns = shiny::NS(),
   table = character(),
+  r_table = character(),
   duplicates_allowed = FALSE,
   language = "EN"
 )
