@@ -42,7 +42,7 @@
 #' @importFrom golem with_golem_options 
 #' @importFrom magrittr %>%
 
-cdwtools <- function(
+linkr <- function(
   language = "EN",
   db_info = list(),
   app_db_folder = character(),
@@ -65,8 +65,11 @@ cdwtools <- function(
   # setwd(find.package("cdwtools"))
   
   # Load translations
-  
+  # Update : use shiny.i18n instead. When it is done, delete get_translations
+  # Change also tolower...
   words <- get_translations()
+  i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
+  i18n$set_translation_language(tolower(language))
 
   css <- "fluent_style.css"
   
@@ -77,7 +80,7 @@ cdwtools <- function(
              "settings/datamarts", "settings/thesaurus", "settings/log")
   
   do.call(shiny.router::make_router, lapply(pages, function(page) shiny.router::route(page, 
-    make_layout(language = language, page = page, words = words)))) -> page
+    make_layout(language = language, page = page, words = words, i18n = i18n)))) -> page
   
   # Load UI & server
     

@@ -120,7 +120,7 @@ mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble:
 #' my_subsets Server Functions
 #'
 #' @noRd 
-mod_my_subsets_server <- function(id = character(), r, language = "EN", words = tibble::tibble()){
+mod_my_subsets_server <- function(id = character(), r, language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

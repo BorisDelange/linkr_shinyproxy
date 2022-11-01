@@ -222,7 +222,7 @@ mod_plugins_ui <- function(id = character(), language = "EN", words = tibble::ti
 #' plugins Server Functions
 #'
 #' @noRd 
-mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
+mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

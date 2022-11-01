@@ -16,6 +16,28 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
     # If perf_monotoring activated
     r$perf_monitoring <- perf_monitoring
     
+    r$perf_monitoring_table <- tibble::tibble(task = character(), datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms())
+    datetime_start <- Sys.time()
+    datetime_stop <- Sys.time()
+    
+    # monitor_perf <- function(action = "stop", task = character()){
+    #   
+    #   if (!perf_monitoring) return()
+    #   if (action == "start") datetime_start <<- Sys.time()
+    #   
+    #   if (action == "stop"){
+    #     datetime_stop <<- Sys.time()
+    #     
+    #     r$perf_monitoring_table <- 
+    #       r$perf_monitoring_table %>% 
+    #       dplyr::bind_rows(tibble::tribble(
+    #         ~task, ~datetime_start, ~datetime_stop, 
+    #         task, datetime_start, datetime_stop))
+    #     
+    #     datetime_start <<- Sys.time() 
+    #   }
+    # }
+    
     # Create r$server_modules_groups_loaded & r$ui_modules_groups_loaded
     r$server_modules_groups_loaded <- ""
     r$ui_modules_groups_loaded <- ""
@@ -28,7 +50,12 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
     if (length(app_db_folder) == 0) r$app_db_folder <- path.expand('~')
     
     # Get translations
+    # Update : use shiny.i18n instead. When it is done, delete get_translations
+    # Change also tolower...
     r$words <- get_translations()
+    i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
+    i18n$set_translation_language(tolower(language))
+    r$i18n <- i18n
     
     # Save currently opened toggles (used to reload cards when we load a page, restart reactivity)
     r$activated_toggles <- ""
@@ -141,76 +168,84 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       # Load server modules                    #
       ##########################################
     
-      if (perf_monitoring) print(paste0(Sys.time(), " _ START LOAD SERVER MODULES"))
+      monitor_perf(r = r, action = "start")
       
       sapply(c("home", "home_get_started", "home_tutorials", "home_resources", "home_dev"), function(page){
-        mod_home_server(page, r, language, r$words)
-        mod_page_header_server(page, r, language, r$words)
+        mod_home_server(page, r, language, i18n)
+        mod_page_header_server(page, r, language, i18n)
       })
      
-      if (perf_monitoring) print(paste0(Sys.time(), " _ data_pages"))
+      monitor_perf(r = r, action = "stop", task = "mod_home_server")
+      
       sapply(c("patient_level_data", "aggregated_data"), function(page){
-        mod_patient_and_aggregated_data_server(page, r, language, r$words)
-        mod_page_sidenav_server(page, r, language, r$words)
-        mod_page_header_server(page, r, language, r$words)
+        mod_patient_and_aggregated_data_server(page, r, language, i18n)
+        mod_page_sidenav_server(page, r, language, i18n)
+        mod_page_header_server(page, r, language, i18n)
       })
       
-      mod_my_studies_server("my_studies", r, language, r$words)
-      mod_my_subsets_server("my_subsets", r, language, r$words)
-      mod_thesaurus_server("thesaurus", r, language, r$words)
+      monitor_perf(r = r, action = "stop", task = "mod_patient_and_aggregated_data_server")
+      
+      mod_my_studies_server("my_studies", r, language, i18n)
+      monitor_perf(r = r, action = "stop", task = "mod_my_studies_server")
+      mod_my_subsets_server("my_subsets", r, language, i18n)
+      monitor_perf(r = r, action = "stop", task = "mod_my_susbsets_server")
+      mod_thesaurus_server("thesaurus", r, language, i18n)
+      monitor_perf(r = r, action = "stop", task = "mod_thesaurus_server")
       
       sapply(c("my_studies", "my_subsets", "thesaurus"), function(page){
-        mod_page_sidenav_server(page, r, language, r$words)
-        mod_page_header_server(page, r, language, r$words)
+        mod_page_sidenav_server(page, r, language, i18n)
+        mod_page_header_server(page, r, language, i18n)
       })
       
-      if (perf_monitoring) print(paste0(Sys.time(), " _ plugins"))
       sapply(c("plugins_patient_lvl", "plugins_aggregated"), function(page){
-        mod_plugins_server(page, r, language, r$words)
-        mod_page_header_server(page, r, language, r$words)
+        mod_plugins_server(page, r, language, i18n)
+        mod_page_header_server(page, r, language, i18n)
       })
+      monitor_perf(r = r, action = "stop", task = "mod_plugins_server")
     
-      if (perf_monitoring) print(paste0(Sys.time(), " _ general"))
-      mod_settings_general_server("settings_general_settings", r, language, r$words)
-      mod_page_sidenav_server("settings_general_settings", r, language, r$words)
-      mod_page_header_server("settings_general_settings", r, language, r$words)
+      mod_settings_general_server("settings_general_settings", r, language, i18n)
+      mod_page_sidenav_server("settings_general_settings", r, language, i18n)
+      mod_page_header_server("settings_general_settings", r, language, i18n)
+      monitor_perf(r = r, action = "stop", task = "mod_settings_general_server")
     
-      if (perf_monitoring) print(paste0(Sys.time(), " _ app_db"))
-      mod_settings_app_database_server("settings_app_db", r, language, r$words)
-      mod_page_sidenav_server("settings_app_db", r, language, r$words)
-      mod_page_header_server("settings_app_db", r, language, r$words)
+      mod_settings_app_database_server("settings_app_db", r, language, i18n)
+      mod_page_sidenav_server("settings_app_db", r, language, i18n)
+      mod_page_header_server("settings_app_db", r, language, i18n)
+      monitor_perf(r = r, action = "stop", task = "mod_settings_app_db_server")
     
-      if (perf_monitoring) print(paste0(Sys.time(), " _ users"))
-      mod_settings_users_server("settings_users", r, language, r$words)
-      mod_page_sidenav_server("settings_users", r, language, r$words)
-      mod_page_header_server("settings_users", r, language, r$words)
+      mod_settings_users_server("settings_users", r, language, i18n)
+      mod_page_sidenav_server("settings_users", r, language, i18n)
+      mod_page_header_server("settings_users", r, language, i18n)
     
       sapply(c("users", "users_statuses", "users_accesses"), function(page){
-        mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language, r$words)
-        mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language, r$words)
-        mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language, r$words)
+        mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language, i18n)
+        mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language, i18n)
+        mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language, i18n)
       })
+      monitor_perf(r = r, action = "stop", task = "mod_settings_users_server")
     
-      if (perf_monitoring) print(paste0(Sys.time(), " _ data_management"))
-      mod_settings_r_console_server("settings_r_console", r, language, r$words)
-      mod_page_sidenav_server("settings_r_console", r, language, r$words)
-      mod_page_header_server("settings_r_console", r, language, r$words)
+      mod_settings_r_console_server("settings_r_console", r, language, i18n)
+      mod_page_sidenav_server("settings_r_console", r, language, i18n)
+      mod_page_header_server("settings_r_console", r, language, i18n)
+      monitor_perf(r = r, action = "stop", task = "mod_r_console_server")
     
-      if (perf_monitoring) print(paste0(Sys.time(), " _ data_management"))
       sapply(c("data_sources", "datamarts", "thesaurus"), function(page){
-        mod_settings_data_management_server(paste0("settings_", page), r, language, r$words)
-        mod_page_sidenav_server(paste0("settings_", page), r, language, r$words)
-        mod_page_header_server(paste0("settings_", page), r, language, r$words)
+        mod_settings_data_management_server(paste0("settings_", page), r, language, i18n)
+        mod_page_sidenav_server(paste0("settings_", page), r, language, i18n)
+        mod_page_header_server(paste0("settings_", page), r, language, i18n)
+        monitor_perf(r = r, action = "stop", task = paste0("mod_", page, "_server"))
       })
     
-      if (perf_monitoring) print(paste0(Sys.time(), " _ log"))
-      mod_settings_log_server("settings_log", r, language, r$words)
-      mod_page_sidenav_server("settings_log", r, language, r$words)
-      mod_page_header_server("settings_log", r, language, r$words)
-      
-      if (perf_monitoring) print(paste0(Sys.time(), " _ END LOAD SERVER MODULES"))
+      mod_settings_log_server("settings_log", r, language, i18n)
+      mod_page_sidenav_server("settings_log", r, language, i18n)
+      mod_page_header_server("settings_log", r, language, i18n)
+      monitor_perf(r = r, action = "stop", task = "mod_settings_log_server")
       
       r$end_load_modules <- TRUE
+      
+      r$perf_monitoring_table <- 
+        r$perf_monitoring_table %>%
+        dplyr::mutate(elapsed_time = datetime_stop - datetime_start)
     })
   }
 }

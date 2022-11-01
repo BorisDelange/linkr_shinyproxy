@@ -42,7 +42,7 @@ mod_settings_log_ui <- function(id = character(), language = "EN", words = tibbl
 #'
 #' @noRd 
 
-mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess(), language = "EN", words = tibble::tibble()){
+mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess(), language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

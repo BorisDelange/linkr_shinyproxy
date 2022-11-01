@@ -106,7 +106,7 @@ mod_settings_sub_users_ui <- function(id = character(), language = "EN", words =
 #' settings_users Server Functions
 #'
 #' @noRd 
-mod_settings_users_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
+mod_settings_users_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -243,8 +243,6 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       # Only for data management subpages
       if (grepl("management", id)){
         
-        if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- BEGIN load ", table, " management datatable"))
-        
         # Dropdowns for each module / page
         dropdowns_datatable <- switch(table, "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
           "users_accesses" = "", "users_statuses" = "")
@@ -300,8 +298,6 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
           # Reload data of datatable
           DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
         })
-        
-        if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- END load ", table, " management datatable"))
       }
       
       ##########################################
@@ -389,7 +385,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         "r_console", "r_console_edit_code_card",
         "data_sources", c("data_sources_see_all_data", "data_sources_edit_data", "data_sources_delete_data", "data_sources_creation_card", "data_sources_datatable_card"),
         "datamarts", c("datamarts_see_all_data", "datamarts_edit_data", "datamarts_delete_data", "datamarts_creation_card", "datamarts_datatable_card", "datamarts_options_card", "datamarts_edit_code_card"),
-        "studies", c("studies_see_all_data", "studies_edit_data", "studies_delete_data", "studies_creation_card", "studies_datatable_card", "studies_options_card",
+        "studies", c("studies_see_all_data", "studies_edit_data", "studies_delete_data", "studies_creation_card", "study_options_card", "studies_datatable_card", "studies_options_card",
           "import_study_card", "export_study_card"),
         "subsets", c("subsets_see_all_data", "subsets_edit_data", "subsets_delete_data", "subsets_creation_card", "subsets_datatable_card", "subsets_edit_code_card"),
         "thesaurus", c("thesaurus_see_all_data", "thesaurus_edit_data", "thesaurus_delete_data", "thesaurus_creation_card", "thesaurus_datatable_card", "thesaurus_sub_datatable_card", "thesaurus_edit_code_card", "thesaurus_datamart_card"),

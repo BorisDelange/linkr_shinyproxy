@@ -1,8 +1,8 @@
-Package: cdwtools
+Package: LinkR
 Title: Clinical Data Warehouses Tools
 Version: 0.1.2
 Authors@R: person('Boris', 'Delange', email = 'boris.delange@gmail.com', role = c('cre', 'aut', 'cph'))
-Description: CDW Tools package gives some tools to help clinicians without advanced programmation skills, 
+Description: LinkR package gives some tools to help clinicians without advanced programmation skills, 
   statisticiants and data scientists use their clinical data warehouse, from patient-level data visualization 
   to pooled patient data analytics, using a web application created with {shiny}.
 License: GPL (>= 3)
@@ -21,6 +21,7 @@ Imports:
     rlist (>= 0.4.6.2),
     shiny (>= 1.6.0),
     shiny.fluent (>= 0.2.1),
+    shiny.i18n (>= 0.2.0),
     shinymanager (>= 1.0.400),
     shiny.react (>= 0.2.3),
     shiny.router (>= 0.2.2),

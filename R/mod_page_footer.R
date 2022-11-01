@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_page_footer_ui <- function(words = tibble::tibble()){
+mod_page_footer_ui <- function(words = tibble::tibble(), i18n = R6::R6Class()){
   div(class = "footer", 
     shiny.fluent::Stack(
       horizontal = TRUE,
@@ -15,7 +15,7 @@ mod_page_footer_ui <- function(words = tibble::tibble()){
       tokens = list(childrenGap = 20),
       tags$a(icon("github"), "", href = "https://github.com/BorisDelange/cdwtools", target="_blank"),
       shiny.fluent::Text(variant = "medium", nowrap = FALSE, ""),
-      shiny.fluent::Text(variant = "medium", nowrap = FALSE, "Version 0.1.2")
+      shiny.fluent::Text(variant = "medium", nowrap = FALSE, "Version 0.1.2 - dev")
     )
   )
 }

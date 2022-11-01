@@ -9,7 +9,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_header_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
+mod_page_header_ui <- function(id = character(), language = "EN", words = tibble::tibble(), i18n = R6::R6Class()){
   
   ns <- NS(id)
 
@@ -18,16 +18,16 @@ mod_page_header_ui <- function(id = character(), language = "EN", words = tibble
   div(class = "header",
     
     div(htmltools::img(src = "www/logo.png", style = "height: 25px;"), class = "logo"),
-    div(class = "title", shiny.fluent::Text(variant = "xLarge", "CDW Tools")),
+    div(class = "title", shiny.fluent::Text(variant = "xLarge", "LinkR")),
     div(class = "header_left_bar", 
       shiny.fluent::CommandBar(
         items = list(
-          shiny.fluent::CommandBarItem(translate(language, "home", words), "Home", href = shiny.router::route_link("home")),
-          shiny.fluent::CommandBarItem(translate(language, "my_studies", words), "CustomList", href = shiny.router::route_link("my_studies")),
-          shiny.fluent::CommandBarItem(translate(language, "my_subsets", words), "People", href = shiny.router::route_link("my_subsets")),
-          shiny.fluent::CommandBarItem(translate(language, "thesaurus", words), "AllApps", href = shiny.router::route_link("thesaurus")),
-          shiny.fluent::CommandBarItem(translate(language, "data", words), "BIDashboard", href = shiny.router::route_link("data")),
-          shiny.fluent::CommandBarItem(translate(language, "plugins", words), "Code", href = shiny.router::route_link("plugins/patient_lvl"))
+          shiny.fluent::CommandBarItem(i18n$t("Home"), "Home", href = shiny.router::route_link("home")),
+          shiny.fluent::CommandBarItem(i18n$t("My studies"), "CustomList", href = shiny.router::route_link("my_studies")),
+          shiny.fluent::CommandBarItem(i18n$t("My subsets"), "People", href = shiny.router::route_link("my_subsets")),
+          shiny.fluent::CommandBarItem(i18n$t("Thesaurus"), "AllApps", href = shiny.router::route_link("thesaurus")),
+          shiny.fluent::CommandBarItem(i18n$t("Data"), "BIDashboard", href = shiny.router::route_link("data")),
+          shiny.fluent::CommandBarItem(i18n$t("Plugins"), "Code", href = shiny.router::route_link("plugins/patient_lvl"))
         )
       )
     ),
@@ -47,7 +47,7 @@ mod_page_header_ui <- function(id = character(), language = "EN", words = tibble
 #' page_header Server Functions
 #'
 #' @noRd 
-mod_page_header_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
+mod_page_header_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

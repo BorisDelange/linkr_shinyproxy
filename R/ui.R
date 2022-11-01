@@ -33,7 +33,7 @@ golem_add_external_resources <- function(css){
     favicon(ext = "png"),
     bundle_resources(
       path = app_sys('app/www'),
-      app_title = 'CDW Tools'
+      app_title = 'LinkR'
     ),
     # Link to CSS file
     htmltools::tags$link(href = css, rel = "stylesheet", type = "text/css"),

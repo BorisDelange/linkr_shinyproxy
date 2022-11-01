@@ -142,7 +142,7 @@ mod_thesaurus_ui <- function(id = character(), language = "EN", words = tibble::
 #' thesaurus Server Functions
 #'
 #' @noRd 
-mod_thesaurus_server <- function(id = character(), r, language = "EN", words = tibble::tibble()){
+mod_thesaurus_server <- function(id = character(), r, language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
  

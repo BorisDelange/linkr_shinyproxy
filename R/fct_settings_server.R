@@ -1,4 +1,26 @@
 ##########################################
+# Monitor app performances               #
+##########################################
+
+monitor_perf <- function(r = shiny::reactiveValues(), action = "stop", task = character()){
+  
+  if (!r$perf_monitoring) return()
+  if (action == "start") datetime_start <<- Sys.time()
+  
+  if (action == "stop"){
+    datetime_stop <<- Sys.time()
+    
+    r$perf_monitoring_table <- 
+      r$perf_monitoring_table %>% 
+      dplyr::bind_rows(tibble::tribble(
+        ~task, ~datetime_start, ~datetime_stop, 
+        task, datetime_start, datetime_stop))
+    
+    datetime_start <<- Sys.time() 
+  }
+}
+
+##########################################
 # Add new data                           #
 ##########################################
 
@@ -309,7 +331,8 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shi
   
   # req(nrow(data_input) > 0)
   
-  if (r$perf_monitoring) print(paste0(Sys.time(), " _ prepare data _ table = ", table))
+  monitor_perf(r = r, action = "start")
+  monitor_perf(r = r, action = "stop", task = paste0("prepare_data_datatable _ table = ", table, " / id = ", id))
   
   # Initiate data_output, starting from data_input
   data_output <- data_input

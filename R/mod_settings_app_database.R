@@ -150,7 +150,7 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
 #'
 #' @noRd 
 
-mod_settings_app_database_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
+mod_settings_app_database_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

@@ -295,7 +295,7 @@ mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibbl
 #' home Server Functions
 #'
 #' @noRd 
-mod_home_server <- function(id = character(), r, language = "EN", words = tibble::tibble()){
+mod_home_server <- function(id = character(), r, language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
  

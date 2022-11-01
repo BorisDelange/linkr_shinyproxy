@@ -124,7 +124,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
 #'
 #' @noRd 
 
-mod_patient_and_aggregated_data_server <- function(id = character(), r, language = "EN", words = tibble::tibble()){
+mod_patient_and_aggregated_data_server <- function(id = character(), r, language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

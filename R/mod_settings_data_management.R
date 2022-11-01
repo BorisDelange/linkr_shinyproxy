@@ -202,11 +202,9 @@ mod_settings_data_management_ui <- function(id = character(), language = "EN", w
 #' @param language Language used (character)
 #' @noRd 
 
-mod_settings_data_management_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
+mod_settings_data_management_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
-    
-    if (r$perf_monitoring) print(paste0(Sys.time(), " _ BEGIN mod ", id))
 
     # Dropdowns in the management datatable, by page
     dropdowns <- tibble::tribble(~id, ~dropdowns,
@@ -321,8 +319,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       ##########################################
     
       table <- paste0(substr(id, nchar("settings_") + 1, nchar(id)))
-    
-      if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- BEGIN load ", table, " management datatable"))
       
       # observeEvent(r[[table]], {
         
@@ -423,9 +419,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         }
         
       })
-        
-      
-      if (r$perf_monitoring) print(paste0(Sys.time(), " _ --- END load ", table, " management datatable"))
     
       ##########################################
       # Save changes in datatable              #
@@ -873,7 +866,5 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
         })
       }
-        
-      if (r$perf_monitoring) print(paste0(Sys.time(), " _ END mod ", id))
   })
 }

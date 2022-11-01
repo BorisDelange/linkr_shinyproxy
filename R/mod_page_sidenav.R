@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
+mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibble::tibble(), i18n = R6::R6Class()){
   ns <- NS(id)
   result <- ""
   
@@ -214,7 +214,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
 #' page_sidenav Server Functions
 #'
 #' @noRd 
-mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", words = tibble::tibble()){
+mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -375,7 +375,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           
           # Load stays of the patient & update dropdown
           shiny.fluent::updateComboBox.shinyInput(session, "stay",
-            options = convert_tibble_to_list(data = r$stays %>% dplyr::filter(patient_id == input$patient$key) %>% dplyr::mutate(name_display = paste0(unit_name, " - ", 
+            options = convert_tibble_to_list(data = r$stays %>% dplyr::filter(patient_id == input$patient$key) %>% dplyr::mutate(name_display = paste0("Unit...", " - ", #paste0(unit_name, " - ", 
               format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", translate(language, "to", words), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
               key_col = "stay_id", text_col = "name_display", words = r$words), value = NULL)
         }
@@ -441,7 +441,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         output$patient_info <- renderUI({
           tagList(span(translate(language, "age", words), style = style), age_div, br(),
             span(translate(language, "gender", words), style = style), r$patients %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::pull(gender) , br(), br(),
-            span(translate(language, "unit", words), style = style), r$stays %>% dplyr::filter(patient_id == r$chosen_patient & stay_id == r$chosen_stay) %>% dplyr::pull(unit_name), br(),
+            span(translate(language, "unit", words), style = style), br(), #r$stays %>% dplyr::filter(patient_id == r$chosen_patient & stay_id == r$chosen_stay) %>% dplyr::pull(unit_name), br(),
             span(translate(language, "from", words), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(admission_datetime), br(),
             span(translate(language, "to", words), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(discharge_datetime))
         })
