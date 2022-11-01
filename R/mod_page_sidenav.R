@@ -47,7 +47,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   # Patient-level & aggregated data        #
   ##########################################
   
-  if (id %in% c("my_studies", "my_subsets", "thesaurus", "patient_level_data", "aggregated_data")){
+  if (id %in% c("my_studies", "my_subsets", "thesaurus", "scripts", "patient_level_data", "aggregated_data")){
     
     dropdowns <- function(names, arrows = TRUE){
       
@@ -56,7 +56,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       sapply(names, function(name){
         
         width <- "250px"
-        translated_name <- switch(name, "datamart" = "Datamart", "study" = "Study", "subset" = "Subset",
+        translated_name <- switch(name, "data_source" = "Data source", "datamart" = "Datamart", "study" = "Study", "subset" = "Subset",
           "patient" = "Patient", "stay" = "Stay", "patient_status" = "Patient status")
         
         result <<- tagList(result,
@@ -90,6 +90,12 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   if (id == "thesaurus") div(class = "sidenav", dropdowns(c("datamart"))) -> result
   
   ##########################################
+  # Scripts                              #
+  ##########################################
+  
+  if (id == "scripts") div(class = "sidenav", dropdowns(c("datamart"))) -> result
+  
+  ##########################################
   # Patient-level data                     #
   ##########################################
   
@@ -99,7 +105,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
       div(
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
           shiny.fluent::PrimaryButton.shinyInput(ns("data_page_ind"), i18n$t("Individual"), style = "width:125px;"), 
-          shiny.fluent::DefaultButton.shinyInput(ns("data_page_agg"), i18n$t("Aggregated"), style = "width:125px;")
+          shiny.fluent::DefaultButton.shinyInput(ns("data_page_agg"), i18n$t("Agregated"), style = "width:125px;")
         ), style = "width:250px;"
       ),
       dropdowns(c("datamart", "study", "subset")),
@@ -214,7 +220,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    if (id %in% c("my_studies", "my_subsets", "thesaurus", "patient_level_data", "aggregated_data")){
+    if (id %in% c("my_studies", "my_subsets", "thesaurus", "scripts", "patient_level_data", "aggregated_data")){
       
       ##########################################
       # Patient-level & aggregated data        #

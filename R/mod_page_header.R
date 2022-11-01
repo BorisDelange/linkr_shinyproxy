@@ -25,8 +25,9 @@ mod_page_header_ui <- function(id = character(), language = "EN", words = tibble
           shiny.fluent::CommandBarItem(i18n$t("Home"), "Home", href = shiny.router::route_link("home")),
           shiny.fluent::CommandBarItem(i18n$t("My studies"), "CustomList", href = shiny.router::route_link("my_studies")),
           shiny.fluent::CommandBarItem(i18n$t("My subsets"), "People", href = shiny.router::route_link("my_subsets")),
-          shiny.fluent::CommandBarItem(i18n$t("Thesaurus"), "AllApps", href = shiny.router::route_link("thesaurus")),
           shiny.fluent::CommandBarItem(i18n$t("Data"), "BIDashboard", href = shiny.router::route_link("data")),
+          shiny.fluent::CommandBarItem(i18n$t("Thesaurus"), "AllApps", href = shiny.router::route_link("thesaurus")),
+          shiny.fluent::CommandBarItem(i18n$t("Scripts"), "CodeEdit", href = shiny.router::route_link("scripts")),
           shiny.fluent::CommandBarItem(i18n$t("Plugins"), "Code", href = shiny.router::route_link("plugins/patient_lvl"))
         )
       )

@@ -7,48 +7,48 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_thesaurus_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
+mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
   cards <- c("thesaurus_items_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
-    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, language = language, words = words))
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, language = "EN", words = words))
   })
   
   div(
     class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "thesaurus_main", text = translate(language, "thesaurus", words))
+      list(key = "thesaurus_main", text = i18n$t("Thesaurus"))
     ), maxDisplayedItems = 3),
     shinyjs::hidden(
       div(id = ns("menu"),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "items_card", itemKey = "items_card", headerText = translate(language, "all_items", words)),
-          shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = translate(language, "categories", words)),
-          shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = translate(language, "conversions", words)),
-          shiny.fluent::PivotItem(id = "create_items_card", itemKey = "create_items_card", headerText = translate(language, "create_items", words))
+          shiny.fluent::PivotItem(id = "items_card", itemKey = "items_card", headerText = i18n$t("All items")),
+          shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = i18n$t("Categories")),
+          shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = i18n$t("Conversions")),
+          shiny.fluent::PivotItem(id = "create_items_card", itemKey = "create_items_card", headerText = i18n$t("Create items"))
         )
       )
     ),
     forbidden_cards,
     div(
       id = ns("choose_a_datamart_card"),
-      make_card("", div(shiny.fluent::MessageBar(translate(language, "choose_a_datamart", words), messageBarType = 5), style = "margin-top:10px;"))
+      make_card("", div(shiny.fluent::MessageBar(i18n$t("Choose a damatart in the dropdown on the left-side of the page"), messageBarType = 5), style = "margin-top:10px;"))
     ),
     shinyjs::hidden(
       div(
         id = ns("items_card"),
-        make_card(translate(language, "items", words),
+        make_card(i18n$t("Items"),
           div(
             div(
-              make_combobox(language = language, ns = ns, label = "thesaurus", width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
+              make_combobox(language = "EN", ns = ns, label = "thesaurus", width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
               DT::DTOutput(ns("thesaurus_items")),
-              shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), translate(language, "save", words)), " ",
-              shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), translate(language, "reload_cache", words)),
+              shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), i18n$t("Save")), " ",
+              shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), i18n$t("Reload cache")),
               br(),
               uiOutput(ns("thesaurus_selected_item"))
             ), br(),
@@ -71,9 +71,9 @@ mod_thesaurus_ui <- function(id = character(), language = "EN", words = tibble::
     shinyjs::hidden(
       div(
         id = ns("categories_card"),
-        make_card(translate(language, "categories", words),
+        make_card(i18n$t("Categories"),
           div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -94,9 +94,9 @@ mod_thesaurus_ui <- function(id = character(), language = "EN", words = tibble::
     shinyjs::hidden(
       div(
         id = ns("conversions_card"),
-        make_card(translate(language, "conversions", words),
+        make_card(i18n$t("Conversions"),
           div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -112,9 +112,9 @@ mod_thesaurus_ui <- function(id = character(), language = "EN", words = tibble::
     shinyjs::hidden(
       div(
         id = ns("create_items_card"),
-        make_card(translate(language, "create_items", words),
+        make_card(i18n$t("Create items"),
           div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -142,7 +142,7 @@ mod_thesaurus_ui <- function(id = character(), language = "EN", words = tibble::
 #' thesaurus Server Functions
 #'
 #' @noRd 
-mod_thesaurus_server <- function(id = character(), r, language = "EN", i18n = R6::R6Class()){
+mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
  
@@ -213,18 +213,18 @@ mod_thesaurus_server <- function(id = character(), r, language = "EN", i18n = R6
       count_patients_rows <- tibble::tibble()
       
       # Add count_items_rows in the cache & get it if already in the cache
-      tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus$key,
+      tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = "EN", thesaurus_id = input$thesaurus$key,
         datamart_id = r$chosen_datamart, category = "count_items_rows"),
           error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = language))
+            error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
       
       # Add count_items_rows in the cache & get it if already in the cache
-      tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus$key,
+      tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = "EN", thesaurus_id = input$thesaurus$key,
         datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
           error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = language))
+            error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
       
-      if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language, words = r$words)
+      if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", "EN", words = r$words)
       req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
       
       # Transform count_rows cols to integer, to be sortable
@@ -248,11 +248,11 @@ mod_thesaurus_server <- function(id = character(), r, language = "EN", i18n = R6
       column_widths <- c("id" = "80px", "action" = "80px", "display_name" = "300px", "unit" = "100px", "category" = "400px")
       sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
       centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-      col_names <- get_col_names(table_name = "datamart_thesaurus_items_with_counts", language = language, words = r$words)
+      col_names <- get_col_names(table_name = "datamart_thesaurus_items_with_counts", language = "EN", words = r$words)
       hidden_cols <- c("id", "name", "thesaurus_id", "item_id", "datetime", "deleted", "modified", "action")
       
       # Render datatable
-      render_datatable(output = output, r = r, ns = ns, language = language, data = r$datamart_thesaurus_items_temp,
+      render_datatable(output = output, r = r, ns = ns, language = "EN", data = r$datamart_thesaurus_items_temp,
         output_name = "thesaurus_items", col_names =  col_names,
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
         searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
@@ -303,7 +303,7 @@ mod_thesaurus_server <- function(id = character(), r, language = "EN", i18n = R6
       req(input$thesaurus)
       
       save_settings_datatable_updates(output = output, r = r, ns = ns, 
-                                      table = "thesaurus_items", r_table = "datamart_thesaurus_items", duplicates_allowed = TRUE, language = language)
+                                      table = "thesaurus_items", r_table = "datamart_thesaurus_items", duplicates_allowed = TRUE, language = "EN")
     })
     
     # When a row is selected
@@ -324,8 +324,8 @@ mod_thesaurus_server <- function(id = character(), r, language = "EN", i18n = R6
       if (nrow(all_values %>% dplyr::filter(!is.na(value))) > 0) values <- suppressMessages(all_values %>% dplyr::filter(!is.na(value)) %>% 
         dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(value))
       values_text <- tagList(
-        span(translate(language, "values", r$words), style = style), paste(values, collapse = " || "), br(),
-        span(translate(language, "numeric_values", r$words), style = style), paste(values_num, collapse = " || "), br()
+        span(i18n$t("Values"), style = style), paste(values, collapse = " || "), br(),
+        span(i18n$t("Numeric values"), style = style), paste(values_num, collapse = " || "), br()
       )
       
       if (nrow(all_values) == 0){
@@ -342,17 +342,17 @@ mod_thesaurus_server <- function(id = character(), r, language = "EN", i18n = R6
           dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(rate_text))
         
         values_text <- tagList(
-          span(translate(language, "rate_values", r$words), style = style), paste(rate, collapse = " || "), br(),
-          span(translate(language, "amount_values", r$words), style = style), paste(amount, collapse = " || "), br()
+          span(i18n$t("Rate"), style = style), paste(rate, collapse = " || "), br(),
+          span(i18n$t("Amount"), style = style), paste(amount, collapse = " || "), br()
         )
         
         if (nrow(all_values) == 0) values_text <- ""
       }
       
       output$thesaurus_selected_item <- renderUI(tagList(br(), div(
-        span(translate(language, "display_name", r$words), style = style), thesaurus_item$display_name, br(),
-        span(translate(language, "thesaurus_id", r$words), style = style), thesaurus_item$thesaurus_id, br(),
-        span(translate(language, "item_id", r$words), style = style), thesaurus_item$item_id, br(),
+        span(i18n$t("Display name"), style = style), thesaurus_item$display_name, br(),
+        span(i18n$t("Thesaurus ID"), style = style), thesaurus_item$thesaurus_id, br(),
+        span(i18n$t("Item ID"), style = style), thesaurus_item$item_id, br(),
         values_text,
         style = "border:dashed 1px; padding:10px;"
       )))

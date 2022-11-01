@@ -33,7 +33,13 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   # Thesaurus                              #
   ##########################################
   
-  if (id == "thesaurus") mod_thesaurus_ui(id = "thesaurus", language = language, words = words) -> result
+  if (id == "thesaurus") mod_thesaurus_ui(id = "thesaurus", i18n = i18n) -> result
+  
+  ##########################################
+  # Scripts                              #
+  ##########################################
+  
+  if (id == "scripts") mod_scripts_ui(id = "scripts", i18n = i18n) -> result
   
   ##########################################
   # Patient-lvl & aggregated data pages    #

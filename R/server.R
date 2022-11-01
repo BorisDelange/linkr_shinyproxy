@@ -189,10 +189,12 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       monitor_perf(r = r, action = "stop", task = "mod_my_studies_server")
       mod_my_subsets_server("my_subsets", r, language, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_my_susbsets_server")
-      mod_thesaurus_server("thesaurus", r, language, i18n)
+      mod_thesaurus_server("thesaurus", r, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_thesaurus_server")
+      mod_scripts_server("scripts", r, i18n)
+      monitor_perf(r = r, action = "stop", task = "mod_scripts_server")
       
-      sapply(c("my_studies", "my_subsets", "thesaurus"), function(page){
+      sapply(c("my_studies", "my_subsets", "thesaurus", "scripts"), function(page){
         mod_page_sidenav_server(page, r, i18n)
         mod_page_header_server(page, r, language, i18n)
       })
@@ -243,9 +245,10 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       
       r$end_load_modules <- TRUE
       
-      # r$perf_monitoring_table <- 
-      #   r$perf_monitoring_table %>%
-      #   dplyr::mutate(elapsed_time = datetime_stop - datetime_start)
+      r$perf_monitoring_table <-
+        r$perf_monitoring_table %>%
+        dplyr::mutate(elapsed_time = round(datetime_stop - datetime_start, 2), .before = "task") %>%
+        dplyr::arrange(dplyr::desc(elapsed_time))
     })
   }
 }
