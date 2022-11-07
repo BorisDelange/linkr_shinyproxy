@@ -251,8 +251,13 @@ mod_my_studies_server <- function(id = character(),  r = shiny::reactiveValues()
         run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language, quiet = TRUE)
 
         # Get scripts associated with this datamart
-        # scripts_code <- r$code %>% dplyr::filter(category == "script") %>% dplyr::select(id = link_id, code) %>%
-        #   dplyr::inner_join(r$scripts %>% dplyr::select(id), by = "id")
+        
+        update_r(r = r, table = "scripts")
+        
+        scripts_code <- r$code %>% dplyr::filter(category == "script") %>% dplyr::select(id = link_id, code) %>%
+          dplyr::inner_join(
+            r$options %>% dplyr::filter(category == "datamart_scripts", link_id == r$chosen_datamart) %>% dplyr::select(id = value_num)
+          )
 
         # A r variable to update study dropdown, when the load of datamart is finished
         r$loaded_datamart <- r$chosen_datamart

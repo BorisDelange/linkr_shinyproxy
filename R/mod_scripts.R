@@ -201,8 +201,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
           tags$li("Pouvoir supprimer les CSV des scripts d'un datamart"),
           tags$li("Modifier colonne datetime_start (enlever Z & T)"),
           tags$li("Make all columns sortable"),
-          tags$li("Scripts in red if bug noticed / in green if OK / in grey if never runned since last update of code"),
-          tags$li("Les données du datamart se chargent 4-5 fois, avec r$chosen_datamart...")
+          tags$li("Scripts in red if bug noticed / in green if OK / in grey if never runned since last update of code")
         )
       ),
       messageBarType = 0)
