@@ -145,6 +145,18 @@ make_combobox <- function(language = "EN", ns = shiny::NS(), label = character()
   )
 }
 
+make_combobox_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
+  allowFreeform = FALSE, autoComplete = "on", id = NA_character_, value = NULL, width = NULL, words = tibble::tibble()){
+  
+  style <- ""
+  if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
+  div(
+    div(class = "input_title", i18n$t(label)),
+    div(shiny.fluent::ComboBox.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect, 
+      allowFreeform = allowFreeform, autoComplete = autoComplete,
+      multiSelectDelimiter = ","), style = style)
+  )
+}
 
 #' Make a shiny.fluent people picker
 #' 
@@ -222,6 +234,25 @@ make_toggle <- function(language = "EN", ns = shiny::NS(), label = character(), 
   if (!inline){
     tagList(
       div(class = "input_title", label),
+      shiny.fluent::Toggle.shinyInput(ns(id), value = value)
+    )  -> result
+  }
+  result
+}
+
+make_toggle_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), id = NULL, value = FALSE, inline = FALSE, translate = TRUE, bold = TRUE){
+  if (is.null(id)) id <- label
+  if (translate) label <- i18n$t(label)
+  if (bold) style <- "" else style <- "font-weight:normal;"
+  if (inline){
+    tagList(
+      shiny.fluent::Toggle.shinyInput(ns(id), value = value),
+      div(class = "toggle_title", label, style = style)
+    ) -> result
+  }
+  if (!inline){
+    tagList(
+      div(class = "input_title", label, style = style),
       shiny.fluent::Toggle.shinyInput(ns(id), value = value)
     )  -> result
   }
@@ -322,6 +353,140 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
     if (length(names(default_tibble)) > 0) data <- default_tibble
   }
 
+  
+  # Which columns are non editable
+  
+  cols <- c(1:length(names(data))) - 1
+  editable_cols_vec <- integer()
+  sapply(editable_cols, function(col){
+    editable_cols_vec <<- c(editable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  non_editable_cols_vec <- cols[!cols %in% editable_cols_vec]
+  
+  # Which columns are non sortable
+  sortable_cols_vec <- integer()
+  sapply(sortable_cols, function(col){
+    sortable_cols_vec <<- c(sortable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  non_sortable_cols_vec <- cols[!cols %in% sortable_cols_vec]
+  
+  # Which cols are centered
+  centered_cols_vec <- integer()
+  sapply(centered_cols, function(col){
+    centered_cols_vec <<- c(centered_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  
+  # Which cols are hidden
+  hidden_cols_vec <- integer()
+  sapply(hidden_cols, function(col){
+    hidden_cols_vec <<- c(hidden_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  
+  # Which cols are searchable
+  searchable_cols_vec <- integer()
+  sapply(searchable_cols, function(col){
+    searchable_cols_vec <<- c(searchable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  non_searchable_cols_vec <- cols[!cols %in% searchable_cols_vec]
+  
+  # Which cols are truncated
+  truncated_cols_vec <- integer()
+  sapply(truncated_cols, function(col){
+    truncated_cols_vec <<- c(truncated_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  })
+  
+  # If filter is TRUE
+  if (filter) filter_list <- list(position = "top")
+  if (!filter) filter_list <- list()
+  
+  column_defs <- list()
+  # Add columns_widths to column_defs
+  sapply(names(column_widths), function(name){
+    column_defs <<- rlist::list.append(column_defs, list(width = column_widths[[name]], targets = which(grepl(paste0("^", name, "$"), names(data))) - 1))})
+  
+  # Add centered_cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(className = "dt-body-center", targets = centered_cols_vec))
+  
+  # Add hidden_cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(visible = FALSE, targets = hidden_cols_vec))
+  
+  # Add sortables cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(sortable = FALSE, targets = non_sortable_cols_vec))
+  
+  # Add searchable cols to column_defs
+  column_defs <- rlist::list.append(column_defs, list(searchable = FALSE, targets = non_searchable_cols_vec))
+  
+  # Truncate long text
+  column_defs <- rlist::list.append(column_defs, list(render = htmlwidgets::JS(
+    "function(data, type, row, meta) {",
+    "return type === 'display' && data != null && data.length > 30 ?",
+    "'<span title=\"' + data + '\">' + data.substr(0, 30) + '...</span>' : data;",
+    "}"), targets = truncated_cols_vec))
+  
+  # Transform searchable cols to factor
+  sapply(factorize_cols, function(col) data <<- data %>% dplyr::mutate_at(col, as.factor))
+  
+  # Rename cols if lengths correspond
+  if (length(col_names) == length(names(data))) names(data) <- col_names
+  
+  # So data is ready to be rendered in the datatable
+  
+  output[[output_name]] <- DT::renderDT(
+    # Data
+    data,
+    
+    # Options of the datatable
+    options = list(
+      dom = datatable_dom,
+      pageLength = page_length, displayStart = start,
+      columnDefs = column_defs,
+      language = dt_translation,
+      compact = TRUE, hover = TRUE
+    ),
+    editable = list(target = "cell", disable = list(columns = non_editable_cols_vec)),
+    filter = filter_list,
+    
+    # Default options
+    rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
+    
+    # Javascript code allowing to have dropdowns & actionButtons on the DataTable
+    callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
+      var $this = $(this.node());
+      $this.attr('id', this.data()[0]);
+      $this.addClass('shiny-input-container');
+      });
+      Shiny.unbindAll(table.table().node());
+      Shiny.bindAll(table.table().node());")
+  )
+}
+
+render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(), data = tibble::tibble(),
+  output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top't><'bottom'p>", page_length = 10, start = 0,
+  editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
+  filter = FALSE, factorize_cols = character(), column_widths = character(), hidden_cols = character(), truncated_cols = character(),
+  default_tibble = tibble::tibble()
+){
+  
+  # Translation for datatable
+  dt_translation <- list(
+    paginate = list(previous = i18n$t("Previous"), `next` = i18n$t("Next")),
+    search = i18n$t("Search : "),
+    lengthMenu = i18n$t("Show _MENU_ entries"),
+    emptyTable = i18n$t("No data available"))
+  
+  # If no row in dataframe, stop here
+  if (nrow(data) == 0){
+    
+    if (length(names(default_tibble)) == 0) return({
+      data <- tibble::tribble(~id, ~datetime)
+      names(data) <- c(i18n$t("ID"), i18n$t("Datetime"))
+      output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom), 
+        rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
+    })
+    
+    if (length(names(default_tibble)) > 0) data <- default_tibble
+  }
+  
   
   # Which columns are non editable
   

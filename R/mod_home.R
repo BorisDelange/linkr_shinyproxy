@@ -7,24 +7,25 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
+mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
   if (id == "home") main <- div(
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "home", text = translate(language, "home", words))
+      list(key = "home", text = i18n$t("Home"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "overview_card", itemKey = "overview", headerText = translate(language, "overview", words)),
-      shiny.fluent::PivotItem(id = "news_card", itemKey = "news", headerText = translate(language, "news", words)),
-      shiny.fluent::PivotItem(id = "versions_card", itemKey = "versions", headerText = translate(language, "versions", words))
+      shiny.fluent::PivotItem(id = "overview_card", itemKey = "overview", headerText = i18n$t("Overview")),
+      shiny.fluent::PivotItem(id = "news_card", itemKey = "news", headerText = i18n$t("News")),
+      shiny.fluent::PivotItem(id = "versions_card", itemKey = "versions", headerText = i18n$t("Versions"))
     ),
     div(
       id = ns("overview_card"),
-      make_card("",
+      make_card(i18n$t("Overview"),
         div(
-          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+          br(),
+          div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
           div(shiny.fluent::MessageBar(
             div(
               strong("A faire"),
@@ -47,9 +48,10 @@ mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibbl
     shinyjs::hidden(
       div(
         id = ns("news_card"),
-        make_card("",
+        make_card(i18n$t("News"),
           div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            br(),
+            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -71,9 +73,10 @@ mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibbl
     shinyjs::hidden(
       div(
         id = ns("versions_card"),
-        make_card("",
+        make_card(i18n$t("Versions"),
           div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            br(),
+            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -90,19 +93,20 @@ mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibbl
   
   if (id == "home_get_started") main <- div(
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "get_started", text = translate(language, "get_started", words))
+      list(key = "get_started", text = i18n$t("Get started"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "import_excel_card", itemKey = "import_excel", headerText = translate(language, "import_excel", words)),
-      shiny.fluent::PivotItem(id = "import_csv_card", itemKey = "import_csv", headerText = translate(language, "import_csv", words)),
-      shiny.fluent::PivotItem(id = "connect_db_card", itemKey = "connect_db", headerText = translate(language, "connect_db", words))
+      shiny.fluent::PivotItem(id = "import_excel_card", itemKey = "import_excel", headerText = i18n$t("Import Excel file")),
+      shiny.fluent::PivotItem(id = "import_csv_card", itemKey = "import_csv", headerText = i18n$t("Import CSV file")),
+      shiny.fluent::PivotItem(id = "connect_db_card", itemKey = "connect_db", headerText = i18n$t("Connect to database"))
     ),
     div(
       id = ns("import_excel_card"),
-      make_card("",
+      make_card(i18n$t("Import Excel file"),
         div(
-          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+          br(),
+          div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
           div(shiny.fluent::MessageBar(
             div(
               strong("A faire"),
@@ -127,9 +131,10 @@ mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibbl
     shinyjs::hidden(
       div(
         id = ns("import_csv_card"),
-        make_card("",
+        make_card(i18n$t("Import CSV file"),
           div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            br(),
+            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -145,9 +150,10 @@ mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibbl
     shinyjs::hidden(
       div(
         id = ns("connect_db_card"),
-        make_card("",
+        make_card(i18n$t("Connect to database"),
           div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+            br(),
+            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -165,17 +171,18 @@ mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibbl
   
   if (id == "home_tutorials") main <- div(
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "tutorials", text = translate(language, "tutorials", words))
+      list(key = "tutorials", text = i18n$t("Tutorials"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "tutorials", itemKey = "tutorials", headerText = translate(language, "tutorials", words))
+      shiny.fluent::PivotItem(id = "tutorials", itemKey = "tutorials", headerText = i18n$t("Tutorials"))
     ),
     div(
       id = ns("tutorials_card"),
-      make_card("",
+      make_card(i18n$t("Tutorials"),
         div(
-          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+          br(),
+          div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
           div(shiny.fluent::MessageBar(
             div(
               strong("A faire"),
@@ -197,17 +204,18 @@ mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibbl
   
   if (id == "home_resources") main <- div(
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "resources", text = translate(language, "resources", words))
+      list(key = "resources", text = i18n$t("Resources"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "resources", itemKey = "resources", headerText = translate(language, "resources", words))
+      shiny.fluent::PivotItem(id = "resources", itemKey = "resources", headerText = i18n$t("Resources"))
     ),
     div(
       id = ns("resources_card"),
-      make_card("",
+      make_card(i18n$t("Resources"),
         div(
-          div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+          br(),
+          div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
           div(shiny.fluent::MessageBar(
             div(
               strong("A faire"),
@@ -230,11 +238,11 @@ mod_home_ui <- function(id = character(), language = "EN", words = tibble::tibbl
   
   if (id == "home_dev") main <- div(
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "dev", text = translate(language, "dev", words))
+      list(key = "dev", text = i18n$t("Dev"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "dev", itemKey = "dev", headerText = translate(language, "dev", words))
+      shiny.fluent::PivotItem(id = "dev", itemKey = "dev", headerText = i18n$t("Dev"))
     ),
     div(
       id = ns("dev_card"),

@@ -569,8 +569,11 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         r$datamart_page <- Sys.time()
       })
       
-      # Once the datamart is loaded, load studies
-      observeEvent(r$loaded_datamart, update_r(r = r, table = "studies"))
+      # Once the datamart is loaded, load studies & scripts
+      observeEvent(r$loaded_datamart, {
+        update_r(r = r, table = "studies")
+        update_r(r = r, table = "scripts")
+      })
       
       observeEvent(r$studies, {
         if (nrow(r$studies) == 0) shiny.fluent::updateComboBox.shinyInput(session, "study", options = list(), value = NULL, 

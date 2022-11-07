@@ -64,7 +64,7 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
     }
   }
   
-  else if (table %in% c("studies", "subsets", "subset_patients", "subsets_patients", "patients_options")){
+  else if (table %in% c("studies", "subsets", "scripts", "subset_patients", "subsets_patients", "patients_options")){
     
     if (table == "subsets_patients"){
       
@@ -76,6 +76,7 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
       
       tables <- tibble::tribble(~name, ~col_name, ~col_value,
         "studies", "datamart_id", r$chosen_datamart,
+        "scripts", "data_source_id", r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id),
         "subsets", "study_id", r$chosen_study,
         "subset_patients", "subset_id", r$chosen_subset,
         "patients_options", "study_id", r$chosen_study)
@@ -230,6 +231,17 @@ get_col_names <- function(table_name = character(), language = "EN", words = tib
   if (table_name == "log"){
     result <- c(translate(language, "id", words), translate(language, "category", words), translate(language, "name", words),
       translate(language, "value", words), translate(language, "user", words), translate(language, "datetime", words))
+  }
+  
+  result
+}
+
+get_col_names_new <- function(table_name = character(), i18n = R6::R6Class()){
+  result <- ""
+  
+  if (table_name == "scripts"){
+    result <- c(i18n$t("ID"), i18n$t("Name"), i18n$t("Description"), i18n$t("Data source ID"), i18n$t("Creator"), 
+      i18n$t("Datetime"), i18n$t("Deleted"), i18n$t("Modified"), i18n$t("Action"))
   }
   
   result

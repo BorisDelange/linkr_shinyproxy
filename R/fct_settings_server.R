@@ -1,7 +1,3 @@
-##########################################
-# Monitor app performances               #
-##########################################
-
 monitor_perf <- function(r = shiny::reactiveValues(), action = "stop", task = character()){
   
   if (!r$perf_monitoring) return()
@@ -19,10 +15,6 @@ monitor_perf <- function(r = shiny::reactiveValues(), action = "stop", task = ch
     datetime_start <<- Sys.time() 
   }
 }
-
-##########################################
-# Add new data                           #
-##########################################
 
 #' Add new settings data
 #' 
@@ -121,7 +113,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 
     if (id == "settings_datamarts") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.integer(data$data_source)))
     if (id == "settings_studies") new_data <- new_data %>% dplyr::bind_cols(
-      tibble::tribble(~datamart_id,  ~patient_lvl_module_family_id, ~aggregated_module_family_id,
+      tibble::tribble(~datamart_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id,
         as.integer(data$datamart), as.integer(data$patient_lvl_module_family), as.integer(data$aggregated_module_family)))
     if (id == "settings_subsets") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~study_id, as.integer(data$study)))
     if (id == "settings_thesaurus") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.character(data$data_source)))
@@ -139,8 +131,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   
   # Creation of new_data variable for scripts page
   if (table == "scripts"){
-    new_data <- tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
-      last_row + 1, as.character(data$name), "", as.character(Sys.time()), FALSE)
+    new_data <- tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
+      last_row + 1, as.character(data$name), "", as.integer(data$data_source), r$user_id, as.character(Sys.time()), FALSE)
   }
 
   # Creation of new_data variable for users sub-pages
@@ -349,10 +341,6 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   else sapply(c("plugin_name", "script_name", "study_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
-##########################################
-# Prepare data for datatable             #
-##########################################
-
 prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", id = character(),
   table = character(), dropdowns = character(), dropdowns_multiselect = character(), dropdowns_null_value = character(), factorize_cols = character(),
   action_buttons = character(), data_input = tibble::tibble(), data_output = tibble::tibble(), words = tibble::tibble()
@@ -395,9 +383,9 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shi
 
     for (i in 1:nrow(data_output)){
       
-      #############
-      # DROPDOWNS #
-      #############
+      # --- --- --- --
+      # Dropdowns ----
+      # --- --- --- --
       
       if (length(dropdowns) != 0){
         lapply(names(dropdowns), function(name){
@@ -444,9 +432,9 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shi
         })
       }
       
-      ##################
-      # ACTION BUTTONS #
-      ##################
+      # --- --- --- --- ---
+      # Action buttons ----
+      # --- --- --- --- ---
       
       # Action buttons : if in action_buttons vector, add action button
       actions <- tagList()
@@ -496,9 +484,9 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shi
       # Update action column in dataframe
       if (length(action_buttons) != 0) data_output[i, "action"] <- as.character(div(actions))
       
-      ################
-      # CREATOR NAME #
-      ################
+      # --- --- --- --- -
+      # Creator name ----
+      # --- --- --- --- -
       
       if ("creator_id" %in% names(data_output)){
         if (nrow(r$users %>% dplyr::filter(id == data_output[[i, "creator_id"]])) > 0){
@@ -545,10 +533,6 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shi
   data_output
 }
 
-##########################################
-# Reload cache_for_settings              #
-##########################################
-
 #' Reload cache
 #' 
 #' @param r Shiny r reactive value
@@ -579,9 +563,225 @@ reload_cache_for_settings <- function(r = shiny::reactiveValues(), table = chara
   }
 }
 
-##########################################
-# Create a cache for action buttons col  #
-##########################################
+prepare_data_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(), id = character(),
+  table = character(), dropdowns = character(), dropdowns_multiselect = character(), dropdowns_null_value = character(), factorize_cols = character(),
+  action_buttons = character(), data_input = tibble::tibble(), data_output = tibble::tibble(), words = tibble::tibble()
+){
+  
+  monitor_perf(r = r, action = "start")
+  monitor_perf(r = r, action = "stop", task = paste0("prepare_data_datatable _ table = ", table, " / id = ", id))
+  
+  # Initiate data_output, starting from data_input
+  data_output <- data_input
+  
+  # Add module family column for modules elements
+  if (grepl("modules_elements", table)){
+    if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
+    if (grepl("aggregated", table)) prefix <- "aggregated"
+    data_output <- data_output %>% dplyr::left_join(r[[paste0(prefix, "_modules")]] %>%
+        dplyr::select(module_id = id, module_family_id), by = "module_id") %>% dplyr::relocate(module_family_id, .after = name)
+  }
+  
+  # Add a column action in the DataTable
+  # Action column is already loaded for thesaurus_items (cache system)
+  if (!grepl("thesaurus_items", table) & length(action_buttons) != 0) data_output["action"] <- NA_character_
+  
+  # Dropdowns is a named character vector, with names corresponding to column names (eg data_source_id)
+  # and values corresponding to data_var / data variables names (eg data_sources)
+  
+  # Transform dropdowns columns in the dataframe to character
+  if (length(dropdowns) != 0) lapply(names(dropdowns), function(col_name) data_output %>% dplyr::mutate_at(col_name, as.character) ->> data_output)
+  
+  # For each row of the dataframe :
+  # - transform dropdowns columns to show dropdowns in Shiny app
+  # - add an Action column with delete action button (+/- options / edit code buttons)
+  # - show creator name
+  
+  # Loop over data only if necessary (eg not necessary for thesaurus_items, with a lot of rows...)
+  # Not necessary if no dropdowns, no action_buttons & no creator_id col
+  if (!grepl("thesaurus_items", table) & (length(dropdowns) != 0 | length(action_buttons) != 0 | "creator_id" %in% names(data_output))){
+    
+    for (i in 1:nrow(data_output)){
+      
+      # --- --- --- --
+      # Dropdowns ----
+      # --- --- --- --
+      
+      if (length(dropdowns) != 0){
+        lapply(names(dropdowns), function(name){
+          
+          # name here is like "data_source_id"
+          # dropdowns[name] here is like "data_sources"
+          # so r[[dropdowns[[name]]]] is like r$data_sources, var containing data_sources data
+          
+          multiSelect = FALSE
+          null_value <- FALSE
+          
+          # Put a null value in dropdowns
+          if (name %in% dropdowns_null_value) null_value <- TRUE
+          
+          # If this is a multiselect dropdown, split results to integers
+          if (name %in% dropdowns_multiselect){
+            
+            multiSelect <- TRUE
+            value <- NULL
+            if (!(TRUE %in% grepl("[a-zA-Z]", stringr::str_split(data_output[[i, name]], ", ") %>% unlist()))){
+              value <- stringr::str_split(data_output[[i, name]], ", ") %>% unlist() %>% as.integer()
+            }
+          }
+          else value <- as.integer(data_output[[i, name]])
+          
+          options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = null_value, words = words) 
+          
+          # For dropdown parent_module in patient_lvl & aggregated_modules, need to select only modules depending on the same module family
+          
+          if (dropdowns[[name]] %in% c("patient_lvl_modules", "aggregated_modules")){
+            options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]] %>% dplyr::filter(module_family_id == data_output[[i, "module_family_id"]]),
+              key_col = "id", text_col = "name", null_value = null_value, words = words)
+          }
+          
+          data_output[i, name] <<- as.character(
+            div(
+              # ID is like "data_sources13" if ID = 13
+              shiny.fluent::Dropdown.shinyInput(ns(paste0(dropdowns[[name]], data_output[[i, "id"]])), options = options, value = value, multiSelect = multiSelect),
+              # On click, we set variable "dropdown_updated" to the ID of the row (in our example, 13)
+              onclick = paste0("Shiny.setInputValue('", id, "-dropdown_updated', '", paste0(dropdowns[[name]], data_output[[i, "id"]]), "', {priority: 'event'})"),
+              style = "width:200px")
+          )
+          
+        })
+      }
+      
+      # --- --- --- --- ---
+      # Action buttons ----
+      # --- --- --- --- ---
+      
+      # Action buttons : if in action_buttons vector, add action button
+      actions <- tagList()
+      
+      # Add add_item button
+      if ("add" %in% action_buttons){
+        actions <- tagList(actions,
+          actionButton(paste0("add_item_", data_output[i, "id"]), "", icon = icon("plus"),
+            onclick = paste0("Shiny.setInputValue('", id, "-add_item", "', this.id, {priority: 'event'})")), "")}
+      
+      # Add options button
+      if ("options" %in% action_buttons){
+        actions <- tagList(actions,
+          actionButton(paste0("options_", data_output[i, "id"]), "", icon = icon("cog"),
+            onclick = paste0("Shiny.setInputValue('", id, "-options", "', this.id, {priority: 'event'})")), "")}
+      
+      # Add edit code button
+      if ("edit_code" %in% action_buttons){
+        actions <- tagList(actions,
+          actionButton(paste0("edit_code_", data_output[i, "id"]), "", icon = icon("file-code"),
+            onclick = paste0("Shiny.setInputValue('", id, "-edit_code", "', this.id, {priority: 'event'})")), "")}
+      
+      # Add sub datatable button
+      if ("sub_datatable" %in% action_buttons){
+        actions <- tagList(actions,
+          actionButton(paste0("sub_datatable_", data_output[i, "id"]), "", icon = icon("table"),
+            onclick = paste0("Shiny.setInputValue('", id, "-sub_datatable", "', this.id, {priority: 'event'})")), "")}
+      
+      # Add delete button
+      if ("delete" %in% action_buttons){
+        
+        # If row is deletable (we havn't made a function argument for deletable or not, only default subsets are not deletable)
+        # Could be changed later
+        
+        delete <- actionButton(paste0("delete_", data_output[i, "id"]), "", icon = icon("trash-alt"),
+          onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})"))
+        
+        # Default subsets are not deletable
+        if (id == "settings_subsets"){
+          if (data_output[i, "name"] %in% c("All patients", "Tous les patients", "Included patients", "Patients inclus", 
+            "Excluded patients", "Patients exclus")) delete <- ""
+        }
+        
+        actions <- tagList(actions, delete)
+      }
+      
+      # Update action column in dataframe
+      if (length(action_buttons) != 0) data_output[i, "action"] <- as.character(div(actions))
+      
+      # --- --- --- --- -
+      # Creator name ----
+      # --- --- --- --- -
+      
+      if ("creator_id" %in% names(data_output)){
+        if (nrow(r$users %>% dplyr::filter(id == data_output[[i, "creator_id"]])) > 0){
+          data_output[i, "creator_id"] <-
+            r$users %>% dplyr::filter(id == data_output[[i, "creator_id"]]) %>%
+            dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>%
+            dplyr::pull(creator)
+        }
+        else data_output[i, "creator_id"] <- i18n$t("Deleted user")
+      }
+      
+      # Get names for other columns if there are not dropdowns
+      
+      cols <- c("data_source_id" = "data_sources", "datamart_id" = "datamarts", "study_id" = "studies", "module_type_id" = "module_types")
+      sapply(names(cols), function(name){
+        if (name %in% names(data_output) & name %not_in% names(dropdowns)){
+          row_id <- data_output[[i, name]]
+          if (length(row_id) > 0) result <- r[[cols[[name]]]] %>% dplyr::filter(id == as.integer(row_id)) %>% dplyr::pull(name)
+          if (length(result) == 0) result <- ""
+          data_output[[i, name]] <<- result
+        }
+      })
+      
+      cols <- c("module_family_id" = "modules_families", "module_id" = "modules", "plugin_id" = "plugins")
+      sapply(names(cols), function(name){
+        if (name %in% names(data_output) & name %not_in% names(dropdowns)){
+          if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
+          if (grepl("aggregated", table)) prefix <- "aggregated_"
+          if (name == "plugin_id") prefix <- ""
+          
+          row_id <- data_output[[i, name]]
+          if (length(row_id) > 0) result <- r[[paste0(prefix, cols[[name]])]] %>% dplyr::filter(id == as.integer(row_id)) %>% dplyr::pull(name)
+          if (length(result) == 0) result <- ""
+          data_output[[i, name]] <<- result
+        }
+      })
+    }
+  }
+  
+  # Factorize cols
+  
+  data_output <- data_output %>% dplyr::mutate_at(factorize_cols, as.factor)
+  
+  data_output
+}
+
+#' Reload cache
+#' 
+#' @param r Shiny r reactive value
+#' @param table Database table name
+#' @param data Data
+
+reload_cache_for_settings <- function(r = shiny::reactiveValues(), table = character(), data = tibble::tibble()){
+  
+  # Delete old values from cache
+  
+  sql <- glue::glue_sql("DELETE FROM cache_for_settings WHERE table_name = {table}", .con = r$db)
+  query <- DBI::dbSendStatement(r$db, sql)
+  DBI::dbClearResult(query)
+  
+  # Add values to cache
+  
+  for (i in 1:nrow(data)){
+    
+    row <- data[i, ] %>% dplyr::rename(link_id = id)
+    row_values <- row %>% unlist(use.names = FALSE)
+    
+    get_last_row(r$db, "cache_for_settings")
+    
+    sql <- glue::glue_sql("INSERT INTO cache_for_settings(id, table_name, {`colnames(row)`*})
+            SELECT {get_last_row(r$db, 'cache_for_settings') + 1}, {table}, {row*}", .con = r$db)
+    query <- DBI::dbSendStatement(r$db, sql)
+    DBI::dbClearResult(query)
+  }
+}
 
 #' Create cache for datatable data
 #' 
@@ -801,11 +1001,6 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
   data
 }
 
-
-##########################################
-# Save updates in datatable              #
-##########################################
-
 #' Update datatable
 #' 
 #' @param input Shiny input variable
@@ -978,10 +1173,6 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   # Notify user
   show_message_bar(output, 2, "modif_saved", "success", language)
 }
-  
-##########################################
-# Delete a row in datatable              #
-##########################################
 
 #' Render delete react
 #' 
@@ -1109,10 +1300,6 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
   show_message_bar(output = output, id = 3, paste0(get_singular(word = table), "_deleted"), type ="severeWarning", language = language)
 }
 
-##########################################
-# Save updates of options                #
-##########################################  
-
 #' Save options
 #' 
 #' @param output variable from Shiny, used to render messages on the message bar
@@ -1193,10 +1380,6 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   show_message_bar(output, 4, "modif_saved", "success", language)
 }
 
-##########################################
-# Save edition of the code               #
-##########################################  
-
 #' Save code edition
 #' 
 #' @description Save code in code table after editing it
@@ -1232,10 +1415,6 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
   # Notification to user
   show_message_bar(output, 4, "modif_saved", "success", language)
 }
-
-##########################################
-# Execute the code in edit_code          #
-########################################## 
 
 #' Execute / test code after edition
 #' 

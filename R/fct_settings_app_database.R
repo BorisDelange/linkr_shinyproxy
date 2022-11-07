@@ -70,7 +70,8 @@ db_create_tables <- function(db){
       datetime = character(), deleted = logical()))
   
   db_create_table(db, "scripts",
-    tibble::tibble(id = integer(), name = character(), description = character(), datetime = character(), deleted = logical()))
+    tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
+      datetime = character(), deleted = logical()))
   
   db_create_table(db, "patients_options",
     tibble::tibble(id = integer(), datamart_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
@@ -295,7 +296,7 @@ load_database <- function(r = shiny::reactiveValues(), language = "EN"){
   tables <- c(
     "users", "users_accesses", "users_statuses",
     "data_sources", "datamarts", "thesaurus",
-    "plugins", 
+    "plugins",
     "code", 
     "options"
     )

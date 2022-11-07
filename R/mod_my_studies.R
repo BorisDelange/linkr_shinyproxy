@@ -10,7 +10,7 @@
 mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
-  # Delete in a future version 
+  # *** To be removed *** ----
   language <- "EN"
   
   cards <- c("datamarts_options_card", "datamarts_edit_code_card", 
@@ -30,6 +30,11 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     shiny.fluent::Breadcrumb(items = list(
       list(key = "datamart_main", text = i18n$t("My studies"))
     ), maxDisplayedItems = 3),
+    
+    # --- --- -- -- --
+    # Pivot items ----
+    # --- --- -- -- --
+    
     shinyjs::hidden(
       div(id = ns("menu"),
         shiny.fluent::Pivot(
@@ -48,46 +53,11 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
       make_card("", div(shiny.fluent::MessageBar(i18n$t("Choose a damatart in the dropdown on the left-side of the page"), messageBarType = 5), style = "margin-top:10px;"))
     ),
     forbidden_cards,
-    shinyjs::hidden(
-      div(
-        id = ns("datamarts_options_card"),
-        make_card(i18n$t("Datamart options"),
-          div(
-            br(),
-            shiny.fluent::Stack(
-              horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle(language = language, ns = ns, label = "show_only_aggregated_data", inline = TRUE, words = words)
-            ), br(),
-            div(
-              div(class = "input_title", paste0(i18n$t("Grant access to"), " :")),
-              shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
-                list(key = "everybody", text = i18n$t("Everybody")),
-                list(key = "people_picker", text = i18n$t("Choose users"))
-              ), className = "inline_choicegroup"),
-              conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
-                uiOutput(ns("users_allowed_read_div"))
-              )
-            ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_datamart_options"), i18n$t("Save"))
-          )
-        ), br()
-      )
-    ),
-    shinyjs::hidden(
-      div(
-        id = ns("datamarts_edit_code_card"),
-        make_card(i18n$t("Edit datamart code"),
-          div(
-            div(shinyAce::aceEditor(ns("datamart_ace_editor"), "", mode = "r", 
-              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("Save")), " ",
-            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("Run code")), br(), br(),
-            div(shiny::verbatimTextOutput(ns("code_result")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
-          )
-        ), br()
-      )
-    ),
+    
+    # --- --- --- --- -- -- --
+    # Study messages card ----
+    # --- --- --- --- -- -- --
+    
     shinyjs::hidden(
       div(
         id = ns("study_messages_card"),
@@ -110,6 +80,11 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         )
       )
     ),
+    
+    # --- --- --- --- -- -- --
+    # Create a study card ----
+    # --- --- --- --- -- -- --
+    
     shinyjs::hidden(
       div(
         id = ns("studies_creation_card"),
@@ -123,6 +98,11 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         ), br()
       )
     ),
+    
+    # --- --- --- --- --- -- -- --
+    # Studies management card ----
+    # --- --- --- --- --- -- -- --
+    
     shinyjs::hidden(
       div(
         id = ns("studies_datatable_card"),
@@ -134,6 +114,11 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         ), br()
       )
     ),
+    
+    # --- --- --- --- --- ---
+    # Study options card ----
+    # --- --- --- --- --- ---
+    
     shinyjs::hidden(
       div(
         id = ns("study_options_card"),
@@ -151,6 +136,11 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         )
       )
     ),
+    
+    # --- --- --- --- -- -- -- 
+    # Import a study card ----
+    # --- --- --- --- -- -- --
+    
     shinyjs::hidden(
       div(
         id = ns("import_study_card"),
@@ -175,6 +165,11 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         )
       )
     ),
+    
+    # --- --- --- --- -- -- -- 
+    # Export a study card ----
+    # --- --- --- --- -- -- --
+    
     shinyjs::hidden(
       div(
         id = ns("export_study_card"),
@@ -202,16 +197,18 @@ mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    ##########################################
-    # Show or hide cards                     #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Show or hide cards ----
+    # --- --- --- --- --- ---
     
     cards <- c("datamarts_options_card", "datamarts_edit_code_card", 
       "study_messages_card", "studies_creation_card", "studies_datatable_card", "study_options_card",
       "import_study_card", "export_study_card", "modules_families_card")#, "thesaurus_datamart_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
 
-    # When a datamart is chosen
+    # --- --- --- --- --- --- --- --
+    # When a datamart is chosen ----
+    # --- --- --- --- --- --- --- --
     
     observeEvent(r$chosen_datamart, {
       
@@ -226,10 +223,6 @@ mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R
       # Initiate selected_key for study UI
       r$patient_lvl_selected_key <- NA_integer_
       r$aggregated_selected_key <- NA_integer_
-      
-      ##########################################
-      # Load datamart data                     #
-      ##########################################
       
       # Reset r variables (prevent bug later if datamart code doesn't work)
       r$patients <- tibble::tibble()
@@ -250,65 +243,11 @@ mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R
       error = function(e) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
         error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language))
       
-      ##########################################
-      # Load UI data                           #
-      ##########################################
-
-      # Datamart options
-
-      options <- r$options %>% dplyr::filter(category == "datamart", link_id == r$chosen_datamart)
-
-      # All users
-      picker_options <-
-        r$users %>%
-        dplyr::left_join(r$users_statuses %>% dplyr::select(user_status_id = id, user_status = name), by = "user_status_id") %>%
-        dplyr::transmute(
-          key = id,
-          imageInitials = paste0(substr(firstname, 0, 1), substr(lastname, 0, 1)),
-          text = paste0(firstname, " ", lastname),
-          secondaryText = user_status)
-
-      # Users who has access
-      value <-
-        picker_options %>%
-        dplyr::mutate(n = 1:dplyr::n()) %>%
-        dplyr::inner_join(
-          options %>%
-            dplyr::filter(name == "user_allowed_read") %>%
-            dplyr::select(key = value_num),
-          by = "key"
-        ) %>%
-        dplyr::pull(key)
-      
-      selected_items <- picker_options %>% dplyr::filter(key %in% value)
-
-      shiny.fluent::updateToggle.shinyInput(session, "show_only_aggregated_data",
-        value = options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(value_num) %>% as.logical)
-      shiny.fluent::updateChoiceGroup.shinyInput(session, "users_allowed_read_group",
-        value = options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value))
-      output$users_allowed_read_div <- renderUI({
-        make_people_picker(
-          language = language, ns = ns, id = "users_allowed_read", label = "blank", options = picker_options, value = value,
-          width = "100%", style = "padding-bottom:10px;", words = words)
-      })
-
-      # Datamart code
-
-      datamart_code <- r$code %>% dplyr::filter(category == "datamart" & link_id == r$chosen_datamart) %>% dplyr::pull(code)
-      shinyAce::updateAceEditor(session, "datamart_ace_editor", value = datamart_code)
-      
     })
-      
-    ##########################################
-    # Render datamart UI                     #
-    ##########################################
     
-    # Show datamart UI, hide other UIs
-    # r$datamart_page <- Sys.time()
-    
-    ##########################################
-    # Datamart options                       #
-    ##########################################
+    # --- --- --- --- --- -
+    # Datamart options ----
+    # --- --- --- --- --- -
     
     observeEvent(input$save_datamart_options, {
 
@@ -322,9 +261,9 @@ mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R
 
     })
     
-    ##########################################
-    # Edit datamart code                     #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Edit datamart code ----
+    # --- --- --- --- --- ---
 
     # Execute code
     
@@ -364,9 +303,9 @@ mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R
       
     })
     
-    ##########################################
-    # Create a study                         #
-    ##########################################
+    # --- --- --- --- ---
+    # Create a study ----
+    # --- --- --- --- ---
     
     observeEvent(input$add_study, {
       
@@ -383,9 +322,9 @@ mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R
       
     })
     
-    ##########################################
-    # Studies management                     #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Studies management ----
+    # --- --- --- --- --- ---
     
     # Action buttons for each module / page
     action_buttons <- c("delete")
@@ -503,13 +442,13 @@ mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R
       r$chosen_study <- NA_integer_
     })
     
-    ##########################################
-    # Import a study                         #
-    ##########################################
+    # --- --- --- --- ---
+    # Import a study ----
+    # --- --- --- --- ---
     
-    ##########################################
-    # Export a study                         #
-    ##########################################
+    # --- --- --- --- ---
+    # Export a study ----
+    # --- --- --- --- ---
     
   })
 }

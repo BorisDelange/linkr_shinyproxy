@@ -1,7 +1,3 @@
-##########################################
-# Default elements                       #
-##########################################
-
 #' Render UI of settings default elements
 #' 
 #' @description Set default UI elements on top of the page : message_bar outputs, react output to confirm delete of a table element
@@ -20,10 +16,6 @@ render_settings_default_elements <- function(ns = shiny::NS()){
     shiny.fluent::reactOutput(ns("delete_confirm"))
   )
 }
-
-##########################################
-# Toggle card                            #
-##########################################
 
 #' Render UI of settings toggle card
 #' 
@@ -58,10 +50,6 @@ render_settings_toggle_card <- function(language = "EN", ns = shiny::NS(), cards
     )
   )
 }
-
-##########################################
-# Creation card                          #
-##########################################
 
 #' Render UI of settings creation card
 #' 
@@ -120,10 +108,6 @@ render_settings_creation_card <- function(language = "EN", ns = shiny::NS(), id 
   )
 }
 
-##########################################
-# Datatable card                         #
-##########################################
-
 #' Render UI of settings datatable card
 #' 
 #' @param language Language used (character)
@@ -146,10 +130,6 @@ render_settings_datatable_card <- function(language = "EN", ns = shiny::NS(), di
     )
   )
 }
-
-##########################################
-# Options card                           #
-##########################################
 
 #' Render UI of options card
 #' 
@@ -177,9 +157,9 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
   # Get options with page ID
   page_options <- get_page_options(id = id)
   
-  ##########################################
-  # Option = Users allowed to read         #
-  ##########################################
+  # --- --- --- --- --- --- --- --- ---
+  # Option = Users allowed to read ----
+  # --- --- --- --- --- --- --- --- ---
   
   if("users_allowed_read" %in% page_options){
     # List of users in the database, with status as secondaryText
@@ -236,9 +216,9 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
       ), br())
   }
   
-  ##########################################
-  # Option = show only aggregated data     #
-  ##########################################
+  # --- --- --- --- --- --- --- --- --- ---
+  # Option = Show only aggregated data ----
+  # --- --- --- --- --- --- --- --- --- ---
   
   if ("show_only_aggregated_data" %in% page_options){
     value <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(value_num)
@@ -249,10 +229,10 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
       )
     )
   }
-  
-  ##########################################
-  # Option = markdown description     #
-  ##########################################
+
+  # --- --- --- --- --- --- --- --- --
+  # Option = Markdown description ----
+  # --- --- --- --- --- --- --- --- --
   
   if ("markdown_description" %in% page_options){
     value <- options %>% dplyr::filter(name == "markdown_description") %>% dplyr::pull(value)
@@ -261,9 +241,9 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
     ), style = "width: 100%;")
   }
   
-  ##########################################
-  # Final UI code                          #
-  ##########################################
+  # --- --- --- --- --
+  # Final UI code ----
+  # --- --- --- --- --
   
   div(id = ns("options_card"),
     make_card(tagList(translate(language, title, words), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
@@ -276,11 +256,6 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
     )
   )
 }
-
-
-##########################################
-# Edit code card                         #
-##########################################
 
 #' Render UI of edit_code card
 #' 
@@ -419,6 +394,17 @@ forbidden_card <- function(ns = shiny::NS(), name = character(), language = "EN"
       id = ns(paste0(name, "_forbidden")),
       make_card("",
         div(shiny.fluent::MessageBar(translate(language, "unauthorized_access_page", words), messageBarType = 5), style = "margin-top:10px;")
+      )
+    )
+  )
+}
+
+forbidden_card_new <- function(ns = shiny::NS(), name = character(), i18n = R6::R6Class()){
+  shinyjs::hidden(
+    div(
+      id = ns(paste0(name, "_forbidden")),
+      make_card("",
+        div(shiny.fluent::MessageBar(i18n$t("Unauthorized access to this page"), messageBarType = 5), style = "margin-top:10px;")
       )
     )
   )
