@@ -109,7 +109,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         make_card(i18n$t("Studies management"),
           div(
             DT::DTOutput(ns("studies_datatable")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_studies_management"), i18n$t("Save"))
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_studies_management"), i18n$t("save"))
           )
         ), br()
       )

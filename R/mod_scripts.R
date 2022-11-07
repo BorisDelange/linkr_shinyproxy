@@ -22,7 +22,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
     render_settings_default_elements(ns = ns),
     #shiny.fluent::reactOutput(ns("plugin_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = id, text = i18n$t("Scripts"))
+      list(key = id, text = i18n$t("scripts"))
     ), maxDisplayedItems = 3),
     
     # --- --- -- -- --
@@ -34,11 +34,11 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "datamart_scripts_card", itemKey = "datamart_scripts_card", headerText = i18n$t("Choose datamart scripts")),
-          shiny.fluent::PivotItem(id = "scripts_datatable_card", itemKey = "scripts_datatable_card", headerText = i18n$t("Scripts management")),
           shiny.fluent::PivotItem(id = "scripts_creation_card", itemKey = "scripts_creation_card", headerText = i18n$t("Create a script")),
+          shiny.fluent::PivotItem(id = "scripts_datatable_card", itemKey = "scripts_datatable_card", headerText = i18n$t("Scripts management")),
           shiny.fluent::PivotItem(id = "scripts_edit_code_card", itemKey = "scripts_edit_code_card", headerText = i18n$t("Edit script code")),
-          shiny.fluent::PivotItem(id = "scripts_options_card", itemKey = "scripts_options_card", headerText = i18n$t("Script options")),
-          shiny.fluent::PivotItem(id = "scripts_thesaurus_card", itemKey = "scripts_thesaurus_card", headerText = i18n$t("Thesaurus items"))
+          shiny.fluent::PivotItem(id = "scripts_options_card", itemKey = "scripts_options_card", headerText = i18n$t("Script options"))#,
+          #shiny.fluent::PivotItem(id = "scripts_thesaurus_card", itemKey = "scripts_thesaurus_card", headerText = i18n$t("Thesaurus items"))
         )
       )
     ),
@@ -56,10 +56,11 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("datamart_scripts_card"),
-        make_card(i18n$t("Choose datamart scripts"),
-          div(
-            
-          )
+        div(
+          class = glue::glue("card ms-depth-8 ms-sm{12} ms-xl{12}"),
+          shiny.fluent::Text(variant = "large", i18n$t("Choose datamart scripts"), block = TRUE),
+          div(uiOutput(ns("datamart_scripts_bucket_list"))),
+          shiny.fluent::PrimaryButton.shinyInput(ns("save_datamart_scripts"), i18n$t("save"))
         ), br()
       )
     ),
@@ -74,7 +75,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
         make_card(i18n$t("Scripts management"),
           div(
             DT::DTOutput(ns("scripts_datatable")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_scripts_management"), i18n$t("Save"))
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_scripts_management"), i18n$t("save"))
           )
         ), br()
       )
@@ -129,7 +130,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
             #   div(shinyAce::aceEditor(ns("ace_edit_code_server"), "", mode = "r", 
             #     autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
             # 
-            # shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("Save")), " ",
+            # shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
             # shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("Run code")), br(), br(),
             # shiny::uiOutput(ns("code_result_ui")), br(),
             # div(verbatimTextOutput(ns("code_result_server")), 
@@ -151,7 +152,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
             make_combobox_new(i18n = i18n, ns = ns, label = "Script", id = "code_chosen_script",
               width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
             
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_script_options"), i18n$t("Save"))
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_script_options"), i18n$t("save"))
           )
         ), br()
       )
@@ -196,6 +197,10 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
     
     observeEvent(r$chosen_datamart, {
       
+      # Create empty var for r$scripts, if there's an error loading the datamart
+      r$scripts <- tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
+        datetime = character(), deleted = logical())
+      
       # Show first card & hide "choose a datamart" card
       shinyjs::hide("choose_a_datamart_card")
       shinyjs::show("menu")
@@ -226,6 +231,25 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       },
         error = function(e) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
           error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language))
+      
+      # Show list of scripts for this datamart
+      
+      output$datamart_scripts_bucket_list <- renderUI({
+        
+        available_scripts <- r$scripts %>% dplyr::pull(name)
+        chosen_scripts <- NULL
+        
+        result <- sortable::bucket_list(
+          header = NULL,
+          group_name = "bucket_list_group",
+          orientation = "horizontal",
+          sortable::add_rank_list(text = i18n$t("chosen_scripts"), labels = chosen_scripts, input_id = ns("datamart_chosen_scripts")),
+          sortable::add_rank_list(text = i18n$t("available_scripts"), labels = available_scripts, input_id = ns("datamart_available_scripts"))
+        )
+        
+        result
+      })
+      
     })
     
     # --- --- --- -- -- --
@@ -239,11 +263,11 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       new_data$script_name <- new_data$name
       new_data$data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)
       
-      add_settings_new_data(session = session, output = output, r = r, language = language, id = "scripts", 
+      add_settings_new_data_new(session = session, output = output, r = r, i18n = i18n, id = "scripts", 
         data = new_data, table = "scripts", required_textfields = "script_name", req_unique_values = "name")
       
     })
-    
+      
     # --- --- --- --- --- ---
     # Scripts management ----
     # --- --- --- --- --- ---

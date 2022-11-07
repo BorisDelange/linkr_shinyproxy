@@ -100,7 +100,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         make_card(i18n$t("Plugins management"),
           div(
             DT::DTOutput(ns("plugins_datatable")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_plugins_management"), i18n$t("Save"))
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_plugins_management"), i18n$t("save"))
           )
         ), br()
       )
@@ -151,7 +151,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
               div(shinyAce::aceEditor(ns("ace_edit_code_server"), "", mode = "r", 
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
             
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("Save")), " ",
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
             shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("Run code")), br(), br(),
             shiny::uiOutput(ns("code_result_ui")), br(),
             div(verbatimTextOutput(ns("code_result_server")), 
@@ -177,7 +177,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
                 uiOutput(ns("users_allowed_read_div"))
               )
             ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_plugin_options"), i18n$t("Save"))
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_plugin_options"), i18n$t("save"))
           )
         ), br()
       )

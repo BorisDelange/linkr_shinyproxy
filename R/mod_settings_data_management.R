@@ -91,7 +91,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
               width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
             div(shinyAce::aceEditor(ns("ace_edit_code"), "", mode = "r", 
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
-            shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("Save")), " ",
+            shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
             shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("Run code")), br(), br(),
             div(shiny::verbatimTextOutput(ns("code_result")), 
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
@@ -117,7 +117,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
                 uiOutput(ns("users_allowed_read_div"))
               )
             ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("Save"))
+            shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("save"))
           )
         ), br()
       ),
@@ -173,7 +173,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
                   shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
             ),
             DT::DTOutput(ns("sub_datatable")), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), i18n$t("Save"))
+            shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), i18n$t("save"))
           )
         )
       ),
@@ -184,7 +184,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
               width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
             div(shinyAce::aceEditor(ns("ace_edit_code"), "", mode = "r", 
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
-            shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("Save")), " ",
+            shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
             shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("Run code")), br(), br(),
             div(shiny::verbatimTextOutput(ns("code_result")), 
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")

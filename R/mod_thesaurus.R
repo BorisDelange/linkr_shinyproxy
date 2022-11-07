@@ -47,7 +47,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
             div(
               make_combobox(language = "EN", ns = ns, label = "thesaurus", width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
               DT::DTOutput(ns("thesaurus_items")),
-              shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), i18n$t("Save")), " ",
+              shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), i18n$t("save")), " ",
               shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), i18n$t("Reload cache")),
               br(),
               uiOutput(ns("thesaurus_selected_item"))

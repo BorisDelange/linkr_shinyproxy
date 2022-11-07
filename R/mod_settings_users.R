@@ -97,7 +97,7 @@ mod_settings_sub_users_ui <- function(id = character(), i18n = R6::R6Class()){
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
               shiny.fluent::DefaultButton.shinyInput(ns("select_all"), i18n$t("Select all")),
               shiny.fluent::DefaultButton.shinyInput(ns("unselect_all"), i18n$t("Unselect all")),
-              shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("Save")))
+              shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("save")))
           )
         )    
       )

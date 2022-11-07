@@ -33,7 +33,7 @@ mod_settings_general_ui <- function(id = character(), i18n = R6::R6Class()){
             make_textfield(language = language, ns = ns, label = "new_password", id = "new_password_bis",
               type = "password", canRevealPassword = TRUE, width = "300px", words = words)
           ), br(),
-          shiny.fluent::PrimaryButton.shinyInput(ns("save"), i18n$t("Save"))
+          shiny.fluent::PrimaryButton.shinyInput(ns("save"), i18n$t("save"))
         )
       )
     )
