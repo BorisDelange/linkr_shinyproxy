@@ -151,7 +151,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     ##########################################
     
     cards <- c("items_card", "categories_card", "conversions_card", "create_items_card")
-    # show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
+    # show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     ##########################################
     # Render thesaurus UI                      #

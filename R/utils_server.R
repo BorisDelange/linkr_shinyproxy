@@ -11,7 +11,7 @@
 update_r <- function(r = shiny::reactiveValues(), table = character(), language = "EN"){
   tables <- c("users", "users_accesses", "users_statuses",
     "data_sources", "datamarts", "studies", "subsets", "subset_patients", "subsets_patients", "thesaurus", "thesaurus_items",
-    "plugins", 
+    "plugins", "scripts",
     "patient_lvl_modules_families", "patient_lvl_modules", "patient_lvl_modules_elements",
     "aggregated_modules_families", "aggregated_modules", "aggregated_modules_elements",
     "code", 
@@ -20,7 +20,7 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
   
   if (table %not_in% tables) stop(paste0(translate(language, "invalid_table_name"), ". ", translate(language, "tables_allowed"), " : ", toString(tables)))
   
-  if (table %in% c("datamarts", "plugins", "data_sources", "thesaurus")){
+  if (table %in% c("datamarts", "plugins", "scripts", "data_sources", "thesaurus")){
     
     r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
     
@@ -92,39 +92,6 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
     r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
     r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
   }
-  
-  # if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
-  #   
-  #   if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
-  #   if (grepl("aggregated", table)) prefix <- "aggregated"
-  #   
-  #   if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
-  #     if (nrow(r[[table]] > 0)){
-  #       r[[table]] <- get_authorized_data(r = r, table = table)
-  #       r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-  #     }
-  #   }
-  # }
-  
-  # Access by parent
-  # if (table %in% c("patient_lvl_modules", "aggregated_modules", "patient_lvl_modules_elements", "aggregated_modules_elements")){
-  #   
-  #   if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
-  #   if (grepl("aggregated", table)) prefix <- "aggregated_"
-  #   
-  #   if (paste0(prefix, "_modules_see_all_data") %not_in% r$user_accesses){
-  #     modules_families_ids <- get_authorized_data(r = r, table = paste0(prefix, "modules_families")) %>% dplyr::pull(id)
-  #     if (nrow(r[[paste0(prefix, "modules")]]) > 0) modules_ids <- r[[paste0(prefix, "modules")]] %>%
-  #         dplyr::filter(module_family_id %in% modules_families_ids) %>% dplyr::pull(id)
-  #     
-  #     if (nrow(r[[table]] > 0)){
-  #       if (grepl("modules$", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_family_id %in% modules_families_ids)
-  #       if (grepl("modules_elements", table)) r[[table]] <- r[[table]] %>% dplyr::filter(module_id %in% modules_ids)
-  #     }
-  #     
-  #     r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-  #   }
-  # }
 }
 
 #' Get options of a page

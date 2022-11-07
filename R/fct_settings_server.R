@@ -136,6 +136,12 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     new_data <- tibble::tribble(~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
       last_row + 1, as.character(data$name), "", as.integer(data$module_type), as.character(Sys.time()), FALSE)
   }
+  
+  # Creation of new_data variable for scripts page
+  if (table == "scripts"){
+    new_data <- tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
+      last_row + 1, as.character(data$name), "", as.character(Sys.time()), FALSE)
+  }
 
   # Creation of new_data variable for users sub-pages
   # Password is hashed
@@ -207,6 +213,29 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row_code + 1, "plugin_ui", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_code + 2, "plugin_server", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+    DBI::dbAppendTable(r$db, "code", new_code)
+    update_r(r = r, table = "code", language = language)
+    
+    add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_code))
+  }
+  
+  # For options of scripts, add one row for long description (Markdown)
+  if (id == "scripts"){
+    
+    # Add options rows
+    
+    #new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+      # last_row_options + 1, "plugin", last_row + 1, "markdown_description", value, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+    #  last_row_options + 1, "plugin", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+    #  last_row_options + 2, "plugin", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
+    #DBI::dbAppendTable(r$db, "options", new_options)
+    #update_r(r = r, table = "options", language = language)
+    
+    #add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_options))
+    
+    # Add code rows
+    new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+      last_row_code + 1, "script", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "code", new_code)
     update_r(r = r, table = "code", language = language)
     
@@ -317,7 +346,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 
   # Reset textfields
   if (table == "users") sapply(c("username", "firstname", "lastname", "password"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
-  else sapply(c("plugin_name", "study_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
+  else sapply(c("plugin_name", "script_name", "study_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
 ##########################################
@@ -1317,47 +1346,7 @@ get_authorized_data <- function(r, table, data = tibble::tibble()){
   data %>% dplyr::filter(id %in% data_allowed)
 }
 
-#' Show or hide cards
-#' 
-#' 
-
-show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table = character(), id = character(), toggles = character()){
-  
-  sapply(toggles, function(toggle){
-    
-    # Reset toggles when we load the page (restart reactivity, sometimes frozen)
-    observe({
-      shiny.router::get_query_param()
-      shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = FALSE)
-      # If this toggle was activated, reactivate it
-      if (paste0(id, "_", toggle) %in% isolate(r$activated_toggles)) shiny.fluent::updateToggle.shinyInput(session, paste0(toggle, "_toggle"), value = TRUE)
-    })
-    
-    # If user has no access, hide card
-    if (length(table > 0)) toggle_user_access <- paste0(table, "_", toggle)
-    else toggle_user_access <- toggle
-        
-    observeEvent(r$user_accesses, if (toggle_user_access %not_in% r$user_accesses) shinyjs::hide(toggle)) 
-    
-    # If user has access, show or hide card when toggle is clicked
-    observeEvent(input[[paste0(toggle, "_toggle")]], {
-      if (toggle_user_access %in% r$user_accesses){
-        if(input[[paste0(toggle, "_toggle")]]){
-          shinyjs::show(toggle) 
-          # Save that this toggle is activated
-          r$activated_toggles <- c(r$activated_toggles, paste0(id, "_", toggle))
-        }
-        else{
-          shinyjs::hide(toggle)
-          # Save that this toggle is disabled
-          r$activated_toggles <- r$activated_toggles[r$activated_toggles != paste0(id, "_", toggle)]
-        }
-      }
-    })
-  })
-}
-
-show_hide_cards_new <- function(r = shiny::reactiveValues(), session, input, table = character(), id = character(), cards = character()){
+show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table = character(), id = character(), cards = character()){
     
   # If user has access, show or hide card when Pivot is clicked
   observeEvent(input$current_tab, {

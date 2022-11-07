@@ -69,6 +69,9 @@ db_create_tables <- function(db){
     tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 
       datetime = character(), deleted = logical()))
   
+  db_create_table(db, "scripts",
+    tibble::tibble(id = integer(), name = character(), description = character(), datetime = character(), deleted = logical()))
+  
   db_create_table(db, "patients_options",
     tibble::tibble(id = integer(), datamart_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
       category = character(), link_id = integer(), name = character(), value = character(), value_num = numeric(), 

@@ -7,10 +7,14 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_my_studies_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
+mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
-  cards <- c("datamarts_options_card", "datamarts_edit_code_card", "studies_creation_card", "studies_datatable_card",
+  # Delete in a future version 
+  language <- "EN"
+  
+  cards <- c("datamarts_options_card", "datamarts_edit_code_card", 
+    "study_messages_card", "studies_creation_card", "studies_datatable_card", "study_options_card",
     "import_study_card", "export_study_card", "modules_families_card", "thesaurus_datamart_card")
   
   forbidden_cards <- tagList()
@@ -24,28 +28,30 @@ mod_my_studies_ui <- function(id = character(), language = "EN", words = tibble:
     shiny.fluent::reactOutput(ns("study_delete_confirm")),
     shiny.fluent::reactOutput(ns("thesaurus_item_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "datamart_main", text = translate(language, "my_studies", words))
+      list(key = "datamart_main", text = i18n$t("My studies"))
     ), maxDisplayedItems = 3),
     shinyjs::hidden(
       div(id = ns("menu"),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "studies_creation_card", itemKey = "studies_creation_card", headerText = translate(language, "create_study", words)),
-          shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = translate(language, "studies_management", words)),
-          shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study_card", headerText = translate(language, "import_study", words)),
-          shiny.fluent::PivotItem(id = "export_study_card", itemKey = "export_study_card", headerText = translate(language, "export_study", words))
+          shiny.fluent::PivotItem(id = "study_messages_card", itemKey = "study_messages_card", headerText = i18n$t("Messages")),
+          shiny.fluent::PivotItem(id = "studies_creation_card", itemKey = "studies_creation_card", headerText = i18n$t("Create a study")),
+          shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = i18n$t("Studies management")),
+          shiny.fluent::PivotItem(id = "study_options_card", itemKey = "study_options_card", headerText = i18n$t("Study options")),
+          shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study_card", headerText = i18n$t("Import a study")),
+          shiny.fluent::PivotItem(id = "export_study_card", itemKey = "export_study_card", headerText = i18n$t("Export a study"))
         )
       )
     ),
     div(
       id = ns("choose_a_datamart_card"),
-      make_card("", div(shiny.fluent::MessageBar(translate(language, "choose_a_datamart", words), messageBarType = 5), style = "margin-top:10px;"))
+      make_card("", div(shiny.fluent::MessageBar(i18n$t("Choose a damatart in the dropdown on the left-side of the page"), messageBarType = 5), style = "margin-top:10px;"))
     ),
     forbidden_cards,
     shinyjs::hidden(
       div(
         id = ns("datamarts_options_card"),
-        make_card(translate(language, "datamart_options", words),
+        make_card(i18n$t("Datamart options"),
           div(
             br(),
             shiny.fluent::Stack(
@@ -53,16 +59,16 @@ mod_my_studies_ui <- function(id = character(), language = "EN", words = tibble:
               make_toggle(language = language, ns = ns, label = "show_only_aggregated_data", inline = TRUE, words = words)
             ), br(),
             div(
-              div(class = "input_title", paste0(translate(language, "datamart_users_allowed_read", words), " :")),
+              div(class = "input_title", paste0(i18n$t("Grant access to"), " :")),
               shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
-                list(key = "everybody", text = translate(language, "everybody", words)),
-                list(key = "people_picker", text = translate(language, "people_picker", words))
+                list(key = "everybody", text = i18n$t("Everybody")),
+                list(key = "people_picker", text = i18n$t("Choose users"))
               ), className = "inline_choicegroup"),
               conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
                 uiOutput(ns("users_allowed_read_div"))
               )
             ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_datamart_options"), translate(language, "save", words))
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_datamart_options"), i18n$t("Save"))
           )
         ), br()
       )
@@ -70,12 +76,12 @@ mod_my_studies_ui <- function(id = character(), language = "EN", words = tibble:
     shinyjs::hidden(
       div(
         id = ns("datamarts_edit_code_card"),
-        make_card(translate(language, "edit_datamart_code", words),
+        make_card(i18n$t("Edit datamart code"),
           div(
             div(shinyAce::aceEditor(ns("datamart_ace_editor"), "", mode = "r", 
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), translate(language, "save", words)), " ",
-            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), translate(language, "execute_code", words)), br(), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("Save")), " ",
+            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("Run code")), br(), br(),
             div(shiny::verbatimTextOutput(ns("code_result")), 
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
@@ -84,13 +90,35 @@ mod_my_studies_ui <- function(id = character(), language = "EN", words = tibble:
     ),
     shinyjs::hidden(
       div(
+        id = ns("study_messages_card"),
+        make_card(i18n$t("Messages"),
+          div(br(),
+            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p(tags$ul(
+                    tags$li("Message indiquant qu'il faut choisir une étude pour afficher la page"),
+                    tags$li("Affichage des messages, plus récent en bas, avec scroll infini"),
+                    tags$li("Nécessite de bien avoir sécurisé les interfaces R Code (avec environnements...)")
+                  )
+                )
+              ),
+              messageBarType = 0)
+            )
+          )
+        )
+      )
+    ),
+    shinyjs::hidden(
+      div(
         id = ns("studies_creation_card"),
-        make_card(translate(language, "create_study", words), 
+        make_card(i18n$t("Create a study"), 
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
               make_textfield(language = language, ns = ns, label = "name", id = "study_name", width = "300px")
             ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("add_study"), translate(language, "add", words))
+            shiny.fluent::PrimaryButton.shinyInput(ns("add_study"), i18n$t("Add"))
           )
         ), br()
       )
@@ -98,20 +126,37 @@ mod_my_studies_ui <- function(id = character(), language = "EN", words = tibble:
     shinyjs::hidden(
       div(
         id = ns("studies_datatable_card"),
-        make_card(translate(language, "studies_management", words),
+        make_card(i18n$t("Studies management"),
           div(
             DT::DTOutput(ns("studies_datatable")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_studies_management"), translate(language, "save", words))
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_studies_management"), i18n$t("Save"))
           )
         ), br()
       )
     ),
     shinyjs::hidden(
       div(
+        id = ns("study_options_card"),
+        make_card(i18n$t("Study options"),
+          div(br(),
+            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(
+              div(
+                strong("A faire"),
+                p("Pareil que pour les datamarts, à qui donner l'accès à l'étude")
+              ),
+              messageBarType = 0)
+            )
+          )
+        )
+      )
+    ),
+    shinyjs::hidden(
+      div(
         id = ns("import_study_card"),
-        make_card("",
-          div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+        make_card(i18n$t("Import a study"),
+          div(br(),
+            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -133,9 +178,9 @@ mod_my_studies_ui <- function(id = character(), language = "EN", words = tibble:
     shinyjs::hidden(
       div(
         id = ns("export_study_card"),
-        make_card("",
-          div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5)), br(),
+        make_card(i18n$t("Export a study"),
+          div(br(),
+            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -161,9 +206,10 @@ mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R
     # Show or hide cards                     #
     ##########################################
     
-    cards <- c("datamarts_options_card", "datamarts_edit_code_card", "studies_creation_card", "studies_datatable_card",
+    cards <- c("datamarts_options_card", "datamarts_edit_code_card", 
+      "study_messages_card", "studies_creation_card", "studies_datatable_card", "study_options_card",
       "import_study_card", "export_study_card", "modules_families_card")#, "thesaurus_datamart_card")
-    show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
+    show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
 
     # When a datamart is chosen
     
@@ -173,7 +219,7 @@ mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R
       shinyjs::hide("choose_a_datamart_card")
       shinyjs::show("menu")
       if (length(input$current_tab) == 0){
-        if ("studies_creation_card" %in% r$user_accesses) shinyjs::show("studies_creation_card")
+        if ("study_messages_card" %in% r$user_accesses) shinyjs::show("study_messages_card")
         else shinyjs::show("studies_creation_card_forbidden")
       }
       

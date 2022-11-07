@@ -252,7 +252,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     cards <- c("all_plugins_card", "plugins_creation_card", "plugins_datatable_card", "plugins_edit_code_card",
       "plugins_options_card", "import_plugin_card", "export_plugin_card")
-    show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
+    show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     # Show first card
     if ("all_plugins_card" %in% r$user_accesses) shinyjs::show("all_plugins_card")

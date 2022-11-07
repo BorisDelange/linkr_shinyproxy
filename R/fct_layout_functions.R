@@ -69,6 +69,24 @@ make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(
   )
 }
 
+#' Make a shiny.fluent textfield
+#' 
+#' @return Shiny UI elements / HTML code
+#' @examples
+#' 
+make_textfield_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), id = NA_character_, 
+  value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, 
+  margin_right = NULL, words = tibble::tibble()){
+  style <- ""
+  if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
+  if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0(style, "min-width: ", min_width, "; max-width: ", max_width, ";")
+  if (!is.null(margin_right)) style <- paste0(style, "margin-right:", margin_right, ";")
+  div(
+    div(class = "input_title", i18n$t(label)),
+    div(shiny.fluent::TextField.shinyInput(ns(id), value = value, type = type, canRevealPassword = canRevealPassword), style = style)
+  )
+}
+
 #' Make a shiny.fluent dropdown
 #' 
 #' @param language Language used (character)

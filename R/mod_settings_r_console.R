@@ -49,7 +49,7 @@ mod_settings_r_console_server <- function(id = character(), r = shiny::reactiveV
     ##########################################
     
     # cards <- "edit_code_card"
-    # show_hide_cards_new(r = r, input = input, session = session, table = "r_console", id = id, cards = cards)
+    # show_hide_cards(r = r, input = input, session = session, table = "r_console", id = id, cards = cards)
     
     if ("r_console" %in% r$user_accesses){
       shinyjs::show("edit_code_card")

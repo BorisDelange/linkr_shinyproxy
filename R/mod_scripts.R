@@ -51,7 +51,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
         make_card(i18n$t("Create a script"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_textfield(language = language, ns = ns, label = "name", id = "script_name", width = "300px")
+              make_textfield_new(i18n = i18n, ns = ns, label = "Name", id = "script_name", width = "300px")
             ), br(),
             shiny.fluent::PrimaryButton.shinyInput(ns("add_script"), i18n$t("Add"))
           )
@@ -134,11 +134,26 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
     ##########################################
     
     cards <- c("scripts_datatable_card", "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card", "scripts_thesaurus_card")
-    show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
+    show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     # Show first card
     if ("scripts_datatable_card" %in% r$user_accesses) shinyjs::show("scripts_datatable_card")
     else shinyjs::show("all_scripts_card_forbidden")
+    
+    ##########################################
+    # Create a script                        #
+    ##########################################
+    
+    observeEvent(input$add_script, {
+      
+      new_data <- list()
+      new_data$name <- coalesce2(type = "char", x = input$script_name)
+      new_data$script_name <- new_data$name
+      
+      add_settings_new_data(session = session, output = output, r = r, language = language, id = "scripts", 
+        data = new_data, table = "scripts", required_textfields = "script_name", req_unique_values = "name")
+      
+    })
     
   })
 }

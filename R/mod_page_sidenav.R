@@ -75,7 +75,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   # My studies                             #
   ##########################################
   
-  if (id == "my_studies") div(class = "sidenav", dropdowns(c("datamart"))) -> result
+  if (id == "my_studies") div(class = "sidenav", dropdowns(c("datamart", "study"))) -> result
   
   ##########################################
   # My subsets                             #

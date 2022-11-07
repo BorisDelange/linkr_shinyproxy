@@ -133,7 +133,7 @@ mod_my_subsets_server <- function(id = character(), r, language = "EN", i18n = R
     ##########################################
     
     cards <- c("management_card", "edit_code_card", "creation_card", "datatable_card")
-    # show_hide_cards_new(r = r, input = input, session = session, id = id, cards = cards)
+    # show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     observeEvent(input$current_tab, {
       sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
       shinyjs::show(input$current_tab)

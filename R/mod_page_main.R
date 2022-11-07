@@ -26,7 +26,7 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   # My studies & subsets                   #
   ##########################################
   
-  if (id == "my_studies") mod_my_studies_ui(id = "my_studies", language = language, words = words) -> result
+  if (id == "my_studies") mod_my_studies_ui(id = "my_studies", i18n = i18n) -> result
   if (id == "my_subsets") mod_my_subsets_ui(id = "my_subsets", language = language, words = words) -> result
   
   ##########################################
@@ -68,8 +68,7 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
     
     # Subpages of Settings / data management
     sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page_settings){
-      if (id == paste0("settings_", page_settings)) mod_settings_data_management_ui(id = paste0("settings_", page_settings), 
-        language = language, words = words) ->> result
+      if (id == paste0("settings_", page_settings)) mod_settings_data_management_ui(id = paste0("settings_", page_settings), i18n = i18n) ->> result
     })
     
     if (id == "settings_plugins") mod_settings_plugins_ui(id = "settings_plugins", language = language, words = words) -> result
