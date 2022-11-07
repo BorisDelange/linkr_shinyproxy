@@ -193,9 +193,11 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
 #' my_studies Server Functions
 #'
 #' @noRd 
-mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R6::R6Class()){
+mod_my_studies_server <- function(id = character(),  r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    language <- "EN"
     
     # --- --- --- --- --- ---
     # Show or hide cards ----
@@ -220,6 +222,52 @@ mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R
         else shinyjs::show("studies_creation_card_forbidden")
       }
       
+      # The datamart is loaded here, and not in sidenav
+      # Placed in sidenav, the datamart is loaded multiple times (each time a page loads its own sidenav)
+      
+      # Initiate selected_key for study UI
+      r$patient_lvl_selected_key <- NA_integer_
+      r$aggregated_selected_key <- NA_integer_
+      
+      # *** To be deleted ----
+      r$patients <- tibble::tibble()
+      r$stays <- tibble::tibble()
+      r$labs_vitals <- tibble::tibble()
+      r$text <- tibble::tibble()
+      r$orders <- tibble::tibble()
+      r$diagnoses <- tibble::tibble()
+      
+      # Reset r variables (prevent bug later if datamart code doesn't work)
+      d$patients <- tibble::tibble()
+      d$stays <- tibble::tibble()
+      d$labs_vitals <- tibble::tibble()
+      d$text <- tibble::tibble()
+      d$orders <- tibble::tibble()
+      d$diagnoses <- tibble::tibble()
+      
+      # Try to load datamart & scripts associated to this datamart
+      tryCatch({
+
+        run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language, quiet = TRUE)
+
+        # Get scripts associated with this datamart
+        # scripts_code <- r$code %>% dplyr::filter(category == "script") %>% dplyr::select(id = link_id, code) %>%
+        #   dplyr::inner_join(r$scripts %>% dplyr::select(id), by = "id")
+
+        # A r variable to update study dropdown, when the load of datamart is finished
+        r$loaded_datamart <- r$chosen_datamart
+
+        show_message_bar_new(output, 1, "import_datamart_success", "success", i18n = i18n)
+      },
+        error = function(e) report_bug(r = r, output = output, error_message = "fail_load_datamart",
+          error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language))
+      
+    })
+    
+    # Once the datamart is loaded, load studies & scripts
+    observeEvent(r$loaded_datamart, {
+      update_r(r = r, table = "studies")
+      update_r(r = r, table = "scripts")
     })
     
     # --- --- --- --- --- -

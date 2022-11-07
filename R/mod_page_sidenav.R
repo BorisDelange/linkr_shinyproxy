@@ -12,9 +12,9 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   ns <- NS(id)
   result <- ""
   
-  ##########################################
-  # Home                                   #
-  ##########################################
+  # --- --- -
+  # Home ----
+  # --- --- -
   
   if (grepl("^home", id)){
     div(class = "sidenav",
@@ -43,9 +43,9 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
   }
 
   
-  ##########################################
-  # Patient-level & aggregated data        #
-  ##########################################
+  # --- --- --- --
+  # Dropdowns ----
+  # --- --- --- --
   
   if (id %in% c("my_studies", "my_subsets", "thesaurus", "scripts", "patient_level_data", "aggregated_data")){
     
@@ -71,33 +71,33 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
     }
   }
   
-  ##########################################
-  # My studies                             #
-  ##########################################
+  # --- --- --- ---
+  # My studies ----
+  # --- --- --- ---
   
   if (id == "my_studies") div(class = "sidenav", dropdowns(c("datamart", "study"))) -> result
   
-  ##########################################
-  # My subsets                             #
-  ##########################################
+  # --- --- --- ---
+  # My subsets ----
+  # --- --- --- ---
   
   if (id == "my_subsets") div(class = "sidenav", dropdowns(c("datamart", "study", "subset"))) -> result
   
-  ##########################################
-  # Thesaurus                              #
-  ##########################################
+  # --- --- --- --
+  # Thesaurus ----
+  # --- --- --- --
   
   if (id == "thesaurus") div(class = "sidenav", dropdowns(c("datamart"))) -> result
   
-  ##########################################
-  # Scripts                              #
-  ##########################################
+  # --- --- -- -
+  # Scripts ----
+  # --- --- -- -
   
   if (id == "scripts") div(class = "sidenav", dropdowns(c("datamart"))) -> result
   
-  ##########################################
-  # Patient-level data                     #
-  ##########################################
+  # --- --- --- --- --- ---
+  # Patient-level data ----
+  # --- --- --- --- --- ---
   
   if (id == "patient_level_data"){
     div(class = "sidenav",
@@ -120,9 +120,9 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
     ) -> result
   }
   
-  ##########################################
-  # Aggregated data                        #
-  ##########################################
+  # --- --- --- --- -- -
+  # Aggregated data ----
+  # --- --- --- --- -- -
   
   if (id == "aggregated_data") div(
     class = "sidenav", 
@@ -136,9 +136,9 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
     dropdowns(c("datamart", "study", "subset"))
   ) -> result
   
-  ##########################################
-  # Plugins                                #
-  ##########################################
+  # --- --- -- -
+  # Plugins ----
+  # --- --- -- -
   
   if (grepl("^plugins", id)){
     div(class = "sidenav",
@@ -163,9 +163,9 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
     ) -> result
   }
   
-  ##########################################
-  # Settings                               #
-  ##########################################
+  # --- --- --- -
+  # Settings ----
+  # --- --- --- -
   
   if (grepl("^settings", id)){
     
@@ -222,9 +222,9 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
     
     if (id %in% c("my_studies", "my_subsets", "thesaurus", "scripts", "patient_level_data", "aggregated_data")){
       
-      ##########################################
-      # Patient-level & aggregated data        #
-      ##########################################
+      # --- --- --- --- --- --- --- --- -
+      # Patient-lvl & agregated data ----
+      # --- --- --- --- --- --- --- --- -
       
       # Changing page between patient-lvl & aggregated data
       
@@ -242,6 +242,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       # Show or hide main UI
       
       # sapply(c("datamart", "study", "subset"), function(name) observeEvent(input[[paste0(name, "_page")]], r[[paste0(name, "_page")]] <- Sys.time()))
+      
+      # --- --- --- --- -- -
+      # Chosen datamart ----
+      # --- --- --- --- -- -
       
       observeEvent(r$datamarts, {
         
@@ -289,6 +293,44 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         r$data_subset$orders <- tibble::tibble()
       })
       
+      # Update the two pages dropdowns (patient-level data page & aggregated data page)
+      observeEvent(r$chosen_datamart, {
+        
+        shiny.fluent::updateComboBox.shinyInput(session, "datamart", options = 
+            convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), 
+          value = list(key = r$chosen_datamart))
+        
+        # Reset r$chosen_study (to reset main display)
+        if (length(r$chosen_study) == 0) r$chosen_study <- NA_integer_
+        if (!is.na(r$chosen_study)) r$chosen_study <- NA_integer_
+        
+        # Reset dropdowns & uiOutput
+        # Hide exclusion_reason dropdown
+        
+        shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "patient_status", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
+        shinyjs::hide("exclusion_reason_div")
+        output$patient_info <- renderUI("")
+        
+        r$datamart_page <- Sys.time()
+        
+      })
+      
+      # --- --- --- --- -
+      # Chosen study ----
+      # --- --- --- --- -
+      
+      observeEvent(r$studies, {
+        if (nrow(r$studies) == 0) shiny.fluent::updateComboBox.shinyInput(session, "study", options = list(), value = NULL, 
+          errorMessage = i18n$t("No study available"))
+        
+        if (nrow(r$studies) > 0) shiny.fluent::updateComboBox.shinyInput(session, "study",
+          options = convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), value = NULL)
+      })
+      
       observeEvent(input$study, {
 
         # Prevent multiple changes of r$chosen_study
@@ -321,6 +363,21 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         r$patients_options <- DBI::dbGetQuery(r$db, sql)
         
       })
+      
+      observeEvent(r$chosen_study, {
+        
+        req(input$datamart$key & !is.na(r$chosen_study))
+        
+        studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart$key)
+        
+        shiny.fluent::updateComboBox.shinyInput(session, "study", options =
+            convert_tibble_to_list(studies %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words),
+          value = list(key = r$chosen_study))
+      })
+      
+      # --- --- --- --- --
+      # Chosen subset ----
+      # --- --- --- --- --
       
       observeEvent(input$subset, {
         
@@ -367,6 +424,16 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
             key_col = "patient_id", text_col = "name_display"), words = r$words)
         }
       })
+      
+      observeEvent(r$chosen_subset, {
+        req(input$study$key)
+        shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(r$subsets, key_col = "id", text_col = "name", words = r$words),
+          value = list(key = r$chosen_subset))
+      })
+      
+      # --- --- --- --- ---
+      # Chosen patient ----
+      # --- --- --- --- ---
       
       observeEvent(input$patient, {
         
@@ -428,6 +495,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         shinyjs::hide("exclusion_reason_div")
       })
       
+      # --- --- --- -- -
+      # Chosen stay ----
+      # --- --- --- -- -
+      
       observeEvent(input$stay, {
         
         r$chosen_stay <- input$stay$key
@@ -448,7 +519,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
             span(i18n$t("To"), style = style), r$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::pull(discharge_datetime))
         })
       })
-
+      
+      # --- --- --- --- --- --- -
+      # Study patient status ----
+      # --- --- --- --- --- --- -
       
       observeEvent(input$patient_status, {
 
@@ -539,112 +613,6 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         update_r(r = r, table = "patients_options", language = language)
       })
 
-  
-      # Update the two pages dropdowns (patient-level data page & aggregated data page)
-      observeEvent(r$chosen_datamart, {
-        
-        shiny.fluent::updateComboBox.shinyInput(session, "datamart", options = 
-          convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), 
-          value = list(key = r$chosen_datamart))
-        
-        # Studies depending on the chosen datamart
-        
-        # studies <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)
-        
-        # Reset r$chosen_study (to reset main display)
-        if (length(r$chosen_study) == 0) r$chosen_study <- NA_integer_
-        if (!is.na(r$chosen_study)) r$chosen_study <- NA_integer_
-        
-        # Reset dropdowns & uiOutput
-        # Hide exclusion_reason dropdown
-        
-        shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL)
-        shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL)
-        shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
-        shiny.fluent::updateComboBox.shinyInput(session, "patient_status", options = list(), value = NULL)
-        shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
-        shinyjs::hide("exclusion_reason_div")
-        output$patient_info <- renderUI("")
-        
-        r$datamart_page <- Sys.time()
-        
-        # Initiate selected_key for study UI
-        r$patient_lvl_selected_key <- NA_integer_
-        r$aggregated_selected_key <- NA_integer_
-
-        # Reset r variables (prevent bug later if datamart code doesn't work)
-        r$patients <- tibble::tibble()
-        r$stays <- tibble::tibble()
-        r$labs_vitals <- tibble::tibble()
-        r$text <- tibble::tibble()
-        r$orders <- tibble::tibble()
-
-        # Try to load datamart
-        tryCatch({
-          run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language, quiet = TRUE)
-
-          # A r variable to update Study dropdown, when the load of datamart is finished
-          r$loaded_datamart <- r$chosen_datamart
-
-          show_message_bar_new(output, 1, "import_datamart_success", "success", i18n = i18n)
-        },
-        error = function(e) report_bug(r = r, output = output, error_message = "fail_load_datamart",
-          error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language))
-      })
-      
-      # Once the datamart is loaded, load studies & scripts
-      observeEvent(r$loaded_datamart, {
-        update_r(r = r, table = "studies")
-        update_r(r = r, table = "scripts")
-      })
-      
-      observeEvent(r$studies, {
-        if (nrow(r$studies) == 0) shiny.fluent::updateComboBox.shinyInput(session, "study", options = list(), value = NULL, 
-          errorMessage = i18n$t("No study available"))
-        
-        if (nrow(r$studies) > 0) shiny.fluent::updateComboBox.shinyInput(session, "study",
-          options = convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words), value = NULL)
-      })
-      
-      observeEvent(r$chosen_study, {
-
-        req(input$datamart$key & !is.na(r$chosen_study))
-
-        studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart$key)
-
-        shiny.fluent::updateComboBox.shinyInput(session, "study", options =
-          convert_tibble_to_list(studies %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words),
-          value = list(key = r$chosen_study))
-      })
-
-      observeEvent(r$chosen_subset, {
-        req(input$study$key)
-        shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(r$subsets, key_col = "id", text_col = "name", words = r$words),
-          value = list(key = r$chosen_subset))
-      })
     }
-    
-    
-    ##########################################
-    # Settings                               #
-    ##########################################
-    
-    # if (grepl("^settings", id)){
-    # 
-    #   observeEvent(r$user_accesses, {
-    #     
-    #     # Hide links to pages that user doesn't have access
-    #     # Never hide General settings page (default when you click on settings on header page)
-    #     
-    #     pages <- c("app_db", "users", "r_console", "data_sources", "datamarts", "thesaurus", "log")
-    #     
-    #     sapply(pages, function(page) if (page %not_in% r$user_accesses) shinyjs::hide(page))
-    #     
-    #     if ("data_sources" %not_in% r$user_accesses & "datamarts" %not_in% r$user_accesses & "studies" %not_in% r$user_accesses &
-    #       "subsets" %not_in% r$user_accesses & "thesaurus" %not_in% r$user_accesses) shinyjs::hide("data_management")
-    #     
-    #     # if ("plugins" %not_in% r$user_accesses & "patient_lvl_modules" %not_in% r$user_accesses & "aggregated_modules" %not_in% r$user_accesses) shinyjs::hide("plugins_modules")
-    #   })
-    # }
   })
 }

@@ -10,8 +10,11 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
   perf_monitoring = FALSE){
   function(input, output, session ) {
     
-    # Create r reactive value
+    # Create r reactive value, for the application processings
     r <- reactiveValues()
+    
+    # Create d reactive value, for datamart data
+    d <- reactiveValues()
     
     # If perf_monotoring activated
     r$perf_monitoring <- perf_monitoring
@@ -185,7 +188,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       
       monitor_perf(r = r, action = "stop", task = "mod_patient_and_aggregated_data_server")
       
-      mod_my_studies_server("my_studies", r, language, i18n)
+      mod_my_studies_server("my_studies", r, d, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_my_studies_server")
       mod_my_subsets_server("my_subsets", r, language, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_my_susbsets_server")

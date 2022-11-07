@@ -186,6 +186,26 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
           )
         ), br()
       )
+    ),
+    
+    # --- --- --- ---
+    # To do list ----
+    # --- --- --- ---
+    
+    div(shiny.fluent::MessageBar(
+      div(
+        strong("A faire"),
+        tags$ul(
+          tags$li("Afficher description des scripts depuis page 'Configurer le datamart', en cliquant sur une case"),
+          tags$li("Créer un script depuis la page Gestion des scripts, en inline"),
+          tags$li("Pouvoir supprimer les CSV des scripts d'un datamart"),
+          tags$li("Modifier colonne datetime_start (enlever Z & T)"),
+          tags$li("Make all columns sortable"),
+          tags$li("Scripts in red if bug noticed / in green if OK / in grey if never runned since last update of code"),
+          tags$li("Les données du datamart se chargent 4-5 fois, avec r$chosen_datamart...")
+        )
+      ),
+      messageBarType = 0)
     )
   ) -> result
   
@@ -244,20 +264,69 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       
       output$datamart_scripts_bucket_list <- renderUI({
         
-        available_scripts <- r$scripts %>% dplyr::pull(name)
-        chosen_scripts <- NULL
+        all_scripts <- r$scripts
+        chosen_scripts <- r$scripts %>% dplyr::inner_join(
+          r$options %>%
+          dplyr::filter(category == "datamart_scripts", link_id == r$chosen_datamart) %>%
+          dplyr::select(id = value_num),
+          by = "id"
+        )
+          
+        available_scripts <- all_scripts %>% dplyr::anti_join(chosen_scripts, by = "id")
         
         result <- sortable::bucket_list(
           header = NULL,
-          group_name = "bucket_list_group",
+          group_name = ns("all_datamart_scripts"),
           orientation = "horizontal",
-          sortable::add_rank_list(text = i18n$t("chosen_scripts"), labels = chosen_scripts, input_id = ns("datamart_chosen_scripts")),
-          sortable::add_rank_list(text = i18n$t("available_scripts"), labels = available_scripts, input_id = ns("datamart_available_scripts"))
+          sortable::add_rank_list(text = i18n$t("chosen_scripts"), labels = chosen_scripts$name, input_id = ns("datamart_chosen_scripts")),
+          sortable::add_rank_list(text = i18n$t("available_scripts"), labels = available_scripts$name, input_id = ns("datamart_available_scripts"))
         )
         
         result
       })
       
+    })
+    
+    # --- --- --- --- --- -
+    # Datamart scripts ----
+    # --- --- --- --- --- -
+    
+    observeEvent(input$save_datamart_scripts, {
+      
+      # Delete rows in options table concerning the scripts for this datamart
+      
+      sql <- glue::glue_sql("DELETE FROM options WHERE category = 'datamart_scripts' AND link_id = {r$chosen_datamart}", .con = r$db)
+      DBI::dbSendStatement(r$db, sql) -> query
+      DBI::dbClearResult(query)
+      
+      # Add in options table informations concerning the scripts for this datamart
+      
+      if(length(input$datamart_chosen_scripts) > 0){
+        
+        data_insert <- tibble::tibble(category = character(), link_id = integer(), name = character(), value = character(),
+          value_num = numeric(), creator_id = integer(), datetime = character(), deleted = logical())
+        
+        sapply(input$datamart_chosen_scripts, function(script){
+          data_insert <<- data_insert %>%
+            dplyr::bind_rows(
+              tibble::tibble(category = "datamart_scripts", link_id = r$chosen_datamart, name = "", value = "",
+                value_num = r$scripts %>% dplyr::filter(name == script) %>% dplyr::pull(id),
+                creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE)
+            )
+        })
+        
+        data_insert$id <- seq.int(nrow(data_insert)) + get_last_row(r$db, "options")
+        data_insert <- data_insert %>% dplyr::relocate(id)
+        
+        print(data_insert)
+
+        DBI::dbAppendTable(r$db, "options", data_insert)
+      }
+      
+      update_r(r = r, table = "options")
+      
+      show_message_bar_new(output, 4, "modif_saved", "success", i18n)
+        
     })
     
     # --- --- --- --- --- --- -
