@@ -20,7 +20,7 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
   
   if (table %not_in% tables) stop(paste0(translate(language, "invalid_table_name"), ". ", translate(language, "tables_allowed"), " : ", toString(tables)))
   
-  if (table %in% c("datamarts", "plugins", "scripts", "data_sources", "thesaurus")){
+  if (table %in% c("datamarts", "plugins", "data_sources", "thesaurus")){
     
     r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
     

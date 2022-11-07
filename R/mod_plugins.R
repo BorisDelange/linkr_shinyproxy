@@ -42,7 +42,11 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
     shiny.fluent::Breadcrumb(items = list(
       list(key = id, text = i18n$t(page_title))
     ), maxDisplayedItems = 3),
-    # uiOutput(ns("plugins_pivot")),
+    
+    # --- --- -- -- --
+    # Pivot items ----
+    # --- --- -- -- --
+    
     shiny.fluent::Pivot(
       id = ns("plugins_pivot"),
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
@@ -55,6 +59,11 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
       shiny.fluent::PivotItem(id = "export_plugin_card", itemKey = "export_plugin_card", headerText = i18n$t("Export a plugin"))
     ),
     forbidden_cards,
+    
+    # --- --- --- --- --- --- -
+    # Plugins catalog card ----
+    # --- --- --- --- --- --- -
+    
     shinyjs::hidden(
       div(
         id = ns("all_plugins_card"),
@@ -94,6 +103,11 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         )
       )
     ),
+    
+    # --- --- --- --- --- -- -- --
+    # Plugins management card ----
+    # --- --- --- --- --- -- -- --
+    
     shinyjs::hidden(
       div(
         id = ns("plugins_datatable_card"),
@@ -105,6 +119,11 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         ), br()
       )
     ),
+    
+    # --- --- --- --- --- --- -
+    # Create a plugin card ----
+    # --- --- --- --- --- --- -
+    
     shinyjs::hidden(
       div(
         id = ns("plugins_creation_card"),
@@ -118,6 +137,11 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         ), br()
       )
     ),
+    
+    # --- --- --- --- --- --- --
+    # Edit plugin code card ----
+    # --- --- --- --- --- --- --
+    
     shinyjs::hidden(
       div(
         id = ns("plugins_edit_code_card"),
@@ -160,6 +184,11 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         ), br()
       )
     ),
+    
+    # --- --- --- --- -- -- --
+    # Plugin options card ----
+    # --- --- --- --- -- -- --
+    
     shinyjs::hidden(
       div(
         id = ns("plugins_options_card"),
@@ -182,6 +211,11 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         ), br()
       )
     ),
+    
+    # --- --- --- --- --- --- -
+    # Import a plugin card ----
+    # --- --- --- --- --- --- -
+    
     shinyjs::hidden(
       div(
         id = ns("import_plugin_card"),
@@ -198,6 +232,11 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         ), br()
       )
     ),
+    
+    # --- --- --- --- --- --- -
+    # Export a plugin card ----
+    # --- --- --- --- --- --- -
+    
     shinyjs::hidden(
       div(
         id = ns("export_plugin_card"),
@@ -246,9 +285,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     r[[paste0(prefix, "_plugins_datatable_loaded")]] <- FALSE
  
-    ##########################################
-    # Show or hide cards                     #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Show or hide cards ----
+    # --- --- --- --- --- ---
     
     cards <- c("all_plugins_card", "plugins_creation_card", "plugins_datatable_card", "plugins_edit_code_card",
       "plugins_options_card", "import_plugin_card", "export_plugin_card")
@@ -258,9 +297,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     if ("all_plugins_card" %in% r$user_accesses) shinyjs::show("all_plugins_card")
     else shinyjs::show("all_plugins_card_forbidden")
     
-    ##########################################
-    # Update dropdowns                       #
-    ##########################################
+    # --- --- --- --- --- -
+    # Update dropdowns ----
+    # --- --- --- --- --- -
     
     observeEvent(r$plugins, {
       
@@ -270,13 +309,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options)
     })
     
-    ##########################################
-    # See all plugins                        #
-    ##########################################
+    # --- --- --- --- -- -
+    # Plugins catalog ----
+    # --- --- --- --- -- -
     
-    ##########################################
-    # Create a plugin                        #
-    ##########################################
+    # --- --- --- --- -- -
+    # Create a plugin ----
+    # --- --- --- --- -- -
     
     observeEvent(input$add_plugin, {
       
@@ -290,9 +329,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
     })
     
-    ##########################################
-    # Plugins management                     #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Plugins management ----
+    # --- --- --- --- --- ---
     
     # Action buttons for each module / page
     action_buttons_plugins_management <- c("delete", "edit_code", "options")
@@ -482,9 +521,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       shinyjs::runjs(glue::glue("$('#{id}-plugins_pivot button[name=\"{i18n$t('Plugin options')}\"]').click();"))
     })
     
-    ##########################################
-    # Plugin options                         #
-    ##########################################
+    # --- --- --- -- -- -
+    # Plugin options ----
+    # --- --- --- -- -- -
     
     observeEvent(input$options_chosen_plugin, {
 
@@ -557,9 +596,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
     })
     
-    ##########################################
-    # Edit plugin code                       #
-    ##########################################
+    # --- --- --- --- --- -
+    # Edit plugin code ----
+    # --- --- --- --- --- -
     
     observeEvent(input$code_chosen_plugin, {
       
@@ -600,9 +639,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     if (prefix == "patient_lvl"){
       
-      ##########################################
-      # Thesaurus datatable                    #
-      ##########################################
+      # --- --- --- --- --- --- -
+      ## Thesaurus datatable ----
+      # --- --- --- --- --- --- -
       
       # Load thesaurus attached to this datamart
       observeEvent(r$chosen_datamart, {
@@ -702,9 +741,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         r$plugin_thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
       })
       
-      ##########################################
-      # Thesaurus items                        #
-      ##########################################
+      # --- --- --- --- -- -
+      # Thesaurus items ----
+      # --- --- --- --- -- -
       
       # When add button is clicked
       observeEvent(input$item_selected, {
@@ -896,9 +935,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       }
     })
     
-    ##########################################
-    # Import a plugin                        #
-    ##########################################
+    # --- --- --- --- -- -
+    # Import a plugin ----
+    # --- --- --- --- -- -
     
     observeEvent(input$import_plugins_browse, shinyjs::click("import_plugins_upload"))
     
@@ -1018,9 +1057,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         error_name = paste0(id, " - import plugins"), category = "Error", error_report = e, language = language))
     })
     
-    ##########################################
-    # Export a plugin                        #
-    ##########################################
+    # --- --- --- --- -- -
+    # Export a plugin ----
+    # --- --- --- --- -- -
     
     # When add button is clicked
     observeEvent(input$add_item, {

@@ -398,7 +398,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         "thesaurus", c("thesaurus_see_all_data", "thesaurus_edit_data", "thesaurus_delete_data", "thesaurus_creation_card", "thesaurus_datatable_card", "thesaurus_sub_datatable_card", "thesaurus_edit_code_card", "thesaurus_datamart_card"),
         "plugins", c("all_plugins_card", "plugins_see_all_data", "plugins_edit_data", "plugins_delete_data", "plugins_description_card", "plugins_creation_card", "plugins_datatable_card",
           "plugins_options_card", "plugins_edit_code_card", "import_plugin_card", "export_plugin_card"),
-        "scripts", c("datamart_scripts_card", "scripts_datatable_card", "scripts_see_all_data", "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card", "scripts_thesaurus_card"),
+        "scripts", c("scripts_descriptions_card", "datamart_scripts_card", "scripts_datatable_card", "scripts_see_all_data", "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card", "scripts_thesaurus_card"),
         # "patient_lvl_modules", c("patient_lvl_modules_see_all_data", "patient_lvl_modules_edit_data", "patient_lvl_modules_delete_data", "patient_lvl_modules_creation_card", "patient_lvl_modules_management_card", "patient_lvl_modules_options_card"),
         # "aggregated_modules", c("aggregated_modules_see_all_data", "aggregated_modules_edit_data", "aggregated_modules_delete_data", "aggregated_modules_creation_card", "aggregated_modules_management_card", "aggregated_modules_options_card"),
         "log", c("all_users", "only_me")

@@ -519,14 +519,12 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     
     # Add options rows
     
-    #new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-    # last_row_options + 1, "plugin", last_row + 1, "markdown_description", value, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-    #  last_row_options + 1, "plugin", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-    #  last_row_options + 2, "plugin", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    #DBI::dbAppendTable(r$db, "options", new_options)
-    #update_r(r = r, table = "options", language = language)
+    new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+      last_row_options + 1, "script", last_row + 1, "markdown_description", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+    DBI::dbAppendTable(r$db, "options", new_options)
+    update_r(r = r, table = "options", language = language)
     
-    #add_log_entry(r = r, category = paste0("code", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_options))
+    add_log_entry(r = r, category = paste0("options", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_options))
     
     # Add code rows
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
@@ -1477,6 +1475,99 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   show_message_bar(output, 2, "modif_saved", "success", language)
 }
 
+save_settings_datatable_updates_new <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), 
+  table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = R6::R6Class()){
+  
+  # Make sure there's no duplicate in names, if duplicates_allowed is set to FALSE
+  
+  # If r_table is different than table
+  if (length(r_table) == 0) r_table <- table
+  
+  if (!duplicates_allowed){
+    
+    duplicates_name <- 0
+    duplicates_display_order <- 0
+    module_is_its_own_parent <- 0
+    loop_over_modules <- 0
+    
+    # For modules tables (patient_lvl & aggregated, modules / modules_families / modules_elements)
+    # Duplicates names are grouped (by family for modules, by module for modules elements)
+    # It's the same with the display order
+    
+    if (grepl("modules", table)){
+      if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+        
+        duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+          dplyr::group_by(module_family_id, name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+        
+        duplicates_display_order <- r[[paste0(table, "_temp")]] %>%
+          dplyr::group_by(module_family_id, parent_module_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+        
+        # A module cannot be its own parent (infinite loop...)
+        module_is_its_own_parent <- r[[paste0(table, "_temp")]] %>% dplyr::filter(id == parent_module_id) %>% nrow()
+        
+        if (module_is_its_own_parent == 0) loop_over_modules <- r[[paste0(table, "_temp")]] %>% dplyr::filter(!is.na(parent_module_id)) %>%
+          dplyr::left_join(r[[paste0(table, "_temp")]] %>% dplyr::select(parent_module_id = id, parent_module_id_bis = parent_module_id), by = "parent_module_id") %>%
+          dplyr::filter(id == parent_module_id_bis) %>% nrow()
+      }
+      
+      if (table == "aggregated_modules_elements"){
+        duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+          dplyr::group_by(module_id, name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+        
+        duplicates_display_order <- r[[paste0(table, "_temp")]] %>%
+          dplyr::group_by(module_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+      }
+      
+      if (duplicates_name > 0) show_message_bar_new(output, 1, "modif_names_duplicates", "severeWarning", i18n)
+      if (duplicates_display_order > 0) show_message_bar_new(output, 1, "modif_display_order_duplicates", "severeWarning", i18n)
+      if (module_is_its_own_parent > 0) show_message_bar_new(output, 1, "module_cannot_be_its_own_parent", "severeWarning", i18n)
+      if (loop_over_modules > 0) show_message_bar_new(output, 1, "module_loop_between_modules", "severeWarning", i18n)
+      
+    }
+    
+    # For other tables
+    if (!grepl("modules", table)){
+      
+      if (table == "users") duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("username", tolower) %>%
+          dplyr::group_by(username) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+      
+      if (table != "users") duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+          dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+      
+      if (duplicates_name > 0) show_message_bar_new(output, 1, "modif_names_duplicates", "severeWarning", i18n)
+    }
+    
+    req(duplicates_name == 0, duplicates_display_order == 0, module_is_its_own_parent == 0, loop_over_modules == 0)
+  }
+  
+  # Save changes in database
+  
+  ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+  
+  if (length(ids_to_del) == 0) show_message_bar_new(output, 2, "modif_saved", "success", i18n)
+  
+  req(length(ids_to_del) > 0)
+  
+  DBI::dbSendStatement(r$db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
+  DBI::dbClearResult(query)
+  
+  # If action in columns, remove before insert into database (for thesaurus_items with cache system)
+  # Same with count_items_rows (and count_patients_rows, always with count_items_rows)
+  data <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
+  if ("action" %in% names(data)) data <- data %>% dplyr::select(-action)
+  if ("count_items_rows" %in% names(data)) data <- data %>% dplyr::select(-count_items_rows, -count_patients_rows)
+  
+  DBI::dbAppendTable(r$db, table, data)
+  
+  # Reload r variable
+  if (table == "thesaurus_items") r$datamart_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
+  else update_r(r = r, table = table)
+  
+  # Notify user
+  show_message_bar_new(output, 2, "modif_saved", "success", i18n)
+}
+
 #' Render delete react
 #' 
 #' @param r Shiny r reactive value to communicate between modules
@@ -1906,5 +1997,67 @@ delete_element <- function(r = shiny::reactiveValues(), session, input, output, 
     # Information variable
     if (length(information_variable) > 0) r[[information_variable]] <- r[[id_var_r]]
 
+  })
+}
+
+delete_element_new <- function(r = shiny::reactiveValues(), session, input, output, ns = shiny::NS(), i18n = R6::R6Class(),
+  delete_prefix = character(), dialog_title = character(), dialog_subtext = character(),
+  react_variable = character(), table = character(), id_var_sql = character(), id_var_r = character(),
+  delete_message = character(), reload_variable = character(), information_variable = character(), translation = TRUE){
+  
+  delete_variable <- paste0(delete_prefix, "_open_dialog")
+  
+  r[[delete_variable]] <- FALSE
+  
+  if (translation){
+    dialog_title <- i18n$t(dialog_title)
+    dialog_subtext <- i18n$t(dialog_subtext)
+  }
+  
+  dialog_content <- list(
+    type = 0,
+    title = dialog_title,
+    closeButtonAriaLabel = "Close",
+    subText = dialog_subtext
+  )
+  
+  output[[react_variable]] <- shiny.fluent::renderReact({
+    
+    shiny.fluent::Dialog(
+      hidden = !r[[delete_variable]],
+      onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", delete_prefix, "_hide_dialog', Math.random()); }")),
+      dialogContentProps = dialog_content,
+      modalProps = list(),
+      shiny.fluent::DialogFooter(
+        shiny.fluent::PrimaryButton.shinyInput(ns(paste0(delete_prefix, "_delete_confirmed")), text = i18n$t("delete")),
+        shiny.fluent::DefaultButton.shinyInput(ns(paste0(delete_prefix, "_delete_canceled")), text = i18n$t("dont_delete"))
+      )
+    )
+  })
+  
+  # Whether to close or not delete dialog box
+  observeEvent(input[[paste0(delete_prefix, "_hide_dialog")]], r[[delete_variable]] <- FALSE)
+  observeEvent(input[[paste0(delete_prefix, "_delete_canceled")]], r[[delete_variable]] <- FALSE)
+  
+  # When the deletion is confirmed...
+  observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
+    
+    r[[delete_variable]] <- FALSE
+    # Delete row in DB table
+    sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE {`id_var_sql`} = {r[[id_var_r]]}" , .con = r$db)
+    DBI::dbSendStatement(r$db, sql) -> query
+    DBI::dbClearResult(query)
+    
+    update_r(r = r, table = table)
+    
+    # Notify user
+    show_message_bar_new(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n)
+    
+    # Activate reload variable
+    r[[reload_variable]] <- Sys.time()
+    
+    # Information variable
+    if (length(information_variable) > 0) r[[information_variable]] <- r[[id_var_r]]
+    
   })
 }

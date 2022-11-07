@@ -10,7 +10,8 @@
 mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
-  cards <- c("datamart_scripts_card", "scripts_datatable_card", "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card", "scripts_thesaurus_card")
+  cards <- c("scripts_descriptions_card", "datamart_scripts_card", "scripts_datatable_card", 
+    "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
@@ -20,7 +21,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
   div(
     class = "main",
     render_settings_default_elements(ns = ns),
-    #shiny.fluent::reactOutput(ns("plugin_delete_confirm")),
+    shiny.fluent::reactOutput(ns("script_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = id, text = i18n$t("scripts"))
     ), maxDisplayedItems = 3),
@@ -32,13 +33,14 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(id = ns("menu"),
         shiny.fluent::Pivot(
+          id = ns("scripts_pivot"),
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "datamart_scripts_card", itemKey = "datamart_scripts_card", headerText = i18n$t("Choose datamart scripts")),
+          shiny.fluent::PivotItem(id = "scripts_descriptions_card", itemKey = "scripts_descriptions_card", headerText = i18n$t("scripts_descriptions_card")),
           shiny.fluent::PivotItem(id = "scripts_creation_card", itemKey = "scripts_creation_card", headerText = i18n$t("Create a script")),
           shiny.fluent::PivotItem(id = "scripts_datatable_card", itemKey = "scripts_datatable_card", headerText = i18n$t("Scripts management")),
           shiny.fluent::PivotItem(id = "scripts_edit_code_card", itemKey = "scripts_edit_code_card", headerText = i18n$t("Edit script code")),
-          shiny.fluent::PivotItem(id = "scripts_options_card", itemKey = "scripts_options_card", headerText = i18n$t("Script options"))#,
-          #shiny.fluent::PivotItem(id = "scripts_thesaurus_card", itemKey = "scripts_thesaurus_card", headerText = i18n$t("Thesaurus items"))
+          shiny.fluent::PivotItem(id = "scripts_options_card", itemKey = "scripts_options_card", headerText = i18n$t("Script options"))
         )
       )
     ),
@@ -48,6 +50,25 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
       make_card("", div(shiny.fluent::MessageBar(i18n$t("Choose a damatart in the dropdown on the left-side of the page"), messageBarType = 5), style = "margin-top:10px;"))
     ),
     forbidden_cards,
+    
+    # --- --- --- --- --- --- --- --
+    # Scripts descriptions card ----
+    # --- --- --- --- --- --- --- --
+    
+    shinyjs::hidden(
+      div(
+        id = ns("scripts_descriptions_card"),
+        make_card(i18n$t("scripts_descriptions_card"),
+          div(
+            make_combobox_new(i18n = i18n, ns = ns, label = "script", id = "scripts_description_chosen_script",
+              width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
+            div(id = ns("scripts_description_markdown_output"),
+              uiOutput(ns("scripts_description_markdown_result")), 
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px; padding-top: 10px;")
+          )
+        ), br()
+      )
+    ),
     
     # --- --- --- --- --- --- --
     # Datamart scripts card ----
@@ -108,33 +129,33 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("scripts_edit_code_card"),
         make_card(i18n$t("Edit script code"),
           div(
-            make_combobox_new(i18n = i18n, ns = ns, label = "Script", id = "code_chosen_script",
-              width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE)
-            
-            # thesaurus_items_div, br(),
-            # 
-            # shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-            #   shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
-            #     list(key = "ui", text = i18n$t("UI")),
-            #     list(key = "server", text = i18n$t("Server"))
-            #   ), className = "inline_choicegroup"),
-            #   div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
-            #   div(i18n$t("Hide editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
-            # ),
-            # shinyjs::hidden(div(id = ns("div_br"), br())),
-            # 
-            # conditionalPanel(condition = "input.edit_code_ui_server == 'ui'", ns = ns,
-            #   div(shinyAce::aceEditor(ns("ace_edit_code_ui"), "", mode = "r", 
-            #     autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
-            # conditionalPanel(condition = "input.edit_code_ui_server == 'server'", ns = ns,
-            #   div(shinyAce::aceEditor(ns("ace_edit_code_server"), "", mode = "r", 
-            #     autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
-            # 
-            # shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
-            # shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("Run code")), br(), br(),
-            # shiny::uiOutput(ns("code_result_ui")), br(),
-            # div(verbatimTextOutput(ns("code_result_server")), 
-            #   style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            make_combobox_new(i18n = i18n, ns = ns, label = "script", id = "code_chosen_script",
+              width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              div(shiny.fluent::Toggle.shinyInput(ns("hide_code_editor"), value = FALSE), style = "margin-top:9px;"),
+              div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+            ),
+            shinyjs::hidden(div(id = ns("div_br"), br())),
+
+            div(shinyAce::aceEditor(ns("ace_edit_code"), "", mode = "r",
+              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
+
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
+              shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")),
+              div(i18n$t("output"), " : ", style = "margin:5px 0px 0px 30px; font-weight:bold;"),
+              div(shiny.fluent::ChoiceGroup.shinyInput(ns("output_type"), value = "console", 
+                options = list(
+                  list(key = "console", text = i18n$t("console")),
+                  list(key = "table", text = i18n$t("table"))
+                ), 
+              className = "inline_choicegroup"), 
+              style = "margin:-3px 0px 0px 20px;")
+            ),
+            br(), br(),
+            div(id = ns("console_output"), verbatimTextOutput(ns("console_result")),
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
+            shinyjs::hidden(div(id = ns("table_output"), DT::DTOutput(ns("table_result")), style = "width: 99%; margin-right: 5px;"))
           )
         ), br()
       )
@@ -149,25 +170,19 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("scripts_options_card"),
         make_card(i18n$t("Script options"),
           div(
-            make_combobox_new(i18n = i18n, ns = ns, label = "Script", id = "code_chosen_script",
+            make_combobox_new(i18n = i18n, ns = ns, label = "script", id = "options_chosen_script",
               width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
+            strong(i18n$t("script_description")), br(),
             
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_script_options"), i18n$t("save"))
-          )
-        ), br()
-      )
-    ),
-    
-    # --- --- --- --- --- --- ---
-    # Scripts thesaurus card ----
-    # --- --- --- --- --- --- ---
-    
-    shinyjs::hidden(
-      div(
-        id = ns("scripts_thesaurus_card"),
-        make_card("",
-          div(
+            div(shinyAce::aceEditor(ns("ace_options_description"), "", mode = "markdown",
+              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
             
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_options_description"), i18n$t("save")), " ",
+            shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("run_code")),
+            br(), br(),
+            div(id = ns("description_markdown_output"),
+              uiOutput(ns("description_markdown_result")), 
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px; padding-top: 10px;")
           )
         ), br()
       )
@@ -188,8 +203,23 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
     # Show or hide cards ----
     # --- --- --- --- --- ---
     
-    cards <- c("datamart_scripts_card", "scripts_datatable_card", "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card", "scripts_thesaurus_card")
+    cards <- c("scripts_descriptions_card", "datamart_scripts_card", "scripts_datatable_card",
+      "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
+    
+    # --- --- --- --- --- -
+    # Update dropdowns ----
+    # --- --- --- --- --- -
+    
+    observeEvent(r$scripts, {
+      
+      options <- convert_tibble_to_list(r$scripts%>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      
+      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", options = options)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", options = options)
+      shiny.fluent::updateComboBox.shinyInput(session, "scripts_description_chosen_script", options = options)
+      
+    })
     
     # --- --- --- --- --- --- --- --
     # When a datamart is chosen ----
@@ -201,6 +231,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       r$scripts <- tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical())
       
+      update_r(r = r, table = "scripts")
+      
       # Show first card & hide "choose a datamart" card
       shinyjs::hide("choose_a_datamart_card")
       shinyjs::show("menu")
@@ -208,30 +240,6 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
         if ("datamart_scripts_card" %in% r$user_accesses) shinyjs::show("datamart_scripts_card")
         else shinyjs::show("datamart_scripts_card_forbidden")
       }
-      
-      # Initiate selected_key for study UI
-      r$patient_lvl_selected_key <- NA_integer_
-      r$aggregated_selected_key <- NA_integer_
-      
-      # Reset r variables (prevent bug later if datamart code doesn't work)
-      r$patients <- tibble::tibble()
-      r$stays <- tibble::tibble()
-      r$labs_vitals <- tibble::tibble()
-      r$text <- tibble::tibble()
-      r$orders <- tibble::tibble()
-      
-      # Try to load datamart 
-      tryCatch({
-        run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language, quiet = TRUE)
-        
-        # A r variable to update Study dropdown, when the load of datamart is finished
-        r$loaded_datamart <- r$chosen_datamart
-        
-        show_message_bar(output, 1, "import_datamart_success", "success", language, r$words)
-      },
-        error = function(e) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-          error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language))
-      
       # Show list of scripts for this datamart
       
       output$datamart_scripts_bucket_list <- renderUI({
@@ -250,6 +258,42 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
         result
       })
       
+    })
+    
+    # --- --- --- --- --- --- -
+    # Scripts descriptions ----
+    # --- --- --- --- --- --- -
+    
+    observeEvent(input$scripts_description_chosen_script, {
+      
+      if (length(input$scripts_description_chosen_script) > 1) link_id <- input$scripts_description_chosen_script$key
+      else link_id <- input$scripts_description_chosen_script
+      
+      # Get description from database
+      script_description <- r$options %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(value) %>%
+        stringr::str_replace_all("\r", "\n")
+      
+      tryCatch({
+        
+        # Clear temp dir
+        unlink(paste0(path.expand("~"), "/linkr_temp_files"), recursive = TRUE, force = TRUE)
+        
+        markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
+          path.expand("~"), "/linkr_temp_files')\n",
+          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files', fig.path = '", path.expand("~"), "/linkr_temp_files')\n```\n")
+        
+        markdown_file <- paste0(markdown_settings, script_description)
+        
+        # Create temp dir
+        dir <- paste0(path.expand("~"), "/linkr_temp_files")
+        file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
+        if (!dir.exists(dir)) dir.create(dir)
+        
+        # Create the markdown file
+        knitr::knit(text = markdown_file, output = file, quiet = TRUE)
+        
+        output$scripts_description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
+      }, error = function(e) "")
     })
     
     # --- --- --- -- -- --
@@ -273,13 +317,13 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
     # --- --- --- --- --- ---
     
     # Action buttons for each module / page
-    action_buttons <- c("delete")
+    action_buttons <- c("delete", "edit_code", "options")
     
     editable_cols <- c("name")
     sortable_cols <- c("id", "name", "data_source_id", "creator_id", "datetime")
     column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
     centered_cols <- c("id", "creator", "datetime", "action")
-    searchable_cols <- c("name", "description", "data_source_id", "creator_id")
+    searchable_cols <- c("name", "description", "creator_id", "data_source_id", "creator_id")
     factorize_cols <- c("creator_id")
     hidden_cols <- c("id", "description", "data_source_id", "deleted", "modified")
     col_names <- get_col_names_new("scripts", i18n)
@@ -316,79 +360,315 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
 
       r$scripts_datatable_proxy <- DT::dataTableProxy("scripts_datatable", deferUntilFlush = FALSE)
     })
-    # 
-    # # Reload datatable
-    # observeEvent(r$studies_temp, {
-    #   
-    #   # Reload datatable_temp variable
-    #   r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-    #     table = "studies", factorize_cols = factorize_cols, action_buttons = action_buttons, 
-    #     data_input = r$studies_temp, words = r$words)
-    #   
-    #   # Reload data of datatable
-    #   if (length(r$studies_datatable_proxy) > 0) DT::replaceData(r$studies_datatable_proxy, 
-    #     r$studies_datatable_temp, resetPaging = FALSE, rownames = FALSE)
-    # })
-    # 
-    # # Updates on datatable data
-    # observeEvent(input$studies_datatable_cell_edit, {
-    #   
-    #   edit_info <- input$studies_datatable_cell_edit
-    #   r$studies_temp <- DT::editData(r$studies_temp, edit_info, rownames = FALSE)
-    #   
-    #   # Store that this row has been modified
-    #   r$studies_temp[[edit_info$row, "modified"]] <- TRUE
-    # })
-    # 
-    # # Save updates
-    # observeEvent(input$save_studies_management, {
-    #   
-    #   req(nrow(r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)) > 0)
-    #   
-    #   save_settings_datatable_updates(output = output, r = r, ns = ns, table = "studies", language = language, duplicates_allowed = FALSE)
-    #   
-    #   # Update sidenav dropdown with the new study
-    #   r$reload_studies <- Sys.time()
-    # })
-    # 
-    # # Delete a row in datatable
-    # 
-    # study_delete_prefix <- "study"
-    # study_dialog_title <- "studies_delete"
-    # study_dialog_subtext <- "studies_delete_subtext"
-    # study_react_variable <- "study_delete_confirm"
-    # study_table <- "studies"
-    # study_id_var_sql <- "id"
-    # study_id_var_r <- "delete_study"
-    # study_delete_message <- "study_deleted"
-    # study_reload_variable <- "reload_studies"
-    # study_information_variable <- "study_deleted"
-    # study_delete_variable <- paste0(study_delete_prefix, "_open_dialog")
-    # 
-    # delete_element(r = r, input = input, output = output, session = session, ns = ns, language = language,
-    #   delete_prefix = study_delete_prefix, dialog_title = study_dialog_title, dialog_subtext = study_dialog_subtext,
-    #   react_variable = study_react_variable, table = study_table, id_var_sql = study_id_var_sql, id_var_r = study_id_var_r, 
-    #   delete_message = study_delete_message, translation = TRUE, reload_variable = study_reload_variable, 
-    #   information_variable = study_information_variable)
-    # 
-    # observeEvent(input$deleted_pressed, {
-    #   
-    #   r$delete_study <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
-    #   r[[study_delete_variable]] <- TRUE
-    #   
-    # })
-    # 
-    # observeEvent(r$reload_studies, {
-    #   
-    #   # Reload sidenav dropdown with reloading studies
-    #   update_r(r = r, table = "studies")
-    #   
-    #   # Reload datatable
-    #   r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)  %>% dplyr::mutate(modified = FALSE)
-    #   
-    #   # Reset chosen study
-    #   r$chosen_study <- NA_integer_
-    # })
+
+    # Reload datatable
+    observeEvent(r$scripts_temp, {
+      
+      # Reload datatable_temp variable
+      if (nrow(r$scripts_temp) > 0) r$scripts_datatable_temp <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
+        table = "scripts", factorize_cols = factorize_cols, action_buttons = action_buttons, data_input = r$scripts_temp)
+
+      # Reload data of datatable
+      if (length(r$scripts_datatable_proxy) > 0) DT::replaceData(r$scripts_datatable_proxy,
+        r$scripts_datatable_temp, resetPaging = FALSE, rownames = FALSE)
+    })
+
+    # Updates on datatable data
+    observeEvent(input$scripts_datatable_cell_edit, {
+
+      edit_info <- input$scripts_datatable_cell_edit
+      r$scripts_temp <- DT::editData(r$scripts_temp, edit_info, rownames = FALSE)
+
+      # Store that this row has been modified
+      r$scripts_temp[[edit_info$row, "modified"]] <- TRUE
+    })
+
+    # Save updates
+    observeEvent(input$save_scripts_management, {
+
+      req(nrow(r$scripts) > 0)
+
+      save_settings_datatable_updates_new(output = output, r = r, ns = ns, table = "scripts", i18n = i18n, duplicates_allowed = FALSE)
+
+      # Update sidenav dropdown with the new study
+      r$reload_scripts <- Sys.time()
+    })
+
+    # Delete a row in datatable
+
+    script_delete_prefix <- "script"
+    script_dialog_title <- "scripts_delete"
+    script_dialog_subtext <- "scripts_delete_subtext"
+    script_react_variable <- "script_delete_confirm"
+    script_table <- "scripts"
+    script_id_var_sql <- "id"
+    script_id_var_r <- "delete_script"
+    script_delete_message <- "script_deleted"
+    script_reload_variable <- "reload_scripts"
+    script_information_variable <- "script_deleted"
+    script_delete_variable <- paste0(script_delete_prefix, "_open_dialog")
+
+    delete_element_new(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
+      delete_prefix = script_delete_prefix, dialog_title = script_dialog_title, dialog_subtext = script_dialog_subtext,
+      react_variable = script_react_variable, table = script_table, id_var_sql = script_id_var_sql, id_var_r = script_id_var_r,
+      delete_message = script_delete_message, translation = TRUE, reload_variable = script_reload_variable,
+      information_variable = script_information_variable)
+
+    observeEvent(input$deleted_pressed, {
+
+      r$delete_script <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
+      r[[script_delete_variable]] <- TRUE
+
+      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", value = NULL)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", value = NULL)
+      shiny.fluent::updateComboBox.shinyInput(session, "scripts_description_chosen_script", value = NULL)
+      
+      output$scripts_description_markdown_result <- renderUI("")
+      shinyAce::updateAceEditor(session, "ace_edit_code", value = "")
+      output$console_result <- renderText("")
+      blank_data <- data <- tibble::tribble(~id)
+      names(blank_data) <- c("")
+      output$table_result <- DT::renderDT(blank_data, options = list(dom = "<'datatable_length'l><'top't><'bottom'p>"), 
+        rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
+      shinyAce::updateAceEditor(session, "ace_options_description", value = "")
+      output$description_markdown_result <- renderUI("")
+    })
+
+    observeEvent(r$reload_scripts, {
+
+      # Reload sidenav dropdown with reloading scripts
+      update_r(r = r, table = "scripts")
+
+      # Reload datatable
+      r$scripts_temp <- r$scripts %>% dplyr::mutate(modified = FALSE)
+    })
+    
+    observeEvent(input$edit_code, {
+      
+      link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
+      
+      options <- convert_tibble_to_list(r$scripts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      value <- list(key = link_id, text = r$scripts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+      
+      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", options = options, value = value)
+      
+      # Set current pivot to edit_plugins_code
+      shinyjs::runjs(glue::glue("$('#{id}-scripts_pivot button[name=\"{i18n$t('Edit script code')}\"]').click();"))
+    })
+    
+    observeEvent(input$options, {
+      
+      # Get link_id variable, to update options div
+      link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
+      
+      options <- convert_tibble_to_list(r$scripts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      value <- list(key = link_id, text = r$scripts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+      
+      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", options = options, value = value)
+      
+      # Set current pivot to edit_plugins_code
+      shinyjs::runjs(glue::glue("$('#{id}-scripts_pivot button[name=\"{i18n$t('Script options')}\"]').click();"))
+    })
+    
+    # --- --- --- --- --- -
+    # Edit script code ----
+    # --- --- --- --- --- -
+    
+    observeEvent(input$code_chosen_script, {
+      
+      if (length(input$code_chosen_script) > 1) link_id <- input$code_chosen_script$key
+      else link_id <- input$code_chosen_script
+      if (length(input$options_chosen_script) > 0){
+        if (length(input$options_chosen_script) > 1) options_link_id <- input$options_chosen_script$key
+        else options_link_id <- input$options_chosen_script
+      }
+      else options_link_id <- 0L
+      
+      if (link_id != options_link_id){
+        options <- convert_tibble_to_list(r$scripts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+        value <- list(key = link_id, text = r$scripts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+        shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", options = options, value = value)
+      }
+      
+      # Get code from database
+      code <- r$code %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(code)
+      
+      shinyAce::updateAceEditor(session, "ace_edit_code", value = code)
+      
+    })
+    
+    # Save updates
+    
+    observeEvent(input$save_code, {
+      
+      if (length(input$code_chosen_script) > 1) link_id <- input$code_chosen_script$key
+      else link_id <- input$code_chosen_script
+      
+      req(!is.null(link_id))
+      
+      # Update code
+      # DON'T USE glue_sql, it adds some quotes in the code
+      
+      code_id <- r$code %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(id)
+
+      DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code, "'", "''"), "' WHERE id = ", code_id)) -> query
+      DBI::dbClearResult(query)
+
+      # Update datetime in plugins table
+
+      sql <- glue::glue_sql("UPDATE scripts SET datetime = {as.character(Sys.time())} WHERE id = {link_id}", .con = r$db)
+      DBI::dbSendStatement(r$db, sql) -> query
+      DBI::dbClearResult(query)
+      
+      update_r(r = r, table = "code")
+      update_r(r = r, table = "scripts")
+      
+      # Notify user
+      show_message_bar_new(output, 4, "modif_saved", "success", i18n)
+      
+    })
+    
+    # Execute code
+    
+    observeEvent(input$execute_code, {
+      
+      edited_code <- isolate(input$ace_edit_code %>% stringr::str_replace_all("\r", "\n"))
+      
+      if (input$output_type == "console"){
+        shinyjs::show("console_output")
+        shinyjs::hide("table_output")
+        
+        output$console_result <- renderText(
+          execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, r = r,
+            edited_code = edited_code, code_type = "server"))
+      }
+      
+      if (input$output_type == "table"){
+        shinyjs::show("table_output")
+        shinyjs::hide("console_output")
+        
+        tryCatch({
+          
+          data <- eval(parse(text = as.character(isolate(input$ace_edit_code)) %>% stringr::str_replace_all("\r", "\n")))
+          
+          render_datatable_new(
+            data = data,
+            output = output,
+            r = r,
+            ns = ns,
+            i18n = i18n,
+            output_name = "table_result",
+            filter = TRUE,
+            searchable_cols = names(data),
+            sortable_cols = names(data)
+          )
+        }, error = function(e) render_datatable_new(
+          data = tibble::tibble(), output = output, r = r, ns = ns, i18n = i18n, output_name = "table_result", filter = FALSE
+        ))
+      }
+    })
+    
+    # Hide ace editor
+    
+    observeEvent(input$hide_code_editor, {
+      if (input$hide_code_editor){
+        shinyjs::hide("ace_edit_code")
+        shinyjs::show("div_br") 
+      }
+      else {
+        shinyjs::show("ace_edit_code")
+        shinyjs::hide("div_br") 
+      }
+    })
+    
+    # --- --- --- --- -- -- --
+    # Edit script options ----
+    # --- --- --- --- -- -- --
+    
+    observeEvent(input$options_chosen_script, {
+      
+      if (length(input$options_chosen_script) > 1) link_id <- input$options_chosen_script$key
+      else link_id <- input$options_chosen_script
+      if (length(input$code_chosen_script) > 0){
+        if (length(input$code_chosen_script) > 1) code_link_id <- input$code_chosen_script$key
+        else code_link_id <- input$code_chosen_script
+      }
+      else code_link_id <- 0L
+      
+      if (link_id != code_link_id){
+        options <- convert_tibble_to_list(r$scripts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+        value <- list(key = link_id, text = r$scripts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+        shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", options = options, value = value)
+      }
+      
+      # Get description from database
+      description <- r$options %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(value)
+
+      shinyAce::updateAceEditor(session, "ace_options_description", value = description)
+    })
+    
+    # Save updates
+    
+    observeEvent(input$save_options_description, {
+      
+      if (length(input$options_chosen_script) > 1) link_id <- input$options_chosen_script$key
+      else link_id <- input$options_chosen_script
+
+      req(!is.null(link_id))
+
+      # Update options
+      # DON'T USE glue_sql, it adds some quotes in the code
+
+      option_id <- r$options %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(id)
+
+      DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", stringr::str_replace_all(input$ace_options_description, "'", "''"), "' WHERE id = ", option_id)) -> query
+      DBI::dbClearResult(query)
+
+      # Update datetime in plugins table
+
+      sql <- glue::glue_sql("UPDATE scripts SET datetime = {as.character(Sys.time())} WHERE id = {link_id}", .con = r$db)
+      DBI::dbSendStatement(r$db, sql) -> query
+      DBI::dbClearResult(query)
+
+      update_r(r = r, table = "options")
+      update_r(r = r, table = "scripts")
+
+      # Notify user
+      show_message_bar_new(output, 4, "modif_saved", "success", i18n)
+      
+    })
+    
+    # Render markdown
+    
+    observeEvent(input$execute_options_description, {
+      
+      options_description <- isolate(input$ace_options_description %>% stringr::str_replace_all("\r", "\n"))
+      
+      tryCatch({
+        
+        # Clear temp dir
+        unlink(paste0(path.expand("~"), "/linkr_temp_files"), recursive = TRUE, force = TRUE)
+        
+        markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
+          path.expand("~"), "/linkr_temp_files')\n",
+          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files', fig.path = '", path.expand("~"), "/linkr_temp_files')\n```\n")
+        
+        markdown_file <- paste0(markdown_settings, options_description)
+        
+        # Create temp dir
+        dir <- paste0(path.expand("~"), "/linkr_temp_files")
+        file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
+        if (!dir.exists(dir)) dir.create(dir)
+        
+        # Create the markdown file
+        knitr::knit(text = markdown_file, output = file, quiet = TRUE)
+        
+        output$description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
+      }, error = function(e) "")
+      
+    })
     
   })
 }

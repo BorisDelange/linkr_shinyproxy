@@ -26,7 +26,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("study_delete_confirm")),
-    shiny.fluent::reactOutput(ns("thesaurus_item_delete_confirm")),
+    #shiny.fluent::reactOutput(ns("thesaurus_item_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "datamart_main", text = i18n$t("My studies"))
     ), maxDisplayedItems = 3),
@@ -219,29 +219,6 @@ mod_my_studies_server <- function(id = character(), r, language = "EN", i18n = R
         if ("study_messages_card" %in% r$user_accesses) shinyjs::show("study_messages_card")
         else shinyjs::show("studies_creation_card_forbidden")
       }
-      
-      # Initiate selected_key for study UI
-      r$patient_lvl_selected_key <- NA_integer_
-      r$aggregated_selected_key <- NA_integer_
-      
-      # Reset r variables (prevent bug later if datamart code doesn't work)
-      r$patients <- tibble::tibble()
-      r$stays <- tibble::tibble()
-      r$labs_vitals <- tibble::tibble()
-      r$text <- tibble::tibble()
-      r$orders <- tibble::tibble()
-      
-      # Try to load datamart 
-      tryCatch({
-        run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language, quiet = TRUE)
-        
-        # A r variable to update Study dropdown, when the load of datamart is finished
-        r$loaded_datamart <- r$chosen_datamart
-        
-        show_message_bar(output, 1, "import_datamart_success", "success", language, r$words)
-      },
-      error = function(e) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-        error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language))
       
     })
     

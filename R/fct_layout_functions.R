@@ -489,8 +489,8 @@ render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny
   if (nrow(data) == 0){
     
     if (length(names(default_tibble)) == 0) return({
-      data <- tibble::tribble(~id, ~datetime)
-      names(data) <- c(i18n$t("ID"), i18n$t("Datetime"))
+      data <- tibble::tribble(~id)
+      names(data) <- c("")
       output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom), 
         rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
     })

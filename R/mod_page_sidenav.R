@@ -567,6 +567,29 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         output$patient_info <- renderUI("")
         
         r$datamart_page <- Sys.time()
+        
+        # Initiate selected_key for study UI
+        r$patient_lvl_selected_key <- NA_integer_
+        r$aggregated_selected_key <- NA_integer_
+
+        # Reset r variables (prevent bug later if datamart code doesn't work)
+        r$patients <- tibble::tibble()
+        r$stays <- tibble::tibble()
+        r$labs_vitals <- tibble::tibble()
+        r$text <- tibble::tibble()
+        r$orders <- tibble::tibble()
+
+        # Try to load datamart
+        tryCatch({
+          run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language, quiet = TRUE)
+
+          # A r variable to update Study dropdown, when the load of datamart is finished
+          r$loaded_datamart <- r$chosen_datamart
+
+          show_message_bar_new(output, 1, "import_datamart_success", "success", i18n = i18n)
+        },
+        error = function(e) report_bug(r = r, output = output, error_message = "fail_load_datamart",
+          error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language))
       })
       
       # Once the datamart is loaded, load studies & scripts
