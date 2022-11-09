@@ -249,11 +249,35 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       
     })
     
+    # --- --- --- --- -
+    # Reset fields ----
+    # --- --- --- --- -
+    
+    reset_scripts_fields <- function(session){
+      
+      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", value = NULL)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", value = NULL)
+      shiny.fluent::updateComboBox.shinyInput(session, "scripts_description_chosen_script", value = NULL)
+      
+      output$scripts_description_markdown_result <- renderUI("")
+      shinyAce::updateAceEditor(session, "ace_edit_code", value = "")
+      output$console_result <- renderText("")
+      blank_data <- data <- tibble::tribble(~id)
+      names(blank_data) <- c("")
+      output$table_result <- DT::renderDT(blank_data, options = list(dom = "<'datatable_length'l><'top't><'bottom'p>"), 
+        rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
+      shinyAce::updateAceEditor(session, "ace_options_description", value = "")
+      output$description_markdown_result <- renderUI("")
+    }
+    
     # --- --- --- --- --- --- --- --
     # When a datamart is chosen ----
     # --- --- --- --- --- --- --- --
     
     observeEvent(r$chosen_datamart, {
+      
+      # Reset fields
+      reset_scripts_fields(session = session)
       
       # Create empty var for r$scripts, if there's an error loading the datamart
       r$scripts <- tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
@@ -407,6 +431,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
     
     observeEvent(r$scripts, {
       
+      # Reset fields
+      
       data_source_id <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)
 
       if(nrow(r$scripts %>% dplyr::filter(data_source_id == !!data_source_id)) == 0){
@@ -494,19 +520,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       r$delete_script <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
       r[[script_delete_variable]] <- TRUE
 
-      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", value = NULL)
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", value = NULL)
-      shiny.fluent::updateComboBox.shinyInput(session, "scripts_description_chosen_script", value = NULL)
-      
-      output$scripts_description_markdown_result <- renderUI("")
-      shinyAce::updateAceEditor(session, "ace_edit_code", value = "")
-      output$console_result <- renderText("")
-      blank_data <- data <- tibble::tribble(~id)
-      names(blank_data) <- c("")
-      output$table_result <- DT::renderDT(blank_data, options = list(dom = "<'datatable_length'l><'top't><'bottom'p>"), 
-        rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
-      shinyAce::updateAceEditor(session, "ace_options_description", value = "")
-      output$description_markdown_result <- renderUI("")
+      reset_scripts_fields(session = session)
     })
 
     observeEvent(r$reload_scripts, {
