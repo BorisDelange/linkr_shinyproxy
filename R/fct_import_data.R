@@ -408,3 +408,102 @@ import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id =
   show_message_bar(output, 1, "import_thesaurus_success", "success", language, r$words)
   # print(translate(language, "import_thesaurus_success", r$words))
 }
+
+import_thesaurus_new <- function(output, r = shiny::reactiveValues(), thesaurus_id = integer(), thesaurus = tibble::tibble(), i18n = R6::R6Class()){
+  # Check thesaurus_id
+  tryCatch(thesaurus_id <- as.integer(thesaurus_id), 
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "invalid_thesaurus_id_value", 
+        error_name = paste0("import_thesaurus - invalid_thesaurus_id_value - id = ", thesaurus_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("invalid_thesaurus_id_value"))}
+  )
+  
+  if (is.na(thesaurus_id) | length(thesaurus_id) == 0){
+    show_message_bar_new(output, 1, "invalid_thesaurus_id_value", "severeWarning", i18n = i18n)
+    stop(i18n$t("invalid_thesaurus_id_value"))
+  }
+  
+  var_cols <- tibble::tribble(
+    ~name, ~type,
+    "item_id", "integer",
+    "name", "character",
+    "display_name", "character",
+    "category", "character",
+    "unit", "character")
+  
+  # Check col names
+  if (!identical(names(thesaurus), c("item_id", "name", "display_name", "category", "unit"))){
+    show_message_bar_new(output, 1, "invalid_col_names", "severeWarning", i18n = i18n)
+    stop(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
+  }
+  
+  # Check col types
+  sapply(1:nrow(var_cols), function(i){
+    var_name <- var_cols[[i, "name"]]
+    if (var_cols[[i, "type"]] == "integer" & !is.integer(thesaurus[[var_name]])){
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
+    }
+    if (var_cols[[i, "type"]] == "character" & !is.character(thesaurus[[var_name]])){
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_character")))
+    }
+  })
+  
+  # Transform as tibble
+  tryCatch(thesaurus <- tibble::as_tibble(thesaurus), 
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_transforming_tibble", 
+        error_name = paste0("import_thesaurus - error_transforming_tibble - id = ", thesaurus_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("error_transforming_tibble"))}
+  )
+  
+  # Check if there are no duplicates in items_id
+  items_duplicates <- thesaurus %>% dplyr::group_by(item_id) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+  if (items_duplicates > 0){
+    show_message_bar_new(output, 1, "error_multiple_item_id", "severeWarning", i18n = i18n)
+    stop(i18n$t("error_multiple_item_id"))
+  }
+  
+  # Get actual items of this thesaurus saved in the database
+  tryCatch(actual_items <- 
+      DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE")) %>% dplyr::select(item_id),
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_get_actuel_items", 
+        error_name = paste0("import_thesaurus - error_get_actuel_items - id = ", thesaurus_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("error_get_actuel_items"))}
+  )
+  
+  # Get items to insert with an anti-join
+  items_to_insert <- thesaurus %>% dplyr::anti_join(actual_items, by = "item_id")
+  
+  # Last ID in thesaurus table
+  last_id <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) AS id FROM thesaurus_items") %>% dplyr::pull()
+  
+  if (nrow(items_to_insert) == 0){
+    show_message_bar_new(output, 1, "thesaurus_no_items_to_insert", "severeWarning", i18n = i18n)
+    stop(i18n$t("thesaurus_no_items_to_insert")) 
+  }
+  
+  items_to_insert <- 
+    items_to_insert %>% 
+    dplyr::transmute(
+      id = 1:dplyr::n() + last_id, 
+      thesaurus_id = !!thesaurus_id, 
+      item_id, 
+      name, 
+      display_name, 
+      category,
+      unit,
+      datetime = as.character(Sys.time()), 
+      deleted = FALSE)
+  
+  tryCatch(DBI::dbAppendTable(r$db, "thesaurus_items", items_to_insert),
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "thesaurus_error_append_table", 
+        error_name = paste0("import_thesaurus - thesaurus_error_append_table - id = ", thesaurus_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("thesaurus_error_append_table"))}
+  )
+  
+  show_message_bar_new(output, 1, "import_thesaurus_success", "success", i18n)
+}

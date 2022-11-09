@@ -208,6 +208,15 @@ mod_my_studies_server <- function(id = character(),  r = shiny::reactiveValues()
       "import_study_card", "export_study_card", "modules_families_card")#, "thesaurus_datamart_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
 
+    # --- --- --- --- --- -
+    # Show message bar ----
+    # --- --- --- --- --- -
+    
+    # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
+    
+    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n))
+    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n))
+    
     # --- --- --- --- --- --- --- --
     # When a datamart is chosen ----
     # --- --- --- --- --- --- --- --
@@ -229,7 +238,7 @@ mod_my_studies_server <- function(id = character(),  r = shiny::reactiveValues()
       r$patient_lvl_selected_key <- NA_integer_
       r$aggregated_selected_key <- NA_integer_
       
-      # *** To be deleted ----
+      # *** To be removed *** ----
       r$patients <- tibble::tibble()
       r$stays <- tibble::tibble()
       r$labs_vitals <- tibble::tibble()
@@ -237,7 +246,7 @@ mod_my_studies_server <- function(id = character(),  r = shiny::reactiveValues()
       r$orders <- tibble::tibble()
       r$diagnoses <- tibble::tibble()
       
-      # Reset r variables (prevent bug later if datamart code doesn't work)
+      # Reset d variables (prevent bug later if datamart code doesn't work)
       d$patients <- tibble::tibble()
       d$stays <- tibble::tibble()
       d$labs_vitals <- tibble::tibble()
@@ -245,27 +254,44 @@ mod_my_studies_server <- function(id = character(),  r = shiny::reactiveValues()
       d$orders <- tibble::tibble()
       d$diagnoses <- tibble::tibble()
       
-      # Try to load datamart & scripts associated to this datamart
+      # Try to load datamart
       tryCatch({
 
         run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language, quiet = TRUE)
 
-        # Get scripts associated with this datamart
-        
-        update_r(r = r, table = "scripts")
-        
-        scripts_code <- r$code %>% dplyr::filter(category == "script") %>% dplyr::select(id = link_id, code) %>%
-          dplyr::inner_join(
-            r$options %>% dplyr::filter(category == "datamart_scripts", link_id == r$chosen_datamart) %>% dplyr::select(id = value_num)
-          )
-
         # A r variable to update study dropdown, when the load of datamart is finished
         r$loaded_datamart <- r$chosen_datamart
 
-        show_message_bar_new(output, 1, "import_datamart_success", "success", i18n = i18n)
+        r$show_message_bar1 <- tibble::tibble(message = "import_datamart_success", type = "success")
+        
+        # Try to run the scripts associated with this datamart
+        
+        tryCatch({
+          
+          scripts_code <- r$code %>% dplyr::filter(category == "script") %>% dplyr::select(id = link_id, code) %>%
+            dplyr::inner_join(
+              r$options %>% dplyr::filter(category == "datamart_scripts", link_id == r$chosen_datamart) %>% dplyr::select(id = value_num)
+            )
+          
+          if (nrow(scripts_code > 0)){
+            for (i in 1:nrow(scripts_code)){
+              eval(parse(text = scripts_code[i, ]$code %>% stringr::str_replace_all("\r", "\n")))
+            }
+            
+            r$show_message_bar2 <- tibble::tibble(message = "run_scripts_success", type = "success")
+          }
+        },
+          error = function(e){
+            r$show_message_bar2 <<- tibble::tibble(message = "fail_load_scripts", type = "severeWarning")
+            report_bug_new(r = r, output = output, error_message = "fail_load_scripts",
+              error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)
+          })
       },
-        error = function(e) report_bug(r = r, output = output, error_message = "fail_load_datamart",
-          error_name = paste0(id, " - run server code"), category = "Error", error_report = e, language = language))
+        error = function(e){
+          r$show_message_bar1 <<- tibble::tibble(message = "fail_load_datamart", type = "severeWarning")
+          report_bug_new(r = r, output = output, error_message = "fail_load_datamart",
+            error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)
+        })
       
     })
     

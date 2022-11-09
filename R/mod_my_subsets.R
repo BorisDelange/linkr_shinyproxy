@@ -128,9 +128,9 @@ mod_my_subsets_server <- function(id = character(), r, language = "EN", i18n = R
     # if (id == "patient_level_data_subsets") prefix <- "patient_lvl"
     # if (id == "aggregated_data_subsets") prefix <- "aggregated"
     
-    ##########################################
-    # Show or hide cards                     #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Show or hide cards ----
+    # --- --- --- --- --- ---
     
     cards <- c("management_card", "edit_code_card", "creation_card", "datatable_card")
     # show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
@@ -138,10 +138,19 @@ mod_my_subsets_server <- function(id = character(), r, language = "EN", i18n = R
       sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
       shinyjs::show(input$current_tab)
     })
- 
-    ##########################################
-    # Render subsets UI                      #
-    ##########################################
+    
+    # --- --- --- --- --- -
+    # Show message bar ----
+    # --- --- --- --- --- -
+    
+    # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
+    
+    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n))
+    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n))
+    
+    # --- --- --- --- --- --
+    # Render subsets UI ----
+    # --- --- --- --- --- --
     
     observeEvent(r$chosen_study, {
       

@@ -54,13 +54,6 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
   }
 }
 
-#' Add items to an existing thesaurus
-#'
-
-add_thesaurus_items <- function(output, r = shiny::reactiveValues(), thesaurus_id = integer(), items = tibble::tibble()){
-  
-}
-
 #' Add patients to a subset
 #'
 #' @description Add patients to a subset, only if not already in the subset

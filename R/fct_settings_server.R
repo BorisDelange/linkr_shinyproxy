@@ -434,8 +434,8 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   
   # Creation of new_data variable for scripts page
   if (table == "scripts"){
-    new_data <- tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
-      last_row + 1, as.character(data$name), "", as.integer(data$data_source), r$user_id, as.character(Sys.time()), FALSE)
+    new_data <- tibble::tribble(~id, ~name, ~data_source_id, ~creator_id, ~datetime, ~deleted,
+      last_row + 1, as.character(data$name), as.integer(data$data_source), r$user_id, as.character(Sys.time()), FALSE)
   }
   
   # Creation of new_data variable for users sub-pages
@@ -474,12 +474,33 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   last_row_code <- get_last_row(r$db, "code")
   last_row_options <- get_last_row(r$db, "options")
   last_row_subsets <- get_last_row(r$db, "subsets")
+  last_row_thesaurus <- get_last_row(r$db, "thesaurus")
   
   # Add a row in code if table is datamarts, thesaurus
   if (table %in% c("datamarts", "thesaurus")){
     
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row_code + 1, get_singular(word = table), last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+    DBI::dbAppendTable(r$db, "code", new_code)
+    update_r(r = r, table = "code", language = language)
+    
+    add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
+  }
+  
+  # Add a new thesaurus if a new data source is created
+  if (table == "data_sources"){
+    
+    new_thesaurus <- tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
+      last_row_thesaurus + 1, paste0(data$name, " - scripts items"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+    DBI::dbAppendTable(r$db, "thesaurus", new_thesaurus)
+    update_r(r = r, table = "thesaurus")
+    
+    add_log_entry(r = r, category = paste0("thesaurus", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_thesaurus))
+    
+    # Add also the code for the new thesaurus
+    
+    new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+      last_row_code + 1, "thesaurus", last_row_thesaurus + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "code", new_code)
     update_r(r = r, table = "code", language = language)
     

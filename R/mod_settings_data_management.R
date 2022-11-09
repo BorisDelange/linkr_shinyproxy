@@ -306,7 +306,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         else new_data$data_source <- toString(as.integer(new_data$data_source))
       }
       
-      add_settings_new_data(session = session, output = output, r = r, language = language, id = id, 
+      add_settings_new_data_new(session = session, output = output, r = r, i18n = i18n, id = id, 
         data = new_data,
         table = substr(id, nchar("settings_") + 1, nchar(id)), 
         required_textfields = "name", req_unique_values = "name",

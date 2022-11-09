@@ -149,6 +149,15 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     # --- ADD A MODULE ELEMENT
     # --- DELETE A MODULE ELEMENT
     
+    # --- --- --- --- --- -
+    # Show message bar ----
+    # --- --- --- --- --- -
+    
+    # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
+    
+    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n))
+    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n))
+    
     ##########################################
     # INITIATE VARS                          #
     ##########################################
