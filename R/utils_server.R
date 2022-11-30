@@ -239,9 +239,21 @@ get_col_names <- function(table_name = character(), language = "EN", words = tib
 get_col_names_new <- function(table_name = character(), i18n = R6::R6Class()){
   result <- ""
   
+  if (table_name %in% c("data_sources", "datamarts", "studies", "subsets", "thesaurus")){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"))
+    c(result, switch(table_name,
+      "datamarts" = i18n$t("data_source"),
+      "studies" = c(i18n$t("datamart"), i18n$t("patient_lvl_module_family"),
+        i18n$t("aggregated_module_family")),
+      "subsets" = i18n$t("study"),
+      "thesaurus" = i18n$t("data_sources"))) -> result
+    result <- c(result, i18n$t("creator"), i18n$t("datetime"),
+      i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+  }
+  
   if (table_name == "scripts"){
-    result <- c(i18n$t("ID"), i18n$t("Name"), i18n$t("Description"), i18n$t("Data source ID"), i18n$t("Creator"), 
-      i18n$t("Datetime"), i18n$t("Deleted"), i18n$t("Modified"), i18n$t("Action"))
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("data_source_id"), i18n$t("creator"), 
+      i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
   result

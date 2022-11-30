@@ -73,7 +73,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("categories_card"),
         make_card(i18n$t("Categories"),
           div(
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -96,7 +96,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("conversions_card"),
         make_card(i18n$t("Conversions"),
           div(
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -114,7 +114,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("create_items_card"),
         make_card(i18n$t("Create items"),
           div(
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),

@@ -404,7 +404,7 @@ forbidden_card_new <- function(ns = shiny::NS(), name = character(), i18n = R6::
     div(
       id = ns(paste0(name, "_forbidden")),
       make_card("",
-        div(shiny.fluent::MessageBar(i18n$t("Unauthorized access to this page"), messageBarType = 5), style = "margin-top:10px;")
+        div(shiny.fluent::MessageBar(i18n$t("unauthorized_access_page"), messageBarType = 5), style = "margin-top:10px;")
       )
     )
   )

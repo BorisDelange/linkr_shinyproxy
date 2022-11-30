@@ -69,7 +69,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("all_plugins_card"),
         make_card("",
           div(
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -132,7 +132,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
               make_textfield(language = language, ns = ns, label = "name", id = "plugin_name", width = "300px")
             ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("add_plugin"), i18n$t("Add"))
+            shiny.fluent::PrimaryButton.shinyInput(ns("add_plugin"), i18n$t("add"))
           )
         ), br()
       )

@@ -63,7 +63,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("study_messages_card"),
         make_card(i18n$t("Messages"),
           div(br(),
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -93,7 +93,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
               make_textfield(language = language, ns = ns, label = "name", id = "study_name", width = "300px")
             ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("add_study"), i18n$t("Add"))
+            shiny.fluent::PrimaryButton.shinyInput(ns("add_study"), i18n$t("add"))
           )
         ), br()
       )
@@ -124,7 +124,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("study_options_card"),
         make_card(i18n$t("Study options"),
           div(br(),
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -146,7 +146,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("import_study_card"),
         make_card(i18n$t("Import a study"),
           div(br(),
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -175,7 +175,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("export_study_card"),
         make_card(i18n$t("Export a study"),
           div(br(),
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),

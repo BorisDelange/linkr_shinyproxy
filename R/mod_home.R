@@ -12,20 +12,20 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
   
   if (id == "home") main <- div(
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "home", text = i18n$t("Home"))
+      list(key = "home", text = i18n$t("home"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "overview_card", itemKey = "overview", headerText = i18n$t("Overview")),
-      shiny.fluent::PivotItem(id = "news_card", itemKey = "news", headerText = i18n$t("News")),
-      shiny.fluent::PivotItem(id = "versions_card", itemKey = "versions", headerText = i18n$t("Versions"))
+      shiny.fluent::PivotItem(id = "overview_card", itemKey = "overview", headerText = i18n$t("overview")),
+      shiny.fluent::PivotItem(id = "news_card", itemKey = "news", headerText = i18n$t("news")),
+      shiny.fluent::PivotItem(id = "versions_card", itemKey = "versions", headerText = i18n$t("versions"))
     ),
     div(
       id = ns("overview_card"),
-      make_card(i18n$t("Overview"),
+      make_card(i18n$t("overview"),
         div(
           br(),
-          div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+          div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
           div(shiny.fluent::MessageBar(
             div(
               strong("A faire"),
@@ -48,10 +48,10 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("news_card"),
-        make_card(i18n$t("News"),
+        make_card(i18n$t("news"),
           div(
             br(),
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -73,10 +73,10 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("versions_card"),
-        make_card(i18n$t("Versions"),
+        make_card(i18n$t("versions"),
           div(
             br(),
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -93,20 +93,20 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
   
   if (id == "home_get_started") main <- div(
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "get_started", text = i18n$t("Get started"))
+      list(key = "get_started", text = i18n$t("get_started"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "import_excel_card", itemKey = "import_excel", headerText = i18n$t("Import Excel file")),
-      shiny.fluent::PivotItem(id = "import_csv_card", itemKey = "import_csv", headerText = i18n$t("Import CSV file")),
-      shiny.fluent::PivotItem(id = "connect_db_card", itemKey = "connect_db", headerText = i18n$t("Connect to database"))
+      shiny.fluent::PivotItem(id = "import_excel_card", itemKey = "import_excel", headerText = i18n$t("import_excel_file")),
+      shiny.fluent::PivotItem(id = "import_csv_card", itemKey = "import_csv", headerText = i18n$t("import_csv_file")),
+      shiny.fluent::PivotItem(id = "connect_db_card", itemKey = "connect_db", headerText = i18n$t("connect_to_database"))
     ),
     div(
       id = ns("import_excel_card"),
-      make_card(i18n$t("Import Excel file"),
+      make_card(i18n$t("import_excel_file"),
         div(
           br(),
-          div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+          div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
           div(shiny.fluent::MessageBar(
             div(
               strong("A faire"),
@@ -131,10 +131,10 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("import_csv_card"),
-        make_card(i18n$t("Import CSV file"),
+        make_card(i18n$t("import_csv_file"),
           div(
             br(),
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -150,10 +150,10 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("connect_db_card"),
-        make_card(i18n$t("Connect to database"),
+        make_card(i18n$t("connect_to_database"),
           div(
             br(),
-            div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -171,18 +171,18 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
   
   if (id == "home_tutorials") main <- div(
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "tutorials", text = i18n$t("Tutorials"))
+      list(key = "tutorials", text = i18n$t("tutorials"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "tutorials", itemKey = "tutorials", headerText = i18n$t("Tutorials"))
+      shiny.fluent::PivotItem(id = "tutorials", itemKey = "tutorials", headerText = i18n$t("tutorials"))
     ),
     div(
       id = ns("tutorials_card"),
-      make_card(i18n$t("Tutorials"),
+      make_card(i18n$t("tutorials"),
         div(
           br(),
-          div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+          div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
           div(shiny.fluent::MessageBar(
             div(
               strong("A faire"),
@@ -204,18 +204,18 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
   
   if (id == "home_resources") main <- div(
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "resources", text = i18n$t("Resources"))
+      list(key = "resources", text = i18n$t("resources"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "resources", itemKey = "resources", headerText = i18n$t("Resources"))
+      shiny.fluent::PivotItem(id = "resources", itemKey = "resources", headerText = i18n$t("resources"))
     ),
     div(
       id = ns("resources_card"),
-      make_card(i18n$t("Resources"),
+      make_card(i18n$t("resources"),
         div(
           br(),
-          div(shiny.fluent::MessageBar(i18n$t("In progress"), messageBarType = 5)), br(),
+          div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
           div(shiny.fluent::MessageBar(
             div(
               strong("A faire"),
@@ -238,11 +238,11 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
   
   if (id == "home_dev") main <- div(
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "dev", text = i18n$t("Dev"))
+      list(key = "dev", text = i18n$t("dev"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "dev", itemKey = "dev", headerText = i18n$t("Dev"))
+      shiny.fluent::PivotItem(id = "dev", itemKey = "dev", headerText = i18n$t("dev"))
     ),
     div(
       id = ns("dev_card"),

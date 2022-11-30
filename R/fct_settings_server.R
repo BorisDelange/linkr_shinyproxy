@@ -401,7 +401,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     })
   }
   
-  if (!dropdowns_check) show_message_bar_new(output = output, id = 2, name = "dropdown_empty", type = "severeWarning", i18n = i18n)
+  if (!dropdowns_check) show_message_bar_new(output = output, id = 2, message = "dropdown_empty", type = "severeWarning", i18n = i18n)
   req(dropdowns_check)
   
   
@@ -1037,7 +1037,7 @@ prepare_data_datatable_new <- function(output, r = shiny::reactiveValues(), ns =
             dplyr::mutate(creator = paste0(firstname, " ", lastname)) %>%
             dplyr::pull(creator)
         }
-        else data_output[i, "creator_id"] <- i18n$t("Deleted user")
+        else data_output[i, "creator_id"] <- i18n$t("deleted_used")
       }
       
       # Get names for other columns if there are not dropdowns

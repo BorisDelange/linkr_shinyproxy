@@ -35,7 +35,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
         shiny.fluent::Pivot(
           id = ns("scripts_pivot"),
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "datamart_scripts_card", itemKey = "datamart_scripts_card", headerText = i18n$t("Choose datamart scripts")),
+          shiny.fluent::PivotItem(id = "datamart_scripts_card", itemKey = "datamart_scripts_card", headerText = i18n$t("choose_datamart_scripts")),
           shiny.fluent::PivotItem(id = "scripts_descriptions_card", itemKey = "scripts_descriptions_card", headerText = i18n$t("scripts_descriptions_card")),
           shiny.fluent::PivotItem(id = "scripts_creation_card", itemKey = "scripts_creation_card", headerText = i18n$t("Create a script")),
           shiny.fluent::PivotItem(id = "scripts_datatable_card", itemKey = "scripts_datatable_card", headerText = i18n$t("Scripts management")),
@@ -79,9 +79,15 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("datamart_scripts_card"),
         div(
           class = glue::glue("card ms-depth-8 ms-sm{12} ms-xl{12}"),
-          shiny.fluent::Text(variant = "large", i18n$t("Choose datamart scripts"), block = TRUE),
+          shiny.fluent::Text(variant = "large", i18n$t("choose_datamart_scripts"), block = TRUE),
           div(uiOutput(ns("datamart_scripts_bucket_list"))),
           shiny.fluent::PrimaryButton.shinyInput(ns("save_datamart_scripts"), i18n$t("save"))
+        ), 
+        make_card(i18n$t("scripts_cache_memory"),
+          div(
+            br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5))
+          )
         ), br()
       )
     ),
@@ -112,9 +118,9 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
         make_card(i18n$t("Create a script"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_textfield_new(i18n = i18n, ns = ns, label = "Name", id = "script_name", width = "300px")
+              make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "script_name", width = "300px")
             ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("add_script"), i18n$t("Add"))
+            shiny.fluent::PrimaryButton.shinyInput(ns("add_script"), i18n$t("add"))
           )
         ), br()
       )

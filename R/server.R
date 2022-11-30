@@ -235,7 +235,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       monitor_perf(r = r, action = "stop", task = "mod_r_console_server")
     
       sapply(c("data_sources", "datamarts", "thesaurus"), function(page){
-        mod_settings_data_management_server(paste0("settings_", page), r, language, i18n)
+        mod_settings_data_management_server(paste0("settings_", page), r, i18n)
         mod_page_sidenav_server(paste0("settings_", page), r, i18n)
         mod_page_header_server(paste0("settings_", page), r, language, i18n)
         monitor_perf(r = r, action = "stop", task = paste0("mod_", page, "_server"))

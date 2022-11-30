@@ -76,7 +76,8 @@ make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(
 #' 
 make_textfield_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), id = NA_character_, 
   value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, 
-  margin_right = NULL, words = tibble::tibble()){
+  margin_right = NULL){
+  if (is.na(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
   if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0(style, "min-width: ", min_width, "; max-width: ", max_width, ";")
@@ -115,6 +116,18 @@ make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character()
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
   div(
     div(id = ns(paste0(id, "_title")), class = "input_title", translate(language, label, words)),
+    div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect), style = style)
+  )
+}
+
+make_dropdown_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
+  id = NA_character_, value = NULL, width = NULL){
+  
+  if (is.na(id)) id <- label
+  style <- ""
+  if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
+  div(
+    div(id = ns(paste0(id, "_title")), class = "input_title", i18n$t(label)),
     div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect), style = style)
   )
 }
@@ -480,10 +493,10 @@ render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny
   
   # Translation for datatable
   dt_translation <- list(
-    paginate = list(previous = i18n$t("Previous"), `next` = i18n$t("Next")),
-    search = i18n$t("Search : "),
-    lengthMenu = i18n$t("Show _MENU_ entries"),
-    emptyTable = i18n$t("No data available"))
+    paginate = list(previous = i18n$t("dt_previous"), `next` = i18n$t("dt_next")),
+    search = i18n$t("dt_search"),
+    lengthMenu = i18n$t("dt_entries"),
+    emptyTable = i18n$t("no_data_available"))
   
   # If no row in dataframe, stop here
   if (nrow(data) == 0){
