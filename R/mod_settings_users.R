@@ -36,11 +36,7 @@ mod_settings_users_ui <- function(id = character(), i18n = R6::R6Class()){
   pivots <- tagList()
   forbidden_cards <- tagList()
   sapply(cards_names, function(card){
-    card_name <- switch(card, "users_creation_card" = "Add new user", "users_management_card" = "Users mngmt", 
-      "users_accesses_creation_card" = "Add access", "users_accesses_management_card" = "Accesses mngmt", 
-      "users_accesses_options_card" = "Accesses opts", "users_statuses_creation_card" = "Add status", 
-      "users_statuses_management_card" = "Statuses mngmt")
-    pivots <<- tagList(pivots, shiny.fluent::PivotItem(id = card, itemKey = card, headerText = i18n$t(card_name)))
+    pivots <<- tagList(pivots, shiny.fluent::PivotItem(id = card, itemKey = card, headerText = i18n$t(card)))
     forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, language = language, words = words))
   })
   
@@ -66,37 +62,37 @@ mod_settings_sub_users_ui <- function(id = character(), i18n = R6::R6Class()){
   page <- substr(id, nchar("settings_users_") + 1, nchar(id))
   
   if (page == "users_creation"){
-    render_settings_creation_card(language = language, ns = ns, id = id, title = "add_user",
+    render_settings_creation_card_new(i18n = i18n, ns = ns, id = id, title = "add_user",
       textfields = c("username", "firstname", "lastname", "password"), textfields_width = "200px",
-      dropdowns = c("user_access", "user_status"), dropdowns_width = "200px", words = words) -> result
+      dropdowns = c("user_access", "user_status"), dropdowns_width = "200px") -> result
   }
   
   if (page == "users_accesses_creation"){
-    render_settings_creation_card(language = language, ns = ns, id = id, title = "add_access",
-      textfields = c("name", "description"), textfields_width = "300px", words = words) -> result
+    render_settings_creation_card_new(i18n = i18n, ns = ns, id = id, title = "add_access",
+      textfields = c("name", "description"), textfields_width = "300px") -> result
   }
   
   if (page == "users_statuses_creation"){
-    render_settings_creation_card(language = language, ns = ns, id = id, title = "add_status",
-      textfields = c("name", "description"), textfields_width = "300px", words = words) -> result
+    render_settings_creation_card_new(i18n = i18n, ns = ns, id = id, title = "add_status",
+      textfields = c("name", "description"), textfields_width = "300px") -> result
   }
   
   if (grepl("management", page)){
-    render_settings_datatable_card(language = language, ns = ns, output_id = "management_datatable", title = page, words = words) -> result
+    render_settings_datatable_card_new(i18n = i18n, ns = ns, output_id = "management_datatable", title = page) -> result
   }
   
   if (page == "users_accesses_options"){
     tagList(
       forbidden_card(ns = ns, name = "options_card", language = language, words = words),
       div(id = ns("options_card"),
-        make_card(i18n$t("Accesses opts"),
+        make_card(i18n$t("accesses_opts"),
           div(
-            make_combobox(language = language, ns = ns, label = "user_access", id = "options_chosen",
-              width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
+            make_combobox_new(i18n = i18n, ns = ns, label = "user_access", id = "options_chosen",
+              width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
             uiOutput(ns("options_toggles_result")), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              shiny.fluent::DefaultButton.shinyInput(ns("select_all"), i18n$t("Select all")),
-              shiny.fluent::DefaultButton.shinyInput(ns("unselect_all"), i18n$t("Unselect all")),
+              shiny.fluent::DefaultButton.shinyInput(ns("select_all"), i18n$t("select_all")),
+              shiny.fluent::DefaultButton.shinyInput(ns("unselect_all"), i18n$t("unselect_all")),
               shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("save")))
           )
         )    
@@ -138,9 +134,9 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
     dropdowns <- ""
     if (page %in% c("users_creation", "users_management")) dropdowns <- c("user_access", "user_status")
     
-    ##########################################
-    # Update dropdowns                       #
-    ##########################################
+    # --- --- --- --- --- -
+    # Update dropdowns ----
+    # --- --- --- --- --- -
     
     if (page == "users_accesses_options"){
       
@@ -152,9 +148,9 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       })
     }
     
-    ##########################################
-    # Show or hide cards                     #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Show or hide cards ----
+    # --- --- --- --- --- ---
     
     # Only for main users page (not for sub-pages)
     if (id == "settings_users"){
@@ -186,9 +182,9 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       # })
     }
     
-    ##########################################
-    # Add a new element                      #
-    ##########################################
+    # --- --- --- --- --- --
+    # Add a new element ----
+    # --- --- --- --- --- --
     
     # Only for creation subpages
     if (grepl("creation", id)){
@@ -229,141 +225,137 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         # Fields requiring unique value
         req_unique_values <- switch(table, "users" = "username", "users_accesses" = "name", "users_statuses" = "name")
         
-        add_settings_new_data(session = session, output = output, r = r, language = language, id = id, 
+        add_settings_new_data_new(session = session, output = output, r = r, i18n = i18n, id = id, 
           data = new_data, table = table, required_textfields = required_textfields, req_unique_values = req_unique_values, dropdowns = dropdowns)
         
         r[[paste0(table, "_toggle")]] <- r[[paste0(table, "_toggle")]] + 1
       })
     }
     
-    ##########################################
-    # Management datatable                   #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Generate datatable ----
+    # --- --- --- --- --- ---
+    
+    # Only for data management subpages
+    if (grepl("management", id)){
       
-      ##########################################
-      # Generate datatable                     #
-      ##########################################
+      # Dropdowns for each module / page
+      dropdowns_datatable <- switch(table, "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
+        "users_accesses" = "", "users_statuses" = "")
       
-      # Only for data management subpages
-      if (grepl("management", id)){
+      # Action buttons for each module / page
+      if ("users_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
+      action_buttons = switch(table, "users" = action_buttons, "users_accesses" = c("options", action_buttons), "users_statuses" =action_buttons)
+      
+      # Sortable cols
+      sortable_cols <- c("id", "name", "description", "username", "firstname", "lastname", "datetime")
+      
+      # Column widths
+      column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
+      
+      # Editable cols
+      editable_cols <- switch(table, "users" = c("username", "firstname", "lastname"),
+        "users_accesses" = c("name", "description"), "users_statuses" = c("name", "description"))
+      
+      # Centered columns
+      centered_cols <- c("id", "user_access_id", "user_status_id", "datetime", "action")
+      
+      # Searchable_cols
+      searchable_cols <- c("name", "description", "username", "firstname", "lastname")
+      
+      # If r variable already created, or not
+      if (length(r[[paste0(table, "_datatable_temp")]]) == 0) data_output <- tibble::tibble()
+      else data_output <- r[[paste0(table, "_datatable_temp")]]
+      
+      # Prepare data for datatable (add code for dropdowns etc)
+      r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+        table = table, dropdowns = dropdowns_datatable,
+        action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
+      
+      hidden_cols <- c("id", "password", "deleted", "modified")
+      
+      # Render datatable
+      render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0(table, "_datatable_temp")]],
+        output_name = "management_datatable", col_names =  get_col_names_new(table_name = table, i18n = i18n),
+        editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+        searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
+      
+      # Create a proxy for datatatable
+      r[[paste0(table, "_datatable_proxy")]] <- DT::dataTableProxy("management_datatable", deferUntilFlush = FALSE)
+      
+      # Reload datatable
+      observeEvent(r[[paste0(table, "_temp")]], {
         
-        # Dropdowns for each module / page
-        dropdowns_datatable <- switch(table, "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
-          "users_accesses" = "", "users_statuses" = "")
-        
-        # Action buttons for each module / page
-        if ("users_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
-        action_buttons = switch(table, "users" = action_buttons, "users_accesses" = c("options", action_buttons), "users_statuses" =action_buttons)
-        
-        # Sortable cols
-        sortable_cols <- c("id", "name", "description", "username", "firstname", "lastname", "datetime")
-        
-        # Column widths
-        column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
-        
-        # Editable cols
-        editable_cols <- switch(table, "users" = c("username", "firstname", "lastname"),
-          "users_accesses" = c("name", "description"), "users_statuses" = c("name", "description"))
-        
-        # Centered columns
-        centered_cols <- c("id", "user_access_id", "user_status_id", "datetime", "action")
-        
-        # Searchable_cols
-        searchable_cols <- c("name", "description", "username", "firstname", "lastname")
-        
-        # If r variable already created, or not
-        if (length(r[[paste0(table, "_datatable_temp")]]) == 0) data_output <- tibble::tibble()
-        else data_output <- r[[paste0(table, "_datatable_temp")]]
-        
-        # Prepare data for datatable (add code for dropdowns etc)
+        # Reload datatable_temp variable
         r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
           table = table, dropdowns = dropdowns_datatable,
           action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
         
-        hidden_cols <- c("id", "password", "deleted", "modified")
-        
-        # Render datatable
-        render_datatable(output = output, r = r, ns = ns, language = language, data = r[[paste0(table, "_datatable_temp")]],
-          output_name = "management_datatable", col_names =  get_col_names(table_name = table, language = language, words = r$words),
-          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-          searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
-        
-        # Create a proxy for datatatable
-        r[[paste0(table, "_datatable_proxy")]] <- DT::dataTableProxy("management_datatable", deferUntilFlush = FALSE)
-        
-        # Reload datatable
-        observeEvent(r[[paste0(table, "_temp")]], {
-          
-          # Reload datatable_temp variable
-          r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
-            table = table, dropdowns = dropdowns_datatable,
-            action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
-          
-          # Reload data of datatable
-          DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
-        })
-      }
-      
-      ##########################################
-      # Save changes in datatable              #
-      ##########################################
-      
-      # Only for data management subpages
-      if (grepl("management", id)){
-        
-        # Each time a row is updated, modify temp variable
-        observeEvent(input$management_datatable_cell_edit, {
-          edit_info <- input$management_datatable_cell_edit
-          r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
-          # Store that this row has been modified
-          r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
-        })
-        
-        # Each time a dropdown is updated, modify temp variable
-        if (table == "users"){
-          observeEvent(r$users, {
-            update_settings_datatable(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns, language = language)
-          })
-        }
+        # Reload data of datatable
+        DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
+      })
+    }
     
-        # When save button is clicked
-        observeEvent(input$management_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language))
-      }
-        
-      ##########################################
-      # Delete a row in datatable              #
-      ##########################################
-      
-      # Only for data management subpages
-      if (grepl("management", id)){
-      
-        # Create & show dialog box
-        observeEvent(r[[paste0(table, "_delete_dialog")]] , {
-          output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = table, language = language))
-        })
-  
-        # Whether to close or not delete dialog box
-        observeEvent(input$hide_dialog, r[[paste0(table, "_delete_dialog")]] <- FALSE)
-        observeEvent(input$delete_canceled, r[[paste0(table, "_delete_dialog")]] <- FALSE)
-        observeEvent(input$deleted_pressed, r[[paste0(table, "_delete_dialog")]] <- TRUE)
-  
-        # When the delete is confirmed...
-        observeEvent(input$delete_confirmed, {
-          
-          # If user has access
-          req(paste0(table, "_management_card") %in% r$user_accesses)
-  
-          # Get value of deleted row
-          row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
-  
-          # Delete row in DB table
-          delete_settings_datatable_row(output = output, r = r, ns = ns, language = language, row_deleted = row_deleted, table = table)
-        })
-      }
+    # --- --- --- --- --- --- --- --
+    # Save updates in datatable ----
+    # --- --- --- --- --- --- --- --
     
-    ##########################################
-    # Edit options by selecting a row        #
-    ##########################################
+    # Only for data management subpages
+    if (grepl("management", id)){
+      
+      # Each time a row is updated, modify temp variable
+      observeEvent(input$management_datatable_cell_edit, {
+        edit_info <- input$management_datatable_cell_edit
+        r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
+        # Store that this row has been modified
+        r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
+      })
+      
+      # Each time a dropdown is updated, modify temp variable
+      if (table == "users"){
+        observeEvent(r$users, {
+          update_settings_datatable(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns, language = language)
+        })
+      }
+  
+      # When save button is clicked
+      observeEvent(input$management_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language))
+    }
+    
+    # --- --- --- --- --- --- --- --
+    # Delete a row in datatable ----
+    # --- --- --- --- --- --- --- --
+    
+    # Only for data management subpages
+    if (grepl("management", id)){
+    
+      # Create & show dialog box
+      observeEvent(r[[paste0(table, "_delete_dialog")]] , {
+        output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = table, language = language))
+      })
+
+      # Whether to close or not delete dialog box
+      observeEvent(input$hide_dialog, r[[paste0(table, "_delete_dialog")]] <- FALSE)
+      observeEvent(input$delete_canceled, r[[paste0(table, "_delete_dialog")]] <- FALSE)
+      observeEvent(input$deleted_pressed, r[[paste0(table, "_delete_dialog")]] <- TRUE)
+
+      # When the delete is confirmed...
+      observeEvent(input$delete_confirmed, {
+        
+        # If user has access
+        req(paste0(table, "_management_card") %in% r$user_accesses)
+
+        # Get value of deleted row
+        row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
+
+        # Delete row in DB table
+        delete_settings_datatable_row(output = output, r = r, ns = ns, language = language, row_deleted = row_deleted, table = table)
+      })
+    }
+  
+    # --- --- --- --- --- --- --- --- -- -
+    # Edit options by selecting a row ----
+    # --- --- --- --- --- --- --- --- -- -
 
     # Only for accesses sub-page
     # We have to use same module than management, to get input from datatable

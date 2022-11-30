@@ -12,11 +12,11 @@ mod_settings_r_console_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   div(class = "main",
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "r_console", text = i18n$t("R console"))
+      list(key = "r_console", text = i18n$t("r_console"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("R console"))
+      shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("r_console"))
     ),
     forbidden_card(ns = ns, name = "edit_code_card", language = "EN", words = words),
     shinyjs::hidden(
@@ -26,7 +26,7 @@ mod_settings_r_console_ui <- function(id = character(), i18n = R6::R6Class()){
             div(shinyAce::aceEditor(ns("ace_code"), "", mode = "r", 
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
            
-            shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("Run code")), br(), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
             div(shiny::verbatimTextOutput(ns("code_result")), 
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )

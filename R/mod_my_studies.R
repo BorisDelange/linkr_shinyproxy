@@ -28,7 +28,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     shiny.fluent::reactOutput(ns("study_delete_confirm")),
     #shiny.fluent::reactOutput(ns("thesaurus_item_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "datamart_main", text = i18n$t("My studies"))
+      list(key = "datamart_main", text = i18n$t("my_studies"))
     ), maxDisplayedItems = 3),
     
     # --- --- -- -- --
@@ -39,12 +39,12 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
       div(id = ns("menu"),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "study_messages_card", itemKey = "study_messages_card", headerText = i18n$t("Messages")),
-          shiny.fluent::PivotItem(id = "studies_creation_card", itemKey = "studies_creation_card", headerText = i18n$t("Create a study")),
-          shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = i18n$t("Studies management")),
-          shiny.fluent::PivotItem(id = "study_options_card", itemKey = "study_options_card", headerText = i18n$t("Study options")),
-          shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study_card", headerText = i18n$t("Import a study")),
-          shiny.fluent::PivotItem(id = "export_study_card", itemKey = "export_study_card", headerText = i18n$t("Export a study"))
+          shiny.fluent::PivotItem(id = "study_messages_card", itemKey = "study_messages_card", headerText = i18n$t("messages")),
+          shiny.fluent::PivotItem(id = "studies_creation_card", itemKey = "studies_creation_card", headerText = i18n$t("create_study")),
+          shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = i18n$t("studies_management")),
+          shiny.fluent::PivotItem(id = "study_options_card", itemKey = "study_options_card", headerText = i18n$t("study_options")),
+          shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study_card", headerText = i18n$t("import_study")),
+          shiny.fluent::PivotItem(id = "export_study_card", itemKey = "export_study_card", headerText = i18n$t("export_study"))
         )
       )
     ),
@@ -61,7 +61,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("study_messages_card"),
-        make_card(i18n$t("Messages"),
+        make_card(i18n$t("messages"),
           div(br(),
             div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
@@ -88,7 +88,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("studies_creation_card"),
-        make_card(i18n$t("Create a study"), 
+        make_card(i18n$t("create_study"), 
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
               make_textfield(language = language, ns = ns, label = "name", id = "study_name", width = "300px")
@@ -106,7 +106,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("studies_datatable_card"),
-        make_card(i18n$t("Studies management"),
+        make_card(i18n$t("studies_management"),
           div(
             DT::DTOutput(ns("studies_datatable")),
             shiny.fluent::PrimaryButton.shinyInput(ns("save_studies_management"), i18n$t("save"))
@@ -122,7 +122,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("study_options_card"),
-        make_card(i18n$t("Study options"),
+        make_card(i18n$t("study_options"),
           div(br(),
             div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
@@ -144,7 +144,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("import_study_card"),
-        make_card(i18n$t("Import a study"),
+        make_card(i18n$t("import_study"),
           div(br(),
             div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
@@ -173,7 +173,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("export_study_card"),
-        make_card(i18n$t("Export a study"),
+        make_card(i18n$t("export_study"),
           div(br(),
             div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(

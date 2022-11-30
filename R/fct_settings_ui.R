@@ -108,6 +108,48 @@ render_settings_creation_card <- function(language = "EN", ns = shiny::NS(), id 
   )
 }
 
+render_settings_creation_card_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), id = character(), title = character(), 
+  textfields = character(), textfields_width = "200px", dropdowns = character(), dropdowns_width = "200px"){
+  
+  # For plugins dropdown, add a dropdown with module choice
+  plugins_dropdown <- ""
+  if (id == "settings_plugins"){
+    plugins_dropdown <- make_dropdown_new(i18n = i18n, ns = ns, label = "module_type", id = "module_type", width = "300px", 
+      options = list(
+        list(key = 1, text = i18n$t("patient_level_data")),
+        list(key = 2, text = i18n$t("aggregated_data"))
+      ), value = 1)
+  }
+  
+  div(id = ns("creation_card"),
+    make_card(
+      title = i18n$t(title),
+      content = div(
+        shiny.fluent::Stack(
+          # Horizontal alignment, with gap of 50 px between elements
+          horizontal = TRUE, tokens = list(childrenGap = 50),
+          # For each textfield, use make_textfield function
+          lapply(textfields, function(label){
+            if (label == "password") make_textfield_new(i18n = i18n, ns = ns, label = label, id = label, width = textfields_width, type = "password", canRevealPassword = TRUE)
+            else make_textfield_new(i18n = i18n, ns = ns, label = label, id = label, width = textfields_width)
+          })
+        ),
+        shiny.fluent::Stack(
+          horizontal = TRUE, tokens = list(childrenGap = 50),
+          lapply(dropdowns, function(label){
+            # Allow multiSelect for thesaurus, column data source
+            multiSelect <- FALSE
+            if (id == "settings_thesaurus") multiSelect <- TRUE
+            make_dropdown_new(i18n = i18n, ns = ns, label = label, id = label, multiSelect = multiSelect, width = dropdowns_width)
+          })
+        ), 
+        plugins_dropdown, br(),
+        shiny.fluent::PrimaryButton.shinyInput(ns("add"), i18n$t("add"))
+      )
+    )
+  )
+}
+
 #' Render UI of settings datatable card
 #' 
 #' @param language Language used (character)
@@ -126,6 +168,18 @@ render_settings_datatable_card <- function(language = "EN", ns = shiny::NS(), di
       div(
         DT::DTOutput(ns(output_id)),
         shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), translate(language, "save", words))
+      )
+    )
+  )
+}
+
+render_settings_datatable_card_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), div_id = "datatable_card", 
+  output_id = "management_datatable", title = character()){
+  div(id = ns(div_id),
+    make_card(i18n$t(title),
+      div(
+        DT::DTOutput(ns(output_id)),
+        shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save"))
       )
     )
   )

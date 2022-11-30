@@ -28,7 +28,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         horizontal = TRUE, tokens = list(childrenGap = 20),
         make_dropdown(language = language, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
           multiSelect = TRUE, width = "650px", words = words),
-        div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), i18n$t("Reset")), style = "margin-top:38px;")
+        div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
       ),
       div(DT::DTOutput(ns("plugin_thesaurus_items")), class = "thesaurus_table"), br(),
       DT::DTOutput(ns("thesaurus_items"))
@@ -50,13 +50,13 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
     shiny.fluent::Pivot(
       id = ns("plugins_pivot"),
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "all_plugins_card", itemKey = "all_plugins_card", headerText = i18n$t("All plugins")),
-      shiny.fluent::PivotItem(id = "plugins_creation_card", itemKey = "plugins_creation_card", headerText = i18n$t("Create a plugin")),
-      shiny.fluent::PivotItem(id = "plugins_datatable_card", itemKey = "plugins_datatable_card", headerText = i18n$t("Plugins management")),
-      shiny.fluent::PivotItem(id = "plugins_edit_code_card", itemKey = "plugins_edit_code_card", headerText = i18n$t("Edit plugin code")),
-      shiny.fluent::PivotItem(id = "plugins_options_card", itemKey = "plugins_options_card", headerText = i18n$t("Plugin options")),
-      shiny.fluent::PivotItem(id = "import_plugin_card", itemKey = "import_plugin_card", headerText = i18n$t("Import a plugin")),
-      shiny.fluent::PivotItem(id = "export_plugin_card", itemKey = "export_plugin_card", headerText = i18n$t("Export a plugin"))
+      shiny.fluent::PivotItem(id = "all_plugins_card", itemKey = "all_plugins_card", headerText = i18n$t("all_plugins")),
+      shiny.fluent::PivotItem(id = "plugins_creation_card", itemKey = "plugins_creation_card", headerText = i18n$t("create_plugin")),
+      shiny.fluent::PivotItem(id = "plugins_datatable_card", itemKey = "plugins_datatable_card", headerText = i18n$t("plugins_management")),
+      shiny.fluent::PivotItem(id = "plugins_edit_code_card", itemKey = "plugins_edit_code_card", headerText = i18n$t("edit_plugin_code")),
+      shiny.fluent::PivotItem(id = "plugins_options_card", itemKey = "plugins_options_card", headerText = i18n$t("plugin_options")),
+      shiny.fluent::PivotItem(id = "import_plugin_card", itemKey = "import_plugin_card", headerText = i18n$t("import_plugin")),
+      shiny.fluent::PivotItem(id = "export_plugin_card", itemKey = "export_plugin_card", headerText = i18n$t("export_plugin"))
     ),
     forbidden_cards,
     
@@ -111,7 +111,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("plugins_datatable_card"),
-        make_card(i18n$t("Plugins management"),
+        make_card(i18n$t("plugins_management"),
           div(
             DT::DTOutput(ns("plugins_datatable")),
             shiny.fluent::PrimaryButton.shinyInput(ns("save_plugins_management"), i18n$t("save"))
@@ -127,7 +127,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("plugins_creation_card"),
-        make_card(i18n$t("Create a plugin"),
+        make_card(i18n$t("create_plugin"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
               make_textfield(language = language, ns = ns, label = "name", id = "plugin_name", width = "300px")
@@ -145,13 +145,13 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("plugins_edit_code_card"),
-        make_card(i18n$t("Edit plugin code"),
+        make_card(i18n$t("edit_plugin_code"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
               make_combobox(language = language, ns = ns, label = "plugin", id = "code_chosen_plugin",
                 width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE),
               div(
-                div(class = "input_title", i18n$t("Group ID")),
+                div(class = "input_title", i18n$t("group_id")),
                 div(shiny.fluent::SpinButton.shinyInput(ns("group_id"), min = 1, max = 100000000, step = 1), style = "width:300px;")
               )
             ),
@@ -160,11 +160,11 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
-                list(key = "ui", text = i18n$t("UI")),
-                list(key = "server", text = i18n$t("Server"))
+                list(key = "ui", text = i18n$t("ui")),
+                list(key = "server", text = i18n$t("server"))
               ), className = "inline_choicegroup"),
               div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
-              div(i18n$t("Hide editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+              div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
             ),
             shinyjs::hidden(div(id = ns("div_br"), br())),
             
@@ -176,7 +176,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
             
             shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
-            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("Run code")), br(), br(),
+            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
             shiny::uiOutput(ns("code_result_ui")), br(),
             div(verbatimTextOutput(ns("code_result_server")), 
                 style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
@@ -192,15 +192,15 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("plugins_options_card"),
-        make_card(i18n$t("Plugin options"),
+        make_card(i18n$t("plugin_options"),
           div(
             make_combobox(language = language, ns = ns, label = "plugin", id = "options_chosen_plugin",
               width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
             div(
-              div(class = "input_title", paste0(i18n$t("Grant access to"), " :")),
+              div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
               shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
-                list(key = "everybody", text = i18n$t("Everybody")),
-                list(key = "people_picker", text = i18n$t("Choose users"))
+                list(key = "everybody", text = i18n$t("everybody")),
+                list(key = "people_picker", text = i18n$t("choose_users"))
               ), className = "inline_choicegroup"),
               conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
                 uiOutput(ns("users_allowed_read_div"))
@@ -219,14 +219,14 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("import_plugin_card"),
-        make_card(i18n$t("Import a plugin"),
+        make_card(i18n$t("import_plugin"),
           div(br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), 
               make_toggle(language = language, ns = ns, label = "replace_already_existing_plugins", inline = TRUE, words = words)), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::DefaultButton.shinyInput(ns("import_plugins_browse"), i18n$t("Choose a zip file")),
+              shiny.fluent::DefaultButton.shinyInput(ns("import_plugins_browse"), i18n$t("choose_zip_file")),
               uiOutput(ns("import_plugins_status"))), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("import_plugins_button"), i18n$t("Import a plugin"), iconProps = list(iconName = "Upload")),
+            shiny.fluent::PrimaryButton.shinyInput(ns("import_plugins_button"), i18n$t("import_plugin"), iconProps = list(iconName = "Upload")),
             div(style = "display:none;", fileInput(ns("import_plugins_upload"), label = "", multiple = FALSE, accept = ".zip"))
           )
         ), br()
@@ -240,14 +240,14 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("export_plugin_card"),
-        make_card(i18n$t("Export a plugin"),
+        make_card(i18n$t("export_plugin"),
           div(
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 20),
               make_dropdown(language = language, ns = ns, label = "plugins_to_export",
                 multiSelect = TRUE, width = "650px", words = words),
               div(shiny.fluent::PrimaryButton.shinyInput(ns("export_plugins"), 
-                i18n$t("Export a plugin"), iconProps = list(iconName = "Download")), style = "margin-top:38px;"),
+                i18n$t("export_plugin"), iconProps = list(iconName = "Download")), style = "margin-top:38px;"),
                 div(style = "visibility:hidden;", downloadButton(ns("export_plugins_download"), label = ""))
             ),
             DT::DTOutput(ns("plugins_to_export_datatable"))
@@ -942,7 +942,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     observeEvent(input$import_plugins_browse, shinyjs::click("import_plugins_upload"))
     
     output$import_plugins_status <- renderUI(tagList(div(
-      span(i18n$t("Loaded file"), " : ", style = "padding-top:5px;"), 
+      span(i18n$t("loaded_file"), " : ", style = "padding-top:5px;"), 
       span(input$import_plugins_upload$name, style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;")))
     
     observeEvent(input$import_plugins_button, {

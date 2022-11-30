@@ -251,6 +251,104 @@ get_col_names_new <- function(table_name = character(), i18n = R6::R6Class()){
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
+  if (table_name == "studies"){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"),
+      i18n$t("datamart"), i18n$t("patient_lvl_module_family"),
+      i18n$t("aggregated_module_family"), i18n$t("creator"), i18n$t("datetime"),
+      i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+  }
+  
+  if (table_name == "studies_no_data"){
+    result <- c(i18n$t("name"), i18n$t("creator"), i18n$t("datetime"),
+      i18n$t("action"))
+  }
+  
+  if (table_name == "thesaurus_items"){
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item"), i18n$t("name"), 
+      i18n$t("display_name"), i18n$t("category"), i18n$t("unit"),
+      i18n$t("datetime"), i18n$t("deleted"), i18n$t("action"), i18n$t("modified"))
+  }
+  
+  if (table_name == "modules_thesaurus_items"){
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item"), i18n$t("name"), 
+      i18n$t("display_name"), i18n$t("category"), i18n$t("unit"),
+      i18n$t("colour"), i18n$t("datetime"), i18n$t("deleted"),
+      i18n$t("action"), i18n$t("modified"))
+  }
+  
+  if (table_name == "thesaurus_items_with_counts"){
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item"), i18n$t("name"), 
+      i18n$t("display_name"), i18n$t("category"), i18n$t("unit"),
+      i18n$t("datetime"), i18n$t("deleted"),
+      i18n$t("num_patients"), i18n$t("num_rows"),
+      i18n$t("action"), i18n$t("modified"))
+  }
+  
+  if (table_name == "modules_thesaurus_items_with_counts"){
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item"), i18n$t("name"), 
+      i18n$t("display_name"), i18n$t("category"), i18n$t("unit"),
+      i18n$t("item_colour"), i18n$t("datetime"), i18n$t("deleted"),
+      i18n$t("num_patients"), i18n$t("num_rows"),
+      i18n$t("action"), i18n$t("modified"))
+  }
+  
+  if (table_name == "datamart_thesaurus_items_with_counts"){
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item"), i18n$t("name"), 
+      i18n$t("display_name"), i18n$t("category"), i18n$t("unit"),
+      i18n$t("datetime"), i18n$t("deleted"),
+      i18n$t("num_patients"), i18n$t("num_rows"),
+      i18n$t("action"), i18n$t("modified"))
+  }
+  
+  if (table_name == "plugins"){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("module_type"), 
+      i18n$t("last_update"),  i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+  }
+  
+  if (table_name == "users"){
+    result <- c(i18n$t("id"), i18n$t("username"), i18n$t("firstname"), i18n$t("lastname"),
+      i18n$t("password"), i18n$t("user_access"), i18n$t("user_status"), i18n$t("datetime"), 
+      i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+  }
+  
+  if (table_name %in% c("users_accesses", "users_statuses")){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), 
+      i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+  }
+  
+  if (table_name %in% c("patient_lvl_modules", "aggregated_modules")){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("module_family"),
+      i18n$t("parent_module"), i18n$t("display_order"), i18n$t("creator"), i18n$t("datetime"), 
+      i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+  }
+  
+  if (table_name %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"),
+      i18n$t("creator"), i18n$t("datetime"), 
+      i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+  }
+  
+  if (table_name == "patient_lvl_modules_elements"){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("module_family"), 
+      i18n$t("group"), i18n$t("module"), i18n$t("plugin"), 
+      i18n$t("thesaurus"), i18n$t("thesaurus_item"), i18n$t("display_name"),
+      i18n$t("unit"), i18n$t("colour"), i18n$t("display_order"),
+      i18n$t("creator"), i18n$t("datetime"),
+      i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+  }
+  
+  if (table_name == "aggregated_modules_elements"){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("module_family"),
+      i18n$t("group"), i18n$t("module"), 
+      i18n$t("plugin"), i18n$t("display_order"), i18n$t("creator"),
+      i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+  }
+  
+  if (table_name == "log"){
+    result <- c(i18n$t("id"), i18n$t("category"), i18n$t("name"),
+      i18n$t("value"), i18n$t("user"), i18n$t("datetime"))
+  }
+  
   if (table_name == "scripts"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("data_source_id"), i18n$t("creator"), 
       i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))

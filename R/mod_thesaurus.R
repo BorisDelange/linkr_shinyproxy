@@ -21,23 +21,23 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
     class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "thesaurus_main", text = i18n$t("Thesaurus"))
+      list(key = "thesaurus_main", text = i18n$t("thesaurus"))
     ), maxDisplayedItems = 3),
     shinyjs::hidden(
       div(id = ns("menu"),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "items_card", itemKey = "items_card", headerText = i18n$t("All items")),
-          shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = i18n$t("Categories")),
-          shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = i18n$t("Conversions")),
-          shiny.fluent::PivotItem(id = "create_items_card", itemKey = "create_items_card", headerText = i18n$t("Create items"))
+          shiny.fluent::PivotItem(id = "items_card", itemKey = "items_card", headerText = i18n$t("all_items")),
+          shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = i18n$t("categories")),
+          shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = i18n$t("conversions")),
+          shiny.fluent::PivotItem(id = "create_items_card", itemKey = "create_items_card", headerText = i18n$t("create_items"))
         )
       )
     ),
     forbidden_cards,
     div(
       id = ns("choose_a_datamart_card"),
-      make_card("", div(shiny.fluent::MessageBar(i18n$t("Choose a damatart in the dropdown on the left-side of the page"), messageBarType = 5), style = "margin-top:10px;"))
+      make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_a_damatart_left_side"), messageBarType = 5), style = "margin-top:10px;"))
     ),
     shinyjs::hidden(
       div(
@@ -48,7 +48,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
               make_combobox(language = "EN", ns = ns, label = "thesaurus", width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
               DT::DTOutput(ns("thesaurus_items")),
               shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), i18n$t("save")), " ",
-              shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), i18n$t("Reload cache")),
+              shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), i18n$t("reload_cache")),
               br(),
               uiOutput(ns("thesaurus_selected_item"))
             ), br(),
@@ -71,7 +71,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("categories_card"),
-        make_card(i18n$t("Categories"),
+        make_card(i18n$t("categories"),
           div(
             div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
@@ -94,7 +94,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("conversions_card"),
-        make_card(i18n$t("Conversions"),
+        make_card(i18n$t("conversions"),
           div(
             div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
@@ -112,7 +112,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("create_items_card"),
-        make_card(i18n$t("Create items"),
+        make_card(i18n$t("create_items"),
           div(
             div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
             div(shiny.fluent::MessageBar(
@@ -333,8 +333,8 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       if (nrow(all_values %>% dplyr::filter(!is.na(value))) > 0) values <- suppressMessages(all_values %>% dplyr::filter(!is.na(value)) %>% 
         dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(value))
       values_text <- tagList(
-        span(i18n$t("Values"), style = style), paste(values, collapse = " || "), br(),
-        span(i18n$t("Numeric values"), style = style), paste(values_num, collapse = " || "), br()
+        span(i18n$t("values"), style = style), paste(values, collapse = " || "), br(),
+        span(i18n$t("numeric_values"), style = style), paste(values_num, collapse = " || "), br()
       )
       
       if (nrow(all_values) == 0){
@@ -351,17 +351,17 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(rate_text))
         
         values_text <- tagList(
-          span(i18n$t("Rate"), style = style), paste(rate, collapse = " || "), br(),
-          span(i18n$t("Amount"), style = style), paste(amount, collapse = " || "), br()
+          span(i18n$t("rate"), style = style), paste(rate, collapse = " || "), br(),
+          span(i18n$t("amount"), style = style), paste(amount, collapse = " || "), br()
         )
         
         if (nrow(all_values) == 0) values_text <- ""
       }
       
       output$thesaurus_selected_item <- renderUI(tagList(br(), div(
-        span(i18n$t("Display name"), style = style), thesaurus_item$display_name, br(),
-        span(i18n$t("Thesaurus ID"), style = style), thesaurus_item$thesaurus_id, br(),
-        span(i18n$t("Item ID"), style = style), thesaurus_item$item_id, br(),
+        span(i18n$t("display_name"), style = style), thesaurus_item$display_name, br(),
+        span(i18n$t("thesaurus_id"), style = style), thesaurus_item$thesaurus_id, br(),
+        span(i18n$t("item_id"), style = style), thesaurus_item$item_id, br(),
         values_text,
         style = "border:dashed 1px; padding:10px;"
       )))

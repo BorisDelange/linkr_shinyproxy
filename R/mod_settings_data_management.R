@@ -36,13 +36,13 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       div(class = "main",
         render_settings_default_elements(ns = ns),
         shiny.fluent::Breadcrumb(items = list(
-          list(key = "data_sources", text = i18n$t("Data sources"))
+          list(key = "data_sources", text = i18n$t("data_sources"))
         ), maxDisplayedItems = 3),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("Create a data source")),
-          shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("Data sources management")),
-          shiny.fluent::PivotItem(id = "create_items_card", itemKey = "create_items_card", headerText = i18n$t("Create items"))
+          shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("create_data source")),
+          shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("data_sources_management")),
+          shiny.fluent::PivotItem(id = "create_items_card", itemKey = "create_items_card", headerText = i18n$t("create_items"))
         ),
         forbidden_cards,
         render_settings_creation_card(
@@ -61,20 +61,20 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
     div(class = "main",
       render_settings_default_elements(ns = ns),
       shiny.fluent::Breadcrumb(items = list(
-        list(key = "datamarts", text = i18n$t("Datamarts"))
+        list(key = "datamarts", text = i18n$t("datamarts"))
       ), maxDisplayedItems = 3),
       shiny.fluent::Pivot(
         id = ns("datamarts_pivot"),
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-        shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("Create a datamart")),
-        shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("Datamarts management")),
-        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("Edit datamart code")),
-        shiny.fluent::PivotItem(id = "options_card", itemKey = "options_card", headerText = i18n$t("Datamart options"))
+        shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("create_datamart")),
+        shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("datamarts_management")),
+        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_datamart_code")),
+        shiny.fluent::PivotItem(id = "options_card", itemKey = "options_card", headerText = i18n$t("datamart_options"))
       ),
       forbidden_cards,
       div(id = ns("creation_card"),
         make_card(
-          i18n$t("Create a datamart"),
+          i18n$t("create_datamart"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
               make_textfield(language = language, ns = ns, label = "name", width = "300px", words = words),
@@ -85,21 +85,21 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
         )
       ),
       div(id = ns("edit_code_card"), 
-        make_card(i18n$t("Edit datamart code"),
+        make_card(i18n$t("edit_datamart_code"),
           div(
             make_combobox(language = language, ns = ns, label = "datamart", id = "code_chosen",
               width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
             div(shinyAce::aceEditor(ns("ace_edit_code"), "", mode = "r", 
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
             shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
-            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("Run code")), br(), br(),
+            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
             div(shiny::verbatimTextOutput(ns("code_result")), 
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
         ), br()
       ),
       div(id = ns("options_card"),
-        make_card(i18n$t("Datamart options"),
+        make_card(i18n$t("datamart_options"),
           div(
             make_combobox(language = language, ns = ns, label = "datamart", id = "options_chosen",
               width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(), br(),
@@ -108,10 +108,10 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
               make_toggle(language = language, ns = ns, label = "show_only_aggregated_data", inline = TRUE, words = words)
             ), br(),
             div(
-              div(class = "input_title", paste0(i18n$t("Grant access to"), " :")),
+              div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
               shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
-                list(key = "everybody", text = i18n$t("Everybody")),
-                list(key = "people_picker", text = i18n$t("Choose users"))
+                list(key = "everybody", text = i18n$t("everybody")),
+                list(key = "people_picker", text = i18n$t("choose_users"))
               ), className = "inline_choicegroup"),
               conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
                 uiOutput(ns("users_allowed_read_div"))
@@ -134,23 +134,23 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
     div(class = "main",
       render_settings_default_elements(ns = ns),
       shiny.fluent::Breadcrumb(items = list(
-        list(key = "thesaurus", text = i18n$t("Thesaurus"))
+        list(key = "thesaurus", text = i18n$t("thesaurus"))
       ), maxDisplayedItems = 3),
       shiny.fluent::Pivot(
         id = ns("thesaurus_pivot"),
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-        shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("Create a thesaurus")),
-        shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("Thesaurus management")),
-        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("Edit thesaurus code")),
-        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("All items")),
-        shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = i18n$t("Categories")),
-        shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = i18n$t("Conversions")),
-        shiny.fluent::PivotItem(id = "mapping_card", itemKey = "mapping_card", headerText = i18n$t("Mapping")),
+        shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("create_thesaurus")),
+        shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("thesaurus_management")),
+        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_thesaurus_code")),
+        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("all_items")),
+        shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = i18n$t("categories")),
+        shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = i18n$t("conversions")),
+        shiny.fluent::PivotItem(id = "mapping_card", itemKey = "mapping_card", headerText = i18n$t("mapping")),
       ),
       forbidden_cards,
       div(id = ns("creation_card"),
         make_card(
-          i18n$t("Create a thesaurus"),
+          i18n$t("create_thesaurus"),
             div(
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
               make_textfield_new(i18n = i18n, ns = ns, label = "name", width = "300px"),
@@ -161,7 +161,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
         )
       ),
       div(id = ns("sub_datatable_card"),
-        make_card(i18n$t("All items"),
+        make_card(i18n$t("all_items"),
           div(
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 50),
@@ -169,7 +169,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
                 width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE),
               make_dropdown(language = language, ns = ns, label = "datamart", id = "thesaurus_datamart", width = "300px", words = words),
               conditionalPanel(condition = "input.datamart != ''", ns = ns,
-                div(strong(i18n$t("Show only items used in this datamart"), style = "display:block; padding-bottom:12px;"),
+                div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
                   shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
             ),
             DT::DTOutput(ns("sub_datatable")), br(),
@@ -178,14 +178,14 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
         )
       ),
       div(id = ns("edit_code_card"), 
-        make_card(i18n$t("Edit thesaurus code"),
+        make_card(i18n$t("edit_thesaurus_code"),
           div(
             make_combobox(language = language, ns = ns, label = "thesaurus", id = "code_chosen",
               width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
             div(shinyAce::aceEditor(ns("ace_edit_code"), "", mode = "r", 
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
             shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
-            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("Run code")), br(), br(),
+            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
             div(shiny::verbatimTextOutput(ns("code_result")), 
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
@@ -535,7 +535,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
           
           # Set current pivot to options_card
-          shinyjs::runjs(glue::glue("$('#{id}-datamarts_pivot button[name=\"{i18n$t('Datamart')}\"]').click();"))
+          shinyjs::runjs(glue::glue("$('#{id}-datamarts_pivot button[name=\"{i18n$t('datamart')}\"]').click();"))
         })
         
         observeEvent(input$options_chosen, {

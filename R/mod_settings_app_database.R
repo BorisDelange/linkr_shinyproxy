@@ -8,34 +8,52 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_settings_app_database_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
+mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
+  
+  cards <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card")
+  
+  forbidden_cards <- tagList()
+  sapply(cards, function(card){
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card_new(ns = ns, name = card, i18n = i18n))
+  })
   
   div(class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "app_db", text = translate(language, "app_db", words))
+      list(key = "app_db", text = i18n$t("app_db"))
     ), maxDisplayedItems = 3),
+    
+    # --- --- -- -- --
+    # Pivot items ----
+    # --- --- -- -- --
+    
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "db_connection_infos_card", itemKey = "db_connection_infos_card", headerText = translate(language, "db_connection_infos_card", words)),
-      shiny.fluent::PivotItem(id = "db_datatable_card", itemKey = "db_datatable_card", headerText = translate(language, "db_datatable_card", words)),
-      shiny.fluent::PivotItem(id = "db_request_card", itemKey = "db_request_card", headerText = translate(language, "db_request_card", words)),
-      shiny.fluent::PivotItem(id = "db_save_card", itemKey = "db_save_card", headerText = translate(language, "db_save_card", words)),
-      shiny.fluent::PivotItem(id = "db_restore_card", itemKey = "db_restore_card", headerText = translate(language, "db_restore_card", words))
+      shiny.fluent::PivotItem(id = "db_connection_infos_card", itemKey = "db_connection_infos_card", headerText = i18n$t("db_connection_infos_card")),
+      shiny.fluent::PivotItem(id = "db_datatable_card", itemKey = "db_datatable_card", headerText = i18n$t("db_datatable_card")),
+      shiny.fluent::PivotItem(id = "db_request_card", itemKey = "db_request_card", headerText = i18n$t("db_request_card")),
+      shiny.fluent::PivotItem(id = "db_save_card", itemKey = "db_save_card", headerText = i18n$t("db_save_card")),
+      shiny.fluent::PivotItem(id = "db_restore_card", itemKey = "db_restore_card", headerText = i18n$t("db_restore_card"))
     ),
-    forbidden_card(ns = ns, name = "db_connection_infos_card", language = language, words = words),
+    
+    forbidden_cards,
+    
+    # --- --- --- --- --- --- --- -
+    # DB connection infos card ----
+    # --- --- --- --- --- --- --- -
+    
     shinyjs::hidden(
       div(
         id = ns("db_connection_infos_card"),
         make_card(
-          translate(language, "connection_infos", words),
+          i18n$t("connection_infos"),
           div(
             div(
-              div(class = "input_title", translate(language, "connection_type", words)),
+              div(class = "input_title", i18n$t("connection_type")),
               shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type"), value = "local", options = list(
-                  list(key = "local", text = translate(language, "local", words)),
-                  list(key = "distant", text = translate(language, "distant", words))
+                  list(key = "local", text = i18n$t("local")),
+                  list(key = "distant", text = i18n$t("distant"))
                 ), className = "inline_choicegroup")
             ),
             shiny::conditionalPanel(
@@ -47,21 +65,21 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
                   list(key = "postgres", text = "PostgreSQL"),
                   list(key = "sqlite", text = "SQLite")
                 ), value = "postgres", width = "250px", words = words),
-                make_textfield(language, ns, "dbname", width = "250px", words = words),
-                make_textfield(language, ns, "host", width = "250px", words = words)
+                make_textfield_new(i18n, ns, "dbname", width = "250px"),
+                make_textfield_new(i18n, ns, "host", width = "250px")
               ),
               shiny.fluent::Stack(
                 horizontal = TRUE,
                 tokens = list(childrenGap = 50),
-                make_textfield(language, ns, "port", width = "250px", words = words),
-                make_textfield(language, ns, "user", width = "250px", words = words),
-                make_textfield(language, ns, "password", type = "password", canRevealPassword = TRUE, width = "250px", words = words)
+                make_textfield_new(i18n, ns, "port", width = "250px"),
+                make_textfield_new(i18n, ns, "user", width = "250px"),
+                make_textfield_new(i18n, ns, "password", type = "password", canRevealPassword = TRUE, width = "250px")
               )), htmltools::br(),
             shiny.fluent::Stack(
               horizontal = TRUE,
               tokens = list(childrenGap = 20),
-              shiny.fluent::PrimaryButton.shinyInput(ns("db_connection_save"), translate(language, "save", words)), " ",
-              shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, shiny.fluent::PrimaryButton.shinyInput(ns("test_connection"), translate(language, "test_connection", words))),
+              shiny.fluent::PrimaryButton.shinyInput(ns("db_connection_save"), i18n$t("save")), " ",
+              shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, shiny.fluent::PrimaryButton.shinyInput(ns("test_connection"), i18n$t("test_connection"))),
               shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, div(shiny::textOutput(ns("test_connection_success")), style = "padding-top:5px; font-weight:bold; color:#0078D4;")),
               shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, div(shiny::textOutput(ns("test_connection_failure")), style = "padding-top:5px; color:red;"))
             ),
@@ -69,75 +87,91 @@ mod_settings_app_database_ui <- function(id = character(), language = "EN", word
         )
       )
     ),
-    forbidden_card(ns = ns, name = "db_datatable_card", language = language, words = words),
+    
+    # --- --- --- --- ---
+    # DB tables card ----
+    # --- --- --- --- ---
+    
     shinyjs::hidden(
       div(
         id = ns("db_datatable_card"),
         make_card(
-          translate(language, "app_db_tables", words),
+          i18n$t("app_db_tables"),
           div(
             br(), shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type_tables"), value = "local", options = list(
-              list(key = "local", text = translate(language, "local", words)),
-              list(key = "distant", text = translate(language, "distant", words))
+              list(key = "local", text = i18n$t("local")),
+              list(key = "distant", text = i18n$t("distant"))
             ), className = "inline_choicegroup"),
             DT::DTOutput(ns("app_db_tables"))
           )
         )
       )
     ),
-    forbidden_card(ns = ns, name = "db_request_card", language = language, words = words),
+    
+    # --- --- --- --- -- -
+    # Request DB card ----
+    # --- --- --- --- -- -
+    
     shinyjs::hidden(
       div(
         id = ns("db_request_card"),
         make_card(
-          translate(language, "app_db_request", words),
+          i18n$t("app_db_request"),
           div(
             shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type_request"), value = "local", options = list(
-              list(key = "local", text = translate(language, "local", words)),
-              list(key = "distant", text = translate(language, "distant", words))
+              list(key = "local", text = i18n$t("local")),
+              list(key = "distant", text = i18n$t("distant"))
             ), className = "inline_choicegroup"),
             div(shinyAce::aceEditor(ns("app_db_request"), "", "sql",
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
             div(shiny::verbatimTextOutput(ns("request_result")), 
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
             htmltools::br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("request"), translate(language, "request", words))
+            shiny.fluent::PrimaryButton.shinyInput(ns("request"), i18n$t("request"))
           )
         )
       )
     ),
-    forbidden_card(ns = ns, name = "db_save_card", language = language, words = words),
+    
+    # --- --- --- --- -
+    # Save DB card ----
+    # --- --- --- --- -
+    
     shinyjs::hidden(
       div(
         id = ns("db_save_card"),
         make_card(
-          translate(language, "db_save", words),
+          i18n$t("db_save"),
           div(
             br(), uiOutput(ns("current_db_save")),
             br(), uiOutput(ns("last_db_save")), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle(language = language, ns = ns, label = "db_export_log", value = FALSE, inline = TRUE, words = words)), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("db_save_button"), translate(language, "export_db", words), iconProps = list(iconName = "Download")),
+              make_toggle_new(i18n = i18n, ns = ns, label = "db_export_log", value = FALSE, inline = TRUE)), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("db_save_button"), i18n$t("export_db"), iconProps = list(iconName = "Download")),
             div(style = "visibility:hidden;", downloadButton(ns("db_save"), label = ""))
           )
         )
       )
     ),
-    forbidden_card(ns = ns, name = "db_restore_card", language = language, words = words),
+    
+    # --- --- --- --- -- -
+    # Restore DB card ----
+    # --- --- --- --- -- -
+    
     shinyjs::hidden(
       div(
         id = ns("db_restore_card"),
         make_card(
-          translate(language, "db_restore", words),
+          i18n$t("db_restore"),
           div(
             br(), uiOutput(ns("current_db_restore")),
             br(), uiOutput(ns("last_db_restore")), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle(language = language, ns = ns, label = "db_import_log", value = FALSE, inline = TRUE, words = words)), br(),
+              make_toggle_new(i18n = i18n, ns = ns, label = "db_import_log", value = FALSE, inline = TRUE)), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::DefaultButton.shinyInput(ns("db_restore_browse"), translate(language, "choose_zip_file", words)),
+              shiny.fluent::DefaultButton.shinyInput(ns("db_restore_browse"), i18n$t("choose_zip_file")),
               uiOutput(ns("db_restore_status"))), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("db_restore_button"), translate(language, "restore_db", words), iconProps = list(iconName = "Upload")),
+            shiny.fluent::PrimaryButton.shinyInput(ns("db_restore_button"), i18n$t("restore_db"), iconProps = list(iconName = "Upload")),
             div(style = "display:none;", fileInput(ns("db_restore"), label = "", multiple = FALSE, accept = ".zip"))
           )
         )
@@ -168,6 +202,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       "thesaurus", "icccicl",
       "thesaurus_items", "iiicccccl",
       "plugins", "iccicl",
+      "scripts", "iciicl",
       "patients_options", "iiiiiiciccnicl",
       "modules_elements_options", "iiiiicccnicl",
       "patient_lvl_modules_families", "iccicl",
@@ -181,9 +216,9 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       "log", "icccic"
     )
     
-    ##########################################
-    # Show or hide cards   #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Show or hide cards ----
+    # --- --- --- --- --- ---
     
     cards <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
@@ -192,9 +227,23 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     if ("db_connection_infos_card" %in% r$user_accesses) shinyjs::show("db_connection_infos_card")
     else shinyjs::show("db_connection_infos_card_forbidden")
     
-    ##########################################
-    # Database connection                    #
-    ##########################################
+    # --- --- --- --- --- --- --- --- ---
+    # Update connection type toggles ----
+    # --- --- --- --- --- --- --- --- ---
+    
+    observeEvent(input$connection_type_tables, {
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type", value = input$connection_type_tables)
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type_request", value = input$connection_type_tables)
+    })
+    
+    observeEvent(input$connection_type_request, {
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type", value = input$connection_type_request)
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type_tables", value = input$connection_type_request)
+    })
+    
+    # --- --- --- --- --- -- -
+    # Database connection ----
+    # --- --- --- --- --- -- -
     
     observeEvent(r$local_db, {
 
@@ -213,64 +262,27 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       })
     })
     
-      ##########################################
-      # Save modif on connection infos         #
-      ##########################################
+    # --- --- --- --- --- --- --- --- --- -
+    # Save updates on connection infos ----
+    # --- --- --- --- --- --- --- --- --- -
+  
+    # When save button is clicked
     
-      # When save button is clicked
+    observeEvent(input$db_connection_save, {
       
-      observeEvent(input$db_connection_save, {
-        
-        # If connection_type is local, save only connection_type but do not erase other informations (distant DB informations)
-        if (input$connection_type == "local"){
-          query <- "UPDATE options SET value = 'local' WHERE category = 'distant_db' AND name = 'connection_type'"
-          DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
-          add_log_entry(r = r, category = "SQL query", name = "Update SQL connection infos", value = query)
-        }
-        
-        # If connection_type is distant, save connection_type and other distant DB informations
-        if (input$connection_type == "distant"){
-          
-          # Checks inputs
-          db_checks <- c("dbname" = FALSE, "host" = FALSE, "port" = FALSE, "user" = FALSE, "password" = FALSE)
-          
-          sapply(names(db_checks), function(name){
-            shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = NULL)
-            if (!is.null(input[[name]])){
-              if (name != "port" & input[[name]] != "") db_checks[[name]] <<- TRUE
-              if (name == "port" & input[[name]] != "" & grepl("^[0-9]+$", input[[name]])) db_checks[[name]] <<- TRUE
-            }
-          })
-          sapply(names(db_checks), function(name) if (!db_checks[[name]]) shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = translate(language, paste0("provide_valid_", name), r$words)))
-          
-          req(db_checks[["dbname"]], db_checks[["host"]], db_checks[["port"]], db_checks[["user"]], db_checks[["password"]])
-          
-          # If checks OK, insert data in database
-          sapply(c("connection_type", "sql_lib", "dbname", "host", "port", "user", "password"), function(name){
-            query <- paste0("UPDATE options
-              SET value = '", input[[name]], "', creator_id = ", r$user_id, ", datetime = '", as.character(Sys.time()), "'
-              WHERE category = 'distant_db' AND name = '", name, "'")
-            DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
-            add_log_entry(r = r, category = "SQL query", name = "Update SQL connection infos", value = query)
-          })
-        }
-        
-        # Reload r$db variable
-        r$db <- get_db(db_info = list(), language = language)
-        
-        show_message_bar(output, 1, "modif_saved", "success", language)
-      })
+      # If connection_type is local, save only connection_type but do not erase other informations (distant DB informations)
+      if (input$connection_type == "local"){
+        query <- "UPDATE options SET value = 'local' WHERE category = 'distant_db' AND name = 'connection_type'"
+        DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
+        add_log_entry(r = r, category = "SQL query", name = "Update SQL connection infos", value = query)
+      }
       
-      ##########################################
-      # Test connection                        #
-      ##########################################
-      
-      # When test connection button is clicked
-    
-      observeEvent(input$test_connection, {
+      # If connection_type is distant, save connection_type and other distant DB informations
+      if (input$connection_type == "distant"){
         
-        # Before testing connection, make sure fields are filled
+        # Checks inputs
         db_checks <- c("dbname" = FALSE, "host" = FALSE, "port" = FALSE, "user" = FALSE, "password" = FALSE)
+        
         sapply(names(db_checks), function(name){
           shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = NULL)
           if (!is.null(input[[name]])){
@@ -278,37 +290,79 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
             if (name == "port" & input[[name]] != "" & grepl("^[0-9]+$", input[[name]])) db_checks[[name]] <<- TRUE
           }
         })
-        
-        # Reset output textfields
-        output$test_connection_success <- renderText("")
-        output$test_connection_failure <- renderText("")
-        
-        sapply(names(db_checks), function(name) if (!db_checks[[name]]) shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = translate(language, paste0("provide_valid_", name), r$words)))
+        sapply(names(db_checks), function(name) if (!db_checks[[name]]) shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = i18n$t(paste0("provide_valid_", name))))
         
         req(db_checks[["dbname"]], db_checks[["host"]], db_checks[["port"]], db_checks[["user"]], db_checks[["password"]])
         
-        # If checks are OK, test connection
-        code <- paste0("DBI::dbConnect(RPostgres::Postgres(),
-          dbname = '", input$dbname, "', host = '", input$host, "', port = ", input$port,
-          ", user = '", input$user, "', password = '", input$password, "')")
-        result_success <- ""
-        result_failure <- ""
-        result <- capture.output(
-          tryCatch(eval(parse(text = isolate(code))), error = function(e) print(e), warning = function(w) print(w))
-        )
-        
-        if (!grepl("exception|error|warning|fatal", tolower(result))) result_success <- paste0(translate(language, "success", r$words), " !")
-        if (grepl("exception|error|warning|fatal", tolower(result))) result_failure <- result
-        
-        output$test_connection_success <- renderText(result_success)
-        output$test_connection_failure <- renderText(result_failure)
-      })
+        # If checks OK, insert data in database
+        sapply(c("connection_type", "sql_lib", "dbname", "host", "port", "user", "password"), function(name){
+          query <- paste0("UPDATE options
+            SET value = '", input[[name]], "', creator_id = ", r$user_id, ", datetime = '", as.character(Sys.time()), "'
+            WHERE category = 'distant_db' AND name = '", name, "'")
+          DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
+          add_log_entry(r = r, category = "SQL query", name = "Update SQL connection infos", value = query)
+        })
+      }
+      
+      # Reload r$db variable
+      r$db <- get_db(db_info = list(), language = language)
+      
+      show_message_bar(output, 1, "modif_saved", "success", language)
+    })
     
-    ##########################################
-    # Database tables datatable              #
-    ##########################################
+    # --- --- --- --- -- -
+    # Test connection ----
+    # --- --- --- --- -- -
+  
+    # When test connection button is clicked
+  
+    observeEvent(input$test_connection, {
+      
+      # Before testing connection, make sure fields are filled
+      db_checks <- c("dbname" = FALSE, "host" = FALSE, "port" = FALSE, "user" = FALSE, "password" = FALSE)
+      sapply(names(db_checks), function(name){
+        shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = NULL)
+        if (!is.null(input[[name]])){
+          if (name != "port" & input[[name]] != "") db_checks[[name]] <<- TRUE
+          if (name == "port" & input[[name]] != "" & grepl("^[0-9]+$", input[[name]])) db_checks[[name]] <<- TRUE
+        }
+      })
+      
+      # Reset output textfields
+      output$test_connection_success <- renderText("")
+      output$test_connection_failure <- renderText("")
+      
+      sapply(names(db_checks), function(name) if (!db_checks[[name]]) shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = i18n$t(paste0("provide_valid_", name))))
+      
+      req(db_checks[["dbname"]], db_checks[["host"]], db_checks[["port"]], db_checks[["user"]], db_checks[["password"]])
+      
+      # If checks are OK, test connection
+      code <- paste0("DBI::dbConnect(RPostgres::Postgres(),
+        dbname = '", input$dbname, "', host = '", input$host, "', port = ", input$port,
+        ", user = '", input$user, "', password = '", input$password, "')")
+      result_success <- ""
+      result_failure <- ""
+      result <- capture.output(
+        tryCatch(eval(parse(text = isolate(code))), error = function(e) print(e), warning = function(w) print(w))
+      )
+      
+      if (!grepl("exception|error|warning|fatal", tolower(result))) result_success <- paste0(i18n$t("success"), " !")
+      if (grepl("exception|error|warning|fatal", tolower(result))) result_failure <- result
+      
+      output$test_connection_success <- renderText(result_success)
+      output$test_connection_failure <- renderText(result_failure)
+    })
+    
+    # --- --- --- --
+    # DB tables ----
+    # --- --- --- --
     
     observeEvent(input$connection_type, {
+      
+      # Update other ChoiceGroups
+      
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type_tables", value = input$connection_type)
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type_request", value = input$connection_type)
       
       # Local database tables
       
@@ -332,20 +386,29 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         }
       }
       
-      colnames(data) <- c(translate(language, "table_name", r$words), translate(language, "row_number", r$words))
+      colnames(data) <- c(i18n$t("table_name"), i18n$t("row_number"))
+      
+      dt_translation <- list(
+        paginate = list(previous = i18n$t("dt_previous"), `next` = i18n$t("dt_next")),
+        search = i18n$t("dt_search"),
+        lengthMenu = i18n$t("dt_entries"),
+        emptyTable = i18n$t("no_data_available"))
       
       output$app_db_tables <- DT::renderDT(
         data,
-        options = list(dom = "t<'bottom'p>",
+        options = list(
+          dom = "t<'bottom'p>",
+          pageLength = 30,
+          language = dt_translation,
           columnDefs = list(
             list(className = "dt-left", targets = "_all")
           )),
         rownames = FALSE, selection = "none")
     })
     
-    ##########################################
-    # Database request                       #
-    ##########################################
+    # --- --- --- ---
+    # DB request ----
+    # --- --- --- ---
     
     observeEvent(input$request, {
       
@@ -388,9 +451,9 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       })
     })
     
-    ##########################################
-    # Save database                          #
-    ##########################################
+    # --- --- -- -
+    # Save DB ----
+    # --- --- -- -
     
     # Last time the db was saved
     # And current db
@@ -400,21 +463,21 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       last_save <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_save' AND name = 'last_db_save'")
 
       if (nrow(last_save) > 0) last_save <- last_save %>% dplyr::pull(value)
-      else last_save <- translate(language, "never", r$words)
+      else last_save <- i18n$t("never")
 
-      output$last_db_save <- renderUI(tagList(strong(translate(language, "last_db_save", r$words)), " : ", last_save))
+      output$last_db_save <- renderUI(tagList(strong(i18n$t("last_db_save")), " : ", last_save))
 
       current_db <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'distant_db'")
       connection_type <- current_db %>% dplyr::filter(name == "connection_type") %>% dplyr::pull(value)
-      if (connection_type == "local") current_db_text <- paste0(translate(language, "local", r$words), " (", r$app_db_folder, ")")
+      if (connection_type == "local") current_db_text <- paste0(i18n$t("local"), " (", r$app_db_folder, ")")
       else {
         sql_lib <- current_db %>% dplyr::filter(name == "sql_lib") %>% dplyr::pull(value)
         dbname <- current_db %>% dplyr::filter(name == "dbname") %>% dplyr::pull(value)
-        current_db_text <- paste0(translate(language, "distant", r$words), " (", sql_lib, " - ", dbname, ")")
+        current_db_text <- paste0(i18n$t("distant"), " (", sql_lib, " - ", dbname, ")")
       }
 
-      output$current_db_save <- renderUI(tagList(strong(translate(language, "current_db", r$words)), " : ", current_db_text))
-      output$current_db_restore <- renderUI(tagList(strong(translate(language, "current_db", r$words)), " : ", current_db_text))
+      output$current_db_save <- renderUI(tagList(strong(i18n$t("current_db")), " : ", current_db_text))
+      output$current_db_restore <- renderUI(tagList(strong(i18n$t("current_db")), " : ", current_db_text))
     })
     
     # Overcome absence of downloadButton in shiny.fluent
@@ -478,9 +541,9 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       }
     )
     
-    ##########################################
-    # Restore database                       #
-    ##########################################
+    # --- --- --- --- --- -
+    # Restore database ----
+    # --- --- --- --- --- -
     
     # Last time the db was restored
     
@@ -489,9 +552,9 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       last_restore <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_restore' AND name = 'last_db_restore'")
 
       if (nrow(last_restore) > 0) last_restore <- last_restore %>% dplyr::pull(value)
-      else last_restore <- translate(language, "never", r$words)
+      else last_restore <- i18n$t("never")
 
-      output$last_db_restore <- renderUI(tagList(strong(translate(language, "last_db_restore", r$words)), " : ", last_restore))
+      output$last_db_restore <- renderUI(tagList(strong(i18n$t("last_db_restore")), " : ", last_restore))
     })
     
     # Overcome absence of downloadButton in shiny.fluent
@@ -500,7 +563,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     observeEvent(input$db_restore_browse, shinyjs::click("db_restore"))
     
     output$db_restore_status <- renderUI(tagList(div(
-      span(translate(language, "loaded_file", r$words), " : ", style = "padding-top:5px;"), 
+      span(i18n$t("loaded_file"), " : ", style = "padding-top:5px;"), 
       span(input$db_restore$name, style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;")))
     
     observeEvent(input$db_restore_button, {

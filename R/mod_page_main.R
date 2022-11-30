@@ -62,7 +62,7 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   if (grepl("^settings", id)){
     
     if (id == "settings_general_settings") mod_settings_general_ui(id = "settings_general_settings", i18n = i18n) -> result
-    if (id == "settings_app_db") mod_settings_app_database_ui(id = "settings_app_db", language = language, words = words) -> result
+    if (id == "settings_app_db") mod_settings_app_database_ui(id = "settings_app_db", i18n = i18n) -> result
     if (id == "settings_users") mod_settings_users_ui(id = "settings_users", i18n = i18n) -> result
     if (id == "settings_r_console") mod_settings_r_console_ui(id = "settings_r_console", i18n = i18n) -> result
     
