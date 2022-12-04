@@ -71,10 +71,10 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
       if (id == paste0("settings_", page_settings)) mod_settings_data_management_ui(id = paste0("settings_", page_settings), i18n = i18n) ->> result
     })
     
-    if (id == "settings_plugins") mod_settings_plugins_ui(id = "settings_plugins", language = language, words = words) -> result
-    if (id == "settings_patient_lvl_modules") mod_settings_modules_ui(id = "settings_patient_lvl_modules", language = language, words = words) -> result
-    if (id == "settings_aggregated_modules") mod_settings_modules_ui(id = "settings_aggregated_modules", language = language, words = words) -> result
-    if (id == "settings_log") mod_settings_log_ui(id = "settings_log", language = language, words = words) -> result
+    #if (id == "settings_plugins") mod_settings_plugins_ui(id = "settings_plugins", language = language, words = words) -> result
+    #if (id == "settings_patient_lvl_modules") mod_settings_modules_ui(id = "settings_patient_lvl_modules", language = language, words = words) -> result
+    #if (id == "settings_aggregated_modules") mod_settings_modules_ui(id = "settings_aggregated_modules", language = language, words = words) -> result
+    if (id == "settings_log") mod_settings_log_ui(id = "settings_log", i18n = i18n) -> result
   }
 
   result

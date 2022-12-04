@@ -37,16 +37,17 @@ mod_settings_users_ui <- function(id = character(), i18n = R6::R6Class()){
   forbidden_cards <- tagList()
   sapply(cards_names, function(card){
     pivots <<- tagList(pivots, shiny.fluent::PivotItem(id = card, itemKey = card, headerText = i18n$t(card)))
-    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, language = language, words = words))
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card_new(ns = ns, name = card, i18n = i18n))
   })
   
   div(class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "users", text = i18n$t("Users"))
+      list(key = "users", text = i18n$t("users"))
     ), maxDisplayedItems = 3),
     div(id = ns("pivot"),
       shiny.fluent::Pivot(
+        id = ns("users_pivot"),
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
         pivots
       )
@@ -83,7 +84,7 @@ mod_settings_sub_users_ui <- function(id = character(), i18n = R6::R6Class()){
   
   if (page == "users_accesses_options"){
     tagList(
-      forbidden_card(ns = ns, name = "options_card", language = language, words = words),
+      forbidden_card_new(ns = ns, name = "options_card", i18n = i18n),
       div(id = ns("options_card"),
         make_card(i18n$t("accesses_opts"),
           div(
@@ -106,7 +107,7 @@ mod_settings_sub_users_ui <- function(id = character(), i18n = R6::R6Class()){
 #' settings_users Server Functions
 #'
 #' @noRd 
-mod_settings_users_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", i18n = R6::R6Class()){
+mod_settings_users_server <- function(id = character(), r = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -245,7 +246,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       
       # Action buttons for each module / page
       if ("users_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
-      action_buttons = switch(table, "users" = action_buttons, "users_accesses" = c("options", action_buttons), "users_statuses" =action_buttons)
+      action_buttons = switch(table, "users" = action_buttons, "users_accesses" = c("options", action_buttons), "users_statuses" = action_buttons)
       
       # Sortable cols
       sortable_cols <- c("id", "name", "description", "username", "firstname", "lastname", "datetime")
@@ -268,9 +269,9 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       else data_output <- r[[paste0(table, "_datatable_temp")]]
       
       # Prepare data for datatable (add code for dropdowns etc)
-      r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+      r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
         table = table, dropdowns = dropdowns_datatable,
-        action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
+        action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
       
       hidden_cols <- c("id", "password", "deleted", "modified")
       
@@ -287,9 +288,9 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       observeEvent(r[[paste0(table, "_temp")]], {
         
         # Reload datatable_temp variable
-        r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, language = language, id = id,
+        r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
           table = table, dropdowns = dropdowns_datatable,
-          action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output, words = r$words)
+          action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
         
         # Reload data of datatable
         DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
@@ -314,12 +315,12 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       # Each time a dropdown is updated, modify temp variable
       if (table == "users"){
         observeEvent(r$users, {
-          update_settings_datatable(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns, language = language)
+          update_settings_datatable_new(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns, i18n = i18n)
         })
       }
   
       # When save button is clicked
-      observeEvent(input$management_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, language = language))
+      observeEvent(input$management_save, save_settings_datatable_updates_new(output = output, r = r, ns = ns, table = table, i18n = i18n))
     }
     
     # --- --- --- --- --- --- --- --
@@ -331,7 +332,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
     
       # Create & show dialog box
       observeEvent(r[[paste0(table, "_delete_dialog")]] , {
-        output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = table, language = language))
+        output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react_new(r = r, ns = ns, table = table, i18n = i18n))
       })
 
       # Whether to close or not delete dialog box
@@ -349,7 +350,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
 
         # Delete row in DB table
-        delete_settings_datatable_row(output = output, r = r, ns = ns, language = language, row_deleted = row_deleted, table = table)
+        delete_settings_datatable_row_new(output = output, r = r, ns = ns, i18n = i18n, row_deleted = row_deleted, table = table)
       })
     }
   
@@ -372,28 +373,92 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       
       options_toggles <- tibble::tribble(
         ~name, ~toggles,
-        # "patient_lvl_data", c(""),
         "general_settings", "change_password_card",
-        "app_db", c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card"),
-        "users", c("users_delete_data", "users_creation_card", "users_management_card",
-         "users_accesses_creation_card", "users_accesses_management_card", "users_accesses_options_card",
-         "users_statuses_creation_card", "users_statuses_management_card"),
-        "r_console", "r_console_edit_code_card",
-        "data_sources", c("data_sources_see_all_data", "data_sources_edit_data", "data_sources_delete_data", "data_sources_creation_card", "data_sources_datatable_card"),
-        "datamarts", c("datamarts_see_all_data", "datamarts_edit_data", "datamarts_delete_data", "datamarts_creation_card", "datamarts_datatable_card", "datamarts_options_card", "datamarts_edit_code_card"),
-        "studies", c("studies_see_all_data", 
-          #"studies_edit_data",
-          "studies_delete_data", "study_messages_card", "studies_creation_card", "study_options_card", "studies_datatable_card", 
-          #"studies_options_card",
-          "import_study_card", "export_study_card"),
-        "subsets", c("subsets_see_all_data", "subsets_edit_data", "subsets_delete_data", "subsets_creation_card", "subsets_datatable_card", "subsets_edit_code_card"),
-        "thesaurus", c("thesaurus_see_all_data", "thesaurus_edit_data", "thesaurus_delete_data", "thesaurus_creation_card", "thesaurus_datatable_card", "thesaurus_sub_datatable_card", "thesaurus_edit_code_card", "thesaurus_datamart_card"),
-        "plugins", c("all_plugins_card", "plugins_see_all_data", "plugins_edit_data", "plugins_delete_data", "plugins_description_card", "plugins_creation_card", "plugins_datatable_card",
-          "plugins_options_card", "plugins_edit_code_card", "import_plugin_card", "export_plugin_card"),
-        "scripts", c("scripts_descriptions_card", "datamart_scripts_card", "scripts_datatable_card", "scripts_see_all_data", "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card", "scripts_thesaurus_card"),
-        # "patient_lvl_modules", c("patient_lvl_modules_see_all_data", "patient_lvl_modules_edit_data", "patient_lvl_modules_delete_data", "patient_lvl_modules_creation_card", "patient_lvl_modules_management_card", "patient_lvl_modules_options_card"),
-        # "aggregated_modules", c("aggregated_modules_see_all_data", "aggregated_modules_edit_data", "aggregated_modules_delete_data", "aggregated_modules_creation_card", "aggregated_modules_management_card", "aggregated_modules_options_card"),
-        "log", c("all_users", "only_me")
+        "app_db", c(
+          "db_connection_infos_card", 
+          "db_datatable_card", 
+          "db_request_card", 
+          "db_save_card", 
+          "db_restore_card"),
+        "users", c(
+          "users_creation_card", 
+          "users_management_card",
+          "users_accesses_creation_card", 
+          "users_accesses_management_card",
+          "users_accesses_options_card",
+          "users_statuses_creation_card", 
+          "users_statuses_management_card",
+          "users_delete_data"),
+        "r_console", 
+          "r_console_edit_code_card",
+        "data_sources", c(
+          "data_sources_see_all_data", 
+          "data_sources_creation_card",
+          "data_sources_datatable_card",
+          "data_sources_edit_data",
+          "data_sources_delete_data"),
+        "datamarts", c(
+          "datamarts_see_all_data", 
+          "datamarts_creation_card", 
+          "datamarts_datatable_card", 
+          "datamarts_edit_data", 
+          "datamarts_delete_data", 
+          "datamarts_options_card", 
+          "datamarts_edit_code_card"),
+        "studies", c(
+          "studies_see_all_data",
+          "study_messages_card", 
+          "studies_creation_card", 
+          "studies_datatable_card",
+          "studies_edit_data", 
+          "studies_delete_data", 
+          "study_options_card",
+          "import_study_card", 
+          "export_study_card"),
+        "subsets", c(
+          "subsets_see_all_data",
+          "subsets_creation_card", 
+          "subsets_datatable_card", 
+          "subsets_edit_data", 
+          "subsets_delete_data", 
+          "subsets_edit_code_card"),
+        "thesaurus", c(
+          "thesaurus_see_all_data",
+          "thesaurus_creation_card",
+          "thesaurus_datatable_card",
+          "thesaurus_edit_data", 
+          "thesaurus_delete_data",
+          "thesaurus_sub_datatable_card", 
+          "thesaurus_edit_code_card", 
+          #"thesaurus_datamart_card",
+          "thesaurus_categories_card", 
+          "thesaurus_conversions_card", 
+          "thesaurus_mapping_card"),
+        "plugins", c(
+          "plugins_see_all_data",
+          "all_plugins_card", 
+          "plugins_creation_card", 
+          "plugins_datatable_card",
+          "plugins_edit_data", 
+          "plugins_delete_data", 
+          #"plugins_description_card", 
+          "plugins_options_card",
+          "plugins_edit_code_card",
+          "import_plugin_card", 
+          "export_plugin_card"),
+        "scripts", c(
+          "scripts_see_all_data", 
+          "scripts_creation_card",
+          "scripts_datatable_card",
+          "scripts_descriptions_card",
+          "datamart_scripts_card", 
+          "scripts_edit_code_card", 
+          "scripts_options_card"
+          #"scripts_thesaurus_card"
+          ),
+        "log", c(
+          "all_users", 
+          "only_me")
       )
       
       observeEvent(r$users_statuses_options, {
@@ -451,6 +516,8 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         })
         
         output$options_toggles_result <- renderUI(options_toggles_result)
+        
+        shinyjs::runjs(glue::glue("$('#settings_users-users_pivot button[name=\"{i18n$t('users_accesses_options_card')}\"]').click();"))
 
       })
       
@@ -534,8 +601,14 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         DBI::dbAppendTable(r$db, "options", data)
         add_log_entry(r = r, category = "SQL query", name = "Update users accesses", value = toString(data))
         
-        # Notificate the user
-        show_message_bar(output = output, id = 1, message = "modif_saved", type = "success", language = language)
+        # Remove because of lag
+        # Update r$user_accesses
+        update_r(r = r, table = "options")
+        user_access_id <- r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::pull(user_access_id)
+        r$user_accesses <- r$options %>% dplyr::filter(category == "users_accesses" & link_id == user_access_id & value_num == 1) %>% dplyr::pull(name)
+        
+        # Notify the user
+        show_message_bar_new(output = output, id = 1, message = "modif_saved", type = "success", i18n = i18n)
         
       })
     }

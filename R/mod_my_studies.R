@@ -50,7 +50,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     ),
     div(
       id = ns("choose_a_datamart_card"),
-      make_card("", div(shiny.fluent::MessageBar(i18n$t("Choose a damatart in the dropdown on the left-side of the page"), messageBarType = 5), style = "margin-top:10px;"))
+      make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_a_damatart_left_side"), messageBarType = 5), style = "margin-top:10px;"))
     ),
     forbidden_cards,
     

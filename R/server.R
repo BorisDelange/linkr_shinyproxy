@@ -203,7 +203,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       })
       
       sapply(c("plugins_patient_lvl", "plugins_aggregated"), function(page){
-        mod_plugins_server(page, r, language, i18n)
+        mod_plugins_server(page, r, i18n)
         mod_page_header_server(page, r, language, i18n)
       })
       monitor_perf(r = r, action = "stop", task = "mod_plugins_server")
@@ -218,14 +218,14 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       mod_page_header_server("settings_app_db", r, language, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_settings_app_db_server")
     
-      mod_settings_users_server("settings_users", r, language, i18n)
+      mod_settings_users_server("settings_users", r, i18n)
       mod_page_sidenav_server("settings_users", r, i18n)
       mod_page_header_server("settings_users", r, language, i18n)
     
       sapply(c("users", "users_statuses", "users_accesses"), function(page){
-        mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, language, i18n)
-        mod_settings_users_server(paste0("settings_users_", page, "_management"), r, language, i18n)
-        mod_settings_users_server(paste0("settings_users_", page, "_options"), r, language, i18n)
+        mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, i18n)
+        mod_settings_users_server(paste0("settings_users_", page, "_management"), r, i18n)
+        mod_settings_users_server(paste0("settings_users_", page, "_options"), r, i18n)
       })
       monitor_perf(r = r, action = "stop", task = "mod_settings_users_server")
     
@@ -241,7 +241,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
         monitor_perf(r = r, action = "stop", task = paste0("mod_", page, "_server"))
       })
     
-      mod_settings_log_server("settings_log", r, language, i18n)
+      mod_settings_log_server("settings_log", r, i18n)
       mod_page_sidenav_server("settings_log", r, i18n)
       mod_page_header_server("settings_log", r, language, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_settings_log_server")

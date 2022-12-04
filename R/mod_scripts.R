@@ -37,17 +37,18 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "datamart_scripts_card", itemKey = "datamart_scripts_card", headerText = i18n$t("choose_datamart_scripts")),
           shiny.fluent::PivotItem(id = "scripts_descriptions_card", itemKey = "scripts_descriptions_card", headerText = i18n$t("scripts_descriptions_card")),
-          shiny.fluent::PivotItem(id = "scripts_creation_card", itemKey = "scripts_creation_card", headerText = i18n$t("Create a script")),
-          shiny.fluent::PivotItem(id = "scripts_datatable_card", itemKey = "scripts_datatable_card", headerText = i18n$t("Scripts management")),
-          shiny.fluent::PivotItem(id = "scripts_edit_code_card", itemKey = "scripts_edit_code_card", headerText = i18n$t("Edit script code")),
-          shiny.fluent::PivotItem(id = "scripts_options_card", itemKey = "scripts_options_card", headerText = i18n$t("Script options"))
+          shiny.fluent::PivotItem(id = "scripts_creation_card", itemKey = "scripts_creation_card", headerText = i18n$t("create_script")),
+          shiny.fluent::PivotItem(id = "scripts_datatable_card", itemKey = "scripts_datatable_card", headerText = i18n$t("scripts_management")),
+          shiny.fluent::PivotItem(id = "scripts_edit_code_card", itemKey = "scripts_edit_code_card", headerText = i18n$t("edit_script_code")),
+          shiny.fluent::PivotItem(id = "scripts_options_card", itemKey = "scripts_options_card", headerText = i18n$t("script_options"))
         )
       )
     ),
     
     div(
       id = ns("choose_a_datamart_card"),
-      make_card("", div(shiny.fluent::MessageBar(i18n$t("Choose a damatart in the dropdown on the left-side of the page"), messageBarType = 5), style = "margin-top:10px;"))
+      make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_a_damatart_left_side"), messageBarType = 5), style = "margin-top:10px;")),
+      br()
     ),
     forbidden_cards,
     
@@ -57,6 +58,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
     
     shinyjs::hidden(
       div(
+        
         id = ns("scripts_descriptions_card"),
         make_card(i18n$t("scripts_descriptions_card"),
           div(
@@ -99,7 +101,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("scripts_datatable_card"),
-        make_card(i18n$t("Scripts management"),
+        make_card(i18n$t("scripts_management"),
           div(
             DT::DTOutput(ns("scripts_datatable")),
             shiny.fluent::PrimaryButton.shinyInput(ns("save_scripts_management"), i18n$t("save"))
@@ -115,7 +117,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("scripts_creation_card"),
-        make_card(i18n$t("Create a script"),
+        make_card(i18n$t("create_script"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
               make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "script_name", width = "300px")
@@ -133,7 +135,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("scripts_edit_code_card"),
-        make_card(i18n$t("Edit script code"),
+        make_card(i18n$t("edit_script_code"),
           div(
             make_combobox_new(i18n = i18n, ns = ns, label = "script", id = "code_chosen_script",
               width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
@@ -174,7 +176,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("scripts_options_card"),
-        make_card(i18n$t("Script options"),
+        make_card(i18n$t("script_options"),
           div(
             make_combobox_new(i18n = i18n, ns = ns, label = "script", id = "options_chosen_script",
               width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
@@ -549,7 +551,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", options = options, value = value)
       
       # Set current pivot to edit_plugins_code
-      shinyjs::runjs(glue::glue("$('#{id}-scripts_pivot button[name=\"{i18n$t('Edit script code')}\"]').click();"))
+      shinyjs::runjs(glue::glue("$('#{id}-scripts_pivot button[name=\"{i18n$t('edit_script_code')}\"]').click();"))
     })
     
     observeEvent(input$options, {
@@ -564,7 +566,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", options = options, value = value)
       
       # Set current pivot to edit_plugins_code
-      shinyjs::runjs(glue::glue("$('#{id}-scripts_pivot button[name=\"{i18n$t('Script options')}\"]').click();"))
+      shinyjs::runjs(glue::glue("$('#{id}-scripts_pivot button[name=\"{i18n$t('script_options')}\"]').click();"))
     })
     
     # --- --- --- --- --- -

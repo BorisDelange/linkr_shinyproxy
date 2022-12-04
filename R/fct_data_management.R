@@ -54,6 +54,50 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
   }
 }
 
+run_datamart_code_new <- function(output, r = shiny::reactiveValues(), datamart_id = integer(), i18n = R6::R6Class(), quiet = FALSE){
+  # Reset r$chosen_datamart to clear patient-level data & aggregated data (use the same r variables for data) 
+  
+  # Get code from datamart
+  tryCatch(r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code),
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_code", 
+        error_name = paste0("run_datamart_code - load_code - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("fail_load_code"))}
+  )
+  code <- r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code)
+  
+  # Replace %datamart_id% with real datamart_id
+  # Replace \r by \n to prevent bug
+  code <- code %>% 
+    stringr::str_replace_all("%datamart_id%", as.character(datamart_id)) %>%
+    stringr::str_replace_all("\r", "\n")
+  
+  # Reset r variables
+  r$patients <- tibble::tibble()
+  r$stays <- tibble::tibble()
+  r$labs_vitals <- tibble::tibble()
+  r$text <- tibble::tibble()
+  r$orders <- tibble::tibble()
+  
+  # Load data from datamart
+  
+  tryCatch(eval(parse(text = code)),
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_execute_code", 
+        error_name = paste0("run_datamart_code - execute_code - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("fail_execute_code"))}
+  )
+  
+  # If data is loaded, nb of rows of r variable > 0
+  if (!quiet){
+    if (nrow(r$patients) != 0) show_message_bar_new(output, 1, "success_load_patients", "success", i18n)
+    if (nrow(r$stays) != 0) show_message_bar_new(output, 2, "success_load_stays", "success", i18n)
+    if (nrow(r$labs_vitals) != 0) show_message_bar_new(output, 3, "success_load_labs_vitals", "success", i18n)
+    if (nrow(r$text) != 0) show_message_bar_new(output, 4, "success_load_text", "success", i18n)
+    if (nrow(r$orders) != 0) show_message_bar_new(output, 5, "success_load_orders", "success", i18n)
+  }
+}
+
 #' Add patients to a subset
 #'
 #' @description Add patients to a subset, only if not already in the subset

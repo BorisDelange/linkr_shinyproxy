@@ -21,6 +21,15 @@ make_card <- function(title = character(), content = character(), size = 12, sty
   )
 }
 
+make_card_shiny_ace <- function(title = character(), content = character(), size = 12, style = "") {
+  div(
+    class = glue::glue("card ms-depth-8 ms-sm{size} ms-xl{size}"),
+    style = style,
+      shiny.fluent::Text(variant = "large", title, block = TRUE),
+      content
+  )
+}
+
 #' Make a page
 #' 
 #' @description Code available in shiny.fluent github pages (Articles). Creates a shiny.fluent page.
@@ -211,6 +220,32 @@ make_people_picker <- function(language = "EN", ns = shiny::NS(), id = NA_charac
       pickerSuggestionsProps = list(
         suggestionsHeaderText = translate(language, "matching_people", words),
         noResultsFoundText = translate(language, "no_results_found", words),
+        showRemoveButtons = TRUE
+      ),
+      defaultSelectedItems = default_selected_items,
+      value = value),
+      style = style
+    )
+  )
+}
+
+make_people_picker_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), id = NA_character_, label = character(), 
+  options = tibble::tibble(), value = NULL, width = NULL, style = character()){
+  
+  if (!is.null(value)) default_selected_items <- options %>% dplyr::filter(key %in% value)
+  else default_selected_items <- NULL
+  
+  style <- ""
+  if (!is.null(width)) style <- paste0(style, "width: ", width)
+  if (is.na(id)) id <- label
+  div(
+    div(class = "input_title", i18n$t(label)),
+    div(shiny.fluent::NormalPeoplePicker.shinyInput(
+      ns(id),
+      options = options,
+      pickerSuggestionsProps = list(
+        suggestionsHeaderText = i18n$t("matching_people"),
+        noResultsFoundText = i18n$t("no_results_found"),
         showRemoveButtons = TRUE
       ),
       defaultSelectedItems = default_selected_items,
@@ -496,7 +531,7 @@ render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny
     paginate = list(previous = i18n$t("dt_previous"), `next` = i18n$t("dt_next")),
     search = i18n$t("dt_search"),
     lengthMenu = i18n$t("dt_entries"),
-    emptyTable = i18n$t("no_data_available"))
+    emptyTable = i18n$t("dt_empty"))
   
   # If no row in dataframe, stop here
   if (nrow(data) == 0){

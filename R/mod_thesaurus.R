@@ -23,6 +23,11 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
     shiny.fluent::Breadcrumb(items = list(
       list(key = "thesaurus_main", text = i18n$t("thesaurus"))
     ), maxDisplayedItems = 3),
+    
+    # --- --- -- -- --
+    # Pivot items ----
+    # --- --- -- -- --
+    
     shinyjs::hidden(
       div(id = ns("menu"),
         shiny.fluent::Pivot(
@@ -34,18 +39,24 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         )
       )
     ),
-    forbidden_cards,
+    
     div(
       id = ns("choose_a_datamart_card"),
       make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_a_damatart_left_side"), messageBarType = 5), style = "margin-top:10px;"))
     ),
+    forbidden_cards,
+    
+    # --- --- --- ---
+    # Items card ----
+    # --- --- --- ---
+    
     shinyjs::hidden(
       div(
         id = ns("items_card"),
-        make_card(i18n$t("Items"),
+        make_card(i18n$t("items"),
           div(
             div(
-              make_combobox(language = "EN", ns = ns, label = "thesaurus", width = "300px", words = words, allowFreeform = FALSE, multiSelect = FALSE), br(),
+              make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", width = "300px",, allowFreeform = FALSE, multiSelect = FALSE), br(),
               DT::DTOutput(ns("thesaurus_items")),
               shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), i18n$t("save")), " ",
               shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), i18n$t("reload_cache")),
@@ -68,6 +79,11 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         ), br()
       )
     ),
+    
+    # --- --- --- --- -- -
+    # Categories card ----
+    # --- --- --- --- -- -
+    
     shinyjs::hidden(
       div(
         id = ns("categories_card"),
@@ -91,6 +107,11 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         ), br()
       )
     ),
+    
+    # --- --- --- --- --- -
+    # Conversions card ----
+    # --- --- --- --- --- -
+    
     shinyjs::hidden(
       div(
         id = ns("conversions_card"),
@@ -109,6 +130,11 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         ), br()
       )
     ),
+    
+    # --- --- --- --- --- -- -
+    # Items creation card ----
+    # --- --- --- --- --- -- -
+    
     shinyjs::hidden(
       div(
         id = ns("create_items_card"),

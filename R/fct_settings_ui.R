@@ -439,6 +439,119 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
   )
 }
 
+render_settings_code_card_new <- function(ns = shiny::NS(), r = shiny::reactiveValues(), id = character(), title = character(), code = list(), 
+  link_id = integer(), i18n = R6::R6Class()){
+  
+  choice_ui_server <- tagList()
+  choice_data <- tagList()
+  
+  # Default output : text output
+  # For plugins, this output is UI, to test plugin's code
+  output_div <- div(shiny::verbatimTextOutput(ns("code_result")), 
+    style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+  
+  # Default ace editor
+  div(shinyAce::aceEditor(ns("ace_edit_code"), code$server, mode = "r", 
+    autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;") -> ace_editor
+  
+  # For plugin page : 
+  # - choose between UI code or Server code
+  # - choose a datamart, a study & a subset (for aggregated data plugin) & a patient / a stay (for patient-lvl data)
+  # - two ace editors, one for UI & one for server
+  
+  if (id == "settings_plugins"){
+    
+    # Get module_type_id of current plugin
+    module_type_id <- r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(module_type_id)
+    
+    # Colours choices
+    colorCells <- list(
+      list(id = "#EF3B2C", color = "#EF3B2C"),
+      list(id = "#CB181D", color = "#CB181D"),
+      list(id = "#7BCCC4", color = "#7BCCC4"),
+      list(id = "#2B8CBE", color = "#2B8CBE"),
+      list(id = "#5AAE61", color = "#5AAE61"),
+      list(id = "#FFD92F", color = "#FFD92F"),
+      list(id = "#000000", color = "#000000"))
+    
+    # Dropdowns for choice of datamart etc
+    # Depending if module_type is patient_lvl_data or aggregated_data
+    if (module_type_id == 1){
+      tagList(
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
+          make_dropdown_new(i18 = i18, ns = ns, label = "datamart", width = "300px",
+            options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")),
+          make_dropdown_new(i18 = i18, ns = ns, label = "study", width = "300px"),
+          make_dropdown_new(i18 = i18, ns = ns, label = "patient", width = "300px"),
+          make_dropdown_new(i18 = i18, ns = ns, label = "stay", width = "300px")),
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
+          make_dropdown_new(i18 = i18, ns = ns, label = "thesaurus", width = "300px"),
+          div(strong(i18$t("show_only_used_items_patient"), style = "display:block; padding-bottom:12px;"),
+            shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")),
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
+          make_combobox_new(i18 = i18, ns = ns, label = "thesaurus_items", multiSelect = TRUE, allowFreeform = TRUE, width = "300px"),
+          div(
+            div(class = "input_title", i18$t("item_colour")),
+            div(shiny.fluent::SwatchColorPicker.shinyInput(ns("colour"), value = "#000000", colorCells = colorCells, columnCount = length(colorCells))),
+            style = "margin-top:5px;"),
+          div(shiny.fluent::PrimaryButton.shinyInput(ns("add_thesaurus_item"), i18$t("add")), style = "margin-top:38px;"),
+          div(shiny.fluent::PrimaryButton.shinyInput(ns("remove_thesaurus_item"), i18$t("remove")), style = "margin-top:38px;"),
+          div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), i18$t("reset")), style = "margin-top:38px;")), br(),
+        uiOutput(ns("thesaurus_selected_items"))) -> choice_data
+    }
+    if (module_type_id == 2){
+      tagList(shiny.fluent::Stack(
+        horizontal = TRUE, tokens = list(childrenGap = 50),
+        make_dropdown_new(i18 = i18, ns = ns, label = "datamart", width = "300px",
+          options = convert_tibble_to_list_new(data = r$datamarts, key_col = "id", text_col = "name")),
+        make_dropdown_new(i18 = i18, ns = ns, label = "study", width = "300px"),
+        make_dropdown_new(i18 = i18, ns = ns, label = "subset", width = "300px")
+      )) -> choice_data
+    }
+    
+    # Toggle for choice of UI or server code
+    shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+      shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
+        list(key = "ui", text = i18$t("ui")),
+        list(key = "server", text = i18$t("server"))
+      ), className = "inline_choicegroup"),
+      div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
+      div(i18$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+    ) -> choice_ui_server
+    
+    # Ace editors
+    tagList(
+      conditionalPanel(condition = "input.edit_code_ui_server == 'ui'", ns = ns,
+        div(shinyAce::aceEditor(ns("ace_edit_code_ui"), code$ui, mode = "r", 
+          autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
+      conditionalPanel(condition = "input.edit_code_ui_server == 'server'", ns = ns,
+        div(shinyAce::aceEditor(ns("ace_edit_code_server"), code$server, mode = "r", 
+          autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"))
+    ) -> ace_editor
+    
+    # UI output to render UI code of the plugin and text output to render server error messages
+    output_div <- tagList(
+      shiny::uiOutput(ns("code_result_ui")), br(),
+      div(verbatimTextOutput(ns("code_result_server")), 
+        style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
+  }
+  
+  div(id = ns("edit_code_card"),
+    # Show current ID in the title
+    make_card(tagList(i18$t(title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
+      div(
+        choice_data, br(),
+        choice_ui_server,
+        ace_editor,
+        shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18$t("save")), " ",
+        shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18$t("execute_code")), 
+        br(), br(),
+        output_div
+      )
+    )
+  )
+}
+
 #' Forbidden card
 #' 
 

@@ -8,29 +8,29 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_settings_log_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
+mod_settings_log_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
   div(class = "main",
       
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "log", text = translate(language, "log", words))
+      list(key = "log", text = i18n$t("log"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "log_card", itemKey = "log_card", headerText = translate(language, "log", words))
+      shiny.fluent::PivotItem(id = "log_card", itemKey = "log_card", headerText = i18n$t("log"))
     ),
     shinyjs::hidden(
       div(
         id = ns("log_card_forbidden"),
         make_card("",
-          div(shiny.fluent::MessageBar(translate(language, "unauthorized_access_page", words), messageBarType = 5), style = "margin-top:10px;")
+          div(shiny.fluent::MessageBar(i18n$t("unauthorized_access_page"), messageBarType = 5), style = "margin-top:10px;")
         )
       )
     ),
     shinyjs::hidden(
       div(id = ns("log_card"),
-        make_card(translate(language, "log"),
+        make_card(i18n$t("log"),
           uiOutput(ns("main"))
         )
       )
@@ -42,7 +42,7 @@ mod_settings_log_ui <- function(id = character(), language = "EN", words = tibbl
 #'
 #' @noRd 
 
-mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess(), language = "EN", i18n = R6::R6Class()){
+mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -86,11 +86,11 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
         
         div(
           shiny.fluent::ChoiceGroup.shinyInput(ns("see_log_of"), value = "only_me", options = list(
-            list(key = "only_me", text = translate(language, "only_me", words)),
-            list(key = "people_picker", text = translate(language, "people_picker", words))
+            list(key = "only_me", text = i18n$t("only_me")),
+            list(key = "people_picker", text = i18n$t("people_picker"))
           ), className = "inline_choicegroup"),
           conditionalPanel(condition = "input.see_log_of == 'people_picker'", ns = ns,
-            make_people_picker(language = language, ns = ns, label = "users", options = options, words = words)
+            make_people_picker_new(i18n = i18n, ns = ns, label = "users", options = options)
           ), br(),
           DT::DTOutput(ns("datatable"))
         ) -> result
@@ -99,7 +99,7 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
       if ("all_users" %not_in% r$user_accesses & "only_me" %in% r$user_accesses){
         div(
           shiny.fluent::ChoiceGroup.shinyInput(ns("see_log_of"), value = "only_me", options = list(
-            list(key = "only_me", text = translate(language, "only_me", words))
+            list(key = "only_me", text = i18n$t("only_me"))
           ), className = "inline_choicegroup"),
           DT::DTOutput(ns("datatable"))
         )
@@ -144,12 +144,12 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
       }
       
       dt_translation <- list(
-        paginate = list(previous = translate(language, "DT_previous_page", words), `next` = translate(language, "DT_next_page", words)),
-        search = translate(language, "DT_search", words),
-        lengthMenu = translate(language, "DT_length", words),
-        emptyTable = translate(language, "DT_empty", words))
+        paginate = list(previous = i18n$t("dt_previous"), `next` = i18n$t("dt_next")),
+        search = i18n$t("dt_search"),
+        lengthMenu = i18n$t("dt_entries"),
+        emptyTable = i18n$t("dt_empty"))
       
-      col_names <- get_col_names("log", language = language, words = r$words)
+      col_names <- get_col_names_new("log", i18n = i18n)
       page_length <- 100
       centered_cols <- c("id", "name", "creator_id", "datetime")
       sortable_cols <- c("id", "category", "name", "creator_id", "datetime")

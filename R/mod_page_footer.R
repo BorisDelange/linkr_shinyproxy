@@ -13,9 +13,9 @@ mod_page_footer_ui <- function(words = tibble::tibble(), i18n = R6::R6Class()){
       horizontal = TRUE,
       horizontalAlign = 'space-between',
       tokens = list(childrenGap = 20),
-      tags$a(icon("github"), "", href = "https://github.com/BorisDelange/cdwtools", target="_blank"),
+      tags$a(icon("github"), "", href = "https://github.com/BorisDelange/linkr", target="_blank"),
       shiny.fluent::Text(variant = "medium", nowrap = FALSE, ""),
-      shiny.fluent::Text(variant = "medium", nowrap = FALSE, "Version 0.1.2 - dev")
+      shiny.fluent::Text(variant = "medium", nowrap = FALSE, "Version 0.2.0 - dev")
     )
   )
 }

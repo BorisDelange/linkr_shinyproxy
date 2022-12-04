@@ -310,6 +310,26 @@ load_database <- function(r = shiny::reactiveValues(), language = "EN"){
   r$module_types <- tibble::tribble(~id, ~name, 1, translate(language, "patient_level_data"), 2, translate(language, "aggregated_data"))
 }
 
+load_database_new <- function(r = shiny::reactiveValues(), i18n = R6::R6Class()){
+  
+  # Database tables to load
+  tables <- c(
+    "users", "users_accesses", "users_statuses",
+    "data_sources", "datamarts", "thesaurus",
+    "plugins",
+    "code", 
+    "options"
+  )
+  
+  sapply(tables, function(table){
+    r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
+    r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
+  })
+  
+  # Add a module_types variable, for settings/plugins dropdown
+  r$module_types <- tibble::tribble(~id, ~name, 1, i18n$t("patient_level_data"), 2, i18n$t("aggregated_data"))
+}
+
 
 #' Check user authentification
 #' 

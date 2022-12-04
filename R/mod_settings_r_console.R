@@ -10,24 +10,82 @@
 
 mod_settings_r_console_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
+  
+  # div(class = "main",
+  #   shiny.fluent::Breadcrumb(items = list(
+  #     list(key = "r_console", text = i18n$t("r_console"))
+  #   ), maxDisplayedItems = 3),
+  #   shiny.fluent::Pivot(
+  #     onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+  #     shiny.fluent::PivotItem(id = "r_console_edit_code_card", itemKey = "r_console_edit_code_card", headerText = i18n$t("r_console"))
+  #   ),
+  #   forbidden_card_new(ns = ns, name = "r_console_edit_code_card", i18n = i18n),
+  #   div(id = ns("r_console_edit_code_card"),
+  #     # make_card("",
+  #       div(
+  #         div(
+  #           shinyAce::aceEditor(
+  #             outputId = ns("ace_code"),
+  #             value = "# Enter code",
+  #             mode = "r",
+  #             code_hotkeys = list(
+  #               "r", list(
+  #                 run_selection = list(
+  #                   win = "CTRL-ENTER",
+  #                   mac = "CTRL-ENTER|CMD-ENTER"
+  #                 ),
+  #                 run_all = list(
+  #                   win = "CTRL-SHIFT-ENTER",
+  #                   mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"
+  #                 )
+  #               )
+  #             ),
+  #             wordWrap = TRUE, debounce = 10
+  #           ),
+  #           actionButton(ns("execute"), label = "Run"), br(), br(),
+  #           verbatimTextOutput(ns("result"))
+  #         )
+  #       )
+  #     # )
+  #   )
+  # )
+  
   div(class = "main",
     shiny.fluent::Breadcrumb(items = list(
       list(key = "r_console", text = i18n$t("r_console"))
     ), maxDisplayedItems = 3),
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("r_console"))
+      shiny.fluent::PivotItem(id = "r_console_edit_code_card", itemKey = "r_console_edit_code_card", headerText = i18n$t("r_console"))
     ),
-    forbidden_card(ns = ns, name = "edit_code_card", language = "EN", words = words),
+    forbidden_card_new(ns = ns, name = "r_console_edit_code_card", i18n = i18n),
     shinyjs::hidden(
-      div(id = ns("edit_code_card"),
-        make_card("",
+      div(id = ns("r_console_edit_code_card"),
+        make_card_shiny_ace("",
           div(
-            div(shinyAce::aceEditor(ns("ace_code"), "", mode = "r", 
-              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
-           
+            div(
+              shinyAce::aceEditor(
+                outputId = ns("ace_code"), value = "", mode = "r",
+                code_hotkeys = list(
+                  "r", list(
+                    run_selection = list(
+                      win = "CTRL-ENTER",
+                      mac = "CTRL-ENTER|CMD-ENTER"
+                    ),
+                    run_all = list(
+                      win = "CTRL-SHIFT-ENTER",
+                      mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"
+                    )
+                  )
+                ),
+                wordWrap = TRUE, debounce = 10
+                # autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+              ),
+              style = "width: 100%;"
+            ),
+
             shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
-            div(shiny::verbatimTextOutput(ns("code_result")), 
+            div(shiny::verbatimTextOutput(ns("code_result")),
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
         )
@@ -44,44 +102,56 @@ mod_settings_r_console_server <- function(id = character(), r = shiny::reactiveV
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    ##########################################
-    # R console / Show or hide cards         #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Show or hide cards ----
+    # --- --- --- --- --- ---
     
-    # cards <- "edit_code_card"
-    # show_hide_cards(r = r, input = input, session = session, table = "r_console", id = id, cards = cards)
+    cards <- "r_console_edit_code_card"
     
-    if ("r_console" %in% r$user_accesses){
-      shinyjs::show("edit_code_card")
-      shinyjs::hide("edit_code_card_forbidden") 
-    }
-    else {
-      shinyjs::show("edit_code_card_forbidden")
-      shinyjs::hide("edit_code_card")
-    }
+    observe({
+      shiny.router::get_query_param()
+
+      if ("r_console_edit_code_card" %in% r$user_accesses){
+        shinyjs::show("r_console_edit_code_card")
+        shinyjs::hide("r_console_edit_code_card_forbidden")
+      }
+      else {
+        shinyjs::show("r_console_edit_code_card_forbidden")
+        shinyjs::hide("r_console_edit_code_card")
+      }
+    })
+  
+    # --- --- --- --- -
+    # Execute code ----
+    # --- --- --- --- -
     
-    ##########################################
-    # R console / Execute code               #
-    ##########################################
+    observeEvent(input$execute_code, {
+      r$r_console_code <- input$ace_code
+    })
     
-    # Refresh reactivity
-    if ("r_console" %in% r$user_accesses){
-      
-      observe({
-        shiny.router::get_query_param()
-        shinyjs::hide("edit_code_card")
-        shinyjs::show("edit_code_card")
-      })
-    
-      observeEvent(input$execute_code, {
-        # If user has access
-        
-        edited_code <- isolate(input$ace_code %>% stringr::str_replace_all("\r", "\n"))
+    observeEvent(input$ace_code_run_selection, {
+      if(!shinyAce::is.empty(input$ace_code_run_selection$selection)){
+        r$r_console_code <- input$ace_code_run_selection$selection
+      }
+      else {
+        r$r_console_code <- input$ace_code_run_selection$line
+      }
+    })
+
+    observeEvent(input$ace_code_run_all, {
+      r$r_console_code <- input$ace_code
+    })
+
+    observeEvent(r$r_console_code, {
+
+      if ("r_console_edit_code_card" %in% r$user_accesses){
+        edited_code <- r$r_console_code %>% stringr::str_replace_all("\r", "\n")
         
         output$code_result <- renderText(
-          execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
-            language = "EN", r = r, edited_code = edited_code, code_type = "server"))
-      })
-    }
+          execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, r = r,
+            edited_code = edited_code, code_type = "server"))
+      }
+    })
+    
   })
 }

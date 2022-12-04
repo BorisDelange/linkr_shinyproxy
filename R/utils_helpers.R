@@ -27,6 +27,21 @@ convert_tibble_to_list <- function(data = tibble::tibble(), key_col = character(
   my_list
 }
 
+convert_tibble_to_list_new <- function(data = tibble::tibble(), key_col = character(), text_col = character(), null_value = FALSE, i18n = R6::R6Class()){
+  
+  # Create a null / an empty value (used in dropdowns)
+  if (null_value) my_list <- list(list(key = "", text = i18n$t("none")))
+  if (!null_value) my_list <- list()
+  
+  # If our data is not empty, for each row append the list
+  if (nrow(data) != 0){
+    for (i in 1:nrow(data)){
+      my_list <- rlist::list.append(my_list, list(key = data[[i, key_col]], text = data[[i, text_col]]))
+    }
+  }
+  my_list
+}
+
 # Delete asap
 id_get_other_name <- function(id, type, language = NULL){
   if (grepl("settings_", id)) id <- substr(id, nchar("settings_") + 1, nchar(id))
