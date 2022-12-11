@@ -265,7 +265,7 @@ render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character
       ), className = "inline_choicegroup"),
       conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
         make_people_picker(
-          language = language, ns = ns, id = "users_allowed_read", label = "blank",
+          language = language, ns = ns, id = "users_allowed_read", label = "users",
           options = picker_options, value = value, width = "100%", style = "padding-bottom:10px;", words = words)
       ), br())
   }

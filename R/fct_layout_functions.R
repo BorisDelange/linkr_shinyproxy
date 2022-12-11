@@ -244,7 +244,7 @@ make_people_picker_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), id = 
       ns(id),
       options = options,
       pickerSuggestionsProps = list(
-        suggestionsHeaderText = i18n$t("matching_people"),
+        suggestionsHeaderText = i18n$t("users"),
         noResultsFoundText = i18n$t("no_results_found"),
         showRemoveButtons = TRUE
       ),
