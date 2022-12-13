@@ -516,10 +516,18 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     # value <- paste0("- **Version** : 0.0.1\n- **Libraries** : *put libraries needed here*\n- **Data allowed** : *put data allowed here*\n",
     #   "- **Previous plugin needed first** : *put previous plugins needed here*\n\n*Put full description here*")
     
+    username <- r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::mutate(fullname = paste0(firstname, " ", lastname)) %>% dplyr::pull(fullname)
+    
     new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      # last_row_options + 1, "plugin", last_row + 1, "markdown_description", value, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_options + 1, "plugin", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 2, "plugin", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row_options + 2, "plugin", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row_options + 3, "plugin", last_row + 1, "version", "0.0.1", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row_options + 4, "plugin", last_row + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row_options + 5, "plugin", last_row + 1, "author", username, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row_options + 6, "plugin", last_row + 1, "image", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row_options + 7, "plugin", last_row + 1, "description_fr", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row_options + 8, "plugin", last_row + 1, "description_en", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
+      )
     DBI::dbAppendTable(r$db, "options", new_options)
     update_r(r = r, table = "options", language = language)
     
@@ -2154,7 +2162,6 @@ save_settings_options_new <- function(output, r = shiny::reactiveValues(), id = 
     option_id <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(id)
     DBI::dbSendStatement(r$db, paste0("UPDATE options SET value_num = ", as.numeric(data$show_only_aggregated_data), " WHERE id = ", option_id)) -> query
     DBI::dbClearResult(query)
-    update_r(r = r, table = "options")
   }
   
   if ("users_allowed_read" %in% page_options){
@@ -2173,7 +2180,6 @@ save_settings_options_new <- function(output, r = shiny::reactiveValues(), id = 
     rows_to_del <- options %>% dplyr::filter(name == "user_allowed_read") %>% dplyr::pull(id)
     DBI::dbSendStatement(r$db, paste0("DELETE FROM options WHERE id IN (", paste(rows_to_del, collapse = ","),")")) -> query
     DBI::dbClearResult(query)
-    update_r(r = r, table = "options")
     
     # Add users in the selected list
     if (length(data$users_allowed_read) != 0){
@@ -2183,16 +2189,18 @@ save_settings_options_new <- function(output, r = shiny::reactiveValues(), id = 
         tibble::tibble(id = (last_row + (1:length(data$users_allowed_read))), category = category, link_id = link_id,
           name = "user_allowed_read", value = "", value_num = as.numeric(data$users_allowed_read), creator_id = as.integer(r$user_id),
           datetime = as.character(Sys.time()), deleted = FALSE))
-      update_r(r = r, table = "options")
     }
   }
   
-  if ("markdown_description" %in% page_options){
-    option_id <- options %>% dplyr::filter(name == "markdown_description") %>% dplyr::pull(id)
-    DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", stringr::str_replace_all(data$markdown_description, "'", "''"), "' WHERE id = ", option_id)) -> query
-    DBI::dbClearResult(query)
-    update_r(r = r, table = "options")
+  for (field in c("markdown_description", "version", "author", "image", "description_fr", "description_en")){
+    if (field %in% page_options){
+      option_id <- options %>% dplyr::filter(name == field) %>% dplyr::pull(id)
+      DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", stringr::str_replace_all(data[[field]], "'", "''"), "' WHERE id = ", option_id)) -> query
+      DBI::dbClearResult(query)
+    }
   }
+  
+  update_r(r = r, table = "options")
   
   show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n)
 }

@@ -58,7 +58,6 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
     
     shinyjs::hidden(
       div(
-        
         id = ns("scripts_descriptions_card"),
         make_card(i18n$t("scripts_descriptions_card"),
           div(

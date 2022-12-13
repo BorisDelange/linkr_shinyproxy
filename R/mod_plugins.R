@@ -10,7 +10,7 @@
 mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
-  cards <- c("all_plugins_card", "plugins_creation_card", "plugins_datatable_card", "plugins_edit_code_card", "plugins_options_card", "import_plugin_card", "export_plugin_card")
+  cards <- c("all_plugins_card", "plugins_datatable_card", "plugins_edit_code_card", "plugins_options_card", "import_plugin_card", "export_plugin_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
@@ -48,7 +48,6 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
       id = ns("plugins_pivot"),
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
       shiny.fluent::PivotItem(id = "all_plugins_card", itemKey = "all_plugins_card", headerText = i18n$t("all_plugins")),
-      shiny.fluent::PivotItem(id = "plugins_creation_card", itemKey = "plugins_creation_card", headerText = i18n$t("create_plugin")),
       shiny.fluent::PivotItem(id = "plugins_datatable_card", itemKey = "plugins_datatable_card", headerText = i18n$t("plugins_management")),
       shiny.fluent::PivotItem(id = "plugins_edit_code_card", itemKey = "plugins_edit_code_card", headerText = i18n$t("edit_plugin_code")),
       shiny.fluent::PivotItem(id = "plugins_options_card", itemKey = "plugins_options_card", headerText = i18n$t("plugin_options")),
@@ -64,86 +63,37 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("all_plugins_card"),
-        make_card(i18n$t("all_plugins"),
-          div(
+        div(id = ns("all_plugins_document_cards"),
+          make_card(i18n$t("all_plugins"),
             div(
-              shiny.fluent::ChoiceGroup.shinyInput(ns("all_plugins_source"), value = "local", options = list(
-                list(key = "local", text = i18n$t("local_plugins")),
-                list(key = "github", text = i18n$t("github_plugins"))
-              ), className = "inline_choicegroup")
-            ), br(), 
-            conditionalPanel(condition = "input.all_plugins_source == 'github'", ns = ns,
               div(
-                div(
-                  shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-                    shiny.fluent::DocumentCard(
-                      shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/196", width = 318, height = 200))),
-                      div(shiny.fluent::DocumentCardTitle(title = "Dygraph", shouldTruncate = TRUE), style = "margin-top:5px;"),
-                      div(shiny.fluent::DocumentCardActivity(activity = "2022-03-23", people = list(list(name = "Annie Lindqvist"))), style = "margin-top:-20px;"),
-                      onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('card_id', ", 13, "); }"))
-                    ),
-                    shiny.fluent::DocumentCard(
-                      shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/197", width = 318, height = 200))),
-                      div(shiny.fluent::DocumentCardTitle(title = "Flowchart", shouldTruncate = TRUE), style = "margin-top:5px;"),
-                      div(shiny.fluent::DocumentCardActivity(activity = "2022-01-22", people = list(list(name = "Boris Delange"))), style = "margin-top:-20px;")
-                    ),
-                    shiny.fluent::DocumentCard(
-                      shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/198", width = 318, height = 200))),
-                      div(shiny.fluent::DocumentCardTitle(title = "Datatable", shouldTruncate = TRUE), style = "margin-top:5px;"),
-                      div(shiny.fluent::DocumentCardActivity(activity = "2021-03-02", people = list(list(name = "John Doe"))), style = "margin-top:-20px;")
-                    )
-                  )
-                ), br(),
-                div(
-                  shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-                    shiny.fluent::DocumentCard(
-                      shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/200", width = 318, height = 200))),
-                      shiny.fluent::DocumentCardTitle(title = "R code", shouldTruncate = TRUE),
-                      shiny.fluent::DocumentCardActivity(activity = "2020-03-23", people = list(list(name = "Annie Garden")))
-                    ),
-                    shiny.fluent::DocumentCard(
-                      shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/17", width = 318, height = 200))),
-                      shiny.fluent::DocumentCardTitle(title = "Features selection", shouldTruncate = TRUE),
-                      shiny.fluent::DocumentCardActivity(activity = "2022-01-22", people = list(list(name = "Boris Delange")))
-                    )
-                  )
-                )
-              )
-            ),
-            conditionalPanel(condition = "input.all_plugins_source == 'local'", ns = ns,
-              div(
-                ""
-              )
-            ),
-            br(), br(),
-            div(shiny.fluent::MessageBar(
-              div(
-                strong("A faire"),
-                p("Créer des vignettes présentant les différents plugins."),
-                p("Proposer :",
-                  tags$ul(
-                    tags$li("Une description de chaque plugin"),
-                    tags$li("Télécharger le plugin si non installé"),
-                    tags$li("Mettre à jour le plugin")
-                  )  
-                ),
-                p("Pour cela :",
-                  tags$ul(
-                    tags$li("Prendre le champ description de la BDD de l'appli"),
-                    tags$li("Stocker un XML avec les champs :",
-                      tags$ul(
-                        tags$li("Identifiant unique du plugin"),
-                        tags$li("Version"),
-                        tags$li("Description")
-                      )  
-                    )
-                  )
-                ),
-                p("Tout ceci depuis Github."),
-                p("Un fichier XML recensant les différents plugins ?"),
-                p("Un dossier par plugin, avec ui.R & server.R ?")
+                shiny.fluent::ChoiceGroup.shinyInput(ns("all_plugins_source"), value = "local", options = list(
+                  list(key = "local", text = i18n$t("local_plugins")),
+                  list(key = "github", text = i18n$t("github_plugins"))
+                ), className = "inline_choicegroup")
+              ), br(), 
+              conditionalPanel(condition = "input.all_plugins_source == 'github'", ns = ns,
+                uiOutput(ns("all_plugins_github"))
               ),
-              messageBarType = 0)
+              conditionalPanel(condition = "input.all_plugins_source == 'local'", ns = ns,
+                uiOutput(ns("all_plugins_local"))
+              )
+            )
+          )
+        ),
+        shinyjs::hidden(
+          div(id = ns("all_plugins_plugin_details"),
+            make_card(
+              tagList(
+                shiny.fluent::ActionButton.shinyInput(ns("all_plugins_show_document_cards"), "", iconProps = list(iconName = "Back")), 
+                "Flowchart"),
+              div(br(),
+                div(
+                  uiOutput(ns("plugin_description_markdown_result")), 
+                  style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"
+                ), br(),
+                uiOutput(ns("download_update_plugin"))
+              )
             )
           )
         ), br(),
@@ -159,26 +109,13 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("plugins_datatable_card"),
         make_card(i18n$t("plugins_management"),
           div(
-            DT::DTOutput(ns("plugins_datatable")),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "plugin_name", width = "300px"),
+              div(shiny.fluent::PrimaryButton.shinyInput(ns("add_plugin"), i18n$t("add")), style = "margin-top:38px;"),
+              style = "position:absolute; z-index:1"
+            ),
+            div(DT::DTOutput(ns("plugins_datatable")), style = "margin-top:35px; z-index:2"),
             shiny.fluent::PrimaryButton.shinyInput(ns("save_plugins_management"), i18n$t("save"))
-          )
-        ), br()
-      )
-    ),
-    
-    # --- --- --- --- --- --- -
-    # Create a plugin card ----
-    # --- --- --- --- --- --- -
-    
-    shinyjs::hidden(
-      div(
-        id = ns("plugins_creation_card"),
-        make_card(i18n$t("create_plugin"),
-          div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "plugin_name", width = "300px")
-            ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("add_plugin"), i18n$t("add"))
           )
         ), br()
       )
@@ -271,10 +208,10 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
               ), className = "inline_choicegroup")
             ),
             conditionalPanel(condition = "input.plugin_description_language == 'fr'", ns = ns,
-              div(shinyAce::aceEditor(ns("ace_plugin_description_fr"), "", mode = "markdown", 
+              div(shinyAce::aceEditor(ns("plugin_description_fr"), "", mode = "markdown", 
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
             conditionalPanel(condition = "input.plugin_description_language == 'en'", ns = ns,
-              div(shinyAce::aceEditor(ns("ace_plugin_description_en"), "", mode = "markdown", 
+              div(shinyAce::aceEditor(ns("plugin_description_en"), "", mode = "markdown", 
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
             shiny.fluent::PrimaryButton.shinyInput(ns("save_plugin_options"), i18n$t("save"))
           )
@@ -362,7 +299,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), i1
     # Show or hide cards ----
     # --- --- --- --- --- ---
     
-    cards <- c("all_plugins_card", "plugins_creation_card", "plugins_datatable_card", "plugins_edit_code_card",
+    cards <- c("all_plugins_card", "plugins_datatable_card", "plugins_edit_code_card",
       "plugins_options_card", "import_plugin_card", "export_plugin_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
@@ -386,20 +323,176 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), i1
     # Plugins catalog ----
     # --- --- --- --- -- -
     
+    # Update plugins catalog
+    
+    observeEvent(r$plugins, {
+      
+      output$all_plugins_github <- renderUI(
+        div(
+          div(
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              shiny.fluent::DocumentCard(
+                shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/196", width = 318, height = 200))),
+                div(shiny.fluent::DocumentCardTitle(title = "Dygraph", shouldTruncate = TRUE), style = "margin-top:5px;"),
+                div(shiny.fluent::DocumentCardActivity(activity = "2022-03-23", people = list(list(name = "Annie Lindqvist"))), style = "margin-top:-20px;"),
+                onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-show_plugin_details', Math.random()); Shiny.setInputValue('", id, "-plugin_id', ", 13, "); }"))
+              ),
+              shiny.fluent::DocumentCard(
+                shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/197", width = 318, height = 200))),
+                div(shiny.fluent::DocumentCardTitle(title = "Flowchart", shouldTruncate = TRUE), style = "margin-top:5px;"),
+                div(shiny.fluent::DocumentCardActivity(activity = "2022-01-22", people = list(list(name = "Boris Delange"))), style = "margin-top:-20px;")
+              ),
+              shiny.fluent::DocumentCard(
+                shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/198", width = 318, height = 200))),
+                div(shiny.fluent::DocumentCardTitle(title = "Datatable", shouldTruncate = TRUE), style = "margin-top:5px;"),
+                div(shiny.fluent::DocumentCardActivity(activity = "2021-03-02", people = list(list(name = "John Doe"))), style = "margin-top:-20px;")
+              )
+            )
+          ), br(),
+          div(
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              shiny.fluent::DocumentCard(
+                shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/200", width = 318, height = 200))),
+                shiny.fluent::DocumentCardTitle(title = "R code", shouldTruncate = TRUE),
+                shiny.fluent::DocumentCardActivity(activity = "2020-03-23", people = list(list(name = "Annie Garden")))
+              ),
+              shiny.fluent::DocumentCard(
+                shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/17", width = 318, height = 200))),
+                shiny.fluent::DocumentCardTitle(title = "Features selection", shouldTruncate = TRUE),
+                shiny.fluent::DocumentCardActivity(activity = "2022-01-22", people = list(list(name = "Boris Delange")))
+              )
+            )
+          )
+        )
+      )
+      
+      plugins_temp <- r$plugins %>% dplyr::filter(name %in% c("Plugin avec options", "Plugin avec options 2", "abcd", "efgh", "ijkl", "mnop", "qrst"))
+      
+      if (nrow(plugins_temp %>% dplyr::filter(module_type_id == !!module_type_id, !deleted)) > 0){
+        
+        all_plugins_local <- tagList()
+        all_plugins_local_document_cards <- tagList()
+        i <- 0
+        
+        for(plugin_id in plugins_temp %>% dplyr::filter(module_type_id == !!module_type_id, !deleted) %>% dplyr::pull(id)){
+          plugin <- r$plugins %>% dplyr::filter(id == plugin_id)
+          options <- r$options %>% dplyr::filter(category == "plugin", link_id == plugin_id)
+          
+          all_plugins_local_document_cards <- tagList(all_plugins_local_document_cards,
+            shiny.fluent::DocumentCard(
+              shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = paste0("https://picsum.photos/318/17", i), width = 318, height = 200))),
+              div(shiny.fluent::DocumentCardTitle(title = plugin$name, shouldTruncate = TRUE, style = "margin-top:5px;")),
+              div(shiny.fluent::DocumentCardActivity(
+                activity = options %>% dplyr::filter(name == "version") %>% dplyr::pull(value),
+                people = list(list(name = options %>% dplyr::filter(name == "author") %>% dplyr::pull(value)))),
+                style = "margin-top:-20px;"
+              ),
+              onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-show_plugin_details', Math.random()); Shiny.setInputValue('", id, "-plugin_id', ", plugin_id, "); }"))
+            ),
+          )
+          
+          i <- i + 1
+          
+          if (i %% 3 == 0){
+            all_plugins_local <- tagList(all_plugins_local,
+              div(
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                  all_plugins_local_document_cards
+                )
+              ), br()
+            )
+            
+            all_plugins_local_document_cards <- tagList()
+          }
+        }
+        
+        if (i %% 3 != 0){ 
+          all_plugins_local <- tagList(all_plugins_local,
+            div(
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                all_plugins_local_document_cards
+              )
+            ), br()
+          )
+        }
+      }
+      
+      if (nrow(plugins_temp %>% dplyr::filter(module_type_id == !!module_type_id, !deleted)) == 0){
+        all_plugins_local <- shiny.fluent::MessageBar(i18n$t("no_plugin_available"), messageBarType = 0)
+      }
+      
+      output$all_plugins_local <- renderUI(all_plugins_local)
+    })
+    
+    observeEvent(input$show_plugin_details, {
+      shinyjs::hide("all_plugins_document_cards")
+      shinyjs::show("all_plugins_plugin_details")
+      
+      # Render markdown description
+      
+        # Clear temp dir
+        unlink(paste0(path.expand("~"), "/linkr_temp_files"), recursive = TRUE, force = TRUE)
+        
+        markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
+          path.expand("~"), "/linkr_temp_files')\n",
+          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files', fig.path = '", path.expand("~"), "/linkr_temp_files')\n```\n")
+        
+        plugin_description <- paste0(
+          "**Auteur** : Boris Delange<br />",
+          "**Version** : 0.2.3\n\n",
+          "Ce plugin permet d'afficher un flowchart\n\nBlabla\n\n")
+        
+        markdown_file <- paste0(markdown_settings, plugin_description)
+        
+        # Create temp dir
+        dir <- paste0(path.expand("~"), "/linkr_temp_files")
+        file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
+        if (!dir.exists(dir)) dir.create(dir)
+        
+        # Create the markdown file
+        knitr::knit(text = markdown_file, output = file, quiet = TRUE)
+        
+        # Render markdown
+        output$plugin_description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
+      
+      # If this is a local plugin
+      
+      # If this is a remote plugin
+      
+      # If the plugin is already installed
+      
+      output$download_update_plugin <- renderUI(
+        shiny.fluent::PrimaryButton.shinyInput(ns("update_plugin"), i18n$t("update_plugin"))
+      )
+      
+      # If the plugin is not installed yet
+    })
+    
+    observeEvent(input$all_plugins_show_document_cards, {
+      shinyjs::show("all_plugins_document_cards")
+      shinyjs::hide("all_plugins_plugin_details")
+    })
+    
     # --- --- --- --- -- -
     # Create a plugin ----
     # --- --- --- --- -- -
     
     observeEvent(input$add_plugin, {
       
-      new_data <- list()
-      new_data$name <- coalesce2(type = "char", x = input$plugin_name)
-      new_data$plugin_name <- new_data$name
-      new_data$module_type <- module_type_id
+      if ("plugins_creation_card" %in% r$user_accesses){
+        
+        new_data <- list()
+        new_data$name <- coalesce2(type = "char", x = input$plugin_name)
+        new_data$plugin_name <- new_data$name
+        new_data$module_type <- module_type_id
+        
+        add_settings_new_data_new(session = session, output = output, r = r, i18n = i18n, id = "settings_plugins", 
+          data = new_data, table = "plugins", required_textfields = "plugin_name", req_unique_values = "name")
+      }
       
-      add_settings_new_data_new(session = session, output = output, r = r, i18n = i18n, id = "settings_plugins", 
-        data = new_data, table = "plugins", required_textfields = "plugin_name", req_unique_values = "name")
-      
+      else {
+        show_message_bar_new(output, 2, "unauthorized_action", "severeWarning", i18n = i18n)
+      }
     })
     
     # --- --- --- --- --- ---
@@ -651,6 +744,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), i1
           width = "100%", style = "padding-bottom:10px;")
       })
       
+      # Plugin version, author, image and descriptions
+      for (field in c("version", "author", "image")) shiny.fluent::updateTextField.shinyInput(session, 
+        paste0("plugin_", field), value = options %>% dplyr::filter(name == field) %>% dplyr::pull(value))
+      
+      for (field in c("description_fr", "description_en")) shinyAce::updateAceEditor(session,
+        paste0("plugin_", field), value = options %>% dplyr::filter(name == field) %>% dplyr::pull(value))
+      
     })
     
     # Save updates
@@ -662,10 +762,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), i1
       
       data <- list()
       data$users_allowed_read <- unique(input$users_allowed_read)
-      data$users_allowed_read_group <- input$users_allowed_read_group
+      for (field in c("users_allowed_read_group", "plugin_version", "plugin_author", 
+        "plugin_image", "plugin_description_fr", "plugin_description_en")) data[[stringr::str_replace(field, "plugin_", "")]] <- input[[field]]
       
       save_settings_options_new(output = output, r = r, id = id, category = "plugin", code_id_input = paste0("options_", link_id),
-        i18n = i18n, data = data, page_options ="users_allowed_read")
+        i18n = i18n, data = data, page_options = c("users_allowed_read", "version", "author", "image", "description_fr", "description_en"))
       
     })
     
