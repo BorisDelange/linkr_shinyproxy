@@ -5,7 +5,7 @@
 #' @import shiny
 #' @noRd
 
-app_server <- function(router, language = "EN", db_info = list(), datamarts_folder = character(), app_db_folder = character(),
+app_server <- function(router, language = "EN", db_info = list(), app_folder = character(), datamarts_folder = character(), app_db_folder = character(),
   #initial_wd = character(), 
   perf_monitoring = FALSE){
   function(input, output, session ) {
@@ -203,7 +203,7 @@ app_server <- function(router, language = "EN", db_info = list(), datamarts_fold
       })
       
       sapply(c("plugins_patient_lvl", "plugins_aggregated"), function(page){
-        mod_plugins_server(page, r, i18n)
+        mod_plugins_server(page, r, language, i18n, app_folder)
         mod_page_header_server(page, r, language, i18n)
       })
       monitor_perf(r = r, action = "stop", task = "mod_plugins_server")

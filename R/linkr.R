@@ -44,6 +44,7 @@
 linkr <- function(
   language = "EN",
   db_info = list(),
+  app_folder = character(),
   app_db_folder = character(),
   datamarts_folder = character(),
   perf_monitoring = FALSE,
@@ -56,6 +57,23 @@ linkr <- function(
   # shiny.launch.browser to automatically open browser
   
   options(shiny.maxRequestSize = 500*1024^2, shiny.launch.browser = TRUE)
+  
+  # Create app folder if it doesn't exist
+  if (length(app_folder) == 0) app_folder <- paste0(path.expand("~"), "/linkr")
+  
+  if (!dir.exists(app_folder)){
+    tryCatch(
+      dir.create(app_folder),
+      error = function(e) print(e)
+    )
+  }
+  
+  # Clear temp dir
+  unlink(paste0(app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
+  
+  # Create app sub-dirs
+  sub_dirs <- c("temp_files", "plugins", "datamarts")
+  for (sub_dir in sub_dirs) if (!dir.exists(paste0(app_folder, "/", sub_dir))) dir.create(paste0(app_folder, "/", sub_dir))
   
   # Initial wd
   # initial_wd <- getwd()
@@ -87,7 +105,7 @@ linkr <- function(
     app = shinyApp(
       ui = app_ui(css = css, page = page, language = language),
       server = app_server(router = page, language = language, db_info = db_info, 
-        datamarts_folder = datamarts_folder, app_db_folder = app_db_folder,# initial_wd = initial_wd, 
+        app_folder = app_folder, datamarts_folder = datamarts_folder, app_db_folder = app_db_folder,# initial_wd = initial_wd, 
         perf_monitoring = perf_monitoring),
       options = options
     ), 

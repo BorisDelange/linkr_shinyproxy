@@ -84,16 +84,8 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         shinyjs::hidden(
           div(id = ns("all_plugins_plugin_details"),
             make_card(
-              tagList(
-                shiny.fluent::ActionButton.shinyInput(ns("all_plugins_show_document_cards"), "", iconProps = list(iconName = "Back")), 
-                "Flowchart"),
-              div(br(),
-                div(
-                  uiOutput(ns("plugin_description_markdown_result")), 
-                  style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"
-                ), br(),
-                uiOutput(ns("download_update_plugin"))
-              )
+              uiOutput(ns("all_plugins_plugin_details_title")),
+              uiOutput(ns("all_plugins_plugin_details_content"))
             )
           )
         ), br(),
@@ -273,7 +265,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
 #' plugins Server Functions
 #'
 #' @noRd 
-mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), language = character(), i18n = R6::R6Class(), app_folder = character()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -387,7 +379,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), i1
                 people = list(list(name = options %>% dplyr::filter(name == "author") %>% dplyr::pull(value)))),
                 style = "margin-top:-20px;"
               ),
-              onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-show_plugin_details', Math.random()); Shiny.setInputValue('", id, "-plugin_id', ", plugin_id, "); }"))
+              onClick = htmlwidgets::JS(paste0("function() { ",
+              "Shiny.setInputValue('", id, "-show_plugin_details', Math.random());",
+              "Shiny.setInputValue('", id, "-plugin_id', ", plugin_id, ");",
+              "}"))
             ),
           )
           
@@ -425,47 +420,74 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), i1
     })
     
     observeEvent(input$show_plugin_details, {
-      shinyjs::hide("all_plugins_document_cards")
-      shinyjs::show("all_plugins_plugin_details")
       
       # Render markdown description
       
-        # Clear temp dir
-        unlink(paste0(path.expand("~"), "/linkr_temp_files"), recursive = TRUE, force = TRUE)
-        
-        markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
-          path.expand("~"), "/linkr_temp_files')\n",
-          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files', fig.path = '", path.expand("~"), "/linkr_temp_files')\n```\n")
-        
-        plugin_description <- paste0(
-          "**Auteur** : Boris Delange<br />",
-          "**Version** : 0.2.3\n\n",
-          "Ce plugin permet d'afficher un flowchart\n\nBlabla\n\n")
-        
-        markdown_file <- paste0(markdown_settings, plugin_description)
-        
-        # Create temp dir
-        dir <- paste0(path.expand("~"), "/linkr_temp_files")
-        file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
-        if (!dir.exists(dir)) dir.create(dir)
-        
-        # Create the markdown file
-        knitr::knit(text = markdown_file, output = file, quiet = TRUE)
-        
-        # Render markdown
-        output$plugin_description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
+      dir <- paste0(app_folder, "/temp_files")
+      
+      markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", dir, "')\n",
+        "knitr::opts_chunk$set(root.dir = '", dir, "', fig.path = '", dir, "')\n```\n")
+      
+      plugin <- r$plugins %>% dplyr::filter(id == input$plugin_id)
+      options <- r$options %>% dplyr::filter(category == "plugin", link_id == input$plugin_id)
+      
+      plugin_description <- paste0(
+        "**Auteur** : ", options %>% dplyr::filter(name == "author") %>% dplyr::pull(value), "<br />",
+        "**Version** : ", options %>% dplyr::filter(name == "version") %>% dplyr::pull(value), "\n\n",
+        options %>% dplyr::filter(name == paste0("description_", tolower(language))) %>% dplyr::pull(value)
+      )
+      
+      markdown_file <- paste0(markdown_settings, plugin_description)
+      
+      # Create temp dir
+      file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
+      if (!dir.exists(dir)) dir.create(dir)
+      
+      # Create the markdown file
+      knitr::knit(text = markdown_file, output = file, quiet = TRUE)
       
       # If this is a local plugin
       
+      if (input$all_plugins_source == "local"){
+        
+        output$all_plugins_plugin_details_title <- renderUI(
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+            div(shiny.fluent::ActionButton.shinyInput(ns("all_plugins_show_document_cards"), "", iconProps = list(iconName = "Back")), style = "position:relative; bottom:6px;"), 
+            plugin$name
+          )
+        )
+        
+        output$all_plugins_plugin_details_content <- renderUI(
+          div(
+            div(class = "markdown", tagList(withMathJax(includeMarkdown(file)))),
+            style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"
+          )
+        )
+      }
+        
       # If this is a remote plugin
       
-      # If the plugin is already installed
-      
-      output$download_update_plugin <- renderUI(
-        shiny.fluent::PrimaryButton.shinyInput(ns("update_plugin"), i18n$t("update_plugin"))
-      )
-      
-      # If the plugin is not installed yet
+      if (input$all_plugins_source == "github"){
+        
+        # output$all_plugins_plugin_details_ui <- renderUI(
+        #   make_card(
+        #     tagList(
+        #       shiny.fluent::ActionButton.shinyInput(ns("all_plugins_show_document_cards"), "", iconProps = list(iconName = "Back")), 
+        #       plugin$name),
+        #     div(br(),
+        #       div(
+        #         div(class = "markdown", withMathJax(includeMarkdown(file))), 
+        #         style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"
+        #       ), br(),
+        #       shiny.fluent::PrimaryButton.shinyInput(ns("update_plugin"), i18n$t("update_plugin"))
+        #     )
+        #   )
+        # )
+      }
+        
+      shinyjs::hide("all_plugins_document_cards")
+      shinyjs::show("all_plugins_plugin_details")
+
     })
     
     observeEvent(input$all_plugins_show_document_cards, {
@@ -1282,36 +1304,79 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), i1
     
     output$export_plugins_download <- downloadHandler(
       
-      filename = function() paste0("cdwtools_plugins_", prefix, "_", as.character(Sys.Date()), ".zip"),
+      filename = function() paste0("linkr_plugins_", as.character(stringr::str_replace(Sys.time(), " ", "_")), ".zip"),
       
       content = function(file){
         
         owd <- setwd(tempdir())
         on.exit(setwd(owd))
         
-        # plugins.csv
-        plugins <- 
-          r[[paste0(prefix, "_export_plugins_selected")]] %>% 
-          dplyr::select(-modified) %>%
-          dplyr::mutate(new_id = 1:dplyr::n())
+        temp_dir <- paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = '')
+        dir.create(paste0(app_folder, "/temp_files/", temp_dir, "/plugins"))
         
-        # code.csv
-        code <-
-          r$code %>%
-          dplyr::inner_join(plugins %>% dplyr::select(link_id = id, new_id), by = "link_id") %>%
-          dplyr::filter(category %in% c("plugin_ui", "plugin_server")) %>%
-          dplyr::select(-link_id) %>% dplyr::rename(link_id = new_id) %>% dplyr::relocate(link_id, .after = "category") %>%
-          dplyr::mutate(new_id = 1:dplyr::n()) %>%
-          dplyr::select(-id) %>% dplyr::rename(id = new_id) %>% dplyr::relocate(id)
+        for (plugin_id in r[[paste0(prefix, "_export_plugins_selected")]] %>% dplyr::pull(id)){
+          
+          plugin <- r$plugins %>% dplyr::filter(id == plugin_id)
+          options <- r$options %>% dplyr::filter(category == "plugin", link_id == plugin_id)
+          code <- r$code %>% dplyr::filter(link_id == plugin_id, category %in% c("plugin_ui", "plugin_server"))
+          
+          # Create folder if doesn't exist
+          plugin_dir <- paste0(app_folder, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
+          if (!dir.exists(plugin_dir)) dir.create(plugin_dir, recursive = TRUE)
+          
+          # Create ui.R & server.R
+          sapply(c("ui", "server"), function(name) writeLines(code %>% dplyr::filter(category == paste0("plugin_", name)) %>% 
+              dplyr::pull(code), paste0(plugin_dir, "/", name, ".R")))
+          
+          # Create XML file
+          xml <- XML::newXMLDoc()
+          plugins_node <- XML::newXMLNode("plugins", doc = xml)
+          plugin_node <- XML::newXMLNode("plugin", parent = plugins_node, doc = xml)
+          XML::newXMLNode("type", module_type_id, parent = plugin_node)
+          XML::newXMLNode("name", plugin$name, parent = plugin_node)
+          sapply(c("version", "unique_id", "author", "image", "description_fr", "description_en"), function(name){
+            XML::newXMLNode(name, options %>% dplyr::filter(name == !!name) %>% dplyr::pull(value), parent = plugin_node)
+          })
+          XML::saveXML(xml, file = paste0(plugin_dir, "/plugin.xml"))
+          
+          # Copy files to temp dir
+          temp_dir_copy <- paste0(app_folder, "/temp_files/", temp_dir, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
+          dir.create(temp_dir_copy)
+          file.copy(
+            c(paste0(plugin_dir, "/ui.R"), paste0(plugin_dir, "/server.R"), paste0(plugin_dir, "/plugin.xml")), 
+            c(paste0(temp_dir_copy, "/ui.R"), paste0(temp_dir_copy, "/server.R"), paste0(temp_dir_copy, "/plugin.xml"))
+          )
+          
+          # Add to files var
+          # files <- c(files, plugin_dir)
+        }
         
-        plugins <- plugins %>% dplyr::select(-id) %>% dplyr::rename(id = new_id) %>% dplyr::relocate(id)
-        
-        readr::write_csv(plugins, "plugins.csv")
-        readr::write_csv(code, "code.csv")
-        
-        files <- c("plugins.csv", "code.csv")
-        
-        zip::zipr(file, files, include_directories = FALSE)
+        # # plugins.csv
+        # plugins <- 
+        #   r[[paste0(prefix, "_export_plugins_selected")]] %>% 
+        #   dplyr::select(-modified) %>%
+        #   dplyr::mutate(new_id = 1:dplyr::n())
+        # 
+        # # code.csv
+        # code <-
+        #   r$code %>%
+        #   dplyr::inner_join(plugins %>% dplyr::select(link_id = id, new_id), by = "link_id") %>%
+        #   dplyr::filter(category %in% c("plugin_ui", "plugin_server")) %>%
+        #   dplyr::select(-link_id) %>% dplyr::rename(link_id = new_id) %>% dplyr::relocate(link_id, .after = "category") %>%
+        #   dplyr::mutate(new_id = 1:dplyr::n()) %>%
+        #   dplyr::select(-id) %>% dplyr::rename(id = new_id) %>% dplyr::relocate(id)
+        # 
+        # plugins <- plugins %>% dplyr::select(-id) %>% dplyr::rename(id = new_id) %>% dplyr::relocate(id)
+        # 
+        # readr::write_csv(plugins, "plugins.csv")
+        # readr::write_csv(code, "code.csv")
+        # 
+        # files <- c("plugins.csv", "code.csv")
+        # 
+        # print(files)
+        zip::zipr(file, paste0(app_folder, "/temp_files/", temp_dir))
+        # zip::zipr(file, paste0(app_folder, "/plugins/", prefix))
+        # zip::zipr(file, files, recurse = TRUE, include_directories = TRUE, mode = "mirror")
       }
     )
     
