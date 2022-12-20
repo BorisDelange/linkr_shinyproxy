@@ -104,9 +104,9 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
               make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "plugin_name", width = "300px"),
               div(shiny.fluent::PrimaryButton.shinyInput(ns("add_plugin"), i18n$t("add")), style = "margin-top:38px;"),
-              style = "position:absolute; z-index:1"
+              style = "position:absolute; z-index:1;"
             ),
-            div(DT::DTOutput(ns("plugins_datatable")), style = "margin-top:35px; z-index:2"),
+            div(DT::DTOutput(ns("plugins_datatable")), style = "margin-top:40px; z-index:2"),
             shiny.fluent::PrimaryButton.shinyInput(ns("save_plugins_management"), i18n$t("save"))
           )
         ), br()
@@ -247,12 +247,13 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
                 multiSelect = TRUE, width = "650px"),
               div(shiny.fluent::PrimaryButton.shinyInput(ns("export_plugins"), 
                 i18n$t("export_plugins"), iconProps = list(iconName = "Upload")), style = "margin-top:38px;"),
-              div(shiny.fluent::DefaultButton.shinyInput(ns("export_plugin_github"), 
-                i18n$t("export_plugins_github"), iconProps = list(iconName = "Upload")), style = "margin-top:38px;"),
-              div(style = "visibility:hidden;", downloadButton(ns("export_plugins_github_download"), label = "")),
+              # div(shiny.fluent::DefaultButton.shinyInput(ns("export_plugin_github"), 
+                # i18n$t("export_plugins_github"), iconProps = list(iconName = "Upload")), style = "margin-top:38px;"),
               div(style = "visibility:hidden;", downloadButton(ns("export_plugins_download"), label = "")),
+              # div(style = "visibility:hidden;", downloadButton(ns("export_plugins_github_download"), label = "")),
+              style = "position:absolute; z-index:1;"
             ),
-            DT::DTOutput(ns("plugins_to_export_datatable"))
+            div(DT::DTOutput(ns("plugins_to_export_datatable")), style = "margin-top:40px; z-index:2")
           )
         ), br()
       )
@@ -319,44 +320,78 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     observeEvent(r$plugins, {
       
-      output$all_plugins_github <- renderUI(
-        div(
-          div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              shiny.fluent::DocumentCard(
-                shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/196", width = 318, height = 200))),
-                div(shiny.fluent::DocumentCardTitle(title = "Dygraph", shouldTruncate = TRUE), style = "margin-top:5px;"),
-                div(shiny.fluent::DocumentCardActivity(activity = "2022-03-23", people = list(list(name = "Annie Lindqvist"))), style = "margin-top:-20px;"),
-                onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-show_plugin_details', Math.random()); Shiny.setInputValue('", id, "-plugin_id', ", 13, "); }"))
+      # Github plugins
+      
+      plugins_file <- paste0(app_folder, "/temp_files/plugins.xml")
+      
+      xml2::download_xml("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/plugins.xml", plugins_file)
+      
+      github_plugins <-
+        xml2::read_xml(plugins_file) %>%
+        XML::xmlParse() %>%
+        XML::xmlToDataFrame(nodes = XML::getNodeSet(., "//plugin")) %>%
+        tibble::as_tibble()
+      
+      r$github_plugins <- github_plugins
+      
+      if (nrow(github_plugins) > 0){
+        
+        all_plugins_github <- tagList()
+        all_plugins_github_document_cards <- tagList()
+        i <- 0
+        
+        for(plugin_id in github_plugins %>% dplyr::pull(unique_id)){
+          plugin <- github_plugins %>% dplyr::filter(unique_id == plugin_id & type == module_type_id)
+          
+          all_plugins_github_document_cards <- tagList(all_plugins_github_document_cards,
+            shiny.fluent::DocumentCard(
+              shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = paste0("https://picsum.photos/318/17", i), width = 318, height = 200))),
+              div(shiny.fluent::DocumentCardTitle(title = plugin$name, shouldTruncate = TRUE, style = "margin-top:5px;")),
+              div(shiny.fluent::DocumentCardActivity(
+                activity = plugin$version,
+                people = list(list(name = plugin$author))),
+                style = "margin-top:-20px;"
               ),
-              shiny.fluent::DocumentCard(
-                shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/197", width = 318, height = 200))),
-                div(shiny.fluent::DocumentCardTitle(title = "Flowchart", shouldTruncate = TRUE), style = "margin-top:5px;"),
-                div(shiny.fluent::DocumentCardActivity(activity = "2022-01-22", people = list(list(name = "Boris Delange"))), style = "margin-top:-20px;")
-              ),
-              shiny.fluent::DocumentCard(
-                shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/198", width = 318, height = 200))),
-                div(shiny.fluent::DocumentCardTitle(title = "Datatable", shouldTruncate = TRUE), style = "margin-top:5px;"),
-                div(shiny.fluent::DocumentCardActivity(activity = "2021-03-02", people = list(list(name = "John Doe"))), style = "margin-top:-20px;")
-              )
-            )
-          ), br(),
-          div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              shiny.fluent::DocumentCard(
-                shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/200", width = 318, height = 200))),
-                shiny.fluent::DocumentCardTitle(title = "R code", shouldTruncate = TRUE),
-                shiny.fluent::DocumentCardActivity(activity = "2020-03-23", people = list(list(name = "Annie Garden")))
-              ),
-              shiny.fluent::DocumentCard(
-                shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = "https://picsum.photos/318/17", width = 318, height = 200))),
-                shiny.fluent::DocumentCardTitle(title = "Features selection", shouldTruncate = TRUE),
-                shiny.fluent::DocumentCardActivity(activity = "2022-01-22", people = list(list(name = "Boris Delange")))
-              )
-            )
+              onClick = htmlwidgets::JS(paste0("function() { ",
+                "Shiny.setInputValue('", id, "-show_plugin_details', Math.random());",
+                "Shiny.setInputValue('", id, "-plugin_id', '", plugin_id, "');",
+                "}"))
+            ),
           )
-        )
-      )
+          
+          i <- i + 1
+          
+          if (i %% 3 == 0){
+            all_plugins_github <- tagList(all_plugins_github,
+              div(
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                  all_plugins_github_document_cards
+                )
+              ), br()
+            )
+            
+            all_plugins_github_document_cards <- tagList()
+          }
+        }
+        
+        if (i %% 3 != 0){
+          all_plugins_github <- tagList(all_plugins_github,
+            div(
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                all_plugins_github_document_cards
+              )
+            ), br()
+          )
+        }
+      }
+      
+      if (nrow(github_plugins) == 0){
+        all_plugins_github <- shiny.fluent::MessageBar(i18n$t("no_plugin_available"), messageBarType = 0)
+      }
+      
+      output$all_plugins_github <- renderUI(all_plugins_github)
+      
+      # Local plugins
       
       plugins_temp <- r$plugins %>% dplyr::filter(name %in% c("Plugin avec options", "Plugin avec options 2", "abcd", "efgh", "ijkl", "mnop", "qrst"))
       
@@ -428,14 +463,30 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", dir, "')\n",
         "knitr::opts_chunk$set(root.dir = '", dir, "', fig.path = '", dir, "')\n```\n")
       
-      plugin <- r$plugins %>% dplyr::filter(id == input$plugin_id)
-      options <- r$options %>% dplyr::filter(category == "plugin", link_id == input$plugin_id)
+      # For local plugins
       
-      plugin_description <- paste0(
-        "**Auteur** : ", options %>% dplyr::filter(name == "author") %>% dplyr::pull(value), "<br />",
-        "**Version** : ", options %>% dplyr::filter(name == "version") %>% dplyr::pull(value), "\n\n",
-        options %>% dplyr::filter(name == paste0("description_", tolower(language))) %>% dplyr::pull(value)
-      )
+      if (input$all_plugins_source == "local"){
+        plugin <- r$plugins %>% dplyr::filter(id == input$plugin_id)
+        options <- r$options %>% dplyr::filter(category == "plugin", link_id == input$plugin_id)
+        
+        plugin_description <- paste0(
+          "**Auteur** : ", options %>% dplyr::filter(name == "author") %>% dplyr::pull(value), "<br />",
+          "**Version** : ", options %>% dplyr::filter(name == "version") %>% dplyr::pull(value), "\n\n",
+          options %>% dplyr::filter(name == paste0("description_", tolower(language))) %>% dplyr::pull(value)
+        )
+      }
+      
+      # For github plugins
+      
+      if (input$all_plugins_source == "github"){
+        plugin <- r$github_plugins %>% dplyr::filter(unique_id == input$plugin_id)
+
+        plugin_description <- paste0(
+          "**Auteur** : ", plugin$name, "<br />",
+          "**Version** : ", plugin$version, "\n\n",
+          plugin %>% dplyr::pull(paste0("description_", tolower(language)))
+        )
+      }
       
       markdown_file <- paste0(markdown_settings, plugin_description)
       
@@ -446,44 +497,57 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       # Create the markdown file
       knitr::knit(text = markdown_file, output = file, quiet = TRUE)
       
-      # If this is a local plugin
+      update_plugin_div <- ""
       
-      if (input$all_plugins_source == "local"){
+      if (input$all_plugins_source == "github"){
         
-        output$all_plugins_plugin_details_title <- renderUI(
-          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-            div(shiny.fluent::ActionButton.shinyInput(ns("all_plugins_show_document_cards"), "", iconProps = list(iconName = "Back")), style = "position:relative; bottom:6px;"), 
-            plugin$name
+        plugins <- 
+          r$plugins %>%
+          dplyr::left_join(
+            r$options %>% dplyr::filter(category == "plugin", name == "unique_id") %>% dplyr::select(id = link_id, unique_id = value),
+            by = "id"
+          ) %>%
+          dplyr::left_join(
+            r$options %>% dplyr::filter(category == "plugin", name == "version") %>% dplyr::select(id = link_id, version = value),
+            by = "id"
           )
-        )
         
-        output$all_plugins_plugin_details_content <- renderUI(
+        plugins_join <- plugins %>% dplyr::inner_join(plugin %>% dplyr::select(unique_id), by = "unique_id")
+        
+        # Check if this plugin is already installed
+        
+        if (nrow(plugins_join) > 0){
+          
+          # Check if this plugin is up to date
+
+          if (compareVersion(plugins_join %>% dplyr::pull(version), plugin$version) == 0) update_plugin_div <- shiny.fluent::DefaultButton.shinyInput(
+            ns("update_plugin"), i18n$t("plugin_up_to_date"), disabled = TRUE)
+          else if (compareVersion(plugins_join %>% dplyr::pull(version), plugin$version) == 1) update_plugin_div <- shiny.fluent::DefaultButton.shinyInput(
+            ns("update_plugin"), i18n$t("local_plugin_newer"), disabled = TRUE)
+          else update_plugin_div <- shiny.fluent::PrimaryButton.shinyInput(ns("update_plugin"), i18n$t("update_plugin"))
+        }
+        
+        else update_plugin_div <- shiny.fluent::PrimaryButton.shinyInput(ns("install_plugin"), i18n$t("install_plugin"))
+        
+        update_plugin_div <- tagList(update_plugin_div, br())
+      }
+        
+      output$all_plugins_plugin_details_title <- renderUI(
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+          div(shiny.fluent::ActionButton.shinyInput(ns("all_plugins_show_document_cards"), "", iconProps = list(iconName = "Back")), style = "position:relative; bottom:6px;"), 
+          plugin$name
+        )
+      )
+      
+      output$all_plugins_plugin_details_content <- renderUI(
+        tagList(
+          update_plugin_div,
           div(
             div(class = "markdown", tagList(withMathJax(includeMarkdown(file)))),
             style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"
           )
         )
-      }
-        
-      # If this is a remote plugin
-      
-      if (input$all_plugins_source == "github"){
-        
-        # output$all_plugins_plugin_details_ui <- renderUI(
-        #   make_card(
-        #     tagList(
-        #       shiny.fluent::ActionButton.shinyInput(ns("all_plugins_show_document_cards"), "", iconProps = list(iconName = "Back")), 
-        #       plugin$name),
-        #     div(br(),
-        #       div(
-        #         div(class = "markdown", withMathJax(includeMarkdown(file))), 
-        #         style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"
-        #       ), br(),
-        #       shiny.fluent::PrimaryButton.shinyInput(ns("update_plugin"), i18n$t("update_plugin"))
-        #     )
-        #   )
-        # )
-      }
+      )
         
       shinyjs::hide("all_plugins_document_cards")
       shinyjs::show("all_plugins_plugin_details")
@@ -493,6 +557,16 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     observeEvent(input$all_plugins_show_document_cards, {
       shinyjs::show("all_plugins_document_cards")
       shinyjs::hide("all_plugins_plugin_details")
+    })
+    
+    # Install of update a github plugin
+    
+    observeEvent(input$install_plugin, {
+      
+    })
+    
+    observeEvent(input$update_plugin, {
+      
     })
     
     # --- --- --- --- -- -
@@ -1304,7 +1378,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     output$export_plugins_download <- downloadHandler(
       
-      filename = function() paste0("linkr_plugins_", as.character(stringr::str_replace(Sys.time(), " ", "_")), ".zip"),
+      filename = function() paste0("linkr_export_plugins_", as.character(stringr::str_replace_all(Sys.time(), " ", "_")), ".zip"),
       
       content = function(file){
         
@@ -1312,7 +1386,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         on.exit(setwd(owd))
         
         temp_dir <- paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = '')
-        dir.create(paste0(app_folder, "/temp_files/", temp_dir, "/plugins"))
+        dir.create(paste0(app_folder, "/temp_files/", temp_dir, "/plugins/", prefix), recursive = TRUE)
         
         for (plugin_id in r[[paste0(prefix, "_export_plugins_selected")]] %>% dplyr::pull(id)){
           
@@ -1341,42 +1415,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
           
           # Copy files to temp dir
           temp_dir_copy <- paste0(app_folder, "/temp_files/", temp_dir, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
-          dir.create(temp_dir_copy)
+          dir.create(temp_dir_copy, recursive = TRUE)
           file.copy(
             c(paste0(plugin_dir, "/ui.R"), paste0(plugin_dir, "/server.R"), paste0(plugin_dir, "/plugin.xml")), 
             c(paste0(temp_dir_copy, "/ui.R"), paste0(temp_dir_copy, "/server.R"), paste0(temp_dir_copy, "/plugin.xml"))
           )
-          
-          # Add to files var
-          # files <- c(files, plugin_dir)
         }
-        
-        # # plugins.csv
-        # plugins <- 
-        #   r[[paste0(prefix, "_export_plugins_selected")]] %>% 
-        #   dplyr::select(-modified) %>%
-        #   dplyr::mutate(new_id = 1:dplyr::n())
-        # 
-        # # code.csv
-        # code <-
-        #   r$code %>%
-        #   dplyr::inner_join(plugins %>% dplyr::select(link_id = id, new_id), by = "link_id") %>%
-        #   dplyr::filter(category %in% c("plugin_ui", "plugin_server")) %>%
-        #   dplyr::select(-link_id) %>% dplyr::rename(link_id = new_id) %>% dplyr::relocate(link_id, .after = "category") %>%
-        #   dplyr::mutate(new_id = 1:dplyr::n()) %>%
-        #   dplyr::select(-id) %>% dplyr::rename(id = new_id) %>% dplyr::relocate(id)
-        # 
-        # plugins <- plugins %>% dplyr::select(-id) %>% dplyr::rename(id = new_id) %>% dplyr::relocate(id)
-        # 
-        # readr::write_csv(plugins, "plugins.csv")
-        # readr::write_csv(code, "code.csv")
-        # 
-        # files <- c("plugins.csv", "code.csv")
-        # 
-        # print(files)
-        zip::zipr(file, paste0(app_folder, "/temp_files/", temp_dir))
-        # zip::zipr(file, paste0(app_folder, "/plugins/", prefix))
-        # zip::zipr(file, files, recurse = TRUE, include_directories = TRUE, mode = "mirror")
+        zip::zipr(file, paste0(app_folder, "/temp_files/", temp_dir, "/plugins"))
       }
     )
     

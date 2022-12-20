@@ -373,6 +373,8 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     }
     else if (table == "studies") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
       AND datamart_id = {data$datamart}", .con = r$db)
+    else if (table == "plugins") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
+      AND module_type_id = {data$module_type}", .con = r$db)
     else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = r$db)
     distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull() %>% tolower()
     
