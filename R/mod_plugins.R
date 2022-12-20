@@ -104,9 +104,9 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
               make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "plugin_name", width = "300px"),
               div(shiny.fluent::PrimaryButton.shinyInput(ns("add_plugin"), i18n$t("add")), style = "margin-top:38px;"),
-              style = "position:absolute; z-index:1;"
+              style = "position:relative; z-index:1; width:500px;"
             ),
-            div(DT::DTOutput(ns("plugins_datatable")), style = "margin-top:40px; z-index:2"),
+            div(DT::DTOutput(ns("plugins_datatable")), style = "margin-top:-30px; z-index:2"),
             shiny.fluent::PrimaryButton.shinyInput(ns("save_plugins_management"), i18n$t("save"))
           )
         ), br()
@@ -244,16 +244,13 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 10),
               make_dropdown_new(i18n = i18n, ns = ns, label = "plugins_to_export",
-                multiSelect = TRUE, width = "650px"),
+                multiSelect = TRUE, width = "400px"),
               div(shiny.fluent::PrimaryButton.shinyInput(ns("export_plugins"), 
                 i18n$t("export_plugins"), iconProps = list(iconName = "Upload")), style = "margin-top:38px;"),
-              # div(shiny.fluent::DefaultButton.shinyInput(ns("export_plugin_github"), 
-                # i18n$t("export_plugins_github"), iconProps = list(iconName = "Upload")), style = "margin-top:38px;"),
               div(style = "visibility:hidden;", downloadButton(ns("export_plugins_download"), label = "")),
-              # div(style = "visibility:hidden;", downloadButton(ns("export_plugins_github_download"), label = "")),
-              style = "position:absolute; z-index:1;"
+              style = "position:relative; z-index:1; width:700px;"
             ),
-            div(DT::DTOutput(ns("plugins_to_export_datatable")), style = "margin-top:40px; z-index:2")
+            div(DT::DTOutput(ns("plugins_to_export_datatable")), style = "margin-top:-30px; z-index:2")
           )
         ), br()
       )
@@ -503,6 +500,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         
         plugins <- 
           r$plugins %>%
+          dplyr::filter(!deleted) %>%
           dplyr::left_join(
             r$options %>% dplyr::filter(category == "plugin", name == "unique_id") %>% dplyr::select(id = link_id, unique_id = value),
             by = "id"
@@ -563,6 +561,67 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     observeEvent(input$install_plugin, {
       
+      plugin <- r$github_plugins %>% dplyr::filter(unique_id == input$plugin_id)
+      
+      tryCatch({
+        
+        # Plugin table
+        
+        last_row <- get_last_row(r$db, "plugins")
+        
+        new_data <- tibble::tribble(
+          ~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
+          last_row + 1, as.character(plugin$name), "", as.integer(module_type_id), as.character(Sys.time()), FALSE)
+        
+        DBI::dbAppendTable(r$db, "plugins", new_data)
+        add_log_entry(r = r, category = paste0("plugins - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
+        
+        # Options table
+        
+        last_row_options <- get_last_row(r$db, "options")
+        
+        new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+          last_row_options + 1, "plugin", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_options + 2, "plugin", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_options + 3, "plugin", last_row + 1, "version", plugin$version, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_options + 4, "plugin", last_row + 1, "unique_id", plugin$unique_id, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_options + 5, "plugin", last_row + 1, "author", plugin$author, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_options + 6, "plugin", last_row + 1, "image", plugin$image, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_options + 7, "plugin", last_row + 1, "description_fr", plugin$description_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_options + 8, "plugin", last_row + 1, "description_en", plugin$description_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
+        )
+        
+        DBI::dbAppendTable(r$db, "options", new_options)
+        add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_options))
+        
+        # Code table
+        
+        plugin_ui_code <- 
+          paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id, "/ui.R") %>%
+          readLines() %>% paste(collapse = "\n")
+        
+        plugin_server_code <-
+          paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id, "/server.R") %>%
+          readLines() %>% paste(collapse = "\n")
+        
+        last_row_code <- get_last_row(r$db, "code")
+        
+        new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+          last_row_code + 1, "plugin_ui", last_row + 1, plugin_ui_code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_code + 2, "plugin_server", last_row + 1, plugin_server_code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+        
+        DBI::dbAppendTable(r$db, "code", new_code)
+        add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
+        
+        update_r(r = r, table = "plugins")
+        update_r(r = r, table = "options")
+        update_r(r = r, table = "code")
+        
+        show_message_bar_new(output, 3, "success_installing_github_plugin", "success", i18n = i18n)
+        
+      }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_install_github_plugin", 
+        error_name = paste0("install_github_plugin - id = ", plugin$unique_id), category = "Error", error_report = toString(e), language = language))
+
     })
     
     observeEvent(input$update_plugin, {
@@ -586,9 +645,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
           data = new_data, table = "plugins", required_textfields = "plugin_name", req_unique_values = "name")
       }
       
-      else {
-        show_message_bar_new(output, 2, "unauthorized_action", "severeWarning", i18n = i18n)
-      }
+      else show_message_bar_new(output, 2, "unauthorized_action", "severeWarning", i18n = i18n)
     })
     
     # --- --- --- --- --- ---
@@ -1378,7 +1435,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     output$export_plugins_download <- downloadHandler(
       
-      filename = function() paste0("linkr_export_plugins_", as.character(stringr::str_replace_all(Sys.time(), " ", "_")), ".zip"),
+      filename = function() paste0("linkr_export_plugins_", 
+        Sys.time() %>% stringr::str_replace_all(" ", "_") %>% stringr::str_replace_all(":", "_") %>% as.character(), ".zip"),
       
       content = function(file){
         
@@ -1415,10 +1473,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
           
           # Copy files to temp dir
           temp_dir_copy <- paste0(app_folder, "/temp_files/", temp_dir, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
-          dir.create(temp_dir_copy, recursive = TRUE)
+          if (!dir.exists(temp_dir_copy)) dir.create(temp_dir_copy, recursive = TRUE)
           file.copy(
             c(paste0(plugin_dir, "/ui.R"), paste0(plugin_dir, "/server.R"), paste0(plugin_dir, "/plugin.xml")), 
-            c(paste0(temp_dir_copy, "/ui.R"), paste0(temp_dir_copy, "/server.R"), paste0(temp_dir_copy, "/plugin.xml"))
+            c(paste0(temp_dir_copy, "/ui.R"), paste0(temp_dir_copy, "/server.R"), paste0(temp_dir_copy, "/plugin.xml")),
+            overwrite = TRUE
           )
         }
         zip::zipr(file, paste0(app_folder, "/temp_files/", temp_dir, "/plugins"))

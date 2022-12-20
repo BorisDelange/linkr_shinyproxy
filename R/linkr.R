@@ -72,7 +72,7 @@ linkr <- function(
   unlink(paste0(app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
   
   # Create app sub-dirs
-  sub_dirs <- c("temp_files", "plugins", "datamarts")
+  sub_dirs <- c("temp_files", "plugins", "datamarts", "studies")
   for (sub_dir in sub_dirs) if (!dir.exists(paste0(app_folder, "/", sub_dir))) dir.create(paste0(app_folder, "/", sub_dir))
   
   # Initial wd
@@ -90,11 +90,29 @@ linkr <- function(
 
   css <- "fluent_style.css"
   
-  pages <- c("home", "home/get_started", "home/tutorials", "home/resources", "home/dev",
-            "my_studies", "my_subsets", "thesaurus", "data", "scripts", "patient_level_data", "aggregated_data",
-             "plugins/patient_lvl", "plugins/aggregated",
-             "settings/general_settings", "settings/app_db", "settings/users", "settings/r_console", "settings/data_sources",
-             "settings/datamarts", "settings/thesaurus", "settings/log")
+  pages <- c(
+    "home", 
+      "home/get_started", 
+      "home/tutorials", 
+      "home/resources", 
+      "home/dev",
+    "my_studies", 
+    "my_subsets", 
+    "thesaurus", 
+    "data", 
+    "scripts", 
+    "patient_level_data", 
+    "aggregated_data",
+    "plugins/patient_lvl",
+    "plugins/aggregated",
+    "settings/general_settings",
+    "settings/app_db",
+    "settings/users", 
+    "settings/r_console", 
+    "settings/data_sources",
+    "settings/datamarts", 
+    "settings/thesaurus", 
+    "settings/log")
   
   do.call(shiny.router::make_router, lapply(pages, function(page) shiny.router::route(page, 
     make_layout(language = language, page = page, words = words, i18n = i18n)))) -> page
