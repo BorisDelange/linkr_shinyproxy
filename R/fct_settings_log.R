@@ -48,7 +48,7 @@ report_bug_new <- function(r = shiny::reactiveValues(), output, error_message = 
   print(error_report)
   
   # Notification to user
-  if (error_message %not_in% c("fail_load_datamart", "fail_load_scripts")) show_message_bar(output, 3, error_message, "severeWarning", language)
+  if (error_message %not_in% c("fail_load_datamart", "fail_load_scripts")) show_message_bar_new(output, 3, error_message, "severeWarning", i18n = i18n)
   
   # Add a log entry for bug report
   add_log_entry(r = r, category = category, name = error_name, value = error_report)
