@@ -523,7 +523,7 @@ render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny
   output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top't><'bottom'p>", page_length = 10, start = 0,
   editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
   filter = FALSE, factorize_cols = character(), column_widths = character(), hidden_cols = character(), truncated_cols = character(),
-  default_tibble = tibble::tibble()
+  selection = "single", default_tibble = tibble::tibble()
 ){
   
   # Translation for datatable
@@ -539,7 +539,7 @@ render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny
     if (length(names(default_tibble)) == 0) return({
       data <- tibble::tribble(~id)
       names(data) <- c("")
-      output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom), 
+      output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom, language = dt_translation), 
         rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
     })
     
@@ -638,9 +638,10 @@ render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny
     ),
     editable = list(target = "cell", disable = list(columns = non_editable_cols_vec)),
     filter = filter_list,
+    selection = selection,
     
     # Default options
-    rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
+    rownames = FALSE, escape = FALSE, server = TRUE,
     
     # Javascript code allowing to have dropdowns & actionButtons on the DataTable
     callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {

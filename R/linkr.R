@@ -87,6 +87,8 @@ linkr <- function(
   words <- get_translations()
   i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
   i18n$set_translation_language(tolower(language))
+  
+  options(digits.secs = 0)
 
   css <- "fluent_style.css"
   

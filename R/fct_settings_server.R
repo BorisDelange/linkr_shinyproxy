@@ -2498,19 +2498,30 @@ delete_element_new <- function(r = shiny::reactiveValues(), session, input, outp
   observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
     
     r[[delete_variable]] <- FALSE
-    # Delete row in DB table
+    
+    # Delete row in DB table and associated tables
     sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE {`id_var_sql`} = {r[[id_var_r]]}" , .con = r$db)
     DBI::dbSendStatement(r$db, sql) -> query
     DBI::dbClearResult(query)
     
+    sql <- glue::glue_sql("UPDATE options SET deleted = TRUE WHERE category = {table} AND link_id = {r[[id_var_r]]}" , .con = r$db)
+    DBI::dbSendStatement(r$db, sql) -> query
+    DBI::dbClearResult(query)
+    
+    sql <- glue::glue_sql("UPDATE code SET deleted = TRUE WHERE category = {table} AND link_id = {r[[id_var_r]]}" , .con = r$db)
+    DBI::dbSendStatement(r$db, sql) -> query
+    DBI::dbClearResult(query)
+    
+    # r[[table]] <- r[[table]] %>% dplyr::filter(eval(parse(text = id_var_sql)) != !!eval(parse(text = r[[id_var_r]])))
+
     update_r(r = r, table = table)
-    
-    # Notify user
+
+    # # Notify user
     show_message_bar_new(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n)
-    
+
     # Activate reload variable
     r[[reload_variable]] <- Sys.time()
-    
+
     # Information variable
     if (length(information_variable) > 0) r[[information_variable]] <- r[[id_var_r]]
     
