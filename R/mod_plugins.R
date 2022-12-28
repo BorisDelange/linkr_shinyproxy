@@ -111,7 +111,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             div(DT::DTOutput(ns("plugins_datatable")), style = "margin-top:-30px; z-index:2"),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::PrimaryButton.shinyInput(ns("save_plugins_management"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("delete_plugins_management"), i18n$t("delete_selection"))
+              shiny.fluent::DefaultButton.shinyInput(ns("delete_selected_plugins"), i18n$t("delete_selection"))
             )
           )
         ), br()
@@ -192,7 +192,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             ), br(),
             div(
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                make_textfield_new(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image_url", width = "700px"),
+                make_textfield_new(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "700px"),
                 div(shiny.fluent::DefaultButton.shinyInput(ns("browse_image"), i18n$t("browse")), style = "margin-top:39px;"),
                 div(shiny.fluent::DefaultButton.shinyInput(ns("import_image"), i18n$t("import_image")), style = "margin-top:39px;"),
               )
@@ -210,7 +210,8 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             conditionalPanel(condition = "input.plugin_description_language == 'en'", ns = ns,
               div(shinyAce::aceEditor(ns("plugin_description_en"), "", mode = "markdown", 
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_plugin_options"), i18n$t("save"))
+            shiny.fluent::PrimaryButton.shinyInput(ns("save_plugin_options"), i18n$t("save")),
+            div(style = "display:none;", fileInput(ns("import_image_file"), label = "", multiple = FALSE, accept = c(".jpg", ".jpeg", ".png")))
           )
         ), br()
       )
@@ -832,11 +833,14 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     # When at least one row is selected
     
-    observeEvent(input$plugins_datatable_rows_selected, {
+    # observeEvent(input$plugins_datatable_rows_selected, {
+      
       # print(input$plugins_datatable_rows_selected)
-    })
+    # })
     
-    # Delete a row in datatable
+    
+    
+    # Delete a row or multiple rows in datatable
 
     plugin_delete_prefix <- paste0(prefix, "_plugin")
     plugin_dialog_title <- "plugins_delete"
@@ -844,7 +848,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     plugin_react_variable <- "plugin_delete_confirm"
     plugin_table <- "plugins"
     plugin_id_var_sql <- "id"
-    plugin_id_var_r <- "delete_plugin"
+    plugin_id_var_r <- "delete_plugins"
     plugin_delete_message <- "plugin_deleted"
     plugin_reload_variable <- paste0("reload" , prefix, "_plugins")
     plugin_information_variable <- "plugin_deleted"
@@ -856,16 +860,26 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       delete_message = plugin_delete_message, translation = TRUE, reload_variable = plugin_reload_variable,
       information_variable = plugin_information_variable)
 
+    # Delete one row (with icon on DT)
+    
     observeEvent(input$deleted_pressed, {
-      r$delete_plugin <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
+      
+      r$delete_plugins <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
+      r[[plugin_delete_variable]] <- TRUE
+    })
+    
+    # Delete multiple rows (with "Delete selection" button)
+    
+    observeEvent(input$delete_selected_plugins, {
+      
+      req(length(input$plugins_datatable_rows_selected) > 0)
+      
+      r$delete_plugins <- r[[paste0(prefix, "_plugins_temp")]][input$plugins_datatable_rows_selected, ] %>% dplyr::pull(id)
       r[[plugin_delete_variable]] <- TRUE
     })
 
     observeEvent(r[[plugin_reload_variable]], {
-
-      # Reload sidenav dropdown with a reload of studies
-      # r[[table]] <- r[[table]] %>% dplyr::filter(eval(parse(text = id_var_sql)) != !!eval(parse(text = r[[id_var_r]])))
-
+      
       # Reload datatable
       r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
@@ -1008,6 +1022,33 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       r$show_plugin_details <- Sys.time()
       
+    })
+    
+    observeEvent(input$import_image, shinyjs::click("import_image_file"))
+    
+    observeEvent(input$import_image_file, {
+      
+      tryCatch({
+        
+        if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
+        else link_id <- input$code_chosen_plugin
+        
+        plugin <- r$plugins %>%
+          dplyr::filter(id == link_id) %>%
+          dplyr::left_join(
+            r$options %>% dplyr::filter(category == "plugin", name == "unique_id") %>% dplyr::select(id = link_id, unique_id = value),
+            by = "id"
+          )
+        
+        plugin_folder <- paste0(app_folder, "/plugins/", prefix, "/", plugin$unique_id)
+        
+        if (!dir.exists(plugin_folder)) dir.create(plugin_folder, recursive = TRUE)
+        file.copy(input$import_image_file$datapath, paste0(plugin_folder, "/", input$import_image_file$name), overwrite = TRUE)
+        
+        show_message_bar_new(output, 4, "image_imported", "success", i18n = i18n)
+        
+      }, error = function(e) report_bug_new(r = r, output = output, error_message = "error_importing_image",
+          error_name = paste0(id, " - import plugin image"), category = "Error", error_report = e, i18n = i18n))
     })
     
     # --- --- --- --- --- -
@@ -1388,11 +1429,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
             by = "unique_id"
           )
         
-        print(plugins)
-        
         if (!input$replace_already_existing_plugins) plugins <- plugins %>% dplyr::filter(is.na(id))
-        
-        print(plugins)
         
         # Loop over each plugin
         

@@ -2473,7 +2473,7 @@ delete_element_new <- function(r = shiny::reactiveValues(), session, input, outp
     type = 0,
     title = dialog_title,
     closeButtonAriaLabel = "Close",
-    subText = dialog_subtext
+    subText = tagList(dialog_subtext, br(), br())
   )
   
   output[[react_variable]] <- shiny.fluent::renderReact({
@@ -2500,22 +2500,20 @@ delete_element_new <- function(r = shiny::reactiveValues(), session, input, outp
     r[[delete_variable]] <- FALSE
     
     # Delete row in DB table and associated tables
-    sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE {`id_var_sql`} = {r[[id_var_r]]}" , .con = r$db)
+    sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE {`id_var_sql`} IN ({r[[id_var_r]]*})" , .con = r$db)
     DBI::dbSendStatement(r$db, sql) -> query
     DBI::dbClearResult(query)
     
-    sql <- glue::glue_sql("UPDATE options SET deleted = TRUE WHERE category = {table} AND link_id = {r[[id_var_r]]}" , .con = r$db)
+    sql <- glue::glue_sql("UPDATE options SET deleted = TRUE WHERE category = {table} AND link_id IN ({r[[id_var_r]]*})" , .con = r$db)
     DBI::dbSendStatement(r$db, sql) -> query
     DBI::dbClearResult(query)
     
-    sql <- glue::glue_sql("UPDATE code SET deleted = TRUE WHERE category = {table} AND link_id = {r[[id_var_r]]}" , .con = r$db)
+    sql <- glue::glue_sql("UPDATE code SET deleted = TRUE WHERE category = {table} AND link_id IN ({r[[id_var_r]]*})" , .con = r$db)
     DBI::dbSendStatement(r$db, sql) -> query
     DBI::dbClearResult(query)
     
-    # r[[table]] <- r[[table]] %>% dplyr::filter(eval(parse(text = id_var_sql)) != !!eval(parse(text = r[[id_var_r]])))
-
-    update_r(r = r, table = table)
-
+    r[[table]] <- r[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
+    
     # # Notify user
     show_message_bar_new(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n)
 
