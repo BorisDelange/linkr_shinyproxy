@@ -149,11 +149,39 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             shinyjs::hidden(div(id = ns("div_br"), br())),
             
             conditionalPanel(condition = "input.edit_code_ui_server == 'ui'", ns = ns,
-              div(shinyAce::aceEditor(ns("ace_edit_code_ui"), "", mode = "r", 
-                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
+              div(shinyAce::aceEditor(
+                ns("ace_edit_code_ui"), "", mode = "r", 
+                code_hotkeys = list(
+                  "r", list(
+                    run_selection = list(
+                      win = "CTRL-ENTER",
+                      mac = "CTRL-ENTER|CMD-ENTER"
+                    ),
+                    run_all = list(
+                      win = "CTRL-SHIFT-ENTER",
+                      mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"
+                    )
+                  )
+                ),
+                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+              ), style = "width: 100%;")),
             conditionalPanel(condition = "input.edit_code_ui_server == 'server'", ns = ns,
-              div(shinyAce::aceEditor(ns("ace_edit_code_server"), "", mode = "r", 
-                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
+              div(shinyAce::aceEditor(
+                ns("ace_edit_code_server"), "", mode = "r", 
+                code_hotkeys = list(
+                  "r", list(
+                    run_selection = list(
+                      win = "CTRL-ENTER",
+                      mac = "CTRL-ENTER|CMD-ENTER"
+                    ),
+                    run_all = list(
+                      win = "CTRL-SHIFT-ENTER",
+                      mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"
+                    )
+                  )
+                ),
+                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+              ), style = "width: 100%;")),
             
             shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
             shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
@@ -704,7 +732,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         new_data$plugin_name <- new_data$name
         new_data$module_type <- module_type_id
         
-        add_settings_new_data_new(session = session, output = output, r = r, i18n = i18n, id = "settings_plugins", 
+        add_settings_new_data_new(session = session, output = output, r = r, m = m, i18n = i18n, id = "settings_plugins", 
           data = new_data, table = "plugins", required_textfields = "plugin_name", req_unique_values = "name")
         
         # Reload datatable
@@ -1283,17 +1311,45 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Execute code
     
     observeEvent(input$execute_code, {
+      r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui
+      r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server
+      r[[paste0(id, "_trigger_code")]] <- Sys.time()
+    })
+    
+    observeEvent(input$ace_edit_code_ui_selection, {
+      if(!shinyAce::is.empty(input$ace_edit_code_ui_run_selection$selection)) r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui_run_selection$selection
+      else r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui_run_selection$line
+      r[[paste0(id, "_server_code")]] <- ""
+    })
+    
+    observeEvent(input$ace_edit_code_server_selection, {
+      if(!shinyAce::is.empty(input$ace_edit_code_server_run_selection$selection)) r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server_run_selection$selection
+      else r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server_run_selection$line
+      r[[paste0(id, "_ui_code")]] <- ""
+    })
+    
+    observeEvent(input$ace_edit_code_ui_run_all, {
+      r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui
+      r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server
+    })
+    
+    observeEvent(input$ace_edit_code_server_run_all, {
+      r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server
+      r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui
+    })
+    
+    observeEvent(r[[paste0(id, "_trigger_code")]], {
       
-      var_check <- TRUE
-      if (length(r$chosen_datamart) == 0) var_check <- FALSE
-      if (length(r$chosen_datamart) > 0){
-        if (is.na(r$chosen_datamart) | is.na(r$chosen_study)) var_check <- FALSE
-        if (prefix == "patient_lvl" & is.na(r$chosen_patient)) var_check <- FALSE
-      }
-      
-      if (!var_check) show_message_bar_new(output = output, id = 3, message = "load_some_patient_data", i18n = i18n)
-      
-      req(var_check)
+      # var_check <- TRUE
+      # if (length(r$chosen_datamart) == 0) var_check <- FALSE
+      # if (length(r$chosen_datamart) > 0){
+      #   if (is.na(r$chosen_datamart) | is.na(r$chosen_study)) var_check <- FALSE
+      #   if (prefix == "patient_lvl" & is.na(r$chosen_patient)) var_check <- FALSE
+      # }
+      # 
+      # if (!var_check) show_message_bar_new(output = output, id = 3, message = "load_some_patient_data", i18n = i18n)
+      # 
+      # req(var_check)
       
       # Get thesaurus items
       
@@ -1312,8 +1368,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
       else link_id <- input$code_chosen_plugin
     
-      ui_code <- input$ace_edit_code_ui
-      server_code <- input$ace_edit_code_server
+      ui_code <- r[[paste0(id, "_ui_code")]]
+      server_code <- r[[paste0(id, "_server_code")]]
       
       # Replace %group_id% in ui_code with 1 for our example
       

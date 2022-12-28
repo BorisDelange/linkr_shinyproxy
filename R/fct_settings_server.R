@@ -341,7 +341,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   else sapply(c("plugin_name", "script_name", "study_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
-add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues(), i18n = R6::R6Class(), id = character(),
+add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class(), id = character(),
   data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), 
   required_dropdowns = "all", dropdowns = character()){
   
@@ -475,7 +475,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   # Add default subsets when creating a new study
   last_row_code <- get_last_row(r$db, "code")
   last_row_options <- get_last_row(r$db, "options")
-  last_row_subsets <- get_last_row(r$db, "subsets")
+  last_row_subsets <- get_last_row(m$db, "subsets")
   last_row_thesaurus <- get_last_row(r$db, "thesaurus")
   
   # Add a row in code if table is datamarts, thesaurus
@@ -498,7 +498,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     update_r(r = r, table = "thesaurus")
     
     add_log_entry(r = r, category = paste0("thesaurus", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_thesaurus))
-    
+  
     # Add also the code for the new thesaurus
     
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
@@ -2254,12 +2254,13 @@ save_settings_code_new <- function(output, r = shiny::reactiveValues(), id = cha
   code_id <- r$code %>% dplyr::filter(category == !!category, link_id == !!link_id) %>% dplyr::pull(id) %>% as.integer()
   
   # Replace ' with '' and store in the database
-  DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(edited_code, "'", "''"), "' WHERE id = ", code_id)) -> query
-  # DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(edited_code, "'", "''"), "' WHERE id = ", code_id)) -> query
+  edited_code <- stringr::str_replace_all(edited_code, "'", "''")
+  sql <- glue::glue_sql("UPDATE code SET code = {edited_code} WHERE id = {code_id}", .con = r$db)
+  query <- DBI::dbSendStatement(r$db, sql)
   DBI::dbClearResult(query)
   r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
   
-  # Notification to user
+  # Notify user
   show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n)
 }
 
@@ -2339,7 +2340,62 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
   result
 }
 
-
+execute_settings_code_new <- function(input, output, session, id = character(), ns = shiny::NS(), i18n = R6::R6Class(), 
+  r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
+  edited_code = character(), code_type = "", data = list()){
+  
+  result <- ""
+  
+  # If code is UI, execute it only
+  if (code_type == "ui"){
+    
+    tryCatch(result <- eval(parse(text = edited_code)), error = function(e) stop(e), warning = function(w) stop(w))
+  }
+  
+  # If code is server, capture the console output
+  # Server is also used by R_console page
+  if (code_type == "server"){
+    
+    # Change this option to display correctly tibble in textbox
+    options('cli.num_colors' = 1)
+    
+    # Capture console output of our code
+    captured_output <- capture.output(
+      tryCatch(eval(parse(text = edited_code)), error = function(e) print(e), warning = function(w) print(w)))
+    
+    # Restore normal value
+    options('cli.num_colors' = NULL)
+    
+    # Display result
+    paste(paste(captured_output), collapse = "\n") -> result
+  }
+  
+  # If code is not UI or server, capture the console output after replacing %% values
+  if (code_type %not_in% c("ui", "server")){
+    
+    # Replace %CODE% from code to real values
+    code <- edited_code %>%
+      stringr::str_replace_all("%datamart_id%", as.character(isolate(r$datamart_id))) %>%
+      stringr::str_replace_all("%subset_id%", as.character(isolate(r$subset_id))) %>%
+      stringr::str_replace_all("%thesaurus_id%", as.character(isolate(r$thesaurus_id)))
+    
+    # Change this option to display correctly tibble in textbox
+    options('cli.num_colors' = 1)
+    
+    # Capture console output of our code
+    captured_output <- capture.output(
+      tryCatch(eval(parse(text = as.character(code))), error = function(e) print(e), warning = function(w) print(w)))
+    
+    # Restore normal value
+    options('cli.num_colors' = NULL)
+    
+    # Display result
+    # paste(captured_output, collapse = "\n") -> result
+    paste(strwrap(captured_output), collapse = "\n") -> result
+  }
+  
+  result
+}
 
 #' Get authorized data for a user
 #'

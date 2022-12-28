@@ -8,9 +8,10 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
+mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   result <- ""
+  language <- "EN"
   
   # Prefix depending on page id
   if (id == "patient_level_data"){
@@ -22,17 +23,17 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
     page_name <- "aggregated_data"
   }
   
-  #########################################
-  # Module creation card                   #
-  ##########################################
+  # --- --- --- --- --- --- -
+  # Module creation card ----
+  # --- --- --- --- --- --- -
   
   module_creation_options <- list(
-    list(key = "same_level", text = translate(language, "same_level", words)),
-    list(key = "level_under", text = translate(language, "level_under", words))
+    list(key = "same_level", text = i18n$t("same_level_current_tab")),
+    list(key = "level_under", text = i18n$t("level_under"))
   )
   
   module_creation_card <- make_card(
-    title = translate(language, "add_module", words),
+    title = i18n$t("add_module"),
     content = div(
       actionButton(ns(paste0(prefix, "_close_add_module")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
       shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
@@ -40,17 +41,17 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
         div(shiny.fluent::ChoiceGroup.shinyInput(ns("add_module_type"), value = "same_level", 
           options = module_creation_options, className = "inline_choicegroup"), style = "padding-top:35px;")
       ), br(),
-      shiny.fluent::PrimaryButton.shinyInput(ns("add_module_button"), translate(language, "add", words)), br(),
+      shiny.fluent::PrimaryButton.shinyInput(ns("add_module_button"), i18n$t("add")), br(),
     )
   )
   
-  ##########################################
-  # Module element creation card           #
-  ##########################################
+  # --- --- --- --- --- --- --- --- -
+  # Module element creation card ----
+  # --- --- --- --- --- --- --- --- -
   
   if (prefix == "patient_lvl"){
     module_element_creation_card <- make_card(
-      title = translate(language, "add_module_element", words),
+      title = i18n$t("add_module_element"),
       content = div(
         actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
@@ -62,10 +63,10 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
           horizontal = TRUE, tokens = list(childrenGap = 20),
           make_dropdown(language = language, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
             multiSelect = TRUE, width = "650px", words = words),
-          div(shiny.fluent::DefaultButton.shinyInput(ns("reset_thesaurus_items"), translate(language, "reset", words)), style = "margin-top:38px;")
+          div(shiny.fluent::DefaultButton.shinyInput(ns("reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
         ),
         div(DT::DTOutput(ns("module_element_thesaurus_items")), class = "thesaurus_table"), br(),
-        shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), translate(language, "add", words)), br(),
+        shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), i18n$t("add")), br(),
         DT::DTOutput(ns("thesaurus_items"))
       )
     )
@@ -73,7 +74,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
   
   if (prefix == "aggregated"){
     module_element_creation_card <- make_card(
-      title = translate(language, "add_module_element", words),
+      title = i18n$t("add_module_element"),
       content = div(
         actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
@@ -81,7 +82,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
           make_combobox(language = language, ns = ns, label = "plugin", id = "plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px", words = words)
         ),
         br(),
-        shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), translate(language, "add", words)),
+        shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), i18n$t("add")),
       )
     )
   }
@@ -94,12 +95,12 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
     shiny.fluent::reactOutput(ns("module_delete_confirm")), shiny.fluent::reactOutput(ns("module_element_delete_confirm")),
     div(id = ns("initial_breadcrumb"),
       shiny.fluent::Breadcrumb(items = list(
-        list(key = "main", text = translate(language, paste0(prefix, "_data"), words), href = paste0("#!/", page_name), isCurrentItem = TRUE)),
+        list(key = "main", text = i18n$t(paste0(prefix, "_data")), href = paste0("#!/", page_name), isCurrentItem = TRUE)),
         maxDisplayedItems = 3)
     ),
     div(
       id = ns("choose_a_study_card"),
-      make_card("", div(shiny.fluent::MessageBar(translate(language, "choose_a_study", words), messageBarType = 5), style = "margin-top:10px;"))
+      make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_study_and_datamart_left_side"), messageBarType = 5), style = "margin-top:10px;"))
     ),
     uiOutput(ns("study_menu")),
     div(id = ns("study_cards")),
@@ -124,13 +125,15 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), language = "EN"
 #'
 #' @noRd 
 
-mod_patient_and_aggregated_data_server <- function(id = character(), r, language = "EN", i18n = R6::R6Class()){
+mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    ##########################################
-    # SUMMARY                                #
-    ##########################################
+    language <- "EN"
+    
+    # --- --- --- --- --- --- -
+    # Summary ----
+    # --- --- --- --- --- --- -
     
     # - INITIATE VARS
     # - HELP ON THIS PAGE
@@ -158,9 +161,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n))
     observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n))
     
-    ##########################################
-    # INITIATE VARS                          #
-    ##########################################
+    # --- --- --- --- --
+    # Initiate vars ----
+    # --- --- --- --- --
     
     # Prefix depending on page id
     if (id == "patient_level_data"){
@@ -198,9 +201,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       shinyjs::show("study_cards")
     })
     
-    ##########################################
-    # HELP ON THIS PAGE                      #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Help for this page ----
+    # --- --- --- --- --- ---
     
     # Help panel
     
@@ -637,9 +640,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       )
     })
     
-    ##########################################
-    # LOAD DATA                              #
-    ##########################################
+    # --- --- --- --
+    # Load data ----
+    # --- --- --- --
     
     if (prefix == "patient_lvl"){
       
@@ -714,9 +717,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       })
     }
     
-    ##########################################
-    # INITIATE UI                            #
-    ##########################################
+    # --- --- --- -- -
+    # Initiate UI ----
+    # --- --- --- -- -
     
     # When a study is chosen
     
@@ -817,13 +820,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       if (grepl("first_load_ui", r[[paste0(prefix, "_load_display_modules")]])) r[[paste0(prefix, "_load_ui_cards")]] <- Sys.time()
     })
     
-    ##########################################
-    # LOAD UI                                #
-    ##########################################
+    # --- --- -- -
+    # Load UI ----
+    # --- --- -- -
     
-      ##########################################
-      # LOAD UI / RENDER MODULES MENU          #
-      ##########################################
+      # --- --- --- --- --- --- -
+      ## Render modules menu ----
+      # --- --- --- --- --- --- -
       
       # Render menu
       output$study_menu <- renderUI({
@@ -849,13 +852,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         if (nrow(display_modules) == 0 | "level" %not_in% names(display_modules)){
           return(tagList(
             shiny.fluent::Breadcrumb(items = list(
-              list(key = "main", text = translate(language, paste0(prefix, "_data"), words), href = paste0("#!/", page_name), isCurrentItem = TRUE,
+              list(key = "main", text = i18n$t(paste0(prefix, "_data")), href = paste0("#!/", page_name), isCurrentItem = TRUE,
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', 0)")))),
               maxDisplayedItems = 3),
             shiny.fluent::Pivot(
               onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', item.props.id)")),
               selectedKey = isolate(r[[paste0(prefix, "_selected_module")]]),
-              shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", 0), headerText = span(translate(language, "add_module", r$words), style = "padding-left:5px;"), itemIcon = "Add")
+              shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", 0), headerText = span(i18n$t("add_module"), style = "padding-left:5px;"), itemIcon = "Add")
             )
           ))
         }
@@ -944,7 +947,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         if (nb_levels == 1) is_current_item <- TRUE
         
         items <- list(
-          list(key = "main", text = translate(language, page_name, words), href = paste0("#!/", page_name), isCurrentItem = is_current_item,
+          list(key = "main", text = i18n$t(page_name), href = paste0("#!/", page_name), isCurrentItem = is_current_item,
             onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', 0)"))))
         
         # Other levels
@@ -979,7 +982,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         })
         
         # Add an add button, to add a new module
-        shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", isolate(r[[paste0(prefix, "_selected_module")]])), headerText = span(translate(language, "add_module", r$words), style = "padding-left:5px;"), itemIcon = "Add"))
+        shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", isolate(r[[paste0(prefix, "_selected_module")]])), headerText = span(i18n$t("add_module"), style = "padding-left:5px;"), itemIcon = "Add"))
         
         tagList(
           shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
@@ -996,9 +999,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         
       })
     
-      ##########################################
-      # LOAD UI / RENDER MODULES ELEMENTS      #
-      ##########################################
+      # --- --- --- --- --- --- --- -
+      ## Render modules elements ----
+      # --- --- --- --- --- --- --- -
     
       observeEvent(r[[paste0(prefix, "_load_ui_cards")]], {
         
@@ -1040,7 +1043,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
               # Check if plugin has been deleted
               check_deleted_plugin <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM plugins WHERE id = ", plugin_id)) %>% dplyr::pull(deleted)
               if (check_deleted_plugin){
-                code_ui_card <- paste0("div(shiny.fluent::MessageBar('", translate(language, "plugin_deleted", r$words), "', messageBarType = 3), style = 'margin-top:10px;')")
+                code_ui_card <- paste0("div(shiny.fluent::MessageBar('", i18n$t("plugin_deleted"), "', messageBarType = 3), style = 'margin-top:10px;')")
               }
 
               # Get name of module element
@@ -1083,7 +1086,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                 output[[paste0(prefix, "_group_", group_id)]] <- renderUI(element_code)
               },
               error = function(e){
-                report_bug(r = r, output = output, error_message = translate(language, "error_run_plugin_ui_code", words),
+                report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
                   error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, language = language)
               })
             })
@@ -1097,8 +1100,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
-                div(shiny.fluent::MessageBar(translate(language, "module_contains_sub_modules", words), messageBarType = 5), style = "margin-top:4px;")
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
+                div(shiny.fluent::MessageBar(i18n$t("module_contains_sub_modules"), messageBarType = 5), style = "margin-top:4px;")
               )
             )
           )
@@ -1106,8 +1109,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           else toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_module_element"), iconProps = list(iconName = "Add")),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
                 div(style = "width:20px;"),
                 toggles
               )
@@ -1128,9 +1131,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         shinyjs::delay(100, r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time())
       })
     
-    ##########################################
-    # Close creation div                     #
-    ##########################################
+    # --- --- --- --- --- ---
+    # Close creation div ----
+    # --- --- --- --- --- ---
     
     observeEvent(input[[paste0(prefix, "_close_add_module_element")]], {
 
@@ -1142,9 +1145,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
     })
 
     
-    ##########################################
-    # LOAD SERVER                            #
-    ##########################################
+    # --- --- --- -- -
+    # Load server ----
+    # --- --- --- -- -
     
     observeEvent(r[[paste0(prefix, "_load_server")]], {
       
@@ -1156,17 +1159,17 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == module_family) %>% dplyr::select(module_id = id)
       module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::inner_join(modules, by = "module_id")
       
-      ##########################################
-      # Delete module & create module element  #
-      ##########################################
+      # --- --- --- --- --- --- --- --- --- --- --
+      ## Delete module & create module element ----
+      # --- --- --- --- --- --- --- --- --- --- --
       
       # Loop over modules
       
       sapply(modules$module_id, function(module_id){
         
-        ##########################################
-        # Create a new module element            #
-        ##########################################
+        # --- --- --- --- --- --- --- -- -
+        ### Create a new module element ----
+        # --- --- --- --- --- --- --- -- -
         
         observeEvent(input[[paste0(prefix, "_add_module_element_", module_id)]], {
 
@@ -1178,9 +1181,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
 
         })
         
-        ##########################################
-        # Delete a module                        #
-        ##########################################
+        # --- --- --- --- -- -
+        ### Delete a module ----
+        # --- --- --- --- -- -
         
         observeEvent(input[[paste0(prefix, "_remove_module_", module_id)]], {
           r[[module_delete_variable]] <- TRUE
@@ -1188,9 +1191,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         
       })
       
-      ##########################################
-      # Run server code for cards              #
-      ##########################################
+      # --- --- --- --- --- --- --- --
+      ## Run server code for cards ----
+      # --- --- --- --- --- --- --- --
       
       # If no thesaurus elements to show in this module, notify the user
       # if (nrow(module_elements) == 0) show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning", language = language)
@@ -1259,9 +1262,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
                 error_name = paste0(id, " - run server code - ", group_id), category = "Error", error_report = e, language = language)
             )
             
-            ##########################################
-            # Delete a module element                #
-            ##########################################
+            # --- --- --- --- --- --- --- ---
+            #### Delete a module element ----
+            # --- --- --- --- --- --- --- ---
             
             observeEvent(input[[paste0(prefix, "_remove_module_element_", group_id)]], {
               r[[paste0(prefix, "_selected_module_element")]] <- group_id
@@ -1273,13 +1276,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       }
     })
     
-    ##########################################
-    # OTHER SERVER REACTIVITY                #
-    ##########################################
+    # --- --- --- --- --- --- -- -
+    # Other server reactivity ----
+    # --- --- --- --- --- --- -- -
     
-      ############################################
-      # SORTABLE / CHANGE PIVOTITEMS ORDER       #
-      ############################################
+      # --- --- --- --- --- --- --- --- --- -- -
+      ## Sortable / change pivotitems order ----
+      # --- --- --- --- --- --- --- --- --- -- -
       
       observeEvent(input$study_pivot_order, {
         
@@ -1308,10 +1311,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         r[[paste0(prefix, "_load_display_modules")]] <- Sys.time()
       })
     
-    
-      ############################################
-      # SHOW / HIDE DIV WHEN PIVOT ITEM SELECTED #
-      ############################################
+      # --- --- --- --- --- --- --- --- --- --- --- -
+      ## Show / hide div when pivot item selected ----
+      # --- --- --- --- --- --- --- --- --- --- --- -
     
       observeEvent(r[[paste0(prefix, "_selected_module")]], {
   
@@ -1354,9 +1356,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         })
       })
     
-      ##########################################
-      # ADD A MODULE                           #
-      ##########################################
+      # --- --- --- --- -
+      ## Add a module ----
+      # --- --- --- --- -
 
       observeEvent(input$study_current_tab, {
 
@@ -1427,7 +1429,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           }
         }
 
-        if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_name", errorMessage = translate(language, "provide_valid_name", r$words))
+        if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_name", errorMessage = i18n$t("provide_valid_name"))
         req(!is.na(new_data$name))
 
         add_settings_new_data(session = session, output = output, r = r, language = language, id = id,
@@ -1449,8 +1451,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_module_element"), iconProps = list(iconName = "Add")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
               div(style = "width:20px;")
             )
           )
@@ -1468,8 +1470,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           parent_toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
-                div(shiny.fluent::MessageBar(translate(language, "module_contains_sub_modules", words), messageBarType = 5), style = "margin-top:4px;")
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
+                div(shiny.fluent::MessageBar(i18n$t("module_contains_sub_modules"), messageBarType = 5), style = "margin-top:4px;")
               )
             )
           )
@@ -1502,10 +1504,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         observeEvent(input[[paste0(prefix, "_remove_module_", r[[paste0(prefix, "_selected_module")]])]], r[[module_delete_variable]] <- TRUE)
       })
       
-      
-      ##########################################
-      # DELETE A MODULE                        #
-      ##########################################
+      # --- --- --- --- -- -
+      ## Delete a module ----
+      # --- --- --- --- -- -
       
       module_delete_prefix <- paste0(prefix, "_module")
       module_dialog_title <- paste0(prefix, "_modules_delete")
@@ -1583,8 +1584,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             parent_toggles_div <- div(
               make_card("",
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", parent_module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", parent_module_id)), i18n$t("new_module_element"), iconProps = list(iconName = "Add")),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
                   div(style = "width:20px;")
                 )
               )
@@ -1594,7 +1595,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
             output[[paste0(prefix, "_toggles_", parent_module_id)]] <- renderUI(parent_toggles_div)
           }
         }
-        
         
         # Delete children modules of deleted module
         # has_children <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == deleted_module_id) %>% nrow()
@@ -1624,9 +1624,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         # TO DO : loop to delete also sub-sub-modules...
       })
 
-      ##########################################
-      # ADD A MODULE ELEMENT                   #
-      ##########################################
+      # --- --- --- --- --- --- --
+      ## Add a module element ----
+      # --- --- --- --- --- --- --
       
       observeEvent(r$plugins, {
 
@@ -1642,9 +1642,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
 
       if (prefix == "patient_lvl"){
 
-        ##########################################
-        # THESAURUS DATATABLE                    #
-        ##########################################
+        # --- --- --- --- --- --- -
+        ## Thesaurus datatable ----
+        # --- --- --- --- --- --- -
 
         # Load thesaurus attached to this datamart
         observeEvent(r$chosen_datamart, {
@@ -1744,9 +1744,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           r$module_element_thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
         })
 
-        ##########################################
-        # THESAURUS ITEMS                        #
-        ##########################################
+        # --- --- --- --- --- -
+        ## Thesaurus items ----
+        # --- --- --- --- --- -
 
         # When add button is clicked
         observeEvent(input$item_selected, {
@@ -1818,9 +1818,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
       }
       # End of if(prefix == "patient_lvl")
       
-      ##########################################
-      # Add button clicked                     #
-      ##########################################
+      # --- --- --- --- --- ---
+      ## Add button clicked ----
+      # --- --- --- --- --- ---
       
       observeEvent(input$add_module_element_button, {
 
@@ -1832,7 +1832,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         new_data$plugin <- input$plugin$key
 
         # Check if name is not empty
-        if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_element_name", errorMessage = translate(language, "provide_valid_name", words))
+        if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_element_name", errorMessage = i18n$t("provide_valid_name"))
         else shiny.fluent::updateTextField.shinyInput(session, "module_element_name", errorMessage = NULL)
         req(!is.na(new_data$name))
 
@@ -1900,7 +1900,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           as.integer(new_data$plugin), last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
 
         DBI::dbAppendTable(r$db, table, new_data)
-        add_log_entry(r = r, category = paste0(table, " - ", translate(language, "insert_new_data", words)), name = translate(language, "sql_query", words), value = toString(new_data))
+        add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
 
         show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language, words = r$words)
 
@@ -1994,7 +1994,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
           )
         },
         error = function(e){
-          report_bug(r = r, output = output, error_message = translate(language, "error_run_plugin_ui_code", words),
+          report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
             error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, language = language)}
         )
         
@@ -2031,8 +2031,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_module_element"), iconProps = list(iconName = "Add")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
               div(style = "width:20px;"),
               toggles
             )
@@ -2065,10 +2065,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         shinyjs::delay(300, r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time())
       })
       
-      ##########################################
-      # DELETE A MODULE ELEMENT                #
-      ##########################################
-
+      # --- --- --- --- --- --- --- -
+      ## Delete a module element ----
+      # --- --- --- --- --- --- --- -
+      
       module_element_delete_prefix <- paste0(prefix, "_module_element")
       module_element_dialog_title <- paste0(prefix, "_modules_elements_group_delete")
       module_element_dialog_subtext <- paste0(prefix, "_modules_elements_group_delete_subtext")
@@ -2137,8 +2137,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
-              div(shiny.fluent::MessageBar(translate(language, "module_contains_sub_modules", words), messageBarType = 5), style = "margin-top:4px;")
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
+              div(shiny.fluent::MessageBar(i18n$t("module_contains_sub_modules"), messageBarType = 5), style = "margin-top:4px;")
             )
           )
         )
@@ -2146,8 +2146,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, language
         else toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add")),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_module_element"), iconProps = list(iconName = "Add")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
               div(style = "width:20px;"),
               toggles
             )

@@ -15,6 +15,8 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
     
     # Create d reactive value, for datamart data
     d <- reactiveValues()
+    vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
+    for (var in vars) d[[var]] <- tibble::tibble()
     
     # Create d reactive value, for plugins & modules data
     m <- reactiveValues()
@@ -32,6 +34,9 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
     
     # Save datamarts_folder in r variable
     r$datamarts_folder <- datamarts_folder
+    
+    # App folder
+    r$app_folder <- app_folder
     
     # App db folder
     app_db_folder <- paste0(app_folder, "/databases")
@@ -166,7 +171,7 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       monitor_perf(r = r, action = "stop", task = "mod_home_server")
       
       sapply(c("patient_level_data", "aggregated_data"), function(page){
-        mod_patient_and_aggregated_data_server(page, r, language, i18n)
+        mod_patient_and_aggregated_data_server(page, r, i18n)
         mod_page_sidenav_server(page, r, i18n)
         mod_page_header_server(page, r, language, i18n)
       })
@@ -220,7 +225,7 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       monitor_perf(r = r, action = "stop", task = "mod_r_console_server")
     
       sapply(c("data_sources", "datamarts", "thesaurus"), function(page){
-        mod_settings_data_management_server(paste0("settings_", page), r, i18n)
+        mod_settings_data_management_server(paste0("settings_", page), r = r, d = d, m = m, i18n = i18n)
         mod_page_sidenav_server(paste0("settings_", page), r, i18n)
         mod_page_header_server(paste0("settings_", page), r, language, i18n)
         monitor_perf(r = r, action = "stop", task = paste0("mod_", page, "_server"))

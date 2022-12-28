@@ -45,24 +45,17 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
         
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("create_data_source")),
           shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("data_sources_management")),
           shiny.fluent::PivotItem(id = "create_items_card", itemKey = "create_items_card", headerText = i18n$t("create_items"))
         ),
         
         forbidden_cards,
         
-        # --- --- --- --- ---
-        ## Creation card ----
-        # --- --- --- --- ---
-        
-        render_settings_creation_card_new(i18n = i18n, ns = ns, id = id, title = "create_data_source", textfields = "name", textfields_width = "300px"),
-        
-        # --- --- --- --- -
+        # --- --- --- --- --- -
         ## Management card ----
-        # --- --- --- --- -
+        # --- --- --- --- --- -
         
-        render_settings_datatable_card_new(i18n = i18n, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "data_sources_management")
+        render_settings_datatable_card_new(i18n = i18n, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "data_sources_management", add_textfield = TRUE)
       ) -> result
     }
   
@@ -124,12 +117,30 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
           div(
             make_combobox_new(i18n = i18n, ns = ns, label = "datamart", id = "code_chosen",
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
-            div(shinyAce::aceEditor(ns("ace_edit_code"), "", mode = "r", 
+            div(shinyAce::aceEditor(
+              ns("ace_edit_code"), "", mode = "r", 
+              code_hotkeys = list(
+                "r", list(
+                  run_selection = list(
+                    win = "CTRL-ENTER",
+                    mac = "CTRL-ENTER|CMD-ENTER"
+                  ),
+                  run_all = list(
+                    win = "CTRL-SHIFT-ENTER",
+                    mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"
+                  ),
+                  save = list(
+                    win = "CTRL-S",
+                    mac = "CTRL-S|CMD-S"
+                  )
+                )
+              ),
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
             shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
             shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
             div(shiny::verbatimTextOutput(ns("code_result")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"), br(),
+            DT::DTOutput(ns("code_datatable"))
           )
         ), br()
       ),
@@ -308,7 +319,8 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
 #' @param language Language used (character)
 #' @noRd 
 
-mod_settings_data_management_server <- function(id = character(), r = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_settings_data_management_server <- function(id = character(), r = shiny::reactiveValues(),
+  d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -354,8 +366,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     show_hide_cards(r = r, input = input, session = session, table = table, id = id, cards = cards)
     
     # Show first card
-    if (paste0(table, "_creation_card") %in% r$user_accesses) shinyjs::show("creation_card")
-    else shinyjs::show("creation_card_forbidden")
+    if (table == "data_sources") first_card <- "datatable_card"
+    else first_card <- "creation_card"
+    
+    if (paste0(table, "_", first_card) %in% r$user_accesses) shinyjs::show(first_card)
+    else shinyjs::show(paste0(first_card, "_forbidden"))
     
     # --- --- --- --- --- --
     # Add a new element ----
@@ -411,7 +426,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         else new_data$data_source <- toString(as.integer(new_data$data_source))
       }
       
-      add_settings_new_data_new(session = session, output = output, r = r, i18n = i18n, id = id, 
+      add_settings_new_data_new(session = session, output = output, r = r, m = m, i18n = i18n, id = id, 
         data = new_data,
         table = substr(id, nchar("settings_") + 1, nchar(id)), 
         required_textfields = "name", req_unique_values = "name",
@@ -493,7 +508,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       if (nrow(r[[paste0(table, "_temp")]]) == 0) render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(),
         output_name = "management_datatable", col_names =  get_col_names_new(table_name = table, i18n = i18n),
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
       
       req(nrow(r[[paste0(table, "_temp")]]) > 0)
       
@@ -508,7 +523,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0(table, "_datatable_temp")]],
           output_name = "management_datatable", col_names =  get_col_names_new(table_name = table, i18n = i18n),
           editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
         
         # Create a proxy for datatatable
         r[[paste0(table, "_datatable_proxy")]] <- DT::dataTableProxy("management_datatable", deferUntilFlush = FALSE)
@@ -692,7 +707,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             value = options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value))
           output$users_allowed_read_div <- renderUI({
             make_people_picker_new(
-              i18n = i18n, ns = ns, id = "users_allowed_read", label = "blank", options = picker_options, value = value,
+              i18n = i18n, ns = ns, id = "users_allowed_read", label = "users", options = picker_options, value = value,
               width = "100%", style = "padding-bottom:10px;")
           })
           
@@ -793,8 +808,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           output$code_result <- renderText("")
         })
         
-        # When save button is clicked
-        observeEvent(input$edit_code_save, {
+        # When save button is clicked, or CTRL+C or CMD+C si pushed
+        observeEvent(input$edit_code_save, r[[paste0(id, "_save")]] <- Sys.time())
+        observeEvent(input$ace_edit_code_save, r[[paste0(id, "_save")]] <- Sys.time())
+        observeEvent(r[[paste0(id, "_save")]], {
           
           req(input$code_chosen)
           
@@ -802,17 +819,53 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           else link_id <- input$code_chosen
           
           save_settings_code_new(output = output, r = r, id = id, category = get_singular(id),
-            code_id_input = paste0("edit_code_", link_id), edited_code = input$ace_edit_code)
+            code_id_input = paste0("edit_code_", link_id), edited_code = input$ace_edit_code, i18n = i18n)
         })
         
         # When Execute code button is clicked
-          observeEvent(input$execute_code, {
-            edited_code <- isolate(input$ace_edit_code) %>% stringr::str_replace_all("\r", "\n")
-            
-            output$code_result <- renderText(
-              execute_settings_code_new(input = input, output = output, session = session, id = id, ns = ns, 
-                i18n = i18n, r = r, edited_code = edited_code))
-          })
+        
+        observeEvent(input$execute_code, {
+          r[[paste0(id, "_code")]] <- input$ace_edit_code
+        })
+        
+        observeEvent(input$ace_edit_code_run_selection, {
+          if(!shinyAce::is.empty(input$ace_edit_code_run_selection$selection)) r[[paste0(id, "_code")]] <- input$ace_edit_code_run_selection$selection
+          else r[[paste0(id, "_code")]] <- input$ace_edit_code_run_selection$line
+        })
+        
+        observeEvent(input$ace_edit_code_run_all, r[[paste0(id, "_code")]] <- input$ace_edit_code)
+      
+        observeEvent(r[[paste0(id, "_code")]], {
+          
+          # Reset d variable
+          vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
+          for (var in vars) d[[var]] <- tibble::tibble()
+          
+          edited_code <- r[[paste0(id, "_code")]] %>% stringr::str_replace_all("\r", "\n")
+          
+          output$code_result <- renderText(
+            execute_settings_code_new(input = input, output = output, session = session, id = id, ns = ns, 
+              i18n = i18n, r = r, d = d, edited_code = edited_code))
+          
+          r[[paste0(id, "_code_datatable_trigger")]] <- Sys.time()
+        })
+        
+        observeEvent(r[[paste0(id, "_code_datatable_trigger")]], {
+          data <- tibble::tibble(name = character(), rows = integer())
+          
+          vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
+          
+          for (var in vars){
+            data <- data %>% dplyr::bind_rows(
+              tibble::tibble(name = var, rows = nrow(d[[var]]))
+            )
+            print(nrow(d[[var]]))
+          }
+          
+          render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = data,
+            output_name = "code_datatable", col_names = c(i18n$t("table_name"), i18n$t("rows")),
+            column_widths = c("rows" = "150px"), datatable_dom = "")
+        })
       }
       
       # --- --- --- --- --- --- --- --- --- --- --- --
@@ -956,7 +1009,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$sub_thesaurus_items_temp,
             output_name = "sub_datatable", col_names =  col_names,
             editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-            searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+            searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
           
           # Create a proxy for datatatable
           r$sub_thesaurus_datatable_proxy <- DT::dataTableProxy("sub_datatable", deferUntilFlush = FALSE)

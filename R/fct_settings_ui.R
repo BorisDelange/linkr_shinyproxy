@@ -11,7 +11,7 @@ render_settings_default_elements <- function(ns = shiny::NS()){
   div(
     div(class = "message_bars",
       shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
-      shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5"))
+      shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")), shiny::uiOutput(ns("message_bar6"))
     ), 
     shiny.fluent::reactOutput(ns("delete_confirm"))
   )
@@ -174,15 +174,41 @@ render_settings_datatable_card <- function(language = "EN", ns = shiny::NS(), di
 }
 
 render_settings_datatable_card_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), div_id = "datatable_card", 
-  output_id = "management_datatable", title = character()){
-  div(id = ns(div_id),
-    make_card(i18n$t(title),
-      div(
-        DT::DTOutput(ns(output_id)),
-        shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save"))
-      )
+  output_id = "management_datatable", title = character(), add_textfield = FALSE){
+  
+  if (add_textfield){
+    div(id = ns(div_id),
+      make_card(i18n$t(title),
+        div(
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+            make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "name", width = "300px"),
+            div(shiny.fluent::PrimaryButton.shinyInput(ns("add"), i18n$t("add")), style = "margin-top:38px;"),
+            style = "position:relative; z-index:1; width:500px;"
+          ),
+          div(DT::DTOutput(ns(output_id)), style = "margin-top:-30px; z-index:2"),
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+            shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
+            shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
+          )
+        )
+        
+      ), br()
     )
-  )
+  }
+  
+  else {
+    div(id = ns(div_id),
+      make_card(i18n$t(title),
+        div(
+          DT::DTOutput(ns(output_id)),
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+            shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
+            shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
+          )
+        )
+      ), br()
+    )
+  }
 }
 
 #' Render UI of options card

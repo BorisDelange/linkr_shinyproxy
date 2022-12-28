@@ -76,67 +76,66 @@
 #' import_datamart(output = output, r = r, datamart_id = 5, data = patients, type = "patients", 
 #'   save_as_csv = FALSE, rewrite = FALSE, language = language)
 #' }
-import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = integer(), data = tibble::tibble(), 
-  type = "patients", save_as_csv = TRUE, rewrite = FALSE, language = "EN", quiet = FALSE){
+import_datamart <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), data = tibble::tibble(), 
+  type = "patients", save_as_csv = TRUE, rewrite = FALSE, i18n = R6::R6Class(), quiet = FALSE){
   
   # Check datamart_id
   tryCatch(as.integer(datamart_id),
     error = function(e){
-      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_datamart_id_value", 
-        error_name = paste0("import_datamart - invalid_datamart_id_value - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-      stop(translate(language, "invalid_datamart_id_value", r$words))}
+      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "invalid_datamart_id_value", 
+        error_name = paste0("import_datamart - invalid_datamart_id_value - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("invalid_datamart_id_value"))}
   )
   
   # If try is a success, assign new value to data (problem with assignment inside the tryCatch)
   datamart_id <- as.integer(datamart_id)
   
   if (is.na(datamart_id) | length(datamart_id) == 0){
-    show_message_bar(output, 1, "invalid_datamart_id_value", "severeWarning", language, r$words)
-    stop(translate(language, "invalid_datamart_id_value", r$words))
+    show_message_bar_new(output, 1, "invalid_datamart_id_value", "severeWarning", i18n = i18n)
+    stop(i18n$t("invalid_datamart_id_value"))
   }
   
   # Type = c("patients", "stays", "labs_vitals", "text", "orders")
   # Check if type is valid
   if (type %not_in% c("patients", "stays", "labs_vitals", "text", "orders")){
-    show_message_bar(output, 1, "var_type_not_valid", "severeWarning", language, r$words) 
-    stop(translate(language, "var_type_not_valid", r$words))
+    show_message_bar_new(output, 1, "var_type_not_valid", "severeWarning", i18n = i18n) 
+    stop(i18n$t("var_type_not_valid"))
   }
-  id_message_bar <- switch(type, "patients" = 1, "stays" = 2, "labs_vitals" = 3, "text" = 4, "orders" = 5)
+  id_message_bar <- switch(type, "patients" = 1, "stays" = 2, "labs_vitals" = 3, "text" = 4, "orders" = 5, "diagnoses" = 6)
   
   # If a datamarts_folder is provided, take this value
   # Take package working directory else
-  if (length(r$datamarts_folder) > 0) folder <- paste0(r$datamarts_folder, "/datamart_", datamart_id)
-  else folder <- paste0(path.expand('~'), "/data/datamart_", datamart_id)
+  folder <- paste0(r$app_folder, "/datamarts/", datamart_id)
   path <- paste0(folder, "/", type, ".csv")
   
   # If files already exists and we do not want to rewrite it
   if (save_as_csv & !rewrite & file.exists(path)){
     tryCatch({
-      if (!quiet) show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", language, r$words)
+      if (!quiet) show_message_bar_new(output, id_message_bar, paste0("import_datamart_success_", type), "success", i18n = i18n)
       return({
         col_types <- switch(type, 
-          "patients" = "icnT",
-          "stays" = "iiciTT",
+          "patients" = "icT",
+          "stays" = "iinciTT",
           "labs_vitals" = "iciTTcncc",
           "text" = "iciTTcc",
           "orders" = "iciTTcincncncc")
-        r[[type]] <- readr::read_csv(path, col_types = col_types)
+        d[[type]] <- readr::read_csv(path, col_types = col_types)
       })
       }, 
       
       error = function(e){
-        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_csv", 
-          error_name = paste0("import_datamart - error_loading_csv - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-        stop(translate(language, "error_loading_csv", r$words))}
+        if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_loading_csv", 
+          error_name = paste0("import_datamart - error_loading_csv - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+        stop(i18n$t("error_loading_csv"))}
     )
   }
   
   # Transform as tibble
   tryCatch(tibble::as_tibble(data), 
     error = function(e){
-      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = paste0("import_datamart - error_transforming_tibble - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-      stop(translate(language, "error_transforming_tibble", r$words))}
+      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_transforming_tibble", 
+        error_name = paste0("import_datamart - error_transforming_tibble - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("error_transforming_tibble"))}
   )
   
   data <- tibble::as_tibble(data)
@@ -148,12 +147,12 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
       ~name, ~type,
       "patient_id", "integer",
       "gender", "character",
-      "age", "numeric",
       "dod", "datetime"),
     "stays", tibble::tribble(
       ~name, ~type,
       "patient_id", "integer",
       "stay_id", "integer",
+      "age", "numeric",
       "thesaurus_name", "character",
       "item_id", "integer",
       "admission_datetime", "datetime",
@@ -193,51 +192,57 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
       "rate_unit", "character",
       "concentration", "numeric",
       "concentration_unit", "character",
-      "comments", "character")
+      "comments", "character"),
+    "diagnoses", tibble::tribble(
+      ~name, ~type,
+      "patient_id", "integer",
+      "thesaurus_name", "character",
+      "item_id", "integer",
+      "datetime_start", "datetime",
+      "datetime_stop", "datetime",
+      "comments", "character"),
   ) -> data_cols
   
   # Check columns var types
   var_cols <- data_cols %>% dplyr::filter(var == type) %>% dplyr::pull(cols)
   var_cols <- var_cols[[1]]
-  if (!identical(names(data), var_cols %>% dplyr::pull(name))) stop(translate(language, "valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
+  if (!identical(names(data), var_cols %>% dplyr::pull(name))) stop(paste0(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name))))
   sapply(1:nrow(var_cols), function(i){
     var_name <- var_cols[[i, "name"]]
     if (var_cols[[i, "type"]] == "integer" & !is.integer(data[[var_name]])){
-      show_message_bar(output, 1, "invalid_col_types", "severeWarning", language, r$words)
-      stop(paste0(translate(language, "column"), " ", var_name, " ", translate(language, "type_must_be_integer", r$words)))
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
     } 
     if (var_cols[[i, "type"]] == "character" & !is.character(data[[var_name]])){
-      show_message_bar(output, 1, "invalid_col_types", "severeWarning", language, r$words)
-      stop(paste0(translate(language, "column"), " ", var_name, " ", translate(language, "type_must_be_character", r$words))) 
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_character"))) 
     }
     if (var_cols[[i, "type"]] == "numeric" & !is.numeric(data[[var_name]])){
-      show_message_bar(output, 1, "invalid_col_types", "severeWarning", language, r$words)
-      stop(paste0(translate(language, "column"), " ", var_name, " ", translate(language, "type_must_be_numeric", r$words)))
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      stop(paste0(i18n$t( "column"), " ", var_name, " ", i18n$t("type_must_be_numeric")))
     } 
     if (var_cols[[i, "type"]] == "datetime" & !lubridate::is.POSIXct(data[[var_name]])){
-      show_message_bar(output, 1, "invalid_col_types", "severeWarning", language, r$words)
-      stop(paste0(translate(language, "column"), " ", var_name, " ", translate(language, "type_must_be_datetime", r$words)))
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_datetime")))
     }
   })
-  
-  
   
   # if  save_as_csv is TRUE, save data in datamart folder
   if (save_as_csv){
     if (!file.exists(folder)) dir.create(folder, recursive = TRUE)
     if (!file.exists(path)) tryCatch(readr::write_csv(data, path),
       error = function(e){
-        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
-          error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-        stop(translate(language, "error_saving_csv", r$words))}
+        if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_saving_csv", 
+          error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+        stop(i18n$t("error_saving_csv"))}
     )
     if (file.exists(path) & rewrite) tryCatch({
       # file.remove(path)
       readr::write_csv(data, path)}, 
       error = function(e){
-        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
-          error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-            stop(translate(language, "error_saving_csv", r$words))}
+        if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_saving_csv", 
+          error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+            stop(i18n$t("error_saving_csv"))}
       )
   }
   
@@ -260,13 +265,13 @@ import_datamart <- function(output, r = shiny::reactiveValues(), datamart_id = i
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_linking_stays_with_thesaurus", 
         error_name = paste0("import_datamart - error_linking_stays_with_thesaurus - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-      stop(translate(language, "error_linking_stays_with_thesaurus", r$words))}
+      stop(i18n$t("error_linking_stays_with_thesaurus"))}
     )
   }
   
-  r[[type]] <- data
+  d[[type]] <- data
   
-  if (!quiet) show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", language, r$words)
+  if (!quiet) show_message_bar_new(output, id_message_bar, paste0("import_datamart_success_", type), "success", i18n = i18n)
 }
 
 #' Import a thesaurus

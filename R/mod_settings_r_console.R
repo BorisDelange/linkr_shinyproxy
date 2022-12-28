@@ -39,8 +39,8 @@ mod_settings_r_console_ui <- function(id = character(), i18n = R6::R6Class()){
                     )
                   )
                 ),
-                wordWrap = TRUE, debounce = 10
-                # autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+                wordWrap = TRUE, debounce = 10,
+                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
               ),
               style = "width: 100%;"
             ),
@@ -91,12 +91,8 @@ mod_settings_r_console_server <- function(id = character(), r = shiny::reactiveV
     })
     
     observeEvent(input$ace_code_run_selection, {
-      if(!shinyAce::is.empty(input$ace_code_run_selection$selection)){
-        r$r_console_code <- input$ace_code_run_selection$selection
-      }
-      else {
-        r$r_console_code <- input$ace_code_run_selection$line
-      }
+      if(!shinyAce::is.empty(input$ace_code_run_selection$selection)) r$r_console_code <- input$ace_code_run_selection$selection
+      else r$r_console_code <- input$ace_code_run_selection$line
     })
 
     observeEvent(input$ace_code_run_all, {

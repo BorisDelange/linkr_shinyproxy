@@ -45,8 +45,8 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   # Patient-lvl & aggregated data pages    #
   ##########################################
   
-  if (id == "patient_level_data") mod_patient_and_aggregated_data_ui(id = "patient_level_data", language = language, words = words) -> result
-  if (id == "aggregated_data") mod_patient_and_aggregated_data_ui(id = "aggregated_data", language = language, words = words) -> result
+  if (id == "patient_level_data") mod_patient_and_aggregated_data_ui(id = "patient_level_data", i18n = i18n) -> result
+  if (id == "aggregated_data") mod_patient_and_aggregated_data_ui(id = "aggregated_data", i18n = i18n) -> result
   
   ##########################################
   # Plugins page                           #
