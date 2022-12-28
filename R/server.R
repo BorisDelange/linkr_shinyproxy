@@ -16,30 +16,15 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
     # Create d reactive value, for datamart data
     d <- reactiveValues()
     
+    # Create d reactive value, for plugins & modules data
+    m <- reactiveValues()
+    
     # If perf_monotoring activated
     r$perf_monitoring <- perf_monitoring
     
     r$perf_monitoring_table <- tibble::tibble(task = character(), datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms())
     datetime_start <- Sys.time()
     datetime_stop <- Sys.time()
-    
-    # monitor_perf <- function(action = "stop", task = character()){
-    #   
-    #   if (!perf_monitoring) return()
-    #   if (action == "start") datetime_start <<- Sys.time()
-    #   
-    #   if (action == "stop"){
-    #     datetime_stop <<- Sys.time()
-    #     
-    #     r$perf_monitoring_table <- 
-    #       r$perf_monitoring_table %>% 
-    #       dplyr::bind_rows(tibble::tribble(
-    #         ~task, ~datetime_start, ~datetime_stop, 
-    #         task, datetime_start, datetime_stop))
-    #     
-    #     datetime_start <<- Sys.time() 
-    #   }
-    # }
     
     # Create r$server_modules_groups_loaded & r$ui_modules_groups_loaded
     r$server_modules_groups_loaded <- ""
@@ -49,8 +34,8 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
     r$datamarts_folder <- datamarts_folder
     
     # App db folder
-    if (length(app_db_folder) > 0) r$app_db_folder <- app_db_folder
-    if (length(app_db_folder) == 0) r$app_db_folder <- path.expand('~')
+    app_db_folder <- paste0(app_folder, "/databases")
+    r$app_db_folder <- app_db_folder
     
     # Get translations
     # Update : use shiny.i18n instead. When it is done, delete get_translations
@@ -66,7 +51,7 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
     # Connection to database
     # If connection informations have been given in cdwtools() function, use these informations
     
-    r$local_db <- get_local_db(app_db_folder = app_db_folder)
+    r$local_db <- get_local_db(app_db_folder = app_db_folder, type = "main")
     
     # Add distant db informations in local database
     
@@ -89,8 +74,8 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       }
     })
     
-    r$db <- get_db(db_info = db_info, app_db_folder = app_db_folder, language = language)
-    
+    r$db <- get_db(db_info = db_info, app_db_folder = app_db_folder, type = "main")
+    m$db <- get_db(db_info = db_info, app_db_folder = app_db_folder, type = "plugins")
     
     # Close DB connection on exit
     # And restore initial working directory
@@ -203,7 +188,7 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       })
       
       sapply(c("plugins_patient_lvl", "plugins_aggregated"), function(page){
-        mod_plugins_server(page, r, language, i18n, app_folder)
+        mod_plugins_server(page, r, d, m, language, i18n, app_folder)
         mod_page_header_server(page, r, language, i18n)
       })
       monitor_perf(r = r, action = "stop", task = "mod_plugins_server")
@@ -229,7 +214,7 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       })
       monitor_perf(r = r, action = "stop", task = "mod_settings_users_server")
     
-      mod_settings_r_console_server("settings_r_console", r, i18n)
+      mod_settings_r_console_server("settings_r_console", r, d, m, i18n)
       mod_page_sidenav_server("settings_r_console", r, i18n)
       mod_page_header_server("settings_r_console", r, language, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_r_console_server")

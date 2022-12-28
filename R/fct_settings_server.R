@@ -2282,7 +2282,8 @@ save_settings_code_new <- function(output, r = shiny::reactiveValues(), id = cha
 #'  execute_settings_code(output = output, r = r, edited_code = "print('test')")
 #' }
 
-execute_settings_code <- function(input, output, session, id = character(), ns = shiny::NS(), language = "EN", r = shiny::reactiveValues(), 
+execute_settings_code <- function(input, output, session, id = character(), ns = shiny::NS(), language = "EN", 
+  r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
   edited_code = character(), code_type = "", data = list()){
 
   result <- ""

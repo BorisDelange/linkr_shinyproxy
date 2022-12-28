@@ -156,7 +156,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
             
             shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
-            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
+            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
             shiny::uiOutput(ns("code_result_ui")), br(),
             div(verbatimTextOutput(ns("code_result_server")), 
                 style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
@@ -276,7 +276,8 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
 #' plugins Server Functions
 #'
 #' @noRd 
-mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), language = character(), i18n = R6::R6Class(), app_folder = character()){
+mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
+  language = character(), i18n = R6::R6Class(), app_folder = character()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -352,12 +353,16 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         all_plugins_github_document_cards <- tagList()
         i <- 0
 
-        for(plugin_id in github_plugins %>% dplyr::pull(unique_id)){
-          plugin <- github_plugins %>% dplyr::filter(unique_id == plugin_id & type == module_type_id)
-
+        for(plugin_id in github_plugins %>% dplyr::filter(type == module_type_id) %>% dplyr::pull(unique_id)){
+          
+          plugin <- github_plugins %>% dplyr::filter(unique_id == plugin_id)
+          # plugin_image_url <- paste0(app_folder, "/plugins/", prefix, "/", plugin$unique_id, "/", plugin$image)
+          plugin_image_url <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id, "/dygraphs3.png")
+          
           all_plugins_github_document_cards <- tagList(all_plugins_github_document_cards,
             shiny.fluent::DocumentCard(
-              shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = paste0("https://picsum.photos/318/17", i), width = 318, height = 200))),
+              shiny.fluent::DocumentCardPreview(previewImages = 
+                list(list(previewImageSrc = plugin_image_url, width = 318, height = 200))),
               div(shiny.fluent::DocumentCardTitle(title = plugin$name, shouldTruncate = TRUE, style = "margin-top:5px;")),
               div(shiny.fluent::DocumentCardActivity(
                 activity = plugin$version,
@@ -398,14 +403,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       }
 
       if (nrow(github_plugins) == 0){
-        all_plugins_github <- shiny.fluent::MessageBar(i18n$t("no_plugin_available"), messageBarType = 0)
+        all_plugins_github <- tagList(br(), shiny.fluent::MessageBar(i18n$t("no_plugin_available"), messageBarType = 0))
       }
 
       output$all_plugins_github <- renderUI(all_plugins_github)
 
       # Local plugins
-
-      # plugins_temp <- r$plugins %>% dplyr::filter(name %in% c("Plugin avec options", "Plugin avec options 2", "abcd", "efgh", "ijkl", "mnop", "qrst"))
 
       if (nrow(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id, !deleted)) > 0){
 
@@ -415,15 +418,20 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
 
         for(plugin_id in r$plugins %>% dplyr::filter(module_type_id == !!module_type_id, !deleted) %>% dplyr::pull(id)){
           plugin <- r$plugins %>% dplyr::filter(id == plugin_id)
-          options <- r$options %>% dplyr::filter(category == "plugin", link_id == plugin_id)
+          plugin_options <- r$options %>% dplyr::filter(category == "plugin", link_id == plugin_id)
+          plugin_image_url <- paste0(app_folder, "/plugins/", prefix, "/",
+            plugin_options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value), "/",
+            plugin_options %>% dplyr::filter(name == "image") %>% dplyr::pull(value))
+          # plugin_image_url <- "/Users/borisdelange/linkr/plugins/patient_lvl/02591f09c9d7363309a04f7e1e4619daee3c74f6f9e11a399b254e5ac9449a0b/dygraphs3.png"
+          # print(plugin_image_url)
 
           all_plugins_local_document_cards <- tagList(all_plugins_local_document_cards,
             shiny.fluent::DocumentCard(
-              shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = paste0("https://picsum.photos/318/17", i), width = 318, height = 200))),
+              shiny.fluent::DocumentCardPreview(previewImages = list(list(previewImageSrc = plugin_image_url, width = 318, height = 200))),
               div(shiny.fluent::DocumentCardTitle(title = plugin$name, shouldTruncate = TRUE, style = "margin-top:5px;")),
               div(shiny.fluent::DocumentCardActivity(
-                activity = options %>% dplyr::filter(name == "version") %>% dplyr::pull(value),
-                people = list(list(name = options %>% dplyr::filter(name == "author") %>% dplyr::pull(value)))),
+                activity = plugin_options %>% dplyr::filter(name == "version") %>% dplyr::pull(value),
+                people = list(list(name = plugin_options %>% dplyr::filter(name == "author") %>% dplyr::pull(value)))),
                 style = "margin-top:-20px;"
               ),
               onClick = htmlwidgets::JS(paste0("function() { ",
@@ -460,7 +468,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       }
 
       if (nrow(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id, !deleted)) == 0){
-        all_plugins_local <- shiny.fluent::MessageBar(i18n$t("no_plugin_available"), messageBarType = 0)
+        all_plugins_local <- tagList(br(), shiny.fluent::MessageBar(i18n$t("no_plugin_available"), messageBarType = 0))
       }
 
       output$all_plugins_local <- renderUI(all_plugins_local)
@@ -483,12 +491,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
       
       if (input$all_plugins_source == "local"){
         plugin <- r$plugins %>% dplyr::filter(id == input$plugin_id)
-        options <- r$options %>% dplyr::filter(category == "plugin", link_id == input$plugin_id)
+        plugin_options <- r$options %>% dplyr::filter(category == "plugin", link_id == input$plugin_id)
         
         plugin_description <- paste0(
-          "**Auteur** : ", options %>% dplyr::filter(name == "author") %>% dplyr::pull(value), "<br />",
-          "**Version** : ", options %>% dplyr::filter(name == "version") %>% dplyr::pull(value), "\n\n",
-          options %>% dplyr::filter(name == paste0("description_", tolower(language))) %>% dplyr::pull(value)
+          "**Auteur** : ", plugin_options %>% dplyr::filter(name == "author") %>% dplyr::pull(value), "<br />",
+          "**Version** : ", plugin_options %>% dplyr::filter(name == "version") %>% dplyr::pull(value), "\n\n",
+          plugin_options %>% dplyr::filter(name == paste0("description_", tolower(language))) %>% dplyr::pull(value)
         )
       }
       
@@ -671,7 +679,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
         update_r(r = r, table = "code")
         
         r$show_plugin_details <- Sys.time()
-        r[[paste0("reload_", prefix, "_plugin")]] <- Sys.time()
+        # r[[paste0("reload_", prefix, "_plugin")]] <- Sys.time()
+        
+        # Reload datatable
+        r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
         
         show_message_bar_new(output, 3, "success_installing_github_plugin", "success", i18n = i18n)
         
@@ -739,7 +750,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     observeEvent(r[[paste0(prefix, "_plugins_temp")]], {
       
       if (nrow(r[[paste0(prefix, "_plugins_temp")]]) == 0) render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(),
-        output_name = "plugins_datatable", col_names =  get_col_names_new(table_name = "plugins", i18n = i18n),
+        output_name = "plugins_datatable", col_names = get_col_names_new(table_name = "plugins", i18n = i18n),
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
         searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols, selection = "multiple")
       
@@ -1009,6 +1020,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), la
     
     observeEvent(input$save_plugin_options, {
       
+      req(length(input$options_chosen_plugin) > 0)
       if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
       else link_id <- input$code_chosen_plugin
       

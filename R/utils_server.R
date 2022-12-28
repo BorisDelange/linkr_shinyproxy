@@ -302,7 +302,7 @@ get_col_names_new <- function(table_name = character(), i18n = R6::R6Class()){
   
   if (table_name == "plugins"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("module_type"), 
-      i18n$t("last_update"),  i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+      i18n$t("updated_on"),  i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
   if (table_name == "users"){

@@ -19,59 +19,98 @@ db_create_table <- function(db, table_name, dataframe){
 #' @description Create all application database required tables. It creates the tables if they do not already exist.
 #' @param db Database connection object (DBI)
 
-db_create_tables <- function(db){
+db_create_tables <- function(db, type = character()){
   
-  # Create tables if not exist
+  # Create tables if doest not exist
   
-  # In table users, create an admin user
-  db_create_table(db, "users",
-    tibble::tibble(id = integer(), username = character(), firstname = character(), lastname = character(), password = character(),
-      user_access_id = integer(), user_status_id = integer(), datetime = character(), deleted = logical()))
+  # Type = main for main database
+  # Type = plugins for plugins / modules database
   
-  db_create_table(db, "users_accesses",
-    tibble::tibble(id = integer(), name = character(), description = character(),
-      datetime = character(), deleted = logical()))
+  if (type == "main"){
+    # In table users, create an admin user
+    db_create_table(db, "users",
+      tibble::tibble(id = integer(), username = character(), firstname = character(), lastname = character(), password = character(),
+        user_access_id = integer(), user_status_id = integer(), datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "users_accesses",
+      tibble::tibble(id = integer(), name = character(), description = character(),
+        datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "users_statuses",
+      tibble::tibble(id = integer(), name = character(), description = character(),
+        datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "data_sources",
+      tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(),
+        datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "datamarts",
+      tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
+        datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "studies",
+      tibble::tibble(id = integer(), name = character(), description = character(), datamart_id = integer(),
+        patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = integer(),
+        datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "thesaurus",
+      tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = character(), creator_id = integer(),
+        datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "thesaurus_items",
+      tibble::tibble(id = integer(), thesaurus_id = integer(), item_id = integer(),
+        name = character(), display_name = character(), category = character(), unit = character(),
+        datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "plugins",
+      tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 
+        datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "scripts",
+      tibble::tibble(id = integer(), name = character(), data_source_id = integer(), creator_id = integer(),
+        datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "patient_lvl_modules_families",
+      tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
+        deleted = logical()))
+    
+    db_create_table(db, "patient_lvl_modules",
+      tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
+        display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "patient_lvl_modules_elements",
+      tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
+        thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+        thesaurus_item_colour = character(), display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "aggregated_modules_families",
+      tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
+        deleted = logical()))
+    
+    db_create_table(db, "aggregated_modules",
+      tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
+        display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "aggregated_modules_elements",
+      tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
+        display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "code",
+      tibble::tibble(id = integer(), category = character(), link_id = integer(), code = character(), creator_id = integer(),
+        datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "options",
+      tibble::tibble(id = integer(), category = character(), link_id = integer(), name = character(), value = character(),
+        value_num = numeric(), creator_id = integer(), datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "cache",
+      tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
+    
+    db_create_table(db, "log",
+      tibble::tibble(id = integer(), category = character(), name = character(), value = character(), creator_id = integer(), datetime = character()))
+  }
   
-  db_create_table(db, "users_statuses",
-    tibble::tibble(id = integer(), name = character(), description = character(),
-      datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "data_sources",
-    tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(),
-      datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "datamarts",
-    tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
-      datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "studies",
-    tibble::tibble(id = integer(), name = character(), description = character(), datamart_id = integer(),
-      patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = integer(),
-      datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "subsets",
-    tibble::tibble(id = integer(), name = character(), description = character(), study_id = integer(), creator_id = integer(),
-      datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "subset_patients",
-    tibble::tibble(id = integer(), subset_id = integer(), patient_id = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "thesaurus",
-    tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = character(), creator_id = integer(),
-      datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "thesaurus_items",
-    tibble::tibble(id = integer(), thesaurus_id = integer(), item_id = integer(),
-      name = character(), display_name = character(), category = character(), unit = character(),
-      datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "plugins",
-    tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 
-      datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "scripts",
-    tibble::tibble(id = integer(), name = character(), data_source_id = integer(), creator_id = integer(),
-      datetime = character(), deleted = logical()))
+  if (type == "plugins"){
   
   db_create_table(db, "patients_options",
     tibble::tibble(id = integer(), datamart_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
@@ -83,57 +122,13 @@ db_create_tables <- function(db){
       category = character(), name = character(), value = character(), value_num = numeric(),
       creator_id = integer(), datetime = character(), deleted = logical()))
   
-  db_create_table(db, "patient_lvl_modules_families",
-    tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
-      deleted = logical()))
-  
-  db_create_table(db, "patient_lvl_modules",
-    tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
-      display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "patient_lvl_modules_elements",
-    tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
-      thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
-      thesaurus_item_colour = character(), display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
-
-  db_create_table(db, "aggregated_modules_families",
-    tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
-      deleted = logical()))
-  
-  db_create_table(db, "aggregated_modules",
-    tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
-      display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "aggregated_modules_elements",
-    tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
-      display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "code",
-    tibble::tibble(id = integer(), category = character(), link_id = integer(), code = character(), creator_id = integer(),
+  db_create_table(db, "subsets",
+    tibble::tibble(id = integer(), name = character(), description = character(), study_id = integer(), creator_id = integer(),
       datetime = character(), deleted = logical()))
   
-  db_create_table(db, "options",
-    tibble::tibble(id = integer(), category = character(), link_id = integer(), name = character(), value = character(),
-      value_num = numeric(), creator_id = integer(), datetime = character(), deleted = logical()))
-  
-  db_create_table(db, "cache",
-    tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
-  
-  # db_create_table(db, "cache_for_settings",
-  #   tibble::tibble(id = integer(), table_name = character(), link_id = integer(), name = character(), description = character(),
-  #     username = character(), firstname = character(), lastname = character(), password = character(),
-  #     user_access_id = character(), user_status_id = character(),
-  #     data_source_id = character(), data_source_id_thesaurus = character(), datamart_id = character(), 
-  #     patient_lvl_module_family_id = character(), aggregated_module_family_id = character(),
-  #     study_id = character(), module_type_id = character(), module_family_id = character(), parent_module_id = character(),
-  #     group_id = integer(), module_id = character(), plugin_id = character(),
-  #     thesaurus_name = character(), thesaurus_item_id = character(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
-  #     thesaurus_item_colour = character(), display_order = character(),
-  #     action = character(), creator_id = character(), datetime = character(), deleted = logical())
-  #   )
-  
-  db_create_table(db, "log",
-    tibble::tibble(id = integer(), category = character(), name = character(), value = character(), creator_id = integer(), datetime = character()))
+  db_create_table(db, "subset_patients",
+    tibble::tibble(id = integer(), subset_id = integer(), patient_id = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+  }
 }
 
 #' Connection to local database
@@ -142,34 +137,38 @@ db_create_tables <- function(db){
 #' (with db_create_tables function). It uses RSQLite library.
 #' It also adds distant database connection informations in the options table, if they do not already exist.
 
-get_local_db <- function(app_db_folder = character()){
+get_local_db <- function(app_db_folder = character(), type = character()){
+  
+  # Type = main for main database
+  # Type = plugins for plugins / modules database
   
   # Connect to local database
-  # If r$default_folder is not null, take this folder
+  # If app_db_folder is not null, take this folder
   # Else, take home folder
   
-  if (length(app_db_folder) > 0) db <- DBI::dbConnect(RSQLite::SQLite(), paste0(app_db_folder, "/cdwtools"))
-  else db <- DBI::dbConnect(RSQLite::SQLite(), paste0(path.expand('~'), "/cdwtools"))
+  db <- DBI::dbConnect(RSQLite::SQLite(), paste0(app_db_folder, "/linkr_", type))
+  db_create_tables(db, type = type)
   
-  db_create_tables(db)
-  
-  # Add distant db rows if they do not already exist
-  if (DBI::dbGetQuery(db, "SELECT COUNT(id) FROM options WHERE category = 'distant_db'") != 7){
+  if (type == "main"){
     
-    DBI::dbSendStatement(db, "DELETE FROM options WHERE category = 'distant_db'")
-    
-    last_row <- DBI::dbGetQuery(db, "SELECT COALESCE(MAX(id), 0) FROM options")
-    
-    sql <- paste0("INSERT INTO options(id, category, name, value, deleted)
-                     SELECT ", last_row + 1, ", 'distant_db', 'connection_type', 'local', FALSE 
-               UNION SELECT ", last_row + 2, ", 'distant_db', 'sql_lib', 'postgres', FALSE
-               UNION SELECT ", last_row + 3, ", 'distant_db', 'dbname', '', FALSE
-               UNION SELECT ", last_row + 4, ", 'distant_db', 'host', '', FALSE
-               UNION SELECT ", last_row + 5, ", 'distant_db', 'port', '', FALSE
-               UNION SELECT ", last_row + 6, ", 'distant_db', 'user', '', FALSE
-               UNION SELECT ", last_row + 7, ", 'distant_db', 'password', '', FALSE")
-    query <- DBI::dbSendStatement(db, sql)
-    DBI::dbClearResult(query)
+    # Add distant db rows if they do not already exist
+    if (DBI::dbGetQuery(db, "SELECT COUNT(id) FROM options WHERE category = 'distant_db'") != 7){
+      
+      DBI::dbSendStatement(db, "DELETE FROM options WHERE category = 'distant_db'")
+      
+      last_row <- DBI::dbGetQuery(db, "SELECT COALESCE(MAX(id), 0) FROM options")
+      
+      sql <- paste0("INSERT INTO options(id, category, name, value, deleted)
+                       SELECT ", last_row + 1, ", 'distant_db', 'connection_type', 'local', FALSE 
+                 UNION SELECT ", last_row + 2, ", 'distant_db', 'sql_lib', 'postgres', FALSE
+                 UNION SELECT ", last_row + 3, ", 'distant_db', 'dbname', '', FALSE
+                 UNION SELECT ", last_row + 4, ", 'distant_db', 'host', '', FALSE
+                 UNION SELECT ", last_row + 5, ", 'distant_db', 'port', '', FALSE
+                 UNION SELECT ", last_row + 6, ", 'distant_db', 'user', '', FALSE
+                 UNION SELECT ", last_row + 7, ", 'distant_db', 'password', '', FALSE")
+      query <- DBI::dbSendStatement(db, sql)
+      DBI::dbClearResult(query)
+    }
   }
   
   # Return DBI db object
@@ -260,11 +259,11 @@ get_distant_db <- function(local_db, db_info = list(), language = "EN", words = 
 #' @param db_info DB informations given in cdwtools function
 #' @param language Language used to display messages (character)
 
-get_db <- function(db_info = list(), app_db_folder = character(), language = "EN"){
+get_db <- function(db_info = list(), app_db_folder = character(), type = character(), language = "EN"){
   
   # First, get local database connection
-  
-  db <- get_local_db(app_db_folder = app_db_folder)
+
+  db <- get_local_db(app_db_folder = app_db_folder, type = type)
   
   # Second, if db_info is not empty, try this connection
   
@@ -275,7 +274,7 @@ get_db <- function(db_info = list(), app_db_folder = character(), language = "EN
   # Third, if db_info is empty, get distant db if parameters in local db are set to distant connection
   # If connection fails, returns local db
   
-  if (length(db_info) == 0){
+  if (length(db_info) == 0 & type == "main"){
     DBI::dbGetQuery(db, "SELECT value FROM options WHERE category = 'distant_db' AND name = 'connection_type'") %>%
       dplyr::pull() -> choice_distant_db
     if (choice_distant_db == "distant") db <- get_distant_db(local_db = db, language = language, words = words)

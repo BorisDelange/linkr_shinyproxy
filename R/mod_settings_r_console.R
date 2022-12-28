@@ -11,45 +11,6 @@
 mod_settings_r_console_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
-  # div(class = "main",
-  #   shiny.fluent::Breadcrumb(items = list(
-  #     list(key = "r_console", text = i18n$t("r_console"))
-  #   ), maxDisplayedItems = 3),
-  #   shiny.fluent::Pivot(
-  #     onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-  #     shiny.fluent::PivotItem(id = "r_console_edit_code_card", itemKey = "r_console_edit_code_card", headerText = i18n$t("r_console"))
-  #   ),
-  #   forbidden_card_new(ns = ns, name = "r_console_edit_code_card", i18n = i18n),
-  #   div(id = ns("r_console_edit_code_card"),
-  #     # make_card("",
-  #       div(
-  #         div(
-  #           shinyAce::aceEditor(
-  #             outputId = ns("ace_code"),
-  #             value = "# Enter code",
-  #             mode = "r",
-  #             code_hotkeys = list(
-  #               "r", list(
-  #                 run_selection = list(
-  #                   win = "CTRL-ENTER",
-  #                   mac = "CTRL-ENTER|CMD-ENTER"
-  #                 ),
-  #                 run_all = list(
-  #                   win = "CTRL-SHIFT-ENTER",
-  #                   mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"
-  #                 )
-  #               )
-  #             ),
-  #             wordWrap = TRUE, debounce = 10
-  #           ),
-  #           actionButton(ns("execute"), label = "Run"), br(), br(),
-  #           verbatimTextOutput(ns("result"))
-  #         )
-  #       )
-  #     # )
-  #   )
-  # )
-  
   div(class = "main",
     shiny.fluent::Breadcrumb(items = list(
       list(key = "r_console", text = i18n$t("r_console"))
@@ -98,7 +59,7 @@ mod_settings_r_console_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 
-mod_settings_r_console_server <- function(id = character(), r = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_settings_r_console_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -148,7 +109,7 @@ mod_settings_r_console_server <- function(id = character(), r = shiny::reactiveV
         edited_code <- r$r_console_code %>% stringr::str_replace_all("\r", "\n")
         
         output$code_result <- renderText(
-          execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, r = r,
+          execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, r = r, d = d, m = m,
             edited_code = edited_code, code_type = "server"))
       }
     })

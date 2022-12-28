@@ -305,7 +305,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       }
       
       # Reload r$db variable
-      r$db <- get_db(db_info = list(), language = language)
+      r$db <- get_db(db_info = list(), app_db_folder = r$app_db_folder, language = language)
       
       show_message_bar(output, 1, "modif_saved", "success", language)
     })
