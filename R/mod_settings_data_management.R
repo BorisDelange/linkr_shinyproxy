@@ -115,8 +115,14 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       div(id = ns("edit_code_card"), 
         make_card(i18n$t("edit_datamart_code"),
           div(
-            make_combobox_new(i18n = i18n, ns = ns, label = "datamart", id = "code_chosen",
-              width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              make_combobox_new(i18n = i18n, ns = ns, label = "datamart", id = "code_chosen",
+                width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+              div(style = "width:20px;"),
+              div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
+              div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:45px; margin-right:30px;"), 
+            ),
+            shinyjs::hidden(div(id = ns("div_br"), br())),
             div(shinyAce::aceEditor(
               ns("ace_edit_code"), "", mode = "r", 
               code_hotkeys = list(
@@ -859,12 +865,24 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             data <- data %>% dplyr::bind_rows(
               tibble::tibble(name = var, rows = nrow(d[[var]]))
             )
-            print(nrow(d[[var]]))
           }
           
           render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = data,
             output_name = "code_datatable", col_names = c(i18n$t("table_name"), i18n$t("rows")),
             column_widths = c("rows" = "150px"), datatable_dom = "")
+        })
+        
+        # Hide editor
+        
+        observeEvent(input$hide_editor, {
+          if (input$hide_editor){
+            shinyjs::hide("ace_edit_code")
+            shinyjs::show("div_br") 
+          }
+          else {
+            shinyjs::show("ace_edit_code")
+            shinyjs::hide("div_br") 
+          }
         })
       }
       

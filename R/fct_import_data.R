@@ -111,7 +111,6 @@ import_datamart <- function(output, r = shiny::reactiveValues(), d = shiny::reac
   # If files already exists and we do not want to rewrite it
   if (save_as_csv & !rewrite & file.exists(path)){
     tryCatch({
-      if (!quiet) show_message_bar_new(output, id_message_bar, paste0("import_datamart_success_", type), "success", i18n = i18n)
       return({
         col_types <- switch(type, 
           "patients" = "icT",
@@ -120,12 +119,17 @@ import_datamart <- function(output, r = shiny::reactiveValues(), d = shiny::reac
           "text" = "iciTTcc",
           "orders" = "iciTTcincncncc")
         d[[type]] <- readr::read_csv(path, col_types = col_types)
+        if (!quiet & nrow(d[[type]]) > 0) show_message_bar_new(output, id_message_bar, paste0("import_datamart_success_", type), "success", i18n = i18n)
       })
       }, 
       
       error = function(e){
         if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_loading_csv", 
           error_name = paste0("import_datamart - error_loading_csv - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+        stop(i18n$t("error_loading_csv"))},
+      warning = function(w){
+        if (nchar(w[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_loading_csv", 
+          error_name = paste0("import_datamart - error_loading_csv - id = ", datamart_id), category = "Error", error_report = toString(w), i18n = i18n)
         stop(i18n$t("error_loading_csv"))}
     )
   }

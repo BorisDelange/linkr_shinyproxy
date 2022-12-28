@@ -54,7 +54,7 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
   }
 }
 
-run_datamart_code_new <- function(output, r = shiny::reactiveValues(), datamart_id = integer(), i18n = R6::R6Class(), quiet = FALSE){
+run_datamart_code_new <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), i18n = R6::R6Class(), quiet = FALSE){
   # Reset r$chosen_datamart to clear patient-level data & aggregated data (use the same r variables for data) 
   
   # Get code from datamart
@@ -73,11 +73,12 @@ run_datamart_code_new <- function(output, r = shiny::reactiveValues(), datamart_
     stringr::str_replace_all("\r", "\n")
   
   # Reset r variables
-  r$patients <- tibble::tibble()
-  r$stays <- tibble::tibble()
-  r$labs_vitals <- tibble::tibble()
-  r$text <- tibble::tibble()
-  r$orders <- tibble::tibble()
+  d$patients <- tibble::tibble()
+  d$stays <- tibble::tibble()
+  d$labs_vitals <- tibble::tibble()
+  d$text <- tibble::tibble()
+  d$orders <- tibble::tibble()
+  d$diagnoses <- tibble::tibble()
   
   # Load data from datamart
   

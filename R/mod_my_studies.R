@@ -193,7 +193,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
 #' my_studies Server Functions
 #'
 #' @noRd 
-mod_my_studies_server <- function(id = character(),  r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -238,15 +238,7 @@ mod_my_studies_server <- function(id = character(),  r = shiny::reactiveValues()
       r$patient_lvl_selected_key <- NA_integer_
       r$aggregated_selected_key <- NA_integer_
       
-      # *** To be removed *** ----
-      r$patients <- tibble::tibble()
-      r$stays <- tibble::tibble()
-      r$labs_vitals <- tibble::tibble()
-      r$text <- tibble::tibble()
-      r$orders <- tibble::tibble()
-      r$diagnoses <- tibble::tibble()
-      
-      # Reset d variables (prevent bug later if datamart code doesn't work)
+      # Reset d variables
       d$patients <- tibble::tibble()
       d$stays <- tibble::tibble()
       d$labs_vitals <- tibble::tibble()
@@ -257,11 +249,11 @@ mod_my_studies_server <- function(id = character(),  r = shiny::reactiveValues()
       # Try to load datamart
       tryCatch({
 
-        run_datamart_code(output, r, datamart_id = r$chosen_datamart, language = language, quiet = TRUE)
-
+        capture.output(run_datamart_code_new(output, r = r, d = d, datamart_id = r$chosen_datamart, i18n = i18n, quiet = TRUE))
+  
         # A r variable to update study dropdown, when the load of datamart is finished
         r$loaded_datamart <- r$chosen_datamart
-
+  
         r$show_message_bar1 <- tibble::tibble(message = "import_datamart_success", type = "success")
         
         # Try to run the scripts associated with this datamart
@@ -270,7 +262,8 @@ mod_my_studies_server <- function(id = character(),  r = shiny::reactiveValues()
           
           scripts_code <- r$code %>% dplyr::filter(category == "script") %>% dplyr::select(id = link_id, code) %>%
             dplyr::inner_join(
-              r$options %>% dplyr::filter(category == "datamart_scripts", link_id == r$chosen_datamart) %>% dplyr::select(id = value_num)
+              r$options %>% dplyr::filter(category == "datamart_scripts", link_id == r$chosen_datamart) %>% dplyr::select(id = value_num),
+              by = "id"
             )
           
           if (nrow(scripts_code > 0)){

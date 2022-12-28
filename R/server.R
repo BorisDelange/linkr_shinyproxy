@@ -172,7 +172,7 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       
       sapply(c("patient_level_data", "aggregated_data"), function(page){
         mod_patient_and_aggregated_data_server(page, r, i18n)
-        mod_page_sidenav_server(page, r, i18n)
+        mod_page_sidenav_server(page, r, d, i18n)
         mod_page_header_server(page, r, language, i18n)
       })
       
@@ -188,7 +188,7 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       monitor_perf(r = r, action = "stop", task = "mod_scripts_server")
       
       sapply(c("my_studies", "my_subsets", "thesaurus", "scripts"), function(page){
-        mod_page_sidenav_server(page, r, i18n)
+        mod_page_sidenav_server(page, r, d, i18n)
         mod_page_header_server(page, r, language, i18n)
       })
       
@@ -199,17 +199,17 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       monitor_perf(r = r, action = "stop", task = "mod_plugins_server")
     
       mod_settings_general_server("settings_general_settings", r, language, i18n)
-      mod_page_sidenav_server("settings_general_settings", r, i18n)
+      mod_page_sidenav_server("settings_general_settings", r, d, i18n)
       mod_page_header_server("settings_general_settings", r, language, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_settings_general_server")
     
       mod_settings_app_database_server("settings_app_db", r, language, i18n)
-      mod_page_sidenav_server("settings_app_db", r, i18n)
+      mod_page_sidenav_server("settings_app_db", r, d, i18n)
       mod_page_header_server("settings_app_db", r, language, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_settings_app_db_server")
     
       mod_settings_users_server("settings_users", r, i18n)
-      mod_page_sidenav_server("settings_users", r, i18n)
+      mod_page_sidenav_server("settings_users", r, d, i18n)
       mod_page_header_server("settings_users", r, language, i18n)
     
       sapply(c("users", "users_statuses", "users_accesses"), function(page){
@@ -220,19 +220,19 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       monitor_perf(r = r, action = "stop", task = "mod_settings_users_server")
     
       mod_settings_r_console_server("settings_r_console", r, d, m, i18n)
-      mod_page_sidenav_server("settings_r_console", r, i18n)
+      mod_page_sidenav_server("settings_r_console", r, d, i18n)
       mod_page_header_server("settings_r_console", r, language, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_r_console_server")
     
       sapply(c("data_sources", "datamarts", "thesaurus"), function(page){
         mod_settings_data_management_server(paste0("settings_", page), r = r, d = d, m = m, i18n = i18n)
-        mod_page_sidenav_server(paste0("settings_", page), r, i18n)
+        mod_page_sidenav_server(paste0("settings_", page), r, d, i18n)
         mod_page_header_server(paste0("settings_", page), r, language, i18n)
         monitor_perf(r = r, action = "stop", task = paste0("mod_", page, "_server"))
       })
     
       mod_settings_log_server("settings_log", r, i18n)
-      mod_page_sidenav_server("settings_log", r, i18n)
+      mod_page_sidenav_server("settings_log", r, d, i18n)
       mod_page_header_server("settings_log", r, language, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_settings_log_server")
       

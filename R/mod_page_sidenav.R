@@ -211,7 +211,7 @@ mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibbl
 #' page_sidenav Server Functions
 #'
 #' @noRd 
-mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -272,20 +272,23 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         # Update Dropdowns AFTER having executing datamart code (prevents a bug, where UI displays and disappears)
         
         # Reset data variables
-        r$data_patient$stays <- tibble::tibble()
-        r$data_patient$labs_vitals <- tibble::tibble()
-        r$data_patient$text <- tibble::tibble()
-        r$data_patient$orders <- tibble::tibble()
+        d$data_patient$stays <- tibble::tibble()
+        d$data_patient$labs_vitals <- tibble::tibble()
+        d$data_patient$text <- tibble::tibble()
+        d$data_patient$orders <- tibble::tibble()
+        d$data_patient$diagnoses <- tibble::tibble()
         
-        r$data_stay$labs_vitals_stay <- tibble::tibble()
-        r$data_stay$text_stay <- tibble::tibble()
-        r$data_stay$orders_stay <- tibble::tibble()
+        d$data_stay$labs_vitals <- tibble::tibble()
+        d$data_stay$text <- tibble::tibble()
+        d$data_stay$orders <- tibble::tibble()
+        d$data_stay$diagnoses <- tibble::tibble()
         
-        r$data_subset$patients <- tibble::tibble()
-        r$data_subset$stays <- tibble::tibble()
-        r$data_subset$labs_vitals <- tibble::tibble()
-        r$data_subset$test <- tibble::tibble()
-        r$data_subset$orders <- tibble::tibble()
+        d$data_subset$patients <- tibble::tibble()
+        d$data_subset$stays <- tibble::tibble()
+        d$data_subset$labs_vitals <- tibble::tibble()
+        d$data_subset$test <- tibble::tibble()
+        d$data_subset$orders <- tibble::tibble()
+        d$data_subset$diagnoses <- tibble::tibble()
       })
       
       # Update the two pages dropdowns (patient-level data page & aggregated data page)
@@ -310,7 +313,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         shinyjs::hide("exclusion_reason_div")
         output$patient_info <- renderUI("")
         
-        r$datamart_page <- Sys.time()
+        # r$datamart_page <- Sys.time()
         
       })
       
