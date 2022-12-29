@@ -125,7 +125,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
 #'
 #' @noRd 
 
-mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R6::R6Class()){
+mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -646,7 +646,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
     
     if (prefix == "patient_lvl"){
       
-      observeEvent(r$chosen_patient, {
+      observeEvent(m$chosen_patient, {
         
         r$data_patient <- list()
         
@@ -659,26 +659,26 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
         r$data_stay$text <- tibble::tibble()
         r$data_stay$orders <- tibble::tibble()
         
-        if (length(r$chosen_patient) > 0){
-          if (!is.na(r$chosen_patient) & r$chosen_patient != ""){
-            if (nrow(r$stays) > 0) r$data_patient$stays <- r$stays %>% dplyr::filter(patient_id == r$chosen_patient) %>% dplyr::arrange(admission_datetime)
-            if (nrow(r$labs_vitals) > 0) r$data_patient$labs_vitals <- r$labs_vitals %>% dplyr::filter(patient_id == r$chosen_patient)
-            if (nrow(r$text) > 0) r$data_patient$text <- r$text %>% dplyr::filter(patient_id == r$chosen_patient)
-            if (nrow(r$orders) > 0) r$data_patient$orders <- r$orders %>% dplyr::filter(patient_id == r$chosen_patient)
+        if (length(m$chosen_patient) > 0){
+          if (!is.na(m$chosen_patient) & m$chosen_patient != ""){
+            if (nrow(r$stays) > 0) r$data_patient$stays <- r$stays %>% dplyr::filter(patient_id == m$chosen_patient) %>% dplyr::arrange(admission_datetime)
+            if (nrow(r$labs_vitals) > 0) r$data_patient$labs_vitals <- r$labs_vitals %>% dplyr::filter(patient_id == m$chosen_patient)
+            if (nrow(r$text) > 0) r$data_patient$text <- r$text %>% dplyr::filter(patient_id == m$chosen_patient)
+            if (nrow(r$orders) > 0) r$data_patient$orders <- r$orders %>% dplyr::filter(patient_id == m$chosen_patient)
           }
         }
       })
       
-      observeEvent(r$chosen_stay, {
+      observeEvent(m$chosen_stay, {
         
         req(r$data_patient)
         
         r$data_stay <- list()
         
-        if (length(r$chosen_stay) > 0){
-          if (!is.na(r$chosen_stay) & r$chosen_stay != ""){
+        if (length(m$chosen_stay) > 0){
+          if (!is.na(m$chosen_stay) & m$chosen_stay != ""){
             
-            r$data_stay$stay <- r$data_patient$stays %>% dplyr::filter(stay_id == r$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
+            r$data_stay$stay <- r$data_patient$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
             
             if (nrow(r$data_patient$labs_vitals) > 0) r$data_stay$labs_vitals <- r$data_patient$labs_vitals %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
             if (nrow(r$data_patient$text) > 0) r$data_stay$text <- r$data_patient$text %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
@@ -690,7 +690,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
     
     if (prefix == "aggregated"){
       
-      observeEvent(r$chosen_subset, {
+      observeEvent(m$chosen_subset, {
         
         r$data_subset <- list()
         patients <- tibble::tibble()
@@ -702,8 +702,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
         r$data_subset$text <- tibble::tibble()
         r$data_subset$orders <- tibble::tibble()
         
-        if (length(r$chosen_subset) > 0){
-          if (!is.na(r$chosen_subset) & r$chosen_subset != "") patients <- r$subset_patients %>% dplyr::filter(subset_id == r$chosen_subset)
+        if (length(m$chosen_subset) > 0){
+          if (!is.na(m$chosen_subset) & m$chosen_subset != "") patients <- r$subset_patients %>% dplyr::filter(subset_id == m$chosen_subset)
         }
         
         if (nrow(patients) > 0){
@@ -723,9 +723,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
     
     # When a study is chosen
     
-    observeEvent(r$chosen_study, {
+    observeEvent(m$chosen_study, {
       
-      req(!is.na(r$chosen_study))
+      req(!is.na(m$chosen_study))
       
       # Delete UI from previous loaded study
       removeUI(selector = paste0("#", ns(r[[paste0(prefix, "_cards")]])), multiple = TRUE)
@@ -764,7 +764,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
       
       # Load study informations
       # For one study, you choose ONE patient_lvl or aggregated data module family
-      study_infos <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE id = ", r$chosen_study))
+      study_infos <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE id = ", m$chosen_study))
       
       # Check if users has access only to aggregated data
       r$options %>% dplyr::filter(category == "datamart" & link_id == r$chosen_datamart & name == "show_only_aggregated_data") %>%
@@ -800,7 +800,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
       display_modules <- display_modules %>% dplyr::arrange(level, display_order)
       
       # Calculate first module shown in the menu
-      if(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(r$chosen_study)){
+      if(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(m$chosen_study)){
         
         # First module shown
         first_module_shown <- display_modules %>% dplyr::filter(level == 1) %>% dplyr::slice(1)
@@ -863,7 +863,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
           ))
         }
         
-        req(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(r$chosen_study))
+        req(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(m$chosen_study))
         
         # First module shown
         first_module_shown <- isolate(r[[paste0(prefix, "_first_module_shown")]])
@@ -1064,7 +1064,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
                   stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
                   stringr::str_replace_all("\r", "\n")
 
-                if (length(r$chosen_study) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%study_id%", as.character(isolate(r$chosen_study)))
+                if (length(m$chosen_study) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%study_id%", as.character(isolate(m$chosen_study)))
 
                 # Module element card
 
@@ -1151,11 +1151,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
     
     observeEvent(r[[paste0(prefix, "_load_server")]], {
       
-      req(!is.na(r$chosen_study))
+      req(!is.na(m$chosen_study))
       
       # Get modules elements, arrange them by display_order
       
-      module_family <- r$studies %>% dplyr::filter(id == r$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+      module_family <- r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
       modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == module_family) %>% dplyr::select(module_id = id)
       module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::inner_join(modules, by = "module_id")
       
@@ -1210,7 +1210,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
           
           # Run plugin server code
           # Only if this code has not been already loaded
-          trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_study)
+          trace_code <- paste0(prefix, "_", group_id, "_", m$chosen_study)
           if (trace_code %not_in% r$server_modules_groups_loaded){
             
             # Add the trace_code to loaded plugins list
@@ -1253,7 +1253,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
                 stringr::str_replace_all("\r", "\n")
               
               # If it is an aggregated plugin, change %study_id% with current chosen study
-              if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
+              if (length(m$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$chosen_study))
             }
             else code_server_card <- ""
             
@@ -1382,7 +1382,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
       # Add button clicked
       observeEvent(input$add_module_button, {
 
-        study <- r$studies %>% dplyr::filter(id == r$chosen_study)
+        study <- r$studies %>% dplyr::filter(id == m$chosen_study)
         module <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_module")]])
 
         new_data <- list()
@@ -1924,7 +1924,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
 
         # Run server code
 
-        trace_code <- paste0(prefix, "_", group_id, "_", r$chosen_study)
+        trace_code <- paste0(prefix, "_", group_id, "_", m$chosen_study)
         if (trace_code %not_in% r$server_modules_groups_loaded){
 
           # Add the trace_code to loaded plugins list
@@ -1944,7 +1944,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
               stringr::str_replace_all("\r", "\n")
 
             # If it is an aggregated plugin, change %study_id% with current chosen study
-            if (length(r$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(r$chosen_study))
+            if (length(m$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$chosen_study))
           }
           else code_server_card <- ""
 
@@ -1982,7 +1982,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r, i18n = R
             stringr::str_replace_all("%module_id%", as.character(module_id)) %>%
             stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
             stringr::str_replace_all("\r", "\n") %>%
-            stringr::str_replace_all("%study_id%", as.character(isolate(r$chosen_study)))
+            stringr::str_replace_all("%study_id%", as.character(isolate(m$chosen_study)))
           
           element_code <- div(
             make_card("",

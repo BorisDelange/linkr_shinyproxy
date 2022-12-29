@@ -77,7 +77,7 @@
 #'   save_as_csv = FALSE, rewrite = FALSE, language = language)
 #' }
 import_datamart <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), data = tibble::tibble(), 
-  type = "patients", save_as_csv = TRUE, rewrite = FALSE, i18n = R6::R6Class(), quiet = FALSE){
+  type = "patients", save_as_csv = TRUE, rewrite = FALSE, i18n = R6::R6Class(), quiet = TRUE){
   
   # Check datamart_id
   tryCatch(as.integer(datamart_id),

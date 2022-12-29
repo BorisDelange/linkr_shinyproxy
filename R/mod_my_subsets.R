@@ -120,7 +120,7 @@ mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble:
 #' my_subsets Server Functions
 #'
 #' @noRd 
-mod_my_subsets_server <- function(id = character(), r, language = "EN", i18n = R6::R6Class()){
+mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(), language = "EN", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -152,9 +152,9 @@ mod_my_subsets_server <- function(id = character(), r, language = "EN", i18n = R
     # Render subsets UI ----
     # --- --- --- --- --- --
     
-    observeEvent(r$chosen_study, {
+    observeEvent(m$chosen_study, {
       
-      req(!is.na(r$chosen_study))
+      req(!is.na(m$chosen_study))
       
       # Show first card & hide "choose a study" card
       shinyjs::hide("choose_a_study_card")
@@ -167,7 +167,7 @@ mod_my_subsets_server <- function(id = character(), r, language = "EN", i18n = R
       
     })
     
-    observeEvent(r$chosen_subset, {
+    observeEvent(m$chosen_subset, {
       
       # Render subset UI
       # ...

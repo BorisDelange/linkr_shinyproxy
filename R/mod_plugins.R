@@ -111,7 +111,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             div(DT::DTOutput(ns("plugins_datatable")), style = "margin-top:-30px; z-index:2"),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::PrimaryButton.shinyInput(ns("save_plugins_management"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("delete_selected_plugins"), i18n$t("delete_selection"))
+              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
             )
           )
         ), br()
@@ -909,7 +909,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     # Delete multiple rows (with "Delete selection" button)
     
-    observeEvent(input$delete_selected_plugins, {
+    observeEvent(input$delete_selection, {
       
       req(length(input$plugins_datatable_rows_selected) > 0)
       
@@ -1343,8 +1343,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # var_check <- TRUE
       # if (length(r$chosen_datamart) == 0) var_check <- FALSE
       # if (length(r$chosen_datamart) > 0){
-      #   if (is.na(r$chosen_datamart) | is.na(r$chosen_study)) var_check <- FALSE
-      #   if (prefix == "patient_lvl" & is.na(r$chosen_patient)) var_check <- FALSE
+      #   if (is.na(r$chosen_datamart) | is.na(m$chosen_study)) var_check <- FALSE
+      #   if (prefix == "patient_lvl" & is.na(m$chosen_patient)) var_check <- FALSE
       # }
       # 
       # if (!var_check) show_message_bar_new(output = output, id = 3, message = "load_some_patient_data", i18n = i18n)
@@ -1379,18 +1379,18 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       ui_code <- ui_code %>% 
         stringr::str_replace_all("%module_id%", "1") %>%
         stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-        stringr::str_replace_all("%study_id%", as.character(r$chosen_study)) %>%
+        stringr::str_replace_all("%study_id%", as.character(m$chosen_study)) %>%
         stringr::str_replace_all("\r", "\n")
       
-      if (prefix == "patient_lvl") ui_code <- ui_code %>% stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient))
+      if (prefix == "patient_lvl") ui_code <- ui_code %>% stringr::str_replace_all("%patient_id%", as.character(m$chosen_patient))
       
       server_code <- server_code %>% 
         stringr::str_replace_all("%module_id%", "1") %>%
         stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-        stringr::str_replace_all("%study_id%", as.character(r$chosen_study)) %>%
+        stringr::str_replace_all("%study_id%", as.character(m$chosen_study)) %>%
         stringr::str_replace_all("\r", "\n")
       
-      if (prefix == "patient_lvl") server_code <- server_code %>% stringr::str_replace_all("%patient_id%", as.character(r$chosen_patient))
+      if (prefix == "patient_lvl") server_code <- server_code %>% stringr::str_replace_all("%patient_id%", as.character(m$chosen_patient))
       
       output$code_result_ui <- renderUI(make_card("", tryCatch(result <- eval(parse(text = ui_code)), error = function(e) stop(e), warning = function(w) stop(w))))
       

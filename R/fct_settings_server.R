@@ -310,7 +310,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     r$studies_choices <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE datamart_id = ", data$datamart))
     
     # Select new study as current study
-    r$chosen_study <- last_row + 1
+    m$chosen_study <- last_row + 1
     r$study_page <- Sys.time()
   }
   
@@ -469,7 +469,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
   
   # Refresh r variables
-  update_r(r = r, table = table, language = language)
+  update_r_new(r = r, m = m, table = table)
   
   # Add new rows in code table & options table
   # Add default subsets when creating a new study
@@ -495,7 +495,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     new_thesaurus <- tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
       last_row_thesaurus + 1, paste0(data$name, " - scripts items"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "thesaurus", new_thesaurus)
-    update_r(r = r, table = "thesaurus")
+    update_r_new(r = r, m = m, table = "thesaurus")
     
     add_log_entry(r = r, category = paste0("thesaurus", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_thesaurus))
   
@@ -504,7 +504,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row_code + 1, "thesaurus", last_row_thesaurus + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "code", new_code)
-    update_r(r = r, table = "code", language = language)
+    update_r_new(r = r, m = m, table = "code")
     
     add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
   }
@@ -531,7 +531,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
       last_row_options + 8, "plugin", last_row + 1, "description_en", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
       )
     DBI::dbAppendTable(r$db, "options", new_options)
-    update_r(r = r, table = "options", language = language)
+    update_r_new(r = r, m = m, table = "options")
     
     add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_options))
     
@@ -540,7 +540,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
       last_row_code + 1, "plugin_ui", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_code + 2, "plugin_server", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "code", new_code)
-    update_r(r = r, table = "code", language = language)
+    update_r_new(r = r, m = m, table = "code")
     
     add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
   }
@@ -553,7 +553,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row_options + 1, "script", last_row + 1, "markdown_description", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "options", new_options)
-    update_r(r = r, table = "options", language = language)
+    update_r_new(r = r, m = m, table = "options")
     
     add_log_entry(r = r, category = paste0("options", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_options))
     
@@ -561,7 +561,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row_code + 1, "script", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "code", new_code)
-    update_r(r = r, table = "code", language = language)
+    update_r_new(r = r, m = m, table = "code")
     
     add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
   }
@@ -574,7 +574,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
       last_row_options + 2, "datamart", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_options + 3, "datamart", last_row + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "options", new_options)
-    update_r(r = r, table = "options", language = language)
+    update_r_new(r = r, m = m, table = "options")
     
     add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_options))
   }
@@ -594,14 +594,14 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
       last_row_subsets + 1, i18n$t("subset_all_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_subsets + 2, i18n$t("subset_included_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_subsets + 3, i18n$t("subset_excluded_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "subsets", new_subsets)
+    DBI::dbAppendTable(m$db, "subsets", new_subsets)
     add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_subsets))
     
     # Add code for creating subset with all patients
     code <- paste0('run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n\n',
       'patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n\n',
       'add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)\n\n',
-      'update_r(r = r, table = "subset_patients")')
+      'update_r_new(r = r, m = m, table = "subset_patients")')
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row_code + 1, "subset", last_row_subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_code + 2, "subset", last_row_subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
@@ -624,11 +624,11 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
       name = i18n$t("sql_query"), value = toString(new_aggregated_module_family))
     
     # Update r$options, r$code & r$subsets, & r modules families
-    update_r(r, "options", language)
-    update_r(r, "subsets", language)
-    update_r(r, "code", language)
-    update_r(r, "patient_lvl_modules_families", language)
-    update_r(r, "aggregated_modules_families", language)
+    update_r_new(r = r, m = m, "options")
+    update_r_new(r = r, m = m, "subsets")
+    update_r_new(r = r, m = m, "code")
+    update_r_new(r = r, m = m, "patient_lvl_modules_families")
+    update_r_new(r = r, m = m, "aggregated_modules_families")
     
     # Add patients to subset
     tryCatch({
@@ -642,7 +642,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     r$studies_choices <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE datamart_id = ", data$datamart))
     
     # Select new study as current study
-    r$chosen_study <- last_row + 1
+    m$chosen_study <- last_row + 1
     r$study_page <- Sys.time()
   }
   
@@ -653,7 +653,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
       last_row_options + 1, get_singular(word = table), last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_options + 2, get_singular(word = table), last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "options", new_options)
-    update_r(r = r, table = "options", language = language)
+    update_r_new(r = r, m = m, table = "options")
     
     add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_options))
   }

@@ -13,7 +13,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
   # *** To be removed *** ----
   language <- "EN"
   
-  cards <- c("datamarts_options_card", "datamarts_edit_code_card", 
+  cards <- c(#"datamarts_options_card", "datamarts_edit_code_card", 
     "study_messages_card", "studies_creation_card", "studies_datatable_card", "study_options_card",
     "import_study_card", "export_study_card", "modules_families_card", "thesaurus_datamart_card")
   
@@ -40,7 +40,6 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "study_messages_card", itemKey = "study_messages_card", headerText = i18n$t("messages")),
-          shiny.fluent::PivotItem(id = "studies_creation_card", itemKey = "studies_creation_card", headerText = i18n$t("create_study")),
           shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = i18n$t("studies_management")),
           shiny.fluent::PivotItem(id = "study_options_card", itemKey = "study_options_card", headerText = i18n$t("study_options")),
           shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study_card", headerText = i18n$t("import_study")),
@@ -81,24 +80,6 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
       )
     ),
     
-    # --- --- --- --- -- -- --
-    # Create a study card ----
-    # --- --- --- --- -- -- --
-    
-    shinyjs::hidden(
-      div(
-        id = ns("studies_creation_card"),
-        make_card(i18n$t("create_study"), 
-          div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_textfield(language = language, ns = ns, label = "name", id = "study_name", width = "300px")
-            ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("add_study"), i18n$t("add"))
-          )
-        ), br()
-      )
-    ),
-    
     # --- --- --- --- --- -- -- --
     # Studies management card ----
     # --- --- --- --- --- -- -- --
@@ -108,8 +89,16 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("studies_datatable_card"),
         make_card(i18n$t("studies_management"),
           div(
-            DT::DTOutput(ns("studies_datatable")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_studies_management"), i18n$t("save"))
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "study_name", width = "300px"),
+              div(shiny.fluent::PrimaryButton.shinyInput(ns("add_study"), i18n$t("add")), style = "margin-top:38px;"),
+              style = "position:relative; z-index:1; width:500px;"
+            ),
+            div(DT::DTOutput(ns("studies_datatable")), style = "margin-top:-30px; z-index:2"),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::PrimaryButton.shinyInput(ns("save_plugins_management"), i18n$t("save")),
+              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
+            )
           )
         ), br()
       )
@@ -193,7 +182,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
 #' my_studies Server Functions
 #'
 #' @noRd 
-mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -203,8 +192,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # Show or hide cards ----
     # --- --- --- --- --- ---
     
-    cards <- c("datamarts_options_card", "datamarts_edit_code_card", 
-      "study_messages_card", "studies_creation_card", "studies_datatable_card", "study_options_card",
+    cards <- c(#"datamarts_options_card", "datamarts_edit_code_card", 
+      "study_messages_card", "studies_datatable_card", "study_options_card",
       "import_study_card", "export_study_card", "modules_families_card")#, "thesaurus_datamart_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
 
@@ -366,7 +355,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       new_data$aggregated_module_family <- get_last_row(r$db, "aggregated_modules_families") + 1
       new_data$datamart <- r$chosen_datamart
       
-      add_settings_new_data(session = session, output = output, r = r, language = language, id = "settings_studies", 
+      add_settings_new_data_new(session = session, output = output, r = r, m = m, i18n = i18n, id = "settings_studies", 
         data = new_data, table = "studies", required_textfields = "study_name", req_unique_values = "name")
       
     })
@@ -385,14 +374,14 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
     factorize_cols <- c("datamart_id", "creator_id")
     hidden_cols <- c("id", "description", "datamart_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "deleted", "modified")
-    col_names <- get_col_names("studies", language)
+    col_names <- get_col_names_new("studies", i18n)
     
     # Prepare data for datatable
     
     observeEvent(r$studies, {
       
       if(nrow(r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)) == 0){
-        render_datatable(output = output, r = r, ns = ns, language = language,
+        render_datatable_new(output = output, r = r, ns = ns, i18n = i18n,
           data = tibble::tribble(~name, ~creator_id, ~datetime, ~action), output_name = "studies_datatable")
       }
       
@@ -408,8 +397,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
       # Render datatable
 
-      render_datatable(output = output, r = r, ns = ns, language = language, data = r$studies_datatable_temp,
-        output_name = "studies_datatable", col_names =  get_col_names(table_name = "studies", language = language, words = r$words),
+      render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$studies_datatable_temp,
+        output_name = "studies_datatable", col_names =  get_col_names_new("studies", i18n),
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
         searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
 
@@ -488,7 +477,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)  %>% dplyr::mutate(modified = FALSE)
       
       # Reset chosen study
-      r$chosen_study <- NA_integer_
+      m$chosen_study <- NA_integer_
     })
     
     # --- --- --- --- ---

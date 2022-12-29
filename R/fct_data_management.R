@@ -10,7 +10,7 @@
 #' \dontrun{
 #' run_datamart_code(output = output, r = r, datamart_id = 3)
 #' }
-run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id = integer(), language = "EN", quiet = FALSE){
+run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id = integer(), language = "EN", quiet = TRUE){
   # Reset r$chosen_datamart to clear patient-level data & aggregated data (use the same r variables for data) 
   
   # Get code from datamart
@@ -54,7 +54,7 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
   }
 }
 
-run_datamart_code_new <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), i18n = R6::R6Class(), quiet = FALSE){
+run_datamart_code_new <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), i18n = R6::R6Class(), quiet = TRUE){
   # Reset r$chosen_datamart to clear patient-level data & aggregated data (use the same r variables for data) 
   
   # Get code from datamart
@@ -73,12 +73,8 @@ run_datamart_code_new <- function(output, r = shiny::reactiveValues(), d = shiny
     stringr::str_replace_all("\r", "\n")
   
   # Reset r variables
-  d$patients <- tibble::tibble()
-  d$stays <- tibble::tibble()
-  d$labs_vitals <- tibble::tibble()
-  d$text <- tibble::tibble()
-  d$orders <- tibble::tibble()
-  d$diagnoses <- tibble::tibble()
+  vars <- c("patients", "stays", "labs_vitals", "text", "orders", "diagnoses")
+  for (var in vars) d[[var]] <- tibble::tibble()
   
   # Load data from datamart
   
@@ -89,14 +85,8 @@ run_datamart_code_new <- function(output, r = shiny::reactiveValues(), d = shiny
       stop(i18n$t("fail_execute_code"))}
   )
   
-  # If data is loaded, nb of rows of r variable > 0
-  if (!quiet){
-    if (nrow(r$patients) != 0) show_message_bar_new(output, 1, "success_load_patients", "success", i18n)
-    if (nrow(r$stays) != 0) show_message_bar_new(output, 2, "success_load_stays", "success", i18n)
-    if (nrow(r$labs_vitals) != 0) show_message_bar_new(output, 3, "success_load_labs_vitals", "success", i18n)
-    if (nrow(r$text) != 0) show_message_bar_new(output, 4, "success_load_text", "success", i18n)
-    if (nrow(r$orders) != 0) show_message_bar_new(output, 5, "success_load_orders", "success", i18n)
-  }
+  # If data is loaded, nb of rows of d variable > 0
+  # if (!quiet) for (var in vars) if (nrow(d[[var]]) != 0) show_message_bar_new(output, 1, paste0("import_datamart_success_", var), "success", i18n)
 }
 
 #' Add patients to a subset
