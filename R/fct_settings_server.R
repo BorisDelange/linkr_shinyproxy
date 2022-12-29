@@ -345,6 +345,10 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   i18n = R6::R6Class(), id = character(), data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), 
   required_dropdowns = "all", dropdowns = character()){
   
+  # --- --- --- --- --- --- --- --- -
+  # Check textfields & dropdowns ----
+  # --- --- --- --- --- --- --- --- -
+  
   # For textfields, we have the choice if empty data is possible or not
   # For dropdowns, we want all of them filled
   
@@ -386,25 +390,33 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   dropdowns_check <- TRUE
   
   if (required_dropdowns == "all"){
-    sapply(dropdowns, function(dropdown){
+    for(dropdown in dropdowns){
       if (dropdown != ""){
-        if (is.null(data[[dropdown]])) dropdowns_check <<- FALSE
-        else if (is.na(data[[dropdown]])) dropdowns_check <<- FALSE
+        if (length(data[[dropdown]]) > 1) {break}
+        if (is.null(data[[dropdown]])) dropdowns_check <- FALSE
+        else if (is.na(data[[dropdown]])) dropdowns_check <- FALSE
       }
-    })
+    }
   }
   
   else {
-    sapply(required_dropdowns, function(dropdown){
+    for(dropdown in required_dropdowns){
       if (dropdown != ""){
-        if (is.null(data[[dropdown]])) dropdowns_check <<- FALSE
-        else if (is.na(data[[dropdown]])) dropdowns_check <<- FALSE
+        if (length(data[[dropdown]]) > 1) {break}
+        if (is.null(data[[dropdown]])) dropdowns_check <- FALSE
+        else if (is.na(data[[dropdown]])) dropdowns_check <- FALSE
       }
-    })
+    }
   }
   
   if (!dropdowns_check) show_message_bar_new(output = output, id = 2, message = "dropdown_empty", type = "severeWarning", i18n = i18n)
   req(dropdowns_check)
+  
+  # --- --- --- --- --- --- --- --- -- -
+  # Add data in data specific table ----
+  # --- --- --- --- --- --- --- --- -- -
+  
+  print("1")
   
   # db variable depending on table
   m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients")
@@ -428,12 +440,12 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     # These columns are found in all of these tables
     new_data$data <- tibble::tribble(~id, ~name, ~description, last_row$data + 1, as.character(data$name), as.character(data$description))
     
-    if (id == "settings_datamarts") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.integer(data$data_source)))
-    if (id == "settings_studies") new_data$data <- new_data$data %>% dplyr::bind_cols(
+    if (table == "datamarts") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.integer(data$data_source)))
+    if (table == "studies") new_data$data <- new_data$data %>% dplyr::bind_cols(
       tibble::tribble(~datamart_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id,
         as.integer(data$datamart), as.integer(data$patient_lvl_module_family), as.integer(data$aggregated_module_family)))
-    if (id == "settings_subsets") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~study_id, as.integer(data$study)))
-    if (id == "settings_thesaurus") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.character(data$data_source)))
+    if (table == "subsets") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~study_id, as.integer(data$study)))
+    if (table == "thesaurus") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, NA_integer_))
     
     # These columns are also found in all of these tables
     # Add them at last to respect the order of cols
@@ -476,6 +488,9 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
       last_row$data + 1, as.character(data$name), as.character(data$description), r$user_id, as.character(Sys.time()), FALSE)
   }
   
+  print(r$thesaurus)
+  print(new_data$data)
+  
   # Append data to the table and to r / m variables
   DBI::dbAppendTable(db, table, new_data$data)
   if (table %in% m_tables) m[[table]] <- m[[table]] %>% dplyr::bind_rows(new_data$data)
@@ -485,6 +500,12 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   # Empty new variables
   new_data_vars <- c("options", "subsets", "code", "patient_lvl_modules_family", "aggregated_modules_family", "thesaurus")
   for(var in new_data_vars) new_data[[var]] <- tibble::tibble()
+  
+  print("2")
+  
+  # --- --- --- --- --- --- --- --- --- --
+  # Add data in code & options tables ----
+  # --- --- --- --- --- --- --- --- --- --
   
   # Add a row in code if table is datamarts, thesaurus
   if (table %in% c("datamarts", "thesaurus")){
@@ -543,8 +564,8 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
       last_row$code + 1, "script", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
-  # For options of datamarts, need to add 3 rows in options
-  if (id == "settings_datamarts"){
+  # For datamarts options, need to add 3 rows in options
+  if (table == "datamarts"){
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, "datamart", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
@@ -553,7 +574,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   }
   
   # For studies, need to add one row in options and add rows of code for subsets, with default value
-  if (id == "settings_studies"){
+  if (table == "studies"){
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, "study", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
@@ -598,6 +619,25 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     # Select new study as current study
     m$chosen_study <- last_row$data + 1
     r$study_page <- Sys.time()
+  }
+  
+  print("3")
+  
+  # For thesaurus options, need to add one row by data_source_id
+  if (table == "thesaurus"){
+    
+    print("5")
+    
+    for (i in 1:length(data$data_source_id)){
+      if (i == 1) new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+          last_row$options + 1, "thesaurus", last_row$data + 1, "data_source_id", "", data$data_source_id[i], as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      else new_data$options <- new_data$options %>%
+        dplyr::bind_rows(
+          tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+          last_row$options + i, "thesaurus", last_row$data + 1, "data_source_id", "", data$data_source_id[i], as.integer(r$user_id), as.character(Sys.time()), FALSE)
+        )
+    }
+    print(new_data$options)
   }
   
   # For options of patient_lvl & aggregated modules families, need to add two rows, for users accesses

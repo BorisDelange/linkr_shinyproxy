@@ -10,11 +10,11 @@
 mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
-  cards <- c("thesaurus_items_card")
+  cards <- c("thesaurus_items_card", "thesaurus_categories_card", "thesaurus_conversions_card", "thesaurus_mapping_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
-    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, language = "EN", words = words))
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card_new(ns = ns, name = card, i18n = i18n))
   })
   
   div(
@@ -32,10 +32,10 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
       div(id = ns("menu"),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "items_card", itemKey = "items_card", headerText = i18n$t("all_items")),
-          shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = i18n$t("categories")),
-          shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = i18n$t("conversions")),
-          shiny.fluent::PivotItem(id = "create_items_card", itemKey = "create_items_card", headerText = i18n$t("create_items"))
+          shiny.fluent::PivotItem(id = "thesaurus_items_card", itemKey = "thesaurus_items_card", headerText = i18n$t("items")),
+          shiny.fluent::PivotItem(id = "thesaurus_categories_card", itemKey = "thesaurus_categories_card", headerText = i18n$t("categories")),
+          shiny.fluent::PivotItem(id = "thesaurus_conversions_card", itemKey = "thesaurus_conversions_card", headerText = i18n$t("conversions")),
+          shiny.fluent::PivotItem(id = "thesaurus_mapping_card", itemKey = "thesaurus_mapping_card", headerText = i18n$t("items_mapping"))
         )
       )
     ),
@@ -52,7 +52,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
     
     shinyjs::hidden(
       div(
-        id = ns("items_card"),
+        id = ns("thesaurus_items_card"),
         make_card(i18n$t("items"),
           div(
             div(
@@ -86,7 +86,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
     
     shinyjs::hidden(
       div(
-        id = ns("categories_card"),
+        id = ns("thesaurus_categories_card"),
         make_card(i18n$t("categories"),
           div(
             div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
@@ -114,7 +114,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
     
     shinyjs::hidden(
       div(
-        id = ns("conversions_card"),
+        id = ns("thesaurus_conversions_card"),
         make_card(i18n$t("conversions"),
           div(
             div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
@@ -137,27 +137,10 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
     
     shinyjs::hidden(
       div(
-        id = ns("create_items_card"),
-        make_card(i18n$t("create_items"),
+        id = ns("thesaurus_mapping_card"),
+        make_card(i18n$t("items_mapping"),
           div(
-            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
-            div(shiny.fluent::MessageBar(
-              div(
-                strong("A faire"),
-                p("Le principe ici est de créer de nouveaux items à partir des items existants."),
-                p("Par exemple, l'item diurèse est rarement disponible, on doit rassembler différents items tels que \"diurèse sur SUD\", \"néphrostomie\" etc"),
-                p("Il nous faudra :",
-                  tags$ul(
-                    tags$li("Un éditeur pour créer les scripts, les enregistrer"),
-                    tags$li("Un tableau pour gérer les scripts (supprimer, changer de nom)"),
-                    tags$li("Un éxécuteur pour tester les scripts"),
-                    tags$li("Si un script fonctionne, il sera lancé au chargement du datamart, et le nouvel item sera ajouté aux items classiques"),
-                    tags$li("Tout ceci nécessite de créer une nouvelle table dans la BDD de l'appli")
-                  )
-                )
-              ),
-              messageBarType = 0)
-            )
+            
           )
         ), br()
       )
@@ -176,8 +159,8 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     # Show or hide cards ----
     # --- --- --- --- --- ---
     
-    cards <- c("items_card", "categories_card", "conversions_card", "create_items_card")
-    # show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
+    cards <- c("thesaurus_items_card", "thesaurus_categories_card", "thesaurus_conversions_card", "thesaurus_mapping_card")
+    show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     # --- --- --- --- --- -
     # Show message bar ----
@@ -194,12 +177,10 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     
     # Delete when "thesaurus_items_card" will be added in r$user_accesses
     
-    observeEvent(input$current_tab, {
-      sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
-      shinyjs::show(input$current_tab)
-    })
-    
-    # End of delete
+    # observeEvent(input$current_tab, {
+    #   sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
+    #   shinyjs::show(input$current_tab)
+    # })
     
     observeEvent(r$chosen_datamart, {
       
@@ -207,10 +188,8 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       shinyjs::hide("choose_a_datamart_card")
       shinyjs::show("menu")
       if (length(input$current_tab) == 0){
-        # if ("thesaurus_items_card" %in% r$user_accesses) shinyjs::show("thesaurus_items_card")
-        # else shinyjs::show("thesaurus_items_card_forbidden")
-        shinyjs::show("items_card")
-        sapply(c("categories_card", "conversions_card", "create_items_card"), shinyjs::hide)
+        if ("thesaurus_items_card" %in% r$user_accesses) shinyjs::show("thesaurus_items_card")
+        else shinyjs::show("thesaurus_items_card_forbidden")
       }
       
       data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)

@@ -22,7 +22,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
     "settings_subsets", c("datamart", "study"),
     "settings_thesaurus", "data_source")
   
-  cards <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card", "categories_card", "conversions_card", "mapping_card")
+  cards <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card")#, "categories_card", "conversions_card", "mapping_card")
   forbidden_cards <- tagList()
   sapply(cards, function(card){
     forbidden_cards <<- tagList(forbidden_cards, forbidden_card_new(ns = ns, name = card, i18n = i18n))
@@ -201,10 +201,10 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
         shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("create_thesaurus")),
         shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("thesaurus_management")),
         shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_thesaurus_code")),
-        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("all_items")),
-        shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = i18n$t("categories")),
-        shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = i18n$t("conversions")),
-        shiny.fluent::PivotItem(id = "mapping_card", itemKey = "mapping_card", headerText = i18n$t("items_mapping")),
+        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("items"))#,
+        # shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = i18n$t("categories")),
+        # shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = i18n$t("conversions")),
+        # shiny.fluent::PivotItem(id = "mapping_card", itemKey = "mapping_card", headerText = i18n$t("items_mapping")),
       ),
       
       
@@ -416,8 +416,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Create a list with new data
       # If page = thesaurus, data_source is character, not integer (multiple choices)
       new_data <- list()
-      if (id == "settings_thesaurus") new_data_var <- c("name" = "char", "description" = "char", "data_source" = "char")
-      else new_data_var <- c("name" = "char", "description" = "char", "data_source" = "int", "datamart" = "int", 
+      # if (id == "settings_thesaurus") new_data_var <- c("name" = "char", "description" = "char", "data_source" = "char")
+      # else 
+        new_data_var <- c("name" = "char", "description" = "char", "data_source" = "int", "datamart" = "int", 
         "study" = "int", "patient_lvl_module_family" = "int", "aggregated_module_family" = "int")
       
       sapply(names(new_data_var),
@@ -426,10 +427,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       })
       
       # Convert data_source to string, for page thesaurus
-      if (id == "settings_thesaurus"){
-        if (length(new_data$data_source) == 1) new_data$data_source <- coalesce2(type = "char", x = input$data_source)
-        else new_data$data_source <- toString(as.integer(new_data$data_source))
-      }
+      # if (id == "settings_thesaurus"){
+      #   if (length(new_data$data_source) == 1) new_data$data_source <- coalesce2(type = "char", x = input$data_source)
+      #   else new_data$data_source <- toString(as.integer(new_data$data_source))
+      # }
       
       add_settings_new_data_new(session = session, output = output, r = r, m = m, i18n = i18n, id = id, 
         data = new_data,

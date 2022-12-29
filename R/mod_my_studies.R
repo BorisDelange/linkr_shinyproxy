@@ -195,7 +195,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     cards <- c(#"datamarts_options_card", "datamarts_edit_code_card", 
       "study_messages_card", "studies_datatable_card", "study_options_card",
-      "import_study_card", "export_study_card")#, "modules_families_card")#, "thesaurus_datamart_card")
+      "import_study_card", "export_study_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
 
     # --- --- --- --- --- -
