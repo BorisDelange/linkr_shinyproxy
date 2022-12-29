@@ -287,17 +287,17 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # Datamart options ----
     # --- --- --- --- --- -
     
-    observeEvent(input$save_datamart_options, {
-
-      data <- list()
-      data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
-      data$users_allowed_read <- unique(input$users_allowed_read)
-      data$users_allowed_read_group <- input$users_allowed_read_group
-
-      save_settings_options(output = output, r = r, id = id, category = "datamart", code_id_input = paste0("options_", r$chosen_datamart),
-        language = language, data = data, page_options = c("show_only_aggregated_data", "users_allowed_read"))
-
-    })
+    # observeEvent(input$save_datamart_options, {
+    # 
+    #   data <- list()
+    #   data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
+    #   data$users_allowed_read <- unique(input$users_allowed_read)
+    #   data$users_allowed_read_group <- input$users_allowed_read_group
+    # 
+    #   save_settings_options(output = output, r = r, id = id, category = "datamart", code_id_input = paste0("options_", r$chosen_datamart),
+    #     language = language, data = data, page_options = c("show_only_aggregated_data", "users_allowed_read"))
+    # 
+    # })
     
     # --- --- --- --- --- ---
     # Edit datamart code ----
@@ -305,41 +305,41 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
     # Execute code
     
-    observeEvent(input$execute_code, {
-
-      code <- input$datamart_ace_editor %>% 
-        stringr::str_replace_all("\r", "\n") %>%
-        stringr::str_replace_all("%datamart_id%", as.character(isolate(r$chosen_datamart)))
-      
-      # Change this option to display correctly tibble in textbox
-      options('cli.num_colors' = 1)
-      
-      # Capture console output of our code
-      captured_output <- capture.output(
-        tryCatch(eval(parse(text = as.character(code))), error = function(e) print(e), warning = function(w) print(w)))
-      
-      # Restore normal value
-      options('cli.num_colors' = NULL)
-      
-      # Display result
-      output$code_result <- renderText(paste(strwrap(captured_output), collapse = "\n"))
-    })
-    
-    # Save updates
-    
-    observeEvent(input$save_code, {
-      
-      code_id <- r$code %>% dplyr::filter(category == "datamart" & link_id == r$chosen_datamart) %>% dplyr::pull(id)
-
-      DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '",
-        stringr::str_replace_all(input$datamart_ace_editor, "'", "''"), "' WHERE id = ", code_id)) -> query
-      DBI::dbClearResult(query)
-      update_r(r = r, table = "code")
-
-      # Notification to user
-      show_message_bar(output, 4, "modif_saved", "success", language)
-      
-    })
+    # observeEvent(input$execute_code, {
+    # 
+    #   code <- input$datamart_ace_editor %>% 
+    #     stringr::str_replace_all("\r", "\n") %>%
+    #     stringr::str_replace_all("%datamart_id%", as.character(isolate(r$chosen_datamart)))
+    #   
+    #   # Change this option to display correctly tibble in textbox
+    #   options('cli.num_colors' = 1)
+    #   
+    #   # Capture console output of our code
+    #   captured_output <- capture.output(
+    #     tryCatch(eval(parse(text = as.character(code))), error = function(e) print(e), warning = function(w) print(w)))
+    #   
+    #   # Restore normal value
+    #   options('cli.num_colors' = NULL)
+    #   
+    #   # Display result
+    #   output$code_result <- renderText(paste(strwrap(captured_output), collapse = "\n"))
+    # })
+    # 
+    # # Save updates
+    # 
+    # observeEvent(input$save_code, {
+    #   
+    #   code_id <- r$code %>% dplyr::filter(category == "datamart" & link_id == r$chosen_datamart) %>% dplyr::pull(id)
+    # 
+    #   DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '",
+    #     stringr::str_replace_all(input$datamart_ace_editor, "'", "''"), "' WHERE id = ", code_id)) -> query
+    #   DBI::dbClearResult(query)
+    #   update_r(r = r, table = "code")
+    # 
+    #   # Notification to user
+    #   show_message_bar(output, 4, "modif_saved", "success", language)
+    #   
+    # })
     
     # --- --- --- --- ---
     # Create a study ----

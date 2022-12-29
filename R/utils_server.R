@@ -39,7 +39,7 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
   else if (grepl("modules", table)){
     
     if (table == "modules_elements_options"){
-      sql <- glue::glue_sql("SELECT * FROM modules_elements_options WHERE deleted IS FALSE AND study_id = {m$chosen_study}", .con = db)
+      sql <- glue::glue_sql("SELECT * FROM modules_elements_options WHERE deleted IS FALSE AND study_id = {r$chosen_study}", .con = db)
       r$modules_elements_options <- DBI::dbGetQuery(db, sql)
     }
     
@@ -47,7 +47,7 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
       if (grepl("patient_lvl", table)) prefix <- "patient_lvl" else prefix <- "aggregated"
       
       if (grepl("families", table)){
-        family_id <- r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+        family_id <- r$studies %>% dplyr::filter(id == r$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
         sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND id = {family_id}", .con = db)
         r[[paste0(prefix, "_modules_families")]] <- DBI::dbGetQuery(db, sql)
       }
@@ -59,7 +59,7 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
       }
       
       else {
-        family_id <- r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+        family_id <- r$studies %>% dplyr::filter(id == r$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
         sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND module_family_id = {family_id}", .con = db)
         r[[paste0(prefix, "_modules")]] <- DBI::dbGetQuery(db, sql)
       }
@@ -80,9 +80,9 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
       tables <- tibble::tribble(~name, ~col_name, ~col_value,
         "studies", "datamart_id", r$chosen_datamart,
         "scripts", "data_source_id", r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id),
-        "subsets", "study_id", m$chosen_study,
+        "subsets", "study_id", r$chosen_study,
         "subset_patients", "subset_id", r$chosen_subset,
-        "patients_options", "study_id", m$chosen_study)
+        "patients_options", "study_id", r$chosen_study)
       
       row <- tables %>% dplyr::filter(name == table)
       
@@ -117,7 +117,7 @@ update_r_new <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(
       
       if (table == "subsets_patients"){
         
-        sql <- glue::glue_sql("SELECT * FROM subset_patients WHERE deleted IS FALSE AND subset_id IN ({r$subsets %>% dplyr::pull(id)*})", .con = db)
+        sql <- glue::glue_sql("SELECT * FROM subset_patients WHERE deleted IS FALSE AND subset_id IN ({m$subsets %>% dplyr::pull(id)*})", .con = db)
         m$subsets_patients <- DBI::dbGetQuery(db, sql)
       }
       

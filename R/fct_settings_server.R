@@ -267,7 +267,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 
     # Add code for creating subset with all patients
     code <- paste0('run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n\n',
-                   'patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n\n',
+                   'patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n\n',
                    'add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)\n\n',
                    'update_r(r = r, table = "subset_patients")')
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
@@ -300,7 +300,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     
     # Add patients to subset
     tryCatch({
-      patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
+      patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
       add_patients_to_subset(output, r, patients, last_row_subsets + 1)
     }, 
     error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
@@ -599,7 +599,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     
     # Add code for creating subset with all patients
     code <- paste0('run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n\n',
-      'patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n\n',
+      'patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n\n',
       'add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)\n\n',
       'update_r_new(r = r, m = m, table = "subset_patients")')
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
@@ -632,7 +632,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     
     # Add patients to subset
     tryCatch({
-      patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
+      patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
       add_patients_to_subset(output, r, patients, last_row_subsets + 1)
     }, 
       error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
@@ -1155,9 +1155,9 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
       rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
       rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
       
-      if (nrow(r$labs_vitals) != 0) rows_labs_vitals <- r$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
-      if (nrow(r$text) != 0) rows_text <- r$text %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
-      if (nrow(r$orders) != 0) rows_orders <- r$orders %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      if (nrow(d$labs_vitals) != 0) rows_labs_vitals <- d$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      if (nrow(d$text) != 0) rows_text <- d$text %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      if (nrow(d$orders) != 0) rows_orders <- d$orders %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
       
       # Merge rows count vars
       count_items_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
@@ -1190,11 +1190,11 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
       rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
       rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
       
-      if (nrow(r$labs_vitals) != 0) rows_labs_vitals <- r$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% 
+      if (nrow(d$labs_vitals) != 0) rows_labs_vitals <- d$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% 
         dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
-      if (nrow(r$text) != 0) rows_text <- r$text %>% dplyr::group_by(thesaurus_name, item_id) %>% 
+      if (nrow(d$text) != 0) rows_text <- d$text %>% dplyr::group_by(thesaurus_name, item_id) %>% 
         dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
-      if (nrow(r$orders) != 0) rows_orders <- r$orders %>% dplyr::group_by(thesaurus_name, item_id) %>%
+      if (nrow(d$orders) != 0) rows_orders <- d$orders %>% dplyr::group_by(thesaurus_name, item_id) %>%
         dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
       
       count_patients_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
@@ -1363,9 +1363,9 @@ create_datatable_cache_new <- function(output, r, i18n = R6::R6Class(), module_i
       rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
       rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
       
-      if (nrow(r$labs_vitals) != 0) rows_labs_vitals <- r$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
-      if (nrow(r$text) != 0) rows_text <- r$text %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
-      if (nrow(r$orders) != 0) rows_orders <- r$orders %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      if (nrow(d$labs_vitals) != 0) rows_labs_vitals <- d$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      if (nrow(d$text) != 0) rows_text <- d$text %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      if (nrow(d$orders) != 0) rows_orders <- d$orders %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
       
       # Merge rows count vars
       count_items_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
@@ -1398,11 +1398,11 @@ create_datatable_cache_new <- function(output, r, i18n = R6::R6Class(), module_i
       rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
       rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
       
-      if (nrow(r$labs_vitals) != 0) rows_labs_vitals <- r$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% 
+      if (nrow(d$labs_vitals) != 0) rows_labs_vitals <- d$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% 
         dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
-      if (nrow(r$text) != 0) rows_text <- r$text %>% dplyr::group_by(thesaurus_name, item_id) %>% 
+      if (nrow(d$text) != 0) rows_text <- d$text %>% dplyr::group_by(thesaurus_name, item_id) %>% 
         dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
-      if (nrow(r$orders) != 0) rows_orders <- r$orders %>% dplyr::group_by(thesaurus_name, item_id) %>%
+      if (nrow(d$orders) != 0) rows_orders <- d$orders %>% dplyr::group_by(thesaurus_name, item_id) %>%
         dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
       
       count_patients_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)

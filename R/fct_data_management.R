@@ -29,11 +29,11 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
     stringr::str_replace_all("\r", "\n")
   
   # Reset r variables
-  r$patients <- tibble::tibble()
-  r$stays <- tibble::tibble()
-  r$labs_vitals <- tibble::tibble()
-  r$text <- tibble::tibble()
-  r$orders <- tibble::tibble()
+  d$patients <- tibble::tibble()
+  d$stays <- tibble::tibble()
+  d$labs_vitals <- tibble::tibble()
+  d$text <- tibble::tibble()
+  d$orders <- tibble::tibble()
   
   # Load data from datamart
   
@@ -46,11 +46,11 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), datamart_id =
   
   # If data is loaded, nb of rows of r variable > 0
   if (!quiet){
-    if (nrow(r$patients) != 0) show_message_bar(output, 1, "success_load_patients", "success", language, r$words)
-    if (nrow(r$stays) != 0) show_message_bar(output, 2, "success_load_stays", "success", language, r$words)
-    if (nrow(r$labs_vitals) != 0) show_message_bar(output, 3, "success_load_labs_vitals", "success", language, r$words)
-    if (nrow(r$text) != 0) show_message_bar(output, 4, "success_load_text", "success", language, r$words)
-    if (nrow(r$orders) != 0) show_message_bar(output, 5, "success_load_orders", "success", language, r$words)
+    if (nrow(d$patients) != 0) show_message_bar(output, 1, "success_load_patients", "success", language, r$words)
+    if (nrow(d$stays) != 0) show_message_bar(output, 2, "success_load_stays", "success", language, r$words)
+    if (nrow(d$labs_vitals) != 0) show_message_bar(output, 3, "success_load_labs_vitals", "success", language, r$words)
+    if (nrow(d$text) != 0) show_message_bar(output, 4, "success_load_text", "success", language, r$words)
+    if (nrow(d$orders) != 0) show_message_bar(output, 5, "success_load_orders", "success", language, r$words)
   }
 }
 

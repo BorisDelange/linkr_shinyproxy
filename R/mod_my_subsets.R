@@ -153,7 +153,6 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- --- --
     
     observeEvent(m$chosen_study, {
-      
       req(!is.na(m$chosen_study))
       
       # Show first card & hide "choose a study" card

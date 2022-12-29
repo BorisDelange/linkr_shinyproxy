@@ -652,7 +652,7 @@
 <span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Existing exclusion reasons</span></span>
 <span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>        </span>
 <span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>        <span class="co"># A message sent by other plugins to reload flowchart</span></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>        <span class="co"># No need to send a message from Patient-level data, cause it changes r$patients_options variable, with makes this reactives reload</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>        <span class="co"># No need to send a message from Patient-level data, cause it changes d$patients_options variable, with makes this reactives reload</span></span>
 <span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">length</span>(r<span class="sc">$</span>reload_flowchart_<span class="sc">%study_id%</span>) <span class="sc">&gt;</span> <span class="dv">0</span>) r<span class="sc">$</span>reload_flowchart_<span class="sc">%study_id%</span> <span class="er">&lt;</span><span class="sc">-</span> <span class="cn">FALSE</span></span>
 <span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>        </span>
 <span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>        sql <span class="ot">&lt;-</span> glue<span class="sc">::</span><span class="fu">glue_sql</span>(<span class="fu">paste0</span>(<span class="st">"SELECT meo1.id, meo1.value AS exclusion_reason, meo2.value_num AS display_order</span></span>

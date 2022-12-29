@@ -123,12 +123,12 @@ The code has to be as follows :
 
 ```{r eval = FALSE}
 # Run code that allows access to datamart data
-# After running this function, data is accessible with r$... variables (eg r$patients for patients)
+# After running this function, data is accessible with r$... variables (eg d$patients for patients)
 run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)
 
 # We create a patients dataframe, containing patients we want to include in this subset
-# We can add some filters here (eg r$patients %>% dplyr::filter(age > 18) to get patients with an age superior to 18 y-old)
-patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
+# We can add some filters here (eg d$patients %>% dplyr::filter(age > 18) to get patients with an age superior to 18 y-old)
+patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
 
 # We finally run add_patients_to_subset function, with our patients datafarme as patients argument
 # It will add our patients to the subset specified with subset_id

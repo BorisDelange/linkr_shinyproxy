@@ -176,11 +176,11 @@
 <p>On the <strong>Edit code page</strong>, you can edit the code that adds patients in a subset with the ShinyAce editor.</p>
 <p>The code has to be as follows :</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run code that allows access to datamart data</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># After running this function, data is accessible with r$... variables (eg r$patients for patients)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># After running this function, data is accessible with r$... variables (eg d$patients for patients)</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">run_datamart_code</span>(<span class="at">output =</span> output, <span class="at">r =</span> r, <span class="at">datamart_id =</span> <span class="sc">%datamart_id%</span>)</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># We create a patients dataframe, containing patients we want to include in this subset</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># We can add some filters here (eg r$patients %&gt;% dplyr::filter(age &gt; 18) to get patients with an age superior to 18 y-old)</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># We can add some filters here (eg d$patients %&gt;% dplyr::filter(age &gt; 18) to get patients with an age superior to 18 y-old)</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>patients <span class="ot">&lt;-</span> r<span class="sc">$</span>patients <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(patient_id) <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">mutate_at</span>(<span class="st">&#39;patient_id&#39;</span>, as.integer)</span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># We finally run add_patients_to_subset function, with our patients datafarme as patients argument</span></span>

@@ -450,7 +450,7 @@ insert_default_values <- function(output, r){
 # import_thesaurus(output = output, r = r, thesaurus_id = %thesaurus_id%, thesaurus = thesaurus(), language = language)'
 
 # subset_code <- 'run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)
-# patients <- r$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)
+# patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)
 # add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)'
 
 # plugin_code_ui_1 <- 'div(

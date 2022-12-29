@@ -525,7 +525,7 @@ flowchart_%group_id%_%study_id% <- reactive({
         # Existing exclusion reasons
         
         # A message sent by other plugins to reload flowchart
-        # No need to send a message from Patient-level data, cause it changes r$patients_options variable, with makes this reactives reload
+        # No need to send a message from Patient-level data, cause it changes d$patients_options variable, with makes this reactives reload
         if (length(r$reload_flowchart_%study_id%) > 0) r$reload_flowchart_%study_id% <- FALSE
         
         sql <- glue::glue_sql(paste0("SELECT meo1.id, meo1.value AS exclusion_reason, meo2.value_num AS display_order
@@ -538,7 +538,7 @@ flowchart_%group_id%_%study_id% <- reactive({
         
         # Excluded patients with exclusions reasons
         
-        excluded_patients <- r$patients_options %>% dplyr::filter(category == "exclusion_reason" & study_id == %study_id%) %>% dplyr::select(patient_id, value_num)
+        excluded_patients <- d$patients_options %>% dplyr::filter(category == "exclusion_reason" & study_id == %study_id%) %>% dplyr::select(patient_id, value_num)
         
         # Merge the two tables
         

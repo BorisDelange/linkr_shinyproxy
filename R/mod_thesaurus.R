@@ -350,7 +350,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       thesaurus_name <- r$thesaurus %>% dplyr::filter(id == thesaurus_item$thesaurus_id) %>% dplyr::pull(name)
       
-      all_values <- r$labs_vitals %>% dplyr::filter(thesaurus_name == !!thesaurus_name) %>%
+      all_values <- d$labs_vitals %>% dplyr::filter(thesaurus_name == !!thesaurus_name) %>%
         dplyr::inner_join(thesaurus_item %>% dplyr::select(item_id), by = "item_id") %>% dplyr::select(value, value_num)
       values_num <- numeric(0)
       if (nrow(all_values %>% dplyr::filter(!is.na(value_num))) > 0) values_num <- suppressMessages(all_values %>% dplyr::filter(!is.na(value_num)) %>% 
@@ -365,7 +365,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       if (nrow(all_values) == 0){
         
-        all_values <- r$orders %>% dplyr::filter(thesaurus_name == !!thesaurus_name) %>%
+        all_values <- d$orders %>% dplyr::filter(thesaurus_name == !!thesaurus_name) %>%
           dplyr::inner_join(thesaurus_item %>% dplyr::select(item_id), by = "item_id") %>% 
           dplyr::mutate(amount_text = paste0(amount, " ", amount_unit), rate_text = paste0(rate, " ", rate_unit)) %>%
           dplyr::select(amount, amount_text, rate, rate_text)

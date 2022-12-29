@@ -311,14 +311,14 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         r[[paste0(prefix, "_help_modal_text")]] <- div(
           p("Au chargement d'un datamart, cinq variables se chargent."),
           p("Les colonnes de chaque variable sont détaillées, avec les noms complets et le type de colonne (integer, character etc)."),
-          p(strong("1) r$patients")),
+          p(strong("1) d$patients")),
           tags$ul(
             tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
             tags$li(strong("gender"), " : Sexe (M / F) (character)"),
             tags$li(strong("age"), " : Age (character)"),
             tags$li(strong("dod"), " : Date de décès (dod pour date of death) (datetime)")
           ),
-          p(strong("2) r$stays")),
+          p(strong("2) d$stays")),
           tags$ul(
             tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
             tags$li(strong("stay_id"), " : Identifiant unique du séjour hospitalier (integer)"),
@@ -326,7 +326,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
             tags$li(strong("admission_datetime"), " : Date & heure d'admission dans l'unité / dans le service (datetime)"),
             tags$li(strong("discharge_datetime"), " : Date & heure de sortie de l'unité / de service (datetime)")
           ),
-          p(strong("3) r$labs_vitals")),
+          p(strong("3) d$labs_vitals")),
           tags$ul(
             tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
             tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
@@ -338,7 +338,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
             tags$li(strong("unit"), " : Unité de la valeur (character)"),
             tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
           ),
-          p(strong("4) r$orders")),
+          p(strong("4) d$orders")),
           tags$ul(
             tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
             tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
@@ -355,7 +355,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
             tags$li(strong("concentration_unit"), " : Unité de la concentration(character)"),
             tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
           ),
-          p(strong("5) r$text")),
+          p(strong("5) d$text")),
           tags$ul(
             tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
             tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
@@ -397,11 +397,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           p(strong("2) Données agrégées - Variables du subset sélectionné")),
           p("Lorsque vous sélectionnez un subset, les variables suivantes sont créées, avec la même structure que détaillée dans ", tags$em("Comprendre le modèle de données"), " :"),
           tags$ul(
-            tags$li(strong("r$data_subset$patients")),
-            tags$li(strong("r$data_subset$stays")),
-            tags$li(strong("r$data_subset$labs_vitals")),
-            tags$li(strong("r$data_subset$orders")),
-            tags$li(strong("r$data_subset$text"))
+            tags$li(strong("d$data_subset$patients")),
+            tags$li(strong("d$data_subset$stays")),
+            tags$li(strong("d$data_subset$labs_vitals")),
+            tags$li(strong("d$data_subset$orders")),
+            tags$li(strong("d$data_subset$text"))
           ),
           p(strong("3) Données individuelles - Variables du patient sélectionné")),
           p("Lorsque vous sélectionnez un patient, les variables suivantes sont créées :"),
@@ -414,9 +414,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           p(strong("4) Données individuelles - Variables du séjour sélectionné")),
           p("De la même façon, lorsque vous sélectionnez un séjour, les variables suivantes sont créées :"),
           tags$ul(
-            tags$li(strong("r$data_stay$labs_vitals")),
-            tags$li(strong("r$data_stay$orders")),
-            tags$li(strong("r$data_stay$text"))
+            tags$li(strong("d$data_stay$labs_vitals")),
+            tags$li(strong("d$data_stay$orders")),
+            tags$li(strong("d$data_stay$text"))
           )
         )
       }
@@ -655,16 +655,16 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         r$data_patient$labs_vitals <- tibble::tibble()
         r$data_patient$text <- tibble::tibble()
         r$data_patient$orders <- tibble::tibble()
-        r$data_stay$labs_vitals <- tibble::tibble()
-        r$data_stay$text <- tibble::tibble()
-        r$data_stay$orders <- tibble::tibble()
+        d$data_stay$labs_vitals <- tibble::tibble()
+        d$data_stay$text <- tibble::tibble()
+        d$data_stay$orders <- tibble::tibble()
         
         if (length(m$chosen_patient) > 0){
           if (!is.na(m$chosen_patient) & m$chosen_patient != ""){
-            if (nrow(r$stays) > 0) r$data_patient$stays <- r$stays %>% dplyr::filter(patient_id == m$chosen_patient) %>% dplyr::arrange(admission_datetime)
-            if (nrow(r$labs_vitals) > 0) r$data_patient$labs_vitals <- r$labs_vitals %>% dplyr::filter(patient_id == m$chosen_patient)
-            if (nrow(r$text) > 0) r$data_patient$text <- r$text %>% dplyr::filter(patient_id == m$chosen_patient)
-            if (nrow(r$orders) > 0) r$data_patient$orders <- r$orders %>% dplyr::filter(patient_id == m$chosen_patient)
+            if (nrow(d$stays) > 0) r$data_patient$stays <- d$stays %>% dplyr::filter(patient_id == m$chosen_patient) %>% dplyr::arrange(admission_datetime)
+            if (nrow(d$labs_vitals) > 0) r$data_patient$labs_vitals <- d$labs_vitals %>% dplyr::filter(patient_id == m$chosen_patient)
+            if (nrow(d$text) > 0) r$data_patient$text <- d$text %>% dplyr::filter(patient_id == m$chosen_patient)
+            if (nrow(d$orders) > 0) r$data_patient$orders <- d$orders %>% dplyr::filter(patient_id == m$chosen_patient)
           }
         }
       })
@@ -673,16 +673,16 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         
         req(r$data_patient)
         
-        r$data_stay <- list()
+        d$data_stay <- list()
         
         if (length(m$chosen_stay) > 0){
           if (!is.na(m$chosen_stay) & m$chosen_stay != ""){
             
-            r$data_stay$stay <- r$data_patient$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
+            d$data_stay$stay <- r$data_patient$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
             
-            if (nrow(r$data_patient$labs_vitals) > 0) r$data_stay$labs_vitals <- r$data_patient$labs_vitals %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
-            if (nrow(r$data_patient$text) > 0) r$data_stay$text <- r$data_patient$text %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
-            if (nrow(r$data_patient$orders) > 0) r$data_stay$orders <- r$data_patient$orders %>% dplyr::filter(datetime_start >= r$data_stay$stay$admission_datetime & datetime_start <= r$data_stay$stay$discharge_datetime)
+            if (nrow(r$data_patient$labs_vitals) > 0) d$data_stay$labs_vitals <- r$data_patient$labs_vitals %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
+            if (nrow(r$data_patient$text) > 0) d$data_stay$text <- r$data_patient$text %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
+            if (nrow(r$data_patient$orders) > 0) d$data_stay$orders <- r$data_patient$orders %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
           }
         }
       })
@@ -692,27 +692,20 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       
       observeEvent(m$chosen_subset, {
         
-        r$data_subset <- list()
+        d$data_subset <- list()
         patients <- tibble::tibble()
         
         # Reset variables
-        r$data_subset$patients <- tibble::tibble()
-        r$data_subset$stays <- tibble::tibble()
-        r$data_subset$labs_vitals <- tibble::tibble()
-        r$data_subset$text <- tibble::tibble()
-        r$data_subset$orders <- tibble::tibble()
+        vars <- c("patients", "stays", "labs_vitals", "text", "orders", "diagnoses")
+        lapply(vars, function(var) d$data_subset[[var]] <- tibble::tibble())
         
         if (length(m$chosen_subset) > 0){
-          if (!is.na(m$chosen_subset) & m$chosen_subset != "") patients <- r$subset_patients %>% dplyr::filter(subset_id == m$chosen_subset)
+          if (!is.na(m$chosen_subset) & m$chosen_subset != "") patients <- m$subset_patients %>% dplyr::filter(subset_id == m$chosen_subset)
         }
         
         if (nrow(patients) > 0){
           patients <- patients %>% dplyr::select(patient_id)
-          if (nrow(r$patients) > 0) r$data_subset$patients <- r$patients %>% dplyr::inner_join(patients, by = "patient_id")
-          if (nrow(r$stays) > 0) r$data_subset$stays <- r$stays %>% dplyr::inner_join(patients, by = "patient_id")
-          if (nrow(r$labs_vitals) > 0) r$data_subset$labs_vitals <- r$labs_vitals %>% dplyr::inner_join(patients, by = "patient_id")
-          if (nrow(r$text) > 0) r$data_subset$text <- r$text %>% dplyr::inner_join(patients, by = "patient_id")
-          if (nrow(r$orders) > 0) r$data_subset$orders <- r$orders %>% dplyr::inner_join(patients, by = "patient_id")
+          lapply(vars, function(var) if (nrow(d[[var]]) > 0) d$data_subset[[var]] <- d[[var]] %>% dplyr::inner_join(patients, by = "patient_id"))
         }
       })
     }
@@ -724,37 +717,36 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     # When a study is chosen
     
     observeEvent(m$chosen_study, {
-      
-      req(!is.na(m$chosen_study))
-      
-      # Delete UI from previous loaded study
-      removeUI(selector = paste0("#", ns(r[[paste0(prefix, "_cards")]])), multiple = TRUE)
-      
-      # Initiiate vector of study cards
-      r[[paste0(prefix, "_cards")]] <- character()
-      
-      # Hide "choose a study" card
-      shinyjs::hide("choose_a_study_card")
-      
-      # Reset selected key
-      r[[paste0(prefix, "_selected_module")]] <- NA_integer_
-      
-      # Reset shown modules
-      r[[paste0(prefix, "_opened_cards")]] <- ""
-      
-      # Hide Add module element card & Add module
-      shinyjs::hide("add_module_element")
-      shinyjs::hide("add_module")
-      
-      r[[paste0(prefix, "_load_display_modules")]] <- paste0("first_load_ui_", Sys.time())
-      
-      # Run observers
-      r[[paste0(prefix, "_load_server")]] <- Sys.time()
-      
-      # Load modules variables
-      update_r(r = r, table = paste0(prefix, "_modules_families"))
-      update_r(r = r, table = paste0(prefix, "_modules"))
-      update_r(r = r, table = paste0(prefix, "_modules_elements"))
+      # req(!is.na(m$chosen_study))
+      # 
+      # # Delete UI from previous loaded study
+      # removeUI(selector = paste0("#", ns(r[[paste0(prefix, "_cards")]])), multiple = TRUE)
+      # 
+      # # Initiiate vector of study cards
+      # r[[paste0(prefix, "_cards")]] <- character()
+      # 
+      # # Hide "choose a study" card
+      # shinyjs::hide("choose_a_study_card")
+      # 
+      # # Reset selected key
+      # r[[paste0(prefix, "_selected_module")]] <- NA_integer_
+      # 
+      # # Reset shown modules
+      # r[[paste0(prefix, "_opened_cards")]] <- ""
+      # 
+      # # Hide Add module element card & Add module
+      # shinyjs::hide("add_module_element")
+      # shinyjs::hide("add_module")
+      # 
+      # r[[paste0(prefix, "_load_display_modules")]] <- paste0("first_load_ui_", Sys.time())
+      # 
+      # # Run observers
+      # r[[paste0(prefix, "_load_server")]] <- Sys.time()
+      # 
+      # # Load modules variables
+      # update_r_new(r = r, m = m, table = paste0(prefix, "_modules_families"))
+      # update_r_new(r = r, m = m, table = paste0(prefix, "_modules"))
+      # update_r_new(r = r, m = m, table = paste0(prefix, "_modules_elements"))
       
     })
     
