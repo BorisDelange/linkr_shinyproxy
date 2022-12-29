@@ -416,8 +416,6 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   # Add data in data specific table ----
   # --- --- --- --- --- --- --- --- -- -
   
-  print("1")
-  
   # db variable depending on table
   m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients")
   if (table %in% m_tables) db <- m$db
@@ -445,7 +443,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
       tibble::tribble(~datamart_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id,
         as.integer(data$datamart), as.integer(data$patient_lvl_module_family), as.integer(data$aggregated_module_family)))
     if (table == "subsets") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~study_id, as.integer(data$study)))
-    if (table == "thesaurus") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, NA_integer_))
+    if (table == "thesaurus") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, data$data_source))
     
     # These columns are also found in all of these tables
     # Add them at last to respect the order of cols
@@ -488,9 +486,6 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
       last_row$data + 1, as.character(data$name), as.character(data$description), r$user_id, as.character(Sys.time()), FALSE)
   }
   
-  print(r$thesaurus)
-  print(new_data$data)
-  
   # Append data to the table and to r / m variables
   DBI::dbAppendTable(db, table, new_data$data)
   if (table %in% m_tables) m[[table]] <- m[[table]] %>% dplyr::bind_rows(new_data$data)
@@ -500,8 +495,6 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   # Empty new variables
   new_data_vars <- c("options", "subsets", "code", "patient_lvl_modules_family", "aggregated_modules_family", "thesaurus")
   for(var in new_data_vars) new_data[[var]] <- tibble::tibble()
-  
-  print("2")
   
   # --- --- --- --- --- --- --- --- --- --
   # Add data in code & options tables ----
@@ -588,7 +581,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
       last_row$subsets + 3, i18n$t("subset_excluded_patients"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add code for creating subset with all patients
-    code <- paste0('run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n\n',
+    code <- paste0('run_datamart_code_new(output = output, r = r, d = d, datamart_id = %datamart_id%)\n\n',
       'patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n\n',
       'add_patients_to_subset_new(output = output, r = r, m = m, patients = patients, subset_id = %subset_id%)\n\n',
       'update_r_new(r = r, m = m, table = "subset_patients")')
@@ -619,25 +612,6 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     # Select new study as current study
     m$chosen_study <- last_row$data + 1
     r$study_page <- Sys.time()
-  }
-  
-  print("3")
-  
-  # For thesaurus options, need to add one row by data_source_id
-  if (table == "thesaurus"){
-    
-    print("5")
-    
-    for (i in 1:length(data$data_source_id)){
-      if (i == 1) new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-          last_row$options + 1, "thesaurus", last_row$data + 1, "data_source_id", "", data$data_source_id[i], as.integer(r$user_id), as.character(Sys.time()), FALSE)
-      else new_data$options <- new_data$options %>%
-        dplyr::bind_rows(
-          tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-          last_row$options + i, "thesaurus", last_row$data + 1, "data_source_id", "", data$data_source_id[i], as.integer(r$user_id), as.character(Sys.time()), FALSE)
-        )
-    }
-    print(new_data$options)
   }
   
   # For options of patient_lvl & aggregated modules families, need to add two rows, for users accesses
@@ -1313,7 +1287,7 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
   data
 }
 
-create_datatable_cache_new <- function(output, r, i18n = R6::R6Class(), module_id = character(), 
+create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = R6::R6Class(), module_id = character(), 
   thesaurus_id = integer(), datamart_id = 0, category = character()){
   
   # Load join between our data and the cache
@@ -1322,20 +1296,20 @@ create_datatable_cache_new <- function(output, r, i18n = R6::R6Class(), module_i
   if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus", "colours_module", "colours_plugin") |
       grepl("plus_data_explorer", category)){
     data <- DBI::dbGetQuery(r$db, paste0(
-      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value
-      FROM thesaurus_items t
-      LEFT JOIN cache c ON c.link_id = t.id AND c.category = '", category, "'
-      WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE
-      ORDER BY t.id")) %>% tibble::as_tibble()
+      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value ",
+      "FROM thesaurus_items t ",
+      "LEFT JOIN cache c ON c.link_id = t.id AND c.category = '", category, "' ", 
+      "WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE ",
+      "ORDER BY t.id"))
   }
   # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
   if (category %in% c("count_patients_rows", "count_items_rows")){
     data <- DBI::dbGetQuery(r$db, paste0(
-      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value
-      FROM thesaurus_items t
-      LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = ", datamart_id, " AND c.category = '", category, "'
-      WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE
-      ORDER BY t.id")) %>% tibble::as_tibble()
+      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value ",
+      "FROM thesaurus_items t ",
+      "LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = ", datamart_id, " AND c.category = '", category, "' ",
+      "WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE ",
+      "ORDER BY t.id"))
   }
   
   # If there are missing data in the cache, reload cache 
@@ -1358,9 +1332,9 @@ create_datatable_cache_new <- function(output, r, i18n = R6::R6Class(), module_i
     if (category == "count_items_rows"){
       
       # Run datamart code
-      # Could interfere with r data variables in patient-lvl & aggregated data, but rare case...
-      # A solution could be adding a global variable indicating that r data variables have changed
-      run_datamart_code(output = output, r = r, i18n = i18n, datamart_id = datamart_id)
+      # Reload r$datamarts so that datamart dropdown on sidenav is reset
+      update_r_new(r = r, table = "datamarts")
+      run_datamart_code_new(output = output, r = r, d = d, i18n = i18n, datamart_id = datamart_id)
       
       # Initiate variables
       rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
@@ -1390,12 +1364,14 @@ create_datatable_cache_new <- function(output, r, i18n = R6::R6Class(), module_i
       
       # Set 0 when value is na
       # Convert value to character
-      data <- data %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", T ~ value))
+      data <- data %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
     }
     
     if (category == "count_patients_rows"){
       
-      run_datamart_code_new(output = output, r = r, i18n = i18n, datamart_id = datamart_id)
+      # Reload r$datamarts so that datamart dropdown on sidenav is reset
+      update_r_new(r = r, table = "datamarts")
+      run_datamart_code_new(output = output, r = r, d = d, i18n = i18n, datamart_id = datamart_id)
       
       # Initiate variables
       rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
@@ -1424,7 +1400,7 @@ create_datatable_cache_new <- function(output, r, i18n = R6::R6Class(), module_i
       
       # Set 0 when value is na
       # Convert value to character
-      data <- data %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", T ~ value))
+      data <- data %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
       
     }
     
@@ -2254,7 +2230,7 @@ save_settings_code_new <- function(output, r = shiny::reactiveValues(), id = cha
   link_id <- as.integer(substr(code_id_input, nchar("edit_code_") + 1, nchar(code_id_input)))
   
   # Reload r$code before querying
-  update_r(r = r, table = "options")
+  # update_r(r = r, table = "options")
   code_id <- r$code %>% dplyr::filter(category == !!category, link_id == !!link_id) %>% dplyr::pull(id) %>% as.integer()
   
   # Replace ' with '' and store in the database
@@ -2262,7 +2238,12 @@ save_settings_code_new <- function(output, r = shiny::reactiveValues(), id = cha
   sql <- glue::glue_sql("UPDATE code SET code = {edited_code} WHERE id = {code_id}", .con = r$db)
   query <- DBI::dbSendStatement(r$db, sql)
   DBI::dbClearResult(query)
-  r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
+  # r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
+  r$code <- r$code %>% dplyr::mutate(
+    code = dplyr::case_when(
+      id == code_id ~ edited_code,
+      TRUE ~ code
+    ))
   
   # Notify user
   show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n)

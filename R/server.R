@@ -87,7 +87,6 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
     onStop(function() {
       add_log_entry(r = isolate(r), category = "Connection ends", name = "Connection ends", value = "")
       DBI::dbDisconnect(isolate(r$db))
-      # setwd(initial_wd)
     })
     
     # Add default values in database if database is empty
@@ -101,7 +100,7 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       insert_default_values(output = output, r = r)
       
       # Load database
-      load_database(r = r, language = language)
+      load_database_new(r = r, i18n = i18n)
       
     })
 

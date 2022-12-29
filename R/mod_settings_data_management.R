@@ -140,7 +140,8 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
                   )
                 )
               ),
-              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
+              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), 
+            style = "width: 100%;"),
             shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
             shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
             div(shiny::verbatimTextOutput(ns("code_result")), 
@@ -240,10 +241,34 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       div(id = ns("edit_code_card"), 
         make_card(i18n$t("edit_thesaurus_code"),
           div(
-            make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "code_chosen",
-              width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
-            div(shinyAce::aceEditor(ns("ace_edit_code"), "", mode = "r", 
-              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "code_chosen",
+                width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+              div(style = "width:20px;"),
+              div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
+              div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:45px; margin-right:30px;"), 
+            ),
+            shinyjs::hidden(div(id = ns("div_br"), br())),
+            div(shinyAce::aceEditor(
+              ns("ace_edit_code"), "", mode = "r", 
+              code_hotkeys = list(
+                "r", list(
+                  run_selection = list(
+                    win = "CTRL-ENTER",
+                    mac = "CTRL-ENTER|CMD-ENTER"
+                  ),
+                  run_all = list(
+                    win = "CTRL-SHIFT-ENTER",
+                    mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"
+                  ),
+                  save = list(
+                    win = "CTRL-S",
+                    mac = "CTRL-S|CMD-S"
+                  )
+                )
+              ),
+              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), 
+            style = "width: 100%;"),
             shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
             shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
             div(shiny::verbatimTextOutput(ns("code_result")), 
@@ -269,7 +294,12 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
                   shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
             ),
             DT::DTOutput(ns("sub_datatable")), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), i18n$t("save"))
+            shiny.fluent::Stack(
+              horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), i18n$t("save")),
+              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection")),
+              shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), i18n$t("reload_cache"))
+            )
           )
         ), br()
       ),
@@ -416,9 +446,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Create a list with new data
       # If page = thesaurus, data_source is character, not integer (multiple choices)
       new_data <- list()
-      # if (id == "settings_thesaurus") new_data_var <- c("name" = "char", "description" = "char", "data_source" = "char")
-      # else 
-        new_data_var <- c("name" = "char", "description" = "char", "data_source" = "int", "datamart" = "int", 
+      if (id == "settings_thesaurus") new_data_var <- c("name" = "char", "description" = "char", "data_source" = "char")
+      else new_data_var <- c("name" = "char", "description" = "char", "data_source" = "int", "datamart" = "int", 
         "study" = "int", "patient_lvl_module_family" = "int", "aggregated_module_family" = "int")
       
       sapply(names(new_data_var),
@@ -427,10 +456,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       })
       
       # Convert data_source to string, for page thesaurus
-      # if (id == "settings_thesaurus"){
-      #   if (length(new_data$data_source) == 1) new_data$data_source <- coalesce2(type = "char", x = input$data_source)
-      #   else new_data$data_source <- toString(as.integer(new_data$data_source))
-      # }
+      if (id == "settings_thesaurus"){
+        if (length(new_data$data_source) == 1) new_data$data_source <- coalesce2(type = "char", x = input$data_source)
+        else new_data$data_source <- toString(as.integer(new_data$data_source))
+      }
       
       add_settings_new_data_new(session = session, output = output, r = r, m = m, i18n = i18n, id = id, 
         data = new_data,
@@ -574,6 +603,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # When save button is clicked
       # Do that for main datatable (management_datatable) & sub_datatable
       observeEvent(input$management_save, {
+        
+        req(nrow(r[[paste0(table, "_temp")]]) > 0)
+        
         duplicates_allowed <- FALSE
         if (table == "subsets") duplicates_allowed <- TRUE
         save_settings_datatable_updates_new(output = output, r = r, ns = ns, table = table, i18n = i18n, duplicates_allowed = duplicates_allowed)
@@ -926,21 +958,21 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       if (table == "thesaurus"){
           
         # Sub datatable is a datatable in thesaurus page, when we click on the subdatatable button of a thesaurus row
-        # It opens a toggle with a datatable containing items of chosen thesaurus
+        # It opens a tab with a datatable containing items of chosen thesaurus
         
         observeEvent(input$sub_datatable, {
           
           # Get link id
           link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
           
-          options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list_new(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
           value <- list(key = link_id, text = r[[table]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
           
           shiny.fluent::updateComboBox.shinyInput(session, "items_chosen", options = options, value = value)
           shiny.fluent::updateComboBox.shinyInput(session, "code_chosen", options = options, value = value)
           
           # Set current pivot to edit_code_card
-          shinyjs::runjs(glue::glue("$('#{id}-thesaurus_pivot button[name=\"{i18n$t('all_items')}\"]').click();"))
+          shinyjs::runjs(glue::glue("$('#{id}-thesaurus_pivot button[name=\"{i18n$t('items')}\"]').click();"))
         })
         
         observeEvent(input$items_chosen, {
@@ -966,7 +998,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
           datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
           
-          options <- convert_tibble_to_list(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          options <- convert_tibble_to_list_new(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
           shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_datamart", options = options)
           
           # Set r$thesaurus_refresh_thesaurus_items to "all_items", cause we havn't chosen yet the thesaurus or the datamart
@@ -993,7 +1025,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           # Get all items from the chosen thesaurus
           
-          r$sub_thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
+          r$sub_thesaurus_items <- create_datatable_cache_new(output = output, r = r, d = d, i18n = i18n, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
           
           if (length(input$thesaurus_datamart) > 0){
             if (input$thesaurus_datamart != ""){
@@ -1002,18 +1034,18 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
               count_patients_rows <- tibble::tibble()
               
               # Add count_items_rows in the cache & get it if already in the cache
-              tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = r$thesaurus_link_id,
+              tryCatch(count_items_rows <- create_datatable_cache_new(output = output, r = r, d = d, i18n = i18n, thesaurus_id = r$thesaurus_link_id,
                 datamart_id = as.integer(input$thesaurus_datamart), category = "count_items_rows"),
-                error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-                  error_name = paste0(id, " - count_items_rows"), category = "Error", error_report = toString(e), language = language))
+                error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+                  error_name = paste0(id, " - count_items_rows"), category = "Error", error_report = toString(e), i18n = i18n))
               
               # Add count_items_rows in the cache & get it if already in the cache
-              tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = r$thesaurus_link_id,
+              tryCatch(count_patients_rows <- create_datatable_cache_new(output = output, r = r, d = d, i18n = i18n, thesaurus_id = r$thesaurus_link_id,
                 datamart_id = as.integer(input$thesaurus_datamart), category = "count_patients_rows"),
-                error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-                  error_name = paste0(id, " - count_patients_rows"), category = "Error", error_report = toString(e), language = language))
+                error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+                  error_name = paste0(id, " - count_patients_rows"), category = "Error", error_report = toString(e), i18n = i18n))
               
-              if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language)
+              if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n)
               req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
               
               # Transform count_rows cols to integer, to be sortable
@@ -1072,6 +1104,38 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             DT::replaceData(r$sub_thesaurus_datatable_proxy, r$sub_thesaurus_items_temp, resetPaging = FALSE, rownames = FALSE)
           })
           
+        })
+        
+        # Reload cache
+        
+        observeEvent(input$reload_thesaurus_cache, {
+          
+          sql <- glue::glue_sql("SELECT id FROM thesaurus_items WHERE thesaurus_id = {r$thesaurus_link_id}", .con = r$db)
+          thesaurus_items <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
+          
+          sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
+            "link_id IN ({thesaurus_items*})"), .con = r$db)
+          print(DBI::dbGetQuery(r$db, sql))
+          
+          # Delete cache
+          sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
+            "link_id IN ({thesaurus_items*})"), .con = r$db)
+          query <- DBI::dbSendStatement(r$db, sql)
+          DBI::dbClearResult(query)
+          
+          sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
+            "link_id IN ({thesaurus_items*})"), .con = r$db)
+          print(DBI::dbGetQuery(r$db, sql))
+          
+          # Reset datamart dropdown
+          data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == r$thesaurus_link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
+          datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
+          
+          options <- convert_tibble_to_list_new(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_datamart", options = options)
+          
+          # Reload datatable
+          r$thesaurus_refresh_thesaurus_items <- paste0(Sys.time(), "all_items")
         })
       }
   })
