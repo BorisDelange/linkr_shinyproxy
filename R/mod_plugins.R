@@ -888,7 +888,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     plugin_table <- "plugins"
     plugin_id_var_sql <- "id"
     plugin_id_var_r <- "delete_plugins"
-    plugin_delete_message <- "plugin_deleted"
+    plugin_delete_message <- "plugins_deleted"
     plugin_reload_variable <- paste0("reload" , prefix, "_plugins")
     plugin_information_variable <- "plugin_deleted"
     plugin_delete_variable <- paste0(plugin_delete_prefix, "_open_dialog")

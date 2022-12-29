@@ -15,18 +15,19 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
   
   cards <- c(#"datamarts_options_card", "datamarts_edit_code_card", 
     "study_messages_card", "studies_creation_card", "studies_datatable_card", "study_options_card",
-    "import_study_card", "export_study_card", "modules_families_card", "thesaurus_datamart_card")
+    "import_study_card", "export_study_card"#, 
+    #"modules_families_card", "thesaurus_datamart_card"
+    )
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
-    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, language = language, words = words))
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card_new(ns = ns, name = card, i18n = i18n))
   })
   
   div(
     class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("study_delete_confirm")),
-    #shiny.fluent::reactOutput(ns("thesaurus_item_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "datamart_main", text = i18n$t("my_studies"))
     ), maxDisplayedItems = 3),
@@ -96,7 +97,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
             ),
             div(DT::DTOutput(ns("studies_datatable")), style = "margin-top:-30px; z-index:2"),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("save_plugins_management"), i18n$t("save")),
+              shiny.fluent::PrimaryButton.shinyInput(ns("save_studies_management"), i18n$t("save")),
               shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
             )
           )
@@ -194,7 +195,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     cards <- c(#"datamarts_options_card", "datamarts_edit_code_card", 
       "study_messages_card", "studies_datatable_card", "study_options_card",
-      "import_study_card", "export_study_card", "modules_families_card")#, "thesaurus_datamart_card")
+      "import_study_card", "export_study_card")#, "modules_families_card")#, "thesaurus_datamart_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
 
     # --- --- --- --- --- -
@@ -217,7 +218,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       shinyjs::show("menu")
       if (length(input$current_tab) == 0){
         if ("study_messages_card" %in% r$user_accesses) shinyjs::show("study_messages_card")
-        else shinyjs::show("studies_creation_card_forbidden")
+        else shinyjs::show("study_messages_card_forbidden")
       }
       
       # The datamart is loaded here, and not in sidenav
@@ -279,67 +280,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     # Once the datamart is loaded, load studies & scripts
     observeEvent(r$loaded_datamart, {
-      update_r(r = r, table = "studies")
-      update_r(r = r, table = "scripts")
+      update_r_new(r = r, m = m, table = "studies")
+      update_r_new(r = r, m = m, table = "scripts")
     })
-    
-    # --- --- --- --- --- -
-    # Datamart options ----
-    # --- --- --- --- --- -
-    
-    # observeEvent(input$save_datamart_options, {
-    # 
-    #   data <- list()
-    #   data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
-    #   data$users_allowed_read <- unique(input$users_allowed_read)
-    #   data$users_allowed_read_group <- input$users_allowed_read_group
-    # 
-    #   save_settings_options(output = output, r = r, id = id, category = "datamart", code_id_input = paste0("options_", r$chosen_datamart),
-    #     language = language, data = data, page_options = c("show_only_aggregated_data", "users_allowed_read"))
-    # 
-    # })
-    
-    # --- --- --- --- --- ---
-    # Edit datamart code ----
-    # --- --- --- --- --- ---
-
-    # Execute code
-    
-    # observeEvent(input$execute_code, {
-    # 
-    #   code <- input$datamart_ace_editor %>% 
-    #     stringr::str_replace_all("\r", "\n") %>%
-    #     stringr::str_replace_all("%datamart_id%", as.character(isolate(r$chosen_datamart)))
-    #   
-    #   # Change this option to display correctly tibble in textbox
-    #   options('cli.num_colors' = 1)
-    #   
-    #   # Capture console output of our code
-    #   captured_output <- capture.output(
-    #     tryCatch(eval(parse(text = as.character(code))), error = function(e) print(e), warning = function(w) print(w)))
-    #   
-    #   # Restore normal value
-    #   options('cli.num_colors' = NULL)
-    #   
-    #   # Display result
-    #   output$code_result <- renderText(paste(strwrap(captured_output), collapse = "\n"))
-    # })
-    # 
-    # # Save updates
-    # 
-    # observeEvent(input$save_code, {
-    #   
-    #   code_id <- r$code %>% dplyr::filter(category == "datamart" & link_id == r$chosen_datamart) %>% dplyr::pull(id)
-    # 
-    #   DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '",
-    #     stringr::str_replace_all(input$datamart_ace_editor, "'", "''"), "' WHERE id = ", code_id)) -> query
-    #   DBI::dbClearResult(query)
-    #   update_r(r = r, table = "code")
-    # 
-    #   # Notification to user
-    #   show_message_bar(output, 4, "modif_saved", "success", language)
-    #   
-    # })
     
     # --- --- --- --- ---
     # Create a study ----
@@ -355,9 +298,11 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       new_data$aggregated_module_family <- get_last_row(r$db, "aggregated_modules_families") + 1
       new_data$datamart <- r$chosen_datamart
       
-      add_settings_new_data_new(session = session, output = output, r = r, m = m, i18n = i18n, id = "settings_studies", 
+      add_settings_new_data_new(session = session, output = output, r = r, d = d, m = m, i18n = i18n, id = "settings_studies", 
         data = new_data, table = "studies", required_textfields = "study_name", req_unique_values = "name")
       
+      # Reload datatable
+      r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
     })
     
     # --- --- --- --- --- ---
@@ -387,7 +332,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       req(nrow(r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)) > 0)
 
-      r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart) %>% dplyr::mutate(modified = FALSE)
+      r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
 
       # Prepare data for datatable
 
@@ -400,12 +345,12 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$studies_datatable_temp,
         output_name = "studies_datatable", col_names =  get_col_names_new("studies", i18n),
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
 
       # Create a proxy for datatable
 
       r$studies_datatable_proxy <- DT::dataTableProxy("studies_datatable", deferUntilFlush = FALSE)
-    })
+    }, once = TRUE)
     
     # Reload datatable
     observeEvent(r$studies_temp, {
@@ -435,7 +380,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       req(nrow(r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)) > 0)
       
-      save_settings_datatable_updates(output = output, r = r, ns = ns, table = "studies", language = language, duplicates_allowed = FALSE)
+      save_settings_datatable_updates_new(output = output, r = r, ns = ns, 
+        table = "studies", r_table = "studies", i18n = i18n, duplicates_allowed = FALSE)
       
       # Update sidenav dropdown with the new study
       r$reload_studies <- Sys.time()
@@ -450,31 +396,40 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     study_table <- "studies"
     study_id_var_sql <- "id"
     study_id_var_r <- "delete_study"
-    study_delete_message <- "study_deleted"
+    study_delete_message <- "studies_deleted"
     study_reload_variable <- "reload_studies"
     study_information_variable <- "study_deleted"
     study_delete_variable <- paste0(study_delete_prefix, "_open_dialog")
     
-    delete_element(r = r, input = input, output = output, session = session, ns = ns, language = language,
+    delete_element_new(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
       delete_prefix = study_delete_prefix, dialog_title = study_dialog_title, dialog_subtext = study_dialog_subtext,
       react_variable = study_react_variable, table = study_table, id_var_sql = study_id_var_sql, id_var_r = study_id_var_r, 
       delete_message = study_delete_message, translation = TRUE, reload_variable = study_reload_variable, 
       information_variable = study_information_variable)
     
+    # Delete one row (with icon on DT)
+    
     observeEvent(input$deleted_pressed, {
       
       r$delete_study <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
       r[[study_delete_variable]] <- TRUE
+    })
+    
+    # Delete multiple rows (with "Delete selection" button)
+    
+    observeEvent(input$delete_selection, {
       
+      req(length(input$studies_datatable_rows_selected) > 0)
+      
+      r$delete_study <- r$studies_temp[input$studies_datatable_rows_selected, ] %>% dplyr::pull(id)
+      r[[study_delete_variable]] <- TRUE
     })
     
     observeEvent(r$reload_studies, {
       
       # Reload sidenav dropdown with reloading studies
       update_r(r = r, table = "studies")
-      
-      # Reload datatable
-      r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)  %>% dplyr::mutate(modified = FALSE)
+      r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       # Reset chosen study
       m$chosen_study <- NA_integer_

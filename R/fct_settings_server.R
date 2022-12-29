@@ -269,7 +269,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     code <- paste0('run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n\n',
                    'patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n\n',
                    'add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)\n\n',
-                   'update_r(r = r, table = "subset_patients")')
+                   'update_r_new(r = r, m = m, table = "subset_patients")')
     new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row_code + 1, "subset", last_row_subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row_code + 2, "subset", last_row_subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
@@ -341,8 +341,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   else sapply(c("plugin_name", "script_name", "study_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
-add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class(), id = character(),
-  data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), 
+add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
+  i18n = R6::R6Class(), id = character(), data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), 
   required_dropdowns = "all", dropdowns = character()){
   
   # For textfields, we have the choice if empty data is possible or not
@@ -406,107 +406,102 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   if (!dropdowns_check) show_message_bar_new(output = output, id = 2, message = "dropdown_empty", type = "severeWarning", i18n = i18n)
   req(dropdowns_check)
   
+  # db variable depending on table
+  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients")
+  if (table %in% m_tables) db <- m$db
+  else db <- r$db
   
   # Get last_row nb
-  last_row <- get_last_row(r$db, table)
+  last_row <- list()
+  for (var in c("code", "options", "subsets", "thesaurus")){
+    if (var == "subsets") last_row[[var]] <- get_last_row(m$db, "subsets") 
+    else last_row[[var]] <- get_last_row(r$db, var)
+  }
+  last_row$data <- get_last_row(db, table)
   
-  # Creation of new_data variable for data_management pages
+  # Create a list with all new data
+  new_data <- list()
+  
+  # Creation of new_data$data variable for data_management pages
   if (table %in% c("data_sources", "datamarts", "studies", "subsets", "thesaurus")){
     
     # These columns are found in all of these tables
-    new_data <- tibble::tribble(~id, ~name, ~description, last_row + 1, as.character(data$name), as.character(data$description))
+    new_data$data <- tibble::tribble(~id, ~name, ~description, last_row$data + 1, as.character(data$name), as.character(data$description))
     
-    if (id == "settings_datamarts") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.integer(data$data_source)))
-    if (id == "settings_studies") new_data <- new_data %>% dplyr::bind_cols(
+    if (id == "settings_datamarts") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.integer(data$data_source)))
+    if (id == "settings_studies") new_data$data <- new_data$data %>% dplyr::bind_cols(
       tibble::tribble(~datamart_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id,
         as.integer(data$datamart), as.integer(data$patient_lvl_module_family), as.integer(data$aggregated_module_family)))
-    if (id == "settings_subsets") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~study_id, as.integer(data$study)))
-    if (id == "settings_thesaurus") new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.character(data$data_source)))
+    if (id == "settings_subsets") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~study_id, as.integer(data$study)))
+    if (id == "settings_thesaurus") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.character(data$data_source)))
     
     # These columns are also found in all of these tables
     # Add them at last to respect the order of cols
-    new_data <- new_data %>% dplyr::bind_cols(tibble::tribble(~creator_id, ~datetime, ~deleted, r$user_id, as.character(Sys.time()), FALSE))
+    new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~creator_id, ~datetime, ~deleted, r$user_id, as.character(Sys.time()), FALSE))
   }
   
-  # Creation of new_data variable for plugins page
+  # Creation of new_data$data variable for plugins page
   if (table == "plugins"){
-    new_data <- tibble::tribble(~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
-      last_row + 1, as.character(data$name), "", as.integer(data$module_type), as.character(Sys.time()), FALSE)
+    new_data$data <- tibble::tribble(~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
+      last_row$data + 1, as.character(data$name), "", as.integer(data$module_type), as.character(Sys.time()), FALSE)
   }
   
-  # Creation of new_data variable for scripts page
+  # Creation of new_data$data variable for scripts page
   if (table == "scripts"){
-    new_data <- tibble::tribble(~id, ~name, ~data_source_id, ~creator_id, ~datetime, ~deleted,
-      last_row + 1, as.character(data$name), as.integer(data$data_source), r$user_id, as.character(Sys.time()), FALSE)
+    new_data$data <- tibble::tribble(~id, ~name, ~data_source_id, ~creator_id, ~datetime, ~deleted,
+      last_row$data + 1, as.character(data$name), as.integer(data$data_source), r$user_id, as.character(Sys.time()), FALSE)
   }
   
-  # Creation of new_data variable for users sub-pages
+  # Creation of new_data$data variable for users sub-pages
   # Password is hashed
   if (table == "users"){
-    new_data <- tibble::tribble(~id, ~username, ~firstname, ~lastname, ~password, ~user_access_id, ~user_status_id, ~datetime, ~deleted,
-      last_row + 1, as.character(data$username), as.character(data$firstname), as.character(data$lastname),
+    new_data$data <- tibble::tribble(~id, ~username, ~firstname, ~lastname, ~password, ~user_access_id, ~user_status_id, ~datetime, ~deleted,
+      last_row$data + 1, as.character(data$username), as.character(data$firstname), as.character(data$lastname),
       rlang::hash(data$password), as.integer(data$user_access), as.integer(data$user_status), as.character(Sys.time()), FALSE)
   }
   
   if (table %in% c("users_accesses", "users_statuses")){
-    new_data <- tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
-      last_row + 1, as.character(data$name), as.character(data$description), as.character(Sys.time()), FALSE)
+    new_data$data <- tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
+      last_row$data + 1, as.character(data$name), as.character(data$description), as.character(Sys.time()), FALSE)
   }
   
   if (table %in% c("patient_lvl_modules", "aggregated_modules")){
-    new_data <- tibble::tribble(~id, ~name,  ~description, ~module_family_id, ~parent_module_id,  ~display_order, ~creator_id, ~datetime, ~deleted,
-      last_row + 1, as.character(data$name), as.character(data$description), as.integer(data$module_family), as.integer(data$parent_module),
+    new_data$data <- tibble::tribble(~id, ~name,  ~description, ~module_family_id, ~parent_module_id,  ~display_order, ~creator_id, ~datetime, ~deleted,
+      last_row$data + 1, as.character(data$name), as.character(data$description), as.integer(data$module_family), as.integer(data$parent_module),
       as.integer(data$display_order), r$user_id, as.character(Sys.time()), FALSE)
   }
   
   if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
-    new_data <- tibble::tribble(~id, ~name,  ~description, ~creator_id, ~datetime, ~deleted,
-      last_row + 1, as.character(data$name), as.character(data$description), r$user_id, as.character(Sys.time()), FALSE)
+    new_data$data <- tibble::tribble(~id, ~name,  ~description, ~creator_id, ~datetime, ~deleted,
+      last_row$data + 1, as.character(data$name), as.character(data$description), r$user_id, as.character(Sys.time()), FALSE)
   }
   
-  # Append data to the table
-  DBI::dbAppendTable(r$db, table, new_data)
-  add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
+  # Append data to the table and to r / m variables
+  DBI::dbAppendTable(db, table, new_data$data)
+  if (table %in% m_tables) m[[table]] <- m[[table]] %>% dplyr::bind_rows(new_data$data)
+  else r[[table]] <- r[[table]] %>% dplyr::bind_rows(new_data$data)
+  add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data$data))
   
-  # Refresh r variables
-  update_r_new(r = r, m = m, table = table)
-  
-  # Add new rows in code table & options table
-  # Add default subsets when creating a new study
-  last_row_code <- get_last_row(r$db, "code")
-  last_row_options <- get_last_row(r$db, "options")
-  last_row_subsets <- get_last_row(m$db, "subsets")
-  last_row_thesaurus <- get_last_row(r$db, "thesaurus")
+  # Empty new variables
+  new_data_vars <- c("options", "subsets", "code", "patient_lvl_modules_family", "aggregated_modules_family", "thesaurus")
+  for(var in new_data_vars) new_data[[var]] <- tibble::tibble()
   
   # Add a row in code if table is datamarts, thesaurus
   if (table %in% c("datamarts", "thesaurus")){
-    
-    new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row_code + 1, get_singular(word = table), last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "code", new_code)
-    update_r(r = r, table = "code", language = language)
-    
-    add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
+    new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+      last_row$code + 1, get_singular(word = table), last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # Add a new thesaurus if a new data source is created
   if (table == "data_sources"){
     
     new_thesaurus <- tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
-      last_row_thesaurus + 1, paste0(data$name, " - scripts items"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "thesaurus", new_thesaurus)
-    update_r_new(r = r, m = m, table = "thesaurus")
-    
-    add_log_entry(r = r, category = paste0("thesaurus", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_thesaurus))
+      last_row$thesaurus + 1, paste0(data$name, " - scripts items"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
   
     # Add also the code for the new thesaurus
     
-    new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row_code + 1, "thesaurus", last_row_thesaurus + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "code", new_code)
-    update_r_new(r = r, m = m, table = "code")
-    
-    add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
+    new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+      last_row$code + 1, "thesaurus", last_row$thesaurus + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # For options of plugins, add one row for long description (Markdown) & 2 rows for users allowed to use this plugin
@@ -517,145 +512,99 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     # Add options rows
     # value <- paste0("- **Version** : 0.0.1\n- **Libraries** : *put libraries needed here*\n- **Data allowed** : *put data allowed here*\n",
     #   "- **Previous plugin needed first** : *put previous plugins needed here*\n\n*Put full description here*")
-    
     username <- r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::mutate(fullname = paste0(firstname, " ", lastname)) %>% dplyr::pull(fullname)
     
-    new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row_options + 1, "plugin", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 2, "plugin", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 3, "plugin", last_row + 1, "version", "0.0.1", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 4, "plugin", last_row + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 5, "plugin", last_row + 1, "author", username, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 6, "plugin", last_row + 1, "image", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 7, "plugin", last_row + 1, "description_fr", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 8, "plugin", last_row + 1, "description_en", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
+    new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+      last_row$options + 1, "plugin", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 2, "plugin", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 3, "plugin", last_row$data + 1, "version", "0.0.1", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 4, "plugin", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 5, "plugin", last_row$data + 1, "author", username, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 6, "plugin", last_row$data + 1, "image", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 7, "plugin", last_row$data + 1, "description_fr", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 8, "plugin", last_row$data + 1, "description_en", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
       )
-    DBI::dbAppendTable(r$db, "options", new_options)
-    update_r_new(r = r, m = m, table = "options")
-    
-    add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_options))
-    
     # Add code rows
-    new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row_code + 1, "plugin_ui", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_code + 2, "plugin_server", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "code", new_code)
-    update_r_new(r = r, m = m, table = "code")
-    
-    add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
+    new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+      last_row$code + 1, "plugin_ui", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$code + 2, "plugin_server", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
-  
+
   # For options of scripts, add one row for long description (Markdown)
   if (id == "scripts"){
     
     # Add options rows
     
-    new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row_options + 1, "script", last_row + 1, "markdown_description", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "options", new_options)
-    update_r_new(r = r, m = m, table = "options")
-    
-    add_log_entry(r = r, category = paste0("options", " - ", translate(language, "insert_new_data", r$words)), name = translate(language, "sql_query", r$words), value = toString(new_options))
+    new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+      last_row$options + 1, "script", last_row$data + 1, "markdown_description", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add code rows
-    new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row_code + 1, "script", last_row + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "code", new_code)
-    update_r_new(r = r, m = m, table = "code")
-    
-    add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
+    new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+      last_row$code + 1, "script", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # For options of datamarts, need to add 3 rows in options
   if (id == "settings_datamarts"){
     
-    new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row_options + 1, "datamart", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 2, "datamart", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 3, "datamart", last_row + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "options", new_options)
-    update_r_new(r = r, m = m, table = "options")
-    
-    add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_options))
+    new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+      last_row$options + 1, "datamart", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 2, "datamart", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 3, "datamart", last_row$data + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # For studies, need to add one row in options and add rows of code for subsets, with default value
   if (id == "settings_studies"){
     
-    new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row_options + 1, "study", last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 2, "study", last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "options", new_options)
-    add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_options))
+    new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+      last_row$options + 1, "study", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 2, "study", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add rows in subsets table, for inclusion / exclusion subsets
     # Add also code corresponding to each subset
-    new_subsets <- tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id,  ~datetime, ~deleted,
-      last_row_subsets + 1, i18n$t("subset_all_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_subsets + 2, i18n$t("subset_included_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_subsets + 3, i18n$t("subset_excluded_patients"), "", last_row + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(m$db, "subsets", new_subsets)
-    add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_subsets))
+    new_data$subsets <- tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id,  ~datetime, ~deleted,
+      last_row$subsets + 1, i18n$t("subset_all_patients"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$subsets + 2, i18n$t("subset_included_patients"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$subsets + 3, i18n$t("subset_excluded_patients"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add code for creating subset with all patients
     code <- paste0('run_datamart_code(output = output, r = r, datamart_id = %datamart_id%)\n\n',
       'patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n\n',
-      'add_patients_to_subset(output = output, r = r, patients = patients, subset_id = %subset_id%)\n\n',
+      'add_patients_to_subset_new(output = output, r = r, m = m, patients = patients, subset_id = %subset_id%)\n\n',
       'update_r_new(r = r, m = m, table = "subset_patients")')
-    new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row_code + 1, "subset", last_row_subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_code + 2, "subset", last_row_subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_code + 3, "subset", last_row_subsets + 3, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "code", new_code)
-    add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
+    new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+      last_row$code + 1, "subset", last_row$subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$code + 2, "subset", last_row$subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$code + 3, "subset", last_row$subsets + 3, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add patient_lvl & aggregated modules families
     
-    new_patient_lvl_module_family <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+    new_data$patient_lvl_module_family <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
       get_last_row(r$db, "patient_lvl_modules_families") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "patient_lvl_modules_families", new_patient_lvl_module_family)
-    add_log_entry(r = r, category = paste0("patient_lvl_module_family", " - ", i18n$t("insert_new_data")),
-      name = i18n$t("sql_query"), value = toString(new_patient_lvl_module_family))
     
-    new_aggregated_module_family <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+    new_data$aggregated_module_family <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
       get_last_row(r$db, "aggregated_modules_families") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "aggregated_modules_families", new_aggregated_module_family)
-    add_log_entry(r = r, category = paste0("aggregated_module_family", " - ", i18n$t("insert_new_data")),
-      name = i18n$t("sql_query"), value = toString(new_aggregated_module_family))
-    
-    # Update r$options, r$code & r$subsets, & r modules families
-    update_r_new(r = r, m = m, "options")
-    update_r_new(r = r, m = m, "subsets")
-    update_r_new(r = r, m = m, "code")
-    update_r_new(r = r, m = m, "patient_lvl_modules_families")
-    update_r_new(r = r, m = m, "aggregated_modules_families")
     
     # Add patients to subset
     tryCatch({
       patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
-      add_patients_to_subset(output, r, patients, last_row_subsets + 1)
+      add_patients_to_subset_new(output, r, m, patients, last_row$subsets + 1)
     }, 
       error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
-        error_name = paste0("add study - add_patients_to_subsets - id = ", last_row_subsets + 1), category = "Error", error_report = toString(e), language = language))
+        error_name = paste0("add study - add_patients_to_subsets - id = ", last_row$subsets + 1), category = "Error", error_report = toString(e), language = language))
     
     # Update sidenav dropdown with the new study
     r$studies_choices <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE datamart_id = ", data$datamart))
     
     # Select new study as current study
-    m$chosen_study <- last_row + 1
+    m$chosen_study <- last_row$data + 1
     r$study_page <- Sys.time()
   }
   
   # For options of patient_lvl & aggregated modules families, need to add two rows, for users accesses
   if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
-    
-    new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row_options + 1, get_singular(word = table), last_row + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row_options + 2, get_singular(word = table), last_row + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
-    DBI::dbAppendTable(r$db, "options", new_options)
-    update_r_new(r = r, m = m, table = "options")
-    
-    add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_options))
+    new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+      last_row$options + 1, get_singular(word = table), last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 2, get_singular(word = table), last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # Hide creation card & options card, show management card
@@ -664,6 +613,21 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = FALSE)
     shiny.fluent::updateToggle.shinyInput(session, "creation_card_toggle", value = FALSE)
     shiny.fluent::updateToggle.shinyInput(session, "datatable_card_toggle", value = TRUE)
+  }
+  
+  # Add new data to r variables and database
+  for (var in new_data_vars){
+    if (nrow(new_data[[var]]) > 0){
+      if (var == "subsets"){
+        DBI::dbAppendTable(m$db, var, new_data$subsets)
+        m$subsets <- m$subsets %>% dplyr::bind_rows(new_data$subsets)
+      } 
+      else {
+        DBI::dbAppendTable(r$db, var, new_data[[var]])
+        r[[var]] <- r[[var]] %>% dplyr::bind_rows(new_data[[var]]) 
+      }
+      add_log_entry(r = r, category = paste0(var, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data[[var]]))
+    }
   }
   
   show_message_bar_new(output = output, id = 1, message = paste0(get_singular(table), "_added"), type = "success", i18n = i18n)

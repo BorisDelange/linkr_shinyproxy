@@ -189,6 +189,79 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), patients
   }
 }
 
+add_patients_to_subset_new <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), patients = tibble::tibble(),
+  subset_id = integer(), success_notification = FALSE, i18n = R6::R6Class()){
+  
+  # Check subset_id
+  tryCatch(subset_id <- as.integer(subset_id), 
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "invalid_subset_id_value", 
+        error_name = paste0("add_patients_to_subset - invalid_subset_id - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("invalid_subset_id_value"))}
+  )
+  
+  if (is.na(subset_id) | length(subset_id) == 0){
+    show_message_bar_new(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n)
+    stop(i18n$t("invalid_subset_id_value"))
+  }
+  
+  var_cols <- tibble::tribble(
+    ~name, ~type,
+    "patient_id", "integer")
+  
+  # Check col names
+  if (!identical(names(patients), "patient_id")){
+    show_message_bar_new(output, 1, "invalid_col_names", "severeWarning", i18n = i18n)
+    stop(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
+  }
+  
+  # Check col types
+  sapply(1:nrow(var_cols), function(i){
+    var_name <- var_cols[[i, "name"]]
+    if (var_cols[[i, "type"]] == "integer" & !is.integer(patients[[var_name]])){
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
+    }
+  })
+  
+  # Transform as tibble
+  tryCatch(patients <- tibble::as_tibble(patients), 
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
+        error_name = paste0("add_patients_to_subset - error_transforming_tibble - id = ", subset_id), category = "Error", error_report = toString(e), language = language)
+      stop(i18n$t("error_transforming_tibble"))}
+  )
+  
+  # Keep only patients not already in the subset
+  actual_patients <- DBI::dbGetQuery(m$db, paste0("SELECT patient_id FROM subset_patients WHERE subset_id = ", subset_id))
+  
+  patients <- patients %>% dplyr::anti_join(actual_patients, by = "patient_id")
+  
+  # If there are patients to add
+  if (nrow(patients) > 0){
+    
+    # Add new patient(s) in the subset
+    tryCatch({
+      last_id <- DBI::dbGetQuery(m$db, "SELECT COALESCE(MAX(id), 0) FROM subset_patients") %>% dplyr::pull()
+      other_cols <- tibble::tibble(
+        id = 1:nrow(patients) + last_id, subset_id = subset_id, creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE
+      )
+      patients <- patients %>% dplyr::bind_cols(other_cols) %>% dplyr::relocate(patient_id, .after = "subset_id")
+      DBI::dbAppendTable(m$db, "subset_patients", patients)
+    },
+      error = function(e){
+        if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_inserting_data", 
+          error_name = paste0("add_patients_to_subset - error_inserting_data - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n)
+        stop(i18n$t("error_inserting_data"))}
+    )
+  }
+  
+  if (success_notification){
+    show_message_bar_new(output, 1, "add_patients_subset_success", "success", i18n = i18n)
+    print(i18n$t("add_patients_subset_success"))
+  }
+}
+
 #' Remove patients from a subset
 #'
 #' @description Remove patients from a subset

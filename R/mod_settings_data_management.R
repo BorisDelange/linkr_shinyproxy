@@ -45,8 +45,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
         
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("data_sources_management")),
-          shiny.fluent::PivotItem(id = "create_items_card", itemKey = "create_items_card", headerText = i18n$t("create_items"))
+          shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("data_sources_management"))
         ),
         
         forbidden_cards,
@@ -450,11 +449,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     dropdowns_datatable <- switch(id,
       "settings_data_sources" = "",
       "settings_datamarts" = "",
-      # "settings_datamarts" = c("data_source_id" = "data_sources"),
-      # "settings_studies" = c("datamart_id" = "datamarts", "patient_lvl_module_family_id" = "patient_lvl_modules_families", "aggregated_module_family_id" = "aggregated_modules_families"),
       "settings_studies" = c("patient_lvl_module_family_id" = "patient_lvl_modules_families", "aggregated_module_family_id" = "aggregated_modules_families"),
       "settings_subsets" = "",
-      # "settings_subsets" = c("study_id" = "studies"),
       "settings_thesaurus" = c("data_source_id" = "data_sources"))
     
     # Dropdowns with multiSelect
@@ -480,7 +476,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     if (id != "settings_thesaurus") sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
     
     # Column widths
-    column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
+    column_widths <- c("id" = "80px", "datetime" = "130px", "creator_id" = "200px", "action" = "80px")
     
     # Centered columns
     centered_cols <- c("id", "creator", "datetime", "action")
@@ -590,56 +586,92 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # --- --- --- --- --- --- --- --
       # Delete a row in datatable ----
       # --- --- --- --- --- --- --- --
-  
-      # Create & show dialog box
-      observeEvent(r[[paste0(table, "_delete_dialog")]] , {
-        output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react_new(r = r, ns = ns, table = table, i18n = i18n))
+      
+      settings_delete_prefix <- table
+      settings_dialog_title <- paste0(table, "_delete")
+      settings_dialog_subtext <- paste0(table, "_delete_subtext")
+      settings_react_variable <- "delete_confirm"
+      settings_id_var_sql <- "id"
+      settings_id_var_r <- paste0("delete_", get_plural(table))
+      settings_delete_message <- paste0(table, "_deleted")
+      settings_reload_variable <- paste0("reload_" , get_plural(table))
+      settings_information_variable <- paste0(table, "_deleted")
+      settings_delete_variable <- paste0(table, "_open_dialog")
+      
+      delete_element_new(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
+        delete_prefix = settings_delete_prefix, dialog_title = settings_dialog_title, dialog_subtext = settings_dialog_subtext,
+        react_variable = settings_react_variable, table = table, id_var_sql = settings_id_var_sql, id_var_r = settings_id_var_r,
+        delete_message = settings_delete_message, translation = TRUE, reload_variable = settings_reload_variable,
+        information_variable = settings_information_variable)
+      
+      # Delete one row (with icon on DT)
+      
+      observeEvent(input$deleted_pressed, {
+        
+        r[[paste0("delete_", get_plural(table))]] <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
+        r[[settings_delete_variable]] <- TRUE
       })
       
-      # Whether to close or not delete dialog box
-      observeEvent(input$hide_dialog, r[[paste0(table, "_delete_dialog")]] <- FALSE)
-      observeEvent(input$delete_canceled, r[[paste0(table, "_delete_dialog")]] <- FALSE)
-      observeEvent(input$deleted_pressed, r[[paste0(table, "_delete_dialog")]] <- TRUE)
+      # Delete multiple rows (with "Delete selection" button)
       
-      # When the delete is confirmed...
-      observeEvent(input$delete_confirmed, {
-
-        # If user has access
-        req(paste0(table, "_datatable_card") %in% r$user_accesses)
+      observeEvent(input$delete_selection, {
         
-        # Get value of deleted row
-        row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
-
-        # Delete row in DB table
-        delete_settings_datatable_row_new(output = output, r = r, ns = ns, i18n = i18n, row_deleted = row_deleted, table = table)
+        req(length(input[["management_datatable_rows_selected"]]) > 0)
+        
+        r[[paste0("delete_", get_plural(table))]] <- r[[paste0(table, "_temp")]][input[["management_datatable_rows_selected"]], ] %>% dplyr::pull(id)
+        r[[settings_delete_variable]] <- TRUE
       })
       
-      # The same for thesaurus_items / sub_datatable
-      if (table == "thesaurus"){
-        observeEvent(r$thesaurus_items_delete_dialog , {
-          output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react_new(r = r, ns = ns, table = "thesaurus_items", i18n = i18n))
-        })
-        
-        # Whether to close or not delete dialog box
-        observeEvent(input$thesaurus_items_hide_dialog, r$thesaurus_items_delete_dialog <- FALSE)
-        observeEvent(input$thesaurus_items_delete_canceled, r$thesaurus_items_delete_dialog <- FALSE)
-        observeEvent(input$thesaurus_items_deleted_pressed, r$thesaurus_items_delete_dialog <- TRUE)
-        
-        # When the delete is confirmed...
-        observeEvent(input$thesaurus_items_delete_confirmed, {
-          
-          # Get value of deleted row
-          row_deleted <- as.integer(substr(input$thesaurus_items_deleted_pressed, nchar("sub_delete_") + 1, nchar(input$thesaurus_items_deleted_pressed)))
-          
-          # Delete row in DB table
-          # Link_id is ID of thesaurus which sub_datatable depends on
-          # category is used to create the cache
-          link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
-        
-          delete_settings_datatable_row_new(output = output, id = id, r = r, ns = ns, i18n = i18n,
-            link_id = link_id, category = "delete", row_deleted = row_deleted, table = "thesaurus_items")
-        })
-      }
+      # 
+      # # Create & show dialog box
+      # observeEvent(r[[paste0(table, "_delete_dialog")]] , {
+      #   output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react_new(r = r, ns = ns, table = table, i18n = i18n))
+      # })
+      # 
+      # # Whether to close or not delete dialog box
+      # observeEvent(input$hide_dialog, r[[paste0(table, "_delete_dialog")]] <- FALSE)
+      # observeEvent(input$delete_canceled, r[[paste0(table, "_delete_dialog")]] <- FALSE)
+      # observeEvent(input$deleted_pressed, r[[paste0(table, "_delete_dialog")]] <- TRUE)
+      # 
+      # # When the delete is confirmed...
+      # observeEvent(input$delete_confirmed, {
+      # 
+      #   # If user has access
+      #   req(paste0(table, "_datatable_card") %in% r$user_accesses)
+      #   
+      #   # Get value of deleted row
+      #   row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
+      # 
+      #   # Delete row in DB table
+      #   delete_settings_datatable_row_new(output = output, r = r, ns = ns, i18n = i18n, row_deleted = row_deleted, table = table)
+      # })
+      # 
+      # # The same for thesaurus_items / sub_datatable
+      # if (table == "thesaurus"){
+      #   observeEvent(r$thesaurus_items_delete_dialog , {
+      #     output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react_new(r = r, ns = ns, table = "thesaurus_items", i18n = i18n))
+      #   })
+      #   
+      #   # Whether to close or not delete dialog box
+      #   observeEvent(input$thesaurus_items_hide_dialog, r$thesaurus_items_delete_dialog <- FALSE)
+      #   observeEvent(input$thesaurus_items_delete_canceled, r$thesaurus_items_delete_dialog <- FALSE)
+      #   observeEvent(input$thesaurus_items_deleted_pressed, r$thesaurus_items_delete_dialog <- TRUE)
+      #   
+      #   # When the delete is confirmed...
+      #   observeEvent(input$thesaurus_items_delete_confirmed, {
+      #     
+      #     # Get value of deleted row
+      #     row_deleted <- as.integer(substr(input$thesaurus_items_deleted_pressed, nchar("sub_delete_") + 1, nchar(input$thesaurus_items_deleted_pressed)))
+      #     
+      #     # Delete row in DB table
+      #     # Link_id is ID of thesaurus which sub_datatable depends on
+      #     # category is used to create the cache
+      #     link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
+      #   
+      #     delete_settings_datatable_row_new(output = output, id = id, r = r, ns = ns, i18n = i18n,
+      #       link_id = link_id, category = "delete", row_deleted = row_deleted, table = "thesaurus_items")
+      #   })
+      # }
       
       # --- --- --- --- --- --- --- --- -- -
       # Edit options by selecting a row ----
