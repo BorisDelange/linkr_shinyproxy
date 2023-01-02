@@ -870,15 +870,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
     })
     
-    # When at least one row is selected
-    
-    # observeEvent(input$plugins_datatable_rows_selected, {
-      
-      # print(input$plugins_datatable_rows_selected)
-    # })
-    
-    
-    
     # Delete a row or multiple rows in datatable
 
     plugin_delete_prefix <- paste0(prefix, "_plugin")

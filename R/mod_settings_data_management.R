@@ -188,6 +188,8 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
   if (id == "settings_thesaurus"){
     div(class = "main",
       render_settings_default_elements(ns = ns),
+      shiny.fluent::reactOutput(ns("thesaurus_reload_cache_confirm")),
+      shiny.fluent::reactOutput(ns("thesaurus_items_delete_confirm")),
       shiny.fluent::Breadcrumb(items = list(
         list(key = "thesaurus", text = i18n$t("thesaurus"))
       ), maxDisplayedItems = 3),
@@ -202,10 +204,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
         shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("create_thesaurus")),
         shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("thesaurus_management")),
         shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_thesaurus_code")),
-        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("items"))#,
-        # shiny.fluent::PivotItem(id = "categories_card", itemKey = "categories_card", headerText = i18n$t("categories")),
-        # shiny.fluent::PivotItem(id = "conversions_card", itemKey = "conversions_card", headerText = i18n$t("conversions")),
-        # shiny.fluent::PivotItem(id = "mapping_card", itemKey = "mapping_card", headerText = i18n$t("items_mapping")),
+        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("items"))
       ),
       
       
@@ -297,7 +296,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection")),
+              shiny.fluent::DefaultButton.shinyInput(ns("thesaurus_items_delete_selection"), i18n$t("delete_selection")),
               shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), i18n$t("reload_cache"))
             )
           )
@@ -519,8 +518,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     factorize_cols <- switch(id,
       "settings_data_sources" = "creator_id",
       "settings_datamarts" = c("data_source_id", "creator_id"),
-      "settings_studies" = c("datamart_id", "creator_id"),
-      "settings_subsets" = c("study_id", "creator_id"),
+      # "settings_studies" = c("datamart_id", "creator_id"),
+      # "settings_subsets" = c("study_id", "creator_id"),
       "settings_thesaurus" = "creator_id")
     
     hidden_cols <- c("id", "description", "deleted", "modified")
@@ -999,10 +998,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
           
           options <- convert_tibble_to_list_new(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-          shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_datamart", options = options)
+          shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_datamart", options = options, value = NULL)
           
           # Set r$thesaurus_refresh_thesaurus_items to "all_items", cause we havn't chosen yet the thesaurus or the datamart
-          r$thesaurus_refresh_thesaurus_items <- paste0(link_id, "all_items")
+          r$thesaurus_refresh_thesaurus_items <- paste0(link_id, "reset_all_items")
         })
           
         observeEvent(input$show_only_used_items, {
@@ -1026,8 +1025,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # Get all items from the chosen thesaurus
           
           r$sub_thesaurus_items <- create_datatable_cache_new(output = output, r = r, d = d, i18n = i18n, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
-          
-          if (length(input$thesaurus_datamart) > 0){
+     
+          if (length(input$thesaurus_datamart) > 0 & !grepl("reset", r$thesaurus_refresh_thesaurus_items)){
             if (input$thesaurus_datamart != ""){
               
               count_items_rows <- tibble::tibble()
@@ -1072,8 +1071,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           editable_cols <- c("display_name", "unit")
           searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
           factorize_cols <- c("category", "unit")
-          column_widths <- c("id" = "80px", "action" = "80px")# "name" = "300px", "display_name" = "300px", "unit" = "100px", 
-          # "category" = "300px", "colour" = "100px")
+          column_widths <- c("id" = "80px", "action" = "80px", "unit" = "100px")
           
           if ("count_patients_rows" %in% names(r$sub_thesaurus_items)){
             sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
@@ -1108,14 +1106,27 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         
         # Reload cache
         
+        thesaurus_reload_cache_prefix <- "thesaurus_reload_cache"
+        thesaurus_reload_cache_react_variable <- "thesaurus_reload_cache_confirm"
+        thesaurus_reload_cache_variable <- paste0(thesaurus_reload_cache_prefix, "_open_dialog")
+        
+        r[[thesaurus_reload_cache_variable]] <- FALSE
+        
         observeEvent(input$reload_thesaurus_cache, {
+          
+          req(length(input$items_chosen) > 1)
+          r[[thesaurus_reload_cache_variable]] <- TRUE
+        })
+        
+        observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_confirmed")]], {
+          
+          r[[thesaurus_reload_cache_variable]] <- FALSE
           
           sql <- glue::glue_sql("SELECT id FROM thesaurus_items WHERE thesaurus_id = {r$thesaurus_link_id}", .con = r$db)
           thesaurus_items <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
           
           sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
             "link_id IN ({thesaurus_items*})"), .con = r$db)
-          print(DBI::dbGetQuery(r$db, sql))
           
           # Delete cache
           sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
@@ -1125,17 +1136,55 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
             "link_id IN ({thesaurus_items*})"), .con = r$db)
-          print(DBI::dbGetQuery(r$db, sql))
           
           # Reset datamart dropdown
           data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == r$thesaurus_link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
           datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
           
           options <- convert_tibble_to_list_new(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-          shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_datamart", options = options)
+          shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_datamart", options = options, value = NULL)
           
           # Reload datatable
           r$thesaurus_refresh_thesaurus_items <- paste0(Sys.time(), "all_items")
+        })
+        
+        # Delete a row or multiple rows in datatable
+        
+        thesaurus_items_delete_prefix <- "thesaurus_items"
+        thesaurus_items_delete_variable <- paste0(thesaurus_items_delete_prefix, "_open_dialog")
+        thesaurus_items_dialog_title <- "thesaurus_items_delete"
+        thesaurus_items_dialog_subtext <- "thesaurus_items_delete_subtext"
+        thesaurus_items_react_variable <- "thesaurus_items_delete_confirm"
+        thesaurus_items_table <- "thesaurus_items"
+        thesaurus_items_id_var_sql <- "id"
+        thesaurus_items_id_var_r <- paste0(id, "_delete_thesaurus_items")
+        thesaurus_items_delete_message <- "thesaurus_items_deleted"
+        thesaurus_items_reload_variable <- "reload_thesaurus_items"
+        thesaurus_items_information_variable <- paste0(id, "_thesaurus_items_deleted")
+        thesaurus_items_delete_variable <- paste0(thesaurus_items_delete_prefix, "_open_dialog")
+        
+        delete_element_new(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
+          delete_prefix = thesaurus_items_delete_prefix, dialog_title = thesaurus_items_dialog_title, dialog_subtext = thesaurus_items_dialog_subtext,
+          react_variable = thesaurus_items_react_variable, table = thesaurus_items_table, id_var_sql = thesaurus_items_id_var_sql, id_var_r = thesaurus_items_id_var_r,
+          delete_message = thesaurus_items_delete_message, translation = TRUE, reload_variable = thesaurus_items_reload_variable,
+          information_variable = thesaurus_items_information_variable)
+        
+        # Delete one row (with icon on DT)
+        
+        observeEvent(input$thesaurus_items_deleted_pressed, {
+          
+          r[[paste0(id, "_delete_thesaurus_items")]] <- as.integer(substr(input$thesaurus_items_deleted_pressed, nchar("delete_") + 1, 100))
+          r[[thesaurus_items_delete_variable]] <- TRUE
+        })
+        
+        # Delete multiple rows (with "Delete selection" button)
+        
+        observeEvent(input$thesaurus_items_delete_selection, {
+          
+          req(length(input$sub_datatable_rows_selected) > 0)
+          
+          r[[paste0(id, "_delete_thesaurus_items")]] <- r$sub_thesaurus_items_temp[input$sub_datatable_rows_selected, ] %>% dplyr::pull(id)
+          r[[thesaurus_items_delete_variable]] <- TRUE
         })
       }
   })
