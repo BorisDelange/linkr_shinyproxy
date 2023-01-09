@@ -98,7 +98,7 @@ update_r <- function(r = shiny::reactiveValues(), table = character(), language 
   }
 }
 
-update_r_new <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), table = character()){
+update_r_new <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), table = character(), i18n = R6::R6Class()){
   tables <- c("users", "users_accesses", "users_statuses",
     "data_sources", "datamarts", "studies", "subsets", "subset_patients", "subsets_patients", "thesaurus", "thesaurus_items",
     "plugins", "scripts",
@@ -108,7 +108,7 @@ update_r_new <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(
     "options",
     "modules_elements_options", "patients_options")
   
-  if (table %not_in% tables) stop(paste0(translate(language, "invalid_table_name"), ". ", translate(language, "tables_allowed"), " : ", toString(tables)))
+  if (table %not_in% tables) stop(paste0(i18n$t("invalid_table_name"), ". ", i18n$t("tables_allowed"), " : ", toString(tables)))
   
   if (table %in% c("patients_options", "modules_elements_options", "subsets", "subset_patients", "subsets_patients")){
     db <- m$db
@@ -378,37 +378,37 @@ get_col_names_new <- function(table_name = character(), i18n = R6::R6Class()){
   }
   
   if (table_name == "thesaurus_items"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item"), i18n$t("name"), 
-      i18n$t("display_name"), i18n$t("category"), i18n$t("unit"),
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
+      i18n$t("abbreviation"), i18n$t("category"), i18n$t("unit"),
       i18n$t("datetime"), i18n$t("deleted"), i18n$t("action"), i18n$t("modified"))
   }
   
   if (table_name == "modules_thesaurus_items"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item"), i18n$t("name"), 
-      i18n$t("display_name"), i18n$t("category"), i18n$t("unit"),
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
+      i18n$t("abbreviation"), i18n$t("category"), i18n$t("unit"),
       i18n$t("colour"), i18n$t("datetime"), i18n$t("deleted"),
       i18n$t("action"), i18n$t("modified"))
   }
   
   if (table_name == "thesaurus_items_with_counts"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item"), i18n$t("name"), 
-      i18n$t("display_name"), i18n$t("category"), i18n$t("unit"),
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
+      i18n$t("abbreviation"), i18n$t("category"), i18n$t("unit"),
       i18n$t("datetime"), i18n$t("deleted"),
       i18n$t("num_patients"), i18n$t("num_rows"),
       i18n$t("action"), i18n$t("modified"))
   }
   
   if (table_name == "modules_thesaurus_items_with_counts"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item"), i18n$t("name"), 
-      i18n$t("display_name"), i18n$t("category"), i18n$t("unit"),
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
+      i18n$t("abbreviation"), i18n$t("category"), i18n$t("unit"),
       i18n$t("item_colour"), i18n$t("datetime"), i18n$t("deleted"),
       i18n$t("num_patients"), i18n$t("num_rows"),
       i18n$t("action"), i18n$t("modified"))
   }
   
   if (table_name == "datamart_thesaurus_items_with_counts"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item"), i18n$t("name"), 
-      i18n$t("display_name"), i18n$t("category"), i18n$t("unit"),
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
+      i18n$t("abbreviation"), i18n$t("category"), i18n$t("unit"),
       i18n$t("datetime"), i18n$t("deleted"),
       i18n$t("num_patients"), i18n$t("num_rows"),
       i18n$t("action"), i18n$t("modified"))
@@ -445,7 +445,7 @@ get_col_names_new <- function(table_name = character(), i18n = R6::R6Class()){
   if (table_name == "patient_lvl_modules_elements"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("module_family"), 
       i18n$t("group"), i18n$t("module"), i18n$t("plugin"), 
-      i18n$t("thesaurus"), i18n$t("thesaurus_item"), i18n$t("display_name"),
+      i18n$t("thesaurus"), i18n$t("thesaurus_item"), i18n$t("abbreviation"),
       i18n$t("unit"), i18n$t("colour"), i18n$t("display_order"),
       i18n$t("creator"), i18n$t("datetime"),
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))

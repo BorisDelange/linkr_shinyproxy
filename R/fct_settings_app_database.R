@@ -62,6 +62,11 @@ db_create_tables <- function(db, type = character()){
         name = character(), display_name = character(), category = character(), unit = character(),
         datetime = character(), deleted = logical()))
     
+    db_create_table(db, "thesaurus_items_users",
+      tibble::tibble(id = integer(), thesaurus_id = integer(), item_id = integer(),
+        name = character(), display_name = character(), category = character(), unit = character(),
+        datetime = character(), deleted = logical()))
+    
     db_create_table(db, "plugins",
       tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 
         datetime = character(), deleted = logical()))

@@ -1806,12 +1806,12 @@ save_settings_datatable_updates_new <- function(output, r = shiny::reactiveValue
   data <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
   if ("action" %in% names(data)) data <- data %>% dplyr::select(-action)
   if ("count_items_rows" %in% names(data)) data <- data %>% dplyr::select(-count_items_rows, -count_patients_rows)
-  
   DBI::dbAppendTable(r$db, table, data)
   
   # Reload r variable
-  if (table == "thesaurus_items") r$datamart_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
-  else update_r(r = r, table = table)
+  r[[r_table]] <- r[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
+  # if (table == "thesaurus_items") r$datamart_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
+  # else update_r_new(r = r, table = table, i18n = i18n)
   
   # Notify user
   show_message_bar_new(output, 2, "modif_saved", "success", i18n)

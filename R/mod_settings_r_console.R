@@ -49,7 +49,7 @@ mod_settings_r_console_ui <- function(id = character(), i18n = R6::R6Class()){
             div(shiny::verbatimTextOutput(ns("code_result")),
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
-        )
+        ), br()
       )
     )
   )

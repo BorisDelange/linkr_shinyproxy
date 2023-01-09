@@ -51,7 +51,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
         forbidden_cards,
         
         # --- --- --- --- --- -
-        ## Management card ----
+        # Management card ----
         # --- --- --- --- --- -
         
         render_settings_datatable_card_new(i18n = i18n, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "data_sources_management", add_textfield = TRUE)
@@ -85,7 +85,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       forbidden_cards,
       
       # --- --- --- --- ---
-      ## Creation card ----
+      # Creation card ----
       # --- --- --- --- ---
       
       div(id = ns("creation_card"),
@@ -102,13 +102,13 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       ),
       
       # --- --- --- --- --- -
-      ## Management card ----
+      # Management card ----
       # --- --- --- --- --- -
       
       render_settings_datatable_card_new(i18n = i18n, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "datamarts_management"),
       
       # --- --- --- --- -- -
-      ## Edit code card ----
+      # Edit code card ----
       # --- --- --- --- -- -
       
       div(id = ns("edit_code_card"), 
@@ -152,7 +152,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       ),
       
       # --- --- --- --- --- ---
-      ## Edit options card ----
+      # Edit options card ----
       # --- --- --- --- --- ---
       
       div(id = ns("options_card"),
@@ -211,7 +211,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       forbidden_cards,
       
       # --- --- --- --- ---
-      ## Creation card ----
+      # Creation card ----
       # --- --- --- --- ---
       
       div(id = ns("creation_card"),
@@ -228,13 +228,13 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       ),
       
       # --- --- --- --- --- -
-      ## Management card ----
+      # Management card ----
       # --- --- --- --- --- -
       
       render_settings_datatable_card_new(i18n = i18n, ns = ns, div_id = "datatable_card", output_id = "management_datatable", title = "thesaurus_management"),
       
       # --- --- --- --- -- -
-      ## Edit code card ----
+      # Edit code card ----
       # --- --- --- --- -- -
       
       div(id = ns("edit_code_card"), 
@@ -277,7 +277,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       ),
       
       # --- --- --- --- -- -
-      ## All items card ----
+      # All items card ----
       # --- --- --- --- -- -
       
       div(id = ns("sub_datatable_card"),
@@ -288,7 +288,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
               make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "items_chosen",
                 width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
               make_dropdown_new(i18n = i18n, ns = ns, label = "datamart", id = "thesaurus_datamart", width = "300px"),
-              conditionalPanel(condition = "input.datamart != ''", ns = ns,
+              conditionalPanel(condition = "input.datamart !== ''", ns = ns,
                 div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
                   shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
             ),
@@ -304,7 +304,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       ),
       
       # --- --- --- --- --- --
-      ## Categories  card ----
+      # Categories  card ----
       # --- --- --- --- --- --
       
       div(id = ns("categories_card"),
@@ -316,7 +316,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       ),
       
       # --- --- --- --- --- --
-      ## Conversions card ----
+      # Conversions card ----
       # --- --- --- --- --- --
       
       div(id = ns("conversions_card"),
@@ -328,7 +328,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       ),
       
       # --- --- --- --- --- -- -
-      ## Items mapping card ----
+      # Items mapping card ----
       # --- --- --- --- --- -- -
       
       div(id = ns("mapping_card"),
@@ -1064,27 +1064,28 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           r$thesaurus_items_temp <- r$thesaurus_items %>% 
             dplyr::mutate(modified = FALSE) %>%
             dplyr::mutate_at("category", as.factor) %>%
-            dplyr::mutate_at("item_id", as.character)
+            dplyr::mutate_at("item_id", as.character) %>%
+            dplyr::arrange(name)
           
           if ("thesaurus_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
           
-          editable_cols <- c("display_name", "unit")
+          editable_cols <- c("name", "display_name", "unit")
           searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
           factorize_cols <- c("category", "unit")
           column_widths <- c("id" = "80px", "action" = "80px", "unit" = "100px")
           
           if ("count_patients_rows" %in% names(r$thesaurus_items)){
-            sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
-            centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
+            sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+            centered_cols <- c("id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
             col_names <- get_col_names_new(table_name = "thesaurus_items_with_counts", i18n = i18n)
           }
           else {
-            sortable_cols <- c("id", "item_id", "name", "display_name", "category")
-            centered_cols <- c("id", "item_id", "unit", "datetime", "action")
+            sortable_cols <- c("id", "name", "display_name", "category")
+            centered_cols <- c("id", "unit", "datetime", "action")
             col_names <- get_col_names_new(table_name = "thesaurus_items", i18n = i18n)
           }
           
-          hidden_cols <- c("id", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
+          hidden_cols <- c("id", "thesaurus_id", "datetime", "deleted", "modified")
           
           # Render datatable
           render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$thesaurus_items_temp,
