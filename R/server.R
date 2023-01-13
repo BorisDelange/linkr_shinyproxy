@@ -18,8 +18,11 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
     vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
     for (var in vars) d[[var]] <- tibble::tibble()
     
-    # Create d reactive value, for plugins & modules data
+    # Create m reactive value, for plugins & modules data
     m <- reactiveValues()
+    
+    # Create o reactive values, for observers inactivation
+    o <- reactiveValues()
     
     # If perf_monotoring activated
     r$perf_monitoring <- perf_monitoring
@@ -192,7 +195,7 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       })
       
       sapply(c("plugins_patient_lvl", "plugins_aggregated"), function(page){
-        mod_plugins_server(page, r, d, m, language, i18n, app_folder)
+        mod_plugins_server(page, r, d, m, o, language, i18n, app_folder)
         mod_page_header_server(page, r, language, i18n)
       })
       monitor_perf(r = r, action = "stop", task = "mod_plugins_server")

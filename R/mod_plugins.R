@@ -25,10 +25,11 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         horizontal = TRUE, tokens = list(childrenGap = 20),
         make_dropdown_new(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
           multiSelect = TRUE, width = "650px"),
-        div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
+        div(shiny.fluent::DefaultButton.shinyInput(ns("reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
       ),
-      div(DT::DTOutput(ns("plugin_thesaurus_items")), class = "thesaurus_table"), br(),
-      DT::DTOutput(ns("thesaurus_items"))
+      div(DT::DTOutput(ns("plugin_thesaurus_items")), class = "thesaurus_table"), 
+      div(id = ns("blank_space"), br()),
+      style = "position:relative; z-index:1; margin-bottom:-30px;"
     )
   }
 
@@ -127,24 +128,21 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("plugins_edit_code_card"),
         make_card(i18n$t("edit_plugin_code"),
           div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_combobox_new(i18n = i18n, ns = ns, label = "plugin", id = "code_chosen_plugin",
-                width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-              div(
-                div(class = "input_title", i18n$t("group_id")),
-                div(shiny.fluent::SpinButton.shinyInput(ns("group_id"), min = 1, max = 100000000, step = 1), style = "width:300px;")
-              )
-            ),
+            make_combobox_new(i18n = i18n, ns = ns, label = "plugin", id = "code_chosen_plugin",
+              width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
             
             thesaurus_items_div, br(),
             
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
-                list(key = "ui", text = i18n$t("ui")),
-                list(key = "server", text = i18n$t("server"))
-              ), className = "inline_choicegroup"),
-              div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
-              div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+            div(
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
+                  list(key = "ui", text = i18n$t("ui")),
+                  list(key = "server", text = i18n$t("server"))
+                ), className = "inline_choicegroup"),
+                div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
+                div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+              ),
+              style = "z-index:2"
             ),
             shinyjs::hidden(div(id = ns("div_br"), br())),
             
@@ -153,14 +151,9 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
                 ns("ace_edit_code_ui"), "", mode = "r", 
                 code_hotkeys = list(
                   "r", list(
-                    run_selection = list(
-                      win = "CTRL-ENTER",
-                      mac = "CTRL-ENTER|CMD-ENTER"
-                    ),
-                    run_all = list(
-                      win = "CTRL-SHIFT-ENTER",
-                      mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"
-                    )
+                    run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+                    run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
                   )
                 ),
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
@@ -170,14 +163,9 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
                 ns("ace_edit_code_server"), "", mode = "r", 
                 code_hotkeys = list(
                   "r", list(
-                    run_selection = list(
-                      win = "CTRL-ENTER",
-                      mac = "CTRL-ENTER|CMD-ENTER"
-                    ),
-                    run_all = list(
-                      win = "CTRL-SHIFT-ENTER",
-                      mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"
-                    )
+                    run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+                    run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
                   )
                 ),
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
@@ -304,7 +292,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
 #' plugins Server Functions
 #'
 #' @noRd 
-mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
+mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), o = shiny::reactiveValues(),
   language = character(), i18n = R6::R6Class(), app_folder = character()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
@@ -450,8 +438,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           plugin_image_url <- paste0(app_folder, "/plugins/", prefix, "/",
             plugin_options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value), "/",
             plugin_options %>% dplyr::filter(name == "image") %>% dplyr::pull(value))
-          # plugin_image_url <- "/Users/borisdelange/linkr/plugins/patient_lvl/02591f09c9d7363309a04f7e1e4619daee3c74f6f9e11a399b254e5ac9449a0b/dygraphs3.png"
-          # print(plugin_image_url)
 
           all_plugins_local_document_cards <- tagList(all_plugins_local_document_cards,
             shiny.fluent::DocumentCard(
@@ -1207,6 +1193,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Create a proxy for datatatable
         r$plugin_thesaurus_items_proxy <- DT::dataTableProxy("plugin_thesaurus_items", deferUntilFlush = FALSE)
         
+        shinyjs::hide("blank_space")
       })
       
       # Reload datatable
@@ -1299,155 +1286,177 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       })
     }
     
-    # Execute code
-    
-    observeEvent(input$execute_code, {
-      r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui
-      r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server
-      r[[paste0(id, "_trigger_code")]] <- Sys.time()
-    })
-    
-    observeEvent(input$ace_edit_code_ui_selection, {
-      if(!shinyAce::is.empty(input$ace_edit_code_ui_run_selection$selection)) r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui_run_selection$selection
-      else r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui_run_selection$line
-      r[[paste0(id, "_server_code")]] <- ""
-    })
-    
-    observeEvent(input$ace_edit_code_server_selection, {
-      if(!shinyAce::is.empty(input$ace_edit_code_server_run_selection$selection)) r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server_run_selection$selection
-      else r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server_run_selection$line
-      r[[paste0(id, "_ui_code")]] <- ""
-    })
-    
-    observeEvent(input$ace_edit_code_ui_run_all, {
-      r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui
-      r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server
-    })
-    
-    observeEvent(input$ace_edit_code_server_run_all, {
-      r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server
-      r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui
-    })
-    
-    observeEvent(r[[paste0(id, "_trigger_code")]], {
+      # --- --- --- -- --
+      ## Execute code ----
+      # --- --- --- -- --
       
-      # var_check <- TRUE
-      # if (length(r$chosen_datamart) == 0) var_check <- FALSE
-      # if (length(r$chosen_datamart) > 0){
-      #   if (is.na(r$chosen_datamart) | is.na(m$chosen_study)) var_check <- FALSE
-      #   if (prefix == "patient_lvl" & is.na(m$chosen_patient)) var_check <- FALSE
-      # }
-      # 
-      # if (!var_check) show_message_bar_new(output = output, id = 3, message = "load_some_patient_data", i18n = i18n)
-      # 
-      # req(var_check)
-      
-      # Get thesaurus items
-      
-      if (prefix == "patient_lvl"){
-        
-        # Check if some thesaurus items selected (not necessary)
-        if (length(r$plugin_thesaurus_selected_items) > 0){
-          
-          # Get thesaurus items with thesaurus own item_id
-          thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
-            dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
-              thesaurus_item_unit, colour = thesaurus_item_colour)
-        }
-      }
-      
-      if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
-      else link_id <- input$code_chosen_plugin
-    
-      ui_code <- r[[paste0(id, "_ui_code")]]
-      server_code <- r[[paste0(id, "_server_code")]]
-      
-      # Replace %group_id% in ui_code with 1 for our example
-      
-      group_id <- get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10000000
-      if (length(input$group_id) > 0) group_id <- input$group_id
-      
-      ui_code <- ui_code %>% 
-        stringr::str_replace_all("%module_id%", "1") %>%
-        stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-        stringr::str_replace_all("%study_id%", as.character(m$chosen_study)) %>%
-        stringr::str_replace_all("\r", "\n")
-      
-      if (prefix == "patient_lvl") ui_code <- ui_code %>% stringr::str_replace_all("%patient_id%", as.character(m$chosen_patient))
-      
-      server_code <- server_code %>% 
-        stringr::str_replace_all("%module_id%", "1") %>%
-        stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-        stringr::str_replace_all("%study_id%", as.character(m$chosen_study)) %>%
-        stringr::str_replace_all("\r", "\n")
-      
-      if (prefix == "patient_lvl") server_code <- server_code %>% stringr::str_replace_all("%patient_id%", as.character(m$chosen_patient))
-      
-      output$code_result_ui <- renderUI(make_card("", tryCatch(result <- eval(parse(text = ui_code)), error = function(e) stop(e), warning = function(w) stop(w))))
-      
-      output$code_result_server <- renderText({
-        
-        options('cli.num_colors' = 1)
-        
-        # Capture console output of our code
-        captured_output <- capture.output(
-          tryCatch(eval(parse(text = server_code)), error = function(e) print(e), warning = function(w) print(w)))
-        
-        # Restore normal value
-        options('cli.num_colors' = NULL)
-        
-        # Display result
-        paste(strwrap(captured_output), collapse = "\n") -> result
+      observeEvent(input$execute_code, {
+        r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui
+        r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server
+        r[[paste0(id, "_trigger_code")]] <- Sys.time()
       })
-    })
+      
+      observeEvent(input$ace_edit_code_ui_run_selection, {
+        if(!shinyAce::is.empty(input$ace_edit_code_ui_run_selection$selection)) r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui_run_selection$selection
+        else r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui_run_selection$line
+        r[[paste0(id, "_server_code")]] <- ""
+        r[[paste0(id, "_trigger_code")]] <- Sys.time()
+      })
+      
+      observeEvent(input$ace_edit_code_server_run_selection, {
+        if(!shinyAce::is.empty(input$ace_edit_code_server_run_selection$selection)) r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server_run_selection$selection
+        else r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server_run_selection$line
+        r[[paste0(id, "_ui_code")]] <- ""
+        r[[paste0(id, "_trigger_code")]] <- Sys.time()
+      })
+      
+      observeEvent(input$ace_edit_code_ui_run_all, {
+        r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui
+        r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server
+        r[[paste0(id, "_trigger_code")]] <- Sys.time()
+      })
+      
+      observeEvent(input$ace_edit_code_server_run_all, {
+        r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server
+        r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui
+        r[[paste0(id, "_trigger_code")]] <- Sys.time()
+      })
+      
+      observeEvent(r[[paste0(id, "_trigger_code")]], {
+        
+        # var_check <- TRUE
+        # if (length(r$chosen_datamart) == 0) var_check <- FALSE
+        # if (length(r$chosen_datamart) > 0){
+        #   if (is.na(r$chosen_datamart) | is.na(m$chosen_study)) var_check <- FALSE
+        #   if (prefix == "patient_lvl" & is.na(m$chosen_patient)) var_check <- FALSE
+        # }
+        # 
+        # if (!var_check) show_message_bar_new(output = output, id = 3, message = "load_some_patient_data_plugin", i18n = i18n)
+        # 
+        # req(var_check)
+        
+        # Create a session number, to inactivate older observers
+        # Reset all older observers
+        
+        if (length(reactiveValuesToList(o)) > 0) for (i in names(reactiveValuesToList(o))) o[[i]] <- FALSE
+        
+        session_num <- as.character(sample(1:1000, 1))
+        o[[session_num]] <- TRUE
+        
+        # NB : req(p[[session_num]]) must be put at the beginning of each observeEvent
+        
+        # Get thesaurus items
+        
+        if (prefix == "patient_lvl"){
+          
+          # Check if some thesaurus items selected (not necessary)
+          if (length(r$plugin_thesaurus_selected_items) > 0){
+            
+            # Get thesaurus items with thesaurus own item_id
+            thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
+              dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
+                thesaurus_item_unit, colour = thesaurus_item_colour)
+          }
+        }
+        
+        if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
+        else link_id <- input$code_chosen_plugin
+      
+        ui_code <- r[[paste0(id, "_ui_code")]]
+        server_code <- r[[paste0(id, "_server_code")]]
+        
+        # Replace %group_id% in ui_code with 1 for our example
+        
+        group_id <- get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10000000
+        if (length(input$group_id) > 0) group_id <- input$group_id
+        
+        ui_code <- ui_code %>% 
+          stringr::str_replace_all("%module_id%", "1") %>%
+          stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+          stringr::str_replace_all("%study_id%", as.character(m$chosen_study)) %>%
+          stringr::str_replace_all("\r", "\n")
+        
+        if (prefix == "patient_lvl") ui_code <- ui_code %>% stringr::str_replace_all("%patient_id%", as.character(m$chosen_patient))
+        
+        server_code <- server_code %>% 
+          stringr::str_replace_all("%module_id%", "1") %>%
+          stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+          stringr::str_replace_all("%study_id%", as.character(m$chosen_study)) %>%
+          stringr::str_replace_all("\r", "\n")
+        
+        if (prefix == "patient_lvl") server_code <- server_code %>% stringr::str_replace_all("%patient_id%", as.character(m$chosen_patient))
+        
+        output$code_result_ui <- renderUI(make_card("", tryCatch(result <- eval(parse(text = ui_code)), error = function(e) stop(e), warning = function(w) stop(w))))
+        
+        output$code_result_server <- renderText({
+          
+          options('cli.num_colors' = 1)
+          
+          # Capture console output of our code
+          captured_output <- capture.output(
+            tryCatch(eval(parse(text = server_code)), error = function(e) print(e), warning = function(w) print(w)))
+          
+          # Restore normal value
+          options('cli.num_colors' = NULL)
+          
+          # Display result
+          paste(strwrap(captured_output), collapse = "\n") -> result
+        })
+      })
     
-    # Save updates
-    
-    observeEvent(input$save_code, {
+      # --- --- --- -- --
+      ## Save updates ----
+      # --- --- --- -- --
       
-      if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
-      else link_id <- input$code_chosen_plugin
-    
-      req(!is.null(link_id))
+      observeEvent(input$ace_edit_code_ui_save, r[[paste0(id, "_save_code")]] <- Sys.time())
+      observeEvent(input$ace_edit_code_server_save, r[[paste0(id, "_save_code")]] <- Sys.time())
+      observeEvent(input$save_code, r[[paste0(id, "_save_code")]] <- Sys.time())
       
-      # Update code
-      # DON'T USE glue_sql, it adds some quotes in the code
+      observeEvent(r[[paste0(id, "_save_code")]], {
+        
+        if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
+        else link_id <- input$code_chosen_plugin
       
-      ui_code_id <- r$code %>% dplyr::filter(category == "plugin_ui" & link_id == !!link_id) %>% dplyr::pull(id)
-      server_code_id <- r$code %>% dplyr::filter(category == "plugin_server" & link_id == !!link_id) %>% dplyr::pull(id)
+        req(!is.null(link_id))
+        
+        # Update code
+        # DON'T USE glue_sql, it adds some quotes in the code
+        
+        ui_code_id <- r$code %>% dplyr::filter(category == "plugin_ui" & link_id == !!link_id) %>% dplyr::pull(id)
+        server_code_id <- r$code %>% dplyr::filter(category == "plugin_server" & link_id == !!link_id) %>% dplyr::pull(id)
+        
+        DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code_ui, "'", "''"), "' WHERE id = ", ui_code_id)) -> query
+        DBI::dbClearResult(query)
+        
+        DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code_server, "'", "''"), "' WHERE id = ", server_code_id)) -> query
+        DBI::dbClearResult(query)
+        
+        # Update datetime in plugins table
+        
+        sql <- glue::glue_sql("UPDATE plugins SET datetime = {as.character(Sys.time())} WHERE id = {link_id}", .con = r$db)
+        DBI::dbSendStatement(r$db, sql) -> query
+        DBI::dbClearResult(query)
+        
+        update_r(r = r, table = "code")
+        update_r(r = r, table = "plugins")
+        
+        # Notify user
+        show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n)
+        
+      })
       
-      DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code_ui, "'", "''"), "' WHERE id = ", ui_code_id)) -> query
-      DBI::dbClearResult(query)
+      # Hide ace editor
       
-      DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code_server, "'", "''"), "' WHERE id = ", server_code_id)) -> query
-      DBI::dbClearResult(query)
-      
-      # Update datetime in plugins table
-      
-      sql <- glue::glue_sql("UPDATE plugins SET datetime = {as.character(Sys.time())} WHERE id = {link_id}", .con = r$db)
-      DBI::dbSendStatement(r$db, sql) -> query
-      DBI::dbClearResult(query)
-      
-      update_r(r = r, table = "code")
-      update_r(r = r, table = "plugins")
-      
-      # Notify user
-      show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n)
-      
-    })
-    
-    # Hide ace editor
-    
-    observeEvent(input$hide_editor, {
-      if (input$hide_editor){
-        sapply(c("ace_edit_code_ui", "ace_edit_code_server"), shinyjs::hide)
-        shinyjs::show("div_br") 
-      }
-      else {
-        sapply(c("ace_edit_code_ui", "ace_edit_code_server"), shinyjs::show)
-        shinyjs::hide("div_br") 
-      }
-    })
+      observeEvent(input$hide_editor, {
+        if (input$hide_editor){
+          sapply(c("ace_edit_code_ui", "ace_edit_code_server"), shinyjs::hide)
+          shinyjs::show("div_br") 
+        }
+        else {
+          sapply(c("ace_edit_code_ui", "ace_edit_code_server"), shinyjs::show)
+          shinyjs::hide("div_br") 
+        }
+      })
     
     # --- --- --- --- -- -
     # Import a plugin ----

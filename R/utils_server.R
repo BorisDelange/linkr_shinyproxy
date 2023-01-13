@@ -400,7 +400,7 @@ get_col_names_new <- function(table_name = character(), i18n = R6::R6Class()){
   
   if (table_name == "modules_thesaurus_items_with_counts"){
     result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
-      i18n$t("abbreviation"), i18n$t("category"), i18n$t("unit"),
+      i18n$t("name_abbreviation"), i18n$t("category"), i18n$t("unit"),
       i18n$t("item_colour"), i18n$t("datetime"), i18n$t("deleted"),
       i18n$t("num_patients"), i18n$t("num_rows"),
       i18n$t("action"), i18n$t("modified"))
