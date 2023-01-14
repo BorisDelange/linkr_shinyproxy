@@ -174,7 +174,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
                     ),
                     div(uiOutput(ns("thesaurus_selected_item_mapping2")), style = "border:dashed 1px; padding:10px;"),
                     style = "width:100%; display:grid; grid-template-columns:2fr 1fr 2fr; grid-gap:20px;"
-                  ),
+                  ), br(),
                   DT::DTOutput(ns("thesaurus_added_mappings"))
                 )
               )    
@@ -239,7 +239,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
         grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
       thesaurus_options <- convert_tibble_to_list_new(data = thesaurus, key_col = "id", text_col = "name", i18n = i18n)
-      for (var in c("thesaurus", "thesaurus_mapping1", "thesaurus_mapping2")) shiny.fluent::updateComboBox.shinyInput(session, var, options = thesaurus_options)
+      for (var in c("thesaurus", "thesaurus_mapping1", "thesaurus_mapping2")) shiny.fluent::updateComboBox.shinyInput(session, var, options = thesaurus_options, value = NULL)
       
       if (length(r$datamart_thesaurus_items_temp) > 0) r$datamart_thesaurus_items_temp <- r$datamart_thesaurus_items_temp %>% dplyr::slice(0)
       
@@ -772,11 +772,13 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         
         # Add new mapping to database
         
-        print(Sys.time())
         DBI::dbAppendTable(r$db, "thesaurus_items_mapping", new_row)
         
         # Notify user
         show_message_bar_new(output, 3, "thesaurus_mapping_added", "success", i18n)
+        
+        # Update datatable
+        r$reload_thesaurus_added_mappings_datatable <- Sys.time()
       }
     })
     
@@ -787,31 +789,41 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       r$thesaurus_added_mappings <- tibble::tibble(id = integer(), thesaurus_id_1 = integer(), item_id_1 = integer(), 
         thesaurus_id_2 = integer(), item_id_2 = integer(), relation_id = integer(), creator_id = integer(), datetime = character(), checked = logical(), deleted = logical())
       
+      output$thesaurus_selected_item_mapping1 <- renderText("")
+      output$thesaurus_selected_item_mapping2 <- renderText("")
+      
+      render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(), output_name = "thesaurus_mapping1_dt", datatable_dom = "")
+      render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(), output_name = "thesaurus_mapping2_dt", datatable_dom = "")
+      
       r$reload_thesaurus_added_mappings_datatable <- Sys.time()
     })
     
     observeEvent(r$reload_thesaurus_added_mappings_datatable, {
       
       r$thesaurus_added_mappings_temp <- r$thesaurus_added_mappings %>%
-        dplyr::mutate(modified = FALSE) %>%
-        dplyr::mutate_at(c("item_id_1", "item_id_2"), as.character)
+        dplyr::mutate_at(c("item_id_1", "item_id_2"), as.character) %>%
+        dplyr::mutate(relation = dplyr::case_when(relation_id == 1 ~ i18n$t("equivalent_to"), relation_id == 2 ~ i18n$t("included_in"), relation_id == 3 ~ i18n$t("include"))) %>%
+        dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_1 = id, thesaurus_name_1 = name), by = "thesaurus_id_1") %>%
+        dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_2 = id, thesaurus_name_2 = name), by = "thesaurus_id_2") %>%
+        dplyr::relocate(thesaurus_name_1, .after = "thesaurus_id_1") %>%
+        dplyr::relocate(thesaurus_name_2, .after = "thesaurus_id_2") %>%
+        dplyr::select(-thesaurus_id_1, -thesaurus_id_2, -relation_id) %>%
+        dplyr::relocate(relation, .after = item_id_1) %>%
+        dplyr::arrange(dplyr::desc(datetime))
 
       # editable_cols <- c("name", "display_name")
       # searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
       # factorize_cols <- c("category", "unit")
-      column_widths <- c("id" = "80px", "action" = "80px", "unit" = "100px", "count_patients_rows" = "80px", "count_items_rows" = "80px")
-      sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
-      centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
+      centered_cols <- c("id", "item_id_1", "thesaurus_name_1", "item_id_2", "thesaurus_name_2", "relation")
       col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_mapping", i18n = i18n)
       hidden_cols <- c("id", "creator_id", "datetime", "checked", "deleted")
 
-      # # Render datatable
-      # render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$datamart_thesaurus_items_temp,
-      #   output_name = "thesaurus_added_mappings", col_names = col_names,
-      #   sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths, hidden_cols = hidden_cols)
-      # 
+      # Render datatable
+      render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$thesaurus_added_mappings_temp, datatable_dom = "<'top't><'bottom'p>",
+        output_name = "thesaurus_added_mappings", col_names = col_names, centered_cols = centered_cols, hidden_cols = hidden_cols)
+
       # # Create a proxy for datatatable
-      # r$thesaurus_added_mappings_datatable_proxy <- DT::dataTableProxy("thesaurus_added_mappings", deferUntilFlush = FALSE)
+      r$thesaurus_added_mappings_datatable_proxy <- DT::dataTableProxy("thesaurus_added_mappings", deferUntilFlush = FALSE)
     })
   })
 }
