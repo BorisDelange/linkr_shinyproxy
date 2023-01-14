@@ -1324,16 +1324,16 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       observeEvent(r[[paste0(id, "_trigger_code")]], {
         
-        # var_check <- TRUE
-        # if (length(r$chosen_datamart) == 0) var_check <- FALSE
-        # if (length(r$chosen_datamart) > 0){
-        #   if (is.na(r$chosen_datamart) | is.na(m$chosen_study)) var_check <- FALSE
-        #   if (prefix == "patient_lvl" & is.na(m$chosen_patient)) var_check <- FALSE
-        # }
-        # 
-        # if (!var_check) show_message_bar_new(output = output, id = 3, message = "load_some_patient_data_plugin", i18n = i18n)
-        # 
-        # req(var_check)
+        var_check <- TRUE
+        if (length(r$chosen_datamart) == 0) var_check <- FALSE
+        if (length(r$chosen_datamart) > 0){
+          if (is.na(r$chosen_datamart) | is.na(m$chosen_study)) var_check <- FALSE
+          if (prefix == "patient_lvl" & is.na(m$chosen_patient)) var_check <- FALSE
+        }
+
+        if (!var_check) show_message_bar_new(output = output, id = 3, message = "load_some_patient_data_plugin", i18n = i18n)
+
+        req(var_check)
         
         # Create a session number, to inactivate older observers
         # Reset all older observers
