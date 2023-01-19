@@ -1302,6 +1302,7 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
       "WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE ",
       "ORDER BY t.id"))
   }
+  
   # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
   if (category %in% c("count_patients_rows", "count_items_rows")){
     data <- DBI::dbGetQuery(r$db, paste0(
@@ -1310,6 +1311,16 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
       "LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = ", datamart_id, " AND c.category = '", category, "' ",
       "WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE ",
       "ORDER BY t.id"))
+  }
+  
+  # For thumbs_and_delete, search in thesaurus_items_mapping table
+  if (category == "thumbs_and_delete"){
+    sql <- glue::glue_sql(paste0("SELECT t.id, t.deleted, c.value ",
+      "FROM thesaurus_items_mapping t ",
+      "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ",
+      "WHERE (t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) AND t.deleted IS FALSE ",
+      "ORDER BY t.id"), .con = r$db)
+    data <- DBI::dbGetQuery(r$db, sql)
   }
   
   # If there are missing data in the cache, reload cache 
@@ -1321,13 +1332,20 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
   if (reload_cache){
     
     # Reload data
-    data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE ORDER BY id"))
+    if (category == "thumbs_and_delete"){
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping t WHERE ",
+        "(t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) AND deleted IS FALSE ",
+        "ORDER BY id"), .con = r$db)
+      data <- DBI::dbGetQuery(r$db, sql)
+    }
+    else data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE ORDER BY id"))
     
     # Make action column, depending on category
     # If category is count_items_rows, add a count row column with number of rows by item in the datamart
     # If category is count_patients_rows, add a count row column with number of patients by item in the datamart
     # If category is delete, add a delete button only
     # If category is plus_minus, add plus and minus buttons
+    # If category is thumbs_and_delete, add thumbs_up, thumbs_down and delete buttons
     
     if (category == "count_items_rows"){
       
@@ -1424,6 +1442,17 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
           shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")))))
     }
+    if (category == "thumbs_and_delete"){
+      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+        tagList(
+          shiny::actionButton(paste0("positive_eval_", id), "", icon = icon("thumbs-up"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})")),
+          shiny::actionButton(paste0("negative_eval_", id), "", icon = icon("thumbs-down"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})")),
+          shiny::actionButton(paste0("remove_", id), "", icon = icon("trash-alt"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"))
+          )))
+    }
     if (grepl("plus_data_explorer", category)){
       data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
@@ -1470,6 +1499,16 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
         ")")) -> query
     }
     
+    # For thumbs_and_delete, use thesaurus_items_mapping table
+    if (category == "thumbs_and_delete"){
+      sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
+        "SELECT c.id FROM cache c ",
+        "INNER JOIN thesaurus_items_mapping t ON c.link_id = t.id AND c.category = {category} ",
+        "AND (t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
+        ")"), .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql)
+    }
+    
     # DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "' AND link_id_bis = ", datamart_id)) -> query
     DBI::dbClearResult(query)
     
@@ -1490,7 +1529,7 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
     DBI::dbAppendTable(r$db, "cache", data_insert)
   }
   
-  if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus") | grepl("plus_data_explorer", category)) data <- data %>% dplyr::rename(action = value)
+  if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus", "thumbs_and_delete") | grepl("plus_data_explorer", category)) data <- data %>% dplyr::rename(action = value)
   if (category %in% c("colours_module", "colours_plugin")) data <- data %>% dplyr::rename(colour = value)
   if (category %in% c("count_patients_rows", "count_items_rows")) data <- data %>% dplyr::rename(!!category := value) %>% dplyr::select(item_id, !!category)
   

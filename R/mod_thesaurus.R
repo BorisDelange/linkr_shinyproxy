@@ -141,8 +141,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
             shiny.fluent::Pivot(
               onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-mapping_current_tab', item.props.id)")),
               shiny.fluent::PivotItem(id = "thesaurus_mapping_add", itemKey = "thesaurus_mapping_add", headerText = i18n$t("add")),
-              shiny.fluent::PivotItem(id = "thesaurus_mapping_evaluate", itemKey = "thesaurus_mapping_evaluate", headerText = i18n$t("evaluate")),
-              shiny.fluent::PivotItem(id = "thesaurus_mapping_edit", itemKey = "thesaurus_mapping_edit", headerText = i18n$t("edit"))
+              shiny.fluent::PivotItem(id = "thesaurus_mapping_management", itemKey = "thesaurus_mapping_management", headerText = i18n$t("evaluate_and_edit"))
             ),
             conditionalPanel(condition = "input.mapping_current_tab == null || input.mapping_current_tab == 'thesaurus_mapping_add'", ns = ns,
               div(
@@ -178,6 +177,13 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
                   DT::DTOutput(ns("thesaurus_added_mappings"))
                 )
               )    
+            ),
+            conditionalPanel(condition = "input.mapping_current_tab == 'thesaurus_mapping_management'", ns = ns,
+              DT::DTOutput(ns("thesaurus_evaluate_mappings")),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::PrimaryButton.shinyInput(ns("save_mappings_evaluation"), i18n$t("save")),
+                shiny.fluent::DefaultButton.shinyInput(ns("mapping_delete_selection"), i18n$t("delete_selection"))
+              )
             )
           )
         ), br()
@@ -285,13 +291,13 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       count_patients_rows <- tibble::tibble()
       
       # Add count_items_rows in the cache & get it if already in the cache
-      tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = "EN", thesaurus_id = input$thesaurus$key,
+      tryCatch(count_items_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
         datamart_id = r$chosen_datamart, category = "count_items_rows"),
           error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
             error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
       
       # Add count_items_rows in the cache & get it if already in the cache
-      tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = "EN", thesaurus_id = input$thesaurus$key,
+      tryCatch(count_patients_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
         datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
           error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
             error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
@@ -519,311 +525,400 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     # Items mapping ----
     # --- --- --- --- --
     
-    observeEvent(input$thesaurus_mapping1, r$thesaurus_mapping_reload <- paste0(Sys.time(), "_mapping1"))
-    observeEvent(input$thesaurus_mapping2, r$thesaurus_mapping_reload <- paste0(Sys.time(), "_mapping2"))
-    
-    observeEvent(r$thesaurus_mapping_reload, {
+      # --- --- --- --- --- --
+      ## Create a mapping ----
+      # --- --- --- --- --- --
       
-      if (grepl("mapping1", r$thesaurus_mapping_reload)) mapping <- "mapping1"
-      else if (grepl("mapping2", r$thesaurus_mapping_reload)) mapping <- "mapping2"
+      observeEvent(input$thesaurus_mapping1, r$thesaurus_mapping_reload <- paste0(Sys.time(), "_mapping1"))
+      observeEvent(input$thesaurus_mapping2, r$thesaurus_mapping_reload <- paste0(Sys.time(), "_mapping2"))
       
-      req(length(input[[paste0("thesaurus_", mapping)]]$key) > 0)
+      observeEvent(r$thesaurus_mapping_reload, {
+        
+        if (grepl("mapping1", r$thesaurus_mapping_reload)) mapping <- "mapping1"
+        else if (grepl("mapping2", r$thesaurus_mapping_reload)) mapping <- "mapping2"
+        
+        req(length(input[[paste0("thesaurus_", mapping)]]$key) > 0)
+        
+        r[[paste0("datamart_thesaurus_items_", mapping)]] <- DBI::dbGetQuery(r$db, paste0(
+          "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted
+            FROM thesaurus_items t
+            WHERE t.thesaurus_id = ", input[[paste0("thesaurus_", mapping)]]$key, " AND t.deleted IS FALSE
+            ORDER BY t.item_id")) %>% tibble::as_tibble() %>% dplyr::mutate(action = "")
+        
+        # Get user's modifications on items names & abbreviations
+        
+        r[[paste0("datamart_thesaurus_user_items_", mapping)]] <- DBI::dbGetQuery(r$db, paste0(
+          "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.deleted
+            FROM thesaurus_items_users t
+            WHERE t.thesaurus_id = ", input[[paste0("thesaurus_", mapping)]]$key, " AND t.user_id = ", r$user_id ," AND t.deleted IS FALSE
+            ORDER BY t.item_id")) %>% tibble::as_tibble()
+        
+        # Merge tibbles
+        r[[paste0("datamart_thesaurus_items_", mapping)]] <-
+          r[[paste0("datamart_thesaurus_items_", mapping)]] %>%
+          dplyr::left_join(
+            r[[paste0("datamart_thesaurus_user_items_", mapping)]] %>% dplyr::select(item_id, new_name = name, new_display_name = display_name),
+            by = "item_id"
+          ) %>%
+          dplyr::mutate(
+            name = dplyr::case_when(!is.na(new_name) ~ new_name, TRUE ~ name),
+            display_name = dplyr::case_when(!is.na(new_display_name) ~ new_display_name, TRUE ~ display_name)
+          ) %>%
+          dplyr::select(-new_name, -new_display_name)
+        
+        count_items_rows <- tibble::tibble()
+        count_patients_rows <- tibble::tibble()
+        
+        # Add count_items_rows in the cache & get it if already in the cache
+        tryCatch(count_items_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input[[paste0("thesaurus_", mapping)]]$key,
+          datamart_id = r$chosen_datamart, category = "count_items_rows"),
+          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
+            error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
+        
+        # Add count_items_rows in the cache & get it if already in the cache
+        tryCatch(count_patients_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input[[paste0("thesaurus_", mapping)]]$key,
+          datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
+          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
+            error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
+        
+        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", "EN", words = r$words)
+        req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
+  
+        # Transform count_rows cols to integer, to be sortable
+        r[[paste0("datamart_thesaurus_items_", mapping)]] <- r[[paste0("datamart_thesaurus_items_", mapping)]] %>%
+          dplyr::left_join(count_items_rows, by = "item_id") %>%
+          dplyr::left_join(count_patients_rows, by = "item_id") %>%
+          dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
+          dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action") %>%
+          dplyr::arrange(name)
+        
+        r[[paste0("datamart_thesaurus_items_", mapping, "_temp")]] <- r[[paste0("datamart_thesaurus_items_", mapping)]] %>%
+          dplyr::mutate(modified = FALSE) %>%
+          dplyr::mutate_at("item_id", as.character)
+        
+        editable_cols <- c("name", "display_name")
+        searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
+        factorize_cols <- c("category", "unit")
+        column_widths <- c("id" = "80px", "action" = "80px", "unit" = "100px", "count_patients_rows" = "80px", "count_items_rows" = "80px")
+        sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+        centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
+        col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_with_counts", i18n = i18n)
+        hidden_cols <- c("id", "thesaurus_id", "item_id", "display_name", "unit", "count_patients_rows", "datetime", "deleted", "modified", "action")
+   
+        # Render datatable
+        render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0("datamart_thesaurus_items_", mapping, "_temp")]],
+          output_name = paste0("thesaurus_", mapping, "_dt"), col_names = col_names, datatable_dom = "<'top't><'bottom'p>",
+          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+        
+        # Create a proxy for datatatable
+        # r$datamart_thesaurus_items_datatable_proxy <- DT::dataTableProxy("thesaurus_items", deferUntilFlush = FALSE)
+      })
       
-      r[[paste0("datamart_thesaurus_items_", mapping)]] <- DBI::dbGetQuery(r$db, paste0(
-        "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted
-          FROM thesaurus_items t
-          WHERE t.thesaurus_id = ", input[[paste0("thesaurus_", mapping)]]$key, " AND t.deleted IS FALSE
-          ORDER BY t.item_id")) %>% tibble::as_tibble() %>% dplyr::mutate(action = "")
+      # When a row is selected
+      observeEvent(input$thesaurus_mapping1_dt_rows_selected, r$thesaurus_mapping_item_info <- paste0(Sys.time(), "_mapping1"))
+      observeEvent(input$thesaurus_mapping2_dt_rows_selected, r$thesaurus_mapping_item_info <- paste0(Sys.time(), "_mapping2"))
       
-      # Get user's modifications on items names & abbreviations
+      observeEvent(r$thesaurus_mapping_item_info, {
+        
+        if (grepl("mapping1", r$thesaurus_mapping_item_info)) mapping <- "mapping1"
+        else if (grepl("mapping2", r$thesaurus_mapping_item_info)) mapping <- "mapping2"
+        
+        style <- "display:inline-block; width:200px; font-weight:bold;"
+        
+        thesaurus_item <- r[[paste0("datamart_thesaurus_items_", mapping, "_temp")]][input[[paste0("thesaurus_", mapping, "_dt_rows_selected")]], ] %>% dplyr::mutate_at("item_id", as.integer)
+        
+        thesaurus_name <- r$thesaurus %>% dplyr::filter(id == thesaurus_item$thesaurus_id) %>% dplyr::pull(name)
+        
+        # Which columns contain data
+        r[[paste0("datamart_thesaurus_items_", mapping, "_d_var")]] <- ""
+        r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- ""
+        plots <- tagList()
+        values_num <- ""
+        values <- ""
+        amounts <- ""
+        rates <- ""
+        
+        for (var in c("labs_vitals", "orders", "text", "diagnoses")){
+          
+          values_text <- ""
+          
+          if (nrow(d[[var]]) > 0){
+            all_values_temp <- d[[var]] %>% dplyr::filter(thesaurus_name == !!thesaurus_name) %>%
+              dplyr::inner_join(thesaurus_item %>% dplyr::select(item_id), by = "item_id")
+            
+            if (nrow(all_values_temp) > 0){
+              all_values <- all_values_temp
+              r[[paste0("datamart_thesaurus_items_", mapping, "_d_var")]] <- var 
+            }
+          }
+        }
+  
+        if (r[[paste0("datamart_thesaurus_items_", mapping, "_d_var")]] == "labs_vitals"){
+          if (nrow(all_values %>% dplyr::filter(!is.na(value_num))) > 0){
+            values_num <- suppressMessages(
+              all_values %>% 
+                dplyr::mutate(value_num_text = dplyr::case_when(!is.na(unit) ~ paste0(value_num, " ", unit), TRUE ~ as.character(value_num))) %>%
+                dplyr::filter(!is.na(value_num)) %>%
+                dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(value_num_text)
+            )
+            # plots <- tagList(plots, plotOutput(ns("value_num_plot")))
+            r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- c(r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]], "value_num")
+          }
+          
+          if (nrow(all_values %>% dplyr::filter(!is.na(value))) > 0){
+            
+            values <- suppressMessages(
+              all_values %>% 
+                dplyr::filter(!is.na(value)) %>%
+                dplyr::slice_sample(n = 5, replace = TRUE) %>% 
+                dplyr::pull(value)
+            )
+            # plots <- tagList(plots, plotOutput(ns("value_plot")))
+            r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- c(r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]], "value")
+          }
+          
+          values_text <- tagList(
+            span(i18n$t("numeric_values"), style = style), paste(values_num, collapse = " || "), br(),
+            span(i18n$t("values"), style = style), paste(values, collapse = " || "), br())
+        }
+  
+        if (r[[paste0("datamart_thesaurus_items_", mapping, "_d_var")]] == "orders"){
+          
+          if (nrow(all_values %>% dplyr::filter(!is.na(amount))) > 0){
+            
+            amounts <- suppressMessages(
+              all_values %>% 
+                dplyr::mutate(amount_text = dplyr::case_when(!is.na(amount_unit) ~ paste0(amount, " ", amount_unit), TRUE ~ as.character(amount))) %>%
+                dplyr::filter(!is.na(amount)) %>%
+                dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(amount_text)
+            )
+            # plots <- tagList(plots, plotOutput(ns("amount_plot")))
+            r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- c(r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]], "amount")
+          }
+          
+          if (nrow(all_values %>% dplyr::filter(!is.na(rate))) > 0){
+            
+            rates <- suppressMessages(
+              all_values %>% 
+                dplyr::mutate(rate_text = dplyr::case_when(!is.na(rate_unit) ~ paste0(rate, " ", rate_unit), TRUE ~ as.character(rate))) %>%
+                dplyr::filter(!is.na(rate)) %>%
+                dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(rate_text)
+            )
+            # plots <- tagList(plots, plotOutput(ns("rate_plot")))
+            r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- c(r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]], "rate")
+          }
+          
+          values_text <- tagList(
+            span(i18n$t("rate"), style = style), paste(rates, collapse = " || "), br(),
+            span(i18n$t("amount"), style = style), paste(amounts, collapse = " || "), br())
+        }
+        
+        if (r[[paste0("datamart_thesaurus_items_", mapping, "_d_var")]] == "text"){
+          
+          if (nrow(all_values %>% dplyr::filter(!is.na(value))) > 0){
+            
+            values <- suppressMessages(
+              all_values %>% 
+                dplyr::filter(!is.na(value)) %>%
+                dplyr::slice_sample(n = 5, replace = TRUE) %>% 
+                dplyr::pull(value)
+            )
+            # plots <- tagList(plots, plotOutput(ns("value_plot")))
+            r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- c(r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]], "value")
+          }
+          
+          values_text <- tagList(
+            span(i18n$t("rate"), style = style), paste(rate, collapse = " || "), br(),
+            span(i18n$t("amount"), style = style), paste(amount, collapse = " || "), br())
+        }
+        
+        output[[paste0("thesaurus_selected_item_", mapping)]] <- renderUI(tagList(div(
+          span(i18n$t("thesaurus_name"), style = style), thesaurus_name, br(),
+          span(i18n$t("item_id"), style = style), thesaurus_item$item_id, br(),
+          span(i18n$t("name"), style = style), thesaurus_item$name, br(),
+          span(i18n$t("abbreviation"), style = style), thesaurus_item$display_name, br(),
+          span(i18n$t("category"), style = style), thesaurus_item$category, br(),
+          span(i18n$t("unit"), style = style), ifelse(is.na(thesaurus_item$unit), "", thesaurus_item$unit), br(),
+          values_text
+        )))
+      })
       
-      r[[paste0("datamart_thesaurus_user_items_", mapping)]] <- DBI::dbGetQuery(r$db, paste0(
-        "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.deleted
-          FROM thesaurus_items_users t
-          WHERE t.thesaurus_id = ", input[[paste0("thesaurus_", mapping)]]$key, " AND t.user_id = ", r$user_id ," AND t.deleted IS FALSE
-          ORDER BY t.item_id")) %>% tibble::as_tibble()
+      # When a mapping id added
       
-      # Merge tibbles
-      r[[paste0("datamart_thesaurus_items_", mapping)]] <-
-        r[[paste0("datamart_thesaurus_items_", mapping)]] %>%
-        dplyr::left_join(
-          r[[paste0("datamart_thesaurus_user_items_", mapping)]] %>% dplyr::select(item_id, new_name = name, new_display_name = display_name),
-          by = "item_id"
+      observeEvent(input$add_mapping, {
+        
+        req(length(input$thesaurus_mapping1_dt_rows_selected) > 0)
+        req(length(input$thesaurus_mapping2_dt_rows_selected) > 0)
+        req(nrow(r$datamart_thesaurus_items_mapping1_temp[input$thesaurus_mapping1_dt_rows_selected, ]) > 0)
+        req(nrow(r$datamart_thesaurus_items_mapping2_temp[input$thesaurus_mapping2_dt_rows_selected, ]) > 0)
+        
+        item_1 <- r$datamart_thesaurus_items_mapping1_temp[input$thesaurus_mapping1_dt_rows_selected, ] %>% dplyr::mutate_at("item_id", as.integer)
+        item_2 <- r$datamart_thesaurus_items_mapping2_temp[input$thesaurus_mapping2_dt_rows_selected, ] %>% dplyr::mutate_at("item_id", as.integer)
+        
+        # Check if mapping already added in database
+        
+        check_duplicates <- FALSE
+        
+        sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping WHERE ",
+          "thesaurus_id_1 == {item_1$thesaurus_id} AND item_id_1 == {item_1$item_id} AND ",
+          "thesaurus_id_2 == {item_2$thesaurus_id} AND item_id_2 == {item_2$item_id} AND ",
+          "relation_id == {as.integer(input$mapping_type)}"), .con = r$db)
+        existing_mapping <- DBI::dbGetQuery(r$db, sql)
+        
+        if (nrow(existing_mapping) > 0) show_message_bar_new(output, 3, "thesaurus_mapping_already_exists", "severeWarning", i18n)
+        
+        if (nrow(existing_mapping) == 0){
+          
+          last_row <- get_last_row(r$db, "thesaurus_items_mapping")
+          
+          # Add new mapping to r$thesaurus_added_mappings
+          
+          new_row <- tibble::tribble(~id, ~thesaurus_id_1, ~item_id_1, ~thesaurus_id_2, ~item_id_2, ~relation_id, ~creator_id, ~datetime, ~deleted,
+            last_row + 1, item_1$thesaurus_id, item_1$item_id, item_2$thesaurus_id, item_2$item_id,
+            as.integer(input$mapping_type), r$user_id, as.character(Sys.time()), FALSE)
+          
+          r$thesaurus_added_mappings <- r$thesaurus_added_mappings %>% dplyr::bind_rows(new_row)
+          
+          # Add new mapping to database
+          
+          DBI::dbAppendTable(r$db, "thesaurus_items_mapping", new_row)
+          
+          # Notify user
+          show_message_bar_new(output, 3, "thesaurus_mapping_added", "success", i18n)
+          
+          # Update datatables
+          r$reload_thesaurus_added_mappings_datatable <- Sys.time()
+          r$reload_thesaurus_evaluate_mappings_datatable <- Sys.time()
+        }
+      })
+      
+      # Table to summarize added mappings
+      
+      observeEvent(r$chosen_datamart, {
+        
+        r$thesaurus_added_mappings <- tibble::tibble(id = integer(), thesaurus_id_1 = integer(), item_id_1 = integer(), 
+          thesaurus_id_2 = integer(), item_id_2 = integer(), relation_id = integer(), creator_id = integer(), datetime = character(), deleted = logical())
+        
+        output$thesaurus_selected_item_mapping1 <- renderText("")
+        output$thesaurus_selected_item_mapping2 <- renderText("")
+        
+        render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(), output_name = "thesaurus_mapping1_dt", datatable_dom = "")
+        render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(), output_name = "thesaurus_mapping2_dt", datatable_dom = "")
+        
+        r$reload_thesaurus_added_mappings_datatable <- Sys.time()
+        r$reload_thesaurus_evaluate_mappings_datatable <- Sys.time()
+      })
+      
+      observeEvent(r$reload_thesaurus_added_mappings_datatable, {
+        
+        r$thesaurus_added_mappings_temp <- r$thesaurus_added_mappings %>%
+          dplyr::mutate_at(c("item_id_1", "item_id_2"), as.character) %>%
+          dplyr::mutate(relation = dplyr::case_when(relation_id == 1 ~ i18n$t("equivalent_to"), relation_id == 2 ~ i18n$t("included_in"), relation_id == 3 ~ i18n$t("include"))) %>%
+          dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_1 = id, thesaurus_name_1 = name), by = "thesaurus_id_1") %>%
+          dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_2 = id, thesaurus_name_2 = name), by = "thesaurus_id_2") %>%
+          dplyr::relocate(thesaurus_name_1, .after = "thesaurus_id_1") %>%
+          dplyr::relocate(thesaurus_name_2, .after = "thesaurus_id_2") %>%
+          dplyr::select(-thesaurus_id_1, -thesaurus_id_2, -relation_id) %>%
+          dplyr::relocate(relation, .after = item_id_1) %>%
+          dplyr::arrange(dplyr::desc(datetime))
+  
+        # editable_cols <- c("name", "display_name")
+        # searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
+        # factorize_cols <- c("category", "unit")
+        centered_cols <- c("id", "item_id_1", "thesaurus_name_1", "item_id_2", "thesaurus_name_2", "relation")
+        col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_mapping", i18n = i18n)
+        hidden_cols <- c("id", "creator_id", "datetime", "deleted")
+  
+        # Render datatable
+        render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$thesaurus_added_mappings_temp, datatable_dom = "<'top't><'bottom'p>",
+          output_name = "thesaurus_added_mappings", col_names = col_names, centered_cols = centered_cols, hidden_cols = hidden_cols)
+  
+        # # Create a proxy for datatatable
+        r$thesaurus_added_mappings_datatable_proxy <- DT::dataTableProxy("thesaurus_added_mappings", deferUntilFlush = FALSE)
+      })
+      
+    # --- --- --- --- ---
+    ## Manage mapping ----
+    # --- --- --- --- ---
+      
+    observeEvent(r$reload_thesaurus_evaluate_mappings_datatable, {
+      
+      # Get all items mappings
+      
+      data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)
+      
+      thesaurus_ids <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
+          grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::pull(id)
+      
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping WHERE (thesaurus_id_1 IN ({thesaurus_ids*}) OR thesaurus_id_2 IN ({thesaurus_ids*})) ",
+        "AND deleted IS FALSE"), .con = r$db)
+      r$datamart_thesaurus_items_evaluate_mappings <- DBI::dbGetQuery(r$db, sql)
+      
+      action_col <- tibble::tibble()
+      
+      # Join with evaluations
+      
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping_evals WHERE mapping_id IN ({r$datamart_thesaurus_items_evaluate_mappings %>% dplyr::pull(id)*}) ",
+        "AND deleted IS FALSE"), .con = r$db)
+      thesaurus_mapping_evals <- DBI::dbGetQuery(r$db, sql)
+      print(thesaurus_mapping_evals)
+      
+      r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>%
+        dplyr::left_join(thesaurus_mapping_evals %>% dplyr::select(eval_id = id, id = mapping_id, evaluation_id), by = "id") %>%
+        dplyr::group_by(id, thesaurus_id_1, item_id_1, thesaurus_id_2, item_id_2, relation_id, creator_id, datetime, deleted) %>%
+        dplyr::summarize(
+          positive_eval = sum(ifelse(evaluation_id == 1, 1, 0)),
+          negative_eval = sum(ifelse(evaluation_id == 2, 1, 0))
         ) %>%
+        dplyr::ungroup() %>%
         dplyr::mutate(
-          name = dplyr::case_when(!is.na(new_name) ~ new_name, TRUE ~ name),
-          display_name = dplyr::case_when(!is.na(new_display_name) ~ new_display_name, TRUE ~ display_name)
-        ) %>%
-        dplyr::select(-new_name, -new_display_name)
+          positive_eval = ifelse(positive_eval > 0, positive_eval, 0),
+          negative_eval = ifelse(negative_eval > 0, negative_eval, 0)
+        )
       
-      count_items_rows <- tibble::tibble()
-      count_patients_rows <- tibble::tibble()
+      # Create or get cache for action column
+      tryCatch(action_col <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_ids, category = "thumbs_and_delete"))
       
-      # Add count_items_rows in the cache & get it if already in the cache
-      tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = "EN", thesaurus_id = input[[paste0("thesaurus_", mapping)]]$key,
-        datamart_id = r$chosen_datamart, category = "count_items_rows"),
-        error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-          error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
+      r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>%
+        dplyr::left_join(action_col %>% dplyr::select(id, action), by = "id") %>%
+        dplyr::relocate(action, .after = "negative_eval")
       
-      # Add count_items_rows in the cache & get it if already in the cache
-      tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = "EN", thesaurus_id = input[[paste0("thesaurus_", mapping)]]$key,
-        datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
-        error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-          error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
+      # Get thesaurus names instead of IDs
+      r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>%
+        dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_1 = id, thesaurus_name_1 = name), by = "thesaurus_id_1") %>%
+        dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_2 = id, thesaurus_name_2 = name), by = "thesaurus_id_2") %>%
+        dplyr::relocate(thesaurus_name_1, .after = "id") %>%
+        dplyr::relocate(thesaurus_name_2, .after = "thesaurus_name_1") %>%
+        dplyr::select(-thesaurus_id_1, -thesaurus_id_2)
       
-      if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", "EN", words = r$words)
-      req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
-
-      # Transform count_rows cols to integer, to be sortable
-      r[[paste0("datamart_thesaurus_items_", mapping)]] <- r[[paste0("datamart_thesaurus_items_", mapping)]] %>%
-        dplyr::left_join(count_items_rows, by = "item_id") %>%
-        dplyr::left_join(count_patients_rows, by = "item_id") %>%
-        dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
-        dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action") %>%
-        dplyr::arrange(name)
+      # Select only mappings without evaluation
       
-      r[[paste0("datamart_thesaurus_items_", mapping, "_temp")]] <- r[[paste0("datamart_thesaurus_items_", mapping)]] %>%
-        dplyr::mutate(modified = FALSE) %>%
-        dplyr::mutate_at("item_id", as.character)
-      
-      editable_cols <- c("name", "display_name")
-      searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
-      factorize_cols <- c("category", "unit")
-      column_widths <- c("id" = "80px", "action" = "80px", "unit" = "100px", "count_patients_rows" = "80px", "count_items_rows" = "80px")
-      sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
-      centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-      col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_with_counts", i18n = i18n)
-      hidden_cols <- c("id", "thesaurus_id", "item_id", "display_name", "unit", "count_patients_rows", "datetime", "deleted", "modified", "action")
- 
       # Render datatable
-      render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0("datamart_thesaurus_items_", mapping, "_temp")]],
-        output_name = paste0("thesaurus_", mapping, "_dt"), col_names = col_names, datatable_dom = "<'top't><'bottom'p>",
-        editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+      
+      r$datamart_thesaurus_items_evaluate_mappings_temp <- r$datamart_thesaurus_items_evaluate_mappings %>%
+        dplyr::mutate(modified = FALSE) #%>%
+        # dplyr::mutate_at(c("item_id_1", "item_id_2"), as.character)
+      
+      # editable_cols <- c("name", "display_name")
+      # searchable_cols <- c("thesaurus_id_1", "name", "display_name", "category", "unit")
+      # factorize_cols <- c("category", "unit")
+      # column_widths <- c("id" = "80px", "action" = "80px", "unit" = "100px", "count_patients_rows" = "80px", "count_items_rows" = "80px")
+      # sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+      # centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
+      # col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_with_counts", i18n = i18n)
+      # hidden_cols <- c("id", "thesaurus_id", "item_id", "display_name", "unit", "count_patients_rows", "datetime", "deleted", "modified", "action")
+      
+      # Render datatable
+      render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$datamart_thesaurus_items_evaluate_mappings_temp,
+        output_name = "thesaurus_evaluate_mappings")
+      # render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0("datamart_thesaurus_items_", mapping, "_temp")]],
+      #   output_name = paste0("thesaurus_", mapping, "_dt"), col_names = col_names, datatable_dom = "<'top't><'bottom'p>",
+      #   sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+      #   searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
       
       # Create a proxy for datatatable
       # r$datamart_thesaurus_items_datatable_proxy <- DT::dataTableProxy("thesaurus_items", deferUntilFlush = FALSE)
-    })
-    
-    # When a row is selected
-    observeEvent(input$thesaurus_mapping1_dt_rows_selected, r$thesaurus_mapping_item_info <- paste0(Sys.time(), "_mapping1"))
-    observeEvent(input$thesaurus_mapping2_dt_rows_selected, r$thesaurus_mapping_item_info <- paste0(Sys.time(), "_mapping2"))
-    
-    observeEvent(r$thesaurus_mapping_item_info, {
-      
-      if (grepl("mapping1", r$thesaurus_mapping_item_info)) mapping <- "mapping1"
-      else if (grepl("mapping2", r$thesaurus_mapping_item_info)) mapping <- "mapping2"
-      
-      style <- "display:inline-block; width:200px; font-weight:bold;"
-      
-      thesaurus_item <- r[[paste0("datamart_thesaurus_items_", mapping, "_temp")]][input[[paste0("thesaurus_", mapping, "_dt_rows_selected")]], ] %>% dplyr::mutate_at("item_id", as.integer)
-      
-      thesaurus_name <- r$thesaurus %>% dplyr::filter(id == thesaurus_item$thesaurus_id) %>% dplyr::pull(name)
-      
-      # Which columns contain data
-      r[[paste0("datamart_thesaurus_items_", mapping, "_d_var")]] <- ""
-      r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- ""
-      plots <- tagList()
-      values_num <- ""
-      values <- ""
-      amounts <- ""
-      rates <- ""
-      
-      for (var in c("labs_vitals", "orders", "text", "diagnoses")){
-        
-        values_text <- ""
-        
-        if (nrow(d[[var]]) > 0){
-          all_values_temp <- d[[var]] %>% dplyr::filter(thesaurus_name == !!thesaurus_name) %>%
-            dplyr::inner_join(thesaurus_item %>% dplyr::select(item_id), by = "item_id")
-          
-          if (nrow(all_values_temp) > 0){
-            all_values <- all_values_temp
-            r[[paste0("datamart_thesaurus_items_", mapping, "_d_var")]] <- var 
-          }
-        }
-      }
-
-      if (r[[paste0("datamart_thesaurus_items_", mapping, "_d_var")]] == "labs_vitals"){
-        if (nrow(all_values %>% dplyr::filter(!is.na(value_num))) > 0){
-          values_num <- suppressMessages(
-            all_values %>% 
-              dplyr::mutate(value_num_text = dplyr::case_when(!is.na(unit) ~ paste0(value_num, " ", unit), TRUE ~ as.character(value_num))) %>%
-              dplyr::filter(!is.na(value_num)) %>%
-              dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(value_num_text)
-          )
-          # plots <- tagList(plots, plotOutput(ns("value_num_plot")))
-          r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- c(r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]], "value_num")
-        }
-        
-        if (nrow(all_values %>% dplyr::filter(!is.na(value))) > 0){
-          
-          values <- suppressMessages(
-            all_values %>% 
-              dplyr::filter(!is.na(value)) %>%
-              dplyr::slice_sample(n = 5, replace = TRUE) %>% 
-              dplyr::pull(value)
-          )
-          # plots <- tagList(plots, plotOutput(ns("value_plot")))
-          r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- c(r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]], "value")
-        }
-        
-        values_text <- tagList(
-          span(i18n$t("numeric_values"), style = style), paste(values_num, collapse = " || "), br(),
-          span(i18n$t("values"), style = style), paste(values, collapse = " || "), br())
-      }
-
-      if (r[[paste0("datamart_thesaurus_items_", mapping, "_d_var")]] == "orders"){
-        
-        if (nrow(all_values %>% dplyr::filter(!is.na(amount))) > 0){
-          
-          amounts <- suppressMessages(
-            all_values %>% 
-              dplyr::mutate(amount_text = dplyr::case_when(!is.na(amount_unit) ~ paste0(amount, " ", amount_unit), TRUE ~ as.character(amount))) %>%
-              dplyr::filter(!is.na(amount)) %>%
-              dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(amount_text)
-          )
-          # plots <- tagList(plots, plotOutput(ns("amount_plot")))
-          r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- c(r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]], "amount")
-        }
-        
-        if (nrow(all_values %>% dplyr::filter(!is.na(rate))) > 0){
-          
-          rates <- suppressMessages(
-            all_values %>% 
-              dplyr::mutate(rate_text = dplyr::case_when(!is.na(rate_unit) ~ paste0(rate, " ", rate_unit), TRUE ~ as.character(rate))) %>%
-              dplyr::filter(!is.na(rate)) %>%
-              dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(rate_text)
-          )
-          # plots <- tagList(plots, plotOutput(ns("rate_plot")))
-          r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- c(r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]], "rate")
-        }
-        
-        values_text <- tagList(
-          span(i18n$t("rate"), style = style), paste(rates, collapse = " || "), br(),
-          span(i18n$t("amount"), style = style), paste(amounts, collapse = " || "), br())
-      }
-      
-      if (r[[paste0("datamart_thesaurus_items_", mapping, "_d_var")]] == "text"){
-        
-        if (nrow(all_values %>% dplyr::filter(!is.na(value))) > 0){
-          
-          values <- suppressMessages(
-            all_values %>% 
-              dplyr::filter(!is.na(value)) %>%
-              dplyr::slice_sample(n = 5, replace = TRUE) %>% 
-              dplyr::pull(value)
-          )
-          # plots <- tagList(plots, plotOutput(ns("value_plot")))
-          r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]] <- c(r[[paste0("datamart_thesaurus_items_", mapping, "_cols_not_empty")]], "value")
-        }
-        
-        values_text <- tagList(
-          span(i18n$t("rate"), style = style), paste(rate, collapse = " || "), br(),
-          span(i18n$t("amount"), style = style), paste(amount, collapse = " || "), br())
-      }
-      
-      output[[paste0("thesaurus_selected_item_", mapping)]] <- renderUI(tagList(br(), div(
-        span(i18n$t("thesaurus_name"), style = style), thesaurus_name, br(),
-        span(i18n$t("item_id"), style = style), thesaurus_item$item_id, br(),
-        span(i18n$t("name"), style = style), thesaurus_item$name, br(),
-        span(i18n$t("abbreviation"), style = style), thesaurus_item$display_name, br(),
-        span(i18n$t("category"), style = style), thesaurus_item$category, br(),
-        span(i18n$t("unit"), style = style), ifelse(is.na(thesaurus_item$unit), "", thesaurus_item$unit), br(),
-        values_text
-      )))
-    })
-    
-    # When a mapping id added
-    
-    observeEvent(input$add_mapping, {
-      
-      req(length(input$thesaurus_mapping1_dt_rows_selected) > 0)
-      req(length(input$thesaurus_mapping2_dt_rows_selected) > 0)
-      req(nrow(r$datamart_thesaurus_items_mapping1_temp[input$thesaurus_mapping1_dt_rows_selected, ]) > 0)
-      req(nrow(r$datamart_thesaurus_items_mapping2_temp[input$thesaurus_mapping2_dt_rows_selected, ]) > 0)
-      
-      item_1 <- r$datamart_thesaurus_items_mapping1_temp[input$thesaurus_mapping1_dt_rows_selected, ] %>% dplyr::mutate_at("item_id", as.integer)
-      item_2 <- r$datamart_thesaurus_items_mapping2_temp[input$thesaurus_mapping2_dt_rows_selected, ] %>% dplyr::mutate_at("item_id", as.integer)
-      
-      # Check if mapping already added in database
-      
-      check_duplicates <- FALSE
-      
-      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping WHERE ",
-        "thesaurus_id_1 == {item_1$thesaurus_id} AND item_id_1 == {item_1$item_id} AND ",
-        "thesaurus_id_2 == {item_2$thesaurus_id} AND item_id_2 == {item_2$item_id} AND ",
-        "relation_id == {as.integer(input$mapping_type)}"), .con = r$db)
-      existing_mapping <- DBI::dbGetQuery(r$db, sql)
-      
-      if (nrow(existing_mapping) > 0) show_message_bar_new(output, 3, "thesaurus_mapping_already_exists", "severeWarning", i18n)
-      
-      if (nrow(existing_mapping) == 0){
-        
-        last_row <- get_last_row(r$db, "thesaurus_items_mapping")
-        
-        # Add new mapping to r$thesaurus_added_mappings
-        
-        new_row <- tibble::tribble(~id, ~thesaurus_id_1, ~item_id_1, ~thesaurus_id_2, ~item_id_2, ~relation_id, ~creator_id, ~datetime, ~checked, ~deleted,
-          last_row + 1, item_1$thesaurus_id, item_1$item_id, item_2$thesaurus_id, item_2$item_id,
-          as.integer(input$mapping_type), r$user_id, as.character(Sys.time()), FALSE, FALSE)
-        
-        r$thesaurus_added_mappings <- r$thesaurus_added_mappings %>% dplyr::bind_rows(new_row)
-        
-        # Add new mapping to database
-        
-        DBI::dbAppendTable(r$db, "thesaurus_items_mapping", new_row)
-        
-        # Notify user
-        show_message_bar_new(output, 3, "thesaurus_mapping_added", "success", i18n)
-        
-        # Update datatable
-        r$reload_thesaurus_added_mappings_datatable <- Sys.time()
-      }
-    })
-    
-    # Table to summarize added mappings
-    
-    observeEvent(r$chosen_datamart, {
-      
-      r$thesaurus_added_mappings <- tibble::tibble(id = integer(), thesaurus_id_1 = integer(), item_id_1 = integer(), 
-        thesaurus_id_2 = integer(), item_id_2 = integer(), relation_id = integer(), creator_id = integer(), datetime = character(), checked = logical(), deleted = logical())
-      
-      output$thesaurus_selected_item_mapping1 <- renderText("")
-      output$thesaurus_selected_item_mapping2 <- renderText("")
-      
-      render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(), output_name = "thesaurus_mapping1_dt", datatable_dom = "")
-      render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(), output_name = "thesaurus_mapping2_dt", datatable_dom = "")
-      
-      r$reload_thesaurus_added_mappings_datatable <- Sys.time()
-    })
-    
-    observeEvent(r$reload_thesaurus_added_mappings_datatable, {
-      
-      r$thesaurus_added_mappings_temp <- r$thesaurus_added_mappings %>%
-        dplyr::mutate_at(c("item_id_1", "item_id_2"), as.character) %>%
-        dplyr::mutate(relation = dplyr::case_when(relation_id == 1 ~ i18n$t("equivalent_to"), relation_id == 2 ~ i18n$t("included_in"), relation_id == 3 ~ i18n$t("include"))) %>%
-        dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_1 = id, thesaurus_name_1 = name), by = "thesaurus_id_1") %>%
-        dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_2 = id, thesaurus_name_2 = name), by = "thesaurus_id_2") %>%
-        dplyr::relocate(thesaurus_name_1, .after = "thesaurus_id_1") %>%
-        dplyr::relocate(thesaurus_name_2, .after = "thesaurus_id_2") %>%
-        dplyr::select(-thesaurus_id_1, -thesaurus_id_2, -relation_id) %>%
-        dplyr::relocate(relation, .after = item_id_1) %>%
-        dplyr::arrange(dplyr::desc(datetime))
-
-      # editable_cols <- c("name", "display_name")
-      # searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
-      # factorize_cols <- c("category", "unit")
-      centered_cols <- c("id", "item_id_1", "thesaurus_name_1", "item_id_2", "thesaurus_name_2", "relation")
-      col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_mapping", i18n = i18n)
-      hidden_cols <- c("id", "creator_id", "datetime", "checked", "deleted")
-
-      # Render datatable
-      render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$thesaurus_added_mappings_temp, datatable_dom = "<'top't><'bottom'p>",
-        output_name = "thesaurus_added_mappings", col_names = col_names, centered_cols = centered_cols, hidden_cols = hidden_cols)
-
-      # # Create a proxy for datatatable
-      r$thesaurus_added_mappings_datatable_proxy <- DT::dataTableProxy("thesaurus_added_mappings", deferUntilFlush = FALSE)
     })
   })
 }
