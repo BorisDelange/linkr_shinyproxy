@@ -72,7 +72,7 @@ db_create_tables <- function(db, type = character()){
         relation_id = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
     db_create_table(db, "thesaurus_items_mapping_evals",
-      tibble::tibble(id = integer(), mapping_id = integer(), user_id = integer(), evaluation_id = integer(),
+      tibble::tibble(id = integer(), mapping_id = integer(), creator_id = integer(), evaluation_id = integer(),
         datetime = character(), deleted = logical()))
     
     db_create_table(db, "plugins",

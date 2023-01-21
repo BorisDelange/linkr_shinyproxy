@@ -838,10 +838,12 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         r$thesaurus_added_mappings_datatable_proxy <- DT::dataTableProxy("thesaurus_added_mappings", deferUntilFlush = FALSE)
       })
       
-    # --- --- --- --- ---
+    # --- --- --- --- - --
     ## Manage mapping ----
-    # --- --- --- --- ---
+    # --- --- --- --- - --
       
+    # Reload datatable  
+    
     observeEvent(r$reload_thesaurus_evaluate_mappings_datatable, {
       
       # Get all items mappings
@@ -862,63 +864,124 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping_evals WHERE mapping_id IN ({r$datamart_thesaurus_items_evaluate_mappings %>% dplyr::pull(id)*}) ",
         "AND deleted IS FALSE"), .con = r$db)
       thesaurus_mapping_evals <- DBI::dbGetQuery(r$db, sql)
-      print(thesaurus_mapping_evals)
       
       r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>%
         dplyr::left_join(thesaurus_mapping_evals %>% dplyr::select(eval_id = id, id = mapping_id, evaluation_id), by = "id") %>%
         dplyr::group_by(id, thesaurus_id_1, item_id_1, thesaurus_id_2, item_id_2, relation_id, creator_id, datetime, deleted) %>%
         dplyr::summarize(
-          positive_eval = sum(ifelse(evaluation_id == 1, 1, 0)),
-          negative_eval = sum(ifelse(evaluation_id == 2, 1, 0))
+          positive_evals = sum(evaluation_id == 1, na.rm = TRUE),
+          negative_evals = sum(evaluation_id == 2, na.rm = TRUE)
         ) %>%
         dplyr::ungroup() %>%
         dplyr::mutate(
-          positive_eval = ifelse(positive_eval > 0, positive_eval, 0),
-          negative_eval = ifelse(negative_eval > 0, negative_eval, 0)
-        )
+          positive_evals = ifelse(positive_evals > 0, positive_evals, 0),
+          negative_evals = ifelse(negative_evals > 0, negative_evals, 0)
+        ) %>%
+        dplyr::mutate_at(c("item_id_1", "item_id_2"), as.character) %>%
+        dplyr::left_join(r$users %>% dplyr::transmute(creator_id = id, creator_name = paste0(firstname, " ", lastname)), by = "creator_id") %>%
+        dplyr::relocate(creator_name, .after = "creator_id") %>%
+        dplyr::select(-creator_id) %>%
+        dplyr::left_join(thesaurus_mapping_evals %>% 
+            dplyr::filter(creator_id == r$user_id) %>%
+            dplyr::select(id = mapping_id, user_evaluation_id = evaluation_id), by = "id")
       
       # Create or get cache for action column
-      tryCatch(action_col <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_ids, category = "thumbs_and_delete"))
+      tryCatch(action_col <- create_datatable_cache_new(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_ids, category = "thumbs_and_delete"))
       
       r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>%
         dplyr::left_join(action_col %>% dplyr::select(id, action), by = "id") %>%
-        dplyr::relocate(action, .after = "negative_eval")
+        dplyr::relocate(action, .after = "negative_evals")
       
       # Get thesaurus names instead of IDs
       r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>%
+        dplyr::mutate(relation = dplyr::case_when(relation_id == 1 ~ i18n$t("equivalent_to"), relation_id == 2 ~ i18n$t("included_in"), relation_id == 3 ~ i18n$t("include"))) %>%
         dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_1 = id, thesaurus_name_1 = name), by = "thesaurus_id_1") %>%
         dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_2 = id, thesaurus_name_2 = name), by = "thesaurus_id_2") %>%
-        dplyr::relocate(thesaurus_name_1, .after = "id") %>%
-        dplyr::relocate(thesaurus_name_2, .after = "thesaurus_name_1") %>%
-        dplyr::select(-thesaurus_id_1, -thesaurus_id_2)
+        dplyr::relocate(thesaurus_name_1, .after = "thesaurus_id_1") %>%
+        dplyr::relocate(thesaurus_name_2, .after = "thesaurus_id_2") %>%
+        dplyr::select(-thesaurus_id_1, -thesaurus_id_2, -relation_id) %>%
+        dplyr::relocate(relation, .after = item_id_1)
       
       # Select only mappings without evaluation
       
       # Render datatable
       
       r$datamart_thesaurus_items_evaluate_mappings_temp <- r$datamart_thesaurus_items_evaluate_mappings %>%
-        dplyr::mutate(modified = FALSE) #%>%
-        # dplyr::mutate_at(c("item_id_1", "item_id_2"), as.character)
+        dplyr::mutate(modified = FALSE)
       
-      # editable_cols <- c("name", "display_name")
-      # searchable_cols <- c("thesaurus_id_1", "name", "display_name", "category", "unit")
-      # factorize_cols <- c("category", "unit")
-      # column_widths <- c("id" = "80px", "action" = "80px", "unit" = "100px", "count_patients_rows" = "80px", "count_items_rows" = "80px")
-      # sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
-      # centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-      # col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_with_counts", i18n = i18n)
-      # hidden_cols <- c("id", "thesaurus_id", "item_id", "display_name", "unit", "count_patients_rows", "datetime", "deleted", "modified", "action")
+      searchable_cols <- c("thesaurus_name_1", "item_id_1", "thesaurus_name_2", "item_id_2", "relation", "creator_name")
+      factorize_cols <- c("thesaurus_name_1", "thesaurus_name_2", "relation", "creator_name")
+      sortable_cols <- c("thesaurus_name_1", "item_id_1", "thesaurus_name_2", "item_id_2", "relation", "creator_name", "datetime", "positive_evals", "negative_evals")
+      centered_cols <- c("id", "datetime", "action", "thesaurus_name_1", "item_id_1", "thesaurus_name_2", "item_id_2", "creator_name", "relation")
+      col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_mapping_evals", i18n = i18n)
+      hidden_cols <- c("id", "deleted", "modified", "user_evaluation_id")
+      column_widths <- c("action" = "80px", "datetime" = "130px")
       
       # Render datatable
       render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$datamart_thesaurus_items_evaluate_mappings_temp,
-        output_name = "thesaurus_evaluate_mappings")
-      # render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0("datamart_thesaurus_items_", mapping, "_temp")]],
-      #   output_name = paste0("thesaurus_", mapping, "_dt"), col_names = col_names, datatable_dom = "<'top't><'bottom'p>",
-      #   sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-      #   searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+        output_name = "thesaurus_evaluate_mappings", hidden_cols = hidden_cols, centered_cols = centered_cols, searchable_cols = searchable_cols,
+        col_names = col_names, filter = TRUE, factorize_cols = factorize_cols, sortable_cols = sortable_cols, column_widths = column_widths,
+        selection = "multiple", datatable_dom = "<'top't><'bottom'p>"
+      )
       
       # Create a proxy for datatatable
-      # r$datamart_thesaurus_items_datatable_proxy <- DT::dataTableProxy("thesaurus_items", deferUntilFlush = FALSE)
+      r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy <- DT::dataTableProxy("thesaurus_evaluate_mappings", deferUntilFlush = FALSE)
     })
+      
+    # When an evaluation button is clicked
+      
+    observeEvent(input$item_mapping_evaluated_positive, {
+      r$item_mapping_evaluation_type <- "positive"
+      r$item_mapping_evaluation_update <- Sys.time()
+    })
+    
+    observeEvent(input$item_mapping_evaluated_negative, {
+      r$item_mapping_evaluation_type <- "negative"
+      r$item_mapping_evaluation_update <- Sys.time()
+    })
+    
+    observeEvent(r$item_mapping_evaluation_update, {
+      
+      prefix <- r$item_mapping_evaluation_type
+      new_evaluation_id <- switch(r$item_mapping_evaluation_type, "positive" = 1L, "negative" = 2L)
+      
+      link_id <- as.integer(substr(input[[paste0("item_mapping_evaluated_", prefix)]], nchar(paste0(prefix, "_eval_")) + 1, nchar(input[[paste0("item_mapping_evaluated_", prefix)]])))
+      
+      # If we cancel current evaluation
+      current_evaluation_id <- r$datamart_thesaurus_items_evaluate_mappings_temp %>%
+        dplyr::filter(id == link_id) %>% dplyr::pull(user_evaluation_id)
+      
+      if (!is.na(current_evaluation_id)) if ((current_evaluation_id == 1 & new_evaluation_id == 1) | (current_evaluation_id == 2 & new_evaluation_id == 2)) new_evaluation_id <- NA_integer_
+      
+      # Change actionButtons style
+      if (is.na(new_evaluation_id)){
+        shinyjs::runjs(paste0("$('#positive_eval_", link_id, "').css({'background-color':'#E8E9EC', 'color':'black'});"))
+        shinyjs::runjs(paste0("$('#negative_eval_", link_id, "').css({'background-color':'#E8E9EC', 'color':'black'});"))
+      }
+      else if (prefix == "positive"){
+        shinyjs::runjs(paste0("$('#positive_eval_", link_id, "').css({'background-color':'#5FBAFF', 'color':'white'});"))
+        shinyjs::runjs(paste0("$('#negative_eval_", link_id, "').css({'background-color':'#E8E9EC', 'color':'black'});"))
+      } 
+      else if (prefix == "negative"){
+        shinyjs::runjs(paste0("$('#negative_eval_", link_id, "').css({'background-color':'#FF434C', 'color':'white'});"))
+        shinyjs::runjs(paste0("$('#positive_eval_", link_id, "').css({'background-color':'#E8E9EC', 'color':'black'});"))
+      }
+      
+      # Update database
+      
+      # Update temp variable
+      r$datamart_thesaurus_items_evaluate_mappings_temp <- r$datamart_thesaurus_items_evaluate_mappings_temp %>%
+        dplyr::mutate(user_evaluation_id = dplyr::case_when(
+          id == link_id ~ new_evaluation_id,
+          TRUE ~ user_evaluation_id
+        ))
+      
+      # Reload datatable
+      # DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings_temp, resetPaging = FALSE, rownames = FALSE)
+    })
+      
+    # When a delete button is clicked
+    
+    # Save updates
   })
 }

@@ -345,8 +345,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     # Update plugins catalog
     
+    error_loading_github <- TRUE
     plugins_file <- paste0(app_folder, "/temp_files/plugins.xml")
-    xml2::download_xml("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/plugins.xml", plugins_file)
+    try({
+      xml2::download_xml("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/plugins.xml", plugins_file)
+      error_loading_github <- FALSE
+    })
     
     observeEvent(r$plugins, r$reload_plugins_document_cards <- Sys.time(), once = TRUE)
     observeEvent(input$reload_plugins_document_cards, r$reload_plugins_document_cards <- Sys.time())
@@ -354,47 +358,65 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     observeEvent(r$reload_plugins_document_cards, {
 
       # Github plugins
+      
+      if (error_loading_github){
+        output$all_plugins_github <- renderUI(tagList(br(), shiny.fluent::MessageBar(i18n$t("error_connection_github"), messageBarType = 3)))
+      }
 
-      github_plugins <-
-        xml2::read_xml(plugins_file) %>%
-        XML::xmlParse() %>%
-        XML::xmlToDataFrame(nodes = XML::getNodeSet(., "//plugin")) %>%
-        tibble::as_tibble()
-
-      r$github_plugins <- github_plugins
-
-      if (nrow(github_plugins) > 0){
-
-        all_plugins_github <- tagList()
-        all_plugins_github_document_cards <- tagList()
-        i <- 0
-
-        for(plugin_id in github_plugins %>% dplyr::filter(type == module_type_id) %>% dplyr::pull(unique_id)){
-          
-          plugin <- github_plugins %>% dplyr::filter(unique_id == plugin_id)
-          # plugin_image_url <- paste0(app_folder, "/plugins/", prefix, "/", plugin$unique_id, "/", plugin$image)
-          plugin_image_url <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id, "/dygraphs3.png")
-          
-          all_plugins_github_document_cards <- tagList(all_plugins_github_document_cards,
-            shiny.fluent::DocumentCard(
-              shiny.fluent::DocumentCardPreview(previewImages = 
-                list(list(previewImageSrc = plugin_image_url, width = 318, height = 200))),
-              div(shiny.fluent::DocumentCardTitle(title = plugin$name, shouldTruncate = TRUE, style = "margin-top:5px;")),
-              div(shiny.fluent::DocumentCardActivity(
-                activity = plugin$version,
-                people = list(list(name = plugin$author))),
-                style = "margin-top:-20px;"
-              ),
-              onClick = htmlwidgets::JS(paste0("function() { ",
-                "Shiny.setInputValue('", id, "-show_plugin_details', Math.random());",
-                "Shiny.setInputValue('", id, "-plugin_id', '", plugin_id, "');",
-                "}"))
+      else {
+        github_plugins <-
+          xml2::read_xml(plugins_file) %>%
+          XML::xmlParse() %>%
+          XML::xmlToDataFrame(nodes = XML::getNodeSet(., "//plugin")) %>%
+          tibble::as_tibble()
+  
+        r$github_plugins <- github_plugins
+  
+        if (nrow(github_plugins) > 0){
+  
+          all_plugins_github <- tagList()
+          all_plugins_github_document_cards <- tagList()
+          i <- 0
+  
+          for(plugin_id in github_plugins %>% dplyr::filter(type == module_type_id) %>% dplyr::pull(unique_id)){
+            
+            plugin <- github_plugins %>% dplyr::filter(unique_id == plugin_id)
+            # plugin_image_url <- paste0(app_folder, "/plugins/", prefix, "/", plugin$unique_id, "/", plugin$image)
+            plugin_image_url <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id, "/dygraphs3.png")
+            
+            all_plugins_github_document_cards <- tagList(all_plugins_github_document_cards,
+              shiny.fluent::DocumentCard(
+                shiny.fluent::DocumentCardPreview(previewImages = 
+                  list(list(previewImageSrc = plugin_image_url, width = 318, height = 200))),
+                div(shiny.fluent::DocumentCardTitle(title = plugin$name, shouldTruncate = TRUE, style = "margin-top:5px;")),
+                div(shiny.fluent::DocumentCardActivity(
+                  activity = plugin$version,
+                  people = list(list(name = plugin$author))),
+                  style = "margin-top:-20px;"
+                ),
+                onClick = htmlwidgets::JS(paste0("function() { ",
+                  "Shiny.setInputValue('", id, "-show_plugin_details', Math.random());",
+                  "Shiny.setInputValue('", id, "-plugin_id', '", plugin_id, "');",
+                  "}"))
+              )
             )
-          )
-
-          i <- i + 1
-
-          if (i %% 3 == 0){
+  
+            i <- i + 1
+  
+            if (i %% 3 == 0){
+              all_plugins_github <- tagList(all_plugins_github, br(),
+                div(
+                  shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                    all_plugins_github_document_cards
+                  )
+                )
+              )
+  
+              all_plugins_github_document_cards <- tagList()
+            }
+          }
+  
+          if (i %% 3 != 0){
             all_plugins_github <- tagList(all_plugins_github, br(),
               div(
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
@@ -402,27 +424,15 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
                 )
               )
             )
-
-            all_plugins_github_document_cards <- tagList()
           }
         }
-
-        if (i %% 3 != 0){
-          all_plugins_github <- tagList(all_plugins_github, br(),
-            div(
-              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-                all_plugins_github_document_cards
-              )
-            )
-          )
+  
+        if (nrow(github_plugins) == 0){
+          all_plugins_github <- tagList(br(), shiny.fluent::MessageBar(i18n$t("no_plugin_available"), messageBarType = 0))
         }
+  
+        output$all_plugins_github <- renderUI(all_plugins_github)
       }
-
-      if (nrow(github_plugins) == 0){
-        all_plugins_github <- tagList(br(), shiny.fluent::MessageBar(i18n$t("no_plugin_available"), messageBarType = 0))
-      }
-
-      output$all_plugins_github <- renderUI(all_plugins_github)
 
       # Local plugins
 

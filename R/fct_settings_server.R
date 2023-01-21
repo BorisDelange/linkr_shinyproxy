@@ -1446,11 +1446,14 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
       data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
           shiny::actionButton(paste0("positive_eval_", id), "", icon = icon("thumbs-up"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})")),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
+            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
           shiny::actionButton(paste0("negative_eval_", id), "", icon = icon("thumbs-down"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})")),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})"),
+            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
           shiny::actionButton(paste0("remove_", id), "", icon = icon("trash-alt"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"))
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"),
+            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
           )))
     }
     if (grepl("plus_data_explorer", category)){

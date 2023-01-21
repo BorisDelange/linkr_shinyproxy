@@ -419,6 +419,12 @@ get_col_names_new <- function(table_name = character(), i18n = R6::R6Class()){
       i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"))
   }
   
+  if (table_name == "datamart_thesaurus_items_mapping_evals"){
+    result <- c(i18n$t("id"), i18n$t("thesaurus1"), i18n$t("item_id"), i18n$t("relation"), i18n$t("thesaurus2"), i18n$t("item_id"),
+      i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("positive_evals"), i18n$t("negative_evals"), 
+      i18n$t("action"), i18n$t("user_evaluation_id"), i18n$t("modified"))
+  }
+  
   if (table_name == "plugins"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("module_type"), 
       i18n$t("updated_on"),  i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
