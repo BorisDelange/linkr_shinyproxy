@@ -37,7 +37,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
     content = div(
       actionButton(ns(paste0(prefix, "_close_add_module")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
       shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-        make_textfield(language = language, ns = ns, label = "name", id = "module_name", width = "300px", words = words),
+        make_textfield_new(ns = ns, label = "name", id = "module_name", width = "300px", i18n = i18n),
         div(shiny.fluent::ChoiceGroup.shinyInput(ns("add_module_type"), value = "same_level", 
           options = module_creation_options, className = "inline_choicegroup"), style = "padding-top:35px;")
       ), br(),
@@ -648,23 +648,21 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       
       observeEvent(m$chosen_patient, {
         
-        r$data_patient <- list()
-        
         # Reset variables
-        r$data_patient$stays <- tibble::tibble()
-        r$data_patient$labs_vitals <- tibble::tibble()
-        r$data_patient$text <- tibble::tibble()
-        r$data_patient$orders <- tibble::tibble()
+        d$data_patient$stays <- tibble::tibble()
+        d$data_patient$labs_vitals <- tibble::tibble()
+        d$data_patient$text <- tibble::tibble()
+        d$data_patient$orders <- tibble::tibble()
         d$data_stay$labs_vitals <- tibble::tibble()
         d$data_stay$text <- tibble::tibble()
         d$data_stay$orders <- tibble::tibble()
         
         if (length(m$chosen_patient) > 0){
           if (!is.na(m$chosen_patient) & m$chosen_patient != ""){
-            if (nrow(d$stays) > 0) r$data_patient$stays <- d$stays %>% dplyr::filter(patient_id == m$chosen_patient) %>% dplyr::arrange(admission_datetime)
-            if (nrow(d$labs_vitals) > 0) r$data_patient$labs_vitals <- d$labs_vitals %>% dplyr::filter(patient_id == m$chosen_patient)
-            if (nrow(d$text) > 0) r$data_patient$text <- d$text %>% dplyr::filter(patient_id == m$chosen_patient)
-            if (nrow(d$orders) > 0) r$data_patient$orders <- d$orders %>% dplyr::filter(patient_id == m$chosen_patient)
+            if (nrow(d$stays) > 0) d$data_patient$stays <- d$stays %>% dplyr::filter(patient_id == m$chosen_patient) %>% dplyr::arrange(admission_datetime)
+            if (nrow(d$labs_vitals) > 0) d$data_patient$labs_vitals <- d$labs_vitals %>% dplyr::filter(patient_id == m$chosen_patient)
+            if (nrow(d$text) > 0) d$data_patient$text <- d$text %>% dplyr::filter(patient_id == m$chosen_patient)
+            if (nrow(d$orders) > 0) d$data_patient$orders <- d$orders %>% dplyr::filter(patient_id == m$chosen_patient)
           }
         }
       })
@@ -678,11 +676,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         if (length(m$chosen_stay) > 0){
           if (!is.na(m$chosen_stay) & m$chosen_stay != ""){
             
-            d$data_stay$stay <- r$data_patient$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
+            d$data_stay$stay <- d$data_patient$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
             
-            if (nrow(r$data_patient$labs_vitals) > 0) d$data_stay$labs_vitals <- r$data_patient$labs_vitals %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
-            if (nrow(r$data_patient$text) > 0) d$data_stay$text <- r$data_patient$text %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
-            if (nrow(r$data_patient$orders) > 0) d$data_stay$orders <- r$data_patient$orders %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
+            if (nrow(d$data_patient$labs_vitals) > 0) d$data_stay$labs_vitals <- d$data_patient$labs_vitals %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
+            if (nrow(d$data_patient$text) > 0) d$data_stay$text <- d$data_patient$text %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
+            if (nrow(d$data_patient$orders) > 0) d$data_stay$orders <- d$data_patient$orders %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
           }
         }
       })
@@ -717,43 +715,42 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     # When a study is chosen
     
     observeEvent(m$chosen_study, {
-      # req(!is.na(m$chosen_study))
-      # 
-      # # Delete UI from previous loaded study
-      # removeUI(selector = paste0("#", ns(r[[paste0(prefix, "_cards")]])), multiple = TRUE)
-      # 
-      # # Initiiate vector of study cards
-      # r[[paste0(prefix, "_cards")]] <- character()
-      # 
-      # # Hide "choose a study" card
-      # shinyjs::hide("choose_a_study_card")
-      # 
-      # # Reset selected key
-      # r[[paste0(prefix, "_selected_module")]] <- NA_integer_
-      # 
-      # # Reset shown modules
-      # r[[paste0(prefix, "_opened_cards")]] <- ""
-      # 
-      # # Hide Add module element card & Add module
-      # shinyjs::hide("add_module_element")
-      # shinyjs::hide("add_module")
-      # 
-      # r[[paste0(prefix, "_load_display_modules")]] <- paste0("first_load_ui_", Sys.time())
-      # 
-      # # Run observers
-      # r[[paste0(prefix, "_load_server")]] <- Sys.time()
-      # 
-      # # Load modules variables
-      # update_r_new(r = r, m = m, table = paste0(prefix, "_modules_families"))
-      # update_r_new(r = r, m = m, table = paste0(prefix, "_modules"))
-      # update_r_new(r = r, m = m, table = paste0(prefix, "_modules_elements"))
+      req(!is.na(m$chosen_study))
+
+      # Delete UI from previous loaded study
+      removeUI(selector = paste0("#", ns(r[[paste0(prefix, "_cards")]])), multiple = TRUE)
+
+      # Initiiate vector of study cards
+      r[[paste0(prefix, "_cards")]] <- character()
+
+      # Hide "choose a study" card
+      shinyjs::hide("choose_a_study_card")
+
+      # Reset selected key
+      r[[paste0(prefix, "_selected_module")]] <- NA_integer_
+
+      # Reset shown modules
+      r[[paste0(prefix, "_opened_cards")]] <- ""
+
+      # Hide Add module element card & Add module
+      shinyjs::hide("add_module_element")
+      shinyjs::hide("add_module")
+
+      r[[paste0(prefix, "_load_display_modules")]] <- paste0("first_load_ui_", Sys.time())
+
+      # Run observers
+      r[[paste0(prefix, "_load_server")]] <- Sys.time()
+
+      # Load modules variables
+      update_r_new(r = r, m = m, table = paste0(prefix, "_modules_families"))
+      update_r_new(r = r, m = m, table = paste0(prefix, "_modules"))
+      update_r_new(r = r, m = m, table = paste0(prefix, "_modules_elements"))
       
     })
     
     # Load study display modules
     
     observeEvent(r[[paste0(prefix, "_load_display_modules")]], {
-      
       # Load study informations
       # For one study, you choose ONE patient_lvl or aggregated data module family
       study_infos <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE id = ", m$chosen_study))
@@ -807,7 +804,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       }
       
       r[[paste0(prefix, "_display_modules")]] <- display_modules
-      
       # Load UI cards
       if (grepl("first_load_ui", r[[paste0(prefix, "_load_display_modules")]])) r[[paste0(prefix, "_load_ui_cards")]] <- Sys.time()
     })
@@ -822,7 +818,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       
       # Render menu
       output$study_menu <- renderUI({
-        
         # The output is reloaded in these conditions :
         # - Change in r[[paste0(prefix, "_display_modules")]]
         # - Change in r[[paste0(prefix, "_load_ui_menu")]]
@@ -835,20 +830,25 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         shinyjs::hide("initial_breadcrumb")
         
         # Check if users has access only to aggregated data
-        if (prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) == 1) show_message_bar(output, 1, "only_aggregated_data_authorized", "severeWarning", language)
+        if (prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) == 1) show_message_bar_new(output, 1, "only_aggregated_data_authorized", "severeWarning", i18n = i18n)
         req((prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) != 1) | prefix == "aggregated")
         
         display_modules <- isolate(r[[paste0(prefix, "_display_modules")]])
         
         # If no module to show, notify user
         if (nrow(display_modules) == 0 | "level" %not_in% names(display_modules)){
+          
           return(tagList(
             shiny.fluent::Breadcrumb(items = list(
               list(key = "main", text = i18n$t(paste0(prefix, "_data")), href = paste0("#!/", page_name), isCurrentItem = TRUE,
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', 0)")))),
               maxDisplayedItems = 3),
             shiny.fluent::Pivot(
-              onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', item.props.id)")),
+              onLinkClick = htmlwidgets::JS(paste0("item => {",
+                "Shiny.setInputValue('", id, "-study_current_tab', item.props.id);",
+                "Shiny.setInputValue('", id, "-study_current_tab_trigger', Math.random());",
+                "}"
+                )),
               selectedKey = isolate(r[[paste0(prefix, "_selected_module")]]),
               shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", 0), headerText = span(i18n$t("add_module"), style = "padding-left:5px;"), itemIcon = "Add")
             )
@@ -980,7 +980,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
           shiny.fluent::Pivot(
             id = paste0(prefix, "_study_pivot"),
-            onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', item.props.id)")),
+            onLinkClick = htmlwidgets::JS(paste0("item => {",
+              "Shiny.setInputValue('", id, "-study_current_tab', item.props.id);",
+              "Shiny.setInputValue('", id, "-study_current_tab_trigger', Math.random());",
+              "}"
+            )),
             selectedKey = isolate(r[[paste0(prefix, "_selected_module")]]),
             shown_tabs
           ),
@@ -1348,11 +1352,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         })
       })
     
-      # --- --- --- --- -
+      # --- --- --- -- ---
       ## Add a module ----
-      # --- --- --- --- -
-
-      observeEvent(input$study_current_tab, {
+      # --- --- --- -- ---
+  
+      observeEvent(input$study_current_tab_trigger, {
 
         req(grepl("add_module", input$study_current_tab))
 

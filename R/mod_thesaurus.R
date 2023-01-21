@@ -138,6 +138,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("thesaurus_mapping_card"),
         make_card(i18n$t("items_mapping"),
           div(
+            shiny.fluent::reactOutput(ns("mappings_delete_confirm")),
             shiny.fluent::Pivot(
               onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-mapping_current_tab', item.props.id)")),
               shiny.fluent::PivotItem(id = "thesaurus_mapping_add", itemKey = "thesaurus_mapping_add", headerText = i18n$t("add")),
@@ -180,6 +181,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
             ),
             conditionalPanel(condition = "input.mapping_current_tab == 'thesaurus_mapping_management'", ns = ns,
               DT::DTOutput(ns("thesaurus_evaluate_mappings")),
+              div(verbatimTextOutput(ns("thesaurus_mapping_details")), style = "border:dashed 1px; padding:10px;"),
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                 shiny.fluent::PrimaryButton.shinyInput(ns("save_mappings_evaluation"), i18n$t("save")),
                 shiny.fluent::DefaultButton.shinyInput(ns("mapping_delete_selection"), i18n$t("delete_selection"))
@@ -834,7 +836,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$thesaurus_added_mappings_temp, datatable_dom = "<'top't><'bottom'p>",
           output_name = "thesaurus_added_mappings", col_names = col_names, centered_cols = centered_cols, hidden_cols = hidden_cols)
   
-        # # Create a proxy for datatatable
+        # Create a proxy for datatatable
         r$thesaurus_added_mappings_datatable_proxy <- DT::dataTableProxy("thesaurus_added_mappings", deferUntilFlush = FALSE)
       })
       
@@ -892,6 +894,45 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         dplyr::left_join(action_col %>% dplyr::select(id, action), by = "id") %>%
         dplyr::relocate(action, .after = "negative_evals")
       
+      # Update action buttons with user evaluations
+      
+      r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>%
+        dplyr::mutate(
+          positive_eval_button_background_color = dplyr::case_when(
+            user_evaluation_id == 1 ~ "#5FBAFF",
+            user_evaluation_id == 2 ~ "#E8E9EC"
+          ),
+          positive_eval_button_color = dplyr::case_when(
+            user_evaluation_id == 1 ~ "white",
+            user_evaluation_id == 2 ~ "black"
+          ),
+          negative_eval_button_background_color = dplyr::case_when(
+            user_evaluation_id == 1 ~ "#E8E9EC",
+            user_evaluation_id == 2 ~ "#FF434C"
+          ),
+          negative_eval_button_color = dplyr::case_when(
+            user_evaluation_id == 1 ~ "black",
+            user_evaluation_id == 2 ~ "white"
+          )
+        ) %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate(action = dplyr::case_when(
+          !is.na(user_evaluation_id) ~ as.character(tagList(
+            shiny::actionButton(paste0("positive_eval_", id), "", icon = icon("thumbs-up"),
+              onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
+              style = paste0("background-color:", positive_eval_button_background_color, "; color:", positive_eval_button_color, "; border-color:#8E8F9D; border-radius:3px; border-width:1px;")),
+            shiny::actionButton(paste0("negative_eval_", id), "", icon = icon("thumbs-down"),
+              onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})"),
+              style = paste0("background-color:", negative_eval_button_background_color, "; color:", negative_eval_button_color, "; border-color:#8E8F9D; border-radius:3px; border-width:1px;")),
+            shiny::actionButton(paste0("remove_", id), "", icon = icon("trash-alt"),
+              onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"),
+              style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
+          )),
+          TRUE ~ action
+        )) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(-positive_eval_button_background_color, -positive_eval_button_color, -negative_eval_button_background_color, -negative_eval_button_color)
+      
       # Get thesaurus names instead of IDs
       r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>%
         dplyr::mutate(relation = dplyr::case_when(relation_id == 1 ~ i18n$t("equivalent_to"), relation_id == 2 ~ i18n$t("included_in"), relation_id == 3 ~ i18n$t("include"))) %>%
@@ -909,7 +950,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       r$datamart_thesaurus_items_evaluate_mappings_temp <- r$datamart_thesaurus_items_evaluate_mappings %>%
         dplyr::mutate(modified = FALSE)
       
-      searchable_cols <- c("thesaurus_name_1", "item_id_1", "thesaurus_name_2", "item_id_2", "relation", "creator_name")
+      searchable_cols <- c("thesaurus_name_1", "item_id_1", "thesaurus_name_2", "item_id_2", "relation", "creator_name", "positive_evals", "negative_evals")
       factorize_cols <- c("thesaurus_name_1", "thesaurus_name_2", "relation", "creator_name")
       sortable_cols <- c("thesaurus_name_1", "item_id_1", "thesaurus_name_2", "item_id_2", "relation", "creator_name", "datetime", "positive_evals", "negative_evals")
       centered_cols <- c("id", "datetime", "action", "thesaurus_name_1", "item_id_1", "thesaurus_name_2", "item_id_2", "creator_name", "relation")
@@ -955,33 +996,150 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       # Change actionButtons style
       if (is.na(new_evaluation_id)){
-        shinyjs::runjs(paste0("$('#positive_eval_", link_id, "').css({'background-color':'#E8E9EC', 'color':'black'});"))
-        shinyjs::runjs(paste0("$('#negative_eval_", link_id, "').css({'background-color':'#E8E9EC', 'color':'black'});"))
+        positive_eval_button_style <- list(background_color = "#E8E9EC", color = "black")
+        negative_eval_button_style <- list(background_color = "#E8E9EC", color = "black")
       }
       else if (prefix == "positive"){
-        shinyjs::runjs(paste0("$('#positive_eval_", link_id, "').css({'background-color':'#5FBAFF', 'color':'white'});"))
-        shinyjs::runjs(paste0("$('#negative_eval_", link_id, "').css({'background-color':'#E8E9EC', 'color':'black'});"))
+        positive_eval_button_style <- list(background_color = "#5FBAFF", color = "white")
+        negative_eval_button_style <- list(background_color = "#E8E9EC", color = "black")
       } 
       else if (prefix == "negative"){
-        shinyjs::runjs(paste0("$('#negative_eval_", link_id, "').css({'background-color':'#FF434C', 'color':'white'});"))
-        shinyjs::runjs(paste0("$('#positive_eval_", link_id, "').css({'background-color':'#E8E9EC', 'color':'black'});"))
+        positive_eval_button_style <- list(background_color = "#E8E9EC", color = "black")
+        negative_eval_button_style <- list(background_color = "#FF434C", color = "white")
       }
-      
-      # Update database
-      
+        
       # Update temp variable
+      
       r$datamart_thesaurus_items_evaluate_mappings_temp <- r$datamart_thesaurus_items_evaluate_mappings_temp %>%
         dplyr::mutate(user_evaluation_id = dplyr::case_when(
           id == link_id ~ new_evaluation_id,
           TRUE ~ user_evaluation_id
+        )) %>%
+        dplyr::mutate(
+          positive_evals = dplyr::case_when(
+            id == link_id & is.na(current_evaluation_id) & new_evaluation_id == 1 ~ positive_evals + 1,
+            id == link_id & current_evaluation_id == 1 & is.na(new_evaluation_id) ~ positive_evals - 1,
+            id == link_id & current_evaluation_id == 2 & new_evaluation_id == 1 ~ positive_evals + 1,
+            id == link_id & current_evaluation_id == 1 & new_evaluation_id == 2 ~ positive_evals - 1,
+            TRUE ~ positive_evals
+          ),
+          negative_evals = dplyr::case_when(
+            id == link_id & is.na(current_evaluation_id) & new_evaluation_id == 2 ~ negative_evals + 1,
+            id == link_id & current_evaluation_id == 2 & is.na(new_evaluation_id) ~ negative_evals - 1,
+            id == link_id & current_evaluation_id == 1 & new_evaluation_id == 2 ~ negative_evals + 1,
+            id == link_id & current_evaluation_id == 2 & new_evaluation_id == 1 ~ negative_evals - 1,
+            TRUE ~ negative_evals
+          )
+        ) %>%
+        dplyr::mutate(action = dplyr::case_when(
+          id == link_id ~ as.character(tagList(
+            shiny::actionButton(paste0("positive_eval_", link_id), "", icon = icon("thumbs-up"),
+              onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
+              style = paste0("background-color:", positive_eval_button_style$background_color, "; color:", positive_eval_button_style$color, "; border-color:#8E8F9D; border-radius:3px; border-width:1px;")),
+            shiny::actionButton(paste0("negative_eval_", link_id), "", icon = icon("thumbs-down"),
+              onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})"),
+              style = paste0("background-color:", negative_eval_button_style$background_color, "; color:", negative_eval_button_style$color, "; border-color:#8E8F9D; border-radius:3px; border-width:1px;")),
+            shiny::actionButton(paste0("remove_", link_id), "", icon = icon("trash-alt"),
+              onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"),
+              style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
+          )),
+          TRUE ~ action
+        )) %>%
+        dplyr::mutate(modified = dplyr::case_when(
+          id == link_id ~ TRUE,
+          TRUE ~ modified
         ))
       
       # Reload datatable
-      # DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings_temp, resetPaging = FALSE, rownames = FALSE)
+      DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings_temp, resetPaging = FALSE, rownames = FALSE)
     })
-      
-    # When a delete button is clicked
     
+    # Delete a row or multiple rows in datatable
+    
+    mappings_delete_prefix <- "mappings"
+    mappings_dialog_title <- "mapping_delete"
+    mappings_dialog_subtext <- "mapping_delete_subtext"
+    mappings_react_variable <- "mappings_delete_confirm"
+    mappings_table <- "thesaurus_items_mapping"
+    mappings_r_table <- "datamart_thesaurus_items_evaluate_mappings"
+    mappings_id_var_sql <- "id"
+    mappings_id_var_r <- "delete_mappings"
+    mappings_delete_message <- "mapping_deleted"
+    mappings_reload_variable <- "reload_mappings_evals"
+    mappings_information_variable <- "mappings_deleted"
+    mappings_delete_variable <- paste0(mappings_delete_prefix, "_open_dialog")
+    
+    delete_element_new(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
+      delete_prefix = mappings_delete_prefix, dialog_title = mappings_dialog_title, dialog_subtext = mappings_dialog_subtext,
+      react_variable = mappings_react_variable, table = mappings_table, r_table = mappings_r_table, id_var_sql = mappings_id_var_sql, id_var_r = mappings_id_var_r,
+      delete_message = mappings_delete_message, translation = TRUE, reload_variable = mappings_reload_variable,
+      information_variable = mappings_information_variable)
+    
+    # Delete one row (with icon on DT)
+    
+    observeEvent(input$item_mapping_deleted_pressed, {
+
+      r$delete_mappings <- as.integer(substr(input$item_mapping_deleted_pressed, nchar("delete_") + 1, 100))
+      r[[mappings_delete_variable]] <- TRUE
+      
+      # Reload datatable (to unselect rows)
+      DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings_temp, resetPaging = FALSE, rownames = FALSE)
+    })
+    
+    # Delete multiple rows (with "Delete selection" button)
+    
+    observeEvent(input$mapping_delete_selection, {
+
+      req(length(input$thesaurus_evaluate_mappings_rows_selected) > 0)
+
+      r$delete_mappings <- r$datamart_thesaurus_items_evaluate_mappings_temp[input$thesaurus_evaluate_mappings_rows_selected, ] %>% dplyr::pull(id)
+      r[[mappings_delete_variable]] <- TRUE
+      
+      # Reload datatable (to unselect rows)
+      DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings_temp, resetPaging = FALSE, rownames = FALSE)
+    })
+    
+    # Reload data
+    
+    observeEvent(r[[mappings_reload_variable]], {
+      
+      # Reload datatable
+      r$datamart_thesaurus_items_evaluate_mappings_temp <- r$datamart_thesaurus_items_evaluate_mappings %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(id)
+      DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings_temp, resetPaging = FALSE, rownames = FALSE)
+    })
+
     # Save updates
+    
+    observeEvent(input$save_mappings_evaluation, {
+      
+      # Update database
+      
+      if (nrow(r$datamart_thesaurus_items_evaluate_mappings_temp %>% dplyr::filter(modified)) == 0) show_message_bar_new(output, 2, "modif_saved", "success", i18n = i18n)
+      
+      req(nrow(r$datamart_thesaurus_items_evaluate_mappings_temp %>% dplyr::filter(modified)) > 0)
+      
+      sql <- glue::glue_sql(paste0("DELETE FROM thesaurus_items_mapping_evals WHERE creator_id = {r$user_id} ",
+        "AND mapping_id IN ({r$datamart_thesaurus_items_evaluate_mappings_temp %>% dplyr::filter(modified) %>% dplyr::pull(id)*})"), .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql)
+      DBI::dbClearResult(query)
+      
+      if (nrow(r$datamart_thesaurus_items_evaluate_mappings_temp %>% dplyr::filter(modified, !is.na(user_evaluation_id))) > 0){
+        new_data <- r$datamart_thesaurus_items_evaluate_mappings_temp %>%
+          dplyr::filter(modified, !is.na(user_evaluation_id)) %>%
+          dplyr::select(mapping_id = id, evaluation_id = user_evaluation_id) %>%
+          dplyr::mutate(id = get_last_row(r$db, "thesaurus_items_mapping_evals") + 1:dplyr::n(), .before = "mapping_id") %>%
+          dplyr::mutate(creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE) %>%
+          dplyr::relocate(evaluation_id, .after = "creator_id")
+        
+        DBI::dbAppendTable(r$db, "thesaurus_items_mapping_evals", new_data)
+      }
+      
+      show_message_bar_new(output, 2, "modif_saved", "success", i18n = i18n)
+    })
+    
+    # When a row is selected
+    observeEvent(input$thesaurus_evaluate_mappings_rows_selected, {
+      
+    })
   })
 }

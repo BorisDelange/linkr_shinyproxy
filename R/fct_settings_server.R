@@ -2541,7 +2541,7 @@ delete_element <- function(r = shiny::reactiveValues(), session, input, output, 
 
 delete_element_new <- function(r = shiny::reactiveValues(), session, input, output, ns = shiny::NS(), i18n = R6::R6Class(),
   delete_prefix = character(), dialog_title = character(), dialog_subtext = character(),
-  react_variable = character(), table = character(), id_var_sql = character(), id_var_r = character(),
+  react_variable = character(), table = character(), r_table = character(), id_var_sql = character(), id_var_r = character(),
   delete_message = character(), reload_variable = character(), information_variable = character(), translation = TRUE){
   
   delete_variable <- paste0(delete_prefix, "_open_dialog")
@@ -2596,7 +2596,8 @@ delete_element_new <- function(r = shiny::reactiveValues(), session, input, outp
     DBI::dbSendStatement(r$db, sql) -> query
     DBI::dbClearResult(query)
     
-    r[[table]] <- r[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
+    if (length(r_table) > 0) r[[r_table]] <- r[[r_table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
+    else r[[table]] <- r[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
     
     # # Notify user
     show_message_bar_new(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n)

@@ -347,10 +347,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     error_loading_github <- TRUE
     plugins_file <- paste0(app_folder, "/temp_files/plugins.xml")
-    try({
+    tryCatch({
       xml2::download_xml("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/plugins.xml", plugins_file)
       error_loading_github <- FALSE
-    })
+    }, error = function(e) "")
     
     observeEvent(r$plugins, r$reload_plugins_document_cards <- Sys.time(), once = TRUE)
     observeEvent(input$reload_plugins_document_cards, r$reload_plugins_document_cards <- Sys.time())

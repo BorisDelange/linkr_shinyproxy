@@ -588,6 +588,12 @@ render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny
     truncated_cols_vec <<- c(truncated_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   
+  # Which cols are with non-selection attribute
+  # no_selection_cols_vec <- integer()
+  # sapply(no_selection_cols, function(col){
+  #   no_selection_cols_vec <<- c(no_selection_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  # })
+  
   # If filter is TRUE
   if (filter) filter_list <- list(position = "top")
   if (!filter) filter_list <- list()
@@ -608,6 +614,9 @@ render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny
   
   # Add searchable cols to column_defs
   column_defs <- rlist::list.append(column_defs, list(searchable = FALSE, targets = non_searchable_cols_vec))
+  
+  # Add no_selection cols to columns_defs
+  # column_defs <- rlist::list.append(column_defs, list(className = "no-selection", targets = no_selection_cols_vec))
   
   # Truncate long text
   column_defs <- rlist::list.append(column_defs, list(render = htmlwidgets::JS(
@@ -651,5 +660,10 @@ render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny
       });
       Shiny.unbindAll(table.table().node());
       Shiny.bindAll(table.table().node());")
+      # table.on('select.dt', function(e, dt, type, indexes) {
+      #   if (table.columns('.no-selection').indexes().length) {
+      #     table.rows(indexes).deselect();
+      #   }
+      # });")
   )
 }
