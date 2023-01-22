@@ -1410,7 +1410,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           options('cli.num_colors' = NULL)
           
           # Display result
-          paste(strwrap(captured_output), collapse = "\n") -> result
+          paste(strwrap(captured_output), collapse = "\n")
         })
       })
     
