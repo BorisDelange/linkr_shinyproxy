@@ -1096,7 +1096,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
                 div(shiny.fluent::MessageBar(i18n$t("module_contains_sub_modules"), messageBarType = 5), style = "margin-top:4px;")
               )
             )
@@ -1105,8 +1105,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           else toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_module_element"), iconProps = list(iconName = "Add")),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add")),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
                 div(style = "width:20px;"),
                 toggles
               )
@@ -1428,7 +1428,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_name", errorMessage = i18n$t("provide_valid_name"))
         req(!is.na(new_data$name))
 
-        add_settings_new_data(session = session, output = output, r = r, language = language, id = id,
+        add_settings_new_data_new(session = session, output = output, r = r, m = m, i18n = i18n, id = id,
           data = new_data, table = paste0(prefix, "_modules"), required_textfields = required_textfields, req_unique_values = req_unique_values)
 
         # Reset fields
@@ -1580,8 +1580,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
             parent_toggles_div <- div(
               make_card("",
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", parent_module_id)), i18n$t("new_module_element"), iconProps = list(iconName = "Add")),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", parent_module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add")),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
                   div(style = "width:20px;")
                 )
               )
@@ -1898,7 +1898,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         DBI::dbAppendTable(r$db, table, new_data)
         add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
 
-        show_message_bar(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", language = language, words = r$words)
+        show_message_bar_new(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", i18n = i18n)
 
         update_r(r = r, table = table, language = language)
 
@@ -2027,8 +2027,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_module_element"), iconProps = list(iconName = "Add")),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
               div(style = "width:20px;"),
               toggles
             )
@@ -2142,8 +2142,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         else toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_module_element"), iconProps = list(iconName = "Add")),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_module"), iconProps = list(iconName = "Delete")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add")),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
               div(style = "width:20px;"),
               toggles
             )
