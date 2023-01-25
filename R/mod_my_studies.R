@@ -244,7 +244,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         # A r variable to update study dropdown, when the load of datamart is finished
         r$loaded_datamart <- r$chosen_datamart
   
-        r$show_message_bar1 <- tibble::tibble(message = "import_datamart_success", type = "success")
+        r$show_message_bar1 <- tibble::tibble(message = "import_datamart_success", type = "success", trigger = Sys.time())
         
         # Try to run the scripts associated with this datamart
         
@@ -261,17 +261,17 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
               eval(parse(text = scripts_code[i, ]$code %>% stringr::str_replace_all("\r", "\n")))
             }
             
-            r$show_message_bar2 <- tibble::tibble(message = "run_scripts_success", type = "success")
+            r$show_message_bar2 <- tibble::tibble(message = "run_scripts_success", type = "success", trigger = Sys.time())
           }
         },
           error = function(e){
-            r$show_message_bar2 <<- tibble::tibble(message = "fail_load_scripts", type = "severeWarning")
+            r$show_message_bar2 <<- tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
             report_bug_new(r = r, output = output, error_message = "fail_load_scripts",
               error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)
           })
       },
         error = function(e){
-          r$show_message_bar1 <<- tibble::tibble(message = "fail_load_datamart", type = "severeWarning")
+          r$show_message_bar1 <<- tibble::tibble(message = "fail_load_datamart", type = "severeWarning", trigger = Sys.time())
           report_bug_new(r = r, output = output, error_message = "fail_load_datamart",
             error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)
         })

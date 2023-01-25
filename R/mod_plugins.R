@@ -315,6 +315,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     r[[paste0(prefix, "_plugins_datatable_loaded")]] <- FALSE
  
+    sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
+    
     # --- --- --- --- --- ---
     # Show or hide cards ----
     # --- --- --- --- --- ---
@@ -708,7 +710,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Reload datatable
         r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
         
-        show_message_bar_new(output, 3, "success_installing_github_plugin", "success", i18n = i18n)
+        show_message_bar_new(output, 3, "success_installing_github_plugin", "success", i18n = i18n, ns = ns)
         
       }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_install_github_plugin", 
         error_name = paste0("install_github_plugin - id = ", plugin$unique_id), category = "Error", error_report = toString(e), language = language))
@@ -735,7 +737,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       }
       
-      else show_message_bar_new(output, 2, "unauthorized_action", "severeWarning", i18n = i18n)
+      else show_message_bar_new(output, 2, "unauthorized_action", "severeWarning", i18n = i18n, ns = ns)
     })
     
     # --- --- --- --- --- ---
@@ -857,7 +859,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Save updates
     observeEvent(input$save_plugins_management, {
       
-      if (nrow(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(modified)) == 0) show_message_bar_new(output, 2, "modif_saved", "success", i18n = i18n)
+      if (nrow(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(modified)) == 0) show_message_bar_new(output, 2, "modif_saved", "success", i18n = i18n, ns = ns)
       
       req(nrow(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(modified)) > 0)
       
@@ -1072,7 +1074,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (!dir.exists(plugin_folder)) dir.create(plugin_folder, recursive = TRUE)
         file.copy(input$import_image_file$datapath, paste0(plugin_folder, "/", input$import_image_file$name), overwrite = TRUE)
         
-        show_message_bar_new(output, 4, "image_imported", "success", i18n = i18n)
+        show_message_bar_new(output, 4, "image_imported", "success", i18n = i18n, ns = ns)
         
       }, error = function(e) report_bug_new(r = r, output = output, error_message = "error_importing_image",
           error_name = paste0(id, " - import plugin image"), category = "Error", error_report = e, i18n = i18n))
@@ -1167,7 +1169,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
             error_name = paste0("plugins - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n))
         
-        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n)
+        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
         req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
         
         # Transform count_rows cols to integer, to be sortable
@@ -1300,6 +1302,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       ## Execute code ----
       # --- --- --- -- --
       
+      # New environment, to authorize access to selected variables from shinyAce editor
+      new_env_vars <- list()
+      for(var in ls()) new_env_vars[[var]] <- NA
+    
       observeEvent(input$execute_code, {
         r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui
         r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server
@@ -1341,7 +1347,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           if (prefix == "patient_lvl" & is.na(m$chosen_patient)) var_check <- FALSE
         }
 
-        if (!var_check) show_message_bar_new(output = output, id = 3, message = "load_some_patient_data_plugin", i18n = i18n)
+        if (!var_check) show_message_bar_new(output = output, id = 3, message = "load_some_patient_data_plugin", i18n = i18n, ns = ns)
 
         req(var_check)
         
@@ -1398,25 +1404,32 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         output$code_result_ui <- renderUI(make_card("", tryCatch(result <- eval(parse(text = ui_code)), error = function(e) stop(e), warning = function(w) stop(w))))
         
+        # New environment, to authorize access to selected variables from shinyAce editor
+        # We choose which vars to keep access to
+        
+        keep_vars <- c("d", "m")
+        for (var in keep_vars) new_env_vars[[var]] <- eval(parse(text = var))
+        new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
+        
+        options('cli.num_colors' = 1)
+        
+        # Capture console output of our code
+        captured_output <- capture.output(
+          tryCatch(eval(parse(text = server_code), envir = new_env), error = function(e) print(e), warning = function(w) print(w)))
+        
+        # Restore normal value
+        options('cli.num_colors' = NULL)
+        
         output$code_result_server <- renderText({
           
-          options('cli.num_colors' = 1)
-          
-          # Capture console output of our code
-          captured_output <- capture.output(
-            tryCatch(eval(parse(text = server_code)), error = function(e) print(e), warning = function(w) print(w)))
-          
-          # Restore normal value
-          options('cli.num_colors' = NULL)
-          
           # Display result
-          paste(strwrap(captured_output), collapse = "\n")
+          paste(paste(captured_output), collapse = "\n")
         })
       })
     
-      # --- --- --- -- --
+      # --- --- --- -- ---
       ## Save updates ----
-      # --- --- --- -- --
+      # --- --- --- -- ---
       
       observeEvent(input$ace_edit_code_ui_save, r[[paste0(id, "_save_code")]] <- Sys.time())
       observeEvent(input$ace_edit_code_server_save, r[[paste0(id, "_save_code")]] <- Sys.time())
@@ -1451,7 +1464,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         update_r(r = r, table = "plugins")
         
         # Notify user
-        show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n)
+        show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
         
       })
       
@@ -1605,7 +1618,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           output_name = "imported_plugins", col_names = col_names, centered_cols = centered_cols, column_widths = column_widths,
           filter = FALSE, hidden_cols = hidden_cols)
 
-        show_message_bar_new(output, 3, "success_importing_plugin", "success", i18n = i18n, time = 15000)
+        show_message_bar_new(output, 3, "success_importing_plugin", "success", i18n = i18n, time = 15000, ns = ns)
       },
       error = function(e) report_bug_new(r = r, output = output, error_message = "error_importing_plugin",
         error_name = paste0(id, " - import plugins"), category = "Error", error_report = e, i18n = i18n))

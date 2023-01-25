@@ -35,7 +35,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
   module_creation_card <- make_card(
     title = i18n$t("add_module"),
     content = div(
-      actionButton(ns(paste0(prefix, "_close_add_module")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
+      actionButton(ns(paste0(prefix, "_close_add_module")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
       shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
         make_textfield_new(ns = ns, label = "name", id = "module_name", width = "300px", i18n = i18n),
         div(shiny.fluent::ChoiceGroup.shinyInput(ns("add_module_type"), value = "same_level", 
@@ -55,14 +55,13 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
       content = div(
         actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_textfield(language = language, ns = ns, label = "name", id = "module_element_name", width = "300px", words = words),
-          make_combobox(language = language, ns = ns, label = "plugin", id = "plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px", words = words)
+          make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "module_element_name", width = "300px"),
+          make_combobox_new(i18n = i18n, ns = ns, label = "plugin", id = "plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px")
         ),
-        make_combobox(language = language, ns = ns, label = "thesaurus", id = "thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px", words = words),
+        make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 20),
-          make_dropdown(language = language, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
-            multiSelect = TRUE, width = "650px", words = words),
+          make_dropdown_new(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items", multiSelect = TRUE, width = "650px"),
           div(shiny.fluent::DefaultButton.shinyInput(ns("reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
         ),
         div(DT::DTOutput(ns("module_element_thesaurus_items")), class = "thesaurus_table"), br(),
@@ -119,7 +118,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
       )
     ), 
     div(shinyAce::aceEditor(
-      ns("ace_edit_code"), "", mode = "r", 
+      ns("ace_edit_code"), "", mode = "r",
       code_hotkeys = list(
         "r", list(
           run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
@@ -130,7 +129,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
       autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
     ), style = "width: 100%;"),
     shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
-    div(verbatimTextOutput(ns("code_result")), 
+    div(verbatimTextOutput(ns("code_result")),
       style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
     br()
   )
@@ -146,7 +145,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     
     language <- "EN"
     
-    sapply(c(1,6), function(i) shinyjs::onevent("hover", paste0("message_bar", i), shinyjs::hide(paste0("message_bar", i))))
+    sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     # --- --- --- --- --- --- -
     # Summary ----
@@ -175,8 +174,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n))
-    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n))
+    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
     
     # --- --- --- --- --
     # Initiate vars ----
@@ -861,7 +860,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         shinyjs::hide("initial_breadcrumb")
         
         # Check if users has access only to aggregated data
-        if (prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) == 1) show_message_bar_new(output, 1, "only_aggregated_data_authorized", "severeWarning", i18n = i18n)
+        if (prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) == 1) show_message_bar_new(output, 1, "only_aggregated_data_authorized", "severeWarning", i18n = i18n, ns = ns)
         req((prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) != 1) | prefix == "aggregated")
         
         display_modules <- isolate(r[[paste0(prefix, "_display_modules")]])
@@ -1140,8 +1139,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
-                paste0("module_id = ", module_id),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
+                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
                 div(shiny.fluent::MessageBar(i18n$t("tab_contains_sub_tabs"), messageBarType = 5), style = "margin-top:4px;")
               )
             )
@@ -1150,9 +1149,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           else toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add")),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
-                paste0("module_id = ", module_id),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
+                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
+                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
                 div(style = "width:20px;"),
                 toggles
               )
@@ -1498,9 +1498,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add")),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
-              paste0("module_id = ", module_id),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
               div(style = "width:20px;")
             )
           )
@@ -1519,8 +1520,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           parent_toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
-                paste0("module_id = ", module_id),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
+                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
                 div(shiny.fluent::MessageBar(i18n$t("tab_contains_sub_tabs"), messageBarType = 5), style = "margin-top:4px;")
               )
             )
@@ -1539,21 +1540,23 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
         # Hide currently opened cards
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
-
-        # Code to make Add module element button work
-        observeEvent(input[[paste0(prefix, "_add_module_element_", r[[paste0(prefix, "_selected_module")]])]], {
-
-          # Hide opened cards
-          sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
-
-          # Show Add module element div
-          shinyjs::show(paste0(prefix, "_add_module_element"))
-
-        }, ignoreInit = TRUE)
-
-        # Code to make Remove module button work
-        observeEvent(input[[paste0(prefix, "_remove_module_", r[[paste0(prefix, "_selected_module")]])]], r[[module_delete_variable]] <- TRUE)
       })
+      
+      # Code to make Add module element button work
+      observeEvent(input[[paste0(prefix, "_add_module_element_trigger")]], {
+        # observeEvent(input[[paste0(prefix, "_add_module_element_", r[[paste0(prefix, "_selected_module")]])]], {
+        
+        # Hide opened cards
+        sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
+        
+        # Show Add module element div
+        shinyjs::show(paste0(prefix, "_add_module_element"))
+        
+      })
+      
+      # Code to make Remove module button work
+      # observeEvent(input[[paste0(prefix, "_remove_module_", r[[paste0(prefix, "_selected_module")]])]], r[[module_delete_variable]] <- TRUE)
+      observeEvent(input[[paste0(prefix, "_remove_module_trigger")]], r[[module_delete_variable]] <- TRUE)
       
       # --- --- --- --- --
       ## Delete a tab ----
@@ -1636,9 +1639,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
             parent_toggles_div <- div(
               make_card("",
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", parent_module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add")),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
-                  paste0("module_id = ", module_id),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", parent_module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
+                    onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
+                    onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
                   div(style = "width:20px;")
                 )
               )
@@ -1955,7 +1959,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         DBI::dbAppendTable(r$db, table, new_data)
         add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
 
-        show_message_bar_new(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", i18n = i18n)
+        show_message_bar_new(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", i18n = i18n, ns = ns)
 
         update_r(r = r, table = table, language = language)
 
@@ -2085,9 +2089,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add")),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
-              paste0("module_id = ", module_id),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
               div(style = "width:20px;"),
               toggles
             )
@@ -2194,8 +2199,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
-              paste0("module_id = ", module_id),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
               div(shiny.fluent::MessageBar(i18n$t("tab_contains_sub_tabs"), messageBarType = 5), style = "margin-top:4px;")
             )
           )
@@ -2204,9 +2209,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         else toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add")),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete")),
-              paste0("module_id = ", module_id),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
               div(style = "width:20px;"),
               toggles
             )

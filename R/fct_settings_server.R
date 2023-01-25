@@ -345,6 +345,8 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   i18n = R6::R6Class(), id = character(), data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), 
   required_dropdowns = "all", dropdowns = character()){
   
+  ns <- shiny::NS(id)
+  
   # --- --- --- --- --- --- --- --- -
   # Check textfields & dropdowns ----
   # --- --- --- --- --- --- --- --- -
@@ -382,7 +384,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = r$db)
     distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull() %>% tolower()
     
-    if (tolower(data[[field]]) %in% distinct_values) show_message_bar_new(output = output, id = 2, message = paste0(field, "_already_used"), type = "severeWarning", i18n = i18n)
+    if (tolower(data[[field]]) %in% distinct_values) show_message_bar_new(output = output, id = 2, message = paste0(field, "_already_used"), type = "severeWarning", i18n = i18n, ns = ns)
     req(tolower(data[[field]]) %not_in% distinct_values)
   })
   
@@ -409,7 +411,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     }
   }
   
-  if (!dropdowns_check) show_message_bar_new(output = output, id = 2, message = "dropdown_empty", type = "severeWarning", i18n = i18n)
+  if (!dropdowns_check) show_message_bar_new(output = output, id = 2, message = "dropdown_empty", type = "severeWarning", i18n = i18n, ns = ns)
   req(dropdowns_check)
   
   # --- --- --- --- --- --- --- --- -- -
@@ -644,7 +646,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     }
   }
   
-  show_message_bar_new(output = output, id = 1, message = paste0(get_singular(table), "_added"), type = "success", i18n = i18n)
+  show_message_bar_new(output = output, id = 1, message = paste0(get_singular(table), "_added"), type = "success", i18n = i18n, ns = ns)
   
   # Reset textfields
   if (table == "users") sapply(c("username", "firstname", "lastname", "password"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
@@ -2600,7 +2602,7 @@ delete_element_new <- function(r = shiny::reactiveValues(), session, input, outp
     else r[[table]] <- r[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
     
     # # Notify user
-    show_message_bar_new(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n)
+    show_message_bar_new(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n, ns = ns)
 
     # Activate reload variable
     r[[reload_variable]] <- Sys.time()
