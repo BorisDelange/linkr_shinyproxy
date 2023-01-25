@@ -32,6 +32,7 @@ Imports:
     stringr (>= 1.4.0),
     tidyr (>= 1.1.4),
     pkgload (>= 1.2.3),
+    pryr (>= 0.1.5),
     XML (>= 3.99-0.13),
     zip (>= 2.2.0)
 Suggests:

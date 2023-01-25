@@ -10,9 +10,6 @@
 mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   result <- div()
-  
-  # Delete in a future version
-  language <- "EN"
  
   # Dropdowns shown in datatable for each page
   dropdowns <- tibble::tribble(~id, ~dropdowns,
@@ -358,9 +355,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    # ** To be deleted ** ----
-    language <- "EN"
-
     # Dropdowns in the management datatable, by page
     dropdowns <- tibble::tribble(~id, ~dropdowns,
       "settings_data_sources", "",
@@ -368,6 +362,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       "settings_studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
       "settings_subsets", c("datamart", "study"),
       "settings_thesaurus", "data_source")
+    
+    # Close message bar
+    sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     # Table name
     table <- substr(id, nchar("settings_") + 1, nchar(id))
@@ -642,6 +639,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         
         r[[paste0("delete_", get_plural(table))]] <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
         r[[settings_delete_variable]] <- TRUE
+        
+        # Reload datatable (to unselect rows)
+        DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
       })
       
       # Delete multiple rows (with "Delete selection" button)
@@ -721,6 +721,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           shiny.fluent::updateComboBox.shinyInput(session, "code_chosen", options = options, value = value)
           shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
+          
+          # Reload datatable (to unselect rows)
+          DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
           
           # Set current pivot to options_card
           shinyjs::runjs(glue::glue("$('#{id}-{paste0(table, '_pivot')} button[name=\"{i18n$t(paste0(get_singular(table), '_options'))}\"]').click();"))
@@ -820,6 +823,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           shiny.fluent::updateComboBox.shinyInput(session, "code_chosen", options = options, value = value)
           if (table == "datamarts") shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
           if (table == "thesaurus") shiny.fluent::updateComboBox.shinyInput(session, "items_chosen", options = options, value = value)
+          
+          # Reload datatable (to unselect rows)
+          DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
           
           # Set current pivot to edit_code_card
           shinyjs::runjs(glue::glue("$('#{id}-{paste0(table, '_pivot')} button[name=\"{i18n$t(paste0('edit_', get_singular(table), '_code'))}\"]').click();"))
@@ -1044,7 +1050,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
                 error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
                   error_name = paste0(id, " - count_patients_rows"), category = "Error", error_report = toString(e), i18n = i18n))
               
-              if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n)
+              if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
               req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
               
               # Transform count_rows cols to integer, to be sortable

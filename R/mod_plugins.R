@@ -315,6 +315,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     r[[paste0(prefix, "_plugins_datatable_loaded")]] <- FALSE
  
+    # Close message bar
     sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     # --- --- --- --- --- ---
@@ -1302,10 +1303,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       ## Execute code ----
       # --- --- --- -- --
       
-      # New environment, to authorize access to selected variables from shinyAce editor
-      new_env_vars <- list()
-      for(var in ls()) new_env_vars[[var]] <- NA
-    
       observeEvent(input$execute_code, {
         r[[paste0(id, "_ui_code")]] <- input$ace_edit_code_ui
         r[[paste0(id, "_server_code")]] <- input$ace_edit_code_server
@@ -1407,8 +1404,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # New environment, to authorize access to selected variables from shinyAce editor
         # We choose which vars to keep access to
         
-        keep_vars <- c("d", "m")
-        for (var in keep_vars) new_env_vars[[var]] <- eval(parse(text = var))
+        # Variables to hide
+        new_env_vars <- list("r" = NA)
+        # Variables to keep
+        for (var in c("d", "m", "o")) new_env_vars[[var]] <- eval(parse(text = var))
         new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
         
         options('cli.num_colors' = 1)

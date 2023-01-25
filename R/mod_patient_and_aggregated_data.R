@@ -58,7 +58,16 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
           make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "module_element_name", width = "300px"),
           make_combobox_new(i18n = i18n, ns = ns, label = "plugin", id = "plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px")
         ),
-        make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+          make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
+          make_dropdown_new(i18n = i18n, ns = ns, label = "items_mapping", id = "thesaurus_mapping", multiSelect = TRUE, width = "300px",
+            options = list(
+              list(key = 1, text = i18n$t("equivalent_to")),
+              list(key = 2, text = i18n$t("included_in")),
+              list(key = 3, text = i18n$t("include"))
+            )
+          )
+        ),
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 20),
           make_dropdown_new(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items", multiSelect = TRUE, width = "650px"),
@@ -117,20 +126,20 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
         style = "position:relative;"
       )
     ), 
-    div(shinyAce::aceEditor(
-      ns("ace_edit_code"), "", mode = "r",
-      code_hotkeys = list(
-        "r", list(
-          run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
-          run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
-          save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
-        )
-      ),
-      autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
-    ), style = "width: 100%;"),
-    shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
-    div(verbatimTextOutput(ns("code_result")),
-      style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
+    # div(shinyAce::aceEditor(
+    #   ns("ace_edit_code"), "", mode = "r",
+    #   code_hotkeys = list(
+    #     "r", list(
+    #       run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+    #       run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+    #       save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
+    #     )
+    #   ),
+    #   autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+    # ), style = "width: 100%;"),
+    # shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
+    # div(verbatimTextOutput(ns("code_result")),
+    #   style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
     br()
   )
 }
@@ -139,7 +148,8 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
 #'
 #' @noRd 
 
-mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
+  o = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -737,12 +747,14 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     # When a study is chosen
     
     observeEvent(m$chosen_study, {
-      req(!is.na(m$chosen_study))
-
+      
       # Hide UI from previous loaded study
       # Don't use removeUI, cause when you switch study, it is deleted and cannot be reinserted
       
       sapply(r[[paste0(prefix, "_cards")]], function(card) shinyjs::hide(card))
+      
+      req(!is.na(m$chosen_study))
+      
       # removeUI(selector = paste0("#", ns(r[[paste0(prefix, "_cards")]])), multiple = TRUE)
 
       # Initiiate vector of study cards
@@ -868,8 +880,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # If no module to show, notify user
         if (nrow(display_modules) == 0 | "level" %not_in% names(display_modules)){
           
-          selected_key <- 0L
-          if (!is.na(isolate(r[[paste0(prefix, "_selected_module")]]))) selected_key <- isolate(r[[paste0(prefix, "_selected_module")]])
+          # selected_key <- 0L
+          # if (!is.na(isolate(r[[paste0(prefix, "_selected_module")]]))) selected_key <- isolate(r[[paste0(prefix, "_selected_module")]])
           
           return(tagList(
             shiny.fluent::Breadcrumb(items = list(
@@ -882,7 +894,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
                 "Shiny.setInputValue('", id, "-study_current_tab_trigger', Math.random());",
                 "}"
                 )),
-              selectedKey = selected_key,
+              selectedKey = NULL,
               shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", 0), headerText = span(i18n$t("add_module"), style = "padding-left:5px;"), itemIcon = "Add")
             )
           ))
@@ -1109,8 +1121,29 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
                 element_code <- div(
                   make_card("",
-                    div(eval(parse(text = code_ui_card)),
-                      actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"), style = "position:absolute; top:8px; right: 10px;")
+                    div(
+                      div(id = ns(paste0(prefix, "_module_element_plugin_ui_", group_id)), eval(parse(text = code_ui_card))),
+                      shinyjs::hidden(
+                        div(id = ns(paste0(prefix, "_module_element_settings_", group_id)),
+                          p(span(i18n$t("widget_name"), style = "font-weight:bold;"), " : ", module_element_name),
+                          shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "_module_elements_settings_show_items_", group_id)), i18n$t("show_used_items"))
+                        )
+                      ),
+                      div(
+                        id = ns(paste0(prefix, "_module_element_settings_remove_buttons_", group_id)),
+                        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 2),
+                          actionButton(ns(paste0(prefix, "_settings_module_element_", group_id)), "", icon = icon("cog")),
+                          actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"))
+                        ),
+                        style = "position:absolute; top:8px; right: 10px;"
+                      ),
+                      shinyjs::hidden(
+                        div(
+                          id = ns(paste0(prefix, "_module_element_quit_button_", group_id)),
+                          actionButton(ns(paste0(prefix, "_quit_module_element_settings_", group_id)), "", icon = icon("times")),
+                          style = "position:absolute; top:8px; right: 10px;"
+                        )
+                      )
                     ),
                     style = "position:relative;"
                   )
@@ -1153,6 +1186,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
                   onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
                 shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
                   onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
+                #paste0("module_id = ", module_id),
                 div(style = "width:20px;"),
                 toggles
               )
@@ -1195,132 +1229,152 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     # Load server ----
     # --- --- --- -- -
     
-    # observeEvent(r[[paste0(prefix, "_load_server")]], {
-    #   
-    #   req(!is.na(m$chosen_study))
-    #   
-    #   # Get modules elements, arrange them by display_order
-    #   
-    #   module_family <- r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
-    #   modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == module_family) %>% dplyr::select(module_id = id)
-    #   module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::inner_join(modules, by = "module_id")
-    #   
-    #   # --- --- --- --- --- --- --- -- -
-    #   ## Delete tab & create widget ----
-    #   # --- --- --- --- --- --- --- -- -
-    #   
-    #   # Loop over modules
-    #   
-    #   sapply(modules$module_id, function(module_id){
-    #     
-    #     # --- --- --- --- --- --- --
-    #     ### Create a new widget ----
-    #     # --- --- --- --- --- --- --
-    #     
-    #     observeEvent(input[[paste0(prefix, "_add_module_element_", module_id)]], {
-    # 
-    #       # Hide opened cards
-    #       sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
-    # 
-    #       # Show Add module element div
-    #       shinyjs::show(paste0(prefix, "_add_module_element"))
-    # 
-    #     })
-    #     
-    #     # --- --- --- --- - -
-    #     ### Delete a tab ----
-    #     # --- --- --- --- - -
-    #     
-    #     observeEvent(input[[paste0(prefix, "_remove_module_", module_id)]], {
-    #       r[[module_delete_variable]] <- TRUE
-    #     })
-    #     
-    #   })
-    #   
-    #   # --- --- --- --- --- --- --- --
-    #   ## Run server code for cards ----
-    #   # --- --- --- --- --- --- --- --
-    #   
-    #   # If no thesaurus elements to show in this module, notify the user
-    #   # if (nrow(module_elements) == 0) show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning", language = language)
-    #   
-    #   if (nrow(module_elements) > 0){
-    #     
-    #     # Get module element group_id
-    #     distinct_groups <- unique(module_elements$group_id)
-    #     
-    #     toggles <- c()
-    #     
-    #     # Loop over distinct cards
-    #     sapply(distinct_groups, function(group_id){
-    #       
-    #       # Run plugin server code
-    #       # Only if this code has not been already loaded
-    #       trace_code <- paste0(prefix, "_", group_id, "_", m$chosen_study)
-    #       if (trace_code %not_in% r$server_modules_groups_loaded){
-    #         
-    #         # Add the trace_code to loaded plugins list
-    #         r$server_modules_groups_loaded <- c(r$server_modules_groups_loaded, trace_code)
-    #         
-    #         # Server code for toggles reactivity
-    #         toggle <- paste0(prefix, "_group_", group_id)
-    #         observeEvent(input[[paste0(toggle, "_toggle")]], {
-    #           req(r[[paste0(prefix, "_selected_module")]] == module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::distinct(module_id) %>% dplyr::pull())
-    #           if (input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle)
-    #         })
-    #         
-    #         # Get name of module element
-    #         # module_element_name_escaping <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% 
-    #         # dplyr::pull(name) %>% stringr::str_replace_all(c("-" = "_", "/" = "_", "\\(" = "_", "\\)" = "_"))
-    #         
-    #         # toggles <<- c(toggles, paste0(prefix, "_group_", group_id))
-    #         
-    #         if (prefix == "patient_lvl"){
-    #           
-    #           # Get thesaurus items with thesaurus own item_id
-    #           thesaurus_selected_items <- module_elements %>% dplyr::filter(group_id == !!group_id) %>%
-    #             dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
-    #               thesaurus_item_unit, colour = thesaurus_item_colour)
-    #         }
-    #         
-    #         # Get plugin code
-    #         
-    #         ids <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::select(plugin_id, module_id)
-    #         
-    #         # Check if plugin has been deleted
-    #         check_deleted_plugin <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM plugins WHERE id = ", ids$plugin_id)) %>% dplyr::pull(deleted)
-    #         if (!check_deleted_plugin){
-    #           
-    #           code_server_card <- r$code %>%
-    #             dplyr::filter(link_id == ids$plugin_id, category == "plugin_server") %>%
-    #             dplyr::pull(code) %>%
-    #             stringr::str_replace_all("%module_id%", as.character(ids$module_id)) %>%
-    #             stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-    #             stringr::str_replace_all("\r", "\n")
-    #           
-    #           # If it is an aggregated plugin, change %study_id% with current chosen study
-    #           if (length(m$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$chosen_study))
-    #         }
-    #         else code_server_card <- ""
-    #         
-    #         tryCatch(eval(parse(text = code_server_card)),
-    #           error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
-    #             error_name = paste0(id, " - run server code - ", group_id), category = "Error", error_report = e, language = language)
-    #         )
-    #         
-    #         # --- --- --- --- --- ---
-    #         #### Delete a widget ----
-    #         # --- --- --- --- --- ---
-    #         
-    #         observeEvent(input[[paste0(prefix, "_remove_module_element_", group_id)]], {
-    #           r[[paste0(prefix, "_selected_module_element")]] <- group_id
-    #           r[[module_element_delete_variable]] <- TRUE
-    #         })
-    #         
-    #       }
-    #     })
-    #   }
-    # })
+    observeEvent(r[[paste0(prefix, "_load_server")]], {
+
+      req(!is.na(m$chosen_study))
+
+      # Get modules elements, arrange them by display_order
+
+      module_family <- r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+      modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == module_family) %>% dplyr::select(module_id = id)
+      module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::inner_join(modules, by = "module_id")
+
+      # --- --- --- --- --- --- --- -- -
+      ## Delete tab & create widget ----
+      # --- --- --- --- --- --- --- -- -
+
+      # Loop over modules
+
+      # sapply(modules$module_id, function(module_id){
+      # 
+      #   # --- --- --- --- --- --- --
+      #   ### Create a new widget ----
+      #   # --- --- --- --- --- --- --
+      # 
+      #   observeEvent(input[[paste0(prefix, "_add_module_element_", module_id)]], {
+      # 
+      #     # Hide opened cards
+      #     sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
+      # 
+      #     # Show Add module element div
+      #     shinyjs::show(paste0(prefix, "_add_module_element"))
+      # 
+      #   })
+      # 
+      #   # --- --- --- --- - -
+      #   ### Delete a tab ----
+      #   # --- --- --- --- - -
+      # 
+      #   observeEvent(input[[paste0(prefix, "_remove_module_", module_id)]], {
+      #     r[[module_delete_variable]] <- TRUE
+      #   })
+      # 
+      # })
+
+      # --- --- --- --- --- --- --- ---
+      ## Run server code for cards ----
+      # --- --- --- --- --- --- --- ---
+
+      # If no thesaurus elements to show in this module, notify the user
+      # if (nrow(module_elements) == 0) show_message_bar(output = output, id = 2, message = "no_module_element_to_show", type = "severeWarning", language = language)
+
+      if (nrow(module_elements) > 0){
+
+        # Get module element group_id
+        distinct_groups <- unique(module_elements$group_id)
+
+        toggles <- c()
+
+        # Loop over distinct cards
+        sapply(distinct_groups, function(group_id){
+
+          # Run plugin server code
+          # Only if this code has not been already loaded
+          trace_code <- paste0(prefix, "_", group_id, "_", m$chosen_study)
+          if (trace_code %not_in% r$server_modules_groups_loaded){
+
+            # Add the trace_code to loaded plugins list
+            r$server_modules_groups_loaded <- c(r$server_modules_groups_loaded, trace_code)
+
+            # Server code for toggles reactivity
+            toggle <- paste0(prefix, "_group_", group_id)
+            observeEvent(input[[paste0(toggle, "_toggle")]], {
+              req(r[[paste0(prefix, "_selected_module")]] == module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::distinct(module_id) %>% dplyr::pull())
+              if (input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle)
+            })
+
+            # Get name of module element
+            # module_element_name_escaping <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>%
+            # dplyr::pull(name) %>% stringr::str_replace_all(c("-" = "_", "/" = "_", "\\(" = "_", "\\)" = "_"))
+
+            # toggles <<- c(toggles, paste0(prefix, "_group_", group_id))
+
+            if (prefix == "patient_lvl"){
+
+              # Get thesaurus items with thesaurus own item_id
+              thesaurus_selected_items <- module_elements %>% dplyr::filter(group_id == !!group_id) %>%
+                dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
+                  thesaurus_item_unit, colour = thesaurus_item_colour)
+            }
+
+            # Get plugin code
+
+            ids <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::select(plugin_id, module_id)
+
+            # Check if plugin has been deleted
+            check_deleted_plugin <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM plugins WHERE id = ", ids$plugin_id)) %>% dplyr::pull(deleted)
+            if (!check_deleted_plugin){
+
+              code_server_card <- r$code %>%
+                dplyr::filter(link_id == ids$plugin_id, category == "plugin_server") %>%
+                dplyr::pull(code) %>%
+                stringr::str_replace_all("%module_id%", as.character(ids$module_id)) %>%
+                stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+                stringr::str_replace_all("\r", "\n")
+
+              # If it is an aggregated plugin, change %study_id% with current chosen study
+              if (length(m$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$chosen_study))
+            }
+            else code_server_card <- ""
+            
+            # Variables to hide
+            new_env_vars <- list("r" = NA)
+            # Variables to keep
+            for (var in c("d", "m", "o")) new_env_vars[[var]] <- eval(parse(text = var))
+            new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
+            
+            tryCatch(eval(parse(text = code_server_card), envir = new_env), error = function(e) print(e), warning = function(w) print(w))
+            
+            # --- --- --- --- --- ---
+            #### Delete a widget ----
+            # --- --- --- --- --- ---
+
+            observeEvent(input[[paste0(prefix, "_remove_module_element_", group_id)]], {
+              r[[paste0(prefix, "_selected_module_element")]] <- group_id
+              r[[module_element_delete_variable]] <- TRUE
+            })
+            
+            # --- --- --- --- --- ---
+            #### Widget settings ----
+            # --- --- --- --- --- ---
+
+            observeEvent(input[[paste0(prefix, "_settings_module_element_", group_id)]], {
+              sapply(c("settings", "quit_button"), function(word) shinyjs::show(paste0(prefix, "_module_element_", word, "_", group_id)))
+              sapply(c("settings_remove_buttons", "plugin_ui"), function(word) shinyjs::hide(paste0(prefix, "_module_element_", word, "_", group_id)))
+            })
+            
+            observeEvent(input[[paste0(prefix, "_quit_module_element_settings_", group_id)]], {
+              sapply(c("settings", "quit_button"), function(word) shinyjs::hide(paste0(prefix, "_module_element_", word, "_", group_id)))
+              sapply(c("settings_remove_buttons", "plugin_ui"), function(word) shinyjs::show(paste0(prefix, "_module_element_", word, "_", group_id)))
+            })
+            
+            observeEvent(input[[paste0(prefix, "_module_elements_settings_show_items_", group_id)]], {
+              shinyjs::hide(paste0(prefix, "_module_elements_settings_show_items_", group_id))
+            })
+          }
+        })
+      }
+    })
     
     # --- --- --- --- --- --- -- -
     # Other server reactivity ----
@@ -1386,7 +1440,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         sapply(distinct_groups, function(group_id){
 
           # If toggle is ON
-          if (length(input[[paste0(paste0(prefix, "_module_id_", module_id, "_group_", group_id), "_toggle")]]) > 0){
+          if (length(input[[paste0(paste0(prefix, "_group_", group_id), "_toggle")]]) > 0){
 
             if (input[[paste0(paste0(prefix, "_group_", group_id), "_toggle")]]){
 
@@ -1471,7 +1525,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           # Can't add a module at the level under if there are modules elements attached to current module
           if (input$add_module_type == "level_under"){
             modules_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_module")]], !deleted)
-            if (nrow(modules_elements) > 0) show_message_bar(output = output, id = 3, message = "add_module_has_modules_elements", language = language)
+            if (nrow(modules_elements) > 0) show_message_bar_new(output = output, id = 3, message = "add_module_has_modules_elements", i18n = i18n)
             req(nrow(modules_elements) == 0)
           }
         }
@@ -1502,6 +1556,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
               shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
+              #paste0("module_id = ", module_id),
               div(style = "width:20px;")
             )
           )
@@ -1542,6 +1597,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
       })
       
+      # --- --- --- --- --- --- --- --- --- --
+      ## Show / hide widget creation card ----
+      # --- --- --- --- --- --- --- --- --- --
+      
       # Code to make Add module element button work
       observeEvent(input[[paste0(prefix, "_add_module_element_trigger")]], {
         # observeEvent(input[[paste0(prefix, "_add_module_element_", r[[paste0(prefix, "_selected_module")]])]], {
@@ -1554,13 +1613,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         
       })
       
-      # Code to make Remove module button work
-      # observeEvent(input[[paste0(prefix, "_remove_module_", r[[paste0(prefix, "_selected_module")]])]], r[[module_delete_variable]] <- TRUE)
-      observeEvent(input[[paste0(prefix, "_remove_module_trigger")]], r[[module_delete_variable]] <- TRUE)
-      
       # --- --- --- --- --
       ## Delete a tab ----
       # --- --- --- --- --
+      
+      # Code to make Remove module button work
+      # observeEvent(input[[paste0(prefix, "_remove_module_", r[[paste0(prefix, "_selected_module")]])]], r[[module_delete_variable]] <- TRUE)
+      observeEvent(input[[paste0(prefix, "_remove_module_trigger")]], r[[module_delete_variable]] <- TRUE)
       
       module_delete_prefix <- paste0(prefix, "_module")
       module_dialog_title <- paste0(prefix, "_modules_delete")
@@ -1643,6 +1702,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
                     onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
                   shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
                     onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
+                  #paste0("module_id = ", module_id),
                   div(style = "width:20px;")
                 )
               )
@@ -1722,9 +1782,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # Load thesaurus items
         observeEvent(input$thesaurus, {
 
-          r$module_element_thesaurus_items <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus$key, category = "plus_module")
+          r$module_element_thesaurus_items <- create_datatable_cache_new(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = input$thesaurus$key, category = "plus_module")
 
-          colour_col <- create_datatable_cache(output = output, r = r, language = language, module_id = id, thesaurus_id = input$thesaurus$key, category = "colours_module")
+          colour_col <- create_datatable_cache_new(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = input$thesaurus$key, category = "colours_module")
 
           if (nrow(colour_col) > 0) r$module_element_thesaurus_items <- r$module_element_thesaurus_items %>%
             dplyr::left_join(colour_col %>% dplyr::select(id, colour), by = "id") %>% dplyr::relocate(colour, .before = "datetime")
@@ -1733,18 +1793,18 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           count_patients_rows <- tibble::tibble()
 
           # Add count_items_rows in the cache & get it if already in the cache
-          tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus$key,
+          tryCatch(count_items_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
             datamart_id = r$chosen_datamart, category = "count_items_rows"),
-              error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart",
-                error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = language))
+              error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart",
+                error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n))
 
           # Add count_items_rows in the cache & get it if already in the cache
-          tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, language = language, thesaurus_id = input$thesaurus$key,
+          tryCatch(count_patients_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
             datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
-              error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart",
-                error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = language))
+              error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart",
+                error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n))
 
-          if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", language, words = r$words)
+          if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
           req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
 
           # Transform count_rows cols to integer, to be sortable
@@ -1769,11 +1829,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           # "category" = "300px", "colour" = "100px")
           sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
           centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-          col_names <- get_col_names(table_name = "modules_thesaurus_items_with_counts", language = language, words = r$words)
+          col_names <- get_col_names_new(table_name = "modules_thesaurus_items_with_counts", i18n = i18n)
           hidden_cols <- c("id", "name", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
 
           # Render datatable
-          render_datatable(output = output, r = r, ns = ns, language = language, data = r$module_element_thesaurus_items_temp,
+          render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$module_element_thesaurus_items_temp,
             output_name = "module_element_thesaurus_items", col_names =  col_names,
             editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
             searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
@@ -1899,7 +1959,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
         sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {new_data$module_new_element}", .con = r$db)
         distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
-        if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", language, words = r$words)
+        if (new_data$name %in% distinct_values) show_message_bar_new(output, 2, "name_already_used", "severeWarning", i18n = i18n, ns = ns)
         req(new_data$name %not_in% distinct_values)
 
         # Check if dropdowns are not empty (if all are required)
@@ -1958,10 +2018,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
         DBI::dbAppendTable(r$db, table, new_data)
         add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
-
+        r[[table]] <- r[[table]] %>% dplyr::bind_rows(new_data)
+        
         show_message_bar_new(output = output, id = 3, message = paste0(get_singular(table), "_added"), type = "success", i18n = i18n, ns = ns)
 
-        update_r(r = r, table = table, language = language)
+        # update_r_new(r = r, m = m, table = table, i18n = i18n)
 
         # Reset name textfield & dropdowns
         shiny.fluent::updateTextField.shinyInput(session, "module_element_name", value = "")
@@ -2005,11 +2066,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           }
           else code_server_card <- ""
 
-          tryCatch(eval(parse(text = code_server_card)),
-            error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
-              rror_name = paste0(id, " - run server code - ", group_id), category = "Error", error_report = e, language = language)
-          )
-
           # Code for toggle reactivity
           toggle <- paste0(prefix, "_group_", group_id)
 
@@ -2033,6 +2089,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         
         code_ui_card <- isolate(r$code) %>% dplyr::filter(link_id == input$plugin$key, category == "plugin_ui") %>% dplyr::pull(code)
         element_code <- div()
+        module_element_name <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
         
         tryCatch({
           code_ui_card <- code_ui_card %>%
@@ -2043,16 +2100,37 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           
           element_code <- div(
             make_card("",
-              div(eval(parse(text = code_ui_card)),
-                actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"), style = "position:absolute; top:8px; right: 10px;")
+              div(
+                div(id = ns(paste0(prefix, "_module_element_plugin_ui_", group_id)), eval(parse(text = code_ui_card))),
+                shinyjs::hidden(
+                  div(id = ns(paste0(prefix, "_module_element_settings_", group_id)),
+                    p(span(i18n$t("widget_name"), style = "font-weight:bold;"), " : ", module_element_name),
+                    
+                  )
+                ),
+                div(
+                  id = ns(paste0(prefix, "_module_element_settings_remove_buttons_", group_id)),
+                  shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 2),
+                    actionButton(ns(paste0(prefix, "_settings_module_element_", group_id)), "", icon = icon("cog")),
+                    actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"))
+                  ),
+                  style = "position:absolute; top:8px; right: 10px;"
+                ),
+                shinyjs::hidden(
+                  div(
+                    id = ns(paste0(prefix, "_module_element_quit_button_", group_id)),
+                    actionButton(ns(paste0(prefix, "_quit_module_element_settings_", group_id)), "", icon = icon("times")),
+                    style = "position:absolute; top:8px; right: 10px;"
+                  )
+                )
               ),
               style = "position:relative;"
             )
           )
         },
         error = function(e){
-          report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
-            error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, language = language)}
+          report_bug_new(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
+            error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, i18n = i18n)}
         )
         
         # Remove toggles UI for this module
@@ -2062,7 +2140,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # Add the new toggles UI for this module
         
         toggles <- tagList()
-        update_r(r = r, table = paste0(prefix, "_modules_elements"))
+        # update_r(r = r, table = paste0(prefix, "_modules_elements"))
         module_elements <- isolate(r[[paste0(prefix, "_modules_elements")]]) %>% dplyr::filter(module_id == !!module_id) %>% dplyr::arrange(display_order)
      
         # Get module element group_id
@@ -2093,6 +2171,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
               shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
+              #paste0("module_id = ", module_id),
               div(style = "width:20px;"),
               toggles
             )
@@ -2105,7 +2184,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
         
         # Add module toggles UI
-        insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = uiOutput(ns(paste0(prefix, "_toggles_", module_id))))
+        # insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = uiOutput(ns(paste0(prefix, "_toggles_", module_id))))
         output[[paste0(prefix, "_toggles_", module_id)]] <- renderUI(toggles_div)
 
         # Add module element UI
@@ -2131,18 +2210,18 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       # --- --- --- --- --- -
       
       module_element_delete_prefix <- paste0(prefix, "_module_element")
-      module_element_dialog_title <- paste0(prefix, "_modules_elements_group_delete")
-      module_element_dialog_subtext <- paste0(prefix, "_modules_elements_group_delete_subtext")
+      module_element_dialog_title <- paste0(prefix, "_modules_elements_delete")
+      module_element_dialog_subtext <- paste0(prefix, "_modules_elements_delete_subtext")
       module_element_react_variable <- "module_element_delete_confirm"
       module_element_table <- paste0(prefix, "_modules_elements")
       module_element_id_var_sql <- "group_id"
       module_element_id_var_r <- paste0(prefix, "_selected_module_element")
-      module_element_delete_message <- paste0(prefix, "_module_element_group_deleted")
+      module_element_delete_message <- paste0(prefix, "_module_element_deleted")
       module_element_reload_variable <- paste0(prefix, "_load_ui")
       module_element_delete_variable <- paste0(module_element_delete_prefix, "_open_dialog")
       module_element_information_variable <- paste0(prefix, "_module_element_deleted")
 
-      delete_element(r = r, input = input, output = output, session = session, ns = ns, language = language,
+      delete_element_new(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
         delete_prefix = module_element_delete_prefix, dialog_title = module_element_dialog_title, dialog_subtext = module_element_dialog_subtext,
         react_variable = module_element_react_variable, table = module_element_table, id_var_sql = module_element_id_var_sql, id_var_r = module_element_id_var_r,
         delete_message = module_element_delete_message, translation = TRUE, reload_variable = module_element_reload_variable,
@@ -2171,8 +2250,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # Add the new toggles UI for this module
 
         toggles <- tagList()
-        update_r(r = r, table = paste0(prefix, "_modules_elements"))
-        module_elements <- isolate(r[[paste0(prefix, "_modules_elements")]]) %>% dplyr::filter(module_id == !!module_id) %>% dplyr::arrange(display_order)
+        r[[paste0(prefix, "_modules_elements")]] <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(group_id != !!group_id)
+        # update_r(r = r, table = paste0(prefix, "_modules_elements"))
+        module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == !!module_id) %>% dplyr::arrange(display_order)
 
         # Get module element group_id
         distinct_groups <- unique(module_elements$group_id)
@@ -2181,7 +2261,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         r[[paste0(prefix, "_opened_cards")]] <- ""
 
         # Loop over distinct cards (modules elements), for this module
-
         sapply(distinct_groups, function(group_id){
 
           # Get name of module element
@@ -2194,7 +2273,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           # Add to the list of opened cards
           r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_group_", group_id))
         })
-
         # Does this module have sub-modules ?
         if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
           make_card("",
@@ -2213,6 +2291,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
               shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
+              #paste0("module_id = ", module_id),
               div(style = "width:20px;"),
               toggles
             )
@@ -2224,9 +2303,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # Show opened cards
         
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
-
         # Add module toggles UI
-        insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = uiOutput(ns(paste0(prefix, "_toggles_", module_id))))
+        # insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = uiOutput(ns(paste0(prefix, "_toggles_", module_id))))
         output[[paste0(prefix, "_toggles_", module_id)]] <- renderUI(toggles_div)
       })
       

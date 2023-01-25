@@ -173,7 +173,7 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
       monitor_perf(r = r, action = "stop", task = "mod_home_server")
       
       sapply(c("patient_level_data", "aggregated_data"), function(page){
-        mod_patient_and_aggregated_data_server(page, r, d, m, i18n)
+        mod_patient_and_aggregated_data_server(page, r, d, m, o, i18n)
         mod_page_sidenav_server(page, r, d, m, i18n, language)
         mod_page_header_server(page, r, language, i18n)
       })

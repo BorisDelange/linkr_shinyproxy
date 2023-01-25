@@ -2290,7 +2290,7 @@ save_settings_code_new <- function(output, r = shiny::reactiveValues(), id = cha
     ))
   
   # Notify user
-  show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n)
+  show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n, ns = shiny::NS(id))
 }
 
 #' Execute / test code after edition

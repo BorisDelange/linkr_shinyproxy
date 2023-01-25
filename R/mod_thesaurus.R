@@ -180,8 +180,8 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
               )    
             ),
             conditionalPanel(condition = "input.mapping_current_tab == 'thesaurus_mapping_management'", ns = ns,
-              DT::DTOutput(ns("thesaurus_evaluate_mappings")),
-              div(verbatimTextOutput(ns("thesaurus_mapping_details")), style = "border:dashed 1px; padding:10px;"),
+              DT::DTOutput(ns("thesaurus_evaluate_mappings")), br(),
+              div(verbatimTextOutput(ns("thesaurus_mapping_details")), style = "border:dashed 1px; padding:10px;"), br(),
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                 shiny.fluent::PrimaryButton.shinyInput(ns("save_mappings_evaluation"), i18n$t("save")),
                 shiny.fluent::DefaultButton.shinyInput(ns("mapping_delete_selection"), i18n$t("delete_selection"))
@@ -768,7 +768,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           "relation_id == {as.integer(input$mapping_type)}"), .con = r$db)
         existing_mapping <- DBI::dbGetQuery(r$db, sql)
         
-        if (nrow(existing_mapping) > 0) show_message_bar_new(output, 3, "thesaurus_mapping_already_exists", "severeWarning", i18n)
+        if (nrow(existing_mapping) > 0) show_message_bar_new(output, 3, "thesaurus_mapping_already_exists", "severeWarning", i18n, ns = ns)
         
         if (nrow(existing_mapping) == 0){
           
@@ -787,7 +787,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           DBI::dbAppendTable(r$db, "thesaurus_items_mapping", new_row)
           
           # Notify user
-          show_message_bar_new(output, 3, "thesaurus_mapping_added", "success", i18n)
+          show_message_bar_new(output, 3, "thesaurus_mapping_added", "success", i18n, ns = ns)
           
           # Update datatables
           r$reload_thesaurus_added_mappings_datatable <- Sys.time()
@@ -962,7 +962,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$datamart_thesaurus_items_evaluate_mappings_temp,
         output_name = "thesaurus_evaluate_mappings", hidden_cols = hidden_cols, centered_cols = centered_cols, searchable_cols = searchable_cols,
         col_names = col_names, filter = TRUE, factorize_cols = factorize_cols, sortable_cols = sortable_cols, column_widths = column_widths,
-        selection = "multiple", datatable_dom = "<'top't><'bottom'p>"
+        selection = "multiple"
       )
       
       # Create a proxy for datatatable
@@ -1114,7 +1114,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       # Update database
       
-      if (nrow(r$datamart_thesaurus_items_evaluate_mappings_temp %>% dplyr::filter(modified)) == 0) show_message_bar_new(output, 2, "modif_saved", "success", i18n = i18n)
+      if (nrow(r$datamart_thesaurus_items_evaluate_mappings_temp %>% dplyr::filter(modified)) == 0) show_message_bar_new(output, 2, "modif_saved", "success", i18n = i18n, ns = ns)
       
       req(nrow(r$datamart_thesaurus_items_evaluate_mappings_temp %>% dplyr::filter(modified)) > 0)
       
@@ -1134,7 +1134,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         DBI::dbAppendTable(r$db, "thesaurus_items_mapping_evals", new_data)
       }
       
-      show_message_bar_new(output, 2, "modif_saved", "success", i18n = i18n)
+      show_message_bar_new(output, 2, "modif_saved", "success", i18n = i18n, ns = ns)
     })
     
     # When a row is selected
