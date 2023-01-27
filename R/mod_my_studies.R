@@ -231,6 +231,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
+    messages_timer <- reactiveTimer(10000, session)
+    
     # --- --- --- --- --- ---
     # Show or hide cards ----
     # --- --- --- --- --- ---
@@ -388,7 +390,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           dplyr::group_by(conversation_id) %>%
           dplyr::summarize(conversation_name = max(conversation_name), datetime = max(datetime), read = min(read)) %>%
           dplyr::ungroup() %>%
-          dplyr::arrange(dplyr::desc(read), dplyr::desc(datetime)) %>%
+          dplyr::arrange(read, dplyr::desc(datetime)) %>%
           dplyr::mutate(unread_messages = dplyr::case_when(read == 1 ~ i18n$t("no"), TRUE ~ i18n$t("yes"))) %>%
           dplyr::select(-read) %>%
           dplyr::relocate(unread_messages, .after = "datetime") %>%
@@ -420,8 +422,67 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # When a conversation is selected
       observeEvent(input$study_conversations_rows_selected, {
         
-        selected_conversation <- r$study_conversations_temp[input$study_conversations_rows_selected, ]
-        conversation_messages <- r$study_messages %>% dplyr::inner_join(selected_conversation %>% dplyr::select(conversation_id), by = "conversation_id")
+        r$study_reload_conversation <- Sys.time()
+        r$study_selected_conversation <- r$study_conversations_temp[input$study_conversations_rows_selected, ]
+      })
+      
+      # Timer to update messages
+      
+      # study_reload_conversation <- reactive({
+      #   print(Sys.time())
+      #   invalidateLater(messages_timer(), 10000)
+      #   
+      #   # req(!is.na(m$chosen_study))
+      #   # req(length(input$study_conversations_rows_selected) > 0)
+      #   # r$study_reload_conversation <- Sys.time()
+      #   
+      #   Sys.time()
+      # })
+      
+      observe({
+        messages_timer()
+        # print(Sys.time())
+        req(!is.na(m$chosen_study))
+        
+        sql <- glue::glue_sql(paste0(
+          "SELECT m.id, c.id AS conversation_id, c.name AS conversation_name, m.message, m.filepath, m.creator_id, m.datetime, im.read ",
+          "FROM messages m ",
+          "INNER JOIN conversations c ON m.conversation_id = c.id AND m.deleted IS FALSE ",
+          "LEFT JOIN inbox_messages im ON m.id = im.message_id AND im.receiver_id = {r$user_id} AND im.deleted IS FALSE ",
+          "WHERE category = 'study_message' AND m.study_id = {m$chosen_study} AND m.deleted IS FALSE"), .con = r$db)
+        
+        study_messages <- DBI::dbGetQuery(r$db, sql) %>% 
+          tibble::as_tibble() %>% dplyr::mutate_at("datetime", as.POSIXct) %>% dplyr::arrange(dplyr::desc(datetime))
+        
+        if (study_messages %>% dplyr::select(id) %>% dplyr::anti_join(r$study_messages %>% dplyr::select(id), by = "id") %>% nrow() > 0 & nrow(study_messages) > 0){
+          
+          r$study_messages <- study_messages
+          
+          r$study_conversations <- r$study_messages %>%
+            dplyr::group_by(conversation_id) %>%
+            dplyr::summarize(conversation_name = max(conversation_name), datetime = max(datetime), read = min(read)) %>%
+            dplyr::ungroup() %>%
+            dplyr::arrange(read, dplyr::desc(datetime)) %>%
+            dplyr::mutate(unread_messages = dplyr::case_when(read == 1 ~ i18n$t("no"), TRUE ~ i18n$t("yes"))) %>%
+            dplyr::select(-read) %>%
+            dplyr::relocate(unread_messages, .after = "datetime") %>%
+            dplyr::mutate_at("datetime", as.character) %>%
+            dplyr::mutate(datetime = stringr::str_replace_all(datetime, "T|Z", ""))
+          
+          r$study_conversations_temp <- r$study_conversations %>% dplyr::mutate(modified = FALSE)
+          
+          DT::replaceData(r$study_conversations_datatable_proxy, r$study_conversations_temp, resetPaging = FALSE, rownames = FALSE)
+          
+          r$study_reload_conversation <- Sys.time()
+        }
+      })
+        
+      observeEvent(r$study_reload_conversation, {
+        
+        # selected_conversation <- r$study_conversations_temp[input$study_conversations_rows_selected, ]
+        # r$study_selected_conversation <- selected_conversation %>% dplyr::select(conversation_id, conversation_name)
+        conversation_messages <- r$study_messages %>% dplyr::inner_join(r$study_selected_conversation %>% dplyr::select(conversation_id), by = "conversation_id") %>%
+          dplyr::arrange(dplyr::desc(datetime))
         
         conversation_messages_ui <- tagList()
         
@@ -432,7 +493,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           dplyr::mutate(colour = "")
         conversation_messages_users$colour <- sample(colours, nrow(conversation_messages_users), replace = TRUE, prob = rep(0.1, 10))
         
-        for (i in nrow(conversation_messages)){
+        for (i in 1:nrow(conversation_messages)){
           
           study_message <- conversation_messages[i, ]
           
@@ -449,16 +510,18 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           if (study_message$creator_id == r$user_id){
             study_message_ui <- div(
               div(
-                div(paste0(date, ", ", format(study_message$datetime, "%H:%M"))),
-                style = "font-size:12px; margin-bottom:10px; color:#878787"
-              ),
-              message_div,
-              style = "background-color:#E6F1F8; margin-top:10px; padding:15px; border-radius:10px; float:right;"
+                div(
+                  div(paste0(date, ", ", format(study_message$datetime, "%H:%M"))),
+                  style = "font-size:12px; margin-bottom:10px; color:#878787"
+                ),
+                message_div,
+                style = "background-color:#E6F1F8; margin-top:10px; padding:15px; border-radius:10px; width:80%; float:right;"
+              )
             )
           }
           else {
-            if (study_message$read) study_message_style <- "background-color:#F5F5F5; margin-top:10px; padding:15px; border-radius:10px; float:left;"
-            else study_message_style <- "background-color:#ECF8E7; margin-top:10px; padding:15px; border-radius:10px; float:left;"
+            if (study_message$read) study_message_style <- "background-color:#F5F5F5; margin-top:10px; padding:15px; border-radius:10px;"
+            else study_message_style <- "background-color:#ECF8E7; margin-top:10px; padding:15px; border-radius:10px;"
             
             creator_name <- r$users %>% dplyr::filter(id == study_message$creator_id) %>%
               dplyr::mutate(creator_name = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator_name)
@@ -470,25 +533,27 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
             study_message_ui <- 
             div(
               div(
-                shiny.fluent::Persona(size = 2,
-                  imageInitials = conversation_messages_users %>% dplyr::filter(creator_id == study_message$creator_id) %>% dplyr::pull(initials), 
-                  initialsColor = conversation_messages_users %>% dplyr::filter(creator_id == study_message$creator_id) %>% dplyr::pull(colour)
-                ),
-                style = "margin-top:18px;"
-              ),
-              div(
                 div(
-                  author_span,
-                  style = "font-size:12px; margin-bottom:10px; color:#878787"
+                  shiny.fluent::Persona(size = 2,
+                    imageInitials = conversation_messages_users %>% dplyr::filter(creator_id == study_message$creator_id) %>% dplyr::pull(initials), 
+                    initialsColor = conversation_messages_users %>% dplyr::filter(creator_id == study_message$creator_id) %>% dplyr::pull(colour)
+                  ),
+                  style = "float:left; margin-left:-40px; margin-top:10px;"
                 ),
-                message_div,
-                style = study_message_style
+                div(
+                  div(
+                    author_span,
+                    style = "font-size:12px; margin-bottom:10px; color:#878787"
+                  ),
+                  message_div,
+                  style = study_message_style
+                )
               ),
-              style = "display:flex;"
+              style = "width:80%; float:left; margin-left:30px;"
             )
           }
           
-          conversation_messages_ui <- tagList(study_message_ui, conversation_messages_ui)
+          conversation_messages_ui <- tagList(conversation_messages_ui, study_message_ui)
         }
         
         output$selected_conversation <- renderUI(tagList(
@@ -512,7 +577,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
                 shiny.fluent::Toggle.shinyInput(ns("new_message_as_rmarkdown"), value = FALSE, style = "margin-top:6px;"),
                 div(class = "toggle_title", i18n$t("rmarkdown"), style = "padding-top:6px;")
               ),
-              div(uiOutput(ns("new_message_preview")), style = "display:flex;")
+              uiOutput(ns("new_message_preview")),
+              style = "float:left; width:100%;"
             )
           ), br(),
           conversation_messages_ui
@@ -535,7 +601,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           dplyr::mutate(read = dplyr::case_when(
             as.logical(read) ~ TRUE, new_read ~ TRUE, TRUE ~ FALSE
           )) %>%
-          dplyr::select(-new_read)
+          dplyr::select(-new_read) %>%
+          dplyr::arrange(dplyr::desc(datetime))
       })
       
       # --- --- --- --- -
@@ -552,235 +619,23 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         shinyjs::show("conversation_new_message")
       })
       
-      # Preview new message
-      
-      observeEvent(input$preview_new_message, {
-        
-        r$study_preview_trigger <- Sys.time()
-        r$study_preview_type <- "message"
-        # if (input$new_message_text == "") output$new_message_preview <- renderUI("")
-        # req(input$new_message_text != "")
-        # 
-        # if (input$new_message_as_rmarkdown){
-        #   
-        #   tryCatch({
-        #     
-        #     new_message_text <- input$new_message_text %>% stringr::str_replace_all("\r", "\n")
-        #     
-        #     # Clear temp dir
-        #     unlink(paste0(r$app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
-        #     
-        #     markdown_settings <- paste0("```{r setup, include=FALSE}\n",
-        #       "knitr::opts_knit$set(root.dir = '", r$app_folder, "/temp_files/')\n",
-        #       "knitr::opts_chunk$set(root.dir = '", r$app_folder, "/temp_files/', fig.path = '", r$app_folder, "/temp_files/',",
-        #       "dpi = 600, out.width='600px')\n",
-        #       "```\n")
-        #     
-        #     markdown_file <- paste0(markdown_settings, new_message_text)
-        #     
-        #     # Create temp dir
-        #     dir <- paste0(r$app_folder, "/temp_files")
-        #     new_file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
-        #     if (!dir.exists(dir)) dir.create(dir)
-        #     
-        #     # Create the markdown file
-        #     knitr::knit(text = markdown_file, output = new_file, quiet = TRUE)
-        #     
-        #     output$new_message_preview <- renderUI(
-        #       div(
-        #         div(
-        #           div(paste0(i18n$t("today"), ", ", format(Sys.time(), "%H:%M"))),
-        #           style = "font-size:12px; margin-bottom:10px; color:#878787"
-        #         ),
-        #         div(class = "markdown_messages", withMathJax(includeMarkdown(new_file))),
-        #         style = "background-color:#ECF8E7; margin-top:10px; padding:15px 15px 0px 15px; border-radius:10px; float:left;"
-        #       )
-        #     )
-        #   }, error = function(e) "")
-        # }
-        # 
-        # else {
-        #   
-        #   new_message_text <- input$new_message_text %>% stringr::str_replace_all("\n", "<br />")
-        #   
-        #   output$new_message_preview <- renderUI(
-        #     div(
-        #       div(
-        #         div(paste0(i18n$t("today"), ", ", format(Sys.time(), "%H:%M"))),
-        #         style = "font-size:12px; margin-bottom:10px; color:#878787"
-        #       ),
-        #       div(HTML(new_message_text)),
-        #       style = "background-color:#ECF8E7; margin-top:10px; padding:15px; border-radius:10px; float:left;"
-        #     )
-        #   )
-        # }
-      })
-      
-      # Save new message
-      
-      # Reload conversation
-    
-      # --- --- --- --- --- --
-      ## New conversation ----
-      # --- --- --- --- --- --
-      
-      # Preview new conversation message
-    
-      observeEvent(input$preview_new_conversation, {
-        r$study_preview_trigger <- Sys.time()
-        r$study_preview_type <- "conversation"
-        
-        # if (input$new_conversation_text == "") output$new_conversation_preview <- renderUI("")
-        # 
-        # req(input$new_conversation_text != "")
-        # 
-        # if (input$new_conversation_as_rmarkdown){
-        # 
-        #   tryCatch({
-        #     
-        #     new_conversation_text <- input$new_conversation_text %>% stringr::str_replace_all("\r", "\n")
-        #     
-        #     # Clear temp dir
-        #     unlink(paste0(r$app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
-        #     
-        #     markdown_settings <- paste0("```{r setup, include=FALSE}\n",
-        #       "knitr::opts_knit$set(root.dir = '", r$app_folder, "/temp_files/')\n",
-        #       "knitr::opts_chunk$set(root.dir = '", r$app_folder, "/temp_files/', fig.path = '", r$app_folder, "/temp_files/',",
-        #       "dpi = 600, out.width='600px')\n",
-        #       "```\n")
-        #     
-        #     markdown_file <- paste0(markdown_settings, new_conversation_text)
-        #     
-        #     # Create temp dir
-        #     dir <- paste0(r$app_folder, "/temp_files")
-        #     new_file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
-        #     if (!dir.exists(dir)) dir.create(dir)
-        #     
-        #     # Create the markdown file
-        #     knitr::knit(text = markdown_file, output = new_file, quiet = TRUE)
-        #     
-        #     output$new_conversation_preview <- renderUI(
-        #       div(
-        #         div(
-        #           div(paste0(i18n$t("today"), ", ", format(Sys.time(), "%H:%M"))),
-        #           style = "font-size:12px; margin-bottom:10px; color:#878787"
-        #         ),
-        #         div(class = "markdown_messages", withMathJax(includeMarkdown(new_file))),
-        #         style = "background-color:#E6F1F8; margin-top:10px; padding:15px 15px 0px 15px; border-radius:10px; float:left;"
-        #       )
-        #     )
-        #   }, error = function(e) "")
-        # }
-        # 
-        # else {
-        #   
-        #   new_conversation_text <- input$new_conversation_text %>% stringr::str_replace_all("\n", "<br />")
-        #   
-        #   output$new_conversation_preview <- renderUI(
-        #     div(
-        #       div(
-        #         div(paste0(i18n$t("today"), ", ", format(Sys.time(), "%H:%M"))),
-        #         style = "font-size:12px; margin-bottom:10px; color:#878787"
-        #       ),
-        #       div(HTML(new_conversation_text)),
-        #       style = "background-color:#E6F1F8; margin-top:10px; padding:15px; border-radius:10px; float:left;"
-        #     )
-        #   )
-        # }
-      })
-    
-      # Save new conversation
-    
-      observeEvent(input$send_new_conversation, {
-        
-        # Is conversation name empty ?
-        if (is.na(input$new_conversation_name) | input$new_conversation_name == "") shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", errorMessage = i18n$t("provide_valid_object"))
-        else shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", errorMessage = NULL)
-        
-        req(!is.na(input$new_conversation_name) & input$new_conversation_name != "")
-        
-        # Is text is empty ?
-        req(input$new_conversation_text != "")
-        
-        # If Rmarkdown toggle is TRUE, save the file
-        
-        if (input$new_conversation_as_rmarkdown){
-        
-          tryCatch({
-            
-            new_conversation_text <- input$new_conversation_text %>% stringr::str_replace_all("\r", "\n")
-  
-            unique_id <- paste0(Sys.time() %>% stringr::str_replace_all(":| |-", "") , paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
-            new_dir <- paste0(r$app_folder, "/messages/", unique_id)
-            
-            markdown_settings <- paste0("```{r setup, include=FALSE}\n",
-              "knitr::opts_knit$set(root.dir = '", new_dir, "/')\n",
-              "knitr::opts_chunk$set(root.dir = '", new_dir, "/', fig.path = '", new_dir, "/',",
-              "dpi = 600, out.width='600px')\n",
-              "```\n")
-  
-            markdown_file <- paste0(markdown_settings, new_conversation_text)
-  
-            # Create new dir
-            new_file <- paste0(new_dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":| |-", ""), ".Md")
-            if (!dir.exists(new_dir)) dir.create(new_dir)
-  
-            # Create the markdown file
-            knitr::knit(text = markdown_file, output = new_file, quiet = TRUE)
-  
-          }, error = function(e) "")
-        }
-        else {
-          new_conversation_text <- input$new_conversation_text
-          new_dir <- ""
-        }
-        
-        # Get list of users authorized to see this study
-        
-        users_allowed_read_group <- r$options %>% dplyr::filter(category == "study", link_id == m$chosen_study, name == "users_allowed_read_group") %>% dplyr::pull(value)
-        if (users_allowed_read_group == "everybody") receivers_ids <- r$users %>% dplyr::pull(id)
-        if (users_allowed_read_group == "people_picker") receivers_ids <- r$options %>% dplyr::filter(category == "study", link_id == m$chosen_study, name == "user_allowed_read") %>% dplyr::pull(value_num)
-
-        # Add data to database
-
-        new_conversation_id <- get_last_row(r$db, "conversations") + 1
-        new_message_id <- get_last_row(r$db, "messages") + 1
-
-        # conversations table
-        new_data <- tibble::tribble(
-          ~id, ~name, ~datetime, ~deleted,
-          new_conversation_id, input$new_conversation_name, as.character(Sys.time()), FALSE)
-        DBI::dbAppendTable(r$db, "conversations", new_data)
-
-        # messages table
-        new_data <- tibble::tribble(
-          ~id, ~conversation_id, ~study_id, ~category, ~message, ~filepath, ~creator_id, ~datetime, ~deleted,
-          new_message_id, new_conversation_id, m$chosen_study, "study_message",
-          new_conversation_text, new_file, r$user_id, as.character(Sys.time()), FALSE)
-        DBI::dbAppendTable(r$db, "messages", new_data)
-
-        # inbox_messages table
-        new_data <- tibble::tibble(
-          id = seq(get_last_row(r$db, "inbox_messages") + 1, get_last_row(r$db, "inbox_messages") + length(receivers_ids), 1),
-          message_id = new_message_id, receiver_id = receivers_ids, read = FALSE, datetime = as.character(Sys.time()), deleted = FALSE)
-        DBI::dbAppendTable(r$db, "inbox_messages", new_data)
-
-        # Reset fields
-        shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", value = "")
-        shinyAce::updateAceEditor(session, "new_conversation_text", value = "")
-        output$new_conversation_preview <- renderUI("")
-
-        # Notify user
-        show_message_bar_new(output = output, id = 4, message = "new_conversation_added", type = "success", i18n = i18n, ns = ns)
-      })
-      
-      # Reload datatable
-      
       # --- --- --- --- --- --- --- --- --- --- -- -
       ## Preview for new message & conversation ----
       # --- --- --- --- --- --- --- --- --- --- -- -
       
+      observeEvent(input$preview_new_conversation, {
+        r$study_preview_trigger <- Sys.time()
+        r$study_preview_type <- "conversation"
+      })
+      
+      observeEvent(input$preview_new_message, {
+        r$study_preview_trigger <- Sys.time()
+        r$study_preview_type <- "message"
+      })
+      
       observeEvent(r$study_preview_trigger, {
+        
+        req(r$study_preview_type %in% c("message", "conversation"))
         
         type <- r$study_preview_type
         if (type == "conversation") background_color <- "#E6F1F8"
@@ -822,7 +677,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
                   style = "font-size:12px; margin-bottom:10px; color:#878787"
                 ),
                 div(class = "markdown_messages", withMathJax(includeMarkdown(new_file))),
-                style = paste0("background-color:", background_color, "; margin-top:10px; padding:15px 15px 0px 15px; border-radius:10px; float:left;")
+                style = paste0("background-color:", background_color, "; margin-top:10px; padding:15px 15px 0px 15px; border-radius:10px; float:left; width:80%;")
               )
             )
           }, error = function(e) "")
@@ -839,10 +694,149 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
                 style = "font-size:12px; margin-bottom:10px; color:#878787"
               ),
               div(HTML(new_text)),
-              style = paste0("background-color:", background_color, "; margin-top:10px; padding:15px; border-radius:10px; float:left;")
+              style = paste0("background-color:", background_color, "; margin-top:10px; padding:15px; border-radius:10px; float:left; width:80%;")
             )
           )
         }
+      })
+      
+      # --- --- --- --- --- --- --- --- --- --
+      ## Save new message or conversation ----
+      # --- --- --- --- --- --- --- --- --- --
+      
+      observeEvent(input$send_new_conversation, {
+        r$study_save_message_conversation_trigger <- Sys.time()
+        r$study_save_message_conversation_type <- "conversation"
+      })
+      
+      observeEvent(input$send_new_message, {
+        r$study_save_message_conversation_trigger <- Sys.time()
+        r$study_save_message_conversation_type <- "message"
+      })
+      
+      observeEvent(r$study_save_message_conversation_trigger, {
+        
+        req(r$study_save_message_conversation_type %in% c("message", "conversation"))
+        type <- r$study_save_message_conversation_type
+        
+        # Is conversation name empty ?
+        if (type == "conversation"){
+          if (is.na(input$new_conversation_name) | input$new_conversation_name == "") 
+            shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", errorMessage = i18n$t("provide_valid_object"))
+          else shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", errorMessage = NULL)
+          
+          req(!is.na(input$new_conversation_name) & input$new_conversation_name != "")
+        }
+        
+        # Is text is empty ?
+        req(input[[paste0("new_", type, "_text")]] != "")
+        
+        # If Rmarkdown toggle is TRUE, save the file
+        
+        if (input[[paste0("new_", type, "_as_rmarkdown")]]){
+          
+          tryCatch({
+            
+            new_text <- input[[paste0("new_", type, "_text")]] %>% stringr::str_replace_all("\r", "\n")
+            
+            unique_id <- paste0(Sys.time() %>% stringr::str_replace_all(":| |-", "") , paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
+            new_dir <- paste0(r$app_folder, "/messages/", unique_id)
+            
+            markdown_settings <- paste0("```{r setup, include=FALSE}\n",
+              "knitr::opts_knit$set(root.dir = '", new_dir, "/')\n",
+              "knitr::opts_chunk$set(root.dir = '", new_dir, "/', fig.path = '", new_dir, "/',",
+              "dpi = 600, out.width='600px')\n",
+              "```\n")
+            
+            markdown_file <- paste0(markdown_settings, new_text)
+            
+            # Create new dir
+            new_file <- paste0(new_dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":| |-", ""), ".Md")
+            if (!dir.exists(new_dir)) dir.create(new_dir)
+            
+            # Create the markdown file
+            knitr::knit(text = markdown_file, output = new_file, quiet = TRUE)
+            
+          }, error = function(e) "")
+        }
+        else {
+          new_text <- input[[paste0("new_", type, "_text")]]
+          new_file <- ""
+        }
+        
+        # Get list of users authorized to see this study
+        
+        users_allowed_read_group <- r$options %>% dplyr::filter(category == "study", link_id == m$chosen_study, name == "users_allowed_read_group") %>% dplyr::pull(value)
+        if (users_allowed_read_group == "everybody") receivers_ids <- r$users %>% dplyr::pull(id)
+        if (users_allowed_read_group == "people_picker") receivers_ids <- r$options %>% dplyr::filter(category == "study", link_id == m$chosen_study, name == "user_allowed_read") %>% dplyr::pull(value_num)
+        
+        # Add data to database
+        
+        if (type == "conversation"){
+          conversation_id <- get_last_row(r$db, "conversations") + 1
+          conversation_name <- input$new_conversation_name 
+        }
+        if (type == "message"){
+          conversation_id <- r$study_selected_conversation$conversation_id
+          conversation_name <- r$study_selected_conversation$conversation_name
+        }
+        
+        new_message_id <- get_last_row(r$db, "messages") + 1
+        
+        if (type == "conversation"){
+          # Conversations table
+          new_data <- tibble::tribble(
+            ~id, ~name, ~datetime, ~deleted,
+            conversation_id, input$new_conversation_name, as.character(Sys.time()), FALSE)
+          DBI::dbAppendTable(r$db, "conversations", new_data)
+        }
+
+        # Messages table
+        new_data <- tibble::tribble(
+          ~id, ~conversation_id, ~study_id, ~category, ~message, ~filepath, ~creator_id, ~datetime, ~deleted,
+          new_message_id, conversation_id, m$chosen_study, "study_message",
+          new_text, new_file, r$user_id, as.character(Sys.time()), FALSE)
+        DBI::dbAppendTable(r$db, "messages", new_data)
+
+        # Inbox_messages table
+        new_data <- tibble::tibble(
+          id = seq(get_last_row(r$db, "inbox_messages") + 1, get_last_row(r$db, "inbox_messages") + length(receivers_ids), 1),
+          message_id = new_message_id, receiver_id = receivers_ids, read = FALSE, datetime = as.character(Sys.time()), deleted = FALSE)
+        DBI::dbAppendTable(r$db, "inbox_messages", new_data)
+
+        # Reset fields
+        if (type == "conversation") shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", value = "")
+        shinyAce::updateAceEditor(session, paste0("new_", type, "_text"), value = "")
+        output[[paste0("new_", type, "_preview")]] <- renderUI("")
+        
+        if (type == "conversation"){
+          
+          # Reload conversations datatable
+          r$study_conversations_temp <- r$study_conversations_temp %>%
+            dplyr::bind_rows(
+              tibble::tribble(
+                ~conversation_id, ~conversation_name, ~datetime, ~unread_messages, ~modified,
+                conversation_id, conversation_name, as.character(Sys.time()), i18n$t("yes"), FALSE
+              )
+            )
+          DT::replaceData(r$study_conversations_datatable_proxy, r$study_conversations_temp, resetPaging = FALSE, rownames = FALSE)
+        }
+        
+        # Reload conversation
+        
+        r$study_messages <- r$study_messages %>%
+          dplyr::bind_rows(
+            tibble::tribble(
+              ~id, ~conversation_id, ~conversation_name, ~message, ~filepath, ~creator_id, ~datetime, ~read,
+              new_message_id, conversation_id, conversation_name, new_text, new_file, r$user_id, Sys.time(), 0
+            )
+          ) %>%
+          dplyr::arrange(dplyr::desc(datetime))
+        
+        if (type == "message") r$study_reload_conversation <- Sys.time()
+
+        # Notify user
+        show_message_bar_new(output = output, id = 4, message = paste0("new_", type, "_added"), type = "success", i18n = i18n, ns = ns)
       })
     
     # --- --- --- --- ---
