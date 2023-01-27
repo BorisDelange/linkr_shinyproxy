@@ -39,6 +39,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(id = ns("menu"),
         shiny.fluent::Pivot(
+          id = ns("studies_pivot"),
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "study_messages_card", itemKey = "study_messages_card", headerText = i18n$t("messages")),
           shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = i18n$t("studies_management")),
@@ -61,22 +62,38 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(
         id = ns("study_messages_card"),
-        make_card(i18n$t("messages"),
-          div(br(),
-            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
-            div(shiny.fluent::MessageBar(
-              div(
-                strong("A faire"),
-                p(tags$ul(
-                    tags$li("Message indiquant qu'il faut choisir une étude pour afficher la page"),
-                    tags$li("Affichage des messages, plus récent en bas, avec scroll infini"),
-                    tags$li("Nécessite de bien avoir sécurisé les interfaces R Code (avec environnements...)")
-                  )
-                )
+        div(id = ns("study_messages_content"),
+          make_card(i18n$t("messages"),
+            div(
+              shiny.fluent::Pivot(
+                onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-messages_current_tab', item.props.id)")),
+                shiny.fluent::PivotItem(id = "all_messages", itemKey = "all_messages", headerText = i18n$t("all_messages")),
+                shiny.fluent::PivotItem(id = "new_conversation", itemKey = "new_conversation", headerText = i18n$t("new_conversation"))
               ),
-              messageBarType = 0)
+              conditionalPanel(condition = "input.messages_current_tab == null || input.messages_current_tab == 'all_messages'", ns = ns,
+                
+              ),
+              conditionalPanel(condition = "input.messages_current_tab == 'new_conversation'", ns = ns,
+                make_textfield_new(i18n = i18n, ns = ns, label = "subject", id = "new_conversation_name"),
+                div(shinyAce::aceEditor(
+                  ns("new_conversation_text"), "", mode = "markdown", 
+                  code_hotkeys = list("markdown", list(run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"))),
+                  autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+                ), style = "width: 100%;"),
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                  shiny.fluent::PrimaryButton.shinyInput(ns("send_new_conversation"), i18n$t("send")), " ",
+                  shiny.fluent::DefaultButton.shinyInput(ns("preview_new_conversation"), i18n$t("preview")),
+                  shiny.fluent::Toggle.shinyInput(ns("new_conversation_as_rmarkdown"), value = FALSE, style = "margin-top:6px;"),
+                  div(class = "toggle_title", i18n$t("rmarkdown"), style = "padding-top:6px;")
+                ),
+                uiOutput(ns("new_conversation_preview"))
+              )
             )
           )
+        ),
+        div(
+          id = ns("choose_a_study_card"),
+          make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_a_study_left_side"), messageBarType = 5), style = "margin-top:10px;"))
         )
       )
     ),
@@ -96,9 +113,12 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
               style = "position:relative; z-index:1; width:500px;"
             ),
             div(DT::DTOutput(ns("studies_datatable")), style = "margin-top:-30px; z-index:2"),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("save_studies_management"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
+            div(
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::PrimaryButton.shinyInput(ns("save_studies_management"), i18n$t("save")),
+                shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
+              ),
+              style = "position:relative; z-index:2; margin-top:-30px;"
             )
           )
         ), br()
@@ -113,15 +133,19 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
       div(
         id = ns("study_options_card"),
         make_card(i18n$t("study_options"),
-          div(br(),
-            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
-            div(shiny.fluent::MessageBar(
-              div(
-                strong("A faire"),
-                p("Pareil que pour les datamarts, à qui donner l'accès à l'étude")
-              ),
-              messageBarType = 0)
-            )
+          div(
+            make_combobox_new(i18n = i18n, ns = ns, label = "study", id = "options_chosen", width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
+            div(
+              div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
+              shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
+                list(key = "everybody", text = i18n$t("everybody")),
+                list(key = "people_picker", text = i18n$t("choose_users"))
+              ), className = "inline_choicegroup"),
+              conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
+                uiOutput(ns("users_allowed_read_div"))
+              )
+            ), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("save"))
           )
         )
       )
@@ -176,7 +200,22 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
           )
         )
       )
-    )
+    ),
+    # div(shinyAce::aceEditor(
+    #   ns("ace_edit_code"), "", mode = "r",
+    #   code_hotkeys = list(
+    #     "r", list(
+    #       run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+    #       run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+    #       save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
+    #     )
+    #   ),
+    #   autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+    # ), style = "width: 100%;"),
+    # shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
+    # div(verbatimTextOutput(ns("code_result")),
+    #   style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
+    br()
   )
 }
     
@@ -188,6 +227,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     ns <- session$ns
     
     language <- "EN"
+    
+    sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     # --- --- --- --- --- ---
     # Show or hide cards ----
@@ -204,8 +245,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n))
-    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n))
+    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
     
     # --- --- --- --- --- --- --- --
     # When a datamart is chosen ----
@@ -220,6 +261,13 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if ("study_messages_card" %in% r$user_accesses) shinyjs::show("study_messages_card")
         else shinyjs::show("study_messages_card_forbidden")
       }
+      
+      # Hide messages card & reset fields
+      shinyjs::show("choose_a_study_card")
+      shinyjs::hide("study_messages_content")
+      shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", value = "")
+      shinyAce::updateAceEditor(session, "new_conversation_text", value = "")
+      output$new_conversation_preview <- renderUI("")
       
       # The datamart is loaded here, and not in sidenav
       # Placed in sidenav, the datamart is loaded multiple times (each time a page loads its own sidenav)
@@ -280,9 +328,197 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     # Once the datamart is loaded, load studies & scripts
     observeEvent(r$loaded_datamart, {
+      
       update_r_new(r = r, m = m, table = "studies")
       update_r_new(r = r, m = m, table = "scripts")
+      
+      # Update dropdown for study options
+      options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options)
     })
+    
+    # --- --- --- --- --- --- --- --
+    # When a study is chosen ----
+    # --- --- --- --- --- --- --- --
+    
+    observeEvent(m$chosen_study, {
+      
+      req(!is.na(m$chosen_study))
+      # Show first card & hide "choose a datamart" card
+      shinyjs::hide("choose_a_study_card")
+      shinyjs::show("study_messages_content")
+      
+      # Reset new conversation fields
+      shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", value = "")
+      shinyAce::updateAceEditor(session, "new_conversation_text", value = "")
+      output$new_conversation_preview <- renderUI("")
+      
+      # Update study options combobox
+      options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      value <- list(key = m$chosen_study, text = r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(name))
+      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
+    })
+    
+    # --- --- --- -
+    # Messages ----
+    # --- --- --- -
+      
+      # --- --- --- --- --
+      ## All messages ----
+      # --- --- --- --- --
+      
+      # --- --- --- --- --- --
+      ## New conversation ----
+      # --- --- --- --- --- --
+      
+      # Preview new conversation message
+    
+      observeEvent(input$preview_new_conversation, {
+        
+        if (input$new_conversation_text == "") output$new_conversation_preview <- renderUI("")
+        
+        req(input$new_conversation_text != "")
+        
+        if (input$new_conversation_as_rmarkdown){
+        
+          tryCatch({
+            
+            new_conversation_text <- input$new_conversation_text %>% stringr::str_replace_all("\r", "\n")
+            
+            # Clear temp dir
+            unlink(paste0(r$app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
+            
+            markdown_settings <- paste0("```{r setup, include=FALSE}\n",
+              "knitr::opts_knit$set(root.dir = '", r$app_folder, "/temp_files/')\n",
+              "knitr::opts_chunk$set(root.dir = '", r$app_folder, "/temp_files/', fig.path = '", r$app_folder, "/temp_files/',",
+              "dpi = 600, out.width='600px')\n",
+              "```\n")
+            
+            markdown_file <- paste0(markdown_settings, new_conversation_text)
+            
+            # Create temp dir
+            dir <- paste0(r$app_folder, "/temp_files")
+            file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
+            if (!dir.exists(dir)) dir.create(dir)
+            
+            # Create the markdown file
+            knitr::knit(text = markdown_file, output = file, quiet = TRUE)
+            
+            output$new_conversation_preview <- renderUI(
+              div(
+                div(
+                  div(paste0(i18n$t("today"), ", ", format(Sys.time(), "%H:%M"))),
+                  style = "font-size:12px; margin-bottom:10px; color:#878787"
+                ),
+                div(class = "markdown", withMathJax(includeMarkdown(file))),
+                style = "background-color:#E6F1F8; margin-top:10px; padding:15px 15px 0px 15px; border-radius:10px; float:left;"
+              )
+            )
+          }, error = function(e) "")
+        }
+        
+        else {
+          
+          new_conversation_text <- input$new_conversation_text %>% stringr::str_replace_all("\n", "<br />")
+          
+          output$new_conversation_preview <- renderUI(
+            div(
+              div(
+                div(paste0(i18n$t("today"), ", ", format(Sys.time(), "%H:%M"))),
+                style = "font-size:12px; margin-bottom:10px; color:#878787"
+              ),
+              div(HTML(new_conversation_text)),
+              style = "background-color:#E6F1F8; margin-top:10px; padding:15px; border-radius:10px; float:left;"
+            )
+          )
+        }
+      })
+    
+      # Save new conversation
+    
+      observeEvent(input$send_new_conversation, {
+        
+        # Is conversation name empty ?
+        if (is.na(input$new_conversation_name) | input$new_conversation_name == "") shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", errorMessage = i18n$t("provide_valid_subject"))
+        else shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", errorMessage = NULL)
+        
+        req(!is.na(input$new_conversation_name) & input$new_conversation_name != "")
+        
+        # Is text is empty ?
+        req(input$new_conversation_text != "")
+        
+        # If Rmarkdown toggle is TRUE, save the file
+        
+        if (input$new_conversation_as_rmarkdown){
+        
+          tryCatch({
+            
+            new_conversation_text <- input$new_conversation_text %>% stringr::str_replace_all("\r", "\n")
+  
+            unique_id <- paste0(Sys.time() %>% stringr::str_replace_all(":| |-", "") , paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
+            dir <- paste0(r$app_folder, "/messages/", unique_id)
+            
+            markdown_settings <- paste0("```{r setup, include=FALSE}\n",
+              "knitr::opts_knit$set(root.dir = '", dir, "/')\n",
+              "knitr::opts_chunk$set(root.dir = '", dir, "/', fig.path = '", dir, "/',",
+              "dpi = 600, out.width='600px')\n",
+              "```\n")
+  
+            markdown_file <- paste0(markdown_settings, new_conversation_text)
+  
+            # Create new dir
+            file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":| |-", ""), ".Md")
+            if (!dir.exists(dir)) dir.create(dir)
+  
+            # Create the markdown file
+            knitr::knit(text = markdown_file, output = file, quiet = TRUE)
+  
+          }, error = function(e) "")
+        }
+        else new_conversation_text <- input$new_conversation_text
+        
+        # Get list of users authorized to see this study
+        
+        users_allowed_read_group <- r$options %>% dplyr::filter(category == "study", link_id == m$chosen_study, name == "users_allowed_read_group") %>% dplyr::pull(value)
+        if (users_allowed_read_group == "everybody") receivers_ids <- r$users %>% dplyr::pull(id)
+        if (users_allowed_read_group == "people_picker") receivers_ids <- r$options %>% dplyr::filter(category == "study", link_id == m$chosen_study, name == "user_allowed_read") %>% dplyr::pull(value_num)
+        print(receivers_ids)
+        
+        # Add data to database
+        
+        new_conversation_id <- get_last_row(r$db, "conversations") + 1
+        new_message_id <- get_last_row(r$db, "messages") + 1
+        
+        # conversations table
+        new_data <- tibble::tribble(
+          ~id, ~name, ~datetime, ~deleted,
+          new_conversation_id, input$new_conversation_name, as.character(Sys.time()), FALSE)
+        print(new_data)
+        DBI::dbAppendTable(r$db, "conversations", new_data)
+        
+        # messages table
+        new_data <- tibble::tribble(
+          ~id, ~conversation_id, ~study_id, ~category, ~message, ~filepath, ~creator_id, ~datetime, ~deleted,
+          new_message_id, new_conversation_id, m$chosen_study, "study_message",
+          new_conversation_text, dir, r$user_id, as.character(Sys.time()), FALSE)
+        print(new_data)
+        DBI::dbAppendTable(r$db, "messages", new_data)
+        
+        # inbox_messages table
+        new_data <- tibble::tibble(
+          id = seq(get_last_row(r$db, "inbox_messages") + 1, get_last_row(r$db, "inbox_messages") + length(receivers_ids), 1),
+          message_id = new_message_id, receiver_id = receivers_ids, read = FALSE, datetime = as.character(Sys.time()), deleted = FALSE)
+        print(new_data)
+        DBI::dbAppendTable(r$db, "inbox_messages", new_data)
+        
+        # Reset fields
+        shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", value = "")
+        shinyAce::updateAceEditor(session, "new_conversation_text", value = "")
+        output$new_conversation_preview <- renderUI("")
+        
+        # Notify user
+        show_message_bar_new(output = output, id = 4, message = "new_conversation_added", type = "success", i18n = i18n, ns = ns)
+      })
     
     # --- --- --- --- ---
     # Create a study ----
@@ -310,7 +546,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- --- ---
     
     # Action buttons for each module / page
-    action_buttons <- c("delete")
+    action_buttons <- c("options", "delete")
     
     editable_cols <- c("name")
     sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
@@ -413,6 +649,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       r$delete_study <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
       r[[study_delete_variable]] <- TRUE
+      
+      # Reload datatable (to unselect rows)
+      DT::replaceData(r$studies_datatable_proxy, r$studies_datatable_temp, resetPaging = FALSE, rownames = FALSE)
     })
     
     # Delete multiple rows (with "Delete selection" button)
@@ -435,6 +674,85 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       m$chosen_study <- NA_integer_
     })
     
+    # --- --- --- --- --
+    # Study options ----
+    # --- --- --- --- --
+    
+    observeEvent(input$options, {
+      
+      # Get link_id variable, to update options div
+      link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
+
+      options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      value <- list(key = link_id, text = r$studies %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+
+      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
+
+      # Reload datatable (to unselect rows)
+      DT::replaceData(r$studies_datatable_proxy, r$studies_datatable_temp, resetPaging = FALSE, rownames = FALSE)
+
+      # Set current pivot to options_card
+      button_name <- gsub("'", "\\\\'", i18n$t('study_options'))
+      shinyjs::runjs(glue::glue("$('#{id}-studies_pivot button[name=\"{button_name}\"]').click();"))
+    })
+    
+    observeEvent(input$options_chosen, {
+      
+      if (length(input$options_chosen) > 1) link_id <- input$options_chosen$key
+      else link_id <- input$options_chosen
+      
+      options <- r$options %>% dplyr::filter(category == "study", link_id == !!link_id)
+      
+      picker_options <-
+        r$users %>%
+        dplyr::left_join(r$users_statuses %>% dplyr::select(user_status_id = id, user_status = name), by = "user_status_id") %>%
+        dplyr::transmute(
+          key = id, 
+          imageInitials = paste0(substr(firstname, 0, 1), substr(lastname, 0, 1)),
+          text = paste0(firstname, " ", lastname), 
+          secondaryText = user_status)
+      
+      value <-
+        picker_options %>%
+        dplyr::mutate(n = 1:dplyr::n()) %>%
+        dplyr::inner_join(
+          options %>%
+            dplyr::filter(name == "user_allowed_read") %>%
+            dplyr::select(key = value_num),
+          by = "key"
+        ) %>%
+        dplyr::pull(key)
+      
+      # Users allowed read group
+      value_group <- options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value)
+      
+      selected_items <- picker_options %>% dplyr::filter(key %in% value)
+      
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "users_allowed_read_group",
+        value = options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value))
+      output$users_allowed_read_div <- renderUI({
+        make_people_picker_new(
+          i18n = i18n, ns = ns, id = "users_allowed_read", label = "users", options = picker_options, value = value,
+          width = "100%", style = "padding-bottom:10px;")
+      })
+      
+    })
+    
+    observeEvent(input$options_save, {
+
+      req(input$options_chosen)
+
+      if (length(input$options_chosen) > 1) link_id <- input$options_chosen$key
+      else link_id <- input$options_chosen
+
+      data <- list()
+      data$users_allowed_read <- input$users_allowed_read
+      data$users_allowed_read_group <- input$users_allowed_read_group
+
+      save_settings_options_new(output = output, r = r, id = id, category = "study", code_id_input = paste0("options_", link_id),
+        i18n = i18n, data = data, page_options = "users_allowed_read")
+    })
+    
     # --- --- --- --- ---
     # Import a study ----
     # --- --- --- --- ---
@@ -442,6 +760,30 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- ---
     # Export a study ----
     # --- --- --- --- ---
+    
+    # --- --- --- --- --- --- --
+    ## Debug - Execute code ----
+    # --- --- --- --- --- --- --
+    
+    observeEvent(input$execute_code, {
+      
+      code <- input$ace_edit_code %>% stringr::str_replace_all("\r", "\n")
+      
+      output$code_result <- renderText({
+        
+        options('cli.num_colors' = 1)
+        
+        # Capture console output of our code
+        captured_output <- capture.output(
+          tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
+        
+        # Restore normal value
+        options('cli.num_colors' = NULL)
+        
+        # Display result
+        paste(strwrap(captured_output), collapse = "\n")
+      })
+    })
     
   })
 }

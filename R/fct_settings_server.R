@@ -1812,10 +1812,10 @@ save_settings_datatable_updates_new <- function(output, r = shiny::reactiveValue
           dplyr::group_by(module_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
       }
       
-      if (duplicates_name > 0) show_message_bar_new(output, 1, "modif_names_duplicates", "severeWarning", i18n)
-      if (duplicates_display_order > 0) show_message_bar_new(output, 1, "modif_display_order_duplicates", "severeWarning", i18n)
-      if (module_is_its_own_parent > 0) show_message_bar_new(output, 1, "module_cannot_be_its_own_parent", "severeWarning", i18n)
-      if (loop_over_modules > 0) show_message_bar_new(output, 1, "module_loop_between_modules", "severeWarning", i18n)
+      if (duplicates_name > 0) show_message_bar_new(output, 1, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
+      if (duplicates_display_order > 0) show_message_bar_new(output, 1, "modif_display_order_duplicates", "severeWarning", i18n, ns = ns)
+      if (module_is_its_own_parent > 0) show_message_bar_new(output, 1, "module_cannot_be_its_own_parent", "severeWarning", i18n, ns = ns)
+      if (loop_over_modules > 0) show_message_bar_new(output, 1, "module_loop_between_modules", "severeWarning", i18n, ns = ns)
       
     }
     
@@ -1828,7 +1828,7 @@ save_settings_datatable_updates_new <- function(output, r = shiny::reactiveValue
       if (table != "users") duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
           dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
       
-      if (duplicates_name > 0) show_message_bar_new(output, 1, "modif_names_duplicates", "severeWarning", i18n)
+      if (duplicates_name > 0) show_message_bar_new(output, 1, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
     }
     
     req(duplicates_name == 0, duplicates_display_order == 0, module_is_its_own_parent == 0, loop_over_modules == 0)
@@ -1838,7 +1838,7 @@ save_settings_datatable_updates_new <- function(output, r = shiny::reactiveValue
   
   ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
   
-  if (length(ids_to_del) == 0) show_message_bar_new(output, 2, "modif_saved", "success", i18n)
+  if (length(ids_to_del) == 0) show_message_bar_new(output, 2, "modif_saved", "success", i18n, ns = ns)
   
   req(length(ids_to_del) > 0)
   
@@ -1858,7 +1858,7 @@ save_settings_datatable_updates_new <- function(output, r = shiny::reactiveValue
   # else update_r_new(r = r, table = table, i18n = i18n)
   
   # Notify user
-  show_message_bar_new(output, 2, "modif_saved", "success", i18n)
+  show_message_bar_new(output, 2, "modif_saved", "success", i18n, ns = ns)
 }
 
 #' Render delete react
@@ -2172,13 +2172,15 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
 save_settings_options_new <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
   code_id_input = integer(), data = data, i18n = R6::R6Class(), page_options = character()){
   
+  ns <- shiny::NS(id)
+  
   # Get link_id variable to update code table
   link_id <- as.integer(substr(code_id_input, nchar("options_") + 1, nchar(code_id_input)))
   
   # Get options with category & link_id
   options <- r$options %>% dplyr::filter(category == !!category, link_id == !!link_id)
   
-  if (nrow(options) == 0) show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n)
+  if (nrow(options) == 0) show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
   req (nrow(options) > 0)
   
   # Get options with page ID
@@ -2226,9 +2228,9 @@ save_settings_options_new <- function(output, r = shiny::reactiveValues(), id = 
     }
   }
   
-  update_r(r = r, table = "options")
+  update_r_new(r = r, table = "options")
   
-  show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n)
+  show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
 }
 
 #' Save code edition

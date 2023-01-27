@@ -386,7 +386,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
         
         markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
           path.expand("~"), "/linkr_temp_files')\n",
-          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files', fig.path = '", path.expand("~"), "/linkr_temp_files')\n```\n")
+          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files/', fig.path = '", path.expand("~"), "/linkr_temp_files/')\n```\n")
         
         markdown_file <- paste0(markdown_settings, script_description)
         

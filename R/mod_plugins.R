@@ -1498,7 +1498,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
         # Extract ZIP file
         
-        temp_dir <- paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = '')
+        temp_dir <- paste0(Sys.time() %>% stringr::str_replace_all(":| |-", ""), paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
         zip::unzip(input$import_plugins_upload$datapath, exdir = paste0(app_folder, "/temp_files/", temp_dir))
         
         # Read XML file
@@ -1682,7 +1682,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         owd <- setwd(tempdir())
         on.exit(setwd(owd))
         
-        temp_dir <- paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = '')
+        temp_dir <- paste0(Sys.time() %>% stringr::str_replace_all(":| |-", ""), paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
         dir.create(paste0(app_folder, "/temp_files/", temp_dir, "/plugins/", prefix), recursive = TRUE)
         
         for (plugin_id in r[[paste0(prefix, "_export_plugins_selected")]] %>% dplyr::pull(id)){

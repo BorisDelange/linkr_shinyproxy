@@ -1105,7 +1105,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
               toggles <<- tagList(toggles,
                 shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_group_", group_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
-                div(class = "toggle_title", module_element_name, style = "padding-top:12px;"))
+                div(class = "toggle_title", module_element_name, style = "padding-top:10px;"))
 
               # Try to run plugin UI code
               # ID of UI element is in the following format : "group_[ID]"
@@ -2158,7 +2158,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           
           toggles <<- tagList(toggles,
             shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_group_", group_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
-            div(class = "toggle_title", module_element_name, style = "padding-top:12px;"))
+            div(class = "toggle_title", module_element_name, style = "padding-top:10px;"))
           
           # Add to the list of opened cards
           r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_group_", group_id))
@@ -2268,7 +2268,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
           toggles <<- tagList(toggles,
             shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_group_", group_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
-            div(class = "toggle_title", module_element_name, style = "padding-top:12px;"))
+            div(class = "toggle_title", module_element_name, style = "padding-top:10px;"))
 
           # Add to the list of opened cards
           r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_group_", group_id))

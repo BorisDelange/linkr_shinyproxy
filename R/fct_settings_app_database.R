@@ -116,6 +116,17 @@ db_create_tables <- function(db, type = character()){
       tibble::tibble(id = integer(), category = character(), link_id = integer(), name = character(), value = character(),
         value_num = numeric(), creator_id = integer(), datetime = character(), deleted = logical()))
     
+    db_create_table(db, "messages",
+      tibble::tibble(id = integer(), conversation_id = integer(), study_id = integer(), category = character(), 
+        message = character(), filepath = character(), creator_id = integer(), datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "conversations",
+        tibble::tibble(id = integer(), name = character(), datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "inbox_messages",
+      tibble::tibble(id = integer(), message_id = integer(), receiver_id = integer(), read = logical(), 
+        datetime = character(), deleted = logical()))
+    
     db_create_table(db, "cache",
       tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
     

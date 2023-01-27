@@ -42,7 +42,7 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
     r$app_folder <- app_folder
     
     # App db folder
-    app_db_folder <- paste0(app_folder, "/databases")
+    app_db_folder <- paste0(app_folder, "/app_database")
     r$app_db_folder <- app_db_folder
     
     # Get translations
