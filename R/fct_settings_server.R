@@ -1041,6 +1041,67 @@ prepare_data_datatable_new <- function(output, r = shiny::reactiveValues(), ns =
   data_output
 }
 
+prepare_data_shiny_tree <- function(data = tibble::tibble(), stopened = FALSE){
+  full_list <- list()
+  
+  if (nrow(data) > 0){
+    
+    # Loop over categories levels
+    for (i in 1:(max(data$level))){
+      
+      if (i == 1){
+        
+        current_lvl_categories <- data %>% dplyr::filter(level == 1)
+        
+        # Loop over categories
+        for (j in 1:nrow(current_lvl_categories)){
+          
+          row <- current_lvl_categories[j, ]
+          
+          new_list <- list(structure("", stid = row$item_id, sttype = "default"))
+          names(new_list) <- row$name
+          full_list <- append(full_list, new_list)
+        }
+      }
+      
+      else {
+        
+        filtered_categories <- data %>% dplyr::filter(level == i)
+        
+        # Create path column
+        paths <- data %>% 
+          dplyr::filter(level == i) %>%
+          dplyr::pull(path)
+        
+        # Loop over paths
+        for (j in 1:length(paths)){
+          
+          path <- paths[j]
+          
+          # Select data with the same path
+          same_path_categories <- filtered_categories %>% dplyr::filter(path == !!path)
+          
+          new_list <- list()
+          
+          for (k in 1:nrow(same_path_categories)){
+            
+            row <- same_path_categories[k, ]
+            new_list_child <- list(structure("", stid = row$item_id, sttype = "default", stopened = stopened))
+            names(new_list_child) <- row$name
+            
+            new_list <- new_list %>% append(new_list_child)
+          }
+          
+          eval(parse(text = paste0("full_list$", path, " <- structure(
+              sttype = 'default', stid = attributes(full_list$", path, ")$stid, stopened = ", stopened, ", new_list)")))
+        }
+      }
+    }
+  }
+  
+  full_list
+}
+
 #' Reload cache
 #' 
 #' @param r Shiny r reactive value

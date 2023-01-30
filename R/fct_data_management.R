@@ -337,3 +337,86 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), pat
     stop(translate(language, "error_removing_patients_from_subset", r$words))}
   )
 }
+
+get_thesaurus_items_levels <- function(data = tibble::tibble()){
+  
+  data_with_levels <- tibble::tibble()
+  
+  i <- 1
+  while (i > 0){
+    if (i == 1){
+      if (nrow(data %>% dplyr::filter(is.na(parent_item_id))) == 0) i <- -1
+      temp <-
+        data %>%
+        dplyr::filter(is.na(parent_item_id)) %>%
+        dplyr::mutate(level = i)
+      
+      data_with_levels <- temp
+    }
+    
+    temp <-
+      temp %>%
+      dplyr::select(parent_item_id = item_id, parent_name = name, dplyr::starts_with("name_level_")) %>%
+      dplyr::inner_join(data, by = "parent_item_id") %>%
+      dplyr::mutate(level = i + 1, !!paste0("name_level_", i) := parent_name) %>%
+      dplyr::select(-parent_name)
+    
+    if (nrow(temp) == 0) i <- -1
+    else {
+      data_with_levels <-
+        data_with_levels %>%
+        dplyr::bind_rows(temp)
+      
+      temp <- temp %>% dplyr::filter(level == i + 1)
+      
+      i <- i + 1
+    }
+  }
+  
+  data_with_levels <- data_with_levels %>%
+    dplyr::left_join(data %>% dplyr::select(item_id = parent_item_id, children_item_id = item_id), by = "item_id") %>%
+    dplyr::group_by(item_id, parent_item_id, name, unit, level, dplyr::across(dplyr::starts_with("name_level_"))) %>%
+    dplyr::summarize(n_children = max(children_item_id)) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(has_children = dplyr::case_when(is.na(n_children) ~ FALSE, TRUE ~ TRUE)) %>%
+    dplyr::select(-n_children)
+  
+  data_with_levels
+}
+
+get_thesaurus_items_paths <- function(data = tibble::tibble()){
+  
+  data_with_paths <- data %>% dplyr::mutate(path = "")
+  
+  full_list <- list()
+  
+  if (nrow(data) > 0){
+    
+    # Loop over categories levels
+    for (i in 1:(max(data$level))){
+      
+      if (i > 1) {
+        
+        filtered_categories <- data %>% dplyr::filter(level == i)
+        
+        # Create path column
+        paths <- data %>% 
+          dplyr::filter(level == i) %>%
+          dplyr::select(-item_id, -parent_item_id, -unit, -level, -name) %>%
+          dplyr::select(seq(1, i - 1)) %>%
+          tidyr::unite("path", sep = "$", na.rm = TRUE, remove = TRUE) %>%
+          dplyr::mutate_at("path", stringr::str_replace_all, "\\$", "`$`") %>%
+          dplyr::mutate(path = paste0("`", path, "`" )) %>%
+          dplyr::pull()
+        
+        filtered_categories$path <- paths
+        
+        data_with_paths <- data_with_paths %>%
+          dplyr::filter(level != i) %>%
+          dplyr::bind_rows(filtered_categories)
+      }
+    }
+  }
+  
+  data_with_paths
+}

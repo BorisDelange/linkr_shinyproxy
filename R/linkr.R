@@ -58,6 +58,8 @@ linkr <- function(
   
   options(shiny.maxRequestSize = 500*1024^2, shiny.launch.browser = TRUE)
   
+  suppressMessages(require(shinyTree))
+  
   # Create app folder if it doesn't exist
   if (length(app_folder) == 0) app_folder <- paste0(path.expand("~"), "/linkr")
   

@@ -33,7 +33,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "thesaurus_items_card", itemKey = "thesaurus_items_card", headerText = i18n$t("items")),
-          shiny.fluent::PivotItem(id = "thesaurus_categories_card", itemKey = "thesaurus_categories_card", headerText = i18n$t("categories")),
+          # shiny.fluent::PivotItem(id = "thesaurus_categories_card", itemKey = "thesaurus_categories_card", headerText = i18n$t("categories")),
           # shiny.fluent::PivotItem(id = "thesaurus_conversions_card", itemKey = "thesaurus_conversions_card", headerText = i18n$t("conversions")),
           shiny.fluent::PivotItem(id = "thesaurus_mapping_card", itemKey = "thesaurus_mapping_card", headerText = i18n$t("items_mapping"))
         )
@@ -55,26 +55,60 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("thesaurus_items_card"),
         make_card(i18n$t("items"),
           div(
-            div(
-              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-                make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "thesaurus", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-                conditionalPanel(
-                  condition = "input.thesaurus != null", ns = ns,
-                  div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
-                    shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")
-                ),
-                style = "position:relative; z-index:1; width:800px;"
+            shiny.fluent::Pivot(
+              onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-thesaurus_items_pivot', item.props.id)")),
+              shiny.fluent::PivotItem(id = "thesaurus_items_table_view", itemKey = "thesaurus_items_table_view", headerText = i18n$t("datatable_view")),
+              shiny.fluent::PivotItem(id = "thesaurus_items_tree_view", itemKey = "thesaurus_items_tree_view", headerText = i18n$t("tree_view"))
+            ),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+              make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "thesaurus", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+              conditionalPanel(
+                condition = "input.thesaurus != null", ns = ns,
+                div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
+                  shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")
               ),
+              style = "position:relative; z-index:1; width:800px;"
+            ),
+            conditionalPanel(
+              condition = "input.thesaurus_items_pivot == null | input.thesaurus_items_pivot == 'thesaurus_items_table_view'", ns = ns,
               div(DT::DTOutput(ns("thesaurus_items")), style = "margin-top:-30px; z-index:2"),
               conditionalPanel("input.thesaurus == null", ns = ns, br(), br()),
               conditionalPanel(
                 condition = "input.thesaurus != null", ns = ns,
                 shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), i18n$t("save"))
-              ),
-              uiOutput(ns("thesaurus_selected_item"))
-            )
+              )
+            ),
+            conditionalPanel(
+              condition = "input.thesaurus_items_pivot == 'thesaurus_items_tree_view'", ns = ns, br(),
+              div(
+                shinyTree::shinyTree(
+                  ns("thesaurus_items_tree"),
+                  search = FALSE,
+                  checkbox = FALSE,
+                  dragAndDrop = TRUE,
+                  theme = "proton",
+                  themeIcons = FALSE,
+                  wholerow = FALSE,
+                  stripes = FALSE,
+                  animation = 100,
+                  contextmenu = FALSE,
+                  unique = TRUE,
+                  types =
+                    "{
+                      '#': { 'max_children' : 2, 'max_depth' : 6, 'valid_children' : ['root'] },
+                      'root' : { 'valid_children' : ['file'] },
+                      'default' : { 'valid_children' : ['default','file'] },
+                      'file' : { 'icon' : 'fa fa-file', 'valid_children' : [] }
+                    }"
+                )
+              )
+            ),
+            uiOutput(ns("thesaurus_selected_item"))
           )
-        ), br()
+        ), br(),
+        #shinyjs::hidden(
+          div(shinyTree::shinyTree(ns("tree")))
+        #)
       )
     ),
     
@@ -82,16 +116,16 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
     # Categories card ----
     # --- --- --- --- -- -
     
-    shinyjs::hidden(
-      div(
-        id = ns("thesaurus_categories_card"),
-        make_card(i18n$t("categories"),
-          div(
-            
-          )
-        ), br()
-      )
-    ),
+    # shinyjs::hidden(
+    #   div(
+    #     id = ns("thesaurus_categories_card"),
+    #     make_card(i18n$t("categories"),
+    #       div(
+    #         
+    #       )
+    #     ), br()
+    #   )
+    # ),
     
     # --- --- --- --- --- -
     # Conversions card ----
@@ -254,11 +288,14 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       req(length(input$thesaurus$key) > 0)
       
-      r$datamart_thesaurus_items <- DBI::dbGetQuery(r$db, paste0(
+      datamart_thesaurus_items <- DBI::dbGetQuery(r$db, paste0(
         "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted
           FROM thesaurus_items t
           WHERE t.thesaurus_id = ", input$thesaurus$key, " AND t.deleted IS FALSE
-          ORDER BY t.item_id")) %>% tibble::as_tibble() %>% dplyr::mutate(action = "")
+          ORDER BY t.item_id")) %>% tibble::as_tibble()
+      
+      r$datamart_thesaurus_items <- datamart_thesaurus_items %>% dplyr::mutate(action = "")
+      r$datamart_thesaurus_items_tree <- datamart_thesaurus_items
       
       # Get user's modifications on items names & abbreviations
       
@@ -334,7 +371,96 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       # Create a proxy for datatatable
       r$datamart_thesaurus_items_datatable_proxy <- DT::dataTableProxy("thesaurus_items", deferUntilFlush = FALSE)
+      
+      # Prepare data for shinyTree
+      
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping WHERE thesaurus_id_1 = {input$thesaurus$key} AND ",
+        "thesaurus_id_2 = {input$thesaurus$key} AND category = 'import_thesaurus_mapping' AND relation_id = 2 AND deleted IS FALSE"), .con = r$db)
+      thesaurus_items_mappings <- DBI::dbGetQuery(r$db, sql)
+      
+      if (nrow(thesaurus_items_mappings) > 0){
+        r$datamart_thesaurus_items_tree <-
+          r$datamart_thesaurus_items_tree %>%
+          dplyr::left_join(
+            thesaurus_items_mappings %>%
+              dplyr::select(item_id = item_id_1, parent_item_id = item_id_2),
+            by = "item_id"
+          ) %>%
+          get_thesaurus_items_levels() %>%
+          get_thesaurus_items_paths()
+      }
+      
+      output$thesaurus_items_tree <- shinyTree::renderTree({
+        r$datamart_thesaurus_items_tree %>%
+          dplyr::sample_n(400) %>% prepare_data_shiny_tree()
+      })
+      # shinyTree::updateTree(session, "thesaurus_items_tree", 
+      #   r$datamart_thesaurus_items_tree %>% dplyr::sample_n(20) %>% prepare_data_shiny_tree())
     })
+    
+    # output$tree <- shinyTree::renderTree({
+    #   list(
+    #     root1 = structure("", stid = 3, sttype = "default"),
+    #     root2 = list(
+    #       SubListA = list(leaf1 = structure('',stid=1,stclass='study'), leaf2 = "", leaf3=""),
+    #       SubListB = list(leafA = "", leafB = "")
+    #     ),
+    #     root3 = list(
+    #       SubListA = list(leaf1 = "", leaf2 = "", leaf3=""),
+    #       SubListB = list(leafA = "", leafB = "")
+    #     )
+    #   )
+    # })
+    
+    # observeEvent(input$thesaurus_items_tree, {
+    #   shinyTree::get_selected(input$thesaurus_items_tree, format = "classid") %>%
+    #     lapply(attr, "stid") %>%
+    #     unlist()
+    # })
+    
+    # observeEvent(input$trigger, {
+    # #   
+    #   print("trigger")
+    #   
+    #   # data <- r$datamart_thesaurus_items_tree %>% dplyr::sample_n(20) %>% prepare_data_shiny_tree()
+    #   # print(data)
+    #   
+    #   data <- list(
+    #     root1 = structure("", stid = 3, sttype = "default"),
+    #     root2 = list(
+    #       SubListA = list(leaf1 = structure('',stid=1,stclass='study'), leaf2 = "", leaf3=""),
+    #       SubListB = list(leafA = "", leafB = "")
+    #     ),
+    #     root3 = list(
+    #       SubListA = list(leaf1 = "", leaf2 = "", leaf3=""),
+    #       SubListB = list(leafA = "", leafB = "")
+    #     )
+    #   )
+    #   shinyTree::updateTree(session, "tree", data)
+    # #   
+    # #   output$thesaurus_items_tree <- shinyTree::renderTree({
+    # #     print("trigger2")
+    # #     input$trigger
+    # #     # r$datamart_thesaurus_items_tree %>%
+    # #     #   dplyr::sample_n(20) %>% prepare_data_shiny_tree()
+    # #   })
+    # })
+    
+    # reactive_data <- reactive({
+    #   print("test1")
+    #   input$trigger
+    #   r$datamart_thesaurus_items_tree %>%
+    #     dplyr::sample_n(20) %>% prepare_data_shiny_tree()
+    # })
+    
+    # output$thesaurus_items_tree <- shinyTree::renderTree({
+    #   # temp <- r$datamart_thesaurus_items_tree %>%
+    #   #   dplyr::sample_n(20) %>% prepare_data_shiny_tree()
+    #   # print(temp)
+    #   # temp
+    #   print("test")
+    #   reactive_data()
+    # })
     
     # Updates on datatable data
     observeEvent(input$thesaurus_items_cell_edit, {
