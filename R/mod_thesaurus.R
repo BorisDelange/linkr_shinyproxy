@@ -87,20 +87,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("thesaurus_categories_card"),
         make_card(i18n$t("categories"),
           div(
-            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
-            div(shiny.fluent::MessageBar(
-              div(
-                strong("A faire"),
-                p("Plusieurs choses seront possibles ici :",
-                  tags$ul(
-                    tags$li("Créer de nouvelles catégories"),
-                    tags$li("Renommer les catégories existantes"),
-                    tags$li("Changer les items de catégorie")
-                  )  
-                )
-              ),
-              messageBarType = 0)
-            )
+            
           )
         ), br()
       )

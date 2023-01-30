@@ -428,20 +428,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       # Timer to update messages
       
-      # study_reload_conversation <- reactive({
-      #   print(Sys.time())
-      #   invalidateLater(messages_timer(), 10000)
-      #   
-      #   # req(!is.na(m$chosen_study))
-      #   # req(length(input$study_conversations_rows_selected) > 0)
-      #   # r$study_reload_conversation <- Sys.time()
-      #   
-      #   Sys.time()
-      # })
-      
       observe({
         messages_timer()
-        # print(Sys.time())
         req(!is.na(m$chosen_study))
         
         sql <- glue::glue_sql(paste0(
