@@ -1090,7 +1090,7 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
   if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus", "colours_module", "colours_plugin") |
       grepl("plus_data_explorer", category)){
     data <- DBI::dbGetQuery(r$db, paste0(
-     "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value
+     "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value
       FROM thesaurus_items t
       LEFT JOIN cache c ON c.link_id = t.id AND c.category = '", category, "'
       WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE
@@ -1099,7 +1099,7 @@ create_datatable_cache <- function(output, r, language = "EN", module_id = chara
   # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
   if (category %in% c("count_patients_rows", "count_items_rows")){
     data <- DBI::dbGetQuery(r$db, paste0(
-     "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value
+     "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value
       FROM thesaurus_items t
       LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = ", datamart_id, " AND c.category = '", category, "'
       WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE
@@ -1298,7 +1298,7 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
   if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus", "colours_module", "colours_plugin") |
       grepl("plus_data_explorer", category)){
     data <- DBI::dbGetQuery(r$db, paste0(
-      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value ",
+      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
       "FROM thesaurus_items t ",
       "LEFT JOIN cache c ON c.link_id = t.id AND c.category = '", category, "' ", 
       "WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE ",
@@ -1308,7 +1308,7 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
   # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
   if (category %in% c("count_patients_rows", "count_items_rows")){
     data <- DBI::dbGetQuery(r$db, paste0(
-      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted, c.value ",
+      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
       "FROM thesaurus_items t ",
       "LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = ", datamart_id, " AND c.category = '", category, "' ",
       "WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE ",

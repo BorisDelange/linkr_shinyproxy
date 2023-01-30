@@ -43,7 +43,7 @@ report_bug <- function(r = shiny::reactiveValues(), output, error_message = char
 }
 
 report_bug_new <- function(r = shiny::reactiveValues(), output, error_message = character(), 
-  error_name = character(), category = character(), error_report = character(), i18n = R6::R6Class()){
+  error_name = character(), category = character(), error_report = character(), i18n = R6::R6Class(), ns = shiny::NS()){
   
   print(error_report)
   

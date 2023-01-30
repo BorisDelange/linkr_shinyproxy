@@ -122,8 +122,17 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
               list(key = "local", text = i18n$t("local")),
               list(key = "distant", text = i18n$t("distant"))
             ), className = "inline_choicegroup"),
-            div(shinyAce::aceEditor(ns("app_db_request"), "", "sql",
-              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
+            div(shinyAce::aceEditor(
+              ns("app_db_request_code"), "", mode = "sql", 
+              code_hotkeys = list(
+                "r", list(
+                  run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+                  run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+                  save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
+                )
+              ),
+              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+            ), style = "width: 100%;"),
             div(shiny::verbatimTextOutput(ns("request_result")), 
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
             htmltools::br(),
@@ -411,23 +420,39 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     # --- --- --- ---
     
     observeEvent(input$request, {
+      r[[paste0(id, "_app_db_request_code")]] <- input$app_db_request_code
+      r[[paste0(id, "_app_db_request_trigger_code")]] <- Sys.time()
+    })
+    
+    observeEvent(input$app_db_request_code_run_selection, {
+      if(!shinyAce::is.empty(input$app_db_request_code_run_selection$selection)) r[[paste0(id, "_app_db_request_code")]] <- input$app_db_request_code_run_selection$selection
+      else r[[paste0(id, "_app_db_request_code")]] <- input$app_db_request_code_run_selection$line
+      r[[paste0(id, "_app_db_request_trigger_code")]] <- Sys.time()
+    })
+    
+    observeEvent(input$app_db_request_code_run_all, {
+      r[[paste0(id, "_app_db_request_code")]] <- input$app_db_request_code
+      r[[paste0(id, "_app_db_request_trigger_code")]] <- Sys.time()
+    })
+    
+    observeEvent(r[[paste0(id, "_app_db_request_trigger_code")]], {
       
       output$request_result <- renderText({
+        
+        # Replace \r with \n to prevent bugs
+        request <- isolate(r[[paste0(id, "_app_db_request_code")]] %>% stringr::str_replace_all("\r", "\n"))
+        
+        # Get local or distant db DBI object
+        if (input$connection_type_request == "local") db <- r$local_db
+        if (input$connection_type_request == "distant") db <- get_distant_db(r$local_db)
         
         # Change this option to display correctly tibble in textbox
         options('cli.num_colors' = 1)
         
         # Capture console output of our code
+        
         captured_output <-
-          tryCatch({
-            
-            # Replace \r with \n to prevent bugs
-            request <- isolate(input$app_db_request %>% stringr::str_replace_all("\r", "\n"))
-            
-            # Get local or distant db DBI object
-            if (input$connection_type_request == "local") db <- r$local_db
-            if (input$connection_type_request == "distant") db <- get_distant_db(r$local_db)
-            
+          capture.output(tryCatch({
             # dbSendStatement if it is not a select
             if (!grepl("^select", tolower(request))) capture.output({
               DBI::dbSendStatement(db, request) -> query
@@ -441,7 +466,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
             # Render result
             result
             
-          }, error = function(e) print(e), warning = function(w) print(w))
+          }, error = function(e) print(e), warning = function(w) print(w)))
         
         # Restore normal value
         options('cli.num_colors' = NULL)

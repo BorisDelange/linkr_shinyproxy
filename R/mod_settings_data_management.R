@@ -249,18 +249,9 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
               ns("ace_edit_code"), "", mode = "r", 
               code_hotkeys = list(
                 "r", list(
-                  run_selection = list(
-                    win = "CTRL-ENTER",
-                    mac = "CTRL-ENTER|CMD-ENTER"
-                  ),
-                  run_all = list(
-                    win = "CTRL-SHIFT-ENTER",
-                    mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"
-                  ),
-                  save = list(
-                    win = "CTRL-S",
-                    mac = "CTRL-S|CMD-S"
-                  )
+                  run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+                  run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+                  save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
                 )
               ),
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), 
@@ -961,27 +952,27 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # --- --- --- --- --- --- --- --- --- --- --- --
         
       if (table == "thesaurus"){
-          
+
         # Sub datatable is a datatable in thesaurus page, when we click on the subdatatable button of a thesaurus row
         # It opens a tab with a datatable containing items of chosen thesaurus
-        
+
         observeEvent(input$sub_datatable, {
-          
+
           # Get link id
           link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
-          
+
           options <- convert_tibble_to_list_new(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
           value <- list(key = link_id, text = r[[table]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-          
+
           shiny.fluent::updateComboBox.shinyInput(session, "items_chosen", options = options, value = value)
           shiny.fluent::updateComboBox.shinyInput(session, "code_chosen", options = options, value = value)
-          
+
           # Set current pivot to edit_code_card
           shinyjs::runjs(glue::glue("$('#{id}-thesaurus_pivot button[name=\"{i18n$t('items')}\"]').click();"))
         })
-        
+
         observeEvent(input$items_chosen, {
-          
+
           if (length(input$items_chosen) > 1) link_id <- input$items_chosen$key
           else link_id <- input$items_chosen
           if (length(input$code_chosen) > 0){
@@ -995,91 +986,90 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             value <- list(key = link_id, text = r$thesaurus %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
             shiny.fluent::updateComboBox.shinyInput(session, "code_chosen", options = options, value = value)
           }
-          
+
           # Create a r var to export value to other observers
           r$thesaurus_link_id <- link_id
-          
+
           # Get datamarts linked to this thesaurus
           data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
           datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
-          
+
           options <- convert_tibble_to_list_new(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
           shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_datamart", options = options, value = NULL)
-          
+
           # Set r$thesaurus_refresh_thesaurus_items to "all_items", cause we havn't chosen yet the thesaurus or the datamart
           r$thesaurus_refresh_thesaurus_items <- paste0(link_id, "reset_all_items")
         })
-          
+
         observeEvent(input$show_only_used_items, {
           if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- "only_used_items"
           else r$thesaurus_refresh_thesaurus_items <- "all_items"
         })
-        
+
         # When value of datamart changes, change value or r$thesaurus_refresh_thesaurus_items, depending on show_only_used_items
-        # Add input$thesaurus_datamart in the value, to refresh even if the value doesn't change 
+        # Add input$thesaurus_datamart in the value, to refresh even if the value doesn't change
         # (if I change datamart and keep "all_items"), it won't active observer cause value hasn't changed...
-        
+
         observeEvent(input$thesaurus_datamart, {
           if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- paste0(input$thesaurus_datamart, "only_used_items")
           else r$thesaurus_refresh_thesaurus_items <- r$thesaurus_refresh_thesaurus_items <- paste0(input$thesaurus_datamart, "all_items")
         })
-        
+
         observeEvent(r$thesaurus_refresh_thesaurus_items, {
-          
+
           req(r$thesaurus_link_id)
-          
+
           # Get all items from the chosen thesaurus
-          
+
           r$thesaurus_items <- create_datatable_cache_new(output = output, r = r, d = d, i18n = i18n, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
-     
+
           if (length(input$thesaurus_datamart) > 0 & !grepl("reset", r$thesaurus_refresh_thesaurus_items)){
             if (input$thesaurus_datamart != ""){
-              
+
               count_items_rows <- tibble::tibble()
               count_patients_rows <- tibble::tibble()
-              
+
               # Add count_items_rows in the cache & get it if already in the cache
               tryCatch(count_items_rows <- create_datatable_cache_new(output = output, r = r, d = d, i18n = i18n, thesaurus_id = r$thesaurus_link_id,
                 datamart_id = as.integer(input$thesaurus_datamart), category = "count_items_rows"),
-                error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+                error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart",
                   error_name = paste0(id, " - count_items_rows"), category = "Error", error_report = toString(e), i18n = i18n))
-              
+
               # Add count_items_rows in the cache & get it if already in the cache
               tryCatch(count_patients_rows <- create_datatable_cache_new(output = output, r = r, d = d, i18n = i18n, thesaurus_id = r$thesaurus_link_id,
                 datamart_id = as.integer(input$thesaurus_datamart), category = "count_patients_rows"),
-                error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+                error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart",
                   error_name = paste0(id, " - count_patients_rows"), category = "Error", error_report = toString(e), i18n = i18n))
-              
+
               if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
               req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
-              
+
               # Transform count_rows cols to integer, to be sortable
               r$thesaurus_items <- r$thesaurus_items %>%
                 dplyr::left_join(count_items_rows, by = "item_id") %>%
                 dplyr::left_join(count_patients_rows, by = "item_id") %>%
                 dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
                 dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
-              
+
               # If r$thesaurus_refresh_thesaurus_items is set to "only_used_items", filter on count_items_rows > 0
               if (grepl("only_used_items", r$thesaurus_refresh_thesaurus_items)) r$thesaurus_items <- r$thesaurus_items %>% dplyr::filter(count_items_rows > 0)
-              
+
               # r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
             }
           }
-          
-          r$thesaurus_items_temp <- r$thesaurus_items %>% 
+
+          r$thesaurus_items_temp <- r$thesaurus_items %>%
             dplyr::mutate(modified = FALSE) %>%
-            dplyr::mutate_at("category", as.factor) %>%
             dplyr::mutate_at("item_id", as.character) %>%
             dplyr::arrange(name)
-          
+
           if ("thesaurus_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
-          
+
           editable_cols <- c("name", "display_name", "unit")
-          searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
-          factorize_cols <- c("category", "unit")
-          column_widths <- c("id" = "80px", "action" = "80px", "unit" = "100px")
-          
+          searchable_cols <- c("item_id", "name", "display_name", "unit")
+          factorize_cols <- c("unit")
+          column_widths <- c("item_id" = "80px", "action" = "80px", "unit" = "100px")
+
           if ("count_patients_rows" %in% names(r$thesaurus_items)){
             sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
             centered_cols <- c("id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
@@ -1090,37 +1080,37 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             centered_cols <- c("id", "unit", "datetime", "action")
             col_names <- get_col_names_new(table_name = "thesaurus_items", i18n = i18n)
           }
-          
+
           hidden_cols <- c("id", "thesaurus_id", "datetime", "deleted", "modified")
-          
+
           # Render datatable
           render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$thesaurus_items_temp,
             output_name = "sub_datatable", col_names =  col_names,
             editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
             searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
-          
+
           # Create a proxy for datatatable
           r$sub_thesaurus_datatable_proxy <- DT::dataTableProxy("sub_datatable", deferUntilFlush = FALSE)
-          
+
           # Reload datatable
           observeEvent(r$thesaurus_items_temp, {
-            
+
             # Reload data of datatable
             DT::replaceData(r$sub_thesaurus_datatable_proxy, r$thesaurus_items_temp, resetPaging = FALSE, rownames = FALSE)
           })
-          
+
         })
-        
+
         # Reload cache
-        
+
         thesaurus_reload_cache_prefix <- "thesaurus_reload_cache"
         thesaurus_reload_cache_react_variable <- "thesaurus_reload_cache_confirm"
         thesaurus_reload_cache_variable <- paste0(thesaurus_reload_cache_prefix, "_open_dialog")
-        
+
         r[[thesaurus_reload_cache_variable]] <- FALSE
-        
+
         output[[thesaurus_reload_cache_react_variable]] <- shiny.fluent::renderReact({
-          
+
           shiny.fluent::Dialog(
             hidden = !r[[thesaurus_reload_cache_variable]],
             onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", thesaurus_reload_cache_prefix, "_hide_dialog', Math.random()); }")),
@@ -1132,49 +1122,49 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             )
           )
         })
-        
+
         # Whether to close or not delete dialog box
         observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_hide_dialog")]], r[[thesaurus_reload_cache_variable]] <- FALSE)
         observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_canceled")]], r[[thesaurus_reload_cache_variable]] <- FALSE)
-        
+
         observeEvent(input$reload_thesaurus_cache, {
-          
+
           req(length(input$items_chosen) > 1)
           r[[thesaurus_reload_cache_variable]] <- TRUE
         })
-        
+
         observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_confirmed")]], {
-          
+
           r[[thesaurus_reload_cache_variable]] <- FALSE
-          
+
           sql <- glue::glue_sql("SELECT id FROM thesaurus_items WHERE thesaurus_id = {r$thesaurus_link_id}", .con = r$db)
           thesaurus_items <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
-          
+
           sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
             "link_id IN ({thesaurus_items*})"), .con = r$db)
-          
+
           # Delete cache
           sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
             "link_id IN ({thesaurus_items*})"), .con = r$db)
           query <- DBI::dbSendStatement(r$db, sql)
           DBI::dbClearResult(query)
-          
+
           sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
             "link_id IN ({thesaurus_items*})"), .con = r$db)
-          
+
           # Reset datamart dropdown
           data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == r$thesaurus_link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
           datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
-          
+
           options <- convert_tibble_to_list_new(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
           shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_datamart", options = options, value = NULL)
-          
+
           # Reload datatable
           r$thesaurus_refresh_thesaurus_items <- paste0(Sys.time(), "reset")
         })
-        
+
         # Delete a row or multiple rows in datatable
-        
+
         thesaurus_items_delete_prefix <- "thesaurus_items"
         thesaurus_items_delete_variable <- paste0(thesaurus_items_delete_prefix, "_open_dialog")
         thesaurus_items_dialog_title <- "thesaurus_items_delete"
@@ -1187,33 +1177,33 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         thesaurus_items_reload_variable <- "reload_thesaurus_items"
         thesaurus_items_information_variable <- paste0(id, "_thesaurus_items_deleted")
         thesaurus_items_delete_variable <- paste0(thesaurus_items_delete_prefix, "_open_dialog")
-        
+
         delete_element_new(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
           delete_prefix = thesaurus_items_delete_prefix, dialog_title = thesaurus_items_dialog_title, dialog_subtext = thesaurus_items_dialog_subtext,
           react_variable = thesaurus_items_react_variable, table = thesaurus_items_table, id_var_sql = thesaurus_items_id_var_sql, id_var_r = thesaurus_items_id_var_r,
           delete_message = thesaurus_items_delete_message, translation = TRUE, reload_variable = thesaurus_items_reload_variable,
           information_variable = thesaurus_items_information_variable)
-        
+
         # Delete one row (with icon on DT)
-        
+
         observeEvent(input$thesaurus_items_deleted_pressed, {
-          
+
           r[[paste0(id, "_delete_thesaurus_items")]] <- as.integer(substr(input$thesaurus_items_deleted_pressed, nchar("sub_delete_") + 1, 100))
           r[[thesaurus_items_delete_variable]] <- TRUE
         })
-        
+
         # Delete multiple rows (with "Delete selection" button)
-        
+
         observeEvent(input$thesaurus_items_delete_selection, {
-          
+
           req(length(input$sub_datatable_rows_selected) > 0)
-          
+
           r[[paste0(id, "_delete_thesaurus_items")]] <- r$thesaurus_items_temp[input$sub_datatable_rows_selected, ] %>% dplyr::pull(id)
           r[[thesaurus_items_delete_variable]] <- TRUE
         })
-        
+
         observeEvent(r[[thesaurus_items_reload_variable]], {
-          
+
           # Reload datatable
           r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
         })

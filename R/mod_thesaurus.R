@@ -34,7 +34,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "thesaurus_items_card", itemKey = "thesaurus_items_card", headerText = i18n$t("items")),
           shiny.fluent::PivotItem(id = "thesaurus_categories_card", itemKey = "thesaurus_categories_card", headerText = i18n$t("categories")),
-          shiny.fluent::PivotItem(id = "thesaurus_conversions_card", itemKey = "thesaurus_conversions_card", headerText = i18n$t("conversions")),
+          # shiny.fluent::PivotItem(id = "thesaurus_conversions_card", itemKey = "thesaurus_conversions_card", headerText = i18n$t("conversions")),
           shiny.fluent::PivotItem(id = "thesaurus_mapping_card", itemKey = "thesaurus_mapping_card", headerText = i18n$t("items_mapping"))
         )
       )
@@ -97,24 +97,24 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
     # Conversions card ----
     # --- --- --- --- --- -
     
-    shinyjs::hidden(
-      div(
-        id = ns("thesaurus_conversions_card"),
-        make_card(i18n$t("conversions"),
-          div(
-            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
-            div(shiny.fluent::MessageBar(
-              div(
-                strong("A faire"),
-                p("Il sera possible de convertir les variables dans différentes unités"),
-                p("Faut-il laisser possible le changement de l'unité, en changeant le texte, dans \"Tous les items\" ?")
-              ),
-              messageBarType = 0)
-            )
-          )
-        ), br()
-      )
-    ),
+    # shinyjs::hidden(
+    #   div(
+    #     id = ns("thesaurus_conversions_card"),
+    #     make_card(i18n$t("conversions"),
+    #       div(
+    #         div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
+    #         div(shiny.fluent::MessageBar(
+    #           div(
+    #             strong("A faire"),
+    #             p("Il sera possible de convertir les variables dans différentes unités"),
+    #             p("Faut-il laisser possible le changement de l'unité, en changeant le texte, dans \"Tous les items\" ?")
+    #           ),
+    #           messageBarType = 0)
+    #         )
+    #       )
+    #     ), br()
+    #   )
+    # ),
     
     # --- --- --- -- --
     # Mapping card ----
@@ -167,12 +167,14 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
               )    
             ),
             conditionalPanel(condition = "input.mapping_current_tab == 'thesaurus_mapping_management'", ns = ns,
-              DT::DTOutput(ns("thesaurus_evaluate_mappings")), br(),
+              div(DT::DTOutput(ns("thesaurus_evaluate_mappings")), style = "margin-top:-30px; z-index:2"),
+              div(
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                  shiny.fluent::PrimaryButton.shinyInput(ns("save_mappings_evaluation"), i18n$t("save")),
+                  shiny.fluent::DefaultButton.shinyInput(ns("mapping_delete_selection"), i18n$t("delete_selection"))
+                ),
+              style = "position:relative; z-index:2; margin-top:-30px;"), br(),
               div(verbatimTextOutput(ns("thesaurus_mapping_details")), style = "border:dashed 1px; padding:10px;"), br(),
-              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::PrimaryButton.shinyInput(ns("save_mappings_evaluation"), i18n$t("save")),
-                shiny.fluent::DefaultButton.shinyInput(ns("mapping_delete_selection"), i18n$t("delete_selection"))
-              )
             )
           )
         ), br()
@@ -187,6 +189,9 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
 mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    # Close message bar
+    sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
  
     # --- --- --- --- --- ---
     # Show or hide cards ----
@@ -250,7 +255,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       req(length(input$thesaurus$key) > 0)
       
       r$datamart_thesaurus_items <- DBI::dbGetQuery(r$db, paste0(
-        "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted
+        "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted
           FROM thesaurus_items t
           WHERE t.thesaurus_id = ", input$thesaurus$key, " AND t.deleted IS FALSE
           ORDER BY t.item_id")) %>% tibble::as_tibble() %>% dplyr::mutate(action = "")
@@ -282,16 +287,16 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # Add count_items_rows in the cache & get it if already in the cache
       tryCatch(count_items_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
         datamart_id = r$chosen_datamart, category = "count_items_rows"),
-          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
+          error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+            error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       
       # Add count_items_rows in the cache & get it if already in the cache
       tryCatch(count_patients_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
         datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
-          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
+          error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+            error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       
-      if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", "EN", words = r$words)
+      if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
       req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
       
       # Transform count_rows cols to integer, to be sortable
@@ -313,10 +318,10 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         dplyr::mutate_at("item_id", as.character)
       
       editable_cols <- c("name", "display_name")
-      searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
-      factorize_cols <- c("category", "unit")
-      column_widths <- c("id" = "80px", "action" = "80px", "unit" = "100px", "count_patients_rows" = "80px", "count_items_rows" = "80px")
-      sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+      searchable_cols <- c("item_id", "name", "display_name", "unit")
+      factorize_cols <- c("unit")
+      column_widths <- c("action" = "80px", "unit" = "100px", "count_patients_rows" = "80px", "count_items_rows" = "80px")
+      sortable_cols <- c("id", "name", "display_name", "count_patients_rows", "count_items_rows")
       centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
       col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_with_counts", i18n = i18n)
       hidden_cols <- c("id", "thesaurus_id", "item_id", "datetime", "deleted", "modified", "action")
@@ -475,7 +480,6 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         span(i18n$t("item_id"), style = style), thesaurus_item$item_id, br(),
         span(i18n$t("name"), style = style), thesaurus_item$name, br(),
         span(i18n$t("abbreviation"), style = style), thesaurus_item$display_name, br(),
-        span(i18n$t("category"), style = style), thesaurus_item$category, br(),
         span(i18n$t("unit"), style = style), ifelse(is.na(thesaurus_item$unit), "", thesaurus_item$unit), br(),
         values_text, br(),
         shiny.fluent::DefaultButton.shinyInput(ns("show_plots"), i18n$t("show_plots")),
@@ -529,7 +533,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         req(length(input[[paste0("thesaurus_", mapping)]]$key) > 0)
         
         r[[paste0("datamart_thesaurus_items_", mapping)]] <- DBI::dbGetQuery(r$db, paste0(
-          "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.category, t.unit, t.datetime, t.deleted
+          "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted
             FROM thesaurus_items t
             WHERE t.thesaurus_id = ", input[[paste0("thesaurus_", mapping)]]$key, " AND t.deleted IS FALSE
             ORDER BY t.item_id")) %>% tibble::as_tibble() %>% dplyr::mutate(action = "")
@@ -561,16 +565,16 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         # Add count_items_rows in the cache & get it if already in the cache
         tryCatch(count_items_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input[[paste0("thesaurus_", mapping)]]$key,
           datamart_id = r$chosen_datamart, category = "count_items_rows"),
-          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
+          error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+            error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
         
         # Add count_items_rows in the cache & get it if already in the cache
         tryCatch(count_patients_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input[[paste0("thesaurus_", mapping)]]$key,
           datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
-          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), language = "EN"))
+          error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+            error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
         
-        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", "EN", words = r$words)
+        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
         req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
   
         # Transform count_rows cols to integer, to be sortable
@@ -586,10 +590,10 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           dplyr::mutate_at("item_id", as.character)
         
         editable_cols <- c("name", "display_name")
-        searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
-        factorize_cols <- c("category", "unit")
+        searchable_cols <- c("item_id", "name", "display_name", "unit")
+        factorize_cols <- c("unit")
         column_widths <- c("id" = "80px", "action" = "80px", "unit" = "100px", "count_patients_rows" = "80px", "count_items_rows" = "80px")
-        sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+        sortable_cols <- c("id", "name", "display_name", "count_patients_rows", "count_items_rows")
         centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
         col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_with_counts", i18n = i18n)
         hidden_cols <- c("id", "thesaurus_id", "item_id", "display_name", "unit", "count_patients_rows", "datetime", "deleted", "modified", "action")
@@ -727,7 +731,6 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           span(i18n$t("item_id"), style = style), thesaurus_item$item_id, br(),
           span(i18n$t("name"), style = style), thesaurus_item$name, br(),
           span(i18n$t("abbreviation"), style = style), thesaurus_item$display_name, br(),
-          span(i18n$t("category"), style = style), thesaurus_item$category, br(),
           span(i18n$t("unit"), style = style), ifelse(is.na(thesaurus_item$unit), "", thesaurus_item$unit), br(),
           values_text
         )))
@@ -750,9 +753,10 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         check_duplicates <- FALSE
         
         sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping WHERE ",
-          "thesaurus_id_1 == {item_1$thesaurus_id} AND item_id_1 == {item_1$item_id} AND ",
-          "thesaurus_id_2 == {item_2$thesaurus_id} AND item_id_2 == {item_2$item_id} AND ",
-          "relation_id == {as.integer(input$mapping_type)}"), .con = r$db)
+          "thesaurus_id_1 = {item_1$thesaurus_id} AND item_id_1 = {item_1$item_id} AND ",
+          "thesaurus_id_2 = {item_2$thesaurus_id} AND item_id_2 = {item_2$item_id} AND ",
+          "relation_id = {as.integer(input$mapping_type)} AND ",
+          "category = 'user_added_mapping'"), .con = r$db)
         existing_mapping <- DBI::dbGetQuery(r$db, sql)
         
         if (nrow(existing_mapping) > 0) show_message_bar_new(output, 3, "thesaurus_mapping_already_exists", "severeWarning", i18n, ns = ns)
@@ -763,8 +767,8 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           
           # Add new mapping to r$thesaurus_added_mappings
           
-          new_row <- tibble::tribble(~id, ~thesaurus_id_1, ~item_id_1, ~thesaurus_id_2, ~item_id_2, ~relation_id, ~creator_id, ~datetime, ~deleted,
-            last_row + 1, item_1$thesaurus_id, item_1$item_id, item_2$thesaurus_id, item_2$item_id,
+          new_row <- tibble::tribble(~id, ~category, ~thesaurus_id_1, ~item_id_1, ~thesaurus_id_2, ~item_id_2, ~relation_id, ~creator_id, ~datetime, ~deleted,
+            last_row + 1, "user_added_mapping", item_1$thesaurus_id, item_1$item_id, item_2$thesaurus_id, item_2$item_id,
             as.integer(input$mapping_type), r$user_id, as.character(Sys.time()), FALSE)
           
           r$thesaurus_added_mappings <- r$thesaurus_added_mappings %>% dplyr::bind_rows(new_row)
@@ -786,7 +790,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       observeEvent(r$chosen_datamart, {
         
-        r$thesaurus_added_mappings <- tibble::tibble(id = integer(), thesaurus_id_1 = integer(), item_id_1 = integer(), 
+        r$thesaurus_added_mappings <- tibble::tibble(id = integer(), category = character(), thesaurus_id_1 = integer(), item_id_1 = integer(), 
           thesaurus_id_2 = integer(), item_id_2 = integer(), relation_id = integer(), creator_id = integer(), datetime = character(), deleted = logical())
         
         output$thesaurus_selected_item_mapping1 <- renderText("")
@@ -843,7 +847,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::pull(id)
       
       sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping WHERE (thesaurus_id_1 IN ({thesaurus_ids*}) OR thesaurus_id_2 IN ({thesaurus_ids*})) ",
-        "AND deleted IS FALSE"), .con = r$db)
+        "AND category = 'user_added_mapping' AND deleted IS FALSE"), .con = r$db)
       r$datamart_thesaurus_items_evaluate_mappings <- DBI::dbGetQuery(r$db, sql)
       
       action_col <- tibble::tibble()

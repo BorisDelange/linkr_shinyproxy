@@ -76,7 +76,7 @@
 #' import_datamart(output = output, r = r, datamart_id = 5, data = patients, type = "patients", 
 #'   save_as_csv = FALSE, rewrite = FALSE, language = language)
 #' }
-import_datamart <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), data = tibble::tibble(), 
+import_datamart <- function(output, ns = shiny::NS(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), data = tibble::tibble(), 
   type = "patients", save_as_csv = TRUE, rewrite = FALSE, i18n = R6::R6Class(), quiet = TRUE){
   
   # Check datamart_id
@@ -91,14 +91,14 @@ import_datamart <- function(output, r = shiny::reactiveValues(), d = shiny::reac
   datamart_id <- as.integer(datamart_id)
   
   if (is.na(datamart_id) | length(datamart_id) == 0){
-    show_message_bar_new(output, 1, "invalid_datamart_id_value", "severeWarning", i18n = i18n)
+    show_message_bar_new(output, 1, "invalid_datamart_id_value", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("invalid_datamart_id_value"))
   }
   
   # Type = c("patients", "stays", "labs_vitals", "text", "orders")
   # Check if type is valid
   if (type %not_in% c("patients", "stays", "labs_vitals", "text", "orders")){
-    show_message_bar_new(output, 1, "var_type_not_valid", "severeWarning", i18n = i18n) 
+    show_message_bar_new(output, 1, "var_type_not_valid", "severeWarning", i18n = i18n, ns = ns) 
     stop(i18n$t("var_type_not_valid"))
   }
   id_message_bar <- switch(type, "patients" = 1, "stays" = 2, "labs_vitals" = 3, "text" = 4, "orders" = 5, "diagnoses" = 6)
@@ -119,9 +119,9 @@ import_datamart <- function(output, r = shiny::reactiveValues(), d = shiny::reac
           "text" = "iciTTcc",
           "orders" = "iciTTcincncncc")
         d[[type]] <- readr::read_csv(path, col_types = col_types)
-        if (!quiet & nrow(d[[type]]) > 0) show_message_bar_new(output, id_message_bar, paste0("import_datamart_success_", type), "success", i18n = i18n)
+        if (!quiet & nrow(d[[type]]) > 0) show_message_bar_new(output, id_message_bar, paste0("import_datamart_success_", type), "success", i18n = i18n, ns = ns)
       })
-      }, 
+    }, 
       
       error = function(e){
         if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_loading_csv", 
@@ -214,19 +214,19 @@ import_datamart <- function(output, r = shiny::reactiveValues(), d = shiny::reac
   sapply(1:nrow(var_cols), function(i){
     var_name <- var_cols[[i, "name"]]
     if (var_cols[[i, "type"]] == "integer" & !is.integer(data[[var_name]])){
-      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
     } 
     if (var_cols[[i, "type"]] == "character" & !is.character(data[[var_name]])){
-      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_character"))) 
     }
     if (var_cols[[i, "type"]] == "numeric" & !is.numeric(data[[var_name]])){
-      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t( "column"), " ", var_name, " ", i18n$t("type_must_be_numeric")))
     } 
     if (var_cols[[i, "type"]] == "datetime" & !lubridate::is.POSIXct(data[[var_name]])){
-      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_datetime")))
     }
   })
@@ -246,8 +246,8 @@ import_datamart <- function(output, r = shiny::reactiveValues(), d = shiny::reac
       error = function(e){
         if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_saving_csv", 
           error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
-            stop(i18n$t("error_saving_csv"))}
-      )
+        stop(i18n$t("error_saving_csv"))}
+    )
   }
   
   # If type is stays, link with thesaurus
@@ -266,16 +266,16 @@ import_datamart <- function(output, r = shiny::reactiveValues(), d = shiny::reac
           dplyr::select(-name, -display_name)
       }
     },
-    error = function(e){
-      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_linking_stays_with_thesaurus", 
-        error_name = paste0("import_datamart - error_linking_stays_with_thesaurus - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
-      stop(i18n$t("error_linking_stays_with_thesaurus"))}
+      error = function(e){
+        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_linking_stays_with_thesaurus", 
+          error_name = paste0("import_datamart - error_linking_stays_with_thesaurus - id = ", datamart_id), category = "Error", error_report = toString(e), language = language)
+        stop(i18n$t("error_linking_stays_with_thesaurus"))}
     )
   }
   
   d[[type]] <- data
   
-  if (!quiet) show_message_bar_new(output, id_message_bar, paste0("import_datamart_success_", type), "success", i18n = i18n)
+  if (!quiet) show_message_bar_new(output, id_message_bar, paste0("import_datamart_success_", type), "success", i18n = i18n, ns = ns)
 }
 
 #' Import a thesaurus
@@ -418,7 +418,7 @@ import_thesaurus <- function(output, r = shiny::reactiveValues(), thesaurus_id =
   # print(translate(language, "import_thesaurus_success", r$words))
 }
 
-import_thesaurus_new <- function(output, r = shiny::reactiveValues(), thesaurus_id = integer(), thesaurus = tibble::tibble(), i18n = R6::R6Class()){
+import_thesaurus_new <- function(output, ns = shiny::NS(), r = shiny::reactiveValues(), thesaurus_id = integer(), thesaurus = tibble::tibble(), i18n = R6::R6Class()){
   # Check thesaurus_id
   tryCatch(thesaurus_id <- as.integer(thesaurus_id), 
     error = function(e){
@@ -428,7 +428,7 @@ import_thesaurus_new <- function(output, r = shiny::reactiveValues(), thesaurus_
   )
   
   if (is.na(thesaurus_id) | length(thesaurus_id) == 0){
-    show_message_bar_new(output, 1, "invalid_thesaurus_id_value", "severeWarning", i18n = i18n)
+    show_message_bar_new(output, 1, "invalid_thesaurus_id_value", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("invalid_thesaurus_id_value"))
   }
   
@@ -437,12 +437,11 @@ import_thesaurus_new <- function(output, r = shiny::reactiveValues(), thesaurus_
     "item_id", "integer",
     "name", "character",
     "display_name", "character",
-    "category", "character",
     "unit", "character")
   
   # Check col names
-  if (!identical(names(thesaurus), c("item_id", "name", "display_name", "category", "unit"))){
-    show_message_bar_new(output, 1, "invalid_col_names", "severeWarning", i18n = i18n)
+  if (!identical(names(thesaurus), c("item_id", "name", "display_name", "unit"))){
+    show_message_bar_new(output, 1, "invalid_col_names", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
   }
   
@@ -450,11 +449,11 @@ import_thesaurus_new <- function(output, r = shiny::reactiveValues(), thesaurus_
   sapply(1:nrow(var_cols), function(i){
     var_name <- var_cols[[i, "name"]]
     if (var_cols[[i, "type"]] == "integer" & !is.integer(thesaurus[[var_name]])){
-      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
     }
     if (var_cols[[i, "type"]] == "character" & !is.character(thesaurus[[var_name]])){
-      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_character")))
     }
   })
@@ -470,17 +469,19 @@ import_thesaurus_new <- function(output, r = shiny::reactiveValues(), thesaurus_
   # Check if there are no duplicates in items_id
   items_duplicates <- thesaurus %>% dplyr::group_by(item_id) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
   if (items_duplicates > 0){
-    show_message_bar_new(output, 1, "error_multiple_item_id", "severeWarning", i18n = i18n)
+    show_message_bar_new(output, 1, "error_multiple_item_id", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("error_multiple_item_id"))
   }
   
   # Get actual items of this thesaurus saved in the database
-  tryCatch(actual_items <- 
-      DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE")) %>% dplyr::select(item_id),
-    error = function(e){
-      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_get_actuel_items", 
-        error_name = paste0("import_thesaurus - error_get_actuel_items - id = ", thesaurus_id), category = "Error", error_report = toString(e), i18n = i18n)
-      stop(i18n$t("error_get_actuel_items"))}
+  tryCatch({
+    sql <- glue::glue_sql("SELECT item_id FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} AND deleted IS FALSE", .con = r$db)
+    actual_items <- DBI::dbGetQuery(r$db, sql)
+  },
+  error = function(e){
+    if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_get_actuel_items", 
+      error_name = paste0("import_thesaurus - error_get_actuel_items - id = ", thesaurus_id), category = "Error", error_report = toString(e), i18n = i18n)
+    stop(i18n$t("error_get_actuel_items"))}
   )
   
   # Get items to insert with an anti-join
@@ -490,21 +491,20 @@ import_thesaurus_new <- function(output, r = shiny::reactiveValues(), thesaurus_
   last_id <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) AS id FROM thesaurus_items") %>% dplyr::pull()
   
   if (nrow(items_to_insert) == 0){
-    show_message_bar_new(output, 1, "thesaurus_no_items_to_insert", "severeWarning", i18n = i18n)
+    show_message_bar_new(output, 1, "thesaurus_no_items_to_insert", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("thesaurus_no_items_to_insert")) 
   }
   
   items_to_insert <- 
     items_to_insert %>% 
     dplyr::transmute(
-      id = 1:dplyr::n() + last_id, 
-      thesaurus_id = !!thesaurus_id, 
-      item_id, 
-      name, 
-      display_name, 
-      category,
+      id = 1:dplyr::n() + last_id,
+      thesaurus_id = !!thesaurus_id,
+      item_id,
+      name,
+      display_name,
       unit,
-      datetime = as.character(Sys.time()), 
+      datetime = as.character(Sys.time()),
       deleted = FALSE)
   
   tryCatch(DBI::dbAppendTable(r$db, "thesaurus_items", items_to_insert),
@@ -514,5 +514,5 @@ import_thesaurus_new <- function(output, r = shiny::reactiveValues(), thesaurus_
       stop(i18n$t("thesaurus_error_append_table"))}
   )
   
-  show_message_bar_new(output, 1, "import_thesaurus_success", "success", i18n)
+  show_message_bar_new(output, 1, "import_thesaurus_success", "success", i18n, ns = ns)
 }

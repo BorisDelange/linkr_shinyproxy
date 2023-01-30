@@ -186,10 +186,12 @@ render_settings_datatable_card_new <- function(i18n = R6::R6Class(), ns = shiny:
             style = "position:relative; z-index:1; width:500px;"
           ),
           div(DT::DTOutput(ns(output_id)), style = "margin-top:-30px; z-index:2"),
-          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-            shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
-            shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
-          )
+          div(
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
+              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
+            ),
+          style = "position:relative; z-index:2; margin-top:-30px;")
         )
         
       ), br()
@@ -200,11 +202,13 @@ render_settings_datatable_card_new <- function(i18n = R6::R6Class(), ns = shiny:
     div(id = ns(div_id),
       make_card(i18n$t(title),
         div(
-          DT::DTOutput(ns(output_id)),
-          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-            shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
-            shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
-          )
+          div(DT::DTOutput(ns(output_id)), style = "margin-top:-30px; z-index:2"),
+          div(
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
+              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
+            ),
+          style = "position:relative; z-index:2; margin-top:-30px;")
         )
       ), br()
     )
