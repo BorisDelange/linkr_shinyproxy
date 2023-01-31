@@ -375,7 +375,7 @@ get_thesaurus_items_levels <- function(data = tibble::tibble()){
   
   data_with_levels <- data_with_levels %>%
     dplyr::left_join(data %>% dplyr::select(item_id = parent_item_id, children_item_id = item_id), by = "item_id") %>%
-    dplyr::group_by(item_id, parent_item_id, name, unit, level, dplyr::across(dplyr::starts_with("name_level_"))) %>%
+    dplyr::group_by(item_id, parent_item_id, name, unit, count_patients_rows, count_items_rows, level, dplyr::across(dplyr::starts_with("name_level_"))) %>%
     dplyr::summarize(n_children = max(children_item_id)) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(has_children = dplyr::case_when(is.na(n_children) ~ FALSE, TRUE ~ TRUE)) %>%
@@ -402,7 +402,7 @@ get_thesaurus_items_paths <- function(data = tibble::tibble()){
         # Create path column
         paths <- data %>% 
           dplyr::filter(level == i) %>%
-          dplyr::select(-item_id, -parent_item_id, -unit, -level, -name) %>%
+          dplyr::select(-item_id, -parent_item_id, -unit, -level, -name, -count_patients_rows, -count_items_rows) %>%
           dplyr::select(seq(1, i - 1)) %>%
           tidyr::unite("path", sep = "$", na.rm = TRUE, remove = TRUE) %>%
           dplyr::mutate_at("path", stringr::str_replace_all, "\\$", "`$`") %>%

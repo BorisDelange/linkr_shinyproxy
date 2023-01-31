@@ -75,7 +75,8 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
               conditionalPanel("input.thesaurus == null", ns = ns, br(), br()),
               conditionalPanel(
                 condition = "input.thesaurus != null", ns = ns,
-                shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), i18n$t("save"))
+                shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), i18n$t("save")),
+                uiOutput(ns("thesaurus_selected_item"))
               )
             ),
             conditionalPanel(
@@ -102,8 +103,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
                     }"
                 )
               )
-            ),
-            uiOutput(ns("thesaurus_selected_item"))
+            )
           )
         ), br(),
         #shinyjs::hidden(
@@ -282,31 +282,39 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     })
     
     observeEvent(input$show_only_used_items, r$reload_thesaurus_datatable <- Sys.time())
-    observeEvent(input$thesaurus, r$reload_thesaurus_datatable <- Sys.time())
+    observeEvent(input$thesaurus, r$reload_thesaurus_data <- Sys.time())
     
-    observeEvent(r$reload_thesaurus_datatable, {
+    observeEvent(r$reload_thesaurus_data, {
       
       req(length(input$thesaurus$key) > 0)
       
-      datamart_thesaurus_items <- DBI::dbGetQuery(r$db, paste0(
-        "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted
-          FROM thesaurus_items t
-          WHERE t.thesaurus_id = ", input$thesaurus$key, " AND t.deleted IS FALSE
-          ORDER BY t.item_id")) %>% tibble::as_tibble()
+      sql <- glue::glue_sql(paste0(
+        "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted ",
+        "FROM thesaurus_items t ",
+        "WHERE t.thesaurus_id = {input$thesaurus$key} AND t.deleted IS FALSE ",
+        "ORDER BY t.item_id"), .con = r$db)
+      
+      datamart_thesaurus_items <- DBI::dbGetQuery(r$db, sql) %>% tibble::as_tibble()
       
       r$datamart_thesaurus_items <- datamart_thesaurus_items %>% dplyr::mutate(action = "")
-      r$datamart_thesaurus_items_tree <- datamart_thesaurus_items
       
       # Get user's modifications on items names & abbreviations
       
-      r$datamart_thesaurus_user_items <- DBI::dbGetQuery(r$db, paste0(
+      sql <- glue::glue_sql(paste0(
         "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.deleted
           FROM thesaurus_items_users t
-          WHERE t.thesaurus_id = ", input$thesaurus$key, " AND t.user_id = ", r$user_id, " AND t.deleted IS FALSE
-          ORDER BY t.item_id")) %>% tibble::as_tibble()
+          WHERE t.thesaurus_id = {input$thesaurus$key} AND t.user_id = {r$user_id} AND t.deleted IS FALSE
+          ORDER BY t.item_id"), .con = r$db)
+      r$datamart_thesaurus_user_items <- DBI::dbGetQuery(r$db, sql) %>% tibble::as_tibble()
+      
+      # Get thesaurus items relationships
+      
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping WHERE thesaurus_id_1 = {input$thesaurus$key} AND ",
+        "thesaurus_id_2 = {input$thesaurus$key} AND category = 'import_thesaurus_mapping' AND relation_id = 2 AND deleted IS FALSE"), .con = r$db)
+      thesaurus_items_mappings <- DBI::dbGetQuery(r$db, sql)
       
       # Merge tibbles
-      r$datamart_thesaurus_items <-
+      if (nrow(r$datamart_thesaurus_user_items) > 0) r$datamart_thesaurus_items <-
         r$datamart_thesaurus_items %>%
         dplyr::left_join(
           r$datamart_thesaurus_user_items %>% dplyr::select(item_id, new_name = name, new_display_name = display_name),
@@ -318,27 +326,35 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         ) %>%
         dplyr::select(-new_name, -new_display_name)
       
+      if (nrow(thesaurus_items_mappings) > 0) r$datamart_thesaurus_items <-
+        r$datamart_thesaurus_items %>%
+        dplyr::left_join(
+          thesaurus_items_mappings %>%
+            dplyr::select(item_id = item_id_1, parent_item_id = item_id_2),
+          by = "item_id"
+        ) %>%
+        dplyr::relocate(parent_item_id, .after = item_id)
+      
       count_items_rows <- tibble::tibble()
       count_patients_rows <- tibble::tibble()
       
       # Add count_items_rows in the cache & get it if already in the cache
       tryCatch(count_items_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
         datamart_id = r$chosen_datamart, category = "count_items_rows"),
-          error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+        error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+          error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       
       # Add count_items_rows in the cache & get it if already in the cache
       tryCatch(count_patients_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
         datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
-          error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+        error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+          error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       
       if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
       req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
       
       # Transform count_rows cols to integer, to be sortable
       r$datamart_thesaurus_items <- r$datamart_thesaurus_items %>%
-        # dplyr::mutate(display_name = ifelse((display_name != "" & !is.na(display_name)), display_name, name)) %>%
         dplyr::left_join(count_items_rows, by = "item_id") %>%
         dplyr::left_join(count_patients_rows, by = "item_id") %>%
         dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
@@ -347,12 +363,66 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # Order by name
       r$datamart_thesaurus_items <- r$datamart_thesaurus_items %>% dplyr::arrange(name)
       
-      # Filter on count_items_rows > 0
-      if (input$show_only_used_items) r$datamart_thesaurus_items <- r$datamart_thesaurus_items %>% dplyr::filter(count_items_rows > 0)
+      # Prepare data for shinyTree
+      
+      datamart_thesaurus_items_tree <-
+        r$datamart_thesaurus_items %>%
+        dplyr::select(-action) %>%
+        get_thesaurus_items_levels() %>%
+        get_thesaurus_items_paths()
+      
+      # Create a first file to save the list without count_items_rows selected
+      
+      not_filtered_list_file <- paste0(r$app_folder, "/thesaurus/thesaurus_", input$thesaurus$key, "_datamart_", r$chosen_datamart, "_not_filtered.rds")
+      filtered_list_file <- paste0(r$app_folder, "/thesaurus/thesaurus_", input$thesaurus$key, "_datamart_", r$chosen_datamart, "_filtered.rds")
+      
+      # If file exists, load it
+      if (file.exists(filtered_list_file) & file.exists(not_filtered_list_file)) tryCatch({
+        
+        #if (input$show_only_used_items) 
+        r$datamart_thesaurus_items_tree_filtered <- rlist::list.load(filtered_list_file)
+        r$datamart_thesaurus_items_tree_not_filtered <- rlist::list.load(not_filtered_list_file)
+        
+      }, error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_list_file", 
+        error_name = paste0("thesaurus - shiny_tree - load_list_file - thesaurus_id = ", input$thesaurus$key), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+      
+      if (!file.exists(filtered_list_file)) tryCatch({
+        
+        r$datamart_thesaurus_items_tree_not_filtered <- datamart_thesaurus_items_tree %>%
+          dplyr::sample_n(400) %>%
+          dplyr::arrange(path, dplyr::desc(count_items_rows), name) %>%
+          prepare_data_shiny_tree() 
+        
+        r$datamart_thesaurus_items_tree_filtered <- datamart_thesaurus_items_tree %>%
+          dplyr::sample_n(400) %>%
+          dplyr::filter(has_children | (!has_children & count_items_rows > 0)) %>%
+          dplyr::arrange(path, dplyr::desc(count_items_rows), name) %>%
+          prepare_data_shiny_tree()
+        
+        r$datamart_thesaurus_items_tree_not_filtered %>% rlist::list.save(not_filtered_list_file)
+        r$datamart_thesaurus_items_tree_filtered %>% rlist::list.save(filtered_list_file)
+        
+        # r$datamart_thesaurus_items_tree <- datamart_thesaurus_items_tree_filtered
+        # else r$datamart_thesaurus_items_tree <- datamart_thesaurus_items_tree_not_filtered
+        
+      }, error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_save_list_file", 
+        error_name = paste0("thesaurus - shiny_tree - save_list_file - thesaurus_id = ", input$thesaurus$key), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+      
+      r$reload_thesaurus_datatable <- Sys.time()
+      r$reload_thesaurus_tree <- Sys.time()
+      
+    })
+    
+    observeEvent(r$reload_thesaurus_datatable, {
+      
+      req(nrow(r$datamart_thesaurus_items) > 0)
       
       r$datamart_thesaurus_items_temp <- r$datamart_thesaurus_items %>%
         dplyr::mutate(modified = FALSE) %>%
         dplyr::mutate_at("item_id", as.character)
+      
+      if (input$show_only_used_items) r$datamart_thesaurus_items_temp <- r$datamart_thesaurus_items %>%
+        dplyr::filter(count_items_rows > 0)
       
       editable_cols <- c("name", "display_name")
       searchable_cols <- c("item_id", "name", "display_name", "unit")
@@ -361,7 +431,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       sortable_cols <- c("id", "name", "display_name", "count_patients_rows", "count_items_rows")
       centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
       col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_with_counts", i18n = i18n)
-      hidden_cols <- c("id", "thesaurus_id", "item_id", "datetime", "deleted", "modified", "action")
+      hidden_cols <- c("id", "thesaurus_id", "item_id", "datetime", "deleted", "modified", "action", "parent_item_id")
       
       # Render datatable
       render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$datamart_thesaurus_items_temp,
@@ -371,96 +441,25 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       # Create a proxy for datatatable
       r$datamart_thesaurus_items_datatable_proxy <- DT::dataTableProxy("thesaurus_items", deferUntilFlush = FALSE)
-      
-      # Prepare data for shinyTree
-      
-      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping WHERE thesaurus_id_1 = {input$thesaurus$key} AND ",
-        "thesaurus_id_2 = {input$thesaurus$key} AND category = 'import_thesaurus_mapping' AND relation_id = 2 AND deleted IS FALSE"), .con = r$db)
-      thesaurus_items_mappings <- DBI::dbGetQuery(r$db, sql)
-      
-      if (nrow(thesaurus_items_mappings) > 0){
-        r$datamart_thesaurus_items_tree <-
-          r$datamart_thesaurus_items_tree %>%
-          dplyr::left_join(
-            thesaurus_items_mappings %>%
-              dplyr::select(item_id = item_id_1, parent_item_id = item_id_2),
-            by = "item_id"
-          ) %>%
-          get_thesaurus_items_levels() %>%
-          get_thesaurus_items_paths()
-      }
-      
-      output$thesaurus_items_tree <- shinyTree::renderTree({
-        r$datamart_thesaurus_items_tree %>%
-          dplyr::sample_n(400) %>% prepare_data_shiny_tree()
-      })
-      # shinyTree::updateTree(session, "thesaurus_items_tree", 
-      #   r$datamart_thesaurus_items_tree %>% dplyr::sample_n(20) %>% prepare_data_shiny_tree())
+ 
+      # Trigger for shinyTree
+      # r$datamart_thesaurus_items_tree_trigger <- Sys.time()
     })
     
-    # output$tree <- shinyTree::renderTree({
-    #   list(
-    #     root1 = structure("", stid = 3, sttype = "default"),
-    #     root2 = list(
-    #       SubListA = list(leaf1 = structure('',stid=1,stclass='study'), leaf2 = "", leaf3=""),
-    #       SubListB = list(leafA = "", leafB = "")
-    #     ),
-    #     root3 = list(
-    #       SubListA = list(leaf1 = "", leaf2 = "", leaf3=""),
-    #       SubListB = list(leafA = "", leafB = "")
-    #     )
-    #   )
-    # })
-    
-    # observeEvent(input$thesaurus_items_tree, {
-    #   shinyTree::get_selected(input$thesaurus_items_tree, format = "classid") %>%
-    #     lapply(attr, "stid") %>%
-    #     unlist()
-    # })
-    
-    # observeEvent(input$trigger, {
-    # #   
-    #   print("trigger")
-    #   
-    #   # data <- r$datamart_thesaurus_items_tree %>% dplyr::sample_n(20) %>% prepare_data_shiny_tree()
-    #   # print(data)
-    #   
-    #   data <- list(
-    #     root1 = structure("", stid = 3, sttype = "default"),
-    #     root2 = list(
-    #       SubListA = list(leaf1 = structure('',stid=1,stclass='study'), leaf2 = "", leaf3=""),
-    #       SubListB = list(leafA = "", leafB = "")
-    #     ),
-    #     root3 = list(
-    #       SubListA = list(leaf1 = "", leaf2 = "", leaf3=""),
-    #       SubListB = list(leafA = "", leafB = "")
-    #     )
-    #   )
-    #   shinyTree::updateTree(session, "tree", data)
-    # #   
-    # #   output$thesaurus_items_tree <- shinyTree::renderTree({
-    # #     print("trigger2")
-    # #     input$trigger
-    # #     # r$datamart_thesaurus_items_tree %>%
-    # #     #   dplyr::sample_n(20) %>% prepare_data_shiny_tree()
-    # #   })
-    # })
-    
-    # reactive_data <- reactive({
-    #   print("test1")
-    #   input$trigger
-    #   r$datamart_thesaurus_items_tree %>%
-    #     dplyr::sample_n(20) %>% prepare_data_shiny_tree()
-    # })
-    
-    # output$thesaurus_items_tree <- shinyTree::renderTree({
-    #   # temp <- r$datamart_thesaurus_items_tree %>%
-    #   #   dplyr::sample_n(20) %>% prepare_data_shiny_tree()
-    #   # print(temp)
-    #   # temp
-    #   print("test")
-    #   reactive_data()
-    # })
+    # Render shinyTree
+    output$thesaurus_items_tree <- shinyTree::renderTree({
+      
+      r$reload_thesaurus_tree
+      
+      # r$datamart_thesaurus_items_tree
+      if (input$show_only_used_items) r$datamart_thesaurus_items_tree_filtered
+      else r$datamart_thesaurus_items_tree_not_filtered
+      
+      # r$datamart_thesaurus_items_tree %>%
+      #   dplyr::arrange(path, dplyr::desc(count_items_rows), name) %>%
+      #   dplyr::sample_n(400) %>%
+      #   prepare_data_shiny_tree()
+    })
     
     # Updates on datatable data
     observeEvent(input$thesaurus_items_cell_edit, {

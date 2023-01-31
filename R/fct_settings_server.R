@@ -1087,13 +1087,13 @@ prepare_data_shiny_tree <- function(data = tibble::tibble(), stopened = FALSE){
             
             row <- same_path_categories[k, ]
             new_list_child <- list(structure("", stid = row$item_id, sttype = "default", stopened = stopened))
-            names(new_list_child) <- row$name
+            names(new_list_child) <- paste0(row$name, " (", row$count_items_rows, ")")
             
             new_list <- new_list %>% append(new_list_child)
           }
           
           eval(parse(text = paste0("full_list$", path, " <- structure(
-              sttype = 'default', stid = attributes(full_list$", path, ")$stid, stopened = ", stopened, ", new_list)")))
+            sttype = 'default', stid = attributes(full_list$", path, ")$stid, stopened = ", stopened, ", new_list)")))
         }
       }
     }

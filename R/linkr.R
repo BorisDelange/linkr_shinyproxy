@@ -74,7 +74,7 @@ linkr <- function(
   unlink(paste0(app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
   
   # Create app sub-dirs
-  sub_dirs <- c("app_database", "datamarts", "messages", "plugins", "studies", "temp_files")
+  sub_dirs <- c("app_database", "datamarts", "messages", "plugins", "studies", "temp_files", "thesaurus")
   for (sub_dir in sub_dirs) if (!dir.exists(paste0(app_folder, "/", sub_dir))) dir.create(paste0(app_folder, "/", sub_dir))
   
   # Initial wd
