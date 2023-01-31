@@ -1058,7 +1058,7 @@ prepare_data_shiny_tree <- function(data = tibble::tibble(), stopened = FALSE){
           
           row <- current_lvl_categories[j, ]
           
-          new_list <- list(structure("", stid = row$item_id, sttype = "default"))
+          new_list <- list(structure("", stid = row$item_id, sttype = "default", stopened = stopened))
           names(new_list) <- row$name
           full_list <- append(full_list, new_list)
         }
@@ -1087,7 +1087,7 @@ prepare_data_shiny_tree <- function(data = tibble::tibble(), stopened = FALSE){
             
             row <- same_path_categories[k, ]
             new_list_child <- list(structure("", stid = row$item_id, sttype = "default", stopened = stopened))
-            names(new_list_child) <- paste0(row$name, " (", row$count_items_rows, ")")
+            names(new_list_child) <- paste0(row$name, " (", row$count_patients_rows, " | ", row$count_items_rows, ")")
             
             new_list <- new_list %>% append(new_list_child)
           }

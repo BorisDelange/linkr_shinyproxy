@@ -65,7 +65,12 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
               conditionalPanel(
                 condition = "input.thesaurus != null", ns = ns,
                 div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
-                  shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")
+                  shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")#,
+                # conditionalPanel(
+                #   condition = "input.thesaurus_items_pivot == 'thesaurus_items_tree_view'", ns = ns,
+                #   div(strong(i18n$t("unroll_tree"), style = "display:block; padding-bottom:12px;"),
+                #     shiny.fluent::Toggle.shinyInput(ns("unroll_tree"), value = TRUE), style = "margin-top:15px;")
+                # )
               ),
               style = "position:relative; z-index:1; width:800px;"
             ),
@@ -76,32 +81,36 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
               conditionalPanel(
                 condition = "input.thesaurus != null", ns = ns,
                 shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), i18n$t("save")),
-                uiOutput(ns("thesaurus_selected_item"))
+                uiOutput(ns("thesaurus_datatable_selected_item"))
               )
             ),
             conditionalPanel(
               condition = "input.thesaurus_items_pivot == 'thesaurus_items_tree_view'", ns = ns, br(),
               div(
-                shinyTree::shinyTree(
-                  ns("thesaurus_items_tree"),
-                  search = FALSE,
-                  checkbox = FALSE,
-                  dragAndDrop = TRUE,
-                  theme = "proton",
-                  themeIcons = FALSE,
-                  wholerow = FALSE,
-                  stripes = FALSE,
-                  animation = 100,
-                  contextmenu = FALSE,
-                  unique = TRUE,
-                  types =
-                    "{
-                      '#': { 'max_children' : 2, 'max_depth' : 6, 'valid_children' : ['root'] },
-                      'root' : { 'valid_children' : ['file'] },
-                      'default' : { 'valid_children' : ['default','file'] },
-                      'file' : { 'icon' : 'fa fa-file', 'valid_children' : [] }
-                    }"
-                )
+                div(
+                  shinyTree::shinyTree(
+                    ns("thesaurus_items_tree"),
+                    search = FALSE,
+                    checkbox = FALSE,
+                    dragAndDrop = FALSE,
+                    theme = "proton",
+                    themeIcons = FALSE,
+                    wholerow = FALSE,
+                    stripes = FALSE,
+                    animation = 100,
+                    contextmenu = FALSE,
+                    unique = FALSE,
+                    types =
+                      "{
+                        '#': { 'max_children' : 2, 'max_depth' : 6, 'valid_children' : ['root'] },
+                        'root' : { 'valid_children' : ['file'] },
+                        'default' : { 'valid_children' : ['default','file'] },
+                        'file' : { 'icon' : 'fa fa-file', 'valid_children' : [] }
+                      }"
+                  ),
+                  style = "width:45%; float:left;"
+                ),
+                div(uiOutput(ns("thesaurus_tree_selected_item")), style = "width:50%; float:right;")
               )
             )
           )
@@ -278,7 +287,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       if (length(r$datamart_thesaurus_items_temp) > 0) r$datamart_thesaurus_items_temp <- r$datamart_thesaurus_items_temp %>% dplyr::slice(0)
       
       # Reset UI of selected item
-      output$thesaurus_selected_item <- renderUI("")
+      output$thesaurus_datatable_selected_item <- renderUI("")
     })
     
     observeEvent(input$show_only_used_items, r$reload_thesaurus_datatable <- Sys.time())
@@ -389,12 +398,12 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       if (!file.exists(filtered_list_file)) tryCatch({
         
         r$datamart_thesaurus_items_tree_not_filtered <- datamart_thesaurus_items_tree %>%
-          dplyr::sample_n(400) %>%
+          # dplyr::sample_n(400) %>%
           dplyr::arrange(path, dplyr::desc(count_items_rows), name) %>%
           prepare_data_shiny_tree() 
         
         r$datamart_thesaurus_items_tree_filtered <- datamart_thesaurus_items_tree %>%
-          dplyr::sample_n(400) %>%
+          # dplyr::sample_n(400) %>%
           dplyr::filter(has_children | (!has_children & count_items_rows > 0)) %>%
           dplyr::arrange(path, dplyr::desc(count_items_rows), name) %>%
           prepare_data_shiny_tree()
@@ -454,11 +463,6 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # r$datamart_thesaurus_items_tree
       if (input$show_only_used_items) r$datamart_thesaurus_items_tree_filtered
       else r$datamart_thesaurus_items_tree_not_filtered
-      
-      # r$datamart_thesaurus_items_tree %>%
-      #   dplyr::arrange(path, dplyr::desc(count_items_rows), name) %>%
-      #   dplyr::sample_n(400) %>%
-      #   prepare_data_shiny_tree()
     })
     
     # Updates on datatable data
@@ -483,12 +487,43 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       save_settings_datatable_updates_new(output = output, r = r, ns = ns, table = "thesaurus_items_users", r_table = "datamart_thesaurus_user_items", duplicates_allowed = TRUE, i18n = i18n)
     })
     
+    # When a tree element is selected
+    observeEvent(input$thesaurus_items_tree, {
+      
+      r$thesaurus_items_selected_item_id <- get_selected(input$thesaurus_items_tree, format = "classid") %>%
+        lapply(attr, "stid") %>% unlist()
+      r$thesaurus_items_selected_item_trigger <- Sys.time()
+    })
+    
+    # observeEvent(r$thesaurus_items_tree_selected_item_id, {
+    #   print(r$thesaurus_items_tree_selected_item_id)
+    # })
+    
     # When a row is selected
     observeEvent(input$thesaurus_items_rows_selected, {
-
+      
+      r$thesaurus_items_selected_item_id <- r$datamart_thesaurus_items_temp[input$thesaurus_items_rows_selected, ] %>% dplyr::pull(item_id)
+      r$thesaurus_items_selected_item_trigger <- Sys.time()
+    })
+    
+    observeEvent(r$thesaurus_items_selected_item_trigger, {
+      
       style <- "display:inline-block; width:200px; font-weight:bold;"
+      
+      if (is.null(input$thesaurus_items_pivot)) prefix <- "datatable"
+      else if (input$thesaurus_items_pivot == "thesaurus_items_table_view") prefix <- "datatable"
+      else if (input$thesaurus_items_pivot == "thesaurus_items_tree_view") prefix <- "tree"
+ 
+      if (length(r$thesaurus_items_selected_item_id) == 0) output[[paste0("thesaurus_", prefix, "_selected_item")]] <- renderUI("") 
+      req(length(r$thesaurus_items_selected_item_id) > 0)
 
-      thesaurus_item <- r$datamart_thesaurus_items_temp[input$thesaurus_items_rows_selected, ] %>% dplyr::mutate_at("item_id", as.integer)
+      if (prefix == "datatable") thesaurus_item <- r$datamart_thesaurus_items_temp %>% dplyr::filter(item_id == r$thesaurus_items_selected_item_id)
+      if (prefix == "tree") thesaurus_item <- r$datamart_thesaurus_items %>% dplyr::filter(item_id == r$thesaurus_items_selected_item_id)
+
+      if (nrow(thesaurus_item) == 0) output[[paste0("thesaurus_", prefix, "_selected_item")]] <- renderUI("")    
+      req(nrow(thesaurus_item) > 0)
+      
+      thesaurus_item <- thesaurus_item %>% dplyr::mutate_at("item_id", as.integer)
 
       thesaurus_name <- r$thesaurus %>% dplyr::filter(id == thesaurus_item$thesaurus_id) %>% dplyr::pull(name)
 
@@ -525,7 +560,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
               dplyr::filter(!is.na(value_num)) %>%
               dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(value_num_text)
             )
-          plots <- tagList(plots, plotOutput(ns("value_num_plot")))
+          plots <- tagList(plots, shinyjs::hidden(plotOutput(ns(paste0(prefix, "_value_num_plot")))))
           r$datamart_thesaurus_items_cols_not_empty <- c(r$datamart_thesaurus_items_cols_not_empty, "value_num")
         }
 
@@ -537,7 +572,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
               dplyr::slice_sample(n = 5, replace = TRUE) %>% 
               dplyr::pull(value)
             )
-          plots <- tagList(plots, plotOutput(ns("value_plot")))
+          plots <- tagList(plots, shinyjs::hidden(plotOutput(ns(paste0(prefix, "_value_plot")))))
           r$datamart_thesaurus_items_cols_not_empty <- c(r$datamart_thesaurus_items_cols_not_empty, "value")
         }
         
@@ -556,7 +591,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
               dplyr::filter(!is.na(amount)) %>%
               dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(amount_text)
           )
-          plots <- tagList(plots, plotOutput(ns("amount_plot")))
+          plots <- tagList(plots, plotOutput(ns(paste0(prefix, "_amount_plot"))))
           r$datamart_thesaurus_items_cols_not_empty <- c(r$datamart_thesaurus_items_cols_not_empty, "amount")
         }
         
@@ -568,7 +603,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
               dplyr::filter(!is.na(rate)) %>%
               dplyr::slice_sample(n = 5, replace = TRUE) %>% dplyr::pull(rate_text)
           )
-          plots <- tagList(plots, plotOutput(ns("rate_plot")))
+          plots <- tagList(plots, plotOutput(ns(paste0(prefix, "_rate_plot"))))
           r$datamart_thesaurus_items_cols_not_empty <- c(r$datamart_thesaurus_items_cols_not_empty, "rate")
         }
         
@@ -587,7 +622,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
               dplyr::slice_sample(n = 5, replace = TRUE) %>% 
               dplyr::pull(value)
           )
-          plots <- tagList(plots, plotOutput(ns("value_plot")))
+          plots <- tagList(plots, shinyjs::hidden(plotOutput(ns("value_plot"))))
           r$datamart_thesaurus_items_cols_not_empty <- c(r$datamart_thesaurus_items_cols_not_empty, "value")
         }
         
@@ -596,9 +631,11 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           span(i18n$t("amount"), style = style), paste(amount, collapse = " || "), br())
       }
       
-      datamart_thesaurus_items_d_var <- ifelse(r$datamart_thesaurus_items_d_var == "", "", paste0("d$", r$datamart_thesaurus_items_d_var))
+      datamart_thesaurus_items_d_var <- ifelse(r$datamart_thesaurus_items_d_var == "", i18n$t("none_fem"), paste0("d$", r$datamart_thesaurus_items_d_var))
         
-      output$thesaurus_selected_item <- renderUI(tagList(br(), div(
+      print(plots)
+      
+      output[[paste0("thesaurus_", prefix, "_selected_item")]] <- renderUI(tagList(br(), div(
         span(i18n$t("var_containing_item"), style = style), datamart_thesaurus_items_d_var, br(),
         span(i18n$t("thesaurus_id"), style = style), thesaurus_item$thesaurus_id, br(),
         span(i18n$t("thesaurus_name"), style = style), thesaurus_name, br(),
@@ -607,21 +644,47 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         span(i18n$t("abbreviation"), style = style), thesaurus_item$display_name, br(),
         span(i18n$t("unit"), style = style), ifelse(is.na(thesaurus_item$unit), "", thesaurus_item$unit), br(),
         values_text, br(),
-        shiny.fluent::DefaultButton.shinyInput(ns("show_plots"), i18n$t("show_plots")),
-        conditionalPanel(condition = "input.show_plots == true", ns = ns, br(), plots),
+        shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "_show_plots")), i18n$t("show_plots")),
+        conditionalPanel(condition = paste0("input.", prefix, "_show_plots == true"), ns = ns, br(), plots),
         style = "border:dashed 1px; padding:10px;"
       )))
     })
     
-    observeEvent(input$show_plots, {
+    observeEvent(input$datatable_show_plots, {
       
-      thesaurus_item <- r$datamart_thesaurus_items_temp[input$thesaurus_items_rows_selected, ] %>% dplyr::mutate_at("item_id", as.integer)
+      if (is.null(input$thesaurus_items_pivot)) prefix <- "datatable"
+      else if (input$thesaurus_items_pivot == "thesaurus_items_table_view") prefix <- "datatable"
+      else if (input$thesaurus_items_pivot == "thesaurus_items_tree_view") prefix <- "tree"
+      
+      thesaurus_item <- r$datamart_thesaurus_items %>% dplyr::filter(item_id == r$thesaurus_items_selected_item_id)
+      
+      # thesaurus_item <- r$datamart_thesaurus_items_temp[input$thesaurus_items_rows_selected, ] %>% dplyr::mutate_at("item_id", as.integer)
       thesaurus_name <- r$thesaurus %>% dplyr::filter(id == thesaurus_item$thesaurus_id) %>% dplyr::pull(name)
       
       all_values <- d$labs_vitals %>% dplyr::filter(thesaurus_name == !!thesaurus_name) %>%
         dplyr::inner_join(thesaurus_item %>% dplyr::select(item_id), by = "item_id") %>% dplyr::select(value, value_num)
-      # values_num <- all_values %>% dplyr::filter(!is.na(value_num))
-      # values <- all_values %>% dplyr::filter(!is.na(value))
+      values_num <- all_values %>% dplyr::filter(!is.na(value_num))
+      values <- all_values %>% dplyr::filter(!is.na(value))
+      
+      print(values_num)
+      
+      shinyjs::show(paste0(prefix, "_value_num_plot"))
+      
+      output[[paste0(prefix, "_value_num_plot")]] <- renderPlot({
+        values_num %>%
+          ggplot2::ggplot(ggplot2::aes(x = value_num)) +
+          ggplot2::geom_histogram(ggplot2::aes(y = (..count..)), colour = "#FFFFFF", alpha = 0.6, fill = "#1F68AE") +
+          ggplot2::labs(x = "", y = "") +
+          ggplot2::theme_bw()
+      })
+      
+      # output[[paste0(prefix, "_value_plot")]] <- renderPlot({
+      #   values %>%
+      #     ggplot2::ggplot(ggplot2::aes(x = value)) +
+      #     ggplot2::geom_histogram(ggplot2::aes(y = (..count..)), stat = "count", colour = "#FFFFFF", alpha = 0.6, fill = "#1F68AE") +
+      #     # ggplot2::labs(x = i18n$t(col), y = "") +
+      #     ggplot2::theme_bw()
+      # })
       
       # for (column_name in c("value", "value_num", "amount", "rate")){
       #   if (col %in% r$datamart_thesaurus_items_cols_not_empty){
