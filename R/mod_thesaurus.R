@@ -169,10 +169,12 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
         make_card(i18n$t("items_mapping"),
           div(
             shiny.fluent::reactOutput(ns("mappings_delete_confirm")),
-            shiny.fluent::Pivot(
-              onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-mapping_current_tab', item.props.id)")),
-              shiny.fluent::PivotItem(id = "thesaurus_mapping_add", itemKey = "thesaurus_mapping_add", headerText = i18n$t("add")),
-              shiny.fluent::PivotItem(id = "thesaurus_mapping_management", itemKey = "thesaurus_mapping_management", headerText = i18n$t("evaluate_and_edit"))
+            div(
+              shiny.fluent::Pivot(
+                onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-mapping_current_tab', item.props.id)")),
+                shiny.fluent::PivotItem(id = "thesaurus_mapping_add", itemKey = "thesaurus_mapping_add", headerText = i18n$t("add")),
+                shiny.fluent::PivotItem(id = "thesaurus_mapping_management", itemKey = "thesaurus_mapping_management", headerText = i18n$t("evaluate_and_edit"))
+              )
             ),
             conditionalPanel(condition = "input.mapping_current_tab == null || input.mapping_current_tab == 'thesaurus_mapping_add'", ns = ns,
               div(
@@ -210,13 +212,13 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
               )    
             ),
             conditionalPanel(condition = "input.mapping_current_tab == 'thesaurus_mapping_management'", ns = ns,
-              div(DT::DTOutput(ns("thesaurus_evaluate_mappings")), style = "margin-top:-30px; z-index:2"),
+              div(DT::DTOutput(ns("thesaurus_evaluate_mappings")), style = "z-index:2"),
               div(
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                   shiny.fluent::PrimaryButton.shinyInput(ns("save_mappings_evaluation"), i18n$t("save")),
                   shiny.fluent::DefaultButton.shinyInput(ns("mapping_delete_selection"), i18n$t("delete_selection"))
                 ),
-              style = "position:relative; z-index:2; margin-top:-30px;"), br(),
+              style = "position:relative; z-index:1; margin-top:-30px; width:500px;"), br(),
               div(verbatimTextOutput(ns("thesaurus_mapping_details")), style = "border:dashed 1px; padding:10px;"), br(),
             )
           )
@@ -783,7 +785,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         column_widths <- c("id" = "80px", "action" = "80px", "unit" = "100px", "count_patients_rows" = "80px", "count_items_rows" = "80px")
         sortable_cols <- c("id", "name", "display_name", "count_patients_rows", "count_items_rows")
         centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-        col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_with_counts", i18n = i18n)
+        col_names <- get_col_names_new(table_name = "mapping_thesaurus_items_with_counts", i18n = i18n)
         hidden_cols <- c("id", "thesaurus_id", "item_id", "display_name", "unit", "count_patients_rows", "datetime", "deleted", "modified", "action")
    
         # Render datatable
@@ -970,7 +972,44 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           
           # Update datatables
           r$reload_thesaurus_added_mappings_datatable <- Sys.time()
-          r$reload_thesaurus_evaluate_mappings_datatable <- Sys.time()
+          # r$reload_thesaurus_evaluate_mappings_datatable <- Sys.time()
+          
+          # r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>%
+          #   dplyr::bind_rows(
+          #     tibble::tibble(
+          #       id = get_last_row(r$db, "thesaurus_items_mapping_evals") + 1,
+          #       thesaurus_name_1 = r$thesaurus %>% dplyr::filter(id == item_1$thesaurus_id) %>% dplyr::pull(name),
+          #       item_id_1 = as.character(item_1$item_id),
+          #       relation = dplyr::case_when(as.integer(input$mapping_type) == 1 ~ i18n$t("equivalent_to"), 
+          #         as.integer(input$mapping_type) == 2 ~ i18n$t("included_in"), as.integer(input$mapping_type) == 3 ~ i18n$t("include")),
+          #       thesaurus_name_2 = r$thesaurus %>% dplyr::filter(id == item_2$thesaurus_id) %>% dplyr::pull(name),
+          #       item_id_2 = as.character(item_2$item_id),
+          #       creator_name = r$users %>% dplyr::filter(id == r$user_id) %>%
+          #         dplyr::mutate(creator_name = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator_name),
+          #       datetime = as.character(Sys.time()),
+          #       deleted = 0L,
+          #       positive_evals = 0,
+          #       negative_evals = 0,
+          #       action = as.character(tagList(
+          #         shiny::actionButton(paste0("positive_eval_", get_last_row(r$db, "thesaurus_items_mapping_evals") + 1), "", icon = icon("thumbs-up"),
+          #           onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
+          #           style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
+          #         shiny::actionButton(paste0("negative_eval_", get_last_row(r$db, "thesaurus_items_mapping_evals") + 1), "", icon = icon("thumbs-down"),
+          #           onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})"),
+          #           style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
+          #         shiny::actionButton(paste0("remove_", get_last_row(r$db, "thesaurus_items_mapping_evals") + 1), "", icon = icon("trash-alt"),
+          #           onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"),
+          #           style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
+          #       )),
+          #       user_evaluation_id = NA_integer_,
+          #       modified = FALSE
+          #     ),
+          #   )
+          # 
+          # r$datamart_thesaurus_items_evaluate_mappings_temp <- r$datamart_thesaurus_items_evaluate_mappings %>%
+          #   dplyr::mutate(modified = FALSE)
+          # 
+          # DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings_temp, resetPaging = FALSE, rownames = FALSE)
         }
       })
       
@@ -1009,7 +1048,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         # factorize_cols <- c("category", "unit")
         centered_cols <- c("id", "item_id_1", "thesaurus_name_1", "item_id_2", "thesaurus_name_2", "relation")
         col_names <- get_col_names_new(table_name = "datamart_thesaurus_items_mapping", i18n = i18n)
-        hidden_cols <- c("id", "creator_id", "datetime", "deleted")
+        hidden_cols <- c("id", "creator_id", "datetime", "deleted", "category")
   
         # Render datatable
         render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$thesaurus_added_mappings_temp, datatable_dom = "<'top't><'bottom'p>",

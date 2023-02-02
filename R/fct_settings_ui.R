@@ -191,7 +191,7 @@ render_settings_datatable_card_new <- function(i18n = R6::R6Class(), ns = shiny:
               shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
               shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
             ),
-          style = "position:relative; z-index:2; margin-top:-30px;")
+          style = "position:relative; z-index:1; margin-top:-30px;")
         )
         
       ), br()
@@ -208,7 +208,7 @@ render_settings_datatable_card_new <- function(i18n = R6::R6Class(), ns = shiny:
               shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
               shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
             ),
-          style = "position:relative; z-index:2; margin-top:-30px;")
+          style = "position:relative; z-index:1; margin-top:-30px; width:500px;")
         )
       ), br()
     )

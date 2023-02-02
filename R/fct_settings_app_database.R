@@ -91,10 +91,20 @@ db_create_tables <- function(db, type = character()){
       tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
+    # db_create_table(db, "patient_lvl_modules_elements",
+    #   tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
+    #     thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+    #     thesaurus_item_colour = character(), display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+    
     db_create_table(db, "patient_lvl_modules_elements",
-      tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
+      tibble::tibble(id = integer(), name = character(), module_id = integer(), plugin_id = integer(), 
+        display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "patient_lvl_modules_elements_items",
+      tibble::tibble(id = integer(), group_id = integer(),
         thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
-        thesaurus_item_colour = character(), display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+        thesaurus_item_colour = character(), mapped_to_widget_item_id = integer(), merge_items = logical(),
+        creator_id = integer(), datetime = character(), deleted = logical()))
     
     db_create_table(db, "aggregated_modules_families",
       tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
@@ -104,9 +114,19 @@ db_create_tables <- function(db, type = character()){
       tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
+    # db_create_table(db, "aggregated_modules_elements",
+    #   tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
+    #     display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+    
     db_create_table(db, "aggregated_modules_elements",
-      tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
+      tibble::tibble(id = integer(), name = character(), module_id = integer(), plugin_id = integer(), 
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "aggregated_modules_elements_items",
+      tibble::tibble(id = integer(), group_id = integer(),
+        thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
+        thesaurus_item_colour = character(), mapped_to_widget_item_id = integer(), merge_items = logical(),
+        creator_id = integer(), datetime = character(), deleted = logical()))
     
     db_create_table(db, "code",
       tibble::tibble(id = integer(), category = character(), link_id = integer(), code = character(), creator_id = integer(),

@@ -1394,6 +1394,8 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
   # Reload cache if necessary
   if (reload_cache){
     
+    print(paste0("reload cache ", category))
+    
     # Reload data
     if (category == "thumbs_and_delete"){
       sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping t WHERE ",
