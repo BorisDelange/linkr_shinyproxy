@@ -1358,22 +1358,24 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
   # For action buttons (delete & plus_minus) & colours, don't use datamart_id / link_id_bis
   if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus", "colours_module", "colours_plugin") |
       grepl("plus_data_explorer", category)){
-    data <- DBI::dbGetQuery(r$db, paste0(
+    sql <- glue::glue_sql(paste0(
       "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
       "FROM thesaurus_items t ",
-      "LEFT JOIN cache c ON c.link_id = t.id AND c.category = '", category, "' ", 
-      "WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE ",
-      "ORDER BY t.id"))
+      "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ", 
+      "WHERE t.thesaurus_id = {thesaurus_id} AND t.deleted IS FALSE ",
+      "ORDER BY t.id"), .con = r$db)
+    data <- DBI::dbGetQuery(r$db, sql)
   }
   
   # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
   if (category %in% c("count_patients_rows", "count_items_rows")){
-    data <- DBI::dbGetQuery(r$db, paste0(
+    sql <- glue::glue_sql(paste0(
       "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
       "FROM thesaurus_items t ",
-      "LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = ", datamart_id, " AND c.category = '", category, "' ",
-      "WHERE t.thesaurus_id = ", thesaurus_id, " AND t.deleted IS FALSE ",
-      "ORDER BY t.id"))
+      "LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = {datamart_id} AND c.category = {category} ",
+      "WHERE t.thesaurus_id = {thesaurus_id} AND t.deleted IS FALSE ",
+      "ORDER BY t.id"), .con = r$db)
+    data <- DBI::dbGetQuery(r$db, sql)
   }
   
   # For thumbs_and_delete, search in thesaurus_items_mapping table
@@ -1381,29 +1383,43 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
     sql <- glue::glue_sql(paste0("SELECT t.id, t.deleted, c.value ",
       "FROM thesaurus_items_mapping t ",
       "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ",
-      "WHERE (t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) AND t.deleted IS FALSE ",
+      "WHERE (t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
+      "AND t.category = 'user_added_mapping' AND t.deleted IS FALSE ",
       "ORDER BY t.id"), .con = r$db)
     data <- DBI::dbGetQuery(r$db, sql)
   }
   
   # If there are missing data in the cache, reload cache 
   
-  reload_cache <- FALSE
-  if (NA_character_ %in% data$value | "" %in% data$value) reload_cache <- TRUE
+  # reload_cache <- FALSE
+  ids_to_keep <- data %>% dplyr::filter(!is.na(data$value) & data$value != "") %>% dplyr::pull(id)
+  if (length(ids_to_keep) == 0) ids_to_keep <- c(0)
+  
+  # if (NA_character_ %in% data$value | "" %in% data$value) reload_cache <- TRUE
   
   # Reload cache if necessary
-  if (reload_cache){
+  if (data %>% dplyr::filter(is.na(data$value) | data$value == "") %>% nrow() > 0){
     
     print(paste0("reload cache ", category))
     
     # Reload data
-    if (category == "thumbs_and_delete"){
-      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping t WHERE ",
-        "(t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) AND deleted IS FALSE ",
-        "ORDER BY id"), .con = r$db)
-      data <- DBI::dbGetQuery(r$db, sql)
+    if (category %in% c("count_items_rows", "count_patients_rows")){
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} ",
+      " AND deleted IS FALSE ORDER BY id"), .con = r$db)
+      data_reload <- DBI::dbGetQuery(r$db, sql)
     }
-    else data <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = ", thesaurus_id, " AND deleted IS FALSE ORDER BY id"))
+    else if (category == "thumbs_and_delete"){
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping t WHERE ",
+        "(t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
+        "AND t.id NOT IN ({ids_to_keep*}) AND t.category = 'user_added_mapping' AND deleted IS FALSE ",
+        "ORDER BY id"), .con = r$db)
+      data_reload <- DBI::dbGetQuery(r$db, sql)
+    }
+    else {
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} ",
+      "AND t.id NOT IN ({ids_to_keep*}) AND deleted IS FALSE ORDER BY id"), .con = r$db)
+      data_reload <- DBI::dbGetQuery(r$db, sql)
+    } 
     
     # Make action column, depending on category
     # If category is count_items_rows, add a count row column with number of rows by item in the datamart
@@ -1441,13 +1457,13 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
       
       if (nrow(count_items_rows) != 0){
         count_items_rows <- count_items_rows %>% dplyr::select(-thesaurus_name, -thesaurus_id)
-        data <- data %>% dplyr::left_join(count_items_rows, by = "item_id") %>% dplyr::rename(value = count_items_rows)
+        data_reload <- data_reload %>% dplyr::left_join(count_items_rows, by = "item_id") %>% dplyr::rename(value = count_items_rows)
       }
-      if (nrow(count_items_rows) == 0) data <- data %>% dplyr::mutate(value = 0)
+      if (nrow(count_items_rows) == 0) data_reload <- data_reload %>% dplyr::mutate(value = 0)
       
       # Set 0 when value is na
       # Convert value to character
-      data <- data %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
+      data_reload <- data_reload %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
     }
     
     if (category == "count_patients_rows"){
@@ -1476,25 +1492,25 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
       
       if (nrow(count_patients_rows) != 0){
         count_patients_rows <- count_patients_rows %>% dplyr::select(-thesaurus_name, -thesaurus_id)
-        data <- data %>% dplyr::left_join(count_patients_rows, by = "item_id") %>% dplyr::rename(value = count_patients_rows)
+        data_reload <- data_reload %>% dplyr::left_join(count_patients_rows, by = "item_id") %>% dplyr::rename(value = count_patients_rows)
       }
       
-      if (nrow(count_patients_rows) == 0) data <- data %>% dplyr::mutate(value = 0)
+      if (nrow(count_patients_rows) == 0) data_reload <- data_reload %>% dplyr::mutate(value = 0)
       
       # Set 0 when value is na
       # Convert value to character
-      data <- data %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
+      data_reload <- data_reload %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
       
     }
     
     if (category == "delete"){
-      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
           shiny::actionButton(paste0("sub_delete_", id), "", icon = icon("trash-alt"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-thesaurus_items_deleted_pressed', this.id, {priority: 'event'})")))))
     }
     if (category == "plus_minus"){
-      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
           shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")),
@@ -1502,13 +1518,13 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
             onclick = paste0("Shiny.setInputValue('", module_id, "-item_removed', this.id, {priority: 'event'})")))))
     }
     if (category %in% c("plus_module", "plus_plugin")){
-      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
           shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")))))
     }
     if (category == "thumbs_and_delete"){
-      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
           shiny::actionButton(paste0("positive_eval_", id), "", icon = icon("thumbs-up"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
@@ -1522,7 +1538,7 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
           )))
     }
     if (grepl("plus_data_explorer", category)){
-      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
           shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-data_explorer_item_selected', this.id, {priority: 'event'})")))))
@@ -1539,7 +1555,7 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
         list(id = "#000000", color = "#000000"))
       
       ns <- NS(module_id)
-      data <- data %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         div(shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0("colour_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells), 
           cellHeight = 15, cellWidth = 15#, cellMargin = 10
         )#,
@@ -1551,31 +1567,40 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
     # Delete old cache
     
     if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus", "colours_module", "colours_plugin") | grepl("plus_data_explorer", category)){
-      DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE id IN (
-        SELECT c.id FROM cache c
-        INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = '", category, "'
-        WHERE t.thesaurus_id = ", thesaurus_id, 
-        ")")) -> query
+      sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
+        "SELECT c.id FROM cache c ",
+        "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
+        "WHERE t.thesaurus_id = {thesaurus_id}", 
+        ")", .con = r$db))
+      DBI::dbSendStatement(r$db, sql) -> query
     }
     
     # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
     if (category %in% c("count_patients_rows", "count_items_rows")){
-      DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE id IN (
-        SELECT c.id FROM cache c
-        INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.link_id_bis = ", datamart_id, " AND c.category = '", category, "'
-        WHERE t.thesaurus_id = ", thesaurus_id, 
-        ")")) -> query
+      sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
+        "SELECT c.id FROM cache c ",
+        "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.link_id_bis = {datamart_id} AND c.category = {category} ",
+        "WHERE t.thesaurus_id = {thesaurus_id}",
+        ")"), .con = r$db)
+      DBI::dbSendStatement(r$db, sql) -> query
     }
     
     # For thumbs_and_delete, use thesaurus_items_mapping table
     if (category == "thumbs_and_delete"){
       sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
         "SELECT c.id FROM cache c ",
-        "INNER JOIN thesaurus_items_mapping t ON c.link_id = t.id AND c.category = {category} ",
+        "INNER JOIN thesaurus_items_mapping t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
         "AND (t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
         ")"), .con = r$db)
       query <- DBI::dbSendStatement(r$db, sql)
     }
+    
+    # Merge new data & old data
+    if (category %not_in% c("count_items_rows", "count_patients_rows")){
+      if (nrow(data) > 0) data <- data %>% dplyr::filter(!is.na(data$value) & data$value != "") %>% dplyr::bind_rows(data_reload)
+      else data <- data_reload
+    } 
+    else data <- data_reload
     
     # DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "' AND link_id_bis = ", datamart_id)) -> query
     DBI::dbClearResult(query)
@@ -1583,7 +1608,7 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
     # Get last row & insert new data
     last_row <- as.integer(DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM cache") %>% dplyr::pull())
     data_insert <-
-      data %>%
+      data_reload %>%
       dplyr::transmute(
         category = !!category,
         link_id = id,
@@ -2670,7 +2695,7 @@ delete_element_new <- function(r = shiny::reactiveValues(), session, input, outp
     show_message_bar_new(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n, ns = ns)
 
     # Activate reload variable
-    r[[reload_variable]] <- Sys.time()
+    if (length(reload_variable) > 0) r[[reload_variable]] <- Sys.time()
 
     # Information variable
     if (length(information_variable) > 0) r[[information_variable]] <- r[[id_var_r]]
