@@ -127,7 +127,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
       id = ns("choose_a_study_card"),
       make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_study_and_datamart_left_side"), messageBarType = 5), style = "margin-top:10px;"))
     ),
-    uiOutput(ns("study_menu")),
+    shinyjs::hidden(uiOutput(ns("study_menu"))),
     div(id = ns("study_cards")),
     shinyjs::hidden(
       div(
@@ -143,20 +143,20 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
         style = "position:relative;"
       )
     ), 
-    div(shinyAce::aceEditor(
-      ns("ace_edit_code"), "", mode = "r",
-      code_hotkeys = list(
-        "r", list(
-          run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
-          run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
-          save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
-        )
-      ),
-      autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
-    ), style = "width: 100%;"),
-    shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
-    div(verbatimTextOutput(ns("code_result")),
-      style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
+    # div(shinyAce::aceEditor(
+    #   ns("ace_edit_code"), "", mode = "r",
+    #   code_hotkeys = list(
+    #     "r", list(
+    #       run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+    #       run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+    #       save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
+    #     )
+    #   ),
+    #   autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+    # ), style = "width: 100%;"),
+    # shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
+    # div(verbatimTextOutput(ns("code_result")),
+    #   style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
     br()
   )
 }
@@ -768,7 +768,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       # Hide UI from previous loaded study
       # Don't use removeUI, cause when you switch study, it is deleted and cannot be reinserted
       
-      sapply(r[[paste0(prefix, "_cards")]], function(card) shinyjs::hide(card))
+      sapply(r[[paste0(prefix, "_cards")]], shinyjs::hide)
       
       req(!is.na(m$chosen_study))
       
@@ -779,6 +779,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
       # Hide "choose a study" card
       shinyjs::hide("choose_a_study_card")
+      shinyjs::hide("initial_breadcrumb")
+      shinyjs::show("study_menu")
 
       # Reset selected key
       r[[paste0(prefix, "_selected_module")]] <- NA_integer_
@@ -882,6 +884,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # - Change in r[[paste0(prefix, "_load_ui_menu")]]
         # - Change in input$study_current_tab
         
+        req(!is.na(m$chosen_study))
         req(r[[paste0(prefix, "_display_modules")]])
         r[[paste0(prefix, "_load_ui_menu")]]
         
@@ -1805,6 +1808,12 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         observeEvent(r$chosen_datamart, {
 
           req(!is.na(r$chosen_datamart))
+          
+          # Reset study menu
+          shinyjs::show("initial_breadcrumb")
+          shinyjs::show("choose_a_study_card")
+          shinyjs::hide("study_menu")
+          sapply(r[[paste0(prefix, "_cards")]], shinyjs::hide)
 
           data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id) %>% as.character()
 
@@ -1815,6 +1824,14 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) |
             grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
           shiny.fluent::updateComboBox.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", words = r$words), value = NULL)
+        })
+        
+        # If r$studies changes, hide study_menu
+        observeEvent(r$studies, {
+          shinyjs::show("initial_breadcrumb")
+          shinyjs::show("choose_a_study_card")
+          shinyjs::hide("study_menu")
+          sapply(r[[paste0(prefix, "_cards")]], shinyjs::hide)
         })
 
         # Load thesaurus items

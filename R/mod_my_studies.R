@@ -336,6 +336,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       update_r_new(r = r, m = m, table = "studies")
       update_r_new(r = r, m = m, table = "scripts")
       
+      # Load studies datatable
+      r$reload_studies_datatable <- Sys.time()
+      
       # Update dropdown for study options
       options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options)
@@ -866,7 +869,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     # Prepare data for datatable
     
-    observeEvent(r$studies, {
+    observeEvent(r$reload_studies_datatable, {
+      
+      req(nrow(r$studies) > 0)
       
       if(nrow(r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)) == 0){
         render_datatable_new(output = output, r = r, ns = ns, i18n = i18n,

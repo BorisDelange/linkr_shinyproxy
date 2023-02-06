@@ -495,7 +495,7 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
   add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data$data))
   
   # Empty new variables
-  new_data_vars <- c("options", "subsets", "code", "patient_lvl_modules_family", "aggregated_modules_family", "thesaurus")
+  new_data_vars <- c("options", "subsets", "code", "patient_lvl_modules_families", "aggregated_modules_families", "thesaurus")
   for(var in new_data_vars) new_data[[var]] <- tibble::tibble()
   
   # --- --- --- --- --- --- --- --- --- --
@@ -594,10 +594,10 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     
     # Add patient_lvl & aggregated modules families
     
-    new_data$patient_lvl_module_family <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+    new_data$patient_lvl_modules_families <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
       get_last_row(r$db, "patient_lvl_modules_families") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
-    new_data$aggregated_module_family <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+    new_data$aggregated_modules_families <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
       get_last_row(r$db, "aggregated_modules_families") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add patients to subset
