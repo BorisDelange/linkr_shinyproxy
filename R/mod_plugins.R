@@ -20,11 +20,34 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
   thesaurus_items_div <- ""
   if (id == "plugins_patient_lvl"){
     thesaurus_items_div <- div(
-      make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
+      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+        make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
+        make_dropdown_new(i18n = i18n, ns = ns, label = "items_mapping", id = "thesaurus_mapping", multiSelect = TRUE, width = "300px",
+          options = list(
+            list(key = 1, text = i18n$t("equivalent_to")),
+            list(key = 2, text = i18n$t("included_in")),
+            list(key = 3, text = i18n$t("include"))
+          )
+        ),
+        conditionalPanel(condition = "input.thesaurus_mapping != null & input.thesaurus_mapping != ''", ns = ns, 
+          div(
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              div(shiny.fluent::Toggle.shinyInput(ns("merge_mapped_items"), value = TRUE), style = "margin-top:45px;"),
+              div(i18n$t("merge_mapped_items"), style = "font-weight:bold; margin-top:45px;")
+            ),
+            style = "margin-left:-28px;"
+          )
+        )
+      ),
       shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 20),
-        make_dropdown_new(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
-          multiSelect = TRUE, width = "650px"),
+        div(
+          div(id = ns("thesaurus_selected_items_title"), class = "input_title", i18n$t("thesaurus_selected_items")),
+          div(shiny.fluent::Dropdown.shinyInput(ns("thesaurus_selected_items"), value = NULL, options = list(), multiSelect = TRUE,
+            onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-thesaurus_selected_items_trigger', Math.random())"))), style = "width:650px;")
+        ),
+        # make_dropdown_new(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
+        #   multiSelect = TRUE, width = "650px"),
         div(shiny.fluent::DefaultButton.shinyInput(ns("reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
       ),
       div(DT::DTOutput(ns("plugin_thesaurus_items")), class = "thesaurus_table"), 
@@ -1189,10 +1212,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           dplyr::mutate_at("item_id", as.character)
         
         editable_cols <- c("display_name", "unit")
-        searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
-        factorize_cols <- c("category", "unit")
+        searchable_cols <- c("item_id", "name", "display_name", "unit")
+        factorize_cols <- c("unit")
         column_widths <- c("id" = "80px", "action" = "80px", "display_name" = "300px", "unit" = "100px")
-        sortable_cols <- c("id", "item_id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+        sortable_cols <- c("id", "item_id", "name", "display_name", "count_patients_rows", "count_items_rows")
         centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
         col_names <- get_col_names_new(table_name = "modules_thesaurus_items_with_counts", i18n = i18n)
         hidden_cols <- c("id", "name", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
@@ -1237,8 +1260,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Initiate r variable if doesn't exist
         if (length(r$plugin_thesaurus_selected_items) == 0){
           r$plugin_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
-            thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
-            thesaurus_item_colour = character(), input_text = character()) 
+            thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
+            thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = logical())
         }
         
         # Get ID of chosen thesaurus item
@@ -1246,34 +1269,114 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         # If this thesaurus item is not already chosen, add it to the "thesaurus selected items" dropdown
         
-        value <- integer(1)
+        # value <- integer(1)
         if (nrow(r$plugin_thesaurus_selected_items) > 0) value <- r$plugin_thesaurus_selected_items %>% 
           dplyr::filter(thesaurus_id == input$thesaurus$key) %>% dplyr::pull(id)
         
-        if (link_id %not_in% value){
+        # if (link_id %not_in% value){
+        
+        # Get thesaurus name
+        thesaurus_name <- r$thesaurus %>% dplyr::filter(id == input$thesaurus$key) %>% dplyr::pull(name)
+        
+        # Get item informations from datatable / r$plugin_thesaurus_items
+        # NB : the thesaurus_item_id saved in the database is the thesaurus ITEM_ID, no its ID in the database (in case thesaurus is deleted or re-uploaded)
+        item <- r$plugin_thesaurus_items_temp %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", name))
+        
+        # display_name <- ifelse((item$display_name == "" | is.na(item$display_name)), item$name, item$display_name)
+        
+        # Get mapped items
+        thesaurus_mapped_items <- tibble::tibble()
+        if (length(input$thesaurus_mapping) > 0){
+          # if (input$thesaurus_mapping %in% c(1, 2, 3)){
           
-          # Get thesaurus name
-          thesaurus_name <- r$thesaurus %>% dplyr::filter(id == input$thesaurus$key) %>% dplyr::pull(name)
+          # Select only validated mappings (with at least one positive eval and more positive than negative evals)
+          # Select mapping in the two ways (added item may be item_1, or item_2)
+          sql <- glue::glue_sql(paste0(
+            "SELECT m.thesaurus_id_2 AS thesaurus_id, m.item_id_2 AS thesaurus_item_id, e.evaluation_id, ",
+            "i.id, i.name AS thesaurus_item_name, i.display_name AS thesaurus_item_display_name, i.unit AS thesaurus_item_unit, ",
+            "u.name AS user_thesaurus_item_name, u.display_name AS user_thesaurus_item_display_name, u.unit AS user_thesaurus_item_unit ",
+            "FROM thesaurus_items_mapping m ",
+            "INNER JOIN thesaurus_items_mapping_evals e ON m.id = e.mapping_id AND e.deleted IS FALSE ",
+            "INNER JOIN thesaurus_items i ON m.thesaurus_id_2 = i.thesaurus_id AND m.item_id_2 = i.item_id AND i.deleted IS FALSE ",
+            "LEFT JOIN thesaurus_items_users u ON m.thesaurus_id_2 = u.thesaurus_id AND m.item_id_2 = u.item_id AND u.deleted IS FALSE ",
+            "WHERE m.thesaurus_id_1 = {as.integer(input$thesaurus$key)} AND m.item_id_1 = {as.integer(item$item_id)} AND m.relation_id IN ({input$thesaurus_mapping*}) ",
+            "AND m.category = 'user_added_mapping' AND m.deleted IS FALSE ",
+            "UNION ",
+            "SELECT m.thesaurus_id_1 AS thesaurus_id, m.item_id_1 AS thesaurus_item_id, e.evaluation_id, ",
+            "i.id, i.name AS thesaurus_item_name, i.display_name AS thesaurus_item_display_name, i.unit AS thesaurus_item_unit, ",
+            "u.name AS user_thesaurus_item_name, u.display_name AS user_thesaurus_item_display_name, u.unit AS user_thesaurus_item_unit ",
+            "FROM thesaurus_items_mapping m ",
+            "INNER JOIN thesaurus_items_mapping_evals e ON m.id = e.mapping_id AND e.deleted IS FALSE ",
+            "INNER JOIN thesaurus_items i ON m.thesaurus_id_1 = i.thesaurus_id AND m.item_id_1 = i.item_id AND i.deleted IS FALSE ",
+            "LEFT JOIN thesaurus_items_users u ON m.thesaurus_id_1 = u.thesaurus_id AND m.item_id_1 = u.item_id AND u.deleted IS FALSE ",
+            "WHERE m.thesaurus_id_2 = {as.integer(input$thesaurus$key)} AND m.item_id_2 = {as.integer(item$item_id)} AND m.relation_id IN ({input$thesaurus_mapping*}) ",
+            "AND m.category = 'user_added_mapping' AND m.deleted IS FALSE"
+          ), .con = r$db)
           
-          # Get item informations from datatable / r$plugin_thesaurus_items
-          # NB : the thesaurus_item_id saved in the database is the thesaurus ITEM_ID, no its ID in the database (in case thesaurus is deleted or re-uploaded)
-          item <- r$plugin_thesaurus_items_temp %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", name))
-          
-          # display_name <- ifelse((item$display_name == "" | is.na(item$display_name)), item$name, item$display_name)
-          
-          # Add item to selected items
-          r$plugin_thesaurus_selected_items <-
-            tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text,
-              as.integer(link_id), as.integer(input$thesaurus$key), as.character(thesaurus_name), as.integer(item$item_id), as.character(item$display_name),
-              as.character(item$unit), as.character(input[[paste0("colour_", link_id)]]), as.character(item$input_text)) %>%
-            dplyr::bind_rows(r$plugin_thesaurus_selected_items)
-          
-          # Update dropdown of selected items
-          options <- convert_tibble_to_list_new(r$plugin_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", i18n = i18n)
-          value <- r$plugin_thesaurus_selected_items %>% dplyr::pull(id)
-          shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
-            options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+          thesaurus_mapped_items <- DBI::dbGetQuery(r$db, sql) %>%
+            dplyr::group_by(id, thesaurus_id, thesaurus_item_id, 
+              thesaurus_item_display_name, user_thesaurus_item_display_name, thesaurus_item_name, user_thesaurus_item_name,
+              thesaurus_item_unit, user_thesaurus_item_unit) %>%
+            dplyr::summarize(
+              positive_evals = sum(evaluation_id == 1, na.rm = TRUE),
+              negative_evals = sum(evaluation_id == 2, na.rm = TRUE)
+            ) %>%
+            dplyr::ungroup() %>%
+            dplyr::mutate(
+              positive_evals = ifelse(positive_evals > 0, positive_evals, 0),
+              negative_evals = ifelse(negative_evals > 0, negative_evals, 0)
+            ) %>%
+            dplyr::filter(positive_evals > negative_evals) %>%
+            dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_id") %>%
+            dplyr::mutate(
+              thesaurus_item_name = ifelse((user_thesaurus_item_name != "" & !is.na(user_thesaurus_item_name)), user_thesaurus_item_name, thesaurus_item_name),
+              thesaurus_item_display_name = ifelse((user_thesaurus_item_display_name != "" & !is.na(user_thesaurus_item_display_name)), user_thesaurus_item_display_name, thesaurus_item_display_name),
+              thesaurus_item_unit = ifelse((user_thesaurus_item_unit != "" & !is.na(user_thesaurus_item_unit)), user_thesaurus_item_unit, thesaurus_item_unit),
+            ) %>%
+            dplyr::mutate(
+              thesaurus_item_display_name = ifelse((thesaurus_item_display_name != "" & !is.na(thesaurus_item_display_name)), thesaurus_item_display_name, thesaurus_item_name)
+            ) %>%
+            dplyr::transmute(
+              id, thesaurus_id, thesaurus_name, thesaurus_item_id, thesaurus_item_display_name,
+              thesaurus_item_unit, thesaurus_item_colour = as.character(input[[paste0("colour_", link_id)]]), 
+              input_text = paste0(thesaurus_name, " - ", thesaurus_item_display_name, " (", tolower(i18n$t("mapped_item")), ")"),
+              mapped_to_item_id = link_id, merge_items = input$merge_mapped_items
+            ) %>%
+            dplyr::anti_join(r$plugin_thesaurus_selected_items %>% dplyr::select(id), by = "id")
+          # }
         }
+        
+        # Add item to selected items
+        add_thesaurus_items <-
+          # r$module_element_thesaurus_selected_items %>%
+          # dplyr::bind_rows(
+          tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name,
+            ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text, ~mapped_to_item_id, ~merge_items,
+            as.integer(link_id), as.integer(input$thesaurus$key), as.character(thesaurus_name), as.integer(item$item_id), as.character(item$display_name),
+            as.character(item$unit), as.character(input[[paste0("colour_", link_id)]]), as.character(item$input_text),
+            NA_integer_, FALSE)
+        # )
+        if (nrow(thesaurus_mapped_items) > 0) add_thesaurus_items <-
+          add_thesaurus_items %>% dplyr::bind_rows(thesaurus_mapped_items)
+        
+        r$plugin_thesaurus_selected_items <-
+          r$plugin_thesaurus_selected_items %>%
+          dplyr::anti_join(add_thesaurus_items %>% dplyr::select(id), by = "id") %>%
+          dplyr::bind_rows(add_thesaurus_items)
+        
+        # Add item to selected items
+        # r$plugin_thesaurus_selected_items <-
+        #   tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text,
+        #     as.integer(link_id), as.integer(input$thesaurus$key), as.character(thesaurus_name), as.integer(item$item_id), as.character(item$display_name),
+        #     as.character(item$unit), as.character(input[[paste0("colour_", link_id)]]), as.character(item$input_text)) %>%
+        #   dplyr::bind_rows(r$plugin_thesaurus_selected_items)
+        
+        # Update dropdown of selected items
+        options <- convert_tibble_to_list_new(r$plugin_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", i18n = i18n)
+        value <- r$plugin_thesaurus_selected_items %>% dplyr::pull(id)
+        shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
+          options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+        # }
         
       })
       
@@ -1281,17 +1384,26 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       observeEvent(input$reset_thesaurus_items, {
         # Reset r$plugin_thesaurus_selected_items
         r$plugin_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
-          thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
-          thesaurus_item_colour = character(), input_text = character()) 
+          thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
+          thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = logical())
         
         shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
       })
       
       # When dropdown is modified
-      observeEvent(input$thesaurus_selected_items, {
+      observeEvent(input$thesaurus_selected_items_trigger, {
         
-        r$plugin_thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
-          dplyr::filter(id %in% input$thesaurus_selected_items)
+        if (length(input$thesaurus_selected_items) == 0) r$plugin_thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>% dplyr::slice(0)
+        if (length(input$thesaurus_selected_items) > 0) {
+          r$plugin_thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
+            dplyr::filter(id %in% input$thesaurus_selected_items)
+          # Delete also mapped items
+          r$plugin_thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
+            dplyr::filter(is.na(mapped_to_item_id) | mapped_to_item_id %in% r$plugin_thesaurus_selected_items$id)
+        }
+        
+        # r$plugin_thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
+        #   dplyr::filter(id %in% input$thesaurus_selected_items)
         options <- convert_tibble_to_list_new(r$plugin_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", i18n = i18n)
         value <- r$plugin_thesaurus_selected_items %>% dplyr::pull(id)
         shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
@@ -1348,16 +1460,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
         req(var_check)
         
-        # Create a session number, to inactivate older observers
-        # Reset all older observers
-        
-        if (length(reactiveValuesToList(o)) > 0) for (i in names(reactiveValuesToList(o))) o[[i]] <- FALSE
-        
-        session_num <- as.character(sample(1:1000, 1))
-        o[[session_num]] <- TRUE
-        
-        # NB : req(p[[session_num]]) must be put at the beginning of each observeEvent
-        
         # Get thesaurus items
         
         if (prefix == "patient_lvl"){
@@ -1368,7 +1470,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             # Get thesaurus items with thesaurus own item_id
             thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
               dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
-                thesaurus_item_unit, colour = thesaurus_item_colour)
+                thesaurus_item_unit, colour = thesaurus_item_colour, mapped_to_item_id, merge_items)
           }
         }
         
@@ -1380,12 +1482,22 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         # Replace %group_id% in ui_code with 1 for our example
         
-        group_id <- get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10000000
-        if (length(input$group_id) > 0) group_id <- input$group_id
+        group_id <- get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10^6
+        
+        # Create a session number, to inactivate older observers
+        # Reset all older observers
+        
+        session_code <- "plugin_test"
+        if (length(o[[session_code]]) == 0) session_num <- 1L
+        if (length(o[[session_code]]) > 0) session_num <- o[[session_code]] + 1
+        o[[session_code]] <- session_num
+        
+        # NB : req(o[[session_code]] == session_num) must be put at the beginning of each observeEvent in plugins code
         
         ui_code <- ui_code %>% 
           stringr::str_replace_all("%module_id%", "1") %>%
           stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+          stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
           stringr::str_replace_all("%study_id%", as.character(m$chosen_study)) %>%
           stringr::str_replace_all("\r", "\n")
         
@@ -1394,6 +1506,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         server_code <- server_code %>% 
           stringr::str_replace_all("%module_id%", "1") %>%
           stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
+          stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
           stringr::str_replace_all("%study_id%", as.character(m$chosen_study)) %>%
           stringr::str_replace_all("\r", "\n")
         
@@ -1407,7 +1520,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Variables to hide
         new_env_vars <- list("r" = NA)
         # Variables to keep
-        for (var in c("d", "m", "o")) new_env_vars[[var]] <- eval(parse(text = var))
+        for (var in c("d", "m", "o", "session_code", "session_num")) new_env_vars[[var]] <- eval(parse(text = var))
         new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
         
         options('cli.num_colors' = 1)

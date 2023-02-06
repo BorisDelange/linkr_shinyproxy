@@ -102,8 +102,8 @@ update_r_new <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(
   tables <- c("users", "users_accesses", "users_statuses",
     "data_sources", "datamarts", "studies", "subsets", "subset_patients", "subsets_patients", "thesaurus", "thesaurus_items",
     "plugins", "scripts",
-    "patient_lvl_modules_families", "patient_lvl_modules", "patient_lvl_modules_elements",
-    "aggregated_modules_families", "aggregated_modules", "aggregated_modules_elements",
+    "patient_lvl_modules_families", "patient_lvl_modules", "patient_lvl_modules_elements", "patient_lvl_modules_elements_items",
+    "aggregated_modules_families", "aggregated_modules", "aggregated_modules_elements", "aggregated_modules_elements_items", 
     "code", 
     "options",
     "modules_elements_options", "patients_options")
@@ -174,6 +174,12 @@ update_r_new <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(
           family_id <- r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
           sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND id = {family_id}", .con = db)
           r[[paste0(prefix, "_modules_families")]] <- DBI::dbGetQuery(db, sql)
+        }
+        
+        else if (grepl("elements_items", table)){
+          group_ids <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::pull(id)
+          sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND group_id IN ({group_ids*})", .con = db)
+          r[[paste0(prefix, "_modules_elements_items")]] <- DBI::dbGetQuery(db, sql)
         }
         
         else if (grepl("elements", table)){

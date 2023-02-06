@@ -85,7 +85,7 @@ make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(
 #' 
 make_textfield_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), id = NA_character_, 
   value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, 
-  margin_right = NULL){
+  margin_right = NULL, disabled = FALSE){
   if (is.na(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
@@ -93,7 +93,7 @@ make_textfield_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = c
   if (!is.null(margin_right)) style <- paste0(style, "margin-right:", margin_right, ";")
   div(
     div(class = "input_title", i18n$t(label)),
-    div(shiny.fluent::TextField.shinyInput(ns(id), value = value, type = type, canRevealPassword = canRevealPassword), style = style)
+    div(shiny.fluent::TextField.shinyInput(ns(id), value = value, type = type, canRevealPassword = canRevealPassword, disabled = disabled), style = style)
   )
 }
 
