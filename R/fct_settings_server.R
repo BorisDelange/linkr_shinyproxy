@@ -1356,8 +1356,8 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
   # Load join between our data and the cache
   
   # For action buttons (delete & plus_minus) & colours, don't use datamart_id / link_id_bis
-  if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus", "colours_module", "colours_plugin") |
-      grepl("plus_data_explorer", category)){
+  if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") |
+      grepl("plus_data_explorer", category) | grepl("colours_module", category) | grepl("plus_module", category)){
     sql <- glue::glue_sql(paste0(
       "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
       "FROM thesaurus_items t ",
@@ -1517,11 +1517,14 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
           shiny::actionButton(paste0("remove_", id), "", icon = icon("minus"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-item_removed', this.id, {priority: 'event'})")))))
     }
-    if (category %in% c("plus_module", "plus_plugin")){
+    if (category == "plus_plugin" | grepl("plus_module", category)){
+      if (category == "plus_plugin") input_name <- "item_selected"
+      else if (category == "plus_module_element_creation") input_name <- "module_element_creation_item_selected"
+      else if (category == "plus_module_element_settings") input_name <- "module_element_settings_item_selected"
       data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
           shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")))))
+            onclick = paste0("Shiny.setInputValue('", module_id, "-", input_name, "', this.id, {priority: 'event'})")))))
     }
     if (category == "thumbs_and_delete"){
       data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
@@ -1543,7 +1546,11 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
           shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
             onclick = paste0("Shiny.setInputValue('", module_id, "-data_explorer_item_selected', this.id, {priority: 'event'})")))))
     }
-    if (category %in% c("colours_module", "colours_plugin")){
+    if (category == "colours_plugin" | grepl("colours_module", category)){
+      
+      if (category == "colours_plugin") input_name <- "colours"
+      else if (category == "colours_module_element_creation") input_name <- "module_element_creation_colour"
+      else if (category == "colours_module_element_settings") input_name <- "module_element_settings_colour"
       
       colorCells <- list(
         list(id = "#EF3B2C", color = "#EF3B2C"),
@@ -1556,7 +1563,7 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
       
       ns <- NS(module_id)
       data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-        div(shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0("colour_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells), 
+        div(shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0(input_name, "_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells), 
           cellHeight = 15, cellWidth = 15#, cellMargin = 10
         )#,
           #style = "height:20px; padding:0px; margin-top:24px;"
@@ -1566,7 +1573,8 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
     
     # Delete old cache
     
-    if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus", "colours_module", "colours_plugin") | grepl("plus_data_explorer", category)){
+    if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") | 
+        grepl("plus_data_explorer", category) | grepl("plus_module", category) | grepl("colours_module", category)){
       sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
         "SELECT c.id FROM cache c ",
         "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
@@ -1622,8 +1630,9 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
     DBI::dbAppendTable(r$db, "cache", data_insert)
   }
   
-  if (category %in% c("delete", "plus_module", "plus_plugin", "plus_minus", "thumbs_and_delete") | grepl("plus_data_explorer", category)) data <- data %>% dplyr::rename(action = value)
-  if (category %in% c("colours_module", "colours_plugin")) data <- data %>% dplyr::rename(colour = value)
+  if (category %in% c("delete", "plus_plugin", "plus_minus", "thumbs_and_delete") | 
+      grepl("plus_data_explorer", category) | grepl("plus_module", category)) data <- data %>% dplyr::rename(action = value)
+  if (category == "colours_plugin" | grepl("colours_module", category)) data <- data %>% dplyr::rename(colour = value)
   if (category %in% c("count_patients_rows", "count_items_rows")) data <- data %>% dplyr::rename(!!category := value) %>% dplyr::select(item_id, !!category)
   
   data
