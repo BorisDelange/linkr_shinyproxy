@@ -1417,9 +1417,9 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
     }
     else {
       sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} ",
-      "AND t.id NOT IN ({ids_to_keep*}) AND deleted IS FALSE ORDER BY id"), .con = r$db)
+      "AND id NOT IN ({ids_to_keep*}) AND deleted IS FALSE ORDER BY id"), .con = r$db)
       data_reload <- DBI::dbGetQuery(r$db, sql)
-    } 
+    }
     
     # Make action column, depending on category
     # If category is count_items_rows, add a count row column with number of rows by item in the datamart
@@ -1571,7 +1571,7 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
         "SELECT c.id FROM cache c ",
         "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
         "WHERE t.thesaurus_id = {thesaurus_id}", 
-        ")", .con = r$db))
+        ")"), .con = r$db)
       DBI::dbSendStatement(r$db, sql) -> query
     }
     

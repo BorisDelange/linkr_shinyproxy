@@ -337,14 +337,14 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         ) %>%
         dplyr::select(-new_name, -new_display_name)
       
-      if (nrow(thesaurus_items_mappings) > 0) r$datamart_thesaurus_items <-
-        r$datamart_thesaurus_items %>%
+      if (nrow(thesaurus_items_mappings) > 0) r$datamart_thesaurus_items <- r$datamart_thesaurus_items %>%
         dplyr::left_join(
           thesaurus_items_mappings %>%
             dplyr::select(item_id = item_id_1, parent_item_id = item_id_2),
           by = "item_id"
         ) %>%
         dplyr::relocate(parent_item_id, .after = item_id)
+      else r$datamart_thesaurus_items <- r$datamart_thesaurus_items %>% dplyr::mutate(parent_item_id = NA_integer_, .after = item_id)
       
       count_items_rows <- tibble::tibble()
       count_patients_rows <- tibble::tibble()
@@ -950,67 +950,69 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         existing_mapping <- DBI::dbGetQuery(r$db, sql)
         
         if (nrow(existing_mapping) > 0) show_message_bar_new(output, 3, "thesaurus_mapping_already_exists", "severeWarning", i18n, ns = ns)
+        req(nrow(existing_mapping) == 0)
         
-        if (nrow(existing_mapping) == 0){
-          
-          last_row <- get_last_row(r$db, "thesaurus_items_mapping")
-          
-          # Add new mapping to r$thesaurus_added_mappings
-          
-          new_row <- tibble::tribble(~id, ~category, ~thesaurus_id_1, ~item_id_1, ~thesaurus_id_2, ~item_id_2, ~relation_id, ~creator_id, ~datetime, ~deleted,
-            last_row + 1, "user_added_mapping", item_1$thesaurus_id, item_1$item_id, item_2$thesaurus_id, item_2$item_id,
-            as.integer(input$mapping_type), r$user_id, as.character(Sys.time()), FALSE)
-          
-          r$thesaurus_added_mappings <- r$thesaurus_added_mappings %>% dplyr::bind_rows(new_row)
-          
-          # Add new mapping to database
-          
-          DBI::dbAppendTable(r$db, "thesaurus_items_mapping", new_row)
-          
-          # Notify user
-          show_message_bar_new(output, 3, "thesaurus_mapping_added", "success", i18n, ns = ns)
-          
-          # Update datatables
-          # r$reload_thesaurus_added_mappings_datatable <- Sys.time()
-          # r$reload_thesaurus_evaluate_mappings_datatable <- Sys.time()
-          
-          r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>%
-            dplyr::bind_rows(
-              tibble::tibble(
-                id = last_row + 1,
-                thesaurus_name_1 = r$thesaurus %>% dplyr::filter(id == item_1$thesaurus_id) %>% dplyr::pull(name),
-                item_id_1 = as.character(item_1$item_id),
-                relation = dplyr::case_when(as.integer(input$mapping_type) == 1 ~ i18n$t("equivalent_to"),
-                  as.integer(input$mapping_type) == 2 ~ i18n$t("included_in"), as.integer(input$mapping_type) == 3 ~ i18n$t("include")),
-                thesaurus_name_2 = r$thesaurus %>% dplyr::filter(id == item_2$thesaurus_id) %>% dplyr::pull(name),
-                item_id_2 = as.character(item_2$item_id),
-                creator_name = r$users %>% dplyr::filter(id == r$user_id) %>%
-                  dplyr::mutate(creator_name = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator_name),
-                datetime = as.character(Sys.time()),
-                deleted = 0L,
-                positive_evals = 0L,
-                negative_evals = 0L,
-                action = as.character(tagList(
-                  shiny::actionButton(paste0("positive_eval_", last_row + 1), "", icon = icon("thumbs-up"),
-                    onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
-                    style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
-                  shiny::actionButton(paste0("negative_eval_", last_row + 1), "", icon = icon("thumbs-down"),
-                    onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})"),
-                    style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
-                  shiny::actionButton(paste0("remove_", last_row + 1), "", icon = icon("trash-alt"),
-                    onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"),
-                    style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
-                )),
-                user_evaluation_id = NA_integer_
-              )
-            ) %>% dplyr::mutate(modified = FALSE) %>%
-            dplyr::arrange(dplyr::desc(id))
+        if (item_1$thesaurus_id == item_2$thesaurus_id & item_1$item_id == item_2$item_id) show_message_bar_new(output, 3, "thesaurus_mapping_same_items", "severeWarning", i18n, ns = ns)
+        req(item_1$thesaurus_id != item_2$thesaurus_id | item_1$item_id != item_2$item_id)
+        
+        last_row <- get_last_row(r$db, "thesaurus_items_mapping")
 
-          # r$datamart_thesaurus_items_evaluate_mappings_temp <- r$datamart_thesaurus_items_evaluate_mappings %>%
-          #   dplyr::mutate(modified = FALSE)
+        # Add new mapping to r$thesaurus_added_mappings
 
-          DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings, resetPaging = FALSE, rownames = FALSE)
-        }
+        new_row <- tibble::tribble(~id, ~category, ~thesaurus_id_1, ~item_id_1, ~thesaurus_id_2, ~item_id_2, ~relation_id, ~creator_id, ~datetime, ~deleted,
+          last_row + 1, "user_added_mapping", item_1$thesaurus_id, item_1$item_id, item_2$thesaurus_id, item_2$item_id,
+          as.integer(input$mapping_type), r$user_id, as.character(Sys.time()), FALSE)
+
+        r$thesaurus_added_mappings <- r$thesaurus_added_mappings %>% dplyr::bind_rows(new_row)
+
+        # Add new mapping to database
+
+        DBI::dbAppendTable(r$db, "thesaurus_items_mapping", new_row)
+
+        # Notify user
+        show_message_bar_new(output, 3, "thesaurus_mapping_added", "success", i18n, ns = ns)
+
+        # Update datatables
+        r$reload_thesaurus_added_mappings_datatable <- Sys.time()
+        # r$reload_thesaurus_evaluate_mappings_datatable <- Sys.time()
+
+        r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>%
+          dplyr::bind_rows(
+            tibble::tibble(
+              id = last_row + 1,
+              thesaurus_name_1 = r$thesaurus %>% dplyr::filter(id == item_1$thesaurus_id) %>% dplyr::pull(name),
+              item_id_1 = as.character(item_1$item_id),
+              relation = dplyr::case_when(as.integer(input$mapping_type) == 1 ~ i18n$t("equivalent_to"),
+                as.integer(input$mapping_type) == 2 ~ i18n$t("included_in"), as.integer(input$mapping_type) == 3 ~ i18n$t("include")),
+              thesaurus_name_2 = r$thesaurus %>% dplyr::filter(id == item_2$thesaurus_id) %>% dplyr::pull(name),
+              item_id_2 = as.character(item_2$item_id),
+              creator_name = r$users %>% dplyr::filter(id == r$user_id) %>%
+                dplyr::mutate(creator_name = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator_name),
+              datetime = as.character(Sys.time()),
+              deleted = 0L,
+              positive_evals = 0L,
+              negative_evals = 0L,
+              action = as.character(tagList(
+                shiny::actionButton(paste0("positive_eval_", last_row + 1), "", icon = icon("thumbs-up"),
+                  onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
+                  style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
+                shiny::actionButton(paste0("negative_eval_", last_row + 1), "", icon = icon("thumbs-down"),
+                  onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})"),
+                  style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
+                shiny::actionButton(paste0("remove_", last_row + 1), "", icon = icon("trash-alt"),
+                  onclick = paste0("Shiny.setInputValue('", !!id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"),
+                  style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
+              )),
+              user_evaluation_id = NA_integer_
+            )
+          ) %>% dplyr::mutate(modified = FALSE) %>%
+          dplyr::arrange(dplyr::desc(id))
+
+        # r$datamart_thesaurus_items_evaluate_mappings_temp <- r$datamart_thesaurus_items_evaluate_mappings %>%
+        #   dplyr::mutate(modified = FALSE)
+
+        DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings, resetPaging = FALSE, rownames = FALSE)
+
       })
       
       # Table to summarize added mappings
@@ -1314,9 +1316,6 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
 
       r$delete_mappings <- r$datamart_thesaurus_items_evaluate_mappings[input$thesaurus_evaluate_mappings_rows_selected, ] %>% dplyr::pull(id)
       r[[mappings_delete_variable]] <- TRUE
-      
-      # Reload datatable (to unselect rows)
-      DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings, resetPaging = FALSE, rownames = FALSE)
     })
     
     # Reload data

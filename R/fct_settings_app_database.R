@@ -103,7 +103,7 @@ db_create_tables <- function(db, type = character()){
     db_create_table(db, "patient_lvl_modules_elements_items",
       tibble::tibble(id = integer(), group_id = integer(),
         thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
-        thesaurus_item_colour = character(), mapped_to_widget_item_id = integer(), merge_items = logical(),
+        thesaurus_item_colour = character(), mapped_to_item_id = integer(), merge_items = logical(),
         creator_id = integer(), datetime = character(), deleted = logical()))
     
     db_create_table(db, "aggregated_modules_families",

@@ -80,12 +80,19 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
         ),
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 20),
-          make_dropdown_new(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items", multiSelect = TRUE, width = "650px"),
+          # make_dropdown_new(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items", multiSelect = TRUE, width = "650px"),
+          
+          div(
+            div(id = ns("thesaurus_selected_items_title"), class = "input_title", i18n$t("thesaurus_selected_items")),
+            div(shiny.fluent::Dropdown.shinyInput(ns("thesaurus_selected_items"), value = NULL, options = list(), multiSelect = TRUE,
+              onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-thesaurus_selected_items_trigger', Math.random())"))), style = "width:650px;")
+          ),
+          
           div(shiny.fluent::DefaultButton.shinyInput(ns("reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
         ),
-        div(DT::DTOutput(ns("module_element_thesaurus_items")), class = "thesaurus_table"), br(),
-        shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), i18n$t("add")), br(),
-        DT::DTOutput(ns("thesaurus_items"))
+        div(DT::DTOutput(ns("module_element_thesaurus_items")), class = "thesaurus_table", style = "z-index:2, margin-bottom:-30px;"), br(),
+        div(shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), i18n$t("add_widget")), style = "z-index:1;")#, br(),
+        # DT::DTOutput(ns("thesaurus_items"))
       )
     )
   }
@@ -94,7 +101,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
     module_element_creation_card <- make_card(
       title = i18n$t("add_module_element"),
       content = div(
-        actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right: 10px;"),
+        actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
           make_textfield(language = language, ns = ns, label = "name", id = "module_element_name", width = "300px", words = words),
           make_combobox(language = language, ns = ns, label = "plugin", id = "plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px", words = words)
@@ -136,20 +143,20 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
         style = "position:relative;"
       )
     ), 
-    # div(shinyAce::aceEditor(
-    #   ns("ace_edit_code"), "", mode = "r",
-    #   code_hotkeys = list(
-    #     "r", list(
-    #       run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
-    #       run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
-    #       save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
-    #     )
-    #   ),
-    #   autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
-    # ), style = "width: 100%;"),
-    # shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
-    # div(verbatimTextOutput(ns("code_result")),
-    #   style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
+    div(shinyAce::aceEditor(
+      ns("ace_edit_code"), "", mode = "r",
+      code_hotkeys = list(
+        "r", list(
+          run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+          run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+          save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
+        )
+      ),
+      autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+    ), style = "width: 100%;"),
+    shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
+    div(verbatimTextOutput(ns("code_result")),
+      style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
     br()
   )
 }
@@ -1903,7 +1910,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           if (length(r$module_element_thesaurus_selected_items) == 0){
             r$module_element_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
               thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
-              thesaurus_item_colour = character(), input_text = character(), mapped_to_widget_item_id = integer(), merge_items = logical())
+              thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = logical())
           }
 
           # Get ID of chosen thesaurus item
@@ -1911,53 +1918,107 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
           # If this thesaurus item is not already chosen, add it to the "thesaurus selected items" dropdown
 
-          value <- integer(1)
-          if (nrow(r$module_element_thesaurus_selected_items) > 0) value <- r$module_element_thesaurus_selected_items %>%
-            dplyr::filter(thesaurus_id == input$thesaurus$key) %>% dplyr::pull(id)
+          # value <- integer(1)
+          # if (nrow(r$module_element_thesaurus_selected_items) > 0) value <- r$module_element_thesaurus_selected_items %>%
+          #   dplyr::filter(thesaurus_id == input$thesaurus$key) %>% dplyr::pull(id)
 
-          if (link_id %not_in% value){
+          # if (link_id %not_in% value){
 
-            # Get thesaurus name
-            thesaurus_name <- r$thesaurus %>% dplyr::filter(id == input$thesaurus$key) %>% dplyr::pull(name)
+          # Get thesaurus name
+          thesaurus_name <- r$thesaurus %>% dplyr::filter(id == input$thesaurus$key) %>% dplyr::pull(name)
 
-            # Get item informations from datatable / r$modules_thesaurus_items
-            # NB : the thesaurus_item_id saved in the database is the thesaurus ITEM_ID, no its ID in the database (in case thesaurus is deleted or re-uploaded)
-            item <- r$module_element_thesaurus_items_temp %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", name))
+          # Get item informations from datatable / r$modules_thesaurus_items
+          # NB : the thesaurus_item_id saved in the database is the thesaurus ITEM_ID, no its ID in the database (in case thesaurus is deleted or re-uploaded)
+          item <- r$module_element_thesaurus_items_temp %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", name))
 
-            # display_name <- ifelse((item$display_name == "" | is.na(item$display_name)), item$name, item$display_name)
+          # display_name <- ifelse((item$display_name == "" | is.na(item$display_name)), item$name, item$display_name)
 
-            # Get mapped items
-            if (length(input$thesaurus_mapping) > 0){
-              if (input$thesaurus_mapping %in% c(1, 2, 3)){
-                
-                # Select only validated mappings (with at least one positive eval and more positive than negative evals)
-                sql <- glue::glue_sql(paste0(
-                  "SELECT m.thesaurus_id_2 AS thesaurus_id, m.item_id_2 AS item_id, e.evaluation_id ",
-                  "FROM thesaurus_items_mapping m",
-                  "INNER JOIN thesaurus_items_mapping_evals e ON m.id = e.mapping_id",
-                  "WHERE m.thesaurus_id_1 = {as.integer(input$thesaurus$key)} AND m.item_id_1 = {as.integer(item$item_id)} AND m.relation_id IN ({input$thesaurus_mapping*}) ",
-                  "AND "
-                  ), .con = r$db)
+          # Get mapped items
+          thesaurus_mapped_items <- tibble::tibble()
+          if (length(input$thesaurus_mapping) > 0){
+            # if (input$thesaurus_mapping %in% c(1, 2, 3)){
+              
+            # Select only validated mappings (with at least one positive eval and more positive than negative evals)
+            # Select mapping in the two ways (added item may be item_1, or item_2)
+            sql <- glue::glue_sql(paste0(
+              "SELECT m.thesaurus_id_2 AS thesaurus_id, m.item_id_2 AS thesaurus_item_id, e.evaluation_id, ",
+              "i.id, i.name AS thesaurus_item_name, i.display_name AS thesaurus_item_display_name, i.unit AS thesaurus_item_unit, ",
+              "u.name AS user_thesaurus_item_name, u.display_name AS user_thesaurus_item_display_name, u.unit AS user_thesaurus_item_unit ",
+              "FROM thesaurus_items_mapping m ",
+              "INNER JOIN thesaurus_items_mapping_evals e ON m.id = e.mapping_id AND e.deleted IS FALSE ",
+              "INNER JOIN thesaurus_items i ON m.thesaurus_id_2 = i.thesaurus_id AND m.item_id_2 = i.item_id AND i.deleted IS FALSE ",
+              "LEFT JOIN thesaurus_items_users u ON m.thesaurus_id_2 = u.thesaurus_id AND m.item_id_2 = u.item_id AND u.deleted IS FALSE ",
+              "WHERE m.thesaurus_id_1 = {as.integer(input$thesaurus$key)} AND m.item_id_1 = {as.integer(item$item_id)} AND m.relation_id IN ({input$thesaurus_mapping*}) ",
+              "AND m.category = 'user_added_mapping' AND m.deleted IS FALSE ",
+              "UNION ",
+              "SELECT m.thesaurus_id_1 AS thesaurus_id, m.item_id_1 AS thesaurus_item_id, e.evaluation_id, ",
+              "i.id, i.name AS thesaurus_item_name, i.display_name AS thesaurus_item_display_name, i.unit AS thesaurus_item_unit, ",
+              "u.name AS user_thesaurus_item_name, u.display_name AS user_thesaurus_item_display_name, u.unit AS user_thesaurus_item_unit ",
+              "FROM thesaurus_items_mapping m ",
+              "INNER JOIN thesaurus_items_mapping_evals e ON m.id = e.mapping_id AND e.deleted IS FALSE ",
+              "INNER JOIN thesaurus_items i ON m.thesaurus_id_1 = i.thesaurus_id AND m.item_id_1 = i.item_id AND i.deleted IS FALSE ",
+              "LEFT JOIN thesaurus_items_users u ON m.thesaurus_id_1 = u.thesaurus_id AND m.item_id_1 = u.item_id AND u.deleted IS FALSE ",
+              "WHERE m.thesaurus_id_2 = {as.integer(input$thesaurus$key)} AND m.item_id_2 = {as.integer(item$item_id)} AND m.relation_id IN ({input$thesaurus_mapping*}) ",
+              "AND m.category = 'user_added_mapping' AND m.deleted IS FALSE"
+              ), .con = r$db)
 
-                r$thesaurus_mapped_items <- DBI::dbGetQuery(r$db, sql)
-              }
-            }
-            
-            # Add item to selected items
-            r$module_element_thesaurus_selected_items <-
+            thesaurus_mapped_items <- DBI::dbGetQuery(r$db, sql) %>%
+              dplyr::group_by(id, thesaurus_id, thesaurus_item_id, 
+                thesaurus_item_display_name, user_thesaurus_item_display_name, thesaurus_item_name, user_thesaurus_item_name,
+                thesaurus_item_unit, user_thesaurus_item_unit) %>%
+              dplyr::summarize(
+                positive_evals = sum(evaluation_id == 1, na.rm = TRUE),
+                negative_evals = sum(evaluation_id == 2, na.rm = TRUE)
+              ) %>%
+              dplyr::ungroup() %>%
+              dplyr::mutate(
+                positive_evals = ifelse(positive_evals > 0, positive_evals, 0),
+                negative_evals = ifelse(negative_evals > 0, negative_evals, 0)
+              ) %>%
+              dplyr::filter(positive_evals > negative_evals) %>%
+              dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_id") %>%
+              dplyr::mutate(
+                thesaurus_item_name = ifelse((user_thesaurus_item_name != "" & !is.na(user_thesaurus_item_name)), user_thesaurus_item_name, thesaurus_item_name),
+                thesaurus_item_display_name = ifelse((user_thesaurus_item_display_name != "" & !is.na(user_thesaurus_item_display_name)), user_thesaurus_item_display_name, thesaurus_item_display_name),
+                thesaurus_item_unit = ifelse((user_thesaurus_item_unit != "" & !is.na(user_thesaurus_item_unit)), user_thesaurus_item_unit, thesaurus_item_unit),
+              ) %>%
+              dplyr::mutate(
+                thesaurus_item_display_name = ifelse((thesaurus_item_display_name != "" & !is.na(thesaurus_item_display_name)), thesaurus_item_display_name, thesaurus_item_name)
+              ) %>%
+              dplyr::transmute(
+                id, thesaurus_id, thesaurus_name, thesaurus_item_id, thesaurus_item_display_name,
+                thesaurus_item_unit, thesaurus_item_colour = as.character(input[[paste0("colour_", link_id)]]), 
+                input_text = paste0(thesaurus_name, " - ", thesaurus_item_display_name, " (", tolower(i18n$t("mapped_item")), ")"),
+                mapped_to_item_id = link_id, merge_items = input[[paste0(prefix, "_merge_mapped_items")]]
+              ) %>%
+              dplyr::anti_join(r$module_element_thesaurus_selected_items %>% dplyr::select(id), by = "id")
+            # }
+          }
+          
+          # Add item to selected items
+          add_thesaurus_items <-
+            # r$module_element_thesaurus_selected_items %>%
+            # dplyr::bind_rows(
               tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name,
-                ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text, ~mapped_to_widget_item_id, ~merge_items,
+                ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text, ~mapped_to_item_id, ~merge_items,
                 as.integer(link_id), as.integer(input$thesaurus$key), as.character(thesaurus_name), as.integer(item$item_id), as.character(item$display_name),
                 as.character(item$unit), as.character(input[[paste0("colour_", link_id)]]), as.character(item$input_text),
-                0L, input[[paste0(prefix, "_merge_mapped_items")]]) %>%
-              dplyr::bind_rows(r$module_element_thesaurus_selected_items)
+                NA_integer_, FALSE)
+            # )
+          if (nrow(thesaurus_mapped_items) > 0) add_thesaurus_items <-
+            add_thesaurus_items %>% dplyr::bind_rows(thesaurus_mapped_items)
+          
+          r$module_element_thesaurus_selected_items <-
+          r$module_element_thesaurus_selected_items %>%
+            dplyr::anti_join(add_thesaurus_items %>% dplyr::select(id), by = "id") %>%
+            dplyr::bind_rows(add_thesaurus_items)
 
-            # Update dropdown of selected items
-            options <- convert_tibble_to_list(r$module_element_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", words = r$words)
-            value <- r$module_element_thesaurus_selected_items %>% dplyr::pull(id)
-            shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
-              options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
-          }
+          # Update dropdown of selected items
+          options <- convert_tibble_to_list(r$module_element_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", words = r$words)
+          value <- r$module_element_thesaurus_selected_items %>% dplyr::pull(id)
+          shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
+            options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+          # }
 
         })
 
@@ -1966,16 +2027,23 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           # Reset r$modules_thesaurus_selected_items
           r$module_element_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
             thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
-            thesaurus_item_colour = character(), input_text = character(), mapped_to_widget_item_id = integer(), merge_items = logical())
+            thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = logical())
 
           shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
         })
 
         # When dropdown is modified
-        observeEvent(input$thesaurus_selected_items, {
+        observeEvent(input$thesaurus_selected_items_trigger, {
 
-          r$module_element_thesaurus_selected_items <- r$module_element_thesaurus_selected_items %>%
-            dplyr::filter(id %in% input$thesaurus_selected_items)
+          if (length(input$thesaurus_selected_items) == 0) r$module_element_thesaurus_selected_items <- r$module_element_thesaurus_selected_items %>% dplyr::slice(0)
+          if (length(input$thesaurus_selected_items) > 0) {
+            r$module_element_thesaurus_selected_items <- r$module_element_thesaurus_selected_items %>%
+              dplyr::filter(id %in% input$thesaurus_selected_items)
+            # Delete also mapped items
+            r$module_element_thesaurus_selected_items <- r$module_element_thesaurus_selected_items %>%
+              dplyr::filter(is.na(mapped_to_item_id) | mapped_to_item_id %in% r$module_element_thesaurus_selected_items$id)
+          }
+          
           options <- convert_tibble_to_list(r$module_element_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", words = r$words)
           value <- r$module_element_thesaurus_selected_items %>% dplyr::pull(id)
           shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
@@ -2005,7 +2073,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
         # Check if values required to be unique are unique
 
-        # table <- paste0(prefix, "_modules_elements")
+        table <- paste0(prefix, "_modules_elements")
 
         sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {new_data$module_new_element}", .con = r$db)
         distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
@@ -2017,22 +2085,27 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
         required_dropdowns <- c("plugin")
 
-        sapply(required_dropdowns, function(dropdown){
-          if (is.null(new_data[[dropdown]])) dropdowns_check <<- FALSE
-          else if (is.na(new_data[[dropdown]])) dropdowns_check <<- FALSE
-        })
+        for (dropdown in required_dropdowns){
+          if (is.null(new_data[[dropdown]])) dropdowns_check <- FALSE
+          else if (is.na(new_data[[dropdown]])) dropdowns_check <- FALSE
+        }
+        # sapply(required_dropdowns, function(dropdown){
+        #   if (is.null(new_data[[dropdown]])) dropdowns_check <<- FALSE
+        #   else if (is.na(new_data[[dropdown]])) dropdowns_check <<- FALSE
+        # })
 
         if (!dropdowns_check) show_message_bar_new(output, 2, "dropdown_empty", "severeWarning", i18n = i18n, ns = ns)
         req(dropdowns_check)
 
         # Get last_row nb
-        last_row_modules_elements <- get_last_row(r$db, paste0(prefix, "_modules_elements"))
+        # last_row_modules_elements <- get_last_row(r$db, paste0(prefix, "_modules_elements"))
+        group_id <- get_last_row(r$db, paste0(prefix, "_modules_elements")) + 1
         last_row_modules_elements_items <- get_last_row(r$db, paste0(prefix, "_modules_elements_items"))
         # group_id <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table)) %>% dplyr::pull() %>% as.integer() + 1
-        last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", paste0(prefix, "_modules_elements"), " WHERE module_id = ", new_data$module_new_element)) %>% dplyr::pull() %>% as.integer()
+        last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM ", paste0(prefix, "_modules_elements"), " WHERE module_id = ", new_data$module_new_element)) %>% dplyr::pull() %>% as.integer()
 
         new_data <- tibble::tribble(~id, ~name, ~module_id, ~plugin_id, ~display_order, ~creator_id, ~datetime, ~deleted,
-          last_row_modules_elements + 1, as.character(new_data$name), as.integer(new_data$module_new_element),
+          group_id, as.character(new_data$name), as.integer(new_data$module_new_element),
           as.integer(new_data$plugin), last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
         
         DBI::dbAppendTable(r$db, paste0(prefix, "_modules_elements"), new_data)
@@ -2051,23 +2124,43 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
             new_data <-
               r$module_element_thesaurus_selected_items %>%
               dplyr::transmute(
+                item_id = id,
                 id = 1:dplyr::n() + last_row_modules_elements_items + 1,
-                group_id = last_row_modules_elements + 1,
+                group_id = !!group_id,
             #     name = as.character(new_data$name),
             #     group_id = !!group_id,
             #     module_id = as.integer(new_data$module_new_element),
             #     plugin_id = as.integer(new_data$plugin),
                 thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour,
-                mapped_to_widget_item_id, merge_items,
+                mapped_to_item_id, merge_items,
             #     display_order = last_display_order + 1,
                 creator_id = r$user_id,
                 datetime = as.character(Sys.time()),
                 deleted = FALSE
               )
             
+            new_data <- new_data %>%
+              dplyr::left_join(
+                new_data %>% dplyr::select(mapped_to_item_id = item_id, new_mapped_to_item_id = id),
+                by = "mapped_to_item_id"
+              ) %>%
+              dplyr::mutate(mapped_to_item_id = new_mapped_to_item_id) %>%
+              dplyr::select(-item_id, -new_mapped_to_item_id)
+            
             DBI::dbAppendTable(r$db, paste0(prefix, "_modules_elements_items"), new_data)
             add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
             r[[paste0(prefix, "_modules_elements_items")]] <- r[[paste0(prefix, "_modules_elements_items")]] %>% dplyr::bind_rows(new_data)
+            
+            # Save thesaurus items for server code
+            thesaurus_selected_items <- new_data %>%
+              dplyr::select(group_id, thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
+                thesaurus_item_unit, colour = thesaurus_item_colour, mapped_to_item_id, merge_items)
+            
+            # Reset r$module_element_thesaurus_selected_items & dropdown
+            r$module_element_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
+              thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
+              thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = logical())
+            shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
           }
           # if (!has_thesaurus_items){
           #   new_data <- tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, ~thesaurus_name, ~thesaurus_item_id,
@@ -2088,19 +2181,19 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
         # Reset name textfield & dropdowns
         shiny.fluent::updateTextField.shinyInput(session, "module_element_name", value = "")
-        if (prefix == "patient_lvl" & has_thesaurus_items){
-
-          # Save thesaurus items for server code first
-          thesaurus_selected_items <-
-            r$module_element_thesaurus_selected_items %>%
-            dplyr::select(group_id, thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
-              thesaurus_item_unit, colour = thesaurus_item_colour, mapped_to_widget_item_id, merge_items)
-
-          r$module_element_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
-            thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
-            thesaurus_item_colour = character(), input_text = character(), mapped_to_widget_item_id = integer(), merge_items = lo)
-          shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
-        }
+        # if (prefix == "patient_lvl" & has_thesaurus_items){
+        # 
+        #   # Save thesaurus items for server code first
+        #   thesaurus_selected_items <-
+        #     r$module_element_thesaurus_selected_items %>%
+        #     dplyr::select(group_id, thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
+        #       thesaurus_item_unit, colour = thesaurus_item_colour, mapped_to_item_id, merge_items)
+        # 
+        #   r$module_element_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
+        #     thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
+        #     thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = lo)
+        #   shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
+        # }
 
         # Run server code
 
@@ -2277,7 +2370,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       module_element_dialog_subtext <- paste0(prefix, "_modules_elements_delete_subtext")
       module_element_react_variable <- "module_element_delete_confirm"
       module_element_table <- paste0(prefix, "_modules_elements")
-      module_element_id_var_sql <- "group_id"
+      module_element_id_var_sql <- "id"
       module_element_id_var_r <- paste0(prefix, "_selected_module_element")
       module_element_delete_message <- paste0(prefix, "_module_element_deleted")
       module_element_reload_variable <- paste0(prefix, "_load_ui")
@@ -2303,7 +2396,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # Remove UI card
         removeUI(selector = paste0("#", ns(paste0(prefix, "_group_", r[[paste0(prefix, "_module_element_deleted")]]))))
         
-        sql <- glue::glue_sql("SELECT DISTINCT(module_id) FROM {`paste0(prefix, '_modules_elements')`} WHERE group_id = {group_id}", .con = r$db)
+        sql <- glue::glue_sql("SELECT DISTINCT(module_id) FROM {`paste0(prefix, '_modules_elements')`} WHERE id = {group_id}", .con = r$db)
         module_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
 
         # Remove toggles UI for this module
@@ -2316,7 +2409,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         r[[paste0(prefix, "_modules_elements")]] <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(group_id != !!group_id)
         # update_r(r = r, table = paste0(prefix, "_modules_elements"))
         module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == !!module_id) %>% 
-          dplyr::rename(group_id == id) %>% dplyr::arrange(display_order)
+          dplyr::rename(group_id = id) %>% dplyr::arrange(display_order)
 
         # Get module element group_id
         distinct_groups <- unique(module_elements$group_id)
