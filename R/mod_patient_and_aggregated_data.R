@@ -2223,7 +2223,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
               dplyr::left_join(count_items_rows, by = "item_id") %>%
               dplyr::left_join(count_patients_rows, by = "item_id") %>%
               dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
-              dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
+              dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action") %>%
+              dplyr::arrange(dplyr::desc(count_items_rows))
   
             # Filter on count_items_rows > 0
             r[[r_var]] <- r[[r_var]] %>% dplyr::filter(count_items_rows > 0)

@@ -433,7 +433,9 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         dplyr::mutate_at("item_id", as.character)
       
       if (input$show_only_used_items) r$datamart_thesaurus_items_temp <- r$datamart_thesaurus_items %>%
-        dplyr::filter(count_items_rows > 0)
+        dplyr::filter(count_items_rows > 0) %>%
+        dplyr::mutate(modified = FALSE) %>%
+        dplyr::mutate_at("item_id", as.character)
       
       editable_cols <- c("name", "display_name")
       searchable_cols <- c("item_id", "name", "display_name", "unit")
@@ -483,8 +485,8 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       req(input$thesaurus)
       
       # Reset datamart_thesaurus_user_items variable, with updates
-      r$datamart_thesaurus_user_items <- r$datamart_thesaurus_items %>% dplyr::mutate(user_id = r$user_id, .after = id)
-      r$datamart_thesaurus_user_items_temp <- r$datamart_thesaurus_items_temp %>% dplyr::mutate(user_id = r$user_id, .after = id)
+      r$datamart_thesaurus_user_items <- r$datamart_thesaurus_items %>% dplyr::mutate(user_id = r$user_id, .after = id) %>% dplyr::select(-parent_item_id)
+      r$datamart_thesaurus_user_items_temp <- r$datamart_thesaurus_items_temp %>% dplyr::mutate(user_id = r$user_id, .after = id) %>% dplyr::select(-parent_item_id)
       
       save_settings_datatable_updates_new(output = output, r = r, ns = ns, table = "thesaurus_items_users", r_table = "datamart_thesaurus_user_items", duplicates_allowed = TRUE, i18n = i18n)
     })
@@ -635,7 +637,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       datamart_thesaurus_items_d_var <- ifelse(r$datamart_thesaurus_items_d_var == "", i18n$t("none_fem"), paste0("d$", r$datamart_thesaurus_items_d_var))
         
-      print(plots)
+      # print(plots)
       
       output[[paste0("thesaurus_", prefix, "_selected_item")]] <- renderUI(tagList(br(), div(
         span(i18n$t("var_containing_item"), style = style), datamart_thesaurus_items_d_var, br(),

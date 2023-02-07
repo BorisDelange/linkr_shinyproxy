@@ -37,7 +37,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "datamart_scripts_card", itemKey = "datamart_scripts_card", headerText = i18n$t("choose_datamart_scripts")),
           shiny.fluent::PivotItem(id = "scripts_descriptions_card", itemKey = "scripts_descriptions_card", headerText = i18n$t("scripts_descriptions_card")),
-          shiny.fluent::PivotItem(id = "scripts_creation_card", itemKey = "scripts_creation_card", headerText = i18n$t("create_script")),
+          # shiny.fluent::PivotItem(id = "scripts_creation_card", itemKey = "scripts_creation_card", headerText = i18n$t("create_script")),
           shiny.fluent::PivotItem(id = "scripts_datatable_card", itemKey = "scripts_datatable_card", headerText = i18n$t("scripts_management")),
           shiny.fluent::PivotItem(id = "scripts_edit_code_card", itemKey = "scripts_edit_code_card", headerText = i18n$t("edit_script_code")),
           shiny.fluent::PivotItem(id = "scripts_options_card", itemKey = "scripts_options_card", headerText = i18n$t("script_options"))
@@ -102,26 +102,16 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("scripts_datatable_card"),
         make_card(i18n$t("scripts_management"),
           div(
-            DT::DTOutput(ns("scripts_datatable")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_scripts_management"), i18n$t("save"))
-          )
-        ), br()
-      )
-    ),
-    
-    # --- --- --- --- --- --- -
-    # Create a script card ----
-    # --- --- --- --- --- --- -
-    
-    shinyjs::hidden(
-      div(
-        id = ns("scripts_creation_card"),
-        make_card(i18n$t("create_script"),
-          div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "script_name", width = "300px")
-            ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("add_script"), i18n$t("add"))
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "script_name", width = "300px"),
+              div(shiny.fluent::PrimaryButton.shinyInput(ns("add_script"), i18n$t("add")), style = "margin-top:38px;"),
+              style = "position:relative; z-index:1; width:500px;"
+            ),
+            div(DT::DTOutput(ns("scripts_datatable")), style = "margin-top:-30px; z-index:2"),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::PrimaryButton.shinyInput(ns("save_scripts_management"), i18n$t("save")),
+              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
+            )
           )
         ), br()
       )
@@ -145,6 +135,13 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
             shinyjs::hidden(div(id = ns("div_br"), br())),
 
             div(shinyAce::aceEditor(ns("ace_edit_code"), "", mode = "r",
+              code_hotkeys = list(
+                "r", list(
+                  run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+                  run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+                  save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
+                )
+              ),
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
 
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
@@ -221,7 +218,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
 #' scripts Server Functions
 #'
 #' @noRd 
-mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -233,14 +230,17 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
+    # Close message bar
+    sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
+    
     # --- --- --- --- --- -
     # Show message bar ----
     # --- --- --- --- --- -
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n))
-    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n))
+    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
     
     # --- --- --- --- --- -
     # Update dropdowns ----
@@ -362,7 +362,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       
       update_r(r = r, table = "options")
       
-      show_message_bar_new(output, 4, "modif_saved", "success", i18n)
+      show_message_bar_new(output, 4, "modif_saved", "success", i18n, ns = ns)
         
     })
     
@@ -413,7 +413,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       new_data$script_name <- new_data$name
       new_data$data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)
       
-      add_settings_new_data_new(session = session, output = output, r = r, i18n = i18n, id = "scripts", 
+      add_settings_new_data_new(session = session, output = output, r = r, m = m, i18n = i18n, id = "scripts",
         data = new_data, table = "scripts", required_textfields = "script_name", req_unique_values = "name")
       
     })
@@ -597,7 +597,10 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
     
     # Save updates
     
-    observeEvent(input$save_code, {
+    observeEvent(input$ace_edit_code_save, r$script_save_code <- Sys.time())
+    observeEvent(input$save_code, r$script_save_code <- Sys.time())
+    
+    observeEvent(r$script_save_code, {
       
       if (length(input$code_chosen_script) > 1) link_id <- input$code_chosen_script$key
       else link_id <- input$code_chosen_script
@@ -622,23 +625,45 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       update_r(r = r, table = "scripts")
       
       # Notify user
-      show_message_bar_new(output, 4, "modif_saved", "success", i18n)
+      show_message_bar_new(output, 4, "modif_saved", "success", i18n, ns = ns)
       
     })
     
     # Execute code
     
-    observeEvent(input$execute_code, {
+    observeEvent(input$execute_code, r$script_code <- input$ace_edit_code)
+    
+    observeEvent(input$ace_edit_code_run_selection, {
+      if(!shinyAce::is.empty(input$ace_edit_code_run_selection$selection)) r$script_code <- input$ace_edit_code_run_selection$selection
+      else r$script_code <- input$ace_edit_code_run_selection$line
+    })
+    
+    observeEvent(input$ace_code_run_all, r$script_code <- input$ace_edit_code)
+    
+    observeEvent(r$script_code, {
       
-      edited_code <- isolate(input$ace_edit_code %>% stringr::str_replace_all("\r", "\n"))
+      edited_code <- r$script_code %>% stringr::str_replace_all("\r", "\n")
+      
+      # Variables to hide
+      new_env_vars <- list("r" = NA)
+      # Variables to keep
+      for (var in c("d", "m", "o")) new_env_vars[[var]] <- eval(parse(text = var))
+      new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
       
       if (input$output_type == "console"){
         shinyjs::show("console_output")
         shinyjs::hide("table_output")
         
-        output$console_result <- renderText(
-          execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, r = r,
-            edited_code = edited_code, code_type = "server"))
+        options('cli.num_colors' = 1)
+        
+        # Capture console output of our code
+        captured_output <- capture.output(
+          tryCatch(eval(parse(text = edited_code), envir = new_env), error = function(e) print(e), warning = function(w) print(w)))
+        
+        # Restore normal value
+        options('cli.num_colors' = NULL)
+        
+        output$console_result <- renderText(paste(paste(captured_output), collapse = "\n"))
       }
       
       if (input$output_type == "table"){
@@ -647,7 +672,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
         
         tryCatch({
           
-          data <- eval(parse(text = as.character(isolate(input$ace_edit_code)) %>% stringr::str_replace_all("\r", "\n")))
+          data <- eval(parse(text = edited_code), envir = new_env)
           
           render_datatable_new(
             data = data,
@@ -732,7 +757,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), i1
       update_r(r = r, table = "scripts")
 
       # Notify user
-      show_message_bar_new(output, 4, "modif_saved", "success", i18n)
+      show_message_bar_new(output, 4, "modif_saved", "success", i18n, ns = ns)
       
     })
     

@@ -232,8 +232,8 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             div(
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                 make_textfield_new(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "700px"),
-                div(shiny.fluent::DefaultButton.shinyInput(ns("browse_image"), i18n$t("browse")), style = "margin-top:39px;"),
-                div(shiny.fluent::DefaultButton.shinyInput(ns("import_image"), i18n$t("import_image")), style = "margin-top:39px;"),
+                # div(shiny.fluent::DefaultButton.shinyInput(ns("browse_image"), i18n$t("browse")), style = "margin-top:39px;"),
+                div(shiny.fluent::DefaultButton.shinyInput(ns("import_image"), i18n$t("import_image")), style = "margin-top:39px;")
               )
             ), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),

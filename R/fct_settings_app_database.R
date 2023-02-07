@@ -64,7 +64,7 @@ db_create_tables <- function(db, type = character()){
     
     db_create_table(db, "thesaurus_items_users",
       tibble::tibble(id = integer(), user_id = integer(), thesaurus_id = integer(), item_id = integer(),
-        name = character(), display_name = character(), category = character(), unit = character(),
+        name = character(), display_name = character(), unit = character(),
         datetime = character(), deleted = logical()))
     
     db_create_table(db, "thesaurus_items_mapping",
