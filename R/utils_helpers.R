@@ -121,3 +121,9 @@ coalesce2 <- function(type, x){
     return(tryCatch(as.character(x)))
   }
 }
+
+`%not_in%` <- Negate(`%in%`)
+
+not_null <- Negate(is.null)
+
+not_na <- Negate(is.na)

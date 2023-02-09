@@ -8,11 +8,12 @@
 #' render_settings_default_elements(ns = NS("settings_datamart"))
 
 render_settings_default_elements <- function(ns = shiny::NS()){
+  
+  message_bars <- tagList()
+  for (i in 1:20) message_bars <- tagList(message_bars, shiny::uiOutput(ns(paste0("message_bar", i))))
+  
   div(
-    div(class = "message_bars",
-      shiny::uiOutput(ns("message_bar1")), shiny::uiOutput(ns("message_bar2")), shiny::uiOutput(ns("message_bar3")), 
-      shiny::uiOutput(ns("message_bar4")), shiny::uiOutput(ns("message_bar5")), shiny::uiOutput(ns("message_bar6"))
-    ), 
+    div(class = "message_bars", message_bars), 
     shiny.fluent::reactOutput(ns("delete_confirm"))
   )
 }

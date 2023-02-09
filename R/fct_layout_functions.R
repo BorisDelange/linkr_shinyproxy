@@ -337,20 +337,21 @@ show_message_bar <- function(output, id = integer(), message = character(), type
 
 show_message_bar_new <- function(output, id = integer(), message = character(), type = "severeWarning", i18n = R6::R6Class(), time = 7000, ns = character()){
   type <- switch(type, "info" = 0, "error" = 1, "blocked" = 2, "severeWarning" = 3, "success" = 4, "warning" = 5)
+  
+  id <- sample(1:20, 1)
+  
   shinyjs::show(paste0("message_bar", id))
   shinyjs::delay(time, shinyjs::hide(paste0("message_bar", id)))
   
-  # If translation of the message doesn't exist, return raw message
   output_message <- i18n$t(message)
   
   if (length(ns) > 0){
     output[[paste0("message_bar", id)]] <- renderUI(div(
-      shiny.fluent::MessageBar(output_message, messageBarType = type), 
+      div(shiny.fluent::MessageBar(output_message, messageBarType = type), style = "z-index:1; margin-top:10px; height:30px; margin-bottom:-30px; max-width:calc(100% - 330px);"),
       div(
         shiny.fluent::IconButton.shinyInput(ns(paste0("close_message_bar_", id)), "", iconProps = list(iconName = "Cancel")), 
-        style = "position:absolute; top:12px; right:332px;"
-      ),
-      style = "margin-top:10px; max-width:calc(100% - 330px);")
+        style = "position:sticky; z-index:2; margin-left:calc(100% - 362px);"
+      ))
     )
   }
   else {

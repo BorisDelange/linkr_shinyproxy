@@ -218,7 +218,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
 #' scripts Server Functions
 #'
 #' @noRd 
-mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -231,7 +231,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), m 
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     # Close message bar
-    sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
+    sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     # --- --- --- --- --- -
     # Show message bar ----
@@ -647,7 +647,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), m 
       # Variables to hide
       new_env_vars <- list("r" = NA)
       # Variables to keep
-      for (var in c("d", "m", "o")) new_env_vars[[var]] <- eval(parse(text = var))
+      for (var in c("d", "m")) new_env_vars[[var]] <- eval(parse(text = var))
       new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
       
       if (input$output_type == "console"){

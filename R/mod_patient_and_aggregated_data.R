@@ -227,7 +227,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     
     language <- "EN"
     
-    sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
+    sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     # --- --- --- --- --- --- -
     # Summary ----

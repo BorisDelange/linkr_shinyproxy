@@ -355,7 +355,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       "settings_thesaurus", "data_source")
     
     # Close message bar
-    sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
+    sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     # Table name
     table <- substr(id, nchar("settings_") + 1, nchar(id))

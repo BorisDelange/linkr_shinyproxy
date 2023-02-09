@@ -236,7 +236,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     ns <- session$ns
     
     # Close message bar
-    sapply(1:6, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
+    sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
  
     # --- --- --- --- --- ---
     # Show or hide cards ----
