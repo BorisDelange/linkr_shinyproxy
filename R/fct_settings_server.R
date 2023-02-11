@@ -2643,7 +2643,8 @@ delete_element <- function(r = shiny::reactiveValues(), session, input, output, 
 delete_element_new <- function(r = shiny::reactiveValues(), session, input, output, ns = shiny::NS(), i18n = R6::R6Class(),
   delete_prefix = character(), dialog_title = character(), dialog_subtext = character(),
   react_variable = character(), table = character(), r_table = character(), id_var_sql = character(), id_var_r = character(),
-  delete_message = character(), reload_variable = character(), information_variable = character(), translation = TRUE){
+  delete_message = character(), reload_variable = character(), information_variable = character(), translation = TRUE, 
+  app_folder = character(), prefix = character()){
   
   delete_variable <- paste0(delete_prefix, "_open_dialog")
   
@@ -2679,10 +2680,18 @@ delete_element_new <- function(r = shiny::reactiveValues(), session, input, outp
   observeEvent(input[[paste0(delete_prefix, "_hide_dialog")]], r[[delete_variable]] <- FALSE)
   observeEvent(input[[paste0(delete_prefix, "_delete_canceled")]], r[[delete_variable]] <- FALSE)
   
-  # When the deletion is confirmed...
+  # When the deletion is confirmed
   observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
     
     r[[delete_variable]] <- FALSE
+    
+    # Remove files if this is a plugin
+    if (table == "plugins"){
+      for (plugin_id in r[[id_var_r]]){
+        plugin_options <- r$options %>% dplyr::filter(category == "plugin", link_id == plugin_id)
+        unlink(paste0(app_folder, "/plugins/", prefix, "/", plugin_options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value)), recursive = TRUE)
+      }
+    }
     
     # Delete row in DB table and associated tables
     sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE {`id_var_sql`} IN ({r[[id_var_r]]*})" , .con = r$db)
