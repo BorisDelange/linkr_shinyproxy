@@ -60,6 +60,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
     class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("plugin_delete_confirm")),
+    shiny.fluent::reactOutput(ns("plugin_image_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = id, text = i18n$t(id))
     ), maxDisplayedItems = 3),
@@ -245,6 +246,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
                 make_dropdown_new(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "320px"),
                 # make_textfield_new(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "700px"),
                 # div(shiny.fluent::DefaultButton.shinyInput(ns("browse_image"), i18n$t("browse")), style = "margin-top:39px;"),
+                div(shiny.fluent::DefaultButton.shinyInput(ns("delete_image"), i18n$t("delete_this_image")), style = "margin-top:39px;"),
                 div(shiny.fluent::DefaultButton.shinyInput(ns("import_image"), i18n$t("import_image")), style = "margin-top:39px;")
               )
             ), 
@@ -428,6 +430,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         all_plugins <- tagList()
         all_plugins_document_cards <- tagList()
         
+        if (nrow(plugins[[type]]) == 0) output[[paste0("all_plugins_", type)]] <- renderUI(br(), shiny.fluent::MessageBar(i18n$t("no_available_plugin"), messageBarType = 5))
+        
         if (nrow(plugins[[type]]) > 0){
           
           i <- 0
@@ -509,9 +513,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
               )
             )
           }
+          
+          output[[paste0("all_plugins_", type)]] <- renderUI(tagList(all_plugins, br()))
         }
-        
-        output[[paste0("all_plugins_", type)]] <- renderUI(tagList(all_plugins, br()))
       })
       
       r$load_plugins_images <- Sys.time()
@@ -1113,14 +1117,70 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
     })
     
+    # Delete an image
+    
+    observeEvent(input$delete_image, r[[paste0(prefix, "_plugins_delete_image")]] <- TRUE)
+    
+    r[[paste0(prefix, "_plugins_delete_image")]] <- FALSE
+    output$plugin_image_delete_confirm <- shiny.fluent::renderReact({
+      shiny.fluent::Dialog(
+        hidden = !r[[paste0(prefix, "_plugins_delete_image")]],
+        onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", prefix, "_plugin_delete_image_hide_dialog', Math.random()); }")),
+        dialogContentProps = list(
+          type = 0,
+          title = i18n$t("plugin_image_delete"),
+          closeButtonAriaLabel = "Close",
+          subText = tagList(i18n$t("plugin_image_delete_subtext"), br(), br())
+        ),
+        modalProps = list(),
+        shiny.fluent::DialogFooter(
+          shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "_plugin_delete_image_delete_confirmed")), text = i18n$t("delete")),
+          shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "_plugin_delete_image_delete_canceled")), text = i18n$t("dont_delete"))
+        )
+      )
+    })
+    
+    observeEvent(input[[paste0(prefix, "_plugin_delete_image_hide_dialog")]], r[[paste0(prefix, "_plugins_delete_image")]] <- FALSE)
+    observeEvent(input[[paste0(prefix, "_plugin_delete_image_delete_canceled")]], r[[paste0(prefix, "_plugins_delete_image")]] <- FALSE)
+    
+    observeEvent(input[[paste0(prefix, "_plugin_delete_image_delete_confirmed")]], {
+      req(input$plugin_image != "")
+      tryCatch({
+        link_id <- input$options_chosen_plugin$key
+        
+        plugin <- r$plugins %>% dplyr::filter(id == link_id) %>%
+          dplyr::left_join(
+            r$options %>% dplyr::filter(category == "plugin", name == "unique_id") %>% dplyr::select(id = link_id, unique_id = value),
+            by = "id"
+          )
+        
+        plugin_folder <- paste0(app_folder, "/plugins/", prefix, "/", plugin$unique_id)
+        unlink(paste0(plugin_folder, "/", input$plugin_image))
+        
+        files_list <- list.files(path = plugin_folder, pattern = "*.\\.(jpeg|jpg|JPG|JPEG|png|PNG)$")
+        shiny.fluent::updateDropdown.shinyInput(session, "plugin_image", 
+          options = convert_tibble_to_list_new(tibble::tibble(text = c("", files_list), key = c("", files_list)), key_col = "key", text_col = "text"),
+          value = "")
+        
+        show_message_bar_new(output, 4, "image_deleted", "success", i18n = i18n, ns = ns)
+        
+      }, error = function(e) report_bug_new(r = r, output = output, error_message = "error_deleting_image",
+        error_name = paste0(id, " - delete plugin image"), category = "Error", error_report = e, i18n = i18n))
+      
+      r[[paste0(prefix, "_plugins_delete_image")]] <- FALSE
+    })
+    
+    # Import an image
+    
     observeEvent(input$import_image, shinyjs::click("import_image_file"))
     
     observeEvent(input$import_image_file, {
       
       tryCatch({
         
-        if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
-        else link_id <- input$code_chosen_plugin
+        # if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
+        # else link_id <- input$code_chosen_plugin
+        link_id <- input$options_chosen_plugin$key
         
         plugin <- r$plugins %>%
           dplyr::filter(id == link_id) %>%
