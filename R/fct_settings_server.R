@@ -543,7 +543,8 @@ add_settings_new_data_new <- function(session, output, r = shiny::reactiveValues
     # Add code rows
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row$code + 1, "plugin_ui", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$code + 2, "plugin_server", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$code + 2, "plugin_server", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$code + 3, "plugin_translations", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
 
   # For options of scripts, add one row for long description (Markdown)
@@ -1400,7 +1401,7 @@ create_datatable_cache_new <- function(output, r = shiny::reactiveValues(), d = 
   # Reload cache if necessary
   if (data %>% dplyr::filter(is.na(data$value) | data$value == "") %>% nrow() > 0){
     
-    print(paste0("reload cache ", category))
+    # print(paste0("reload cache ", category))
     
     # Reload data
     if (category %in% c("count_items_rows", "count_patients_rows")){

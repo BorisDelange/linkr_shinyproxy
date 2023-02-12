@@ -5,10 +5,12 @@
 #' @import shiny
 #' @noRd
 
-app_server <- function(router, language = "EN", db_info = list(), app_folder = character(), datamarts_folder = character(), app_db_folder = character(),
+app_server <- function(router, language = "en", db_info = list(), app_folder = character(), datamarts_folder = character(), app_db_folder = character(),
   #initial_wd = character(), 
   perf_monitoring = FALSE){
   function(input, output, session ) {
+    
+    language <- tolower(language)
     
     # Create r reactive value, for the application processings
     r <- reactiveValues()
@@ -47,10 +49,9 @@ app_server <- function(router, language = "EN", db_info = list(), app_folder = c
     
     # Get translations
     # Update : use shiny.i18n instead. When it is done, delete get_translations
-    # Change also tolower...
     r$words <- get_translations()
     i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
-    i18n$set_translation_language(tolower(language))
+    i18n$set_translation_language(language)
     r$i18n <- i18n
     
     # Save currently opened toggles (used to reload cards when we load a page, restart reactivity)

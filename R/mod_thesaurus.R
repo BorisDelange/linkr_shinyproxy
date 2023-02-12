@@ -670,7 +670,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       values_num <- all_values %>% dplyr::filter(!is.na(value_num))
       values <- all_values %>% dplyr::filter(!is.na(value))
       
-      print(values_num)
+      # print(values_num)
       
       shinyjs::show(paste0(prefix, "_value_num_plot"))
       
