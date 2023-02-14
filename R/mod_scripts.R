@@ -379,14 +379,18 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     # Update scripts_cache_infos UI
     
-    observeEvent(r$datamart_loaded_scripts, {
-      if (nrow(r$datamart_loaded_scripts) > 0){
+    observeEvent(r$update_scripts_cache_card, {
+      
+      loaded_scripts_file_path <- paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/loaded_scripts.csv")
+      datamart_loaded_scripts <- readr::read_csv(loaded_scripts_file_path)
+      
+      if (nrow(datamart_loaded_scripts) > 0){
         
-        datetime <- r$datamart_loaded_scripts %>% dplyr::slice(1) %>% dplyr::pull(datetime)
+        datetime <- datamart_loaded_scripts %>% dplyr::slice(1) %>% dplyr::pull(datetime)
         if (tolower(language) == "fr") datetime <- format(as.POSIXct(datetime), format = "%d-%m-%Y %H:%M")
         if (tolower(language) == "en") datetime <- format(as.POSIXct(datetime), format = "%Y-%m-%d %H:%M")
         
-        datamart_loaded_scripts <- r$datamart_loaded_scripts %>%
+        datamart_loaded_scripts <- datamart_loaded_scripts %>%
           dplyr::left_join(r$scripts %>% dplyr::select(id, name), by = "id") %>%
           dplyr::mutate(name = dplyr::case_when(is.na(name) ~ i18n$t("deleted_script"), TRUE ~ name))
 
@@ -417,6 +421,13 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
           )
         )
       }
+    })
+    
+    # Reload script cache
+    
+    observeEvent(input$reload_cache, {
+      r$load_scripts <- Sys.time()
+      r$force_reload_scripts_cache <- TRUE
     })
     
     # --- --- --- --- --- --- -
