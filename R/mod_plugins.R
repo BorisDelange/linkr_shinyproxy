@@ -391,10 +391,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     error_loading_github <- TRUE
     plugins_file <- paste0(app_folder, "/temp_files/plugins.xml")
-    tryCatch({
-      xml2::download_xml("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/plugins.xml", plugins_file)
-      error_loading_github <- FALSE
-    }, error = function(e) "")
+    if (curl::has_internet()){
+      tryCatch({
+        xml2::download_xml("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/plugins.xml", plugins_file)
+        error_loading_github <- FALSE
+      }, error = function(e) "")
+    }
     
     # Github plugins
     
@@ -430,9 +432,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         all_plugins <- tagList()
         all_plugins_document_cards <- tagList()
         
-        if (nrow(plugins[[type]]) == 0) output[[paste0("all_plugins_", type)]] <- renderUI(tagList(br(), shiny.fluent::MessageBar(i18n$t("no_available_plugin"), messageBarType = 5)))
+        if (type == "github" & error_loading_github) output$all_plugins_github <- renderUI(tagList(br(), shiny.fluent::MessageBar(i18n$t("error_connection_github"), messageBarType = 3)))
+        else if (nrow(plugins[[type]]) == 0) output[[paste0("all_plugins_", type)]] <- renderUI(tagList(br(), shiny.fluent::MessageBar(i18n$t("no_available_plugin"), messageBarType = 5)))
         
-        if (nrow(plugins[[type]]) > 0){
+        else if (nrow(plugins[[type]]) > 0){
           
           i <- 0
 

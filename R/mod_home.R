@@ -10,86 +10,59 @@
 mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
-  if (id == "home") main <- div(
-    shiny.fluent::Breadcrumb(items = list(
-      list(key = "home", text = i18n$t("home"))
-    ), maxDisplayedItems = 3),
-    shiny.fluent::Pivot(
-      onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "overview_card", itemKey = "overview", headerText = i18n$t("overview")),
-      shiny.fluent::PivotItem(id = "news_card", itemKey = "news", headerText = i18n$t("news")),
-      shiny.fluent::PivotItem(id = "versions_card", itemKey = "versions", headerText = i18n$t("versions"))
-    ),
-    div(
-      id = ns("overview_card"),
-      make_card(i18n$t("overview"),
+  if (id == "home"){
+    
+    # if (!curl::has_internet()){
+    #   overview_div <- div("no_internet")
+    # }
+    # if (curl::has_internet()){
+    #   overview_md <- readLines(textConnection("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/overview.Md"))
+    #   overview_div <- div(
+    #     withMathJax(includeMarkdown(overview_md))
+    #   )
+    # }
+    
+    main <- div(
+      shiny.fluent::Breadcrumb(items = list(
+        list(key = "home", text = i18n$t("home"))
+      ), maxDisplayedItems = 3),
+      shiny.fluent::Pivot(
+        onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+        shiny.fluent::PivotItem(id = "overview_card", itemKey = "overview", headerText = i18n$t("overview")),
+        shiny.fluent::PivotItem(id = "news_card", itemKey = "news", headerText = i18n$t("news")),
+        shiny.fluent::PivotItem(id = "versions_card", itemKey = "versions", headerText = i18n$t("versions"))
+      ),
+      div(
+        id = ns("overview_card"),
+        make_card(i18n$t("overview"), uiOutput(ns("overview_div")))
+      ),
+      shinyjs::hidden(
         div(
-          br(),
-          div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
-          div(shiny.fluent::MessageBar(
+          id = ns("news_card"), uiOutput(ns("news_div"))
+          # make_card(i18n$t("news"), uiOutput(ns("overview_news")))
+        )
+      ),
+      shinyjs::hidden(
+        div(
+          id = ns("versions_card"),
+          make_card(i18n$t("versions"),
             div(
-              strong("A faire"),
-              p("Mettre une présentation générale de l'application, telle que celle faite sur la page d'accueil de Github."),
-              p("Bref tuto pour commencer à utiliser l'application, en présentant les fonctionnalités :",
-                tags$ul(
-                  tags$li("Aide"),
-                  tags$li("Charger des données"),
-                  tags$li("Créer une étude"),
-                  tags$li("Configurer le thésaurus"),
-                  tags$li("Données individuelles et agrégées")
-                )  
+              br(),
+              div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
+              div(shiny.fluent::MessageBar(
+                div(
+                  strong("A faire"),
+                  p("Afficher les changements par version."),
+                  p("Décrire comment charger une ancienne version ou mettre à jour pour la nouvelle version.")
+                ),
+                messageBarType = 0)
               )
-            ),
-            messageBarType = 0)
-          )
-        )
-      )
-    ),
-    shinyjs::hidden(
-      div(
-        id = ns("news_card"),
-        make_card(i18n$t("news"),
-          div(
-            br(),
-            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
-            div(shiny.fluent::MessageBar(
-              div(
-                strong("A faire"),
-                p("Actualités en lien avec l'application, du type :",
-                  tags$ul(
-                    tags$li("Nouvelles fonctionnalités"),
-                    tags$li("Nouvelle version disponible"),
-                    tags$li("Nouveau tutoriel")
-                  ),
-                "Le tout devant être chargé depuis Github."
-                )
-              ),
-              messageBarType = 0)
-            )
-          )
-        )
-      )
-    ),
-    shinyjs::hidden(
-      div(
-        id = ns("versions_card"),
-        make_card(i18n$t("versions"),
-          div(
-            br(),
-            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
-            div(shiny.fluent::MessageBar(
-              div(
-                strong("A faire"),
-                p("Afficher les changements par version."),
-                p("Décrire comment charger une ancienne version ou mettre à jour pour la nouvelle version.")
-              ),
-              messageBarType = 0)
             )
           )
         )
       )
     )
-  )
+  }
   
   if (id == "home_get_started") main <- div(
     shiny.fluent::Breadcrumb(items = list(
@@ -303,13 +276,57 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
 #' home Server Functions
 #'
 #' @noRd 
-mod_home_server <- function(id = character(), r, language = "EN", i18n = R6::R6Class()){
+mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
  
     # Show or hide datamart cards
     
-    if (id == "home") cards <- c("overview_card", "news_card", "versions_card")
+    if (id == "home"){
+      
+      cards <- c("overview_card", "news_card", "versions_card")
+      
+      if (!curl::has_internet()){
+        overview_div <- div("no_internet")
+        news_div <- div("no_internet")
+      }
+      if (curl::has_internet()){
+        overview_div <- readLines(textConnection("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/overview.Md")) %>% 
+          includeMarkdown() %>% withMathJax()
+        # overview_div <- withMathJax(includeMarkdown(overview_md))
+        
+        news_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/index.csv", col_types = "cc") %>%
+          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n)
+        
+        news_div <- tagList()
+        
+        sapply(1:nrow(news_files), function(i){
+          
+          news_file <- news_files[i, ]
+          
+          datetime <- substr(news_file$file, 1, 16) %>% as.POSIXct(format = "%Y-%m-%d_%H-%M")
+          if (tolower(language) == "fr") datetime <- format(as.POSIXct(datetime), format = "%d-%m-%Y %H:%M")
+          if (tolower(language) == "en") datetime <- format(as.POSIXct(datetime), format = "%Y-%m-%d %H:%M")
+          
+          filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/", news_file$file)
+          news_md <- readLines(textConnection(filepath_github)) %>% includeMarkdown() %>% withMathJax()
+          
+          output_name <- paste0("news_", substr(news_file$file, 1, 16))
+          
+          news_div <<- tagList(news_div, 
+            make_card(
+              tagList(news_file$title, span(" - ", datetime, style = "font-size:12px;")), 
+              uiOutput(ns(output_name))
+            )
+          )
+          output[[output_name]] <- renderUI(news_md)
+        })
+      }
+      
+      output$overview_div <- renderUI(overview_div)
+      output$news_div <- renderUI(news_div)
+      
+    } 
     if (id == "home_get_started") cards <- c("import_excel_card", "import_csv_card", "connect_db_card")
     if (id == "home_tutorials") cards <- c("tutorials_card")
     if (id == "home_resources") cards <- c("resources_card")

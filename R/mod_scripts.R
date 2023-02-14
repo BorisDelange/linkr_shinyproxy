@@ -382,7 +382,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     observeEvent(r$update_scripts_cache_card, {
       
       loaded_scripts_file_path <- paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/loaded_scripts.csv")
-      datamart_loaded_scripts <- readr::read_csv(loaded_scripts_file_path)
+      if (file.exists(loaded_scripts_file_path)) datamart_loaded_scripts <- readr::read_csv(loaded_scripts_file_path)
+      if (!file.exists(loaded_scripts_file_path)) datamart_loaded_scripts <- tibble::tibble()
       
       if (nrow(datamart_loaded_scripts) > 0){
         
