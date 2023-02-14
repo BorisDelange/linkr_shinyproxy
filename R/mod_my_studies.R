@@ -43,9 +43,9 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "study_messages_card", itemKey = "study_messages_card", headerText = i18n$t("messages")),
           shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = i18n$t("studies_management")),
-          shiny.fluent::PivotItem(id = "study_options_card", itemKey = "study_options_card", headerText = i18n$t("study_options")),
-          shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study_card", headerText = i18n$t("import_study")),
-          shiny.fluent::PivotItem(id = "export_study_card", itemKey = "export_study_card", headerText = i18n$t("export_study"))
+          shiny.fluent::PivotItem(id = "study_options_card", itemKey = "study_options_card", headerText = i18n$t("study_options"))#,
+          # shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study_card", headerText = i18n$t("import_study")),
+          # shiny.fluent::PivotItem(id = "export_study_card", itemKey = "export_study_card", headerText = i18n$t("export_study"))
         )
       )
     ),
@@ -288,53 +288,90 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       d$orders <- tibble::tibble()
       d$diagnoses <- tibble::tibble()
       
+      # Status of loaded scripts
+      r$datamart_loaded_scripts <- tibble::tibble(id = integer(), status = character(), datetime = character())
+      
+      # A r variable to update study dropdown, when the load of datamart is finished
+      r$loaded_datamart <- r$chosen_datamart
+      
+      # Load studies & scripts related to this datamart
+      update_r_new(r = r, m = m, table = "studies")
+      update_r_new(r = r, m = m, table = "scripts")
+      
       # Try to load datamart
       tryCatch({
 
         capture.output(run_datamart_code_new(output, r = r, d = d, datamart_id = r$chosen_datamart, i18n = i18n, quiet = TRUE))
   
-        # A r variable to update study dropdown, when the load of datamart is finished
-        r$loaded_datamart <- r$chosen_datamart
-  
         r$show_message_bar1 <- tibble::tibble(message = "import_datamart_success", type = "success", trigger = Sys.time())
         
         # Try to run the scripts associated with this datamart
+        # Save runned scripts and success status
         
-        tryCatch({
+        if (nrow(r$scripts) > 0){
           
-          scripts_code <- r$code %>% dplyr::filter(category == "script") %>% dplyr::select(id = link_id, code) %>%
-            dplyr::inner_join(
+          scripts <- r$scripts %>% dplyr::inner_join(
               r$options %>% dplyr::filter(category == "datamart_scripts", link_id == r$chosen_datamart) %>% dplyr::select(id = value_num),
               by = "id"
-            )
+            ) %>%
+            dplyr::inner_join(r$code %>% dplyr::filter(category == "script") %>% dplyr::select(id = link_id, code), by = "id")
           
-          if (nrow(scripts_code > 0)){
-            for (i in 1:nrow(scripts_code)){
-              eval(parse(text = scripts_code[i, ]$code %>% stringr::str_replace_all("\r", "\n")))
+          if (nrow(scripts) > 0){
+            for (i in 1:nrow(scripts)){
+              
+              script <- scripts[i, ]
+              
+              r$datamart_loaded_scripts <- r$datamart_loaded_scripts %>% dplyr::bind_rows(
+                tibble::tibble(id = script$id, status = "failure", datetime = as.character(Sys.time())))
+              
+              # Execute script code
+              captured_output <- capture.output(
+                tryCatch({
+                  eval(parse(text = script$code %>% stringr::str_replace_all("\r", "\n")))
+                  r$datamart_loaded_scripts <- r$datamart_loaded_scripts %>% dplyr::mutate(status = dplyr::case_when(
+                    id == script$id ~ "success", TRUE ~ status
+                  ))
+                },
+                error = function(e){
+                  r$show_message_bar2 <- tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
+                  report_bug_new(r = r, output = output, error_message = "fail_load_scripts",
+                    error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)})
+              )
+            }
+          }
+          
+          if (nrow(r$datamart_loaded_scripts) > 0){
+            
+            # If activate_scripts_cache option activated, save data as CSV files
+            if(r$options %>% dplyr::filter(category == "datamart", name == "activate_scripts_cache", link_id == r$chosen_datamart) %>% dplyr::pull(value_num) == 1){
+            
+              # Save data as CSV files
+              for (table in c("labs_vitals", "patients")){
+                if (nrow(d[[table]]) > 0){
+                  readr::write_csv(d[[table]], paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/", table, "_with_scripts.csv"))
+                }
+              }
+              
+              # Save a CSV file for informations on loaded scripts
+              readr::write_csv(r$datamart_loaded_scripts, paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/loaded_scripts.csv"))
             }
             
-            r$show_message_bar2 <- tibble::tibble(message = "run_scripts_success", type = "success", trigger = Sys.time())
+            if (nrow(r$datamart_loaded_scripts %>% dplyr::filter(status == "failure")) > 0) r$show_message_bar2 <- 
+              tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
+            else r$show_message_bar2 <- tibble::tibble(message = "run_scripts_success", type = "success", trigger = Sys.time())
           }
-        },
-          error = function(e){
-            r$show_message_bar2 <<- tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
-            report_bug_new(r = r, output = output, error_message = "fail_load_scripts",
-              error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)
-          })
+        }
       },
-        error = function(e){
-          r$show_message_bar1 <<- tibble::tibble(message = "fail_load_datamart", type = "severeWarning", trigger = Sys.time())
-          report_bug_new(r = r, output = output, error_message = "fail_load_datamart",
-            error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)
-        })
+      error = function(e){
+        r$show_message_bar1 <- tibble::tibble(message = "fail_load_datamart", type = "severeWarning", trigger = Sys.time())
+        report_bug_new(r = r, output = output, error_message = "fail_load_datamart",
+          error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)
+      })
       
     })
     
     # Once the datamart is loaded, load studies & scripts
     observeEvent(r$loaded_datamart, {
-      
-      update_r_new(r = r, m = m, table = "studies")
-      update_r_new(r = r, m = m, table = "scripts")
       
       # Load studies datatable
       r$reload_studies_datatable <- Sys.time()

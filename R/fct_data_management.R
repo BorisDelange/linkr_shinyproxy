@@ -107,6 +107,11 @@ run_datamart_code_new <- function(output, r = shiny::reactiveValues(), d = shiny
 add_patients_to_subset <- function(output, r = shiny::reactiveValues(), patients = tibble::tibble(), subset_id = integer(),
   success_notification = TRUE, language = "EN"){
   
+  if (length(subset_id) == 0){
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
+    stop(translate(language, "invalid_subset_id_value", r$words))
+  }
+  
   # Check subset_id
   tryCatch(subset_id <- as.integer(subset_id), 
     error = function(e){
@@ -119,7 +124,7 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), patients
       stop(translate(language, "invalid_subset_id_value", r$words))}
   )
   
-  if (is.na(subset_id) | length(subset_id) == 0){
+  if (is.na(subset_id)){
     show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
     stop(translate(language, "invalid_subset_id_value", r$words))
   }
@@ -193,6 +198,12 @@ add_patients_to_subset_new <- function(output, r = shiny::reactiveValues(), m = 
   subset_id = integer(), success_notification = FALSE, i18n = R6::R6Class()){
   
   # Check subset_id
+  
+  if (length(subset_id) == 0){
+    show_message_bar_new(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n)
+    stop(i18n$t("invalid_subset_id_value"))
+  }
+  
   tryCatch(subset_id <- as.integer(subset_id), 
     error = function(e){
       if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "invalid_subset_id_value", 
@@ -200,7 +211,7 @@ add_patients_to_subset_new <- function(output, r = shiny::reactiveValues(), m = 
       stop(i18n$t("invalid_subset_id_value"))}
   )
   
-  if (is.na(subset_id) | length(subset_id) == 0){
+  if (is.na(subset_id)){
     show_message_bar_new(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n)
     stop(i18n$t("invalid_subset_id_value"))
   }
@@ -276,6 +287,12 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), pat
   subset_id = integer(), language = "EN"){
   
   # Check subset_id
+  
+  if (length(subset_id) == 0){
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
+    stop(translate(language, "invalid_subset_id_value", r$words))
+  }
+  
   tryCatch(subset_id <- as.integer(subset_id), 
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_subset_id_value", 
@@ -287,7 +304,7 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), pat
       stop(translate(language, "invalid_subset_id_value", r$words))}
   )
   
-  if (is.na(subset_id) | length(subset_id) == 0){
+  if (is.na(subset_id)){
     show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
     stop(translate(language, "invalid_subset_id_value", r$words))
   }
@@ -419,4 +436,181 @@ get_thesaurus_items_paths <- function(data = tibble::tibble()){
   }
   
   data_with_paths
+}
+
+get_thesaurus_name <- function(r = shiny::reactiveValues(), datamart_id = integer(), thesaurus_id = integer()){
+  
+  result <- NA_character_
+  
+  if (length(datamart_id) > 0){
+    data_source_id <- r$datamarts %>% dplyr::filter(id == datamart_id) %>% dplyr::pull(data_source_id)
+    if (length(data_source_id) > 0) data_source_name <- r$data_sources %>% dplyr::filter(id == data_source_id) %>% dplyr::pull(name)
+    result <- paste0(data_source_name, " - scripts")
+  }
+  
+  if (length(thesaurus_id) > 0){
+    result <- r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% dplyr::pull(name)
+  }
+  
+  result
+}
+
+get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_name = character(), 
+  item_name = character(), item_id = integer(), method = character(), create = FALSE, item_unit = NA_character_, 
+  i18n = R6::R6Class(), ns = shiny::NS()){
+  
+  stop_fct <- FALSE
+  
+  # Check thesaurus_name
+  
+  if (length(thesaurus_name) == 0) stop_fct <- TRUE
+  else if (is.na(thesaurus_name)) stop_fct <- TRUE
+  
+  if (stop_fct){
+    show_message_bar_new(output, 1, "invalid_thesaurus_name_value", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_thesaurus_name_value"))
+  }
+  
+  # Get thesaurus_id
+  
+  sql <- glue::glue_sql("SELECT * FROM thesaurus WHERE name = {thesaurus_name} AND deleted IS FALSE", .con = r$db)
+  thesaurus_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
+  if (length(thesaurus_id) == 0){
+    show_message_bar_new(output, 1, "thesaurus_id_not_found", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("thesaurus_id_not_found"))
+  }
+  
+  # Search by item name
+  
+  if (length(method) == 0) stop_fct <- TRUE
+  else if (is.na(method)) stop_fct <- TRUE
+  if (stop_fct){
+    show_message_bar_new(output, 1, "invalid_thesaurus_search_method", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_thesaurus_search_method"))
+  }
+  
+  if (method == "item_name"){
+    
+    if (length(item_name) == 0) stop_fct <- TRUE
+    else if (is.na(item_name)) stop_fct <- TRUE
+    if (stop_fct){
+      show_message_bar_new(output, 1, "invalid_thesaurus_item_name", "severeWarning", i18n = i18n, ns = ns)
+      stop(i18n$t("invalid_thesaurus_item_name"))
+    }
+    
+    sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} AND ",
+      "name = {item_name} AND deleted IS FALSE"), .con = r$db)
+    result <- DBI::dbGetQuery(r$db, sql)
+  }
+  
+  # Search by item id
+  
+  if (method == "item_id"){
+    
+    if (length(item_id) == 0) stop_fct <- TRUE
+    else if (is.na(item_id)) stop_fct <- TRUE
+    if (stop_fct){
+      show_message_bar_new(output, 1, "invalid_thesaurus_item_id", "severeWarning", i18n = i18n, ns = ns)
+      stop(i18n$t("invalid_thesaurus_item_id"))
+    }
+    
+    sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} AND ",
+      "item_id = {item_id} AND deleted IS FALSE"), .con = r$db)
+    result <- DBI::dbGetQuery(r$db, sql)
+  }
+  
+  if (nrow(result) == 0 & create){
+    add_thesaurus_item(output = output, r = r, thesaurus_name = thesaurus_name, item_name = item_name, item_unit = item_unit, i18n = i18n, ns = ns)
+  }
+  
+  else result
+}
+
+add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_name = character(), item_name = character(), 
+  item_unit = NA_character_, i18n = R6::R6Class(), ns = shiny::NS()){
+  
+  stop_fct <- FALSE
+  
+  # Check thesaurus_name
+  
+  if (length(thesaurus_name) == 0) stop_fct <- TRUE
+  else if (is.na(thesaurus_name)) stop_fct <- TRUE
+  
+  if (stop_fct){
+    show_message_bar_new(output, 1, "invalid_thesaurus_name_value", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_thesaurus_name_value"))
+  }
+  
+  # Get thesaurus_id
+  
+  sql <- glue::glue_sql("SELECT * FROM thesaurus WHERE name = {thesaurus_name} AND deleted IS FALSE", .con = r$db)
+  thesaurus_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
+  if (length(thesaurus_id) == 0){
+    show_message_bar_new(output, 1, "thesaurus_id_not_found", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("thesaurus_id_not_found"))
+  }
+  
+  # Check item_name
+  
+  if (length(item_name) == 0) stop_fct <- TRUE
+  else if (is.na(item_name)) stop_fct <- TRUE
+  if (stop_fct){
+    show_message_bar_new(output, 1, "invalid_thesaurus_item_name", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_thesaurus_item_name"))
+  }
+  
+  # Check item_unit
+  
+  if (length(item_unit) == 0) item_unit <- NA_character_
+  
+  # Check if this item already exists
+  sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} AND ",
+    "name = {item_name} AND deleted IS FALSE"), .con = r$db)
+  check_item <- DBI::dbGetQuery(r$db, sql)
+  
+  if (nrow(check_item) > 0){
+    show_message_bar_new(output, 1, "thesaurus_item_already_exists", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_thesaurus_item_name"))
+  }
+  
+  if (nrow(check_item) == 0){
+    
+    sql <- glue::glue_sql(paste0("SELECT COALESCE(MAX(item_id), 0) FROM thesaurus_items WHERE ",
+      "thesaurus_id = {thesaurus_id}"), .con = r$db)
+    last_item_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
+    
+    new_data <- tibble::tribble(~id, ~thesaurus_id, ~item_id, ~name, ~display_name, ~unit, ~datetime, ~deleted,
+      get_last_row(r$db, "thesaurus_items"), thesaurus_id, last_item_id + 1, item_name, "", item_unit, as.character(Sys.time()), FALSE)
+    DBI::dbAppendTable(r$db, "thesaurus_items", new_data)
+  }
+  
+  show_message_bar_new(output, 1, "thesaurus_item_added", "success", i18n = i18n, ns = ns)
+}
+
+create_scripts_thesaurus <- function(output, r = shiny::reactiveValues(), data_source_id = integer(), 
+  i18n = R6::R6Class(), ns = shiny::NS()){
+  
+  # Check if thesaurus exists
+  data_source_name <- r$data_sources %>% dplyr::filter(id == data_source_id) %>% dplyr::pull(name)
+  sql <- glue::glue_sql("SELECT * FROM thesaurus WHERE name = {paste0(data_source_name, ' - scripts')} AND deleted IS FALSE", .con = r$db)
+  thesaurus <- DBI::dbGetQuery(r$db, sql)
+  
+  # Create if doesn't exist
+  if (nrow(thesaurus) == 0){
+    
+    last_row_thesaurus <- get_last_row(r$db, "thesaurus")
+    
+    new_data <- tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
+      last_row_thesaurus + 1, paste0(data_source_name, " - scripts"), NA_character_, as.character(data_source_id), r$user_id, 
+      as.character(Sys.time()), FALSE)
+    DBI::dbAppendTable(r$db, "thesaurus", new_data)
+    r$thesaurus <- r$thesaurus %>% dplyr::bind_rows(new_data)
+    
+    new_data <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+      get_last_row(r$db, "code") + 1, "thesaurus", last_row_thesaurus + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+    DBI::dbAppendTable(r$db, "code", new_data)
+    r$code <- r$code %>% dplyr::bind_rows(new_data)
+    
+    show_message_bar_new(output, 1, "thesaurus_added", "success", i18n = i18n, ns = ns)
+  }
 }

@@ -187,7 +187,7 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
       monitor_perf(r = r, action = "stop", task = "mod_my_susbsets_server")
       mod_thesaurus_server("thesaurus", r, d, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_thesaurus_server")
-      mod_scripts_server("scripts", r, d, m, i18n)
+      mod_scripts_server("scripts", r, d, m, language, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_scripts_server")
       
       sapply(c("my_studies", "my_subsets", "thesaurus", "scripts"), function(page){

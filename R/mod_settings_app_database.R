@@ -461,7 +461,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
             }) -> result
             
             # Else, a dbGetQuery
-            else capture.output(DBI::dbGetQuery(db, request) %>% tibble::as_tibble()) -> result
+            else capture.output(DBI::dbGetQuery(db, request) %>% tibble::as_tibble() %>% print(n = 1000)) -> result
             
             # Render result
             result

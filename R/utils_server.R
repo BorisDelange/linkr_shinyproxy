@@ -502,7 +502,7 @@ get_col_names_new <- function(table_name = character(), i18n = R6::R6Class()){
   }
   
   if (table_name == "scripts"){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("data_source_id"), i18n$t("creator"), 
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("data_source_id"), i18n$t("creator"), 
       i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   

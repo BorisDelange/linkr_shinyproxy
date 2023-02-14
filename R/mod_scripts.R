@@ -87,7 +87,13 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
         make_card(i18n$t("scripts_cache_memory"),
           div(
             br(),
-            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5))
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              make_toggle_new(i18n = i18n, ns = ns, id = "activate_scripts_cache", label = "activate_scripts_cache", inline = TRUE)),
+            conditionalPanel(condition = "input.activate_scripts_cache == true", ns = ns, uiOutput(ns("scripts_cache_infos"))), br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), 
+              shiny.fluent::PrimaryButton.shinyInput(ns("save_cache_settings"), i18n$t("save")),
+              conditionalPanel(condition = "input.activate_scripts_cache == true", ns = ns, shiny.fluent::DefaultButton.shinyInput(ns("reload_cache"), i18n$t("reload_cache")))
+            )
           )
         ), br()
       )
@@ -146,20 +152,19 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
 
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
-              shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")),
-              div(i18n$t("output"), " : ", style = "margin:5px 0px 0px 30px; font-weight:bold;"),
-              div(shiny.fluent::ChoiceGroup.shinyInput(ns("output_type"), value = "console", 
-                options = list(
-                  list(key = "console", text = i18n$t("console")),
-                  list(key = "table", text = i18n$t("table"))
-                ), 
-              className = "inline_choicegroup"), 
-              style = "margin:-3px 0px 0px 20px;")
-            ),
-            br(), br(),
+              shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))#,
+              # div(i18n$t("output"), " : ", style = "margin:5px 0px 0px 30px; font-weight:bold;"),
+              # div(shiny.fluent::ChoiceGroup.shinyInput(ns("output_type"), value = "console", 
+              #   options = list(
+              #     list(key = "console", text = i18n$t("console")),
+              #     list(key = "table", text = i18n$t("table"))
+              #   ), 
+              # className = "inline_choicegroup"), 
+              # style = "margin:-3px 0px 0px 20px;")
+            ), br(),
             div(id = ns("console_output"), verbatimTextOutput(ns("console_result")),
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
-            shinyjs::hidden(div(id = ns("table_output"), DT::DTOutput(ns("table_result")), style = "width: 99%; margin-right: 5px;"))
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")#,
+            # shinyjs::hidden(div(id = ns("table_output"), DT::DTOutput(ns("table_result")), style = "width: 99%; margin-right: 5px;"))
           )
         ), br()
       )
@@ -190,25 +195,6 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
           )
         ), br()
       )
-    ),
-    
-    # --- --- --- ---
-    # To do list ----
-    # --- --- --- ---
-    
-    div(shiny.fluent::MessageBar(
-      div(
-        strong("A faire"),
-        tags$ul(
-          tags$li("Afficher description des scripts depuis page 'Configurer le datamart', en cliquant sur une case"),
-          tags$li("Créer un script depuis la page Gestion des scripts, en inline"),
-          tags$li("Pouvoir supprimer les CSV des scripts d'un datamart"),
-          tags$li("Modifier colonne datetime_start (enlever Z & T)"),
-          tags$li("Make all columns sortable"),
-          tags$li("Scripts in red if bug noticed / in green if OK / in grey if never runned since last update of code")
-        )
-      ),
-      messageBarType = 0)
     )
   ) -> result
   
@@ -218,7 +204,8 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
 #' scripts Server Functions
 #'
 #' @noRd 
-mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
+  language = "en", i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -286,10 +273,16 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Reset fields
       reset_scripts_fields(session = session)
       
-      # Create empty var for r$scripts, if there's an error loading the datamart
-      r$scripts <- tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
-        datetime = character(), deleted = logical())
+      # activate_scripts_cache option
+      value <- r$options %>% 
+        dplyr::filter(category == "datamart", name == "activate_scripts_cache", link_id == r$chosen_datamart) %>% dplyr::pull(value_num)
+      shiny.fluent::updateToggle.shinyInput(session, "activate_scripts_cache", value = as.logical(value))
       
+      # Create empty var for r$scripts, if there's an error loading the datamart
+      # r$scripts <- tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
+      #   datetime = character(), deleted = logical())
+      
+      # Load scripts for this datamart
       update_r(r = r, table = "scripts")
       
       # Show first card & hide "choose a datamart" card
@@ -330,6 +323,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Datamart scripts ----
     # --- --- --- --- --- -
     
+    # Save datamart scripts
+    
     observeEvent(input$save_datamart_scripts, {
       
       # Delete rows in options table concerning the scripts for this datamart
@@ -364,6 +359,64 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       show_message_bar_new(output, 4, "modif_saved", "success", i18n, ns = ns)
         
+    })
+    
+    # Save cache settings
+    
+    observeEvent(input$save_cache_settings, {
+      
+      sql <- glue::glue_sql(paste0("UPDATE options SET value_num = {as.integer(input$activate_scripts_cache)} ",
+        "WHERE category = 'datamart' AND name = 'activate_scripts_cache' AND link_id = {r$chosen_datamart} AND deleted IS FALSE"), .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql)
+      DBI::dbClearResult(query)
+      r$options <- r$options %>% dplyr::mutate(value_num = dplyr::case_when(
+        category == "datamart" & name == "activate_scripts_cache" & link_id == r$chosen_datamart & !deleted ~ as.numeric(input$activate_scripts_cache),
+        TRUE ~ value_num
+      ))
+      
+      show_message_bar_new(output, 4, "modif_saved", "success", i18n, ns = ns)
+    })
+    
+    # Update scripts_cache_infos UI
+    
+    observeEvent(r$datamart_loaded_scripts, {
+      if (nrow(r$datamart_loaded_scripts) > 0){
+        
+        datetime <- r$datamart_loaded_scripts %>% dplyr::slice(1) %>% dplyr::pull(datetime)
+        if (tolower(language) == "fr") datetime <- format(as.POSIXct(datetime), format = "%d-%m-%Y %H:%M")
+        if (tolower(language) == "en") datetime <- format(as.POSIXct(datetime), format = "%Y-%m-%d %H:%M")
+        
+        datamart_loaded_scripts <- r$datamart_loaded_scripts %>%
+          dplyr::left_join(r$scripts %>% dplyr::select(id, name), by = "id") %>%
+          dplyr::mutate(name = dplyr::case_when(is.na(name) ~ i18n$t("deleted_script"), TRUE ~ name))
+
+        loaded_scripts <- list()
+        loaded_scripts$success <- datamart_loaded_scripts %>% dplyr::filter(status == "success")
+        loaded_scripts$failure <- datamart_loaded_scripts %>% dplyr::filter(status == "failure")
+
+        for (status in c("success", "failure")){
+          if (nrow(loaded_scripts[[status]]) == 0) loaded_scripts[[status]] <- "/"
+          else {
+            my_list <- tagList()
+            for (i in 1:nrow(loaded_scripts[[status]])){
+              row <- loaded_scripts[[status]][i, ]
+              my_list <- tagList(my_list, tags$li(row$name))
+            }
+            loaded_scripts[[status]] <- tagList(tags$ul(my_list))
+          }
+        }
+
+        output$scripts_cache_infos <- renderUI(
+          tagList(
+            br(), div(
+              strong(i18n$t("last_cache_load_datetime")), " : ", datetime, br(), br(),
+              span(i18n$t("scripts_loaded_successfully"), style = "font-weight:bold; color:#0078D5;"), " : ", loaded_scripts$success,
+              span(i18n$t("scripts_with_load_failure"), style = "font-weight:bold; color:#CB181D;"), " : ", loaded_scripts$failure,
+              style = "border:solid 1px #DDDCDE; padding:8px; margin:0px 10px 0px 10px;"
+            )
+          )
+        )
+      }
     })
     
     # --- --- --- --- --- --- -
@@ -631,64 +684,75 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     # Execute code
     
-    observeEvent(input$execute_code, r$script_code <- input$ace_edit_code)
+    observeEvent(input$execute_code, {
+      r$script_code <- input$ace_edit_code
+      r$script_code_trigger <- Sys.time()
+      })
     
     observeEvent(input$ace_edit_code_run_selection, {
       if(!shinyAce::is.empty(input$ace_edit_code_run_selection$selection)) r$script_code <- input$ace_edit_code_run_selection$selection
       else r$script_code <- input$ace_edit_code_run_selection$line
+      r$script_code_trigger <- Sys.time()
     })
     
-    observeEvent(input$ace_code_run_all, r$script_code <- input$ace_edit_code)
+    observeEvent(input$ace_edit_code_run_all, {
+      r$script_code <- input$ace_edit_code
+      r$script_code_trigger <- Sys.time()
+      })
     
-    observeEvent(r$script_code, {
+    observeEvent(r$script_code_trigger, {
+      
+      # Create thesaurus for scripts if doesn't exist
+      create_scripts_thesaurus(output = output, r = r, 
+        data_source_id = r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id), i18n = i18n, ns = ns)
       
       edited_code <- r$script_code %>% stringr::str_replace_all("\r", "\n")
       
       # Variables to hide
-      new_env_vars <- list("r" = NA)
+      new_env_vars <- list()
       # Variables to keep
-      for (var in c("d", "m")) new_env_vars[[var]] <- eval(parse(text = var))
+      for (var in c("d", "m", "r", "output", "i18n",)) new_env_vars[[var]] <- eval(parse(text = var))
       new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
       
-      if (input$output_type == "console"){
-        shinyjs::show("console_output")
-        shinyjs::hide("table_output")
-        
-        options('cli.num_colors' = 1)
-        
-        # Capture console output of our code
-        captured_output <- capture.output(
-          tryCatch(eval(parse(text = edited_code), envir = new_env), error = function(e) print(e), warning = function(w) print(w)))
-        
-        # Restore normal value
-        options('cli.num_colors' = NULL)
-        
-        output$console_result <- renderText(paste(paste(captured_output), collapse = "\n"))
-      }
+      # if (input$output_type == "console"){
+      # shinyjs::show("console_output")
+      # shinyjs::hide("table_output")
       
-      if (input$output_type == "table"){
-        shinyjs::show("table_output")
-        shinyjs::hide("console_output")
-        
-        tryCatch({
-          
-          data <- eval(parse(text = edited_code), envir = new_env)
-          
-          render_datatable_new(
-            data = data,
-            output = output,
-            r = r,
-            ns = ns,
-            i18n = i18n,
-            output_name = "table_result",
-            filter = TRUE,
-            searchable_cols = names(data),
-            sortable_cols = names(data)
-          )
-        }, error = function(e) render_datatable_new(
-          data = tibble::tibble(), output = output, r = r, ns = ns, i18n = i18n, output_name = "table_result", filter = FALSE
-        ))
-      }
+      options('cli.num_colors' = 1)
+      
+      # Capture console output of our code
+      captured_output <- capture.output(
+        tryCatch(eval(parse(text = edited_code), envir = new_env), error = function(e) print(e), warning = function(w) print(w)))
+      
+      # Restore normal value
+      options('cli.num_colors' = NULL)
+      
+      output$console_result <- renderText(paste(paste(captured_output), collapse = "\n"))
+      # }
+      
+      # if (input$output_type == "table"){
+      #   shinyjs::show("table_output")
+      #   shinyjs::hide("console_output")
+      #   
+      #   tryCatch({
+      #     
+      #     data <- eval(parse(text = edited_code), envir = new_env)
+      #     
+      #     render_datatable_new(
+      #       data = data,
+      #       output = output,
+      #       r = r,
+      #       ns = ns,
+      #       i18n = i18n,
+      #       output_name = "table_result",
+      #       filter = TRUE,
+      #       searchable_cols = names(data),
+      #       sortable_cols = names(data)
+      #     )
+      #   }, error = function(e) render_datatable_new(
+      #     data = tibble::tibble(), output = output, r = r, ns = ns, i18n = i18n, output_name = "table_result", filter = FALSE
+      #   ))
+      # }
     })
     
     # Hide ace editor

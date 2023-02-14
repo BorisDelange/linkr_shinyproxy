@@ -352,16 +352,16 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # Add count_items_rows in the cache & get it if already in the cache
       tryCatch(count_items_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
         datamart_id = r$chosen_datamart, category = "count_items_rows"),
-        error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
-          error_name = paste0("modules - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+        error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_thesaurus", 
+          error_name = paste0("thesaurus - create_datatable_cache - count_items_rows - fail_load_thesaurus - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       
       # Add count_items_rows in the cache & get it if already in the cache
       tryCatch(count_patients_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
         datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
-        error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
-          error_name = paste0("modules - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+        error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_thesaurus", 
+          error_name = paste0("thesaurus - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       
-      if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
+      if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
       req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
       
       # Transform count_rows cols to integer, to be sortable
