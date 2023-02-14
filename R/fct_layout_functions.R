@@ -550,17 +550,17 @@ render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny
     emptyTable = i18n$t("dt_empty"))
   
   # If no row in dataframe, stop here
-  if (nrow(data) == 0){
-    
-    if (length(names(default_tibble)) == 0) return({
-      data <- tibble::tribble(~id)
-      names(data) <- c("")
-      output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom, language = dt_translation), 
-        rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
-    })
-    
-    if (length(names(default_tibble)) > 0) data <- default_tibble
-  }
+  # if (nrow(data) == 0){
+  #   
+  #   if (length(names(default_tibble)) == 0) return({
+  #     data <- tibble::tribble(~id)
+  #     names(data) <- c("")
+  #     output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom, language = dt_translation), 
+  #       rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
+  #   })
+  #   
+  #   if (length(names(default_tibble)) > 0) data <- default_tibble
+  # }
   
   
   # Which columns are non editable

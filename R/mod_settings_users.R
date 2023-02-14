@@ -270,8 +270,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       
       # Prepare data for datatable (add code for dropdowns etc)
       r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
-        table = table, dropdowns = dropdowns_datatable,
-        action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
+        table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
       
       hidden_cols <- c("id", "password", "deleted", "modified")
       
@@ -289,8 +288,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         
         # Reload datatable_temp variable
         r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
-          table = table, dropdowns = dropdowns_datatable,
-          action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
+          table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
         
         # Reload data of datatable
         DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)

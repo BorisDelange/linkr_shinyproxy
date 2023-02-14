@@ -519,8 +519,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Prepare data for datatable
 
       r$scripts_datatable_temp <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
-        table = "scripts", factorize_cols = factorize_cols, action_buttons = action_buttons,
-        data_input = r$scripts_temp, words = r$words)
+        table = "scripts", factorize_cols = factorize_cols, action_buttons = action_buttons, data_input = r$scripts_temp)
 
       # Render datatable
 

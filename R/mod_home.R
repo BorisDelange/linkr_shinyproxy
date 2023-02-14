@@ -32,35 +32,9 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
         shiny.fluent::PivotItem(id = "news_card", itemKey = "news", headerText = i18n$t("news")),
         shiny.fluent::PivotItem(id = "versions_card", itemKey = "versions", headerText = i18n$t("versions"))
       ),
-      div(
-        id = ns("overview_card"),
-        make_card(i18n$t("overview"), uiOutput(ns("overview_div")))
-      ),
-      shinyjs::hidden(
-        div(
-          id = ns("news_card"), uiOutput(ns("news_div"))
-          # make_card(i18n$t("news"), uiOutput(ns("overview_news")))
-        )
-      ),
-      shinyjs::hidden(
-        div(
-          id = ns("versions_card"),
-          make_card(i18n$t("versions"),
-            div(
-              br(),
-              div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
-              div(shiny.fluent::MessageBar(
-                div(
-                  strong("A faire"),
-                  p("Afficher les changements par version."),
-                  p("Décrire comment charger une ancienne version ou mettre à jour pour la nouvelle version.")
-                ),
-                messageBarType = 0)
-              )
-            )
-          )
-        )
-      )
+      div(id = ns("overview_card"), make_card(i18n$t("overview"), uiOutput(ns("overview_div")))),
+      shinyjs::hidden(div( id = ns("news_card"), uiOutput(ns("news_div")))),
+      shinyjs::hidden(div( id = ns("versions_card"), uiOutput(ns("versions_div")))),
     )
   }
   
@@ -287,44 +261,95 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
       cards <- c("overview_card", "news_card", "versions_card")
       
       if (!curl::has_internet()){
-        overview_div <- div("no_internet")
-        news_div <- div("no_internet")
+        default_div <- make_card("", shiny.fluent::MessageBar(i18n$t("error_connection_github"), messageBarType = 3))
+        overview_div <- default_div
+        news_div <- default_div
+        versions_div <- default_div
       }
       if (curl::has_internet()){
-        overview_div <- readLines(textConnection("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/overview.Md")) %>% 
-          includeMarkdown() %>% withMathJax()
-        # overview_div <- withMathJax(includeMarkdown(overview_md))
         
-        news_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/index.csv", col_types = "cc") %>%
-          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n)
+        # Overview div
+        
+        con <- textConnection("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/overview.Md")
+        overview_div <- readLines(con) %>% includeMarkdown() %>% withMathJax()
+        close(con)
+        
+        # News div
+        
+        try(news_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/index.csv", col_types = "cc") %>%
+          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n))
         
         news_div <- tagList()
         
-        sapply(1:nrow(news_files), function(i){
-          
-          news_file <- news_files[i, ]
-          
-          datetime <- substr(news_file$file, 1, 16) %>% as.POSIXct(format = "%Y-%m-%d_%H-%M")
-          if (tolower(language) == "fr") datetime <- format(as.POSIXct(datetime), format = "%d-%m-%Y %H:%M")
-          if (tolower(language) == "en") datetime <- format(as.POSIXct(datetime), format = "%Y-%m-%d %H:%M")
-          
-          filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/", news_file$file)
-          news_md <- readLines(textConnection(filepath_github)) %>% includeMarkdown() %>% withMathJax()
-          
-          output_name <- paste0("news_", substr(news_file$file, 1, 16))
-          
-          news_div <<- tagList(news_div, 
-            make_card(
-              tagList(news_file$title, span(" - ", datetime, style = "font-size:12px;")), 
-              uiOutput(ns(output_name))
+        if (nrow(news_files) == 0) news_div <- make_card("", shiny.fluent::MessageBar(i18n$t("no_data_available"), messageBarType = 5))
+        if (nrow(news_files) > 0){
+        
+          sapply(1:nrow(news_files), function(i){
+            
+            news_file <- news_files[i, ]
+            
+            datetime <- substr(news_file$file, 1, 16) %>% as.POSIXct(format = "%Y-%m-%d_%H-%M")
+            if (tolower(language) == "fr") datetime <- format(as.POSIXct(datetime), format = "%d-%m-%Y %H:%M")
+            if (tolower(language) == "en") datetime <- format(as.POSIXct(datetime), format = "%Y-%m-%d %H:%M")
+            
+            filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/", tolower(language), "/", news_file$file)
+            con <- textConnection(filepath_github)
+            news_md <- readLines(textConnection(filepath_github)) %>% includeMarkdown() %>% withMathJax()
+            close(con)
+            
+            output_name <- paste0("news_", substr(news_file$file, 1, 16))
+            
+            news_div <<- tagList(news_div, 
+              make_card(
+                tagList(news_file$title, span(" - ", datetime, style = "font-size:12px;")), 
+                uiOutput(ns(output_name))
+              )
             )
-          )
-          output[[output_name]] <- renderUI(news_md)
-        })
+            output[[output_name]] <- renderUI(news_md)
+          })
+        }
+        
+        # Versions div
+        
+        versions_files <- tibble::tibble()
+        
+        try(versions_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/versions/index.csv", col_types = "cc") %>%
+          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n))
+        
+        versions_div <- tagList()
+        
+        if (nrow(versions_files) == 0) versions_div <- make_card("", shiny.fluent::MessageBar(i18n$t("no_data_available"), messageBarType = 5))
+        if (nrow(versions_files) > 0){
+          
+          sapply(1:nrow(versions_files), function(i){
+            
+            versions_file <- versions_files[i, ]
+            
+            datetime <- substr(versions_file$file, 1, 16) %>% as.POSIXct(format = "%Y-%m-%d_%H-%M")
+            if (tolower(language) == "fr") datetime <- format(as.POSIXct(datetime), format = "%d-%m-%Y %H:%M")
+            if (tolower(language) == "en") datetime <- format(as.POSIXct(datetime), format = "%Y-%m-%d %H:%M")
+            
+            filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/versions/", tolower(language), "/", versions_file$file)
+            con <- textConnection(filepath_github)
+            news_md <- readLines(con) %>% includeMarkdown() %>% withMathJax()
+            close(con)
+            
+            output_name <- paste0("news_", substr(versions_file$file, 1, 16))
+            
+            news_div <<- tagList(news_div, 
+              make_card(
+                tagList(versions_file$title, span(" - ", datetime, style = "font-size:12px;")), 
+                uiOutput(ns(output_name))
+              )
+            )
+            output[[output_name]] <- renderUI(news_md)
+          })
+        }
       }
       
       output$overview_div <- renderUI(overview_div)
       output$news_div <- renderUI(news_div)
+      output$versions_div <- renderUI(versions_div)
       
     } 
     if (id == "home_get_started") cards <- c("import_excel_card", "import_csv_card", "connect_db_card")

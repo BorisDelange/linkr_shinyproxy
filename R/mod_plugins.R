@@ -871,8 +871,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Reload datatable_temp variable
       r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
-        table = "plugins", action_buttons = action_buttons_export_plugins, 
-        data_input = r[[paste0(prefix, "_export_plugins_temp")]])
+        table = "plugins", action_buttons = action_buttons_export_plugins, data_input = r[[paste0(prefix, "_export_plugins_temp")]])
       
       # Reload data of datatable
       if (length(r[[paste0(prefix, "_export_plugins_datatable_proxy")]]) > 0) DT::replaceData(r[[paste0(prefix, "_export_plugins_datatable_proxy")]], 

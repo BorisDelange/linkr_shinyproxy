@@ -855,8 +855,7 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shi
 
 prepare_data_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(), id = character(),
   table = character(), dropdowns = character(), dropdowns_multiselect = character(), dropdowns_null_value = character(), factorize_cols = character(),
-  action_buttons = character(), data_input = tibble::tibble(), data_output = tibble::tibble(), words = tibble::tibble()
-){
+  action_buttons = character(), data_input = tibble::tibble(), data_output = tibble::tibble()){
   
   monitor_perf(r = r, action = "start")
   monitor_perf(r = r, action = "stop", task = paste0("prepare_data_datatable _ table = ", table, " / id = ", id))
@@ -921,7 +920,7 @@ prepare_data_datatable_new <- function(output, r = shiny::reactiveValues(), ns =
           }
           else value <- as.integer(data_output[[i, name]])
           
-          options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = null_value, words = words) 
+          options <- convert_tibble_to_list_new(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = null_value, i18n = i18n) 
           
           # For dropdown parent_module in patient_lvl & aggregated_modules, need to select only modules depending on the same module family
           
