@@ -27,6 +27,7 @@ mod_settings_general_ui <- function(id = character(), i18n = R6::R6Class()){
     div(id = ns("change_password_card"),
       make_card(i18n$t("change_password"),
         div(
+          make_dropdown_new(i18n = i18n, ns = ns, label = "user", id = "user", width = "300px", disabled = TRUE),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
             make_textfield_new(i18n = i18n, ns = ns, label = "old_password", type = "password", canRevealPassword = TRUE, width = "300px"),
             make_textfield_new(i18n = i18n, ns = ns, label = "new_password", type = "password", canRevealPassword = TRUE, width = "300px"),

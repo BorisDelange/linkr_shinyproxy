@@ -130,14 +130,14 @@ make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character()
 }
 
 make_dropdown_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
-  id = NA_character_, value = NULL, width = NULL){
+  id = NA_character_, value = NULL, width = NULL, disabled = FALSE){
   
   if (is.na(id)) id <- label
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
   div(
     div(id = ns(paste0(id, "_title")), class = "input_title", i18n$t(label)),
-    div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect), style = style)
+    div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect, disabled = disabled), style = style)
   )
 }
 

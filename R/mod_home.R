@@ -276,8 +276,8 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
         
         # News div
         
-        try(news_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/index.csv", col_types = "cc") %>%
-          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n))
+        tryCatch(news_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/index.csv", col_types = "cc") %>%
+          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n), error = function(e) "")
         
         news_div <- tagList()
         
@@ -313,8 +313,8 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
         
         versions_files <- tibble::tibble()
         
-        try(versions_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/versions/index.csv", col_types = "cc") %>%
-          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n))
+        tryCatch(versions_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/versions/index.csv", col_types = "cc") %>%
+          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n), error = function(e) "")
         
         versions_div <- tagList()
         
