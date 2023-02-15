@@ -300,5 +300,9 @@ get_col_names <- function(table_name = character(), i18n = R6::R6Class()){
       i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
+  if (table_name == "perf_monitoring"){
+    result <- c(i18n$t("elapsed_time"), i18n$t("task"), i18n$t("datetime_start"), i18n$t("datetime_stop"))
+  }
+  
   result
 }

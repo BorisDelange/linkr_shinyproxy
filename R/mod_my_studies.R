@@ -549,7 +549,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
       observe({
         
-        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        # if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer to update messages"))
         
         messages_timer()
@@ -587,7 +587,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           r$study_reload_conversation <- Sys.time()
         }
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer to update messages"))
+        # if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer to update messages"))
       })
 
       observeEvent(r$study_reload_conversation, {

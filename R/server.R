@@ -255,12 +255,12 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
         mod_settings_users_server(paste0("settings_users_", page, "_options"), r, i18n)
       })
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_users")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_r_console"))
+      if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_dev"))
     
-      mod_settings_r_console_server("settings_r_console", r, d, m, i18n)
-      mod_page_sidenav_server("settings_r_console", r, d, m, i18n, language)
-      mod_page_header_server("settings_r_console", r, language, i18n)
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_r_console")
+      mod_settings_dev_server("settings_dev", r, d, m, i18n)
+      mod_page_sidenav_server("settings_dev", r, d, m, i18n, language)
+      mod_page_header_server("settings_dev", r, language, i18n)
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_dev")
       if (debug) print(paste0(Sys.time(), " - server - load server modules - data_sources / datamarts / thesaurus"))
     
       sapply(c("data_sources", "datamarts", "thesaurus"), function(page){
@@ -279,9 +279,9 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
       
       r$end_load_modules <- TRUE
       
-      r$perf_monitoring_table <-
-        r$perf_monitoring_table %>%
-        dplyr::mutate(elapsed_time = round(datetime_stop - datetime_start, 2), .before = "task") #%>%
+      # r$perf_monitoring_table <-
+      #   r$perf_monitoring_table %>%
+      #   dplyr::mutate(elapsed_time = round(datetime_stop - datetime_start, 2), .before = "task") #%>%
         # dplyr::arrange(dplyr::desc(elapsed_time))
     })
   }

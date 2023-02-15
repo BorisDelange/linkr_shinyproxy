@@ -24,8 +24,8 @@ mod_page_sidenav_ui <- function(id = character(), i18n = R6::R6Class()){
             list(name = i18n$t("home"), key = "home", url = shiny.router::route_link("home")),
             list(name = i18n$t("get_started"), key = "home_get_started", url = shiny.router::route_link("home/get_started")),
             list(name = i18n$t("tutorials"), key = "home_tutorials", url = shiny.router::route_link("home/tutorials")),
-            list(name = i18n$t("resources"), key = "home_resources", url = shiny.router::route_link("home/resources")),
-            list(name = i18n$t("dev"), key = "home_dev", url = shiny.router::route_link("home/dev"))
+            list(name = i18n$t("resources"), key = "home_resources", url = shiny.router::route_link("home/resources"))#,
+            # list(name = i18n$t("dev"), key = "home_dev", url = shiny.router::route_link("home/dev"))
             )
           )
         ),
@@ -174,7 +174,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = R6::R6Class()){
     })
     
     links <- list()
-    sapply(c("general_settings", "app_db", "users", "r_console", "data_management", "log"), function(page){
+    sapply(c("general_settings", "app_db", "users", "dev", "data_management", "log"), function(page){
       # Sub links for data management
       if (page == "data_management") links <<- rlist::list.append(links, list(name = i18n$t(page),
         id = ns(page), key = page, links = links_data_management, selectedKey = substr(id, nchar("settings") + 2, 100), isExpanded = TRUE))

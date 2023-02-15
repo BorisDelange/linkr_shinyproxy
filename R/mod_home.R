@@ -173,62 +173,62 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
     )
   )
   
-  if (id == "home_dev") main <- div(
-    shiny.fluent::Breadcrumb(items = list(
-      list(key = "dev", text = i18n$t("dev"))
-    ), maxDisplayedItems = 3),
-    shiny.fluent::Pivot(
-      onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-      shiny.fluent::PivotItem(id = "dev", itemKey = "dev", headerText = i18n$t("dev"))
-    ),
-    div(
-      id = ns("dev_card"),
-      make_card("",
-        div(
-          shiny.fluent::MessageBar(
-            div(
-              strong("A faire pour la version 0.1.3"),
-              p(
-                tags$ul(
-                  # tags$li("Plugins : vignettes, infos en XML sur Github, code sur Github, identifiant unique par plugin"),
-                  # tags$li("Pages d'accueil"),
-                  # tags$li("Pages de mise en place, Excel / CSV / connexion BDD"),
-                  # tags$li("Pages de tutoriels"),
-                  # tags$li("Pages de ressources"),
-                  # tags$li("Corrections Thésaurus - items (confirmation recharger cache, ajouter cache pour valeurs exemples)"),
-                  # tags$li("Création page Catégories pour Thésaurus"),
-                  # tags$li("Création page Conversions pour Thésaurus"),
-                  # tags$li("Création page Créer des items pour Thésaurus"),
-                  # tags$li("Pages d'aide sur chaque page"),
-                  # tags$li("Modifier forme Options accès utilisateurs"),
-                  # tags$li("Pages de subset"),
-                  # tags$li("Revoir les droits par utilisateur, pour l'affichage des pages (ajouter celles qui n'existaient pas encore"),
-                  # tags$li("Ajouter des items dans Settings / data sources"),
-                  # tags$li("Conversions / Catégories / Mapping dans Settings / thesaurus"),
-                  tags$li("Résoudre les bugs suivants ",
-                    tags$ul(
-                      tags$li("Lors connexion à BDD appli distante, switch pour la nouvelle BDD sans changer de compte"),
-                      # tags$li("En choisissant sur paramètres dans Gestion accès, afficher la page Options accès")
-                    )  
-                  )
-                )  
-              )
-            ),
-            messageBarType = 5), br(),
-          shiny.fluent::MessageBar(
-            div(
-              strong("Fait pour la version 0.1.3"),
-              p(
-                tags$ul(
-                  
-                )  
-              )
-            ),
-            messageBarType = 4)
-        )
-      )
-    )
-  )
+  # if (id == "home_dev") main <- div(
+  #   shiny.fluent::Breadcrumb(items = list(
+  #     list(key = "dev", text = i18n$t("dev"))
+  #   ), maxDisplayedItems = 3),
+  #   shiny.fluent::Pivot(
+  #     onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
+  #     shiny.fluent::PivotItem(id = "dev", itemKey = "dev", headerText = i18n$t("dev"))
+  #   ),
+  #   div(
+  #     id = ns("dev_card"),
+  #     make_card("",
+  #       div(
+  #         shiny.fluent::MessageBar(
+  #           div(
+  #             strong("A faire pour la version 0.1.3"),
+  #             p(
+  #               tags$ul(
+  #                 # tags$li("Plugins : vignettes, infos en XML sur Github, code sur Github, identifiant unique par plugin"),
+  #                 # tags$li("Pages d'accueil"),
+  #                 # tags$li("Pages de mise en place, Excel / CSV / connexion BDD"),
+  #                 # tags$li("Pages de tutoriels"),
+  #                 # tags$li("Pages de ressources"),
+  #                 # tags$li("Corrections Thésaurus - items (confirmation recharger cache, ajouter cache pour valeurs exemples)"),
+  #                 # tags$li("Création page Catégories pour Thésaurus"),
+  #                 # tags$li("Création page Conversions pour Thésaurus"),
+  #                 # tags$li("Création page Créer des items pour Thésaurus"),
+  #                 # tags$li("Pages d'aide sur chaque page"),
+  #                 # tags$li("Modifier forme Options accès utilisateurs"),
+  #                 # tags$li("Pages de subset"),
+  #                 # tags$li("Revoir les droits par utilisateur, pour l'affichage des pages (ajouter celles qui n'existaient pas encore"),
+  #                 # tags$li("Ajouter des items dans Settings / data sources"),
+  #                 # tags$li("Conversions / Catégories / Mapping dans Settings / thesaurus"),
+  #                 tags$li("Résoudre les bugs suivants ",
+  #                   tags$ul(
+  #                     tags$li("Lors connexion à BDD appli distante, switch pour la nouvelle BDD sans changer de compte"),
+  #                     # tags$li("En choisissant sur paramètres dans Gestion accès, afficher la page Options accès")
+  #                   )  
+  #                 )
+  #               )  
+  #             )
+  #           ),
+  #           messageBarType = 5), br(),
+  #         shiny.fluent::MessageBar(
+  #           div(
+  #             strong("Fait pour la version 0.1.3"),
+  #             p(
+  #               tags$ul(
+  #                 
+  #               )  
+  #             )
+  #           ),
+  #           messageBarType = 4)
+  #       )
+  #     )
+  #   )
+  # )
   
   div(class = "main",
       

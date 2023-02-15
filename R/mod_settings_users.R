@@ -387,8 +387,10 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
           "users_statuses_creation_card", 
           "users_statuses_management_card",
           "users_delete_data"),
-        "r_console", 
-          "r_console_edit_code_card",
+        "dev", c(
+          "dev_edit_code_card",
+          "dev_perf_monitoring_card",
+          "dev_to_do_list_card"),
         "data_sources", c(
           "data_sources_see_all_data", 
           "data_sources_creation_card",
