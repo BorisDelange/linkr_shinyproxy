@@ -92,7 +92,8 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
             conditionalPanel(condition = "input.activate_scripts_cache == true", ns = ns, uiOutput(ns("scripts_cache_infos"))), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), 
               shiny.fluent::PrimaryButton.shinyInput(ns("save_cache_settings"), i18n$t("save")),
-              conditionalPanel(condition = "input.activate_scripts_cache == true", ns = ns, shiny.fluent::DefaultButton.shinyInput(ns("reload_cache"), i18n$t("reload_cache")))
+              conditionalPanel(condition = "input.activate_scripts_cache == true", ns = ns, 
+                shiny.fluent::DefaultButton.shinyInput(ns("reload_cache"), i18n$t("reload_cache")))
             )
           )
         ), br()
@@ -208,9 +209,12 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  language = "en", i18n = R6::R6Class()){
+  language = "en", i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    if (perf_monitoring) monitor_perf(r = r, action = "start")
+    if (debug) print(paste0(Sys.time(), " - mod_scripts - start"))
     
     # --- --- --- --- --- ---
     # Show or hide cards ----
@@ -231,12 +235,15 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     observeEvent(r$show_message_bar1, show_message_bar(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
     observeEvent(r$show_message_bar2, show_message_bar(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
+    if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - show_message_bars"))
     
     # --- --- --- --- --- -
     # Update dropdowns ----
     # --- --- --- --- --- -
     
     observeEvent(r$scripts, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts"))
       
       options <- convert_tibble_to_list(r$scripts%>% dplyr::arrange(name), key_col = "id", text_col = "name")
       
@@ -252,6 +259,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     reset_scripts_fields <- function(session){
       
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - function reset_scripts_fields"))
+      
       shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", value = NULL)
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", value = NULL)
       shiny.fluent::updateComboBox.shinyInput(session, "scripts_description_chosen_script", value = NULL)
@@ -265,6 +274,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
       shinyAce::updateAceEditor(session, "ace_options_description", value = "")
       output$description_markdown_result <- renderUI("")
+      output$scripts_cache_infos <- renderUI("")
     }
     
     # --- --- --- --- --- --- --- --
@@ -272,6 +282,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # --- --- --- --- --- --- --- --
     
     observeEvent(r$chosen_datamart, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$chosen_datamart"))
       
       # Reset fields
       reset_scripts_fields(session = session)
@@ -320,6 +333,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         result
       })
       
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$chosen_datamart"))
     })
     
     # --- --- --- --- --- -
@@ -329,6 +343,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Save datamart scripts
     
     observeEvent(input$save_datamart_scripts, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_datamart_scripts"))
       
       # Delete rows in options table concerning the scripts for this datamart
       
@@ -364,11 +381,15 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)
         
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input_save_datamart_scripts"))
     })
     
     # Save cache settings
     
     observeEvent(input$save_cache_settings, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_cache_settings"))
       
       sql <- glue::glue_sql(paste0("UPDATE options SET value_num = {as.integer(input$activate_scripts_cache)} ",
         "WHERE category = 'datamart' AND name = 'activate_scripts_cache' AND link_id = {r$chosen_datamart} AND deleted IS FALSE"), .con = r$db)
@@ -380,14 +401,18 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       ))
       
       show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input$save_cache_settings"))
     })
     
     # Update scripts_cache_infos UI
     
     observeEvent(r$update_scripts_cache_card, {
       
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$update_scripts_cache_card"))
+      
       loaded_scripts_file_path <- paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/loaded_scripts.csv")
-      if (file.exists(loaded_scripts_file_path)) datamart_loaded_scripts <- readr::read_csv(loaded_scripts_file_path)
+      if (file.exists(loaded_scripts_file_path)) datamart_loaded_scripts <- readr::read_csv(loaded_scripts_file_path, show_col_types = FALSE)
       if (!file.exists(loaded_scripts_file_path)) datamart_loaded_scripts <- tibble::tibble()
       
       if (nrow(datamart_loaded_scripts) > 0){
@@ -416,7 +441,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
           }
         }
 
-        output$scripts_cache_infos <- renderUI(
+        output$scripts_cache_infos <- renderUI({
+          if (debug) print(paste0(Sys.time(), " - mod_scripts - output$scripts_cache_infos"))
+          
           tagList(
             br(), div(
               strong(i18n$t("last_cache_load_datetime")), " : ", datetime, br(), br(),
@@ -425,13 +452,17 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
               style = "border:solid 1px #DDDCDE; padding:8px; margin:0px 10px 0px 10px;"
             )
           )
-        )
+        })
       }
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$update_scripts_cache_card"))
     })
     
     # Reload script cache
     
     observeEvent(input$reload_cache, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$reload_cache"))
+      
       r$load_scripts <- Sys.time()
       r$force_reload_scripts_cache <- TRUE
     })
@@ -441,6 +472,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # --- --- --- --- --- --- -
     
     observeEvent(input$scripts_description_chosen_script, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$scripts_description_chosen_script"))
       
       if (length(input$scripts_description_chosen_script) > 1) link_id <- input$scripts_description_chosen_script$key
       else link_id <- input$scripts_description_chosen_script
@@ -470,6 +504,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         output$scripts_description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
       }, error = function(e) "")
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input$scripts_description_chosen_script"))
     })
     
     # --- --- --- -- -- --
@@ -477,6 +513,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # --- --- --- -- -- --
     
     observeEvent(input$add_script, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$add_script"))
       
       new_data <- list()
       new_data$name <- coalesce2(type = "char", x = input$script_name)
@@ -508,6 +546,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     observeEvent(r$scripts, {
       
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts"))
+      
       # Reset fields
       
       data_source_id <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)
@@ -536,10 +577,14 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Create a proxy for datatable
 
       r$scripts_datatable_proxy <- DT::dataTableProxy("scripts_datatable", deferUntilFlush = FALSE)
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$scripts"))
     })
 
     # Reload datatable
     observeEvent(r$scripts_temp, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts_temp"))
       
       # Reload datatable_temp variable
       if (nrow(r$scripts_temp) > 0) r$scripts_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
@@ -552,6 +597,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
     # Updates on datatable data
     observeEvent(input$scripts_datatable_cell_edit, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$scripts_datatable_cell_edit"))
 
       edit_info <- input$scripts_datatable_cell_edit
       r$scripts_temp <- DT::editData(r$scripts_temp, edit_info, rownames = FALSE)
@@ -562,6 +609,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
     # Save updates
     observeEvent(input$save_scripts_management, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_scripts_management"))
 
       req(nrow(r$scripts) > 0)
 
@@ -592,6 +641,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       information_variable = script_information_variable)
 
     observeEvent(input$deleted_pressed, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$deleted_pressed"))
 
       r$delete_script <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
       r[[script_delete_variable]] <- TRUE
@@ -600,6 +651,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     })
 
     observeEvent(r$reload_scripts, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$reload_scripts"))
 
       # Reload sidenav dropdown with reloading scripts
       # update_r(r = r, table = "scripts")
@@ -609,6 +662,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     })
     
     observeEvent(input$edit_code, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$edit_code"))
       
       link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
       
@@ -623,6 +678,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     })
     
     observeEvent(input$options, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$options"))
       
       # Get link_id variable, to update options div
       link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
@@ -642,6 +699,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # --- --- --- --- --- -
     
     observeEvent(input$code_chosen_script, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$code_chosen_script"))
       
       if (length(input$code_chosen_script) > 1) link_id <- input$code_chosen_script$key
       else link_id <- input$code_chosen_script
@@ -666,10 +725,19 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     # Save updates
     
-    observeEvent(input$ace_edit_code_save, r$script_save_code <- Sys.time())
-    observeEvent(input$save_code, r$script_save_code <- Sys.time())
+    observeEvent(input$ace_edit_code_save, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$ace_edit_code_save"))
+      r$script_save_code <- Sys.time()
+    })
+    observeEvent(input$save_code, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_code"))
+      r$script_save_code <- Sys.time()
+    })
     
     observeEvent(r$script_save_code, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$script_save_code"))
       
       if (length(input$code_chosen_script) > 1) link_id <- input$code_chosen_script$key
       else link_id <- input$code_chosen_script
@@ -700,27 +768,33 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Notify user
       show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)
       
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$scripts_save_code"))
     })
     
     # Execute code
     
     observeEvent(input$execute_code, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$execute_code"))
       r$script_code <- input$ace_edit_code
       r$script_code_trigger <- Sys.time()
-      })
+    })
     
     observeEvent(input$ace_edit_code_run_selection, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$ace_edit_code_run_selection"))
       if(!shinyAce::is.empty(input$ace_edit_code_run_selection$selection)) r$script_code <- input$ace_edit_code_run_selection$selection
       else r$script_code <- input$ace_edit_code_run_selection$line
       r$script_code_trigger <- Sys.time()
     })
     
     observeEvent(input$ace_edit_code_run_all, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$ace_edit_code_run_all"))
       r$script_code <- input$ace_edit_code
       r$script_code_trigger <- Sys.time()
-      })
+    })
     
     observeEvent(r$script_code_trigger, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$script_code_trigger"))
       
       # Create thesaurus for scripts if doesn't exist
       create_scripts_thesaurus(output = output, r = r, 
@@ -748,36 +822,14 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       options('cli.num_colors' = NULL)
       
       output$console_result <- renderText(paste(paste(captured_output), collapse = "\n"))
-      # }
-      
-      # if (input$output_type == "table"){
-      #   shinyjs::show("table_output")
-      #   shinyjs::hide("console_output")
-      #   
-      #   tryCatch({
-      #     
-      #     data <- eval(parse(text = edited_code), envir = new_env)
-      #     
-      #     render_datatable(
-      #       data = data,
-      #       output = output,
-      #       r = r,
-      #       ns = ns,
-      #       i18n = i18n,
-      #       output_name = "table_result",
-      #       filter = TRUE,
-      #       searchable_cols = names(data),
-      #       sortable_cols = names(data)
-      #     )
-      #   }, error = function(e) render_datatable(
-      #     data = tibble::tibble(), output = output, r = r, ns = ns, i18n = i18n, output_name = "table_result", filter = FALSE
-      #   ))
-      # }
     })
     
     # Hide ace editor
     
     observeEvent(input$hide_code_editor, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$hide_code_editor"))
+      
       if (input$hide_code_editor){
         shinyjs::hide("ace_edit_code")
         shinyjs::show("div_br") 
@@ -793,6 +845,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # --- --- --- --- -- -- --
     
     observeEvent(input$options_chosen_script, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$options_chosen_script"))
       
       if (length(input$options_chosen_script) > 1) link_id <- input$options_chosen_script$key
       else link_id <- input$options_chosen_script
@@ -817,6 +871,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Save updates
     
     observeEvent(input$save_options_description, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_options_description"))
       
       if (length(input$options_chosen_script) > 1) link_id <- input$options_chosen_script$key
       else link_id <- input$options_chosen_script
@@ -848,11 +905,15 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Notify user
       show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)
       
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input$save_options_description"))
     })
     
     # Render markdown
     
     observeEvent(input$execute_options_description, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$execute_options_description"))
       
       options_description <- isolate(input$ace_options_description %>% stringr::str_replace_all("\r", "\n"))
       
@@ -878,6 +939,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         output$description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
       }, error = function(e) "")
       
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input$execute_options_description"))
     })
     
   })

@@ -223,11 +223,15 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
 #' my_studies Server Functions
 #'
 #' @noRd 
-mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
+  i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    language <- "EN"
+    if (perf_monitoring) monitor_perf(r = r, action = "start")
+    if (debug) print(paste0(Sys.time(), " - mod_my_studies - start"))
+    
+    language <- "en"
     
     sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
@@ -250,12 +254,16 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     observeEvent(r$show_message_bar1, show_message_bar(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
     observeEvent(r$show_message_bar2, show_message_bar(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
+    if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - show_message_bars"))
     
     # --- --- --- --- --- --- --- --
     # When a datamart is chosen ----
     # --- --- --- --- --- --- --- --
     
     observeEvent(r$chosen_datamart, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$chosen_datamart"))
       
       # Show first card & hide "choose a datamart" card
       shinyjs::hide("choose_a_datamart_card")
@@ -289,7 +297,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       d$diagnoses <- tibble::tibble()
       
       # Status of loaded scripts
-      r$datamart_loaded_scripts <- tibble::tibble(id = integer(), status = character(), datetime = character())
+      # r$datamart_loaded_scripts <- tibble::tibble(id = integer(), status = character(), datetime = character())
       
       # A r variable to update study dropdown, when the load of datamart is finished
       r$loaded_datamart <- r$chosen_datamart
@@ -316,14 +324,21 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       })
       
       r$reload_studies_datatable <- Sys.time()
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$chosen_datamart"))
     })
     
     # Load scripts
     
     observeEvent(r$load_scripts, {
       
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$load_scripts"))
+      
       # Try to run the scripts associated with this datamart
       # Save runned scripts and success status
+      
+      r$datamart_loaded_scripts <- tibble::tibble(id = integer(), status = character(), datetime = character())
       
       if (nrow(r$scripts) > 0){
         
@@ -359,11 +374,16 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         
         if (nrow(r$datamart_loaded_scripts) > 0) r$reload_scripts_cache <- Sys.time()
       }
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$load_scripts"))
     })
     
     # Reload scripts cache
     
     observeEvent(r$reload_scripts_cache, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$reload_scripts_cache"))
       
       req(!is.na(r$chosen_datamart))
       
@@ -372,7 +392,11 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         
         tables <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
         
+        datamart_file_path <- paste0(r$app_folder, "/datamarts/", r$chosen_datamart)
         loaded_scripts_file_path <- paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/loaded_scripts.csv")
+        
+        # If datamart folder doesn't exist, create it
+        if (!dir.exists(datamart_file_path)) dir.create(datamart_file_path)
         
         # If cache doesn't exist, create cache
         if (!file.exists(loaded_scripts_file_path) | r$force_reload_scripts_cache){
@@ -393,7 +417,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if (file.exists(loaded_scripts_file_path)){
           for (table in tables){
             table_file_path <- paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/", table, "_with_scripts.csv")
-            if (file.exists(table_file_path)) d[[table]] <- readr::read_csv(table_file_path)
+            if (file.exists(table_file_path)) d[[table]] <- readr::read_csv(table_file_path, show_col_types = FALSE)
           }
         }
       }
@@ -404,10 +428,14 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       r$force_reload_scripts_cache <- FALSE
       r$update_scripts_cache_card <- Sys.time()
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$reload_scripts_cache"))
     })
     
     # Once the datamart is loaded, load studies & scripts
     observeEvent(r$loaded_datamart, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$loaded_datamart"))
       
       # Load studies datatable
       # r$reload_studies_datatable <- Sys.time()
@@ -422,6 +450,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- --- --- --- --
     
     observeEvent(m$chosen_study, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$chosen_study"))
       
       req(!is.na(m$chosen_study))
       # Show first card & hide "choose a datamart" card
@@ -449,6 +479,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # --- --- --- --- --
 
       observeEvent(m$chosen_study, {
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer m$chosen_study"))
 
         req(!is.na(m$chosen_study))
 
@@ -500,10 +533,13 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if (length(r$study_conversations_datatable_proxy) > 0) DT::replaceData(r$study_conversations_datatable_proxy, 
           r$study_conversations_temp, resetPaging = FALSE, rownames = FALSE)
         
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer m$chosen_study"))
       })
 
       # When a conversation is selected
       observeEvent(input$study_conversations_rows_selected, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$study_conversations_rows_selected"))
 
         r$study_reload_conversation <- Sys.time()
         r$study_selected_conversation <- r$study_conversations_temp[input$study_conversations_rows_selected, ]
@@ -512,6 +548,10 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # Timer to update messages
 
       observe({
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer to update messages"))
+        
         messages_timer()
         req(!is.na(m$chosen_study))
 
@@ -546,9 +586,14 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
           r$study_reload_conversation <- Sys.time()
         }
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer to update messages"))
       })
 
       observeEvent(r$study_reload_conversation, {
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$study_reload_conversation"))
 
         # selected_conversation <- r$study_conversations_temp[input$study_conversations_rows_selected, ]
         # r$study_selected_conversation <- selected_conversation %>% dplyr::select(conversation_id, conversation_name)
@@ -674,6 +719,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           )) %>%
           dplyr::select(-new_read) %>%
           dplyr::arrange(dplyr::desc(datetime))
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$study_reload_conversation"))
       })
 
       # --- --- --- --- -
@@ -681,11 +728,13 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # --- --- --- --- -
 
       observeEvent(input$conversation_new_message, {
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$conversation_new_message"))
         sapply(c("new_message_text_div", "conversation_hide_new_message_div"), function(name) shinyjs::show(name))
         shinyjs::hide("conversation_new_message")
       })
 
       observeEvent(input$conversation_hide_new_message, {
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$conversation_hide_new_message"))
         sapply(c("new_message_text_div", "conversation_hide_new_message_div"), function(name) shinyjs::hide(name))
         shinyjs::show("conversation_new_message")
       })
@@ -695,16 +744,21 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # --- --- --- --- --- --- --- --- --- --- -- -
 
       observeEvent(input$preview_new_conversation, {
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$preview_new_conversation"))
         r$study_preview_trigger <- Sys.time()
         r$study_preview_type <- "conversation"
       })
 
       observeEvent(input$preview_new_message, {
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$preview_new_message"))
         r$study_preview_trigger <- Sys.time()
         r$study_preview_type <- "message"
       })
 
       observeEvent(r$study_preview_trigger, {
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$study_preview_trigger"))
 
         req(r$study_preview_type %in% c("message", "conversation"))
 
@@ -769,6 +823,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
             )
           )
         }
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$study_preview_trigger"))
       })
 
       # --- --- --- --- --- --- --- --- --- --
@@ -776,16 +832,21 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # --- --- --- --- --- --- --- --- --- --
 
       observeEvent(input$send_new_conversation, {
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$send_new_conversation"))
         r$study_save_message_conversation_trigger <- Sys.time()
         r$study_save_message_conversation_type <- "conversation"
       })
 
       observeEvent(input$send_new_message, {
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$send_new_message"))
         r$study_save_message_conversation_trigger <- Sys.time()
         r$study_save_message_conversation_type <- "message"
       })
 
       observeEvent(r$study_save_message_conversation_trigger, {
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$study_save_message_conversation_trigger"))
 
         req(r$study_save_message_conversation_type %in% c("message", "conversation"))
         type <- r$study_save_message_conversation_type
@@ -908,6 +969,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
         # Notify user
         show_message_bar(output = output, id = 4, message = paste0("new_", type, "_added"), type = "success", i18n = i18n, ns = ns)
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$study_save_message_conversation_trigger"))
       })
 
     # --- --- --- --- ---
@@ -915,6 +978,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- ---
     
     observeEvent(input$add_study, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$add_study"))
       
       new_data <- list()
       new_data$name <- coalesce2(type = "char", x = input$study_name)
@@ -929,6 +995,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       # Reload datatable
       r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer input$add_study"))
     })
     
     # --- --- --- --- --- ---
@@ -950,6 +1018,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # Prepare data for datatable
     
     observeEvent(r$reload_studies_datatable, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$reload_studies_datatable"))
       
       if (nrow(r$studies) == 0) {
         
@@ -983,13 +1054,15 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         r$studies_datatable_proxy <- DT::dataTableProxy("studies_datatable", deferUntilFlush = FALSE)
       }
       
-      if (length(r$studies_datatable_proxy) > 0){
-        DT::replaceData(r$studies_datatable_proxy, data, resetPaging = FALSE, rownames = FALSE)
-      }
+      if (length(r$studies_datatable_proxy) > 0) DT::replaceData(r$studies_datatable_proxy, data, resetPaging = FALSE, rownames = FALSE)
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$reload_studies_datatable"))
     })
     
     # Reload datatable
     observeEvent(r$studies_temp, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$studies_temp"))
 
       # Reload datatable_temp variable
       if (nrow(r$studies_temp) == 0) r$studies_datatable_temp <- tibble::tibble(id = integer(), name = character(), description = character(), datamart_id = integer(),
@@ -1007,6 +1080,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # Updates on datatable data
     observeEvent(input$studies_datatable_cell_edit, {
       
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$studies_datatable_cell_edit"))
+      
       edit_info <- input$studies_datatable_cell_edit
       r$studies_temp <- DT::editData(r$studies_temp, edit_info, rownames = FALSE)
       
@@ -1016,6 +1091,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     # Save updates
     observeEvent(input$save_studies_management, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$save_studies_management"))
       
       req(nrow(r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)) > 0)
       
@@ -1050,6 +1127,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     observeEvent(input$deleted_pressed, {
       
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$deleted_pressed"))
+      
       r$delete_study <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
       r[[study_delete_variable]] <- TRUE
       
@@ -1061,6 +1140,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     observeEvent(input$delete_selection, {
       
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$delete_selection"))
+      
       req(length(input$studies_datatable_rows_selected) > 0)
       
       r$delete_study <- r$studies_temp[input$studies_datatable_rows_selected, ] %>% dplyr::pull(id)
@@ -1068,6 +1149,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     })
     
     observeEvent(r$reload_studies, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$reload_studies"))
       
       # Reload sidenav dropdown with reloading studies
       update_r(r = r, table = "studies")
@@ -1082,6 +1165,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- --
     
     observeEvent(input$options, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$options"))
       
       # Get link_id variable, to update options div
       link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
@@ -1100,6 +1185,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     })
     
     observeEvent(input$options_chosen, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$options_chosen"))
       
       if (length(input$options_chosen) > 1) link_id <- input$options_chosen$key
       else link_id <- input$options_chosen
@@ -1142,6 +1229,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     })
     
     observeEvent(input$options_save, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$options_save"))
 
       req(input$options_chosen)
 
@@ -1154,6 +1244,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
       save_settings_options(output = output, r = r, id = id, category = "study", code_id_input = paste0("options_", link_id),
         i18n = i18n, data = data, page_options = "users_allowed_read")
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer input$options_save"))
     })
     
     # --- --- --- --- ---
@@ -1169,6 +1261,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- --- --- --
     
     observeEvent(input$execute_code, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$execute_code"))
       
       code <- input$ace_edit_code %>% stringr::str_replace_all("\r", "\n")
       

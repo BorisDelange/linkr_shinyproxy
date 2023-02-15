@@ -118,7 +118,7 @@ import_datamart <- function(output, ns = shiny::NS(), r = shiny::reactiveValues(
           "labs_vitals" = "iciTTcncc",
           "text" = "iciTTcc",
           "orders" = "iciTTcincncncc")
-        d[[type]] <- readr::read_csv(path, col_types = col_types)
+        d[[type]] <- readr::read_csv(path, col_types = col_types, show_col_types = FALSE)
         if (!quiet & nrow(d[[type]]) > 0) show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", i18n = i18n, ns = ns)
       })
     }, 

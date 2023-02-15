@@ -631,7 +631,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
             
               # Load CSV file
               col_types_temp <- col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
-              temp <- readr::read_csv(paste0(exdir, "/", file_name), col_types = col_types_temp)
+              temp <- readr::read_csv(paste0(exdir, "/", file_name), col_types = col_types_temp, show_col_types = FALSE)
   
               # Delete data from old table
               sql <- glue::glue_sql("DELETE FROM {`table`}", .con = r$db)
