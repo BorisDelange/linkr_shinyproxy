@@ -517,20 +517,31 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       if (nrow(last_save) == 0) {
         
         # Insert last time row
-        last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull()
-        query <- DBI::dbSendStatement(r$db, paste0("INSERT INTO options(id, category, name, value, creator_id, datetime, deleted) ",
-          "SELECT ", last_row + 1, ", 'last_db_save', 'last_db_save', '", as.character(Sys.time()), "', ", r$user_id, ", ",
-          "'", as.character(Sys.time()), "', FALSE"))
-        DBI::dbClearResult(query)
+        last_row <- get_last_row(r$db, "options")
+        new_data <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+          as.integer(last_row + 1), "last_db_save", NA_integer_, "last_db_save", as.character(Sys.time()),
+          NA_real_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+        DBI::dbAppendTable(r$db, "options", new_data)
+        r$options <- r$options %>% dplyr::bind_rows(new_data)
+        
+        # query <- DBI::dbSendStatement(r$db, paste0("INSERT INTO options(id, category, name, value, creator_id, datetime, deleted) ",
+        #   "SELECT ", last_row + 1, ", 'last_db_save', 'last_db_save', '", as.character(Sys.time()), "', ", r$user_id, ", ",
+        #   "'", as.character(Sys.time()), "', FALSE"))
+        # DBI::dbClearResult(query)
       }
       
       else {
-        query <- DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", as.character(Sys.time()), "', datetime = '", as.character(Sys.time()), "'",
-          " WHERE category = 'last_db_save' AND name = 'last_db_save'"))
+        new_datetime <- as.character(Sys.time())
+        sql <- glue::glue_sql("UPDATE options SET value = {new_datetime}, datetime = {new_datetime} WHERE category = 'last_db_save' AND name = 'last_db_save'", .con = r$db)
+        query <- DBI::dbSendStatement(r$db, sql)
         DBI::dbClearResult(query)
+        r$options <- r$options %>% dplyr::mutate(
+          value = dplyr::case_when(category == "last_db_save" & name == "last_db_save" ~ new_datetime, TRUE ~ value),
+          datetime = dplyr::case_when(category == "last_db_save" & name == "last_db_save" ~ new_datetime, TRUE ~ datetime)
+        )
       }
       
-      update_r(r = r, table = "options")
+      # update_r(r = r, table = "options")
       
     })
     
@@ -573,7 +584,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     # Last time the db was restored
     
     observeEvent(r$options, {
-
+      
       last_restore <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_restore' AND name = 'last_db_restore'")
 
       if (nrow(last_restore) > 0) last_restore <- last_restore %>% dplyr::pull(value)
@@ -649,25 +660,32 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         if (nrow(last_restore) == 0) {
           
           # Insert last time row
-          last_row <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM options") %>% dplyr::pull()
-          query <- DBI::dbSendStatement(r$db, paste0("INSERT INTO options(id, category, name, value, creator_id, datetime, deleted) ",
-            "SELECT ", last_row + 1, ", 'last_db_restore', 'last_db_restore', '", as.character(Sys.time()), "', ", r$user_id, ", ",
-            "'", as.character(Sys.time()), "', FALSE"))
-          DBI::dbClearResult(query)
+          last_row <- get_last_row(r$db, "options")
+          
+          new_data <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+            as.integer(last_row + 1), "last_db_restore", NA_integer_, "last_db_restore", as.character(Sys.time()),
+            NA_real_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+          query <- DBI::dbAppendTable(r$db, "options", new_data)
+          r$options <- r$options %>% dplyr::bind_rows(new_data)
         }
         
         else {
-          query <- DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", as.character(Sys.time()), "', datetime = '", as.character(Sys.time()), "'",
-            " WHERE category = 'last_db_restore' AND name = 'last_db_restore'"))
+          new_datetime <- as.character(Sys.time())
+          sql <- glue::glue_sql("UPDATE options SET value = {new_datetime}, datetime = {new_datetime} WHERE category = 'last_db_restore' AND name = 'last_db_restore'", .con = r$db)
+          query <- DBI::dbSendStatement(r$db, sql)
           DBI::dbClearResult(query)
+          r$options <- r$options %>% dplyr::mutate(
+            value = dplyr::case_when(category == "last_db_restore" & name == "last_db_restore" ~ new_datetime, TRUE ~ value),
+            datetime = dplyr::case_when(category == "last_db_restore" & name == "last_db_restore" ~ new_datetime, TRUE ~ datetime)
+          )
         }
         
-        update_r(r = r, table = "options")
+        # update_r(r = r, table = "options")
         
-        show_message_bar(output, 3, "database_restored", "success", i18n = i18n, time = 15000)
+        show_message_bar(output, 3, "database_restored", "success", i18n = i18n, ns = ns, time = 15000)
       },
       error = function(e) report_bug(r = r, output = output, error_message = "error_restoring_database", 
-        error_name = paste0(id, " - restore database"), category = "Error", error_report = e, i18n = i18n))
+        error_name = paste0(id, " - restore database"), category = "Error", error_report = e, i18n = i18n, ns = ns))
     })
     
   })

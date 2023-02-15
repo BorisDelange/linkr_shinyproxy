@@ -335,6 +335,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       sql <- glue::glue_sql("DELETE FROM options WHERE category = 'datamart_scripts' AND link_id = {r$chosen_datamart}", .con = r$db)
       DBI::dbSendStatement(r$db, sql) -> query
       DBI::dbClearResult(query)
+      r$options <- r$options %>% dplyr::filter(category != "datamart_scripts" | (category == "datamart_scripts" & link_id != r$chosen_datamart))
       
       # Add in options table informations concerning the scripts for this datamart
       
@@ -356,9 +357,10 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         data_insert <- data_insert %>% dplyr::relocate(id)
 
         DBI::dbAppendTable(r$db, "options", data_insert)
+        r$options <- r$options %>% dplyr::bind_rows(data_insert)
       }
       
-      update_r(r = r, table = "options")
+      # update_r(r = r, table = "options")
       
       show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)
         
@@ -600,7 +602,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     observeEvent(r$reload_scripts, {
 
       # Reload sidenav dropdown with reloading scripts
-      update_r(r = r, table = "scripts")
+      # update_r(r = r, table = "scripts")
 
       # Reload datatable
       r$scripts_temp <- r$scripts %>% dplyr::mutate(modified = FALSE)
@@ -679,17 +681,21 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       code_id <- r$code %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(id)
 
-      DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", stringr::str_replace_all(input$ace_edit_code, "'", "''"), "' WHERE id = ", code_id)) -> query
+      ace_edit_code <- stringr::str_replace_all(input$ace_edit_code, "'", "''")
+      sql <- glue::glue_sql("UPDATE code SET code = {ace_edit_code} WHERE id = {code_id}", .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql) -> query
       DBI::dbClearResult(query)
+      r$code <- r$code %>% dplyr::mutate(code = dplyr::case_when(id == code_id ~ ace_edit_code, TRUE ~ code))
 
       # Update datetime in plugins table
 
       sql <- glue::glue_sql("UPDATE scripts SET datetime = {as.character(Sys.time())} WHERE id = {link_id}", .con = r$db)
-      DBI::dbSendStatement(r$db, sql) -> query
+      query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
+      r$scripts <- r$scripts %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ as.character(Sys.time()), TRUE ~ datetime))
       
-      update_r(r = r, table = "code")
-      update_r(r = r, table = "scripts")
+      # update_r(r = r, table = "code")
+      # update_r(r = r, table = "scripts")
       
       # Notify user
       show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)
@@ -822,17 +828,22 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
       option_id <- r$options %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(id)
 
-      DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", stringr::str_replace_all(input$ace_options_description, "'", "''"), "' WHERE id = ", option_id)) -> query
+      new_description <- stringr::str_replace_all(input$ace_options_description, "'", "''")
+      sql <- glue::glue_sql("UPDATE options SET value = {new_description} WHERE id = {option_id}", .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
+      r$options <- r$options %>% dplyr::mutate(value = dplyr::case_when(id == option_id ~ new_description, TRUE ~ value))
 
       # Update datetime in plugins table
 
-      sql <- glue::glue_sql("UPDATE scripts SET datetime = {as.character(Sys.time())} WHERE id = {link_id}", .con = r$db)
-      DBI::dbSendStatement(r$db, sql) -> query
+      new_datetime <- as.character(Sys.time())
+      sql <- glue::glue_sql("UPDATE scripts SET datetime = {new_datetime} WHERE id = {link_id}", .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
+      r$scripts <- r$scripts %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ new_datetime, TRUE ~ datetime))
 
-      update_r(r = r, table = "options")
-      update_r(r = r, table = "scripts")
+      # update_r(r = r, table = "options")
+      # update_r(r = r, table = "scripts")
 
       # Notify user
       show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)

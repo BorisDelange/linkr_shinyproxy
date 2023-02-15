@@ -535,6 +535,15 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
         table = table, dropdowns = dropdowns_datatable, dropdowns_multiselect = dropdowns_multiselect, factorize_cols = factorize_cols,
         action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]])
+      
+      # Replace empty data_source_id by "deleted data source"
+      if (table == "datamarts"){
+        r[[paste0(table, "_datatable_temp")]] <- r[[paste0(table, "_datatable_temp")]] %>%
+        dplyr::mutate_at("data_source_id", as.character) %>%
+        dplyr::mutate(data_source_id = dplyr::case_when(
+          data_source_id == "" ~ i18n$t("deleted_data_source"), TRUE ~ data_source_id
+        ))
+      }
     
       if (!r[[paste0(table, "_datatable_loaded")]]){
         

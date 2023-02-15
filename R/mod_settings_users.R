@@ -588,6 +588,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         sql <- paste0("DELETE FROM options WHERE category = 'users_accesses' AND link_id = ", link_id)
         query <- DBI::dbSendStatement(r$db, sql)
         DBI::dbClearResult(query)
+        r$options <- r$options %>% dplyr::filter(category != "users_accesses" | (category == "users_accesses" & link_id != !!link_id))
         add_log_entry(r = r, category = "SQL query", name = "Update users accesses", value = sql)
         
         # Attribute id values
@@ -598,15 +599,16 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         # Add new values to database
         DBI::dbAppendTable(r$db, "options", data)
         add_log_entry(r = r, category = "SQL query", name = "Update users accesses", value = toString(data))
+        r$options <- r$options %>% dplyr::bind_rows(data)
         
         # Remove because of lag
         # Update r$user_accesses
-        update_r(r = r, table = "options")
+        # update_r(r = r, table = "options")
         user_access_id <- r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::pull(user_access_id)
         r$user_accesses <- r$options %>% dplyr::filter(category == "users_accesses" & link_id == user_access_id & value_num == 1) %>% dplyr::pull(name)
         
         # Notify the user
-        show_message_bar(output = output, id = 1, message = "modif_saved", type = "success", i18n = i18n)
+        show_message_bar(output = output, id = 1, message = "modif_saved", type = "success", i18n = i18n, ns = ns)
         
       })
     }

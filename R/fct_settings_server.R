@@ -1,21 +1,3 @@
-monitor_perf <- function(r = shiny::reactiveValues(), action = "stop", task = character()){
-  
-  if (!r$perf_monitoring) return()
-  if (action == "start") datetime_start <<- Sys.time()
-  
-  if (action == "stop"){
-    datetime_stop <<- Sys.time()
-    
-    r$perf_monitoring_table <- 
-      r$perf_monitoring_table %>% 
-      dplyr::bind_rows(tibble::tribble(
-        ~task, ~datetime_start, ~datetime_stop, 
-        task, datetime_start, datetime_stop))
-    
-    datetime_start <<- Sys.time() 
-  }
-}
-
 #' Add new settings data
 #' 
 #' @param session Shiny session variable
@@ -352,6 +334,585 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   else sapply(c("plugin_name", "script_name", "study_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
+#' Create cache for datatable data
+#' 
+#' @param output Shiny output value, to show message bars
+#' @param r Shiny r reactive value, to communicate between modules
+#' @param language Language used (character)
+#' @param module_id ID of current page / module (character)
+#' @param thesaurus_id ID of thesaurus, which thesaurus items depend on (integer)
+#' @param datamart_id ID of datamart to count rows by item of the thesaurus (integer)
+#' @param category Category of cache, depending of the page of Settings (character)
+
+create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = R6::R6Class(), module_id = character(), 
+  thesaurus_id = integer(), datamart_id = 0, category = character()){
+  
+  # Load join between our data and the cache
+  
+  # For action buttons (delete & plus_minus) & colours, don't use datamart_id / link_id_bis
+  if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") |
+      grepl("plus_data_explorer", category) | grepl("colours_module", category) | grepl("plus_module", category)){
+    sql <- glue::glue_sql(paste0(
+      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
+      "FROM thesaurus_items t ",
+      "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ", 
+      "WHERE t.thesaurus_id = {thesaurus_id} AND t.deleted IS FALSE ",
+      "ORDER BY t.id"), .con = r$db)
+    data <- DBI::dbGetQuery(r$db, sql)
+  }
+  
+  # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
+  if (category %in% c("count_patients_rows", "count_items_rows")){
+    sql <- glue::glue_sql(paste0(
+      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
+      "FROM thesaurus_items t ",
+      "LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = {datamart_id} AND c.category = {category} ",
+      "WHERE t.thesaurus_id = {thesaurus_id} AND t.deleted IS FALSE ",
+      "ORDER BY t.id"), .con = r$db)
+    data <- DBI::dbGetQuery(r$db, sql)
+  }
+  
+  # For thumbs_and_delete, search in thesaurus_items_mapping table
+  if (category == "thumbs_and_delete"){
+    sql <- glue::glue_sql(paste0("SELECT t.id, t.deleted, c.value ",
+      "FROM thesaurus_items_mapping t ",
+      "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ",
+      "WHERE (t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
+      "AND t.category = 'user_added_mapping' AND t.deleted IS FALSE ",
+      "ORDER BY t.id"), .con = r$db)
+    data <- DBI::dbGetQuery(r$db, sql)
+  }
+  
+  # If there are missing data in the cache, reload cache 
+  
+  # reload_cache <- FALSE
+  ids_to_keep <- data %>% dplyr::filter(!is.na(data$value) & data$value != "") %>% dplyr::pull(id)
+  if (length(ids_to_keep) == 0) ids_to_keep <- c(0)
+  
+  # if (NA_character_ %in% data$value | "" %in% data$value) reload_cache <- TRUE
+  
+  # Reload cache if necessary
+  if (data %>% dplyr::filter(is.na(data$value) | data$value == "") %>% nrow() > 0){
+    
+    # print(paste0("reload cache ", category))
+    
+    # Reload data
+    if (category %in% c("count_items_rows", "count_patients_rows")){
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} ",
+        " AND deleted IS FALSE ORDER BY id"), .con = r$db)
+      data_reload <- DBI::dbGetQuery(r$db, sql)
+    }
+    else if (category == "thumbs_and_delete"){
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping t WHERE ",
+        "(t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
+        "AND t.id NOT IN ({ids_to_keep*}) AND t.category = 'user_added_mapping' AND deleted IS FALSE ",
+        "ORDER BY id"), .con = r$db)
+      data_reload <- DBI::dbGetQuery(r$db, sql)
+    }
+    else {
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} ",
+        "AND id NOT IN ({ids_to_keep*}) AND deleted IS FALSE ORDER BY id"), .con = r$db)
+      data_reload <- DBI::dbGetQuery(r$db, sql)
+    }
+    
+    # Make action column, depending on category
+    # If category is count_items_rows, add a count row column with number of rows by item in the datamart
+    # If category is count_patients_rows, add a count row column with number of patients by item in the datamart
+    # If category is delete, add a delete button only
+    # If category is plus_minus, add plus and minus buttons
+    # If category is thumbs_and_delete, add thumbs_up, thumbs_down and delete buttons
+    
+    if (category == "count_items_rows"){
+      
+      # Run datamart code
+      # Reload r$datamarts so that datamart dropdown on sidenav is reset
+      # update_r(r = r, table = "datamarts")
+      run_datamart_code(output = output, r = r, d = d, i18n = i18n, datamart_id = datamart_id)
+      
+      # Initiate variables
+      rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
+      rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
+      rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
+      
+      if (nrow(d$labs_vitals) != 0) rows_labs_vitals <- d$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      if (nrow(d$text) != 0) rows_text <- d$text %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      if (nrow(d$orders) != 0) rows_orders <- d$orders %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
+      
+      # Merge rows count vars
+      count_items_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
+      
+      # Check if argument thesaurus_id corresponds to thesaurus_name in the data
+      # Select thesaurus from r$thesaurus with thesaurus_id
+      # Inner join with correspondance between thesaurus_name
+      
+      count_items_rows <- count_items_rows %>% 
+        dplyr::inner_join(r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% 
+            dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
+      
+      if (nrow(count_items_rows) != 0){
+        count_items_rows <- count_items_rows %>% dplyr::select(-thesaurus_name, -thesaurus_id)
+        data_reload <- data_reload %>% dplyr::left_join(count_items_rows, by = "item_id") %>% dplyr::rename(value = count_items_rows)
+      }
+      if (nrow(count_items_rows) == 0) data_reload <- data_reload %>% dplyr::mutate(value = 0)
+      
+      # Set 0 when value is na
+      # Convert value to character
+      data_reload <- data_reload %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
+    }
+    
+    if (category == "count_patients_rows"){
+      
+      # Reload r$datamarts so that datamart dropdown on sidenav is reset
+      # update_r(r = r, table = "datamarts")
+      run_datamart_code(output = output, r = r, d = d, i18n = i18n, datamart_id = datamart_id)
+      
+      # Initiate variables
+      rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
+      rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
+      rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
+      
+      if (nrow(d$labs_vitals) != 0) rows_labs_vitals <- d$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% 
+        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
+      if (nrow(d$text) != 0) rows_text <- d$text %>% dplyr::group_by(thesaurus_name, item_id) %>% 
+        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
+      if (nrow(d$orders) != 0) rows_orders <- d$orders %>% dplyr::group_by(thesaurus_name, item_id) %>%
+        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
+      
+      count_patients_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
+      
+      count_patients_rows <- count_patients_rows %>% 
+        dplyr::inner_join(r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% 
+            dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
+      
+      if (nrow(count_patients_rows) != 0){
+        count_patients_rows <- count_patients_rows %>% dplyr::select(-thesaurus_name, -thesaurus_id)
+        data_reload <- data_reload %>% dplyr::left_join(count_patients_rows, by = "item_id") %>% dplyr::rename(value = count_patients_rows)
+      }
+      
+      if (nrow(count_patients_rows) == 0) data_reload <- data_reload %>% dplyr::mutate(value = 0)
+      
+      # Set 0 when value is na
+      # Convert value to character
+      data_reload <- data_reload %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
+      
+    }
+    
+    if (category == "delete"){
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+        tagList(
+          shiny::actionButton(paste0("sub_delete_", id), "", icon = icon("trash-alt"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-thesaurus_items_deleted_pressed', this.id, {priority: 'event'})")))))
+    }
+    if (category == "plus_minus"){
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+        tagList(
+          shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")),
+          shiny::actionButton(paste0("remove_", id), "", icon = icon("minus"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_removed', this.id, {priority: 'event'})")))))
+    }
+    if (category == "plus_plugin" | grepl("plus_module", category)){
+      if (category == "plus_plugin") input_name <- "item_selected"
+      else if (category == "plus_module_element_creation") input_name <- "module_element_creation_item_selected"
+      else if (category == "plus_module_element_settings") input_name <- "module_element_settings_item_selected"
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+        tagList(
+          shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-", input_name, "', this.id, {priority: 'event'})")))))
+    }
+    if (category == "thumbs_and_delete"){
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+        tagList(
+          shiny::actionButton(paste0("positive_eval_", id), "", icon = icon("thumbs-up"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
+            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
+          shiny::actionButton(paste0("negative_eval_", id), "", icon = icon("thumbs-down"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})"),
+            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
+          shiny::actionButton(paste0("remove_", id), "", icon = icon("trash-alt"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"),
+            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
+        )))
+    }
+    if (grepl("plus_data_explorer", category)){
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+        tagList(
+          shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-data_explorer_item_selected', this.id, {priority: 'event'})")))))
+    }
+    if (category == "colours_plugin" | grepl("colours_module", category)){
+      
+      if (category == "colours_plugin") input_name <- "colours"
+      else if (category == "colours_module_element_creation") input_name <- "module_element_creation_colour"
+      else if (category == "colours_module_element_settings") input_name <- "module_element_settings_colour"
+      
+      colorCells <- list(
+        list(id = "#EF3B2C", color = "#EF3B2C"),
+        list(id = "#CB181D", color = "#CB181D"),
+        list(id = "#7BCCC4", color = "#7BCCC4"),
+        list(id = "#2B8CBE", color = "#2B8CBE"),
+        list(id = "#5AAE61", color = "#5AAE61"),
+        list(id = "#FFD92F", color = "#FFD92F"),
+        list(id = "#000000", color = "#000000"))
+      
+      ns <- NS(module_id)
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+        div(shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0(input_name, "_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells), 
+          cellHeight = 15, cellWidth = 15#, cellMargin = 10
+        )#,
+          #style = "height:20px; padding:0px; margin-top:24px;"
+        )
+      ))
+    }
+    
+    # Delete old cache
+    
+    if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") | 
+        grepl("plus_data_explorer", category) | grepl("plus_module", category) | grepl("colours_module", category)){
+      sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
+        "SELECT c.id FROM cache c ",
+        "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
+        "WHERE t.thesaurus_id = {thesaurus_id}", 
+        ")"), .con = r$db)
+      DBI::dbSendStatement(r$db, sql) -> query
+    }
+    
+    # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
+    if (category %in% c("count_patients_rows", "count_items_rows")){
+      sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
+        "SELECT c.id FROM cache c ",
+        "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.link_id_bis = {datamart_id} AND c.category = {category} ",
+        "WHERE t.thesaurus_id = {thesaurus_id}",
+        ")"), .con = r$db)
+      DBI::dbSendStatement(r$db, sql) -> query
+    }
+    
+    # For thumbs_and_delete, use thesaurus_items_mapping table
+    if (category == "thumbs_and_delete"){
+      sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
+        "SELECT c.id FROM cache c ",
+        "INNER JOIN thesaurus_items_mapping t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
+        "AND (t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
+        ")"), .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql)
+    }
+    
+    # Merge new data & old data
+    if (category %not_in% c("count_items_rows", "count_patients_rows")){
+      if (nrow(data) > 0) data <- data %>% dplyr::filter(!is.na(data$value) & data$value != "") %>% dplyr::bind_rows(data_reload)
+      else data <- data_reload
+    } 
+    else data <- data_reload
+    
+    # DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "' AND link_id_bis = ", datamart_id)) -> query
+    DBI::dbClearResult(query)
+    
+    # Get last row & insert new data
+    last_row <- as.integer(DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM cache") %>% dplyr::pull())
+    data_insert <-
+      data_reload %>%
+      dplyr::transmute(
+        category = !!category,
+        link_id = id,
+        link_id_bis = datamart_id,
+        value,
+        datetime = as.character(Sys.time()))
+    data_insert$id <- seq.int(nrow(data_insert)) + last_row
+    data_insert <- data_insert %>% dplyr::relocate(id)
+    
+    # Add data in cache table
+    DBI::dbAppendTable(r$db, "cache", data_insert)
+  }
+  
+  if (category %in% c("delete", "plus_plugin", "plus_minus", "thumbs_and_delete") | 
+      grepl("plus_data_explorer", category) | grepl("plus_module", category)) data <- data %>% dplyr::rename(action = value)
+  if (category == "colours_plugin" | grepl("colours_module", category)) data <- data %>% dplyr::rename(colour = value)
+  if (category %in% c("count_patients_rows", "count_items_rows")) data <- data %>% dplyr::rename(!!category := value) %>% dplyr::select(item_id, !!category)
+  
+  data
+}
+
+#' Delete element
+#' 
+delete_element <- function(r = shiny::reactiveValues(), session, input, output, ns = shiny::NS(), i18n = R6::R6Class(),
+  delete_prefix = character(), dialog_title = character(), dialog_subtext = character(),
+  react_variable = character(), table = character(), r_table = character(), id_var_sql = character(), id_var_r = character(),
+  delete_message = character(), reload_variable = character(), information_variable = character(), translation = TRUE, 
+  app_folder = character(), prefix = character()){
+  
+  delete_variable <- paste0(delete_prefix, "_open_dialog")
+  
+  r[[delete_variable]] <- FALSE
+  
+  if (translation){
+    dialog_title <- i18n$t(dialog_title)
+    dialog_subtext <- i18n$t(dialog_subtext)
+  }
+  
+  dialog_content <- list(
+    type = 0,
+    title = dialog_title,
+    closeButtonAriaLabel = "Close",
+    subText = tagList(dialog_subtext, br(), br())
+  )
+  
+  output[[react_variable]] <- shiny.fluent::renderReact({
+    
+    shiny.fluent::Dialog(
+      hidden = !r[[delete_variable]],
+      onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", delete_prefix, "_hide_dialog', Math.random()); }")),
+      dialogContentProps = dialog_content,
+      modalProps = list(),
+      shiny.fluent::DialogFooter(
+        shiny.fluent::PrimaryButton.shinyInput(ns(paste0(delete_prefix, "_delete_confirmed")), text = i18n$t("delete")),
+        shiny.fluent::DefaultButton.shinyInput(ns(paste0(delete_prefix, "_delete_canceled")), text = i18n$t("dont_delete"))
+      )
+    )
+  })
+  
+  # Whether to close or not delete dialog box
+  observeEvent(input[[paste0(delete_prefix, "_hide_dialog")]], r[[delete_variable]] <- FALSE)
+  observeEvent(input[[paste0(delete_prefix, "_delete_canceled")]], r[[delete_variable]] <- FALSE)
+  
+  # When the deletion is confirmed
+  observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
+    
+    r[[delete_variable]] <- FALSE
+    
+    # Remove files if this is a plugin
+    if (table == "plugins"){
+      for (plugin_id in r[[id_var_r]]){
+        plugin_options <- r$options %>% dplyr::filter(category == "plugin", link_id == plugin_id)
+        unlink(paste0(app_folder, "/plugins/", prefix, "/", plugin_options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value)), recursive = TRUE)
+      }
+    }
+    
+    # Delete row in DB table and associated tables
+    sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE {`id_var_sql`} IN ({r[[id_var_r]]*})" , .con = r$db)
+    DBI::dbSendStatement(r$db, sql) -> query
+    DBI::dbClearResult(query)
+    
+    sql <- glue::glue_sql("UPDATE options SET deleted = TRUE WHERE category = {table} AND link_id IN ({r[[id_var_r]]*})" , .con = r$db)
+    DBI::dbSendStatement(r$db, sql) -> query
+    DBI::dbClearResult(query)
+    
+    sql <- glue::glue_sql("UPDATE code SET deleted = TRUE WHERE category = {table} AND link_id IN ({r[[id_var_r]]*})" , .con = r$db)
+    DBI::dbSendStatement(r$db, sql) -> query
+    DBI::dbClearResult(query)
+    
+    if (length(r_table) > 0) r[[r_table]] <- r[[r_table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
+    else r[[table]] <- r[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
+    
+    # # Notify user
+    show_message_bar(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n, ns = ns)
+    
+    # Activate reload variable
+    if (length(reload_variable) > 0) r[[reload_variable]] <- Sys.time()
+    
+    # Information variable
+    if (length(information_variable) > 0) r[[information_variable]] <- r[[id_var_r]]
+    
+  })
+}
+
+#' Delete a row in datatable
+#' 
+#' @param output Shiny output variable
+#' @param r r Shiny reactive value used to communicate between modules
+#' @param ns Shiny namespace
+#' @param language Language used (character)
+#' @param row_deleted ID of row to delete (integer) 
+#' @param table Name of the table used (character)
+#' @examples 
+#' \dontrun{
+#' delete_settings_datatable_row(output = output, r = r, ns = ns, language = "EN", row_deleted = 13, table = "datamarts")
+#' }
+delete_settings_datatable_row <- function(output, id = character(), r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(),
+  link_id = integer(), category = character(), row_deleted = integer(), table = character()){
+  
+  # Close dialog box
+  r[[paste0(table, "_delete_dialog")]] <- FALSE
+  
+  # Delete row in database
+  DBI::dbSendStatement(r$db, paste0("UPDATE ", table, " SET deleted = TRUE WHERE id = ", row_deleted)) -> query
+  DBI::dbClearResult(query)
+  r[[table]] <- r[[table]] %>% dplyr::filter(id != row_deleted)
+  
+  # Prefix, for patient_lvl & aggregated tables
+  prefix <- ""
+  if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
+  if (grepl("aggregated", table)) prefix <- "aggregated"
+  
+  # If we delete a datamart, delete all studies & subsets associated
+  if (table == "datamarts"){
+    
+    studies <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM studies WHERE datamart_id = ", row_deleted))
+    
+    if(nrow(studies) > 0){
+      studies <- studies %>% dplyr::pull()
+      
+      sql <- glue::glue_sql("UPDATE studies SET deleted = TRUE WHERE datamart_id = {row_deleted}", .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql)
+      DBI::dbClearResult(query)
+      r$studies <- r$studies %>% dplyr::filter(datamart_id != row_deleted)
+      
+      sql <- glue::glue_sql("UPDATE subsets SET deleted = TRUE WHERE study_id IN ({studies*})", .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql)
+      DBI::dbClearResult(query)
+      r$subsets <- r$subsets %>% dplyr::filter(study_in %not_in% studies)
+      
+      # update_r(r = r, table = "studies")
+      # update_r(r = r, table = "subsets")
+    }
+  }
+  
+  # If we delete a study, delete all subsets associated
+  if (table == "studies"){
+    
+    sql <- glue::glue_sql("UPDATE subsets SET deleted = TRUE WHERE study_id = {row_deleted}", .con = r$db)
+    query <- DBI::dbSendStatement(r$db, sql)
+    DBI::dbClearResult(query)
+    r$subsets <- r$subsets %>% dplyr::filter(study_id != row_deleted)
+    
+    # update_r(r = r, table = "subsets")
+  }
+  
+  # If we delete a module family, delete all modules & modules elements associated
+  if (table == paste0(prefix, "_modules_families")){
+    
+    modules <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM ", prefix, "_modules WHERE module_family_id = ", row_deleted)) %>% dplyr::pull()
+    
+    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_modules'`} SET deleted = TRUE WHERE module_family_id = {row_deleted}", .con = r$db)
+    query <- DBI::dbSendStatement(r$db, sql)
+    DBI::dbClearResult(query)
+    r[[paste0(prefix, "_modules")]] <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id != row_deleted)
+    
+    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_modules_elements'`} SET deleted = TRUE WHERE module_id IN ({modules*})", .con = r$db)
+    query <- DBI::dbSendStatement(r$db, sql)
+    DBI::dbClearResult(query)
+    r[[paste0(prefix, "_modules_elements")]] <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id %not_in% modules)
+    
+    # update_r(r = r, table = paste0(prefix, "_modules"))
+    # update_r(r = r, table = paste0(prefix, "_modules_elements"))
+  }
+  
+  # If we delete a module, delete all modules elements associated
+  if (table == paste0(prefix, "_modules")){
+    
+    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_modules_elements')`} SET deleted = TRUE WHERE module_id = {row_deleted}", .con = r$db)
+    query <- DBI::dbSendStatement(r$db, sql)
+    DBI::dbClearResult(query)
+    r[[paste0(prefix, "_modules_elements")]] <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id != row_deleted)
+    
+    # update_r(r = r, table = paste0(prefix, "_modules_elements"))
+  }
+  
+  # Update r vars
+  # For thesaurus_items : the r variable is r$sub_thesaurus_items (from page settings / data management / thesaurus)
+  # This page is the only place from where we can delete a thesaurus item
+  # Distinct r$ names are to avoid conflict with other pages (settings / plugins & settings / modules)
+  
+  if (table == "thesaurus_items") r$thesaurus_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_delete")
+  
+  # if (table != "thesaurus_items") update_r(r = r, table = table)
+  
+  # Notification to user
+  show_message_bar(output = output, id = 3, paste0(get_singular(word = table), "_deleted"), type = "severeWarning", i18n = i18n, ns = ns)
+}
+
+#' Execute / test code after edition
+#' 
+#' @description Execute code entered in the ShinyAce editor\cr
+#' For plugins page, UI & server code are displayed in distinct outputs (uiOutput for UI code, textOutput for server code to display error messages)
+#' @param input variable from Shiny, used to execute UI & server code (plugins page)
+#' @param output variable from Shiny, used to render messages on the message bar
+#' @param session variable from Shiny, used to execute UI & server code (plugins page)
+#' @param id ID of the current page / module
+#' @param ns Shiny namespace
+#' @param language language used (character)
+#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param edited_code New code, after editing it (character)
+#' @param code_type For plugins page, code_type could be UI or server (character)
+#' @param data A list containing dataframes / tibbles, if data need to be used in the evaluated code (list)
+#' @examples 
+#' \dontrun{
+#'  execute_settings_code(output = output, r = r, edited_code = "print('test')")
+#' }
+execute_settings_code <- function(input, output, session, id = character(), ns = shiny::NS(), i18n = R6::R6Class(), 
+  r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
+  edited_code = character(), code_type = "", data = list()){
+  
+  result <- ""
+  
+  # If code is UI, execute it only
+  if (code_type == "ui"){
+    
+    tryCatch(result <- eval(parse(text = edited_code)), error = function(e) stop(e), warning = function(w) stop(w))
+  }
+  
+  # If code is server, capture the console output
+  # Server is also used by R_console page
+  if (code_type == "server"){
+    
+    # Change this option to display correctly tibble in textbox
+    options('cli.num_colors' = 1)
+    
+    # Capture console output of our code
+    captured_output <- capture.output(
+      tryCatch(eval(parse(text = edited_code)), error = function(e) print(e), warning = function(w) print(w)))
+    
+    # Restore normal value
+    options('cli.num_colors' = NULL)
+    
+    # Display result
+    paste(paste(captured_output), collapse = "\n") -> result
+  }
+  
+  # If code is not UI or server, capture the console output after replacing %% values
+  if (code_type %not_in% c("ui", "server")){
+    
+    # Replace %CODE% from code to real values
+    code <- edited_code %>%
+      stringr::str_replace_all("%datamart_id%", as.character(isolate(r$datamart_id))) %>%
+      stringr::str_replace_all("%subset_id%", as.character(isolate(r$subset_id))) %>%
+      stringr::str_replace_all("%thesaurus_id%", as.character(isolate(r$thesaurus_id)))
+    
+    # Change this option to display correctly tibble in textbox
+    options('cli.num_colors' = 1)
+    
+    # Capture console output of our code
+    captured_output <- capture.output(
+      tryCatch(eval(parse(text = as.character(code))), error = function(e) print(e), warning = function(w) print(w)))
+    
+    # Restore normal value
+    options('cli.num_colors' = NULL)
+    
+    # Display result
+    # paste(captured_output, collapse = "\n") -> result
+    paste(strwrap(captured_output), collapse = "\n") -> result
+  }
+  
+  result
+}
+
+monitor_perf <- function(r = shiny::reactiveValues(), action = "stop", task = character()){
+  
+  if (!r$perf_monitoring) return()
+  if (action == "start") datetime_start <<- Sys.time()
+  
+  if (action == "stop"){
+    datetime_stop <<- Sys.time()
+    
+    r$perf_monitoring_table <- 
+      r$perf_monitoring_table %>% 
+      dplyr::bind_rows(tibble::tribble(
+        ~task, ~datetime_start, ~datetime_stop, 
+        task, datetime_start, datetime_stop))
+    
+    datetime_start <<- Sys.time() 
+  }
+}
+
 prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(), id = character(),
   table = character(), dropdowns = character(), dropdowns_multiselect = character(), dropdowns_null_value = character(), factorize_cols = character(),
   action_buttons = character(), data_input = tibble::tibble(), data_output = tibble::tibble()){
@@ -632,368 +1193,167 @@ reload_cache_for_settings <- function(r = shiny::reactiveValues(), table = chara
   }
 }
 
-#' Create cache for datatable data
+#' Render delete react
 #' 
-#' @param output Shiny output value, to show message bars
-#' @param r Shiny r reactive value, to communicate between modules
-#' @param language Language used (character)
-#' @param module_id ID of current page / module (character)
-#' @param thesaurus_id ID of thesaurus, which thesaurus items depend on (integer)
-#' @param datamart_id ID of datamart to count rows by item of the thesaurus (integer)
-#' @param category Category of cache, depending of the page of Settings (character)
-
-create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = R6::R6Class(), module_id = character(), 
-  thesaurus_id = integer(), datamart_id = 0, category = character()){
-  
-  # Load join between our data and the cache
-  
-  # For action buttons (delete & plus_minus) & colours, don't use datamart_id / link_id_bis
-  if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") |
-      grepl("plus_data_explorer", category) | grepl("colours_module", category) | grepl("plus_module", category)){
-    sql <- glue::glue_sql(paste0(
-      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
-      "FROM thesaurus_items t ",
-      "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ", 
-      "WHERE t.thesaurus_id = {thesaurus_id} AND t.deleted IS FALSE ",
-      "ORDER BY t.id"), .con = r$db)
-    data <- DBI::dbGetQuery(r$db, sql)
-  }
-  
-  # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
-  if (category %in% c("count_patients_rows", "count_items_rows")){
-    sql <- glue::glue_sql(paste0(
-      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
-      "FROM thesaurus_items t ",
-      "LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = {datamart_id} AND c.category = {category} ",
-      "WHERE t.thesaurus_id = {thesaurus_id} AND t.deleted IS FALSE ",
-      "ORDER BY t.id"), .con = r$db)
-    data <- DBI::dbGetQuery(r$db, sql)
-  }
-  
-  # For thumbs_and_delete, search in thesaurus_items_mapping table
-  if (category == "thumbs_and_delete"){
-    sql <- glue::glue_sql(paste0("SELECT t.id, t.deleted, c.value ",
-      "FROM thesaurus_items_mapping t ",
-      "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ",
-      "WHERE (t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
-      "AND t.category = 'user_added_mapping' AND t.deleted IS FALSE ",
-      "ORDER BY t.id"), .con = r$db)
-    data <- DBI::dbGetQuery(r$db, sql)
-  }
-  
-  # If there are missing data in the cache, reload cache 
-  
-  # reload_cache <- FALSE
-  ids_to_keep <- data %>% dplyr::filter(!is.na(data$value) & data$value != "") %>% dplyr::pull(id)
-  if (length(ids_to_keep) == 0) ids_to_keep <- c(0)
-  
-  # if (NA_character_ %in% data$value | "" %in% data$value) reload_cache <- TRUE
-  
-  # Reload cache if necessary
-  if (data %>% dplyr::filter(is.na(data$value) | data$value == "") %>% nrow() > 0){
-    
-    # print(paste0("reload cache ", category))
-    
-    # Reload data
-    if (category %in% c("count_items_rows", "count_patients_rows")){
-      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} ",
-      " AND deleted IS FALSE ORDER BY id"), .con = r$db)
-      data_reload <- DBI::dbGetQuery(r$db, sql)
-    }
-    else if (category == "thumbs_and_delete"){
-      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping t WHERE ",
-        "(t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
-        "AND t.id NOT IN ({ids_to_keep*}) AND t.category = 'user_added_mapping' AND deleted IS FALSE ",
-        "ORDER BY id"), .con = r$db)
-      data_reload <- DBI::dbGetQuery(r$db, sql)
-    }
-    else {
-      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} ",
-      "AND id NOT IN ({ids_to_keep*}) AND deleted IS FALSE ORDER BY id"), .con = r$db)
-      data_reload <- DBI::dbGetQuery(r$db, sql)
-    }
-    
-    # Make action column, depending on category
-    # If category is count_items_rows, add a count row column with number of rows by item in the datamart
-    # If category is count_patients_rows, add a count row column with number of patients by item in the datamart
-    # If category is delete, add a delete button only
-    # If category is plus_minus, add plus and minus buttons
-    # If category is thumbs_and_delete, add thumbs_up, thumbs_down and delete buttons
-    
-    if (category == "count_items_rows"){
-      
-      # Run datamart code
-      # Reload r$datamarts so that datamart dropdown on sidenav is reset
-      update_r(r = r, table = "datamarts")
-      run_datamart_code(output = output, r = r, d = d, i18n = i18n, datamart_id = datamart_id)
-      
-      # Initiate variables
-      rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
-      rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
-      rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
-      
-      if (nrow(d$labs_vitals) != 0) rows_labs_vitals <- d$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
-      if (nrow(d$text) != 0) rows_text <- d$text %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
-      if (nrow(d$orders) != 0) rows_orders <- d$orders %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
-      
-      # Merge rows count vars
-      count_items_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
-      
-      # Check if argument thesaurus_id corresponds to thesaurus_name in the data
-      # Select thesaurus from r$thesaurus with thesaurus_id
-      # Inner join with correspondance between thesaurus_name
-      
-      count_items_rows <- count_items_rows %>% 
-        dplyr::inner_join(r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% 
-            dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
-      
-      if (nrow(count_items_rows) != 0){
-        count_items_rows <- count_items_rows %>% dplyr::select(-thesaurus_name, -thesaurus_id)
-        data_reload <- data_reload %>% dplyr::left_join(count_items_rows, by = "item_id") %>% dplyr::rename(value = count_items_rows)
-      }
-      if (nrow(count_items_rows) == 0) data_reload <- data_reload %>% dplyr::mutate(value = 0)
-      
-      # Set 0 when value is na
-      # Convert value to character
-      data_reload <- data_reload %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
-    }
-    
-    if (category == "count_patients_rows"){
-      
-      # Reload r$datamarts so that datamart dropdown on sidenav is reset
-      update_r(r = r, table = "datamarts")
-      run_datamart_code(output = output, r = r, d = d, i18n = i18n, datamart_id = datamart_id)
-      
-      # Initiate variables
-      rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
-      rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
-      rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
-      
-      if (nrow(d$labs_vitals) != 0) rows_labs_vitals <- d$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% 
-        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
-      if (nrow(d$text) != 0) rows_text <- d$text %>% dplyr::group_by(thesaurus_name, item_id) %>% 
-        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
-      if (nrow(d$orders) != 0) rows_orders <- d$orders %>% dplyr::group_by(thesaurus_name, item_id) %>%
-        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
-      
-      count_patients_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
-      
-      count_patients_rows <- count_patients_rows %>% 
-        dplyr::inner_join(r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% 
-            dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
-      
-      if (nrow(count_patients_rows) != 0){
-        count_patients_rows <- count_patients_rows %>% dplyr::select(-thesaurus_name, -thesaurus_id)
-        data_reload <- data_reload %>% dplyr::left_join(count_patients_rows, by = "item_id") %>% dplyr::rename(value = count_patients_rows)
-      }
-      
-      if (nrow(count_patients_rows) == 0) data_reload <- data_reload %>% dplyr::mutate(value = 0)
-      
-      # Set 0 when value is na
-      # Convert value to character
-      data_reload <- data_reload %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
-      
-    }
-    
-    if (category == "delete"){
-      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-        tagList(
-          shiny::actionButton(paste0("sub_delete_", id), "", icon = icon("trash-alt"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-thesaurus_items_deleted_pressed', this.id, {priority: 'event'})")))))
-    }
-    if (category == "plus_minus"){
-      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-        tagList(
-          shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")),
-          shiny::actionButton(paste0("remove_", id), "", icon = icon("minus"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-item_removed', this.id, {priority: 'event'})")))))
-    }
-    if (category == "plus_plugin" | grepl("plus_module", category)){
-      if (category == "plus_plugin") input_name <- "item_selected"
-      else if (category == "plus_module_element_creation") input_name <- "module_element_creation_item_selected"
-      else if (category == "plus_module_element_settings") input_name <- "module_element_settings_item_selected"
-      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-        tagList(
-          shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-", input_name, "', this.id, {priority: 'event'})")))))
-    }
-    if (category == "thumbs_and_delete"){
-      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-        tagList(
-          shiny::actionButton(paste0("positive_eval_", id), "", icon = icon("thumbs-up"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
-            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
-          shiny::actionButton(paste0("negative_eval_", id), "", icon = icon("thumbs-down"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})"),
-            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
-          shiny::actionButton(paste0("remove_", id), "", icon = icon("trash-alt"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"),
-            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
-          )))
-    }
-    if (grepl("plus_data_explorer", category)){
-      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-        tagList(
-          shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-            onclick = paste0("Shiny.setInputValue('", module_id, "-data_explorer_item_selected', this.id, {priority: 'event'})")))))
-    }
-    if (category == "colours_plugin" | grepl("colours_module", category)){
-      
-      if (category == "colours_plugin") input_name <- "colours"
-      else if (category == "colours_module_element_creation") input_name <- "module_element_creation_colour"
-      else if (category == "colours_module_element_settings") input_name <- "module_element_settings_colour"
-      
-      colorCells <- list(
-        list(id = "#EF3B2C", color = "#EF3B2C"),
-        list(id = "#CB181D", color = "#CB181D"),
-        list(id = "#7BCCC4", color = "#7BCCC4"),
-        list(id = "#2B8CBE", color = "#2B8CBE"),
-        list(id = "#5AAE61", color = "#5AAE61"),
-        list(id = "#FFD92F", color = "#FFD92F"),
-        list(id = "#000000", color = "#000000"))
-      
-      ns <- NS(module_id)
-      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-        div(shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0(input_name, "_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells), 
-          cellHeight = 15, cellWidth = 15#, cellMargin = 10
-        )#,
-          #style = "height:20px; padding:0px; margin-top:24px;"
-        )
-      ))
-    }
-    
-    # Delete old cache
-    
-    if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") | 
-        grepl("plus_data_explorer", category) | grepl("plus_module", category) | grepl("colours_module", category)){
-      sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
-        "SELECT c.id FROM cache c ",
-        "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
-        "WHERE t.thesaurus_id = {thesaurus_id}", 
-        ")"), .con = r$db)
-      DBI::dbSendStatement(r$db, sql) -> query
-    }
-    
-    # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
-    if (category %in% c("count_patients_rows", "count_items_rows")){
-      sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
-        "SELECT c.id FROM cache c ",
-        "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.link_id_bis = {datamart_id} AND c.category = {category} ",
-        "WHERE t.thesaurus_id = {thesaurus_id}",
-        ")"), .con = r$db)
-      DBI::dbSendStatement(r$db, sql) -> query
-    }
-    
-    # For thumbs_and_delete, use thesaurus_items_mapping table
-    if (category == "thumbs_and_delete"){
-      sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
-        "SELECT c.id FROM cache c ",
-        "INNER JOIN thesaurus_items_mapping t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
-        "AND (t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
-        ")"), .con = r$db)
-      query <- DBI::dbSendStatement(r$db, sql)
-    }
-    
-    # Merge new data & old data
-    if (category %not_in% c("count_items_rows", "count_patients_rows")){
-      if (nrow(data) > 0) data <- data %>% dplyr::filter(!is.na(data$value) & data$value != "") %>% dplyr::bind_rows(data_reload)
-      else data <- data_reload
-    } 
-    else data <- data_reload
-    
-    # DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "' AND link_id_bis = ", datamart_id)) -> query
-    DBI::dbClearResult(query)
-    
-    # Get last row & insert new data
-    last_row <- as.integer(DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) FROM cache") %>% dplyr::pull())
-    data_insert <-
-      data_reload %>%
-      dplyr::transmute(
-        category = !!category,
-        link_id = id,
-        link_id_bis = datamart_id,
-        value,
-        datetime = as.character(Sys.time()))
-    data_insert$id <- seq.int(nrow(data_insert)) + last_row
-    data_insert <- data_insert %>% dplyr::relocate(id)
-    
-    # Add data in cache table
-    DBI::dbAppendTable(r$db, "cache", data_insert)
-  }
-  
-  if (category %in% c("delete", "plus_plugin", "plus_minus", "thumbs_and_delete") | 
-      grepl("plus_data_explorer", category) | grepl("plus_module", category)) data <- data %>% dplyr::rename(action = value)
-  if (category == "colours_plugin" | grepl("colours_module", category)) data <- data %>% dplyr::rename(colour = value)
-  if (category %in% c("count_patients_rows", "count_items_rows")) data <- data %>% dplyr::rename(!!category := value) %>% dplyr::select(item_id, !!category)
-  
-  data
-}
-
-#' Update datatable
-#' 
-#' @param input Shiny input variable
 #' @param r Shiny r reactive value to communicate between modules
 #' @param ns Shiny namespace
 #' @param table Name of the table used (character)
-#' @param dropdowns Dropdowns shown on datatable (character)
 #' @param language Language used (character)
 #' @examples 
 #' \dontrun{
-#' update_settings_datatable(r = r, ns = ns, table = "datamarts", dropdowns = "data_source", language = "EN")
+#' render_settings_delete_react(r = r, table = "datamarts")
 #' }
-update_settings_datatable <- function(input, r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), dropdowns = character(), i18n = R6::R6Class()){
+render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), i18n = R6::R6Class()){
+  prefix <- ""
+  if (table == "thesaurus_items") prefix <- "thesaurus_items_"
   
-  sapply(r[[table]] %>% dplyr::pull(id), function(id){
-    sapply(dropdowns, function(dropdown){
-      
-      observer_name <- paste0(get_plural(word = dropdown), id)
-      
-      # Load the observer only once
-      if (observer_name %not_in% r$loaded_observers){
-        observeEvent(input[[observer_name]], {
-          
-          dropdown_table <- dropdown
-          dropdown_input <- dropdown
-          
-          # If table is a module table, dropdown name is different
-          if (table %in% c("patient_lvl_modules", "aggregated_modules")){
-            dropdown_table <- switch(dropdown, 
-              "patient_lvl_module_family" = "module_family", "aggregated_module_family" = "module_family",
-              "patient_lvl_module" = "parent_module", "aggregated_module" = "parent_module")
-          }
-          
-          # When we load a page, every dropdown triggers the event
-          # Change temp variable only if new value is different than old value
-          old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]]
-          new_value <- NA_integer_
-          
-          # If thesaurus, data_source_id can accept multiple values (converting to string)
-          if (table == "thesaurus") new_value <- toString(as.integer(input[[paste0("data_sources", id)]]))
-          if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins", "users", "patient_lvl_modules", "aggregated_modules")){
-            # if (!is.null(input[[paste0(get_plural(word = dropdown_input), id)]])) {
-            #   if (length(input[[paste0(get_plural(word = dropdown_input), id)]]) == 0) new_value <- NA_integer_
-            new_value <- coalesce2("int", input[[paste0(get_plural(word = dropdown_input), id)]])
-            # }
-          }
-          
-          if (length(new_value) > 0 & length(old_value) > 0){
-            if (new_value == "" | is.na(new_value)){
-              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]] <- NA_integer_
-              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
-            }
-            else if (old_value == "" | is.na(old_value) | new_value != old_value){
-              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]] <- new_value
-              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
-            }
-          }
-        }, ignoreInit = TRUE)
-        
-        # Keep trace that this observer has been loaded
-        r$loaded_observers <- c(r$loaded_observers, observer_name)
-      }
-    })
-  })
+  dialogContentProps <- list(
+    type = 0,
+    title = i18n$t(paste0(table, "_delete")),
+    closeButtonAriaLabel = "Close",
+    subText = i18n$t(paste0(table, "_delete_subtext"))
+  )
+  shiny.fluent::Dialog(
+    hidden = !r[[paste0(table, "_delete_dialog")]],
+    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", prefix, "hide_dialog', Math.random()); }")),
+    dialogContentProps = dialogContentProps,
+    modalProps = list(),
+    shiny.fluent::DialogFooter(
+      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "delete_confirmed")), text = i18n$t("delete")),
+      shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "delete_canceled")), text = i18n$t("dont_delete"))
+    )
+  )
+}
+
+#' Save code edition
+#' 
+#' @description Save code in code table after editing it
+#' @param output variable from Shiny, used to render messages on the message bar
+#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param id ID of the current page, format = "settings_[PAGE]" (character)
+#' @param category Category column in code table, eg : "datamart", "plugin" (character)
+#' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
+#' @param edited_code New code, after editing it (character)
+#' @param language Language used
+#' @examples
+#' \dontrun{
+#' save_settings_code(output = output, r = r, id = "settings_datamart", category = "datamart", code_id_input = "edit_code_5",
+#'   edited_code = "print('test code edition')", language = "EN")
+#' }
+save_settings_code <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
+  code_id_input = integer(), edited_code = character(), i18n = R6::R6Class()){
+  
+  # Get link_id variable to update code table
+  link_id <- as.integer(substr(code_id_input, nchar("edit_code_") + 1, nchar(code_id_input)))
+  
+  # Reload r$code before querying
+  # update_r(r = r, table = "options")
+  code_id <- r$code %>% dplyr::filter(category == !!category, link_id == !!link_id) %>% dplyr::pull(id) %>% as.integer()
+  
+  # Replace ' with '' and store in the database
+  edited_code <- stringr::str_replace_all(edited_code, "'", "''")
+  sql <- glue::glue_sql("UPDATE code SET code = {edited_code} WHERE id = {code_id}", .con = r$db)
+  query <- DBI::dbSendStatement(r$db, sql)
+  DBI::dbClearResult(query)
+  # r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
+  r$code <- r$code %>% dplyr::mutate(
+    code = dplyr::case_when(
+      id == code_id ~ edited_code,
+      TRUE ~ code
+    ))
+  
+  # Notify user
+  show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = shiny::NS(id))
+}
+
+#' Save options
+#' 
+#' @param output variable from Shiny, used to render messages on the message bar
+#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param id ID of the current page, format = "settings_[PAGE]" (character)
+#' @param category Category column in code table, eg : "datamart", "plugin" (character)
+#' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
+#' @param data New data to store in options table (list)
+#' @param language Language used
+#' @examples
+#' \dontrun{
+#' data <- list()
+#' data$show_only_aggregated_data <- TRUE
+#' data$users_allowed_read <- c(1, 3, 4)
+#' save_settings_options(output = output, r = r, id = "settings_datamart", category = "datamart", code_id_input = "edit_code_3",
+#'   data = data, language = "EN")
+#' }
+save_settings_options <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
+  code_id_input = integer(), data = data, i18n = R6::R6Class(), page_options = character()){
+  
+  ns <- shiny::NS(id)
+  
+  # Get link_id variable to update code table
+  link_id <- as.integer(substr(code_id_input, nchar("options_") + 1, nchar(code_id_input)))
+  
+  # Get options with category & link_id
+  options <- r$options %>% dplyr::filter(category == !!category, link_id == !!link_id)
+  
+  if (nrow(options) == 0) show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
+  req (nrow(options) > 0)
+  
+  # Get options with page ID
+  if (length(page_options) == 0) page_options <- get_page_options(id = id)
+  
+  if("show_only_aggregated_data" %in% page_options){
+    option_id <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(id)
+    sql <- glue::glue_sql("UPDATE options SET value_num = {as.numeric(data$show_only_aggregated_data)} WHERE id = {option_id}", .con = r$db)
+    query <- DBI::dbSendStatement(r$db, sql)
+    DBI::dbClearResult(query)
+    r$options <- r$options %>% dplyr::mutate(value_num = dplyr::case_when(id == option_id ~ as.numeric(data$show_only_aggregated_data), TRUE ~ value_num))
+  }
+  
+  if ("users_allowed_read" %in% page_options){
+    
+    # Save users_allowed_read_group value (everybody or people_picker)
+    # Don't need to delete each users allowed if you change from "choose people" to "everybody"
+    option_id <- options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(id)
+    sql <- glue::glue_sql("UPDATE options SET value = {data$users_allowed_read_group} WHERE id = {option_id}", .con = r$db)
+    query <- DBI::dbSendStatement(sql)
+    DBI::dbClearResult(query)
+    r$options <- r$options %>% dplyr::mutate(value = dplyr::case_when(id == option_id ~ data$users_allowed_read_group, TRUE ~ value))
+    
+    # The idea is to delete every rows of options for this module, and then reinsert one row per user
+    # Get unique ID (peoplePicker can select twice a user, if he's already checked at the initiation of the input)
+    
+    # Delete all users allowed in the options table
+    rows_to_del <- options %>% dplyr::filter(name == "user_allowed_read") %>% dplyr::pull(id)
+    sql <- glue::glue_sql("DELETE FROM options WHERE id IN ({rows_to_del*})", .con = r$db)
+    DBI::dbSendStatement(r$db, sql) -> query
+    DBI::dbClearResult(query)
+    r$options <- r$options %>% dplyr::filter(id %not_in% rows_to_del)
+    
+    # Add users in the selected list
+    if (length(data$users_allowed_read) != 0){
+      data$users_allowed_read <- unique(data$users_allowed_read)
+      last_row <- max(r$options["id"])
+      new_data <- tibble::tibble(id = (last_row + (1:length(data$users_allowed_read))), category = category, link_id = link_id,
+        name = "user_allowed_read", value = "", value_num = as.numeric(data$users_allowed_read), creator_id = as.integer(r$user_id),
+        datetime = as.character(Sys.time()), deleted = FALSE)
+      DBI::dbAppendTable(r$db, "options", new_data)
+      r$options <- r$options %>% dplyr::bind_rows(new_data)
+    }
+  }
+  
+  for (field in c("markdown_description", "version", "author", "image", "description_fr", "description_en")){
+    if (field %in% page_options){
+      option_id <- options %>% dplyr::filter(name == field) %>% dplyr::pull(id)
+      new_value <- stringr::str_replace_all(data[[field]], "'", "''")
+      sql <- glue::glue_sql("UPDATE options SET value = {new_value} WHERE id = {option_id}", .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql)
+      DBI::dbClearResult(query)
+      r$options <- r$options %>% dplyr::mutate(value = dplyr::case_when(id == option_id ~ new_value, TRUE ~ value))
+    }
+  }
+  
+  # update_r(r = r, table = "options")
+  
+  show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
 }
 
 #' Save changes in datatable
@@ -1101,447 +1461,6 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   show_message_bar(output, 2, "modif_saved", "success", i18n, ns = ns)
 }
 
-#' Render delete react
-#' 
-#' @param r Shiny r reactive value to communicate between modules
-#' @param ns Shiny namespace
-#' @param table Name of the table used (character)
-#' @param language Language used (character)
-#' @examples 
-#' \dontrun{
-#' render_settings_delete_react(r = r, table = "datamarts")
-#' }
-
-# render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), language = "EN"){
-#   prefix <- ""
-#   if (table == "thesaurus_items") prefix <- "thesaurus_items_"
-#   
-#   dialogContentProps <- list(
-#     type = 0,
-#     title = translate(language, paste0(table, "_delete"), r$words),
-#     closeButtonAriaLabel = "Close",
-#     subText = translate(language, paste0(table, "_delete_subtext"), r$words)
-#   )
-#   shiny.fluent::Dialog(
-#     hidden = !r[[paste0(table, "_delete_dialog")]],
-#     onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", prefix, "hide_dialog', Math.random()); }")),
-#     dialogContentProps = dialogContentProps,
-#     modalProps = list(),
-#     shiny.fluent::DialogFooter(
-#       shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "delete_confirmed")), text = translate(language, "delete", r$words)),
-#       shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "delete_canceled")), text = translate(language, "dont_delete", r$words))
-#     )
-#   )
-# }
-
-render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), i18n = R6::R6Class()){
-  prefix <- ""
-  if (table == "thesaurus_items") prefix <- "thesaurus_items_"
-  
-  dialogContentProps <- list(
-    type = 0,
-    title = i18n$t(paste0(table, "_delete")),
-    closeButtonAriaLabel = "Close",
-    subText = i18n$t(paste0(table, "_delete_subtext"))
-  )
-  shiny.fluent::Dialog(
-    hidden = !r[[paste0(table, "_delete_dialog")]],
-    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", prefix, "hide_dialog', Math.random()); }")),
-    dialogContentProps = dialogContentProps,
-    modalProps = list(),
-    shiny.fluent::DialogFooter(
-      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "delete_confirmed")), text = i18n$t("delete")),
-      shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "delete_canceled")), text = i18n$t("dont_delete"))
-    )
-  )
-}
-
-#' Delete a row in datatable
-#' 
-#' @param output Shiny output variable
-#' @param r r Shiny reactive value used to communicate between modules
-#' @param ns Shiny namespace
-#' @param language Language used (character)
-#' @param row_deleted ID of row to delete (integer) 
-#' @param table Name of the table used (character)
-#' @examples 
-#' \dontrun{
-#' delete_settings_datatable_row(output = output, r = r, ns = ns, language = "EN", row_deleted = 13, table = "datamarts")
-#' }
-delete_settings_datatable_row <- function(output, id = character(), r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(),
-  link_id = integer(), category = character(), row_deleted = integer(), table = character()){
-  
-  # Close dialog box
-  r[[paste0(table, "_delete_dialog")]] <- FALSE
-  
-  # Delete row in database
-  DBI::dbSendStatement(r$db, paste0("UPDATE ", table, " SET deleted = TRUE WHERE id = ", row_deleted)) -> query
-  DBI::dbClearResult(query)
-  
-  # Prefix, for patient_lvl & aggregated tables
-  prefix <- ""
-  if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
-  if (grepl("aggregated", table)) prefix <- "aggregated"
-  
-  # If we delete a datamart, delete all studies & subsets associated
-  if (table == "datamarts"){
-    
-    studies <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM studies WHERE datamart_id = ", row_deleted))
-    
-    if(nrow(studies) > 0){
-      studies <- studies %>% dplyr::pull()
-      
-      DBI::dbSendStatement(r$db, paste0("UPDATE studies SET deleted = TRUE WHERE datamart_id = ", row_deleted)) -> query
-      DBI::dbClearResult(query)
-      
-      DBI::dbSendStatement(r$db, paste0("UPDATE subsets SET deleted = TRUE WHERE study_id IN (", paste(studies, collapse = ","), ")")) -> query
-      DBI::dbClearResult(query)
-      
-      update_r(r = r, table = "studies")
-      update_r(r = r, table = "subsets")
-    }
-  }
-  
-  # If we delete a study, delete all subsets associated
-  if (table == "studies"){
-    
-    DBI::dbSendStatement(r$db, paste0("UPDATE subsets SET deleted = TRUE WHERE study_id = ", row_deleted)) -> query
-    DBI::dbClearResult(query)
-    
-    update_r(r = r, table = "subsets")
-  }
-  
-  # If we delete a module family, delete all modules & modules elements associated
-  if (table == paste0(prefix, "_modules_families")){
-    
-    modules <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM ", prefix, "_modules WHERE module_family_id = ", row_deleted)) %>% dplyr::pull()
-    
-    DBI::dbSendStatement(r$db, paste0("UPDATE ", prefix, "_modules SET deleted = TRUE WHERE module_family_id = ", row_deleted)) -> query
-    DBI::dbClearResult(query)
-    
-    DBI::dbSendStatement(r$db, paste0("UPDATE ", prefix, "_modules_elements SET deleted = TRUE WHERE module_id IN (", paste(modules, collapse = ","), ")")) -> query
-    DBI::dbClearResult(query)
-    
-    update_r(r = r, table = paste0(prefix, "_modules"))
-    update_r(r = r, table = paste0(prefix, "_modules_elements"))
-  }
-  
-  # If we delete a module, delete all modules elements associated
-  if (table == paste0(prefix, "_modules")){
-    
-    DBI::dbSendStatement(r$db, paste0("UPDATE ", prefix, "_modules_elements SET deleted = TRUE WHERE module_id = ", row_deleted)) -> query
-    DBI::dbClearResult(query)
-    
-    update_r(r = r, table = paste0(prefix, "_modules_elements"))
-  }
-  
-  # Update r vars
-  # For thesaurus_items : the r variable is r$sub_thesaurus_items (from page settings / data management / thesaurus)
-  # This page is the only place from where we can delete a thesaurus item
-  # Distinct r$ names are to avoid conflict with other pages (settings / plugins & settings / modules)
-  
-  if (table == "thesaurus_items") r$thesaurus_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_delete")
-  
-  if (table != "thesaurus_items") update_r(r = r, table = table)
-  
-  # Notification to user
-  show_message_bar(output = output, id = 3, paste0(get_singular(word = table), "_deleted"), type = "severeWarning", i18n = i18n)
-}
-
-#' Save options
-#' 
-#' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
-#' @param id ID of the current page, format = "settings_[PAGE]" (character)
-#' @param category Category column in code table, eg : "datamart", "plugin" (character)
-#' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
-#' @param data New data to store in options table (list)
-#' @param language Language used
-#' @examples
-#' \dontrun{
-#' data <- list()
-#' data$show_only_aggregated_data <- TRUE
-#' data$users_allowed_read <- c(1, 3, 4)
-#' save_settings_options(output = output, r = r, id = "settings_datamart", category = "datamart", code_id_input = "edit_code_3",
-#'   data = data, language = "EN")
-#' }
-
-# save_settings_options <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
-#   code_id_input = integer(), data = data, language = "EN", page_options = character()){
-#   
-#   # Get link_id variable to update code table
-#   link_id <- as.integer(substr(code_id_input, nchar("options_") + 1, nchar(code_id_input)))
-#   
-#   # Get options with category & link_id
-#   options <- r$options %>% dplyr::filter(category == !!category, link_id == !!link_id)
-#   
-#   if (nrow(options) == 0) show_message_bar(output, 4, "modif_saved", "success", language)
-#   req (nrow(options) > 0)
-#   
-#   # Get options with page ID
-#   if (length(page_options) == 0) page_options <- get_page_options(id = id)
-#   
-#   if("show_only_aggregated_data" %in% page_options){
-#     option_id <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(id)
-#     DBI::dbSendStatement(r$db, paste0("UPDATE options SET value_num = ", as.numeric(data$show_only_aggregated_data), " WHERE id = ", option_id)) -> query
-#     DBI::dbClearResult(query)
-#     update_r(r = r, table = "options", language = language)
-#   }
-#   
-#   if ("users_allowed_read" %in% page_options){
-#     
-#     # Save users_allowed_read_group value (everybody or people_picker)
-#     # Don't need to delete each users allowed if you change from "choose people" to "everybody"
-#     option_id <- options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(id)
-#     query <- DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", data$users_allowed_read_group,
-#       "' WHERE id = ", option_id))
-#     DBI::dbClearResult(query)
-#     
-#     # The idea is to delete every rows of options for this module, and then reinsert one row per user
-#     # Get unique ID (peoplePicker can select twice a user, if he's already checked at the initiation of the input)
-#     
-#     # Delete all users allowed in the options table
-#     rows_to_del <- options %>% dplyr::filter(name == "user_allowed_read") %>% dplyr::pull(id)
-#     DBI::dbSendStatement(r$db, paste0("DELETE FROM options WHERE id IN (", paste(rows_to_del, collapse = ","),")")) -> query
-#     DBI::dbClearResult(query)
-#     update_r(r = r, table = "options", language = language)
-#     
-#     # Add users in the selected list
-#     if (length(data$users_allowed_read) != 0){
-#       data$users_allowed_read <- unique(data$users_allowed_read)
-#       last_row <- max(r$options["id"])
-#       DBI::dbAppendTable(r$db, "options",
-#         tibble::tibble(id = (last_row + (1:length(data$users_allowed_read))), category = category, link_id = link_id,
-#           name = "user_allowed_read", value = "", value_num = as.numeric(data$users_allowed_read), creator_id = as.integer(r$user_id),
-#           datetime = as.character(Sys.time()), deleted = FALSE))
-#       update_r(r = r, table = "options", language = language)
-#     }
-#   }
-#   
-#   if ("markdown_description" %in% page_options){
-#     option_id <- options %>% dplyr::filter(name == "markdown_description") %>% dplyr::pull(id)
-#     DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", stringr::str_replace_all(data$markdown_description, "'", "''"), "' WHERE id = ", option_id)) -> query
-#     DBI::dbClearResult(query)
-#     update_r(r = r, table = "options", language = language)
-#   }
-#   
-#   show_message_bar(output, 4, "modif_saved", "success", language)
-# }
-
-save_settings_options <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
-  code_id_input = integer(), data = data, i18n = R6::R6Class(), page_options = character()){
-  
-  ns <- shiny::NS(id)
-  
-  # Get link_id variable to update code table
-  link_id <- as.integer(substr(code_id_input, nchar("options_") + 1, nchar(code_id_input)))
-  
-  # Get options with category & link_id
-  options <- r$options %>% dplyr::filter(category == !!category, link_id == !!link_id)
-  
-  if (nrow(options) == 0) show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
-  req (nrow(options) > 0)
-  
-  # Get options with page ID
-  if (length(page_options) == 0) page_options <- get_page_options(id = id)
-  
-  if("show_only_aggregated_data" %in% page_options){
-    option_id <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(id)
-    DBI::dbSendStatement(r$db, paste0("UPDATE options SET value_num = ", as.numeric(data$show_only_aggregated_data), " WHERE id = ", option_id)) -> query
-    DBI::dbClearResult(query)
-  }
-  
-  if ("users_allowed_read" %in% page_options){
-    
-    # Save users_allowed_read_group value (everybody or people_picker)
-    # Don't need to delete each users allowed if you change from "choose people" to "everybody"
-    option_id <- options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(id)
-    query <- DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", data$users_allowed_read_group,
-      "' WHERE id = ", option_id))
-    DBI::dbClearResult(query)
-    
-    # The idea is to delete every rows of options for this module, and then reinsert one row per user
-    # Get unique ID (peoplePicker can select twice a user, if he's already checked at the initiation of the input)
-    
-    # Delete all users allowed in the options table
-    rows_to_del <- options %>% dplyr::filter(name == "user_allowed_read") %>% dplyr::pull(id)
-    DBI::dbSendStatement(r$db, paste0("DELETE FROM options WHERE id IN (", paste(rows_to_del, collapse = ","),")")) -> query
-    DBI::dbClearResult(query)
-    
-    # Add users in the selected list
-    if (length(data$users_allowed_read) != 0){
-      data$users_allowed_read <- unique(data$users_allowed_read)
-      last_row <- max(r$options["id"])
-      DBI::dbAppendTable(r$db, "options",
-        tibble::tibble(id = (last_row + (1:length(data$users_allowed_read))), category = category, link_id = link_id,
-          name = "user_allowed_read", value = "", value_num = as.numeric(data$users_allowed_read), creator_id = as.integer(r$user_id),
-          datetime = as.character(Sys.time()), deleted = FALSE))
-    }
-  }
-  
-  for (field in c("markdown_description", "version", "author", "image", "description_fr", "description_en")){
-    if (field %in% page_options){
-      option_id <- options %>% dplyr::filter(name == field) %>% dplyr::pull(id)
-      DBI::dbSendStatement(r$db, paste0("UPDATE options SET value = '", stringr::str_replace_all(data[[field]], "'", "''"), "' WHERE id = ", option_id)) -> query
-      DBI::dbClearResult(query)
-    }
-  }
-  
-  update_r(r = r, table = "options")
-  
-  show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
-}
-
-#' Save code edition
-#' 
-#' @description Save code in code table after editing it
-#' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
-#' @param id ID of the current page, format = "settings_[PAGE]" (character)
-#' @param category Category column in code table, eg : "datamart", "plugin" (character)
-#' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
-#' @param edited_code New code, after editing it (character)
-#' @param language Language used
-#' @examples
-#' \dontrun{
-#' save_settings_code(output = output, r = r, id = "settings_datamart", category = "datamart", code_id_input = "edit_code_5",
-#'   edited_code = "print('test code edition')", language = "EN")
-#' }
-save_settings_code <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
-  code_id_input = integer(), edited_code = character(), i18n = R6::R6Class()){
-
-  # Get link_id variable to update code table
-  link_id <- as.integer(substr(code_id_input, nchar("edit_code_") + 1, nchar(code_id_input)))
-
-  # Reload r$code before querying
-  # update_r(r = r, table = "options")
-  code_id <- r$code %>% dplyr::filter(category == !!category, link_id == !!link_id) %>% dplyr::pull(id) %>% as.integer()
-
-  # Replace ' with '' and store in the database
-  edited_code <- stringr::str_replace_all(edited_code, "'", "''")
-  sql <- glue::glue_sql("UPDATE code SET code = {edited_code} WHERE id = {code_id}", .con = r$db)
-  query <- DBI::dbSendStatement(r$db, sql)
-  DBI::dbClearResult(query)
-  # r$code <- DBI::dbGetQuery(r$db, "SELECT * FROM code WHERE deleted IS FALSE ORDER BY id")
-  r$code <- r$code %>% dplyr::mutate(
-    code = dplyr::case_when(
-      id == code_id ~ edited_code,
-      TRUE ~ code
-    ))
-
-  # Notify user
-  show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = shiny::NS(id))
-}
-
-#' Execute / test code after edition
-#' 
-#' @description Execute code entered in the ShinyAce editor\cr
-#' For plugins page, UI & server code are displayed in distinct outputs (uiOutput for UI code, textOutput for server code to display error messages)
-#' @param input variable from Shiny, used to execute UI & server code (plugins page)
-#' @param output variable from Shiny, used to render messages on the message bar
-#' @param session variable from Shiny, used to execute UI & server code (plugins page)
-#' @param id ID of the current page / module
-#' @param ns Shiny namespace
-#' @param language language used (character)
-#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
-#' @param edited_code New code, after editing it (character)
-#' @param code_type For plugins page, code_type could be UI or server (character)
-#' @param data A list containing dataframes / tibbles, if data need to be used in the evaluated code (list)
-#' @examples 
-#' \dontrun{
-#'  execute_settings_code(output = output, r = r, edited_code = "print('test')")
-#' }
-execute_settings_code <- function(input, output, session, id = character(), ns = shiny::NS(), i18n = R6::R6Class(), 
-  r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
-  edited_code = character(), code_type = "", data = list()){
-  
-  result <- ""
-  
-  # If code is UI, execute it only
-  if (code_type == "ui"){
-    
-    tryCatch(result <- eval(parse(text = edited_code)), error = function(e) stop(e), warning = function(w) stop(w))
-  }
-  
-  # If code is server, capture the console output
-  # Server is also used by R_console page
-  if (code_type == "server"){
-    
-    # Change this option to display correctly tibble in textbox
-    options('cli.num_colors' = 1)
-    
-    # Capture console output of our code
-    captured_output <- capture.output(
-      tryCatch(eval(parse(text = edited_code)), error = function(e) print(e), warning = function(w) print(w)))
-    
-    # Restore normal value
-    options('cli.num_colors' = NULL)
-    
-    # Display result
-    paste(paste(captured_output), collapse = "\n") -> result
-  }
-  
-  # If code is not UI or server, capture the console output after replacing %% values
-  if (code_type %not_in% c("ui", "server")){
-    
-    # Replace %CODE% from code to real values
-    code <- edited_code %>%
-      stringr::str_replace_all("%datamart_id%", as.character(isolate(r$datamart_id))) %>%
-      stringr::str_replace_all("%subset_id%", as.character(isolate(r$subset_id))) %>%
-      stringr::str_replace_all("%thesaurus_id%", as.character(isolate(r$thesaurus_id)))
-    
-    # Change this option to display correctly tibble in textbox
-    options('cli.num_colors' = 1)
-    
-    # Capture console output of our code
-    captured_output <- capture.output(
-      tryCatch(eval(parse(text = as.character(code))), error = function(e) print(e), warning = function(w) print(w)))
-    
-    # Restore normal value
-    options('cli.num_colors' = NULL)
-    
-    # Display result
-    # paste(captured_output, collapse = "\n") -> result
-    paste(strwrap(captured_output), collapse = "\n") -> result
-  }
-  
-  result
-}
-
-#' Get authorized data for a user
-#'
-#' @param r Shiny r reactive value, used to communicate between modules
-#' @param table Name of the table the data comes from (character)
-#' @param data If data is not r[[table]] (tibble / dataframe)
-
-get_authorized_data <- function(r, table, data = tibble::tibble()){
-  
-  if (nrow(data) == 0) data <- r[[table]]
-  
-  # Merge with options
-  options <- data %>% dplyr::inner_join(r$options %>% dplyr::filter(category == get_singular(table)) %>% 
-    dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
-  
-  # Vector of authorized data
-  data_allowed <- integer()
-  
-  # For each data row, select those the user has access
-  sapply(unique(options$id), function(data_id){
-    
-    # Loop over each data ID
-    
-    users_allowed_read_group <- options %>% dplyr::filter(id == data_id, option_name == "users_allowed_read_group")
-    users_allowed_read <- options %>% dplyr::filter(id == data_id, option_name == "user_allowed_read")
-    
-    if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") data_allowed <<- c(data_allowed, data_id)
-    else if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) data_allowed <<- c(data_allowed, data_id)
-    
-  })
-  
-  # Select authorized data
-  data %>% dplyr::filter(id %in% data_allowed)
-}
-
 show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table = character(), id = character(), cards = character()){
     
   # If user has access, show or hide card when Pivot is clicked
@@ -1558,148 +1477,68 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
   })
 }
 
-#' Delete element
+#' Update datatable
 #' 
-
-# delete_element <- function(r = shiny::reactiveValues(), session, input, output, ns = shiny::NS(), language = "EN",
-#   delete_prefix = character(), dialog_title = character(), dialog_subtext = character(),
-#   react_variable = character(), table = character(), id_var_sql = character(), id_var_r = character(),
-#   delete_message = character(), reload_variable = character(), information_variable = character(), translation = TRUE){
-#   
-#   delete_variable <- paste0(delete_prefix, "_open_dialog")
-# 
-#   r[[delete_variable]] <- FALSE
-# 
-#   if (translation){
-#     dialog_title <- translate(language, dialog_title, r$words)
-#     dialog_subtext <- translate(language, dialog_subtext, r$words)
-#   }
-# 
-#   dialog_content <- list(
-#     type = 0,
-#     title = dialog_title,
-#     closeButtonAriaLabel = "Close",
-#     subText = dialog_subtext
-#   )
-#   
-#   output[[react_variable]] <- shiny.fluent::renderReact({
-# 
-#     shiny.fluent::Dialog(
-#       hidden = !r[[delete_variable]],
-#       onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", delete_prefix, "_hide_dialog', Math.random()); }")),
-#       dialogContentProps = dialog_content,
-#       modalProps = list(),
-#       shiny.fluent::DialogFooter(
-#         shiny.fluent::PrimaryButton.shinyInput(ns(paste0(delete_prefix, "_delete_confirmed")), text = translate(language, "delete", r$words)),
-#         shiny.fluent::DefaultButton.shinyInput(ns(paste0(delete_prefix, "_delete_canceled")), text = translate(language, "dont_delete", r$words))
-#       )
-#     )
-#   })
-#   
-#   # Whether to close or not delete dialog box
-#   observeEvent(input[[paste0(delete_prefix, "_hide_dialog")]], r[[delete_variable]] <- FALSE)
-#   observeEvent(input[[paste0(delete_prefix, "_delete_canceled")]], r[[delete_variable]] <- FALSE)
-#   
-#   # When the delete is confirmed...
-#   observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
-# 
-#     r[[delete_variable]] <- FALSE
-#     # Delete row in DB table
-#     sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE {`id_var_sql`} = {r[[id_var_r]]}" , .con = r$db)
-#     DBI::dbSendStatement(r$db, sql) -> query
-#     DBI::dbClearResult(query)
-# 
-#     update_r(r = r, table = table)
-# 
-#     # Notify user
-#     show_message_bar(output = output, id = 4, delete_message, type ="severeWarning", language = language)
-# 
-#     # Activate reload variable
-#     r[[reload_variable]] <- Sys.time()
-#     
-#     # Information variable
-#     if (length(information_variable) > 0) r[[information_variable]] <- r[[id_var_r]]
-# 
-#   })
-# }
-
-delete_element <- function(r = shiny::reactiveValues(), session, input, output, ns = shiny::NS(), i18n = R6::R6Class(),
-  delete_prefix = character(), dialog_title = character(), dialog_subtext = character(),
-  react_variable = character(), table = character(), r_table = character(), id_var_sql = character(), id_var_r = character(),
-  delete_message = character(), reload_variable = character(), information_variable = character(), translation = TRUE, 
-  app_folder = character(), prefix = character()){
+#' @param input Shiny input variable
+#' @param r Shiny r reactive value to communicate between modules
+#' @param ns Shiny namespace
+#' @param table Name of the table used (character)
+#' @param dropdowns Dropdowns shown on datatable (character)
+#' @param language Language used (character)
+#' @examples 
+#' \dontrun{
+#' update_settings_datatable(r = r, ns = ns, table = "datamarts", dropdowns = "data_source", language = "EN")
+#' }
+update_settings_datatable <- function(input, r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), dropdowns = character(), i18n = R6::R6Class()){
   
-  delete_variable <- paste0(delete_prefix, "_open_dialog")
-  
-  r[[delete_variable]] <- FALSE
-  
-  if (translation){
-    dialog_title <- i18n$t(dialog_title)
-    dialog_subtext <- i18n$t(dialog_subtext)
-  }
-  
-  dialog_content <- list(
-    type = 0,
-    title = dialog_title,
-    closeButtonAriaLabel = "Close",
-    subText = tagList(dialog_subtext, br(), br())
-  )
-  
-  output[[react_variable]] <- shiny.fluent::renderReact({
-    
-    shiny.fluent::Dialog(
-      hidden = !r[[delete_variable]],
-      onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", delete_prefix, "_hide_dialog', Math.random()); }")),
-      dialogContentProps = dialog_content,
-      modalProps = list(),
-      shiny.fluent::DialogFooter(
-        shiny.fluent::PrimaryButton.shinyInput(ns(paste0(delete_prefix, "_delete_confirmed")), text = i18n$t("delete")),
-        shiny.fluent::DefaultButton.shinyInput(ns(paste0(delete_prefix, "_delete_canceled")), text = i18n$t("dont_delete"))
-      )
-    )
-  })
-  
-  # Whether to close or not delete dialog box
-  observeEvent(input[[paste0(delete_prefix, "_hide_dialog")]], r[[delete_variable]] <- FALSE)
-  observeEvent(input[[paste0(delete_prefix, "_delete_canceled")]], r[[delete_variable]] <- FALSE)
-  
-  # When the deletion is confirmed
-  observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
-    
-    r[[delete_variable]] <- FALSE
-    
-    # Remove files if this is a plugin
-    if (table == "plugins"){
-      for (plugin_id in r[[id_var_r]]){
-        plugin_options <- r$options %>% dplyr::filter(category == "plugin", link_id == plugin_id)
-        unlink(paste0(app_folder, "/plugins/", prefix, "/", plugin_options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value)), recursive = TRUE)
+  sapply(r[[table]] %>% dplyr::pull(id), function(id){
+    sapply(dropdowns, function(dropdown){
+      
+      observer_name <- paste0(get_plural(word = dropdown), id)
+      
+      # Load the observer only once
+      if (observer_name %not_in% r$loaded_observers){
+        observeEvent(input[[observer_name]], {
+          
+          dropdown_table <- dropdown
+          dropdown_input <- dropdown
+          
+          # If table is a module table, dropdown name is different
+          if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+            dropdown_table <- switch(dropdown, 
+              "patient_lvl_module_family" = "module_family", "aggregated_module_family" = "module_family",
+              "patient_lvl_module" = "parent_module", "aggregated_module" = "parent_module")
+          }
+          
+          # When we load a page, every dropdown triggers the event
+          # Change temp variable only if new value is different than old value
+          old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]]
+          new_value <- NA_integer_
+          
+          # If thesaurus, data_source_id can accept multiple values (converting to string)
+          if (table == "thesaurus") new_value <- toString(as.integer(input[[paste0("data_sources", id)]]))
+          if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins", "users", "patient_lvl_modules", "aggregated_modules")){
+            # if (!is.null(input[[paste0(get_plural(word = dropdown_input), id)]])) {
+            #   if (length(input[[paste0(get_plural(word = dropdown_input), id)]]) == 0) new_value <- NA_integer_
+            new_value <- coalesce2("int", input[[paste0(get_plural(word = dropdown_input), id)]])
+            # }
+          }
+          
+          if (length(new_value) > 0 & length(old_value) > 0){
+            if (new_value == "" | is.na(new_value)){
+              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]] <- NA_integer_
+              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
+            }
+            else if (old_value == "" | is.na(old_value) | new_value != old_value){
+              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]] <- new_value
+              r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), "modified"]] <- TRUE
+            }
+          }
+        }, ignoreInit = TRUE)
+        
+        # Keep trace that this observer has been loaded
+        r$loaded_observers <- c(r$loaded_observers, observer_name)
       }
-    }
-    
-    # Delete row in DB table and associated tables
-    sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE {`id_var_sql`} IN ({r[[id_var_r]]*})" , .con = r$db)
-    DBI::dbSendStatement(r$db, sql) -> query
-    DBI::dbClearResult(query)
-    
-    sql <- glue::glue_sql("UPDATE options SET deleted = TRUE WHERE category = {table} AND link_id IN ({r[[id_var_r]]*})" , .con = r$db)
-    DBI::dbSendStatement(r$db, sql) -> query
-    DBI::dbClearResult(query)
-    
-    sql <- glue::glue_sql("UPDATE code SET deleted = TRUE WHERE category = {table} AND link_id IN ({r[[id_var_r]]*})" , .con = r$db)
-    DBI::dbSendStatement(r$db, sql) -> query
-    DBI::dbClearResult(query)
-    
-    if (length(r_table) > 0) r[[r_table]] <- r[[r_table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
-    else r[[table]] <- r[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
-    
-    # # Notify user
-    show_message_bar(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n, ns = ns)
-
-    # Activate reload variable
-    if (length(reload_variable) > 0) r[[reload_variable]] <- Sys.time()
-
-    # Information variable
-    if (length(information_variable) > 0) r[[information_variable]] <- r[[id_var_r]]
-    
+    })
   })
 }

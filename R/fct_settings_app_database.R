@@ -175,6 +175,41 @@ db_create_tables <- function(db, type = character()){
   }
 }
 
+#' Get authorized data for a user
+#'
+#' @param r Shiny r reactive value, used to communicate between modules
+#' @param table Name of the table the data comes from (character)
+#' @param data If data is not r[[table]] (tibble / dataframe)
+
+get_authorized_data <- function(r, table, data = tibble::tibble()){
+  
+  if (nrow(data) == 0) data <- r[[table]]
+  
+  # Merge with options
+  options <- data %>% dplyr::inner_join(r$options %>% dplyr::filter(category == get_singular(table)) %>% 
+      dplyr::select(option_id = id, link_id, option_name = name, value, value_num), by = c("id" = "link_id"))
+  
+  # Vector of authorized data
+  data_allowed <- integer()
+  
+  # For each data row, select those the user has access
+  sapply(unique(options$id), function(data_id){
+    
+    # Loop over each data ID
+    
+    users_allowed_read_group <- options %>% dplyr::filter(id == data_id, option_name == "users_allowed_read_group")
+    users_allowed_read <- options %>% dplyr::filter(id == data_id, option_name == "user_allowed_read")
+    
+    if (users_allowed_read_group %>% dplyr::pull(value) == "everybody") data_allowed <<- c(data_allowed, data_id)
+    else if (nrow(users_allowed_read %>% dplyr::filter(value_num == r$user_id)) > 0) data_allowed <<- c(data_allowed, data_id)
+    
+  })
+  
+  # Select authorized data
+  data %>% dplyr::filter(id %in% data_allowed)
+}
+
+
 #' Connection to local database
 #' 
 #' @description Get a connection to local application database. If tables do not already exist, there are created
