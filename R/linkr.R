@@ -48,6 +48,7 @@ linkr <- function(
   app_db_folder = character(),
   datamarts_folder = character(),
   perf_monitoring = FALSE,
+  debug = FALSE,
   options = list(),
   ...
 ) {
@@ -56,11 +57,13 @@ linkr <- function(
   # Used to restore database
   # shiny.launch.browser to automatically open browser
   
+  if (debug) print(paste0(Sys.time(), " - linkr - init"))
   options(shiny.maxRequestSize = 500*1024^2, shiny.launch.browser = TRUE)
   
   suppressMessages(require(shinyTree))
   
   # Create app folder if it doesn't exist
+  if (debug) print(paste0(Sys.time(), " - linkr - app_folder"))
   if (length(app_folder) == 0) app_folder <- paste0(path.expand("~"), "/linkr")
   
   if (!dir.exists(app_folder)){
@@ -71,9 +74,11 @@ linkr <- function(
   }
   
   # Clear temp dir
+  if (debug) print(paste0(Sys.time(), " - linkr - temp dir"))
   unlink(paste0(app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
   
   # Create app sub-dirs
+  if (debug) print(paste0(Sys.time(), " - linkr - app sub-dirs"))
   sub_dirs <- c("app_database", "datamarts", "messages", "plugins", "studies", "temp_files", "thesaurus")
   for (sub_dir in sub_dirs) if (!dir.exists(paste0(app_folder, "/", sub_dir))) dir.create(paste0(app_folder, "/", sub_dir))
   
@@ -87,6 +92,7 @@ linkr <- function(
   # Update : use shiny.i18n instead. When it is done, delete get_translations
   # Change also tolower...
   # words <- get_translations()
+  if (debug) print(paste0(Sys.time(), " - linkr - translation"))
   i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
   i18n$set_translation_language(tolower(language))
   
@@ -94,6 +100,7 @@ linkr <- function(
 
   css <- "fluent_style.css"
   
+  if (debug) print(paste0(Sys.time(), " - linkr - make_router"))
   pages <- c(
     "home", 
       "home/get_started", 
@@ -122,13 +129,14 @@ linkr <- function(
     make_layout(language = language, page = page, i18n = i18n)))) -> page
   
   # Load UI & server
-    
+  
+  if (debug) print(paste0(Sys.time(), " - linkr - load UI & server"))
   with_golem_options(
     app = shinyApp(
-      ui = app_ui(css = css, page = page, language = language),
+      ui = app_ui(css = css, page = page, language = language, debug = debug),
       server = app_server(router = page, language = language, db_info = db_info, 
         app_folder = app_folder, datamarts_folder = datamarts_folder, app_db_folder = app_db_folder,# initial_wd = initial_wd, 
-        perf_monitoring = perf_monitoring),
+        perf_monitoring = perf_monitoring, debug = debug),
       options = options
     ), 
     golem_opts = list()

@@ -897,14 +897,14 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
 
 monitor_perf <- function(r = shiny::reactiveValues(), action = "stop", task = character()){
   
-  if (!r$perf_monitoring) return()
+  # if (!r$perf_monitoring) return()
   if (action == "start") datetime_start <<- Sys.time()
   
   if (action == "stop"){
     datetime_stop <<- Sys.time()
     
     r$perf_monitoring_table <- 
-      r$perf_monitoring_table %>% 
+      isolate(r$perf_monitoring_table) %>% 
       dplyr::bind_rows(tibble::tribble(
         ~task, ~datetime_start, ~datetime_stop, 
         task, datetime_start, datetime_stop))
@@ -916,10 +916,7 @@ monitor_perf <- function(r = shiny::reactiveValues(), action = "stop", task = ch
 prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(), id = character(),
   table = character(), dropdowns = character(), dropdowns_multiselect = character(), dropdowns_null_value = character(), factorize_cols = character(),
   action_buttons = character(), data_input = tibble::tibble(), data_output = tibble::tibble()){
-  
-  monitor_perf(r = r, action = "start")
-  monitor_perf(r = r, action = "stop", task = paste0("prepare_data_datatable _ table = ", table, " / id = ", id))
-  
+
   # Initiate data_output, starting from data_input
   data_output <- data_input
   

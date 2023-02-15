@@ -240,10 +240,13 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
 #' home Server Functions
 #'
 #' @noRd 
-mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6Class()){
+mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
  
+    if(perf_monitoring) monitor_perf(r = r, action = "start")
+    if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - start"))
+    
     # Show or hide datamart cards
     
     if (id == "home"){
@@ -251,28 +254,39 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
       cards <- c("overview_card", "news_card", "versions_card")
       
       if (!r$has_internet){
+        
+        if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - no_internet"))
+        
         default_div <- make_card("", shiny.fluent::MessageBar(i18n$t("error_connection_github"), messageBarType = 3))
         overview_div <- default_div
         news_div <- default_div
         versions_div <- default_div
+        
+        if(perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home_server - ", id, " - no_internet"))
       }
       if (r$has_internet){
         
         # Overview div
         
+        if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - download overview.Md"))
         con <- textConnection("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/overview.Md")
         overview_div <- readLines(con) %>% includeMarkdown() %>% withMathJax()
         close(con)
+        if(perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home_server - ", id, " - download overview.Md"))
         
         # News div
         
+        if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - download news/index.csv"))
         tryCatch(news_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/index.csv", col_types = "cc") %>%
           dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n), error = function(e) "", warning = function(w) "")
+        if(perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home_server - ", id, " - download news/index.csv"))
         
         news_div <- tagList()
         
         if (nrow(news_files) == 0) news_div <- make_card("", shiny.fluent::MessageBar(i18n$t("no_data_available"), messageBarType = 5))
         if (nrow(news_files) > 0){
+          
+          if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - loop over news files"))
         
           sapply(1:nrow(news_files), function(i){
             
@@ -297,19 +311,25 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
             )
             output[[output_name]] <- renderUI(news_md)
           })
+          
+          if(perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home_server - ", id, " - loop over news files"))
         }
         
         # Versions div
         
         versions_files <- tibble::tibble()
         
+        if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - download versions/index.csv"))
         tryCatch(versions_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/versions/index.csv", col_types = "cc") %>%
           dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n), error = function(e) "", warning = function(w) "")
+        if(perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home_server - ", id, " - download versions/index.csv"))
         
         versions_div <- tagList()
         
         if (nrow(versions_files) == 0) versions_div <- make_card("", shiny.fluent::MessageBar(i18n$t("no_data_available"), messageBarType = 5))
         if (nrow(versions_files) > 0){
+          
+          if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - loop over versions files"))
           
           sapply(1:nrow(versions_files), function(i){
             
@@ -334,6 +354,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
             )
             output[[output_name]] <- renderUI(news_md)
           })
+          if(perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home_server - ", id, " - loop over versions files"))
         }
       }
       
@@ -349,9 +370,12 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
     
     observeEvent(input$current_tab, {
       
+      if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - observer input$current_tab"))
+      
       sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
       shinyjs::show(input$current_tab)
     })
     
+    if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - end"))
   })
 }

@@ -221,11 +221,14 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
 #' @noRd 
 
 mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  o = shiny::reactiveValues(), i18n = R6::R6Class()){
+  o = shiny::reactiveValues(), i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    language <- "EN"
+    if (perf_monitoring) monitor_perf(r = r, action = "start")
+    if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - start"))
+    
+    language <- "en"
     
     sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
@@ -258,10 +261,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     
     observeEvent(r$show_message_bar1, show_message_bar(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
     observeEvent(r$show_message_bar2, show_message_bar(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
+    if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - show_message_bars"))
     
     # --- --- --- --- --
     # Initiate vars ----
     # --- --- --- --- --
+    
+    if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - initiate vars"))
     
     # Prefix depending on page id
     if (id == "patient_level_data"){
@@ -289,21 +295,30 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     
     # Load page from header
     
-    observe({
+    observeEvent(shiny.router::get_page(), {
+      if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer shiny_router::change_page"))
+      
       if (prefix == "aggregated" & shiny.router::get_page() == "data" & r$data_page == "patient_level_data") shiny.router::change_page("patient_level_data")
       else if (prefix == "patient_lvl" & shiny.router::get_page() == "data" & r$data_page == "aggregated_data") shiny.router::change_page("aggregated_data")
       
       # Close help pages when page changes
       r[[paste0(prefix, "_open_help_panel")]] <- FALSE
       r[[paste0(prefix, "_open_help_modal")]] <- FALSE
-    })
-    
-    # Refresh reactivity
-    observe({
-      shiny.router::get_query_param()
+      
+      # Refresh reactivity
       shinyjs::hide("study_cards")
       shinyjs::show("study_cards")
     })
+    
+    # # Refresh reactivity
+    # observe({
+    #   if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer shiny.router::get_query_param"))
+    #   shiny.router::get_query_param()
+    #   shinyjs::hide("study_cards")
+    #   shinyjs::show("study_cards")
+    # })
+    
+    if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - initiate vars"))
     
     # --- --- --- --- --- ---
     # Help for this page ----
@@ -752,6 +767,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       
       observeEvent(m$chosen_patient, {
         
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer m$chosen_patient"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        
         # Reset variables
         d$data_patient$stays <- tibble::tibble()
         d$data_patient$labs_vitals <- tibble::tibble()
@@ -769,9 +787,14 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
             if (nrow(d$orders) > 0) d$data_patient$orders <- d$orders %>% dplyr::filter(patient_id == m$chosen_patient)
           }
         }
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer m$chosen_patient"))
       })
       
       observeEvent(m$chosen_stay, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer m$chosen_stay"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         req(d$data_patient)
         
@@ -787,12 +810,17 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
             if (nrow(d$data_patient$orders) > 0) d$data_stay$orders <- d$data_patient$orders %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
           }
         }
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer m$chosen_stay"))
       })
     }
     
     if (prefix == "aggregated"){
       
       observeEvent(m$chosen_subset, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer m$chosen_subset"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         d$data_subset <- list()
         patients <- tibble::tibble()
@@ -809,6 +837,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           patients <- patients %>% dplyr::select(patient_id)
           lapply(vars, function(var) if (nrow(d[[var]]) > 0) d$data_subset[[var]] <- d[[var]] %>% dplyr::inner_join(patients, by = "patient_id"))
         }
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer m$chosen_subset"))
       })
     }
     
@@ -819,6 +849,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     # When a study is chosen
     
     observeEvent(m$chosen_study, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer m$chosen_study"))
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
       
       # Hide UI from previous loaded study
       # Don't use removeUI, cause when you switch study, it is deleted and cannot be reinserted
@@ -878,23 +911,36 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         value = NULL)
       r[[paste0(prefix, "_reload_thesaurus_dropdown")]] <- Sys.time()
       r[[paste0(prefix, "_reload_plugins_dropdown")]] <- Sys.time()
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer m$chosen_study"))
     })
     
     # Reload thesaurus dropdown
     observeEvent(r[[paste0(prefix, "_reload_thesaurus_dropdown")]], {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..reload_thesaurus_dropdown"))
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      
       data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id) %>% as.character()
       thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) |
           grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
       
       sapply(c("module_element_creation_thesaurus", "module_element_settings_thesaurus"), function(name) shiny.fluent::updateComboBox.shinyInput(session, name, 
         options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", i18n = i18n), value = NULL))
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer r$..reload_thesaurus_dropdown"))
     })
     
     # Reload plugins dropdown
     
-    observeEvent(r$plugin, r[[paste0(prefix, "_reload_plugins_dropdown")]] <- Sys.time())
+    observeEvent(r$plugin, {
+      if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$plugin"))
+      r[[paste0(prefix, "_reload_plugins_dropdown")]] <- Sys.time()
+    })
     
     observeEvent(r[[paste0(prefix, "_reload_plugins_dropdown")]], {
+      if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..reload_plugins_dropdown"))
+
       module_type_id <- switch(prefix, "patient_lvl" = 1, "aggregated" = 2)
       
       plugins <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)
@@ -906,6 +952,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     # Load study display modules
     
     observeEvent(r[[paste0(prefix, "_load_display_modules")]], {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..load_display_modules"))
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      
       # Load study informations
       # For one study, you choose ONE patient_lvl or aggregated data module family
       study_infos <- r$studies %>% dplyr::filter(id == m$chosen_study)
@@ -964,6 +1014,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       
       # Load UI cards
       if (grepl("first_load_ui", r[[paste0(prefix, "_load_display_modules")]])) r[[paste0(prefix, "_load_ui_cards")]] <- Sys.time()
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer r$..load_display_modules"))
     })
     
     # --- --- -- -
@@ -976,6 +1028,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       
       # Render menu
       output$study_menu <- renderUI({
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - output$study_menu"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        
         # The output is reloaded in these conditions :
         # - Change in r[[paste0(prefix, "_display_modules")]]
         # - Change in r[[paste0(prefix, "_load_ui_menu")]]
@@ -1143,6 +1199,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", isolate(r[[paste0(prefix, "_selected_module")]])), headerText = span(i18n$t("add_module"), style = "padding-left:5px;"), itemIcon = "Add"))
         
         r[[paste0(prefix, "_load_ui_stage")]] <- "end_loading_tabs_menu"
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - output$study_menu"))
         
         tagList(
           shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
@@ -1168,6 +1225,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       # --- --- --- --- -- -
     
       observeEvent(r[[paste0(prefix, "_load_ui_cards")]], {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..load_ui_cards"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         # Don't reload study UI if already loaded
         req(m$chosen_study %not_in% r[[paste0(prefix, "_loaded_studies")]])
@@ -1316,6 +1376,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # Reload UI menu (problem for displaying cards : blanks if we do not do that)
         # shinyjs::delay(100, r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time())
         r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time()
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer r$..load_ui_cards"))
       })
     
     # --- --- --- --- --- ---
@@ -1323,6 +1385,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     # --- --- --- --- --- ---
     
     observeEvent(input[[paste0(prefix, "_close_add_module_element")]], {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$..close_add_module_element"))
 
       # Show opened cards before opening Add module element div
       sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
@@ -1337,6 +1401,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     # --- --- --- -- -
     
     observeEvent(r[[paste0(prefix, "_load_server")]], {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..load_server"))
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
 
       req(!is.na(m$chosen_study))
 
@@ -1346,38 +1413,6 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == module_family) %>% dplyr::select(module_id = id)
       module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::inner_join(modules, by = "module_id") %>% dplyr::rename(group_id = id)
       module_elements_items <- r[[paste0(prefix, "_modules_elements_items")]] %>% dplyr::inner_join(module_elements %>% dplyr::select(group_id), by = "group_id")
-      
-      # --- --- --- --- --- --- --- -- -
-      ## Delete tab & create widget ----
-      # --- --- --- --- --- --- --- -- -
-
-      # Loop over modules
-
-      # sapply(modules$module_id, function(module_id){
-      # 
-      #   # --- --- --- --- --- --- --
-      #   ### Create a new widget ----
-      #   # --- --- --- --- --- --- --
-      # 
-      #   observeEvent(input[[paste0(prefix, "_add_module_element_", module_id)]], {
-      # 
-      #     # Hide opened cards
-      #     sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
-      # 
-      #     # Show Add module element div
-      #     shinyjs::show(paste0(prefix, "_add_module_element"))
-      # 
-      #   })
-      # 
-      #   # --- --- --- --- - -
-      #   ### Delete a tab ----
-      #   # --- --- --- --- - -
-      # 
-      #   observeEvent(input[[paste0(prefix, "_remove_module_", module_id)]], {
-      #     r[[module_delete_variable]] <- TRUE
-      #   })
-      # 
-      # })
 
       # --- --- --- --- --- --- --- ---
       ## Run server code for cards ----
@@ -1493,6 +1528,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           }
         })
       }
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer r$..load_server"))
     })
     
     # --- --- --- --- --- --- -- -
@@ -1504,6 +1541,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       # --- --- --- --- -- -
     
       observeEvent(r[[paste0(prefix, "_settings_module_element_trigger")]], {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..settings_module_element_trigger"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
         shinyjs::show(paste0(prefix, "_module_element_settings"))
         r[[paste0(prefix, "_module_element_card_selected_type")]] <- "module_element_settings"
@@ -1559,47 +1600,58 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           shiny.fluent::updateDropdown.shinyInput(session, "module_element_settings_thesaurus_selected_items",
             options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
         }
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer r$..settings_module_element_trigger"))
       })
     
       observeEvent(input$module_element_settings_thesaurus, {
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$module_element_settings_thesaurus"))
         r[[paste0(prefix, "_load_thesaurus_trigger")]] <- Sys.time()
-        # r[[paste0(prefix, "_load_thesaurus_type")]] <- "module_element_settings"
       })
       
       # When an item is selected
       observeEvent(input$module_element_settings_item_selected, {
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$module_element_settings_item_selected"))
         r[[paste0(prefix, "_item_selected_trigger")]] <- Sys.time()
       })
       
       # When reset button is clicked
       observeEvent(input$module_element_settings_reset_thesaurus_items, {
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$module_element_settings_reset_thesaurus_items"))
         r[[paste0(prefix, "_reset_thesaurus_items_trigger")]] <- Sys.time()
       })
       
       # When dropdown is modified
       observeEvent(input$module_element_settings_thesaurus_selected_items_trigger, {
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$module_element_settings_thesaurus_selected_items_trigger"))
         r[[paste0(prefix, "_thesaurus_selected_items_trigger")]] <- Sys.time()
       })
       
       # Reload datatable
       observeEvent(r$module_element_settings_thesaurus_items_temp, {
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$module_element_settings_thesaurus_items_temp"))
         r[[paste0(prefix, "_reload_datatable_trigger")]] <- Sys.time()
       })
       
       # Updates in datatable
       
       observeEvent(input$module_element_settings_thesaurus_items_cell_edit, {
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$module_element_settings_thesaurus_items_cell_edit"))
         r[[paste0(prefix, "_edit_datatable_trigger")]] <- Sys.time()
       })
       
       # Close button clicked
       observeEvent(input[[paste0(prefix, "_close_module_element_settings")]], {
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$..close_module_element_settings"))
         shinyjs::hide(paste0(prefix, "_module_element_settings"))
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
       })
       
       # Save updates
       observeEvent(input$edit_module_element_button, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$..edit_module_element_button"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         new_data <- list()
         
@@ -1764,6 +1816,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # Hide settings card and show opened cards
         shinyjs::hide(paste0(prefix, "_module_element_settings"))
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer input$..edit_module_element_button"))
       })
     
       # --- --- --- --- --- --- --- --- --- -- -
@@ -1771,6 +1825,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       # --- --- --- --- --- --- --- --- --- -- -
       
       observeEvent(input$study_pivot_order, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$study_pivot_order"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         new_pivot_order <- tibble::tibble(name = stringr::str_split(input$study_pivot_order, "\n") %>% unlist()) %>%
           dplyr::mutate(display_order = 1:dplyr::n())
@@ -1798,6 +1855,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           dplyr::arrange(id)
         
         r[[paste0(prefix, "_load_display_modules")]] <- Sys.time()
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer input$study_pivot_oder"))
       })
     
       # --- --- --- --- --- --- --- --- --- --- --- -
@@ -1805,6 +1864,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       # --- --- --- --- --- --- --- --- --- --- --- -
 
       observeEvent(r[[paste0(prefix, "_selected_module")]], {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..selected_module"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         req(!grepl("show_module", r[[paste0(prefix, "_selected_module")]]))
 
@@ -1844,6 +1906,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           }
 
         })
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer r$..selected_module"))
       })
     
       # --- --- --- - -
@@ -1851,6 +1915,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       # --- --- --- - -
   
       observeEvent(input$study_current_tab_trigger, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$..study_current_tab_trigger"))
+        
         req(grepl("add_module", input$study_current_tab))
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
         shinyjs::hide(paste0(prefix, "_add_module_element"))
@@ -1860,6 +1927,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
       # Close creation div
       observeEvent(input[[paste0(prefix, "_close_add_module")]], {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$..close_add_module"))
 
         # Show opened cards before opening Add module element div
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
@@ -1870,6 +1939,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
       # Add button clicked
       observeEvent(input$add_module_button, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$add_module_button"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
 
         study <- r$studies %>% dplyr::filter(id == m$chosen_study)
         module <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_module")]])
@@ -1984,6 +2056,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
         # Hide currently opened cards
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer input$add_module_button"))
       })
       
       # --- --- --- --- --- --- --- --- --- --
@@ -1992,7 +2066,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       
       # Code to make Add module element button work
       observeEvent(input[[paste0(prefix, "_add_module_element_trigger")]], {
-        # observeEvent(input[[paste0(prefix, "_add_module_element_", r[[paste0(prefix, "_selected_module")]])]], {
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$..add_module_element_trigger"))
         
         # Hide opened cards
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
@@ -2009,7 +2083,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       
       # Code to make Remove module button work
       # observeEvent(input[[paste0(prefix, "_remove_module_", r[[paste0(prefix, "_selected_module")]])]], r[[module_delete_variable]] <- TRUE)
-      observeEvent(input[[paste0(prefix, "_remove_module_trigger")]], r[[module_delete_variable]] <- TRUE)
+      observeEvent(input[[paste0(prefix, "_remove_module_trigger")]], {
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$..remove_module_trigger"))
+        r[[module_delete_variable]] <- TRUE
+      })
       
       module_delete_prefix <- paste0(prefix, "_module")
       module_dialog_title <- paste0(prefix, "_modules_delete")
@@ -2034,6 +2111,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       # Delete sub-modules either
 
       observeEvent(r[[module_information_variable]], {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..module_deleted"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
 
         table <- paste0(prefix, "_modules")
         deleted_module_id <- r[[paste0(prefix, "_module_deleted")]]
@@ -2103,32 +2183,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           }
         }
         
-        # Delete children modules of deleted module
-        # has_children <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == deleted_module_id) %>% nrow()
-        # parent_module_id <- deleted_module_id
-        
-        
-        
-        # delete_children <- function(module_id){
-        #   children_ids <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == !!module_id) %>% dplyr::pull(id)
-        #   sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_modules')`} SET deleted = TRUE WHERE id IN ({children_ids*})" , .con = r$db)
-        #   DBI::dbSendStatement(r$db, sql) -> query
-        #   DBI::dbClearResult(query)
-        # }
-        # 
-        # 
-        # while(has_children > 0){
-        #   
-        #   delete_children(module_id)
-        #   children_ids <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == !!parent_module_id) %>% dplyr::pull(id)
-        #   
-        #   
-        #   has_children <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == !!parent_module_id) %>% nrow()
-        # }
-        
-        # update_r(r = r, table = module_table)
-        
-        # TO DO : loop to delete also sub-sub-modules...
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer r$..module_deleted"))
       })
 
       # --- --- --- --- --
@@ -2145,6 +2200,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
         # Load thesaurus attached to this datamart
         observeEvent(r$chosen_datamart, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$chosen_datamart"))
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
 
           req(!is.na(r$chosen_datamart))
           
@@ -2165,10 +2223,15 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           if (length(r$module_element_creation_thesaurus_selected_items) > 0){
             r$module_element_creation_thesaurus_selected_items <- r$module_element_creation_thesaurus_selected_items %>% dplyr::slice(0)
           }
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer r$chosen_datamart"))
         })
         
         # If r$studies changes, hide study_menu
         observeEvent(r$studies, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$studies"))
+          
           shinyjs::show("initial_breadcrumb")
           shinyjs::show("choose_a_study_card")
           shinyjs::hide("study_menu")
@@ -2178,11 +2241,15 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # Load thesaurus items
         
         observeEvent(input$module_element_creation_thesaurus, {
+          if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$module_element_creation_thesaurus"))
           r[[paste0(prefix, "_load_thesaurus_trigger")]] <- Sys.time()
           # r[[paste0(prefix, "_load_thesaurus_type")]] <- "module_element_creation"
         })
         
         observeEvent(r[[paste0(prefix, "_load_thesaurus_trigger")]], {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..load_thesaurus_trigger"))
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
           
           r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_items")
           thesaurus_id <- input[[paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus")]]$key
@@ -2253,14 +2320,18 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           # Create a proxy for datatatable
           r[[paste0(r_var, "_proxy")]] <- DT::dataTableProxy(r_var, deferUntilFlush = FALSE)
 
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer r$..load_thesaurus_trigger"))
         })
 
         # Reload datatable
         observeEvent(r$module_element_creation_thesaurus_items_temp, {
+          if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$module_element_creation_thesaurus_items_temp"))
           r[[paste0(prefix, "_reload_datatable_trigger")]] <- Sys.time()
         })
 
         observeEvent(r[[paste0(prefix, "_reload_datatable_trigger")]], {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..reload_datatable_trigger"))
 
           r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_items")
 
@@ -2271,10 +2342,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # Updates in datatable
 
         observeEvent(input$module_element_creation_thesaurus_items_cell_edit, {
+          if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$module_element_creation_thesaurus_items_cell_edit"))
           r[[paste0(prefix, "_edit_datatable_trigger")]] <- Sys.time()
         })
 
         observeEvent(r[[paste0(prefix, "_edit_datatable_trigger")]], {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..edit_datatable_trigger"))
 
           r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_items")
           input_edit_info <- paste0(r_var, "_cell_edit")
@@ -2294,10 +2368,14 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           # --- --- --- --- --- --- ---
           
           observeEvent(input$module_element_creation_item_selected, {
+            if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$module_element_creation_item_selected"))
             r[[paste0(prefix, "_item_selected_trigger")]] <- Sys.time()
           })
           
           observeEvent(r[[paste0(prefix, "_item_selected_trigger")]], {
+            
+            if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..item_selected_trigger"))
+            if (perf_monitoring) monitor_perf(r = r, action = "start")
             
             r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_selected_items")
             thesaurus_id <- input[[paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus")]]$key
@@ -2421,15 +2499,20 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
             shiny.fluent::updateDropdown.shinyInput(session, thesaurus_selected_items_input,
               options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
             # }
+            
+            if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer r$..item_selected_trigger"))
   
           })
   
           # When reset button is clicked
           observeEvent(input$module_element_creation_reset_thesaurus_items, {
+            if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$module_element_creation_reset_thesaurus_items"))
             r[[paste0(prefix, "_reset_thesaurus_items_trigger")]] <- Sys.time()
           })
           
           observeEvent(r[[paste0(prefix, "_reset_thesaurus_items_trigger")]], {
+            if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..reset_thesaurus_items_trigger"))
+            
             r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_selected_items")
             input_thesaurus_selected_items <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_selected_items")
             
@@ -2446,10 +2529,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
   
           # When dropdown is modified
           observeEvent(input$module_element_creation_thesaurus_selected_items_trigger, {
+            if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$module_element_creation_thesaurus_selected_items_trigger"))
             r[[paste0(prefix, "_thesaurus_selected_items_trigger")]] <- Sys.time()
           })
           
           observeEvent(r[[paste0(prefix, "_thesaurus_selected_items_trigger")]], {
+            
+            if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$..thesaurus_selected_items_trigger"))
             
             r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_selected_items")
             input_thesaurus_selected_items <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_selected_items")
@@ -2477,6 +2563,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       # --- --- --- --- --- --- --- ---
       
       observeEvent(input$add_module_element_button, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$add_module_element_button"))
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
 
         new_data <- list()
 
@@ -2788,6 +2877,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         # Reload UI menu (problem for displaying cards : blanks if we do not do that)
         # shinyjs::delay(300, r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time())
         r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time()
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer input$add_module_element_button"))
       })
       
       # --- --- --- --- --- -
@@ -2814,6 +2905,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       
       # When a module is element deleted, remove UI and reload toggles UI
       observeEvent(r[[module_element_information_variable]], {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer r$..module_element_deleted"))
         
         # table <- paste0(prefix, "_modules")
         # deleted_module_id <- r[[paste0(prefix, "_module_element_group_deleted")]]
@@ -2901,6 +2994,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       # --- --- --- --- --- --- --
       
       observeEvent(input$execute_code, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer input$execute_code"))
         
         # print("cards = ")
         # print(r[[paste0(prefix, "_cards")]])
