@@ -121,21 +121,10 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
             shinyjs::hidden(div(id = ns("div_br"), br())),
             div(shinyAce::aceEditor(
               ns("ace_edit_code"), "", mode = "r", 
-              code_hotkeys = list(
-                "r", list(
-                  run_selection = list(
-                    win = "CTRL-ENTER",
-                    mac = "CTRL-ENTER|CMD-ENTER"
-                  ),
-                  run_all = list(
-                    win = "CTRL-SHIFT-ENTER",
-                    mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"
-                  ),
-                  save = list(
-                    win = "CTRL-S",
-                    mac = "CTRL-S|CMD-S"
-                  )
-                )
+              code_hotkeys = list("r", list(
+                run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+                run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+                save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"))
               ),
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), 
             style = "width: 100%;"),
@@ -524,45 +513,45 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
     observeEvent(r[[paste0(table, "_temp")]], {
       
-      if (nrow(r[[paste0(table, "_temp")]]) == 0) render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(),
-        output_name = "management_datatable", col_names =  get_col_names(table_name = table, i18n = i18n),
-        editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
-      
-      req(nrow(r[[paste0(table, "_temp")]]) > 0)
-      
-      # Prepare data for datatable (add code for dropdowns etc)
-      r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
-        table = table, dropdowns = dropdowns_datatable, dropdowns_multiselect = dropdowns_multiselect, factorize_cols = factorize_cols,
-        action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]])
-      
-      # Replace empty data_source_id by "deleted data source"
-      if (table == "datamarts"){
-        r[[paste0(table, "_datatable_temp")]] <- r[[paste0(table, "_datatable_temp")]] %>%
-        dplyr::mutate_at("data_source_id", as.character) %>%
-        dplyr::mutate(data_source_id = dplyr::case_when(
-          data_source_id == "" ~ i18n$t("deleted_data_source"), TRUE ~ data_source_id
-        ))
-      }
-    
-      if (!r[[paste0(table, "_datatable_loaded")]]){
+      if (nrow(r[[paste0(table, "_temp")]]) == 0){
         
-        # Render datatable
-        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0(table, "_datatable_temp")]],
+        if (table == "data_sources") data <- tibble::tibble(id = integer(), name = character(), description = character(),
+          creator_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
+        if (table == "datamarts") data <- tibble::tibble(id = integer(), name = character(), description = character(),
+          data_source_id = character(), creator_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
+        if (table == "thesaurus") data <- tibble::tibble(id = integer(), name = character(), description = character(),
+          data_source_id = character(), creator_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
+      }
+      
+      if (nrow(r[[paste0(table, "_temp")]]) > 0){
+
+        r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
+          table = table, dropdowns = dropdowns_datatable, dropdowns_multiselect = dropdowns_multiselect, factorize_cols = factorize_cols,
+          action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]])
+        
+        # Replace empty data_source_id by "deleted data source"
+        if (table == "datamarts"){
+          r[[paste0(table, "_datatable_temp")]] <- r[[paste0(table, "_datatable_temp")]] %>%
+            dplyr::mutate_at("data_source_id", as.character) %>%
+            dplyr::mutate(data_source_id = dplyr::case_when(
+              data_source_id == "" ~ i18n$t("deleted_data_source"), TRUE ~ data_source_id
+            ))
+        }
+        data <- r[[paste0(table, "_datatable_temp")]]
+      }
+      
+      if (length(r[[paste0(table, "_datatable_proxy")]]) == 0){
+        
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data,
           output_name = "management_datatable", col_names =  get_col_names(table_name = table, i18n = i18n),
           editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
           searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
-        
-        # Create a proxy for datatatable
+
         r[[paste0(table, "_datatable_proxy")]] <- DT::dataTableProxy("management_datatable", deferUntilFlush = FALSE)
-        
-        r[[paste0(table, "_datatable_loaded")]] <- TRUE
       }
       
-      else {
-        
-        # Reload data of datatable
-        DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
+      if (length(r[[paste0(table, "_datatable_proxy")]]) > 0){
+        DT::replaceData(r[[paste0(table, "_datatable_proxy")]], data, resetPaging = FALSE, rownames = FALSE)
       }
       
     })
