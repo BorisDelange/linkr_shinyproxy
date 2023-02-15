@@ -86,7 +86,7 @@ linkr <- function(
   # Load translations
   # Update : use shiny.i18n instead. When it is done, delete get_translations
   # Change also tolower...
-  words <- get_translations()
+  # words <- get_translations()
   i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
   i18n$set_translation_language(tolower(language))
   
@@ -119,7 +119,7 @@ linkr <- function(
     "settings/log")
   
   do.call(shiny.router::make_router, lapply(pages, function(page) shiny.router::route(page, 
-    make_layout(language = language, page = page, words = words, i18n = i18n)))) -> page
+    make_layout(language = language, page = page, i18n = i18n)))) -> page
   
   # Load UI & server
     

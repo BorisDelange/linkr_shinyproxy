@@ -90,7 +90,7 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
             list(key = "people_picker", text = i18n$t("people_picker"))
           ), className = "inline_choicegroup"),
           conditionalPanel(condition = "input.see_log_of == 'people_picker'", ns = ns,
-            make_people_picker_new(i18n = i18n, ns = ns, label = "users", options = options)
+            make_people_picker(i18n = i18n, ns = ns, label = "users", options = options)
           ), br(),
           DT::DTOutput(ns("datatable"))
         ) -> result
@@ -149,7 +149,7 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
         lengthMenu = i18n$t("dt_entries"),
         emptyTable = i18n$t("dt_empty"))
       
-      col_names <- get_col_names_new("log", i18n = i18n)
+      col_names <- get_col_names("log", i18n = i18n)
       page_length <- 100
       centered_cols <- c("id", "name", "creator_id", "datetime")
       sortable_cols <- c("id", "category", "name", "creator_id", "datetime")

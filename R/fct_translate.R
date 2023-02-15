@@ -13,7 +13,7 @@
 #' cdwtools::translate("IT", words, "settings")
 #' cdwtools::translate("FR", words, "settings")
 
-translate <- function(language = "EN", reference_word = character(), words = tibble::tibble()){
+# translate <- function(language = "EN", reference_word = character(), words = tibble::tibble()){
   
   # if (nrow(words) == 0){
   #   words <- get_translations()
@@ -33,17 +33,17 @@ translate <- function(language = "EN", reference_word = character(), words = tib
   # if (nrow(words) == 0) result <- "Deprecated use of translations"
   # 
   # result
-  "translation"
-}
+#   "translation"
+# }
 
 #' Create a tibble with translations
 #' @noRd
 #'
-
-get_translations <- function(){
-    dplyr::tribble(~language, ~reference_word, ~translated_word,
-    "EN", "blank", "",
-    "FR", "blank", ""#,
+# 
+# get_translations <- function(){
+#     dplyr::tribble(~language, ~reference_word, ~translated_word,
+#     "EN", "blank", "",
+#     "FR", "blank", ""#,
     # "EN", "home", "Home",
     # "FR", "home", "Accueil",
     # "EN", "my_studies", "My studies",
@@ -1178,6 +1178,6 @@ get_translations <- function(){
     # "FR", "choose_a_datamart", "Choisissez un datamart dans le menu déroulant à gauche de l'écran",
     # "EN", "choose_a_study", "Choose a damatart & a study in the dropdown on the left-side of the page",
     # "FR", "choose_a_study", "Choisissez un datamart & une étude dans le menu déroulant à gauche de l'écran"
-    ) -> data
-  data
-}
+#     ) -> data
+#   data
+# }

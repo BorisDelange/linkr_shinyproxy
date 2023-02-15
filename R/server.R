@@ -56,7 +56,7 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
     
     # Get translations
     # Update : use shiny.i18n instead. When it is done, delete get_translations
-    r$words <- get_translations()
+    # r$words <- get_translations()
     i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
     i18n$set_translation_language(language)
     r$i18n <- i18n
@@ -85,8 +85,8 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
             DBI::dbClearResult(query)
           })
         },
-        error = function(e) print(translate(language, "error_insert_distant_db_info")),
-        warning = function(w) print(translate(language, "error_insert_distant_db_info")))
+        error = function(e) print(i18n$t("error_insert_distant_db_info")),
+        warning = function(w) print(i18n$t("error_insert_distant_db_info")))
       }
     })
     
@@ -108,10 +108,10 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
     observeEvent(r$db, {
       
       # Add default values in database, if it is empty
-      insert_default_values(output = output, r = r)
+      # insert_default_values(output = output, r = r)
       
       # Load database
-      load_database_new(r = r, i18n = i18n)
+      load_database(r = r, i18n = i18n)
       
     })
 

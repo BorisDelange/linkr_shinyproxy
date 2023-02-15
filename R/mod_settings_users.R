@@ -37,7 +37,7 @@ mod_settings_users_ui <- function(id = character(), i18n = R6::R6Class()){
   forbidden_cards <- tagList()
   sapply(cards_names, function(card){
     pivots <<- tagList(pivots, shiny.fluent::PivotItem(id = card, itemKey = card, headerText = i18n$t(card)))
-    forbidden_cards <<- tagList(forbidden_cards, forbidden_card_new(ns = ns, name = card, i18n = i18n))
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, i18n = i18n))
   })
   
   div(class = "main",
@@ -63,32 +63,32 @@ mod_settings_sub_users_ui <- function(id = character(), i18n = R6::R6Class()){
   page <- substr(id, nchar("settings_users_") + 1, nchar(id))
   
   if (page == "users_creation"){
-    render_settings_creation_card_new(i18n = i18n, ns = ns, id = id, title = "add_user",
+    render_settings_creation_card(i18n = i18n, ns = ns, id = id, title = "add_user",
       textfields = c("username", "firstname", "lastname", "password"), textfields_width = "200px",
       dropdowns = c("user_access", "user_status"), dropdowns_width = "200px") -> result
   }
   
   if (page == "users_accesses_creation"){
-    render_settings_creation_card_new(i18n = i18n, ns = ns, id = id, title = "add_access",
+    render_settings_creation_card(i18n = i18n, ns = ns, id = id, title = "add_access",
       textfields = c("name", "description"), textfields_width = "300px") -> result
   }
   
   if (page == "users_statuses_creation"){
-    render_settings_creation_card_new(i18n = i18n, ns = ns, id = id, title = "add_status",
+    render_settings_creation_card(i18n = i18n, ns = ns, id = id, title = "add_status",
       textfields = c("name", "description"), textfields_width = "300px") -> result
   }
   
   if (grepl("management", page)){
-    render_settings_datatable_card_new(i18n = i18n, ns = ns, output_id = "management_datatable", title = page) -> result
+    render_settings_datatable_card(i18n = i18n, ns = ns, title = page) -> result
   }
   
   if (page == "users_accesses_options"){
     tagList(
-      forbidden_card_new(ns = ns, name = "options_card", i18n = i18n),
+      forbidden_card(ns = ns, name = "options_card", i18n = i18n),
       div(id = ns("options_card"),
         make_card(i18n$t("accesses_opts"),
           div(
-            make_combobox_new(i18n = i18n, ns = ns, label = "user_access", id = "options_chosen",
+            make_combobox(i18n = i18n, ns = ns, label = "user_access", id = "options_chosen",
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
             uiOutput(ns("options_toggles_result")), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
@@ -195,7 +195,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         function(data_var){
           observeEvent(r[[data_var]], {
             # Convert options to list
-            options <- convert_tibble_to_list(data = r[[data_var]], key_col = "id", text_col = "name", words = r$words)
+            options <- convert_tibble_to_list(data = r[[data_var]], key_col = "id", text_col = "name")
             shiny.fluent::updateDropdown.shinyInput(session, get_singular(word = data_var), options = options)
           })
         })
@@ -226,7 +226,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         # Fields requiring unique value
         req_unique_values <- switch(table, "users" = "username", "users_accesses" = "name", "users_statuses" = "name")
         
-        add_settings_new_data_new(session = session, output = output, r = r, i18n = i18n, id = id, 
+        add_settings_new_data(session = session, output = output, r = r, i18n = i18n, id = id, 
           data = new_data, table = table, required_textfields = required_textfields, req_unique_values = req_unique_values, dropdowns = dropdowns)
         
         r[[paste0(table, "_toggle")]] <- r[[paste0(table, "_toggle")]] + 1
@@ -269,14 +269,14 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       else data_output <- r[[paste0(table, "_datatable_temp")]]
       
       # Prepare data for datatable (add code for dropdowns etc)
-      r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
+      r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
         table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
       
       hidden_cols <- c("id", "password", "deleted", "modified")
       
       # Render datatable
-      render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0(table, "_datatable_temp")]],
-        output_name = "management_datatable", col_names =  get_col_names_new(table_name = table, i18n = i18n),
+      render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0(table, "_datatable_temp")]],
+        output_name = "management_datatable", col_names =  get_col_names(table_name = table, i18n = i18n),
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
         searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
       
@@ -287,7 +287,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       observeEvent(r[[paste0(table, "_temp")]], {
         
         # Reload datatable_temp variable
-        r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
+        r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
           table = table, dropdowns = dropdowns_datatable, action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]], data_output = data_output)
         
         # Reload data of datatable
@@ -313,12 +313,12 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       # Each time a dropdown is updated, modify temp variable
       if (table == "users"){
         observeEvent(r$users, {
-          update_settings_datatable_new(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns, i18n = i18n)
+          update_settings_datatable(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns, i18n = i18n)
         })
       }
   
       # When save button is clicked
-      observeEvent(input$management_save, save_settings_datatable_updates_new(output = output, r = r, ns = ns, table = table, i18n = i18n))
+      observeEvent(input$management_save, save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, i18n = i18n))
     }
     
     # --- --- --- --- --- --- --- --
@@ -330,7 +330,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
     
       # Create & show dialog box
       observeEvent(r[[paste0(table, "_delete_dialog")]] , {
-        output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react_new(r = r, ns = ns, table = table, i18n = i18n))
+        output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = table, i18n = i18n))
       })
 
       # Whether to close or not delete dialog box
@@ -348,7 +348,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
 
         # Delete row in DB table
-        delete_settings_datatable_row_new(output = output, r = r, ns = ns, i18n = i18n, row_deleted = row_deleted, table = table)
+        delete_settings_datatable_row(output = output, r = r, ns = ns, i18n = i18n, row_deleted = row_deleted, table = table)
       })
     }
   
@@ -493,7 +493,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
               
               # Create toggle
               sub_results <<- tagList(sub_results, 
-                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), make_toggle_new(i18n = i18n, ns = ns, label = toggle, inline = TRUE, value = value, bold = FALSE)))
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), make_toggle(i18n = i18n, ns = ns, label = toggle, inline = TRUE, value = value, bold = FALSE)))
             })
           }
           
@@ -507,7 +507,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
           # Create final toggle
           options_toggles_result <<- tagList(options_toggles_result, br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle_new(i18n = i18n, ns = ns, label = label, inline = TRUE, value = value)),
+              make_toggle(i18n = i18n, ns = ns, label = label, inline = TRUE, value = value)),
             conditionalPanel(condition = paste0("input.", label, " == 1"), ns = ns,
               br(), sub_results), hr()
           )
@@ -606,7 +606,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         r$user_accesses <- r$options %>% dplyr::filter(category == "users_accesses" & link_id == user_access_id & value_num == 1) %>% dplyr::pull(name)
         
         # Notify the user
-        show_message_bar_new(output = output, id = 1, message = "modif_saved", type = "success", i18n = i18n)
+        show_message_bar(output = output, id = 1, message = "modif_saved", type = "success", i18n = i18n)
         
       })
     }

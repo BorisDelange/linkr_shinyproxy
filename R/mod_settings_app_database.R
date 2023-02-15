@@ -15,7 +15,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
-    forbidden_cards <<- tagList(forbidden_cards, forbidden_card_new(ns = ns, name = card, i18n = i18n))
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, i18n = i18n))
   })
   
   div(class = "main",
@@ -61,19 +61,19 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
               shiny.fluent::Stack(
                 horizontal = TRUE,
                 tokens = list(childrenGap = 50),
-                make_dropdown(language, ns, "sql_lib", options = list(
+                make_dropdown(i18n, ns, "sql_lib", options = list(
                   list(key = "postgres", text = "PostgreSQL"),
                   list(key = "sqlite", text = "SQLite")
-                ), value = "postgres", width = "250px", words = words),
-                make_textfield_new(i18n, ns, "dbname", width = "250px"),
-                make_textfield_new(i18n, ns, "host", width = "250px")
+                ), value = "postgres", width = "250px"),
+                make_textfield(i18n, ns, "dbname", width = "250px"),
+                make_textfield(i18n, ns, "host", width = "250px")
               ),
               shiny.fluent::Stack(
                 horizontal = TRUE,
                 tokens = list(childrenGap = 50),
-                make_textfield_new(i18n, ns, "port", width = "250px"),
-                make_textfield_new(i18n, ns, "user", width = "250px"),
-                make_textfield_new(i18n, ns, "password", type = "password", canRevealPassword = TRUE, width = "250px")
+                make_textfield(i18n, ns, "port", width = "250px"),
+                make_textfield(i18n, ns, "user", width = "250px"),
+                make_textfield(i18n, ns, "password", type = "password", canRevealPassword = TRUE, width = "250px")
               )), htmltools::br(),
             shiny.fluent::Stack(
               horizontal = TRUE,
@@ -155,7 +155,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
             br(), uiOutput(ns("current_db_save")),
             br(), uiOutput(ns("last_db_save")), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle_new(i18n = i18n, ns = ns, label = "db_export_log", value = FALSE, inline = TRUE)), br(),
+              make_toggle(i18n = i18n, ns = ns, label = "db_export_log", value = FALSE, inline = TRUE)), br(),
             shiny.fluent::PrimaryButton.shinyInput(ns("db_save_button"), i18n$t("export_db"), iconProps = list(iconName = "Download")),
             div(style = "visibility:hidden;", downloadButton(ns("db_save"), label = ""))
           )
@@ -176,7 +176,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
             br(), uiOutput(ns("current_db_restore")),
             br(), uiOutput(ns("last_db_restore")), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle_new(i18n = i18n, ns = ns, label = "db_import_log", value = FALSE, inline = TRUE)), br(),
+              make_toggle(i18n = i18n, ns = ns, label = "db_import_log", value = FALSE, inline = TRUE)), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::DefaultButton.shinyInput(ns("db_restore_browse"), i18n$t("choose_zip_file")),
               uiOutput(ns("db_restore_status"))), br(),
@@ -314,9 +314,9 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       }
       
       # Reload r$db variable
-      r$db <- get_db(db_info = list(), app_db_folder = r$app_db_folder, language = language)
+      r$db <- get_db(db_info = list(), app_db_folder = r$app_db_folder, i18n = i18n)
       
-      show_message_bar(output, 1, "modif_saved", "success", language)
+      show_message_bar(output, 1, "modif_saved", "success", i18n = i18n)
     })
     
     # --- --- --- --- -- -
@@ -386,7 +386,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       
       if (input$connection_type == "distant"){
         data <- tibble::tibble(name = character(), row_number = integer())
-        if (test_distant_db(local_db = r$local_db, language = language, words = r$words) == "success"){
+        if (test_distant_db(local_db = r$local_db, i18n = i18n) == "success"){
           distant_db <- get_distant_db(r$local_db)
           tibble::tibble(name = DBI::dbListTables(distant_db),
             row_number = sapply(DBI::dbListTables(distant_db),
@@ -530,7 +530,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         DBI::dbClearResult(query)
       }
       
-      update_r(r = r, table = "options", language = language)
+      update_r(r = r, table = "options")
       
     })
     
@@ -640,7 +640,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         unlink(paste0(find.package("cdwtools"), "/data/temp"), recursive = TRUE, force = TRUE)
         
         # Load database, restored
-        load_database(r = r, language = language)
+        load_database(r = r, i18n = i18n)
         
         # If restore is a success, save in database
         
@@ -662,14 +662,12 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           DBI::dbClearResult(query)
         }
         
-        update_r(r = r, table = "options", language = language)
+        update_r(r = r, table = "options")
         
-        show_message_bar(output, 3, "database_restored", "success", language, time = 15000)
+        show_message_bar(output, 3, "database_restored", "success", i18n = i18n, time = 15000)
       },
       error = function(e) report_bug(r = r, output = output, error_message = "error_restoring_database", 
-        error_name = paste0(id, " - restore database"), category = "Error", error_report = e, language = language))#,
-      # warning = function(w) report_bug(r = r, output = output, error_message = "error_restoring_database", 
-      #   error_name = paste0(id, " - restore database"), category = "Warning", error_report = w, language = language))
+        error_name = paste0(id, " - restore database"), category = "Error", error_report = e, i18n = i18n))
     })
     
   })

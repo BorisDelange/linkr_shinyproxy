@@ -10,13 +10,13 @@
 #' \dontrun{
 #' run_datamart_code(output = output, r = r, datamart_id = 3)
 #' }
-run_datamart_code_new <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), i18n = R6::R6Class(), quiet = TRUE){
+run_datamart_code <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), i18n = R6::R6Class(), quiet = TRUE){
   # Reset r$chosen_datamart to clear patient-level data & aggregated data (use the same r variables for data) 
   
   # Get code from datamart
   tryCatch(r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code),
     error = function(e){
-      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_code", 
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_code", 
         error_name = paste0("run_datamart_code - load_code - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
       stop(i18n$t("fail_load_code"))}
   )
@@ -36,13 +36,13 @@ run_datamart_code_new <- function(output, r = shiny::reactiveValues(), d = shiny
   
   tryCatch(eval(parse(text = code)),
     error = function(e){
-      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_execute_code", 
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_execute_code", 
         error_name = paste0("run_datamart_code - execute_code - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
       stop(i18n$t("fail_execute_code"))}
   )
   
   # If data is loaded, nb of rows of d variable > 0
-  # if (!quiet) for (var in vars) if (nrow(d[[var]]) != 0) show_message_bar_new(output, 1, paste0("import_datamart_success_", var), "success", i18n)
+  # if (!quiet) for (var in vars) if (nrow(d[[var]]) != 0) show_message_bar(output, 1, paste0("import_datamart_success_", var), "success", i18n)
 }
 
 #' Add patients to a subset
@@ -60,25 +60,25 @@ run_datamart_code_new <- function(output, r = shiny::reactiveValues(), d = shiny
 #' patients <- tibble::tribble(~patient_id, 123L, 456L, 789L)
 #' subset_add_patients(output = output, r = r, patients = patients, subset_id = 3, language = "EN")
 #' }
-add_patients_to_subset_new <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), patients = tibble::tibble(),
+add_patients_to_subset <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), patients = tibble::tibble(),
   subset_id = integer(), success_notification = FALSE, i18n = R6::R6Class()){
   
   # Check subset_id
   
   if (length(subset_id) == 0){
-    show_message_bar_new(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n)
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n)
     stop(i18n$t("invalid_subset_id_value"))
   }
   
   tryCatch(subset_id <- as.integer(subset_id), 
     error = function(e){
-      if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "invalid_subset_id_value", 
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_subset_id_value", 
         error_name = paste0("add_patients_to_subset - invalid_subset_id - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n)
       stop(i18n$t("invalid_subset_id_value"))}
   )
   
   if (is.na(subset_id)){
-    show_message_bar_new(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n)
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n)
     stop(i18n$t("invalid_subset_id_value"))
   }
   
@@ -88,7 +88,7 @@ add_patients_to_subset_new <- function(output, r = shiny::reactiveValues(), m = 
   
   # Check col names
   if (!identical(names(patients), "patient_id")){
-    show_message_bar_new(output, 1, "invalid_col_names", "severeWarning", i18n = i18n)
+    show_message_bar(output, 1, "invalid_col_names", "severeWarning", i18n = i18n)
     stop(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
   }
   
@@ -96,7 +96,7 @@ add_patients_to_subset_new <- function(output, r = shiny::reactiveValues(), m = 
   sapply(1:nrow(var_cols), function(i){
     var_name <- var_cols[[i, "name"]]
     if (var_cols[[i, "type"]] == "integer" & !is.integer(patients[[var_name]])){
-      show_message_bar_new(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      show_message_bar(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
       stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
     }
   })
@@ -105,7 +105,7 @@ add_patients_to_subset_new <- function(output, r = shiny::reactiveValues(), m = 
   tryCatch(patients <- tibble::as_tibble(patients), 
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = paste0("add_patients_to_subset - error_transforming_tibble - id = ", subset_id), category = "Error", error_report = toString(e), language = language)
+        error_name = paste0("add_patients_to_subset - error_transforming_tibble - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n)
       stop(i18n$t("error_transforming_tibble"))}
   )
   
@@ -127,14 +127,14 @@ add_patients_to_subset_new <- function(output, r = shiny::reactiveValues(), m = 
       DBI::dbAppendTable(m$db, "subset_patients", patients)
     },
       error = function(e){
-        if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "error_inserting_data", 
+        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_inserting_data", 
           error_name = paste0("add_patients_to_subset - error_inserting_data - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n)
         stop(i18n$t("error_inserting_data"))}
     )
   }
   
   if (success_notification){
-    show_message_bar_new(output, 1, "add_patients_subset_success", "success", i18n = i18n)
+    show_message_bar(output, 1, "add_patients_subset_success", "success", i18n = i18n)
     print(i18n$t("add_patients_subset_success"))
   }
 }
@@ -150,29 +150,29 @@ add_patients_to_subset_new <- function(output, r = shiny::reactiveValues(), m = 
 #' @param language language used for error / warning messages (character, default = "EN")
 
 remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), patients = tibble::tibble(), 
-  subset_id = integer(), language = "EN"){
+  subset_id = integer(), i18n = R6::R6Class()){
   
   # Check subset_id
   
   if (length(subset_id) == 0){
-    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
-    stop(translate(language, "invalid_subset_id_value", r$words))
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n)
+    stop(i18n$t("invalid_subset_id_value"))
   }
   
   tryCatch(subset_id <- as.integer(subset_id), 
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_subset_id_value", 
-        error_name = paste0("remove_patients_from_subset - invalid_subset_id_value - id = ", subset_id), category = "Error", error_report = toString(e), language = language)
-      stop(translate(language, "invalid_subset_id_value", r$words))},
+        error_name = paste0("remove_patients_from_subset - invalid_subset_id_value - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("invalid_subset_id_value"))},
     warning = function(w) if (nchar(w[1]) > 0){
       report_bug(r = r, output = output, error_message = "invalid_subset_id_value", 
-        error_name = paste0("remove_patients_from_subset - invalid_subset_id_value - id = ", subset_id), category = "Warning", error_report = toString(w), language = language)
-      stop(translate(language, "invalid_subset_id_value", r$words))}
+        error_name = paste0("remove_patients_from_subset - invalid_subset_id_value - id = ", subset_id), category = "Warning", error_report = toString(w), i18n = i18n)
+      stop(i18n$t("invalid_subset_id_value"))}
   )
   
   if (is.na(subset_id)){
-    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", language, r$words)
-    stop(translate(language, "invalid_subset_id_value", r$words))
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n)
+    stop(i18n$t("invalid_subset_id_value"))
   }
   
   var_cols <- tibble::tribble(
@@ -181,16 +181,16 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), pat
   
   # Check col names
   if (!identical(names(patients), "patient_id")){
-    show_message_bar(output, 1, "invalid_col_names", "severeWarning", language, r$words)
-    stop(translate(language, "valid_col_names_are", r$words), toString(var_cols %>% dplyr::pull(name)))
+    show_message_bar(output, 1, "invalid_col_names", "severeWarning", i18n = i18n)
+    stop(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
   }
   
   # Check col types
   sapply(1:nrow(var_cols), function(i){
     var_name <- var_cols[[i, "name"]]
     if (var_cols[[i, "type"]] == "integer" & !is.integer(patients[[var_name]])){
-      show_message_bar(output, 1, "invalid_col_types", "severeWarning", language, r$words)
-      stop(paste0(translate(language, "column", r$words), " ", var_name, " ", translate(language, "type_must_be_integer", r$words)))
+      show_message_bar(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
     }
   })
   
@@ -198,12 +198,12 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), pat
   tryCatch(patients <- tibble::as_tibble(patients), 
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = paste0("remove_patients_from_subset - error_transforming_tibble - id = ", subset_id), category = "Error", error_report = toString(e), language = language)
-      stop(translate(language, "error_transforming_tibble", r$words))},
+        error_name = paste0("remove_patients_from_subset - error_transforming_tibble - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("error_transforming_tibble"))},
     warning = function(w) if (nchar(w[1]) > 0){
       report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = paste0("remove_patients_from_subset - error_transforming_tibble - id = ", subset_id), category = "Warning", error_report = toString(w), language = language)
-      stop(translate(language, "error_transforming_tibble", r$words))}
+        error_name = paste0("remove_patients_from_subset - error_transforming_tibble - id = ", subset_id), category = "Warning", error_report = toString(w), i18n = i18n)
+      stop(i18n$t("error_transforming_tibble"))}
   )
   
   tryCatch({ query <- DBI::dbSendStatement(r$db, paste0("DELETE FROM subset_patients WHERE subset_id = ", subset_id, " AND
@@ -212,12 +212,12 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), pat
   }, 
   error = function(e){
     if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_removing_patients_from_subset", 
-      error_name = paste0("remove_patients_from_subset - error_removing_patients_from_subset - id = ", subset_id), category = "Error", error_report = toString(e), language = language)
-    stop(translate(language, "error_removing_patients_from_subset", r$words))},
+      error_name = paste0("remove_patients_from_subset - error_removing_patients_from_subset - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n)
+    stop(i18n$t("error_removing_patients_from_subset"))},
   warning = function(w) if (nchar(w[1]) > 0){
     report_bug(r = r, output = output, error_message = "error_removing_patients_from_subset", 
-      error_name = paste0("remove_patients_from_subset - error_removing_patients_from_subset - id = ", subset_id), category = "Warning", error_report = toString(w), language = language)
-    stop(translate(language, "error_removing_patients_from_subset", r$words))}
+      error_name = paste0("remove_patients_from_subset - error_removing_patients_from_subset - id = ", subset_id), category = "Warning", error_report = toString(w), i18n = i18n)
+    stop(i18n$t("error_removing_patients_from_subset"))}
   )
 }
 
@@ -333,7 +333,7 @@ get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
   else if (is.na(thesaurus_name)) stop_fct <- TRUE
   
   if (stop_fct){
-    show_message_bar_new(output, 1, "invalid_thesaurus_name_value", "severeWarning", i18n = i18n, ns = ns)
+    show_message_bar(output, 1, "invalid_thesaurus_name_value", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("invalid_thesaurus_name_value"))
   }
   
@@ -342,7 +342,7 @@ get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
   sql <- glue::glue_sql("SELECT * FROM thesaurus WHERE name = {thesaurus_name} AND deleted IS FALSE", .con = r$db)
   thesaurus_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
   if (length(thesaurus_id) == 0){
-    show_message_bar_new(output, 1, "thesaurus_id_not_found", "severeWarning", i18n = i18n, ns = ns)
+    show_message_bar(output, 1, "thesaurus_id_not_found", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("thesaurus_id_not_found"))
   }
   
@@ -351,7 +351,7 @@ get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
   if (length(method) == 0) stop_fct <- TRUE
   else if (is.na(method)) stop_fct <- TRUE
   if (stop_fct){
-    show_message_bar_new(output, 1, "invalid_thesaurus_search_method", "severeWarning", i18n = i18n, ns = ns)
+    show_message_bar(output, 1, "invalid_thesaurus_search_method", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("invalid_thesaurus_search_method"))
   }
   
@@ -360,7 +360,7 @@ get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
     if (length(item_name) == 0) stop_fct <- TRUE
     else if (is.na(item_name)) stop_fct <- TRUE
     if (stop_fct){
-      show_message_bar_new(output, 1, "invalid_thesaurus_item_name", "severeWarning", i18n = i18n, ns = ns)
+      show_message_bar(output, 1, "invalid_thesaurus_item_name", "severeWarning", i18n = i18n, ns = ns)
       stop(i18n$t("invalid_thesaurus_item_name"))
     }
     
@@ -376,7 +376,7 @@ get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
     if (length(item_id) == 0) stop_fct <- TRUE
     else if (is.na(item_id)) stop_fct <- TRUE
     if (stop_fct){
-      show_message_bar_new(output, 1, "invalid_thesaurus_item_id", "severeWarning", i18n = i18n, ns = ns)
+      show_message_bar(output, 1, "invalid_thesaurus_item_id", "severeWarning", i18n = i18n, ns = ns)
       stop(i18n$t("invalid_thesaurus_item_id"))
     }
     
@@ -403,7 +403,7 @@ add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
   else if (is.na(thesaurus_name)) stop_fct <- TRUE
   
   if (stop_fct){
-    show_message_bar_new(output, 1, "invalid_thesaurus_name_value", "severeWarning", i18n = i18n, ns = ns)
+    show_message_bar(output, 1, "invalid_thesaurus_name_value", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("invalid_thesaurus_name_value"))
   }
   
@@ -412,7 +412,7 @@ add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
   sql <- glue::glue_sql("SELECT * FROM thesaurus WHERE name = {thesaurus_name} AND deleted IS FALSE", .con = r$db)
   thesaurus_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
   if (length(thesaurus_id) == 0){
-    show_message_bar_new(output, 1, "thesaurus_id_not_found", "severeWarning", i18n = i18n, ns = ns)
+    show_message_bar(output, 1, "thesaurus_id_not_found", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("thesaurus_id_not_found"))
   }
   
@@ -421,7 +421,7 @@ add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
   if (length(item_name) == 0) stop_fct <- TRUE
   else if (is.na(item_name)) stop_fct <- TRUE
   if (stop_fct){
-    show_message_bar_new(output, 1, "invalid_thesaurus_item_name", "severeWarning", i18n = i18n, ns = ns)
+    show_message_bar(output, 1, "invalid_thesaurus_item_name", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("invalid_thesaurus_item_name"))
   }
   
@@ -435,7 +435,7 @@ add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
   check_item <- DBI::dbGetQuery(r$db, sql)
   
   if (nrow(check_item) > 0){
-    show_message_bar_new(output, 1, "thesaurus_item_already_exists", "severeWarning", i18n = i18n, ns = ns)
+    show_message_bar(output, 1, "thesaurus_item_already_exists", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("invalid_thesaurus_item_name"))
   }
   
@@ -450,7 +450,7 @@ add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
     DBI::dbAppendTable(r$db, "thesaurus_items", new_data)
   }
   
-  show_message_bar_new(output, 1, "thesaurus_item_added", "success", i18n = i18n, ns = ns)
+  show_message_bar(output, 1, "thesaurus_item_added", "success", i18n = i18n, ns = ns)
 }
 
 create_scripts_thesaurus <- function(output, r = shiny::reactiveValues(), data_source_id = integer(), 
@@ -477,6 +477,6 @@ create_scripts_thesaurus <- function(output, r = shiny::reactiveValues(), data_s
     DBI::dbAppendTable(r$db, "code", new_data)
     r$code <- r$code %>% dplyr::bind_rows(new_data)
     
-    show_message_bar_new(output, 1, "thesaurus_added", "success", i18n = i18n, ns = ns)
+    show_message_bar(output, 1, "thesaurus_added", "success", i18n = i18n, ns = ns)
   }
 }

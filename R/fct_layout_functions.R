@@ -50,12 +50,12 @@ make_page <- function (title = character(), subtitle = character(), contents = c
 }
 
 #' Make a complete layout with header, sidenav, main & footer
-make_layout <- function(language = "EN", page = character(), words = tibble::tibble(), i18n = R6::R6Class()){
+make_layout <- function(language = "EN", page = character(), i18n = R6::R6Class()){
   div(class = "grid-container",
-    mod_page_header_ui(id = stringr::str_replace(page, "/", "_"), language = language, words = words, i18n = i18n),
-    mod_page_sidenav_ui(id = stringr::str_replace(page, "/", "_"), language = language, words = words, i18n = i18n),
-    mod_page_main_ui(id = stringr::str_replace(page, "/", "_"), language = language, words = words, i18n = i18n),
-    mod_page_footer_ui(words = words, i18n = i18n)
+    mod_page_header_ui(id = stringr::str_replace(page, "/", "_"), i18n = i18n),
+    mod_page_sidenav_ui(id = stringr::str_replace(page, "/", "_"), i18n = i18n),
+    mod_page_main_ui(id = stringr::str_replace(page, "/", "_"), language = language, i18n = i18n),
+    mod_page_footer_ui(i18n = i18n)
   )
 }
 
@@ -64,26 +64,7 @@ make_layout <- function(language = "EN", page = character(), words = tibble::tib
 #' @return Shiny UI elements / HTML code
 #' @examples
 #' 
-make_textfield <- function(language = "EN", ns = shiny::NS(), label = character(), id = NA_character_, 
-  value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, 
-  margin_right = NULL, words = tibble::tibble()){
-  if (is.na(id)) id <- label
-  style <- ""
-  if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
-  if (is.null(width) & !is.null(min_width) & !is.null(max_width)) style <- paste0(style, "min-width: ", min_width, "; max-width: ", max_width, ";")
-  if (!is.null(margin_right)) style <- paste0(style, "margin-right:", margin_right, ";")
-  div(
-    div(class = "input_title", translate(language, label, words)),
-    div(shiny.fluent::TextField.shinyInput(ns(id), value = value, type = type, canRevealPassword = canRevealPassword), style = style)
-  )
-}
-
-#' Make a shiny.fluent textfield
-#' 
-#' @return Shiny UI elements / HTML code
-#' @examples
-#' 
-make_textfield_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), id = NA_character_, 
+make_textfield <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), id = NA_character_, 
   value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, 
   margin_right = NULL, disabled = FALSE){
   if (is.na(id)) id <- label
@@ -116,20 +97,7 @@ make_textfield_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = c
 #' make_dropdown(language = "EN", ns = NS("settings_datamarts"), label = "my_dropdown", id = "my_dropdown",
 #'   options = options, multiSelect = FALSE, value = "my_key1", width = "100%")
 #' }
-
-make_dropdown <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
-  id = NA_character_, value = NULL, width = NULL, words = tibble::tibble()){
-  
-  if (is.na(id)) id <- label
-  style <- ""
-  if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
-  div(
-    div(id = ns(paste0(id, "_title")), class = "input_title", translate(language, label, words)),
-    div(shiny.fluent::Dropdown.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect), style = style)
-  )
-}
-
-make_dropdown_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
+make_dropdown <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
   id = NA_character_, value = NULL, width = NULL, disabled = FALSE){
   
   if (is.na(id)) id <- label
@@ -152,23 +120,8 @@ make_dropdown_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = ch
 #' @param multiSelect Is multiselection of options is possible ? (logical)
 #' @param width Width of the dropdown, CSS code so "300px" or "100\%" are accepted
 #' @param allowFreeForm Allows user to enter free text, not provided by options (logical)
-
-make_combobox <- function(language = "EN", ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
-  allowFreeform = FALSE, autoComplete = "on", id = NA_character_, value = NULL, width = NULL, words = tibble::tibble()){
-  
-  if (is.na(id)) id <- label
-  style <- ""
-  if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
-  div(
-    div(class = "input_title", translate(language, label, words)),
-    div(shiny.fluent::ComboBox.shinyInput(ns(id), value = value, options = options, multiSelect = multiSelect, 
-      allowFreeform = allowFreeform, autoComplete = autoComplete,
-      multiSelectDelimiter = ","), style = style)
-  )
-}
-
-make_combobox_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
-  allowFreeform = FALSE, autoComplete = "on", id = NA_character_, value = NULL, width = NULL, words = tibble::tibble()){
+make_combobox <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
+  allowFreeform = FALSE, autoComplete = "on", id = NA_character_, value = NULL, width = NULL){
   
   style <- ""
   if (!is.null(width)) style <- paste0(style, "width: ", width, ";")
@@ -202,34 +155,7 @@ make_combobox_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = ch
 #'   2, "DA", "Doug Altman", "Statistician")
 #' make_people_picker(language = "EN", ns = ns, id = "my_people_picker", "My people picker", options = options, value = 2, width = "200px")
 #' }
-
-make_people_picker <- function(language = "EN", ns = shiny::NS(), id = NA_character_, label = character(), 
-  options = tibble::tibble(), value = NULL, width = NULL, style = character(), words = tibble::tibble()){
-  
-  if (!is.null(value)) default_selected_items <- options %>% dplyr::filter(key %in% value)
-  else default_selected_items <- NULL
-  
-  style <- ""
-  if (!is.null(width)) style <- paste0(style, "width: ", width)
-  if (is.na(id)) id <- label
-  div(
-    div(class = "input_title", translate(language, label, words)),
-    div(shiny.fluent::NormalPeoplePicker.shinyInput(
-      ns(id),
-      options = options,
-      pickerSuggestionsProps = list(
-        suggestionsHeaderText = translate(language, "matching_people", words),
-        noResultsFoundText = translate(language, "no_results_found", words),
-        showRemoveButtons = TRUE
-      ),
-      defaultSelectedItems = default_selected_items,
-      value = value),
-      style = style
-    )
-  )
-}
-
-make_people_picker_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), id = NA_character_, label = character(), 
+make_people_picker <- function(i18n = R6::R6Class(), ns = shiny::NS(), id = NA_character_, label = character(), 
   options = tibble::tibble(), value = NULL, width = NULL, style = character()){
   
   if (!is.null(value)) default_selected_items <- options %>% dplyr::filter(key %in% value)
@@ -268,27 +194,7 @@ make_people_picker_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), id = 
 #' \dontrun{
 #' make_toggle(language = "EN", ns = ns, label = "My toggle", id = "my_toggle", value = TRUE, inline = FALSE)
 #' }
-
-make_toggle <- function(language = "EN", ns = shiny::NS(), label = character(), id = NULL, value = FALSE, 
-  inline = FALSE, translate = TRUE, words = tibble::tibble()){
-  if (is.null(id)) id <- label
-  if (translate) label <- translate(language, label, words)
-  if (inline){
-    tagList(
-      shiny.fluent::Toggle.shinyInput(ns(id), value = value),
-      div(class = "toggle_title", label)
-    ) -> result
-  }
-  if (!inline){
-    tagList(
-      div(class = "input_title", label),
-      shiny.fluent::Toggle.shinyInput(ns(id), value = value)
-    )  -> result
-  }
-  result
-}
-
-make_toggle_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), id = NULL, value = FALSE, inline = FALSE, translate = TRUE, bold = TRUE){
+make_toggle <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), id = NULL, value = FALSE, inline = FALSE, translate = TRUE, bold = TRUE){
   if (is.null(id)) id <- label
   if (translate) label <- i18n$t(label)
   if (bold) style <- "" else style <- "font-weight:normal;"
@@ -322,20 +228,7 @@ make_toggle_new <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = char
 #' \dontrun{
 #' message_bar(id = 2, message = "name_already_used", type = "severeWarning", language = language, time = 5000)
 #' }
-
-show_message_bar <- function(output, id = integer(), message = character(), type = "severeWarning", language = "EN", words = tibble::tibble(), time = 7000){
-  type <- switch(type, "info" = 0, "error" = 1, "blocked" = 2, "severeWarning" = 3, "success" = 4, "warning" = 5)
-  shinyjs::show(paste0("message_bar", id))
-  shinyjs::delay(time, shinyjs::hide(paste0("message_bar", id)))
-  
-  # If translation of the message doesn't exist, return raw message
-  output_message <- translate(language, message, words)
-  if (output_message == "") output_message <- message
-  
-  output[[paste0("message_bar", id)]] <- renderUI(div(shiny.fluent::MessageBar(output_message, messageBarType = type), style = "margin-top:10px;"))
-}
-
-show_message_bar_new <- function(output, id = integer(), message = character(), type = "severeWarning", i18n = R6::R6Class(), time = 7000, ns = character()){
+show_message_bar <- function(output, id = integer(), message = character(), type = "severeWarning", i18n = R6::R6Class(), time = 7000, ns = character()){
   type <- switch(type, "info" = 0, "error" = 1, "blocked" = 2, "severeWarning" = 3, "success" = 4, "warning" = 5)
   
   id <- sample(1:20, 1)
@@ -400,142 +293,7 @@ make_choicegroup <- function(language = "EN", ns = shiny::NS(), label = characte
 #' @param searchable_cols If filter is TRUE, choose which columns are searchable (character)
 #' @param factorize_cols Which columns are factorized (to be filtered with a dropdown) (character)
 #' @param column_widths Columns widths (named character vector)
-
-render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), language = "EN", data = tibble::tibble(),
-  output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top't><'bottom'p>", page_length = 10, start = 0,
-  editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
-  filter = FALSE, factorize_cols = character(), column_widths = character(), hidden_cols = character(), truncated_cols = character(),
-  default_tibble = tibble::tibble()
-){
-  
-  # Translation for datatable
-  dt_translation <- list(
-    paginate = list(previous = translate(language, "DT_previous_page", r$words), `next` = translate(language, "DT_next_page", r$words)),
-    search = translate(language, "DT_search", r$words),
-    lengthMenu = translate(language, "DT_length", r$words),
-    emptyTable = translate(language, "DT_empty", r$words))
-  
-  # If no row in dataframe, stop here
-  if (nrow(data) == 0){
-    
-    if (length(names(default_tibble)) == 0) return({
-      data <- tibble::tribble(~id, ~datetime)
-      names(data) <- c(translate(language, "id", r$words), translate(language, "datetime", r$words))
-      output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom), 
-        rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
-    })
-    
-    if (length(names(default_tibble)) > 0) data <- default_tibble
-  }
-
-  
-  # Which columns are non editable
-  
-  cols <- c(1:length(names(data))) - 1
-  editable_cols_vec <- integer()
-  sapply(editable_cols, function(col){
-    editable_cols_vec <<- c(editable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
-  })
-  non_editable_cols_vec <- cols[!cols %in% editable_cols_vec]
-  
-  # Which columns are non sortable
-  sortable_cols_vec <- integer()
-  sapply(sortable_cols, function(col){
-    sortable_cols_vec <<- c(sortable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
-  })
-  non_sortable_cols_vec <- cols[!cols %in% sortable_cols_vec]
-  
-  # Which cols are centered
-  centered_cols_vec <- integer()
-  sapply(centered_cols, function(col){
-    centered_cols_vec <<- c(centered_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
-  })
-  
-  # Which cols are hidden
-  hidden_cols_vec <- integer()
-  sapply(hidden_cols, function(col){
-    hidden_cols_vec <<- c(hidden_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
-  })
-  
-  # Which cols are searchable
-  searchable_cols_vec <- integer()
-  sapply(searchable_cols, function(col){
-    searchable_cols_vec <<- c(searchable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
-  })
-  non_searchable_cols_vec <- cols[!cols %in% searchable_cols_vec]
-  
-  # Which cols are truncated
-  truncated_cols_vec <- integer()
-  sapply(truncated_cols, function(col){
-    truncated_cols_vec <<- c(truncated_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
-  })
-  
-  # If filter is TRUE
-  if (filter) filter_list <- list(position = "top")
-  if (!filter) filter_list <- list()
-  
-  column_defs <- list()
-  # Add columns_widths to column_defs
-  sapply(names(column_widths), function(name){
-    column_defs <<- rlist::list.append(column_defs, list(width = column_widths[[name]], targets = which(grepl(paste0("^", name, "$"), names(data))) - 1))})
-  
-  # Add centered_cols to column_defs
-  column_defs <- rlist::list.append(column_defs, list(className = "dt-body-center", targets = centered_cols_vec))
-  
-  # Add hidden_cols to column_defs
-  column_defs <- rlist::list.append(column_defs, list(visible = FALSE, targets = hidden_cols_vec))
-  
-  # Add sortables cols to column_defs
-  column_defs <- rlist::list.append(column_defs, list(sortable = FALSE, targets = non_sortable_cols_vec))
-  
-  # Add searchable cols to column_defs
-  column_defs <- rlist::list.append(column_defs, list(searchable = FALSE, targets = non_searchable_cols_vec))
-  
-  # Truncate long text
-  column_defs <- rlist::list.append(column_defs, list(render = htmlwidgets::JS(
-    "function(data, type, row, meta) {",
-    "return type === 'display' && data != null && data.length > 30 ?",
-    "'<span title=\"' + data + '\">' + data.substr(0, 30) + '...</span>' : data;",
-    "}"), targets = truncated_cols_vec))
-  
-  # Transform searchable cols to factor
-  sapply(factorize_cols, function(col) data <<- data %>% dplyr::mutate_at(col, as.factor))
-  
-  # Rename cols if lengths correspond
-  if (length(col_names) == length(names(data))) names(data) <- col_names
-  
-  # So data is ready to be rendered in the datatable
-  
-  output[[output_name]] <- DT::renderDT(
-    # Data
-    data,
-    
-    # Options of the datatable
-    options = list(
-      dom = datatable_dom,
-      pageLength = page_length, displayStart = start,
-      columnDefs = column_defs,
-      language = dt_translation,
-      compact = TRUE, hover = TRUE
-    ),
-    editable = list(target = "cell", disable = list(columns = non_editable_cols_vec)),
-    filter = filter_list,
-    
-    # Default options
-    rownames = FALSE, selection = "single", escape = FALSE, server = TRUE,
-    
-    # Javascript code allowing to have dropdowns & actionButtons on the DataTable
-    callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
-      var $this = $(this.node());
-      $this.attr('id', this.data()[0]);
-      $this.addClass('shiny-input-container');
-      });
-      Shiny.unbindAll(table.table().node());
-      Shiny.bindAll(table.table().node());")
-  )
-}
-
-render_datatable_new <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(), data = tibble::tibble(),
+render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(), data = tibble::tibble(),
   output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top't><'bottom'p>", page_length = 10, start = 0,
   editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
   filter = FALSE, factorize_cols = character(), column_widths = character(), hidden_cols = character(), truncated_cols = character(),

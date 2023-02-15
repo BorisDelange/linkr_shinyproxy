@@ -9,7 +9,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_header_ui <- function(id = character(), language = "EN", words = tibble::tibble(), i18n = R6::R6Class()){
+mod_page_header_ui <- function(id = character(), i18n = R6::R6Class()){
   
   ns <- NS(id)
 

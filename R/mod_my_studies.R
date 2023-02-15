@@ -21,7 +21,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
-    forbidden_cards <<- tagList(forbidden_cards, forbidden_card_new(ns = ns, name = card, i18n = i18n))
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, i18n = i18n))
   })
   
   div(
@@ -75,7 +75,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
                 uiOutput(ns("selected_conversation"))
               ),
               conditionalPanel(condition = "input.messages_current_tab == 'new_conversation'", ns = ns,
-                make_textfield_new(i18n = i18n, ns = ns, label = "object", id = "new_conversation_name"),
+                make_textfield(i18n = i18n, ns = ns, label = "object", id = "new_conversation_name"),
                 div(shinyAce::aceEditor(
                   ns("new_conversation_text"), "", mode = "markdown", 
                   code_hotkeys = list("markdown", list(run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"))),
@@ -109,7 +109,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         make_card(i18n$t("studies_management"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "study_name", width = "300px"),
+              make_textfield(i18n = i18n, ns = ns, label = "name", id = "study_name", width = "300px"),
               div(shiny.fluent::PrimaryButton.shinyInput(ns("add_study"), i18n$t("add")), style = "margin-top:38px;"),
               style = "position:relative; z-index:1; width:500px;"
             ),
@@ -135,7 +135,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("study_options_card"),
         make_card(i18n$t("study_options"),
           div(
-            make_combobox_new(i18n = i18n, ns = ns, label = "study", id = "options_chosen", width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
+            make_combobox(i18n = i18n, ns = ns, label = "study", id = "options_chosen", width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
             div(
               div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
               shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
@@ -248,8 +248,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
-    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar1, show_message_bar(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar2, show_message_bar(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
     
     # --- --- --- --- --- --- --- --
     # When a datamart is chosen ----
@@ -295,15 +295,15 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       r$loaded_datamart <- r$chosen_datamart
       
       # Load studies & scripts related to this datamart
-      update_r_new(r = r, m = m, table = "studies")
-      update_r_new(r = r, m = m, table = "scripts")
+      update_r(r = r, m = m, table = "studies")
+      update_r(r = r, m = m, table = "scripts")
       
       r$force_reload_scripts_cache <- FALSE
       
       # Try to load datamart
       tryCatch({
 
-        capture.output(run_datamart_code_new(output, r = r, d = d, datamart_id = r$chosen_datamart, i18n = i18n, quiet = TRUE))
+        capture.output(run_datamart_code(output, r = r, d = d, datamart_id = r$chosen_datamart, i18n = i18n, quiet = TRUE))
   
         r$show_message_bar1 <- tibble::tibble(message = "import_datamart_success", type = "success", trigger = Sys.time())
         
@@ -311,7 +311,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       },
       error = function(e){
         r$show_message_bar1 <- tibble::tibble(message = "fail_load_datamart", type = "severeWarning", trigger = Sys.time())
-        report_bug_new(r = r, output = output, error_message = "fail_load_datamart",
+        report_bug(r = r, output = output, error_message = "fail_load_datamart",
           error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)
       })
       
@@ -351,7 +351,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
               },
                 error = function(e){
                   r$show_message_bar2 <- tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
-                  report_bug_new(r = r, output = output, error_message = "fail_load_scripts",
+                  report_bug(r = r, output = output, error_message = "fail_load_scripts",
                     error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)})
             )
           }
@@ -483,12 +483,12 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         column_widths <- c("datetime" = "150px", "unread_messages" = "150px")
         sortable_cols <- c("id", "conversation_name", "datetime", "unread_messages")
         centered_cols <- c("id", "datetime", "unread_messages")
-        col_names <- get_col_names_new(table_name = "study_conversations", i18n = i18n)
+        col_names <- get_col_names(table_name = "study_conversations", i18n = i18n)
         hidden_cols <- c("conversation_id", "modified")
 
         # Render datatable
         if (length(r$study_conversations_datatable_proxy) == 0){
-          render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$study_conversations_temp,
+          render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$study_conversations_temp,
             output_name = "study_conversations", col_names = col_names,
             sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
             searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
@@ -907,7 +907,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if (type == "message") r$study_reload_conversation <- Sys.time()
 
         # Notify user
-        show_message_bar_new(output = output, id = 4, message = paste0("new_", type, "_added"), type = "success", i18n = i18n, ns = ns)
+        show_message_bar(output = output, id = 4, message = paste0("new_", type, "_added"), type = "success", i18n = i18n, ns = ns)
       })
 
     # --- --- --- --- ---
@@ -924,7 +924,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       new_data$aggregated_module_family <- get_last_row(r$db, "aggregated_modules_families") + 1
       new_data$datamart <- r$chosen_datamart
       
-      add_settings_new_data_new(session = session, output = output, r = r, d = d, m = m, i18n = i18n, id = "settings_studies", 
+      add_settings_new_data(session = session, output = output, r = r, d = d, m = m, i18n = i18n, id = "settings_studies", 
         data = new_data, table = "studies", required_textfields = "study_name", req_unique_values = "name")
       
       # Reload datatable
@@ -945,7 +945,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
     factorize_cols <- c("datamart_id", "creator_id")
     hidden_cols <- c("id", "description", "datamart_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "deleted", "modified")
-    col_names <- get_col_names_new("studies", i18n)
+    col_names <- get_col_names("studies", i18n)
     
     # Prepare data for datatable
     
@@ -964,7 +964,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         
         # Prepare data for datatable
         
-        r$studies_datatable_temp <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
+        r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
           table = "studies", factorize_cols = factorize_cols, action_buttons = action_buttons, data_input = r$studies_temp)
         data <- r$studies_datatable_temp
       }
@@ -973,8 +973,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         
         # Render datatable
         
-        render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = data,
-          output_name = "studies_datatable", col_names = get_col_names_new("studies", i18n),
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data,
+          output_name = "studies_datatable", col_names = get_col_names("studies", i18n),
           editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
           searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
         
@@ -996,7 +996,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = integer(), datetime = character(),
         deleted = integer(), modified = logical(), action = character())
       
-      if (nrow(r$studies_temp) > 0) r$studies_datatable_temp <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
+      if (nrow(r$studies_temp) > 0) r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
         table = "studies", factorize_cols = factorize_cols, action_buttons = action_buttons, data_input = r$studies_temp)
 
       # Reload data of datatable
@@ -1019,7 +1019,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       req(nrow(r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)) > 0)
       
-      save_settings_datatable_updates_new(output = output, r = r, ns = ns, 
+      save_settings_datatable_updates(output = output, r = r, ns = ns, 
         table = "studies", r_table = "studies", i18n = i18n, duplicates_allowed = FALSE)
       
       # Update sidenav dropdown with the new study
@@ -1040,7 +1040,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     study_information_variable <- "study_deleted"
     study_delete_variable <- paste0(study_delete_prefix, "_open_dialog")
     
-    delete_element_new(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
+    delete_element(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
       delete_prefix = study_delete_prefix, dialog_title = study_dialog_title, dialog_subtext = study_dialog_subtext,
       react_variable = study_react_variable, table = study_table, id_var_sql = study_id_var_sql, id_var_r = study_id_var_r, 
       delete_message = study_delete_message, translation = TRUE, reload_variable = study_reload_variable, 
@@ -1134,7 +1134,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       shiny.fluent::updateChoiceGroup.shinyInput(session, "users_allowed_read_group",
         value = options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value))
       output$users_allowed_read_div <- renderUI({
-        make_people_picker_new(
+        make_people_picker(
           i18n = i18n, ns = ns, id = "users_allowed_read", label = "users", options = picker_options, value = value,
           width = "100%", style = "padding-bottom:10px;")
       })
@@ -1152,7 +1152,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       data$users_allowed_read <- input$users_allowed_read
       data$users_allowed_read_group <- input$users_allowed_read_group
 
-      save_settings_options_new(output = output, r = r, id = id, category = "study", code_id_input = paste0("options_", link_id),
+      save_settings_options(output = output, r = r, id = id, category = "study", code_id_input = paste0("options_", link_id),
         i18n = i18n, data = data, page_options = "users_allowed_read")
     })
     

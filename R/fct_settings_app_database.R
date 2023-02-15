@@ -226,7 +226,7 @@ get_local_db <- function(app_db_folder = character(), type = character()){
 #' @param local_db DBI db object of local database
 #' @param language Language used to display messages (character)
 
-test_distant_db <- function(local_db, language = "EN", words = tibble::tibble()){
+test_distant_db <- function(local_db, i18n = R6::R6Class()){
   
   result <- "fail"
   
@@ -246,8 +246,8 @@ test_distant_db <- function(local_db, language = "EN", words = tibble::tibble())
       port = db_info$port, user = db_info$user, password = db_info$password)
     result <- "success"
   },
-  error = function(e) print(translate(language, "failed_connect_distant_db", words)),
-  warning = function(w) print(translate(language, "failed_connect_distant_db", words)))
+  error = function(e) print(i18n$t("failed_connect_distant_db")),
+  warning = function(w) print(i18n$t("failed_connect_distant_db")))
   
   # Result is fail or success
   result
@@ -259,7 +259,7 @@ test_distant_db <- function(local_db, language = "EN", words = tibble::tibble())
 #' @param local_db DBI db object of local database
 #' @param language Language used to display messages (character)
 
-get_distant_db <- function(local_db, db_info = list(), language = "EN", words = tibble::tibble()){
+get_distant_db <- function(local_db, db_info = list(), i18n = R6::R6Class()){
   
   # If we fail to connect to distant db, the result is the local db
   db <- local_db
@@ -284,8 +284,8 @@ get_distant_db <- function(local_db, db_info = list(), language = "EN", words = 
     if (db_info$sql_lib == "sqlite") db <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$dbname, host = db_info$host,
       port = db_info$port, user = db_info$user, password = db_info$password)
   }, 
-  error = function(e) print(translate(language, "failed_connect_distant_db", words)),
-  warning = function(w) print(translate(language, "failed_connect_distant_db", words)))
+  error = function(e) print(i18n$t("failed_connect_distant_db")),
+  warning = function(w) print(i18n$t("failed_connect_distant_db")))
   
   # Create tables if they do not already exist
   db_create_tables(db)
@@ -303,7 +303,7 @@ get_distant_db <- function(local_db, db_info = list(), language = "EN", words = 
 #' @param db_info DB informations given in cdwtools function
 #' @param language Language used to display messages (character)
 
-get_db <- function(db_info = list(), app_db_folder = character(), type = character(), language = "EN"){
+get_db <- function(db_info = list(), app_db_folder = character(), type = character(), i18n = R6::R6Class()){
   
   # First, get local database connection
 
@@ -312,7 +312,7 @@ get_db <- function(db_info = list(), app_db_folder = character(), type = charact
   # Second, if db_info is not empty, try this connection
   
   if (length(db_info) > 0){
-    get_distant_db(local_db = db, db_info = db_info, language = language, words = words)
+    get_distant_db(local_db = db, db_info = db_info, i18n = i18n)
   }
   
   # Third, if db_info is empty, get distant db if parameters in local db are set to distant connection
@@ -321,7 +321,7 @@ get_db <- function(db_info = list(), app_db_folder = character(), type = charact
   if (length(db_info) == 0 & type == "main"){
     DBI::dbGetQuery(db, "SELECT value FROM options WHERE category = 'distant_db' AND name = 'connection_type'") %>%
       dplyr::pull() -> choice_distant_db
-    if (choice_distant_db == "distant") db <- get_distant_db(local_db = db, language = language, words = words)
+    if (choice_distant_db == "distant") db <- get_distant_db(local_db = db, i18n = i18n)
   }
   
   # Returns distant db connection if succesfully loaded, returns local db connection else
@@ -332,28 +332,7 @@ get_db <- function(db_info = list(), app_db_folder = character(), type = charact
 #' Load database
 #' 
 #' @param r Shiny r reactive value, used to communicate between modules
-
-load_database <- function(r = shiny::reactiveValues(), language = "EN"){
-  
-  # Database tables to load
-  tables <- c(
-    "users", "users_accesses", "users_statuses",
-    "data_sources", "datamarts", "thesaurus",
-    "plugins",
-    "code", 
-    "options"
-    )
-  
-  sapply(tables, function(table){
-    r[[table]] <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
-    r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
-  })
-  
-  # Add a module_types variable, for settings/plugins dropdown
-  r$module_types <- tibble::tribble(~id, ~name, 1, translate(language, "patient_level_data"), 2, translate(language, "aggregated_data"))
-}
-
-load_database_new <- function(r = shiny::reactiveValues(), i18n = R6::R6Class()){
+load_database <- function(r = shiny::reactiveValues(), i18n = R6::R6Class()){
   
   # Database tables to load
   tables <- c(

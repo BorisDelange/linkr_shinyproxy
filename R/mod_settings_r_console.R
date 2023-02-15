@@ -19,7 +19,7 @@ mod_settings_r_console_ui <- function(id = character(), i18n = R6::R6Class()){
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
       shiny.fluent::PivotItem(id = "r_console_edit_code_card", itemKey = "r_console_edit_code_card", headerText = i18n$t("r_console"))
     ),
-    forbidden_card_new(ns = ns, name = "r_console_edit_code_card", i18n = i18n),
+    forbidden_card(ns = ns, name = "r_console_edit_code_card", i18n = i18n),
     shinyjs::hidden(
       div(id = ns("r_console_edit_code_card"),
         make_card_shiny_ace("",

@@ -14,15 +14,15 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
-    forbidden_cards <<- tagList(forbidden_cards, forbidden_card_new(ns = ns, name = card, i18n = i18n))
+    forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, i18n = i18n))
   })
   
   thesaurus_items_div <- ""
   if (id == "plugins_patient_lvl"){
     thesaurus_items_div <- div(
       shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-        make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
-        make_dropdown_new(i18n = i18n, ns = ns, label = "items_mapping", id = "thesaurus_mapping", multiSelect = TRUE, width = "300px",
+        make_combobox(i18n = i18n, ns = ns, label = "thesaurus", id = "thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
+        make_dropdown(i18n = i18n, ns = ns, label = "items_mapping", id = "thesaurus_mapping", multiSelect = TRUE, width = "300px",
           options = list(
             list(key = 1, text = i18n$t("equivalent_to")),
             list(key = 2, text = i18n$t("included_in")),
@@ -46,7 +46,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
           div(shiny.fluent::Dropdown.shinyInput(ns("thesaurus_selected_items"), value = NULL, options = list(), multiSelect = TRUE,
             onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-thesaurus_selected_items_trigger', Math.random())"))), style = "width:650px;")
         ),
-        # make_dropdown_new(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
+        # make_dropdown(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
         #   multiSelect = TRUE, width = "650px"),
         div(shiny.fluent::DefaultButton.shinyInput(ns("reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
       ),
@@ -132,7 +132,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         make_card(i18n$t("plugins_management"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "plugin_name", width = "300px"),
+              make_textfield(i18n = i18n, ns = ns, label = "name", id = "plugin_name", width = "300px"),
               div(shiny.fluent::PrimaryButton.shinyInput(ns("add_plugin"), i18n$t("add")), style = "margin-top:38px;"),
               style = "position:relative; z-index:1; width:500px;"
             ),
@@ -158,7 +158,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("plugins_edit_code_card"),
         make_card(i18n$t("edit_plugin_code"),
           div(
-            make_combobox_new(i18n = i18n, ns = ns, label = "plugin", id = "code_chosen_plugin",
+            make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "code_chosen_plugin",
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
             
             thesaurus_items_div, br(),
@@ -232,10 +232,10 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         make_card(i18n$t("plugin_options"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_combobox_new(i18n = i18n, ns = ns, label = "plugin", id = "options_chosen_plugin",
+              make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "options_chosen_plugin",
                 width = "320px", allowFreeform = FALSE, multiSelect = FALSE),
-              make_textfield_new(i18n = i18n, ns = ns, label = "author", id = "plugin_author", width = "320px"),
-              make_textfield_new(i18n = i18n, ns = ns, label = "version", id = "plugin_version", width = "60px")
+              make_textfield(i18n = i18n, ns = ns, label = "author", id = "plugin_author", width = "320px"),
+              make_textfield(i18n = i18n, ns = ns, label = "version", id = "plugin_version", width = "60px")
             ), br(),
             div(
               div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
@@ -249,8 +249,8 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             ), br(),
             div(
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-                make_dropdown_new(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "320px"),
-                # make_textfield_new(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "700px"),
+                make_dropdown(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "320px"),
+                # make_textfield(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "700px"),
                 # div(shiny.fluent::DefaultButton.shinyInput(ns("browse_image"), i18n$t("browse")), style = "margin-top:39px;"),
                 div(shiny.fluent::DefaultButton.shinyInput(ns("delete_image"), i18n$t("delete_this_image")), style = "margin-top:39px;"),
                 div(shiny.fluent::DefaultButton.shinyInput(ns("import_image"), i18n$t("import_image")), style = "margin-top:39px;")
@@ -292,7 +292,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
         make_card(i18n$t("import_plugin"),
           div(br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), 
-              make_toggle_new(i18n = i18n, ns = ns, label = "replace_already_existing_plugins", inline = TRUE)), br(),
+              make_toggle(i18n = i18n, ns = ns, label = "replace_already_existing_plugins", inline = TRUE)), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::DefaultButton.shinyInput(ns("import_plugins_browse"), i18n$t("choose_zip_file")),
               uiOutput(ns("import_plugins_status"))), br(),
@@ -321,7 +321,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
           div(
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_dropdown_new(i18n = i18n, ns = ns, label = "plugins_to_export",
+              make_dropdown(i18n = i18n, ns = ns, label = "plugins_to_export",
                 multiSelect = TRUE, width = "400px"),
               div(shiny.fluent::PrimaryButton.shinyInput(ns("export_plugins"), 
                 i18n$t("export_plugins"), iconProps = list(iconName = "Upload")), style = "margin-top:38px;"),
@@ -757,9 +757,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
         r$code <- r$code %>% dplyr::bind_rows(new_code)
         
-        # update_r_new(r = r, table = "plugins")
-        # update_r_new(r = r, table = "options")
-        # update_r_new(r = r, table = "code")
+        # update_r(r = r, table = "plugins")
+        # update_r(r = r, table = "options")
+        # update_r(r = r, table = "code")
         
         r$show_plugin_details <- Sys.time()
         # r[[paste0("reload_", prefix, "_plugin")]] <- Sys.time()
@@ -767,10 +767,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Reload datatable
         r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
         
-        show_message_bar_new(output, 3, "success_installing_github_plugin", "success", i18n = i18n, ns = ns)
+        show_message_bar(output, 3, "success_installing_github_plugin", "success", i18n = i18n, ns = ns)
         
       }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_install_github_plugin", 
-        error_name = paste0("install_github_plugin - id = ", plugin$unique_id), category = "Error", error_report = toString(e), language = language))
+        error_name = paste0("install_github_plugin - id = ", plugin$unique_id), category = "Error", error_report = toString(e), i18n = i18n))
 
     })
     
@@ -787,14 +787,14 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         new_data$plugin_name <- new_data$name
         new_data$module_type <- module_type_id
         
-        add_settings_new_data_new(session = session, output = output, r = r, m = m, i18n = i18n, id = id, 
+        add_settings_new_data(session = session, output = output, r = r, m = m, i18n = i18n, id = id, 
           data = new_data, table = "plugins", required_textfields = "plugin_name", req_unique_values = "name")
         
         # Reload datatable
         r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       }
       
-      else show_message_bar_new(output, 2, "unauthorized_action", "severeWarning", i18n = i18n, ns = ns)
+      else show_message_bar(output, 2, "unauthorized_action", "severeWarning", i18n = i18n, ns = ns)
     })
     
     # --- --- --- --- --- ---
@@ -811,7 +811,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     centered_cols <- c("id", "datetime", "action")
     searchable_cols <- c("name")
     hidden_cols <- c("id", "description", "module_type_id", "deleted", "modified")
-    col_names <- get_col_names_new("plugins", i18n)
+    col_names <- get_col_names("plugins", i18n)
     
     # Prepare data for datatable
     
@@ -848,11 +848,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
         # Prepare data for datatables
   
-        r[[paste0(prefix, "_plugins_datatable_temp")]] <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
+        r[[paste0(prefix, "_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
           table = "plugins", action_buttons = action_buttons_plugins_management, data_input = r[[paste0(prefix, "_plugins_temp")]])
         data_plugins_datatable <- r[[paste0(prefix, "_plugins_datatable_temp")]]
         
-        r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
+        r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
           table = "plugins", action_buttons = action_buttons_export_plugins, data_input = r[[paste0(prefix, "_export_plugins_temp")]])
         data_export_plugins_datatable <- r[[paste0(prefix, "_export_plugins_datatable_temp")]]
       }
@@ -868,13 +868,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # If datatable doesn't exist
       if (length(r[[paste0(prefix, "_plugins_datatable_proxy")]]) == 0){
 
-        render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = data_plugins_datatable,
-          output_name = "plugins_datatable", col_names =  get_col_names_new(table_name = "plugins", i18n = i18n),
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data_plugins_datatable,
+          output_name = "plugins_datatable", col_names =  get_col_names(table_name = "plugins", i18n = i18n),
           editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
           searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols, selection = "multiple")
   
-        render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = data_export_plugins_datatable,
-          output_name = "plugins_to_export_datatable", col_names =  get_col_names_new(table_name = "plugins", i18n = i18n),
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data_export_plugins_datatable,
+          output_name = "plugins_to_export_datatable", col_names =  get_col_names(table_name = "plugins", i18n = i18n),
           editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
           searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
   
@@ -885,7 +885,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       }
       
       # Update dropdowns
-      options <- convert_tibble_to_list_new(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       if (length(input$options_chosen_plugin) == 0) link_id <- NULL
       else if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
       else link_id <- input$options_chosen_plugin
@@ -905,7 +905,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           module_type_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
       }
       if (nrow(r[[paste0(prefix, "_export_plugins_temp")]]) > 0){
-        r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable_new(output = output, r = r, ns = ns, i18n = i18n, id = id,
+        r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
           table = "plugins", action_buttons = action_buttons_export_plugins, data_input = r[[paste0(prefix, "_export_plugins_temp")]])
         data <- r[[paste0(prefix, "_export_plugins_datatable_temp")]]
       }
@@ -936,11 +936,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Save updates
     observeEvent(input$save_plugins_management, {
       
-      if (nrow(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(modified)) == 0) show_message_bar_new(output, 2, "modif_saved", "success", i18n = i18n, ns = ns)
+      if (nrow(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(modified)) == 0) show_message_bar(output, 2, "modif_saved", "success", i18n = i18n, ns = ns)
       
       req(nrow(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(modified)) > 0)
       
-      save_settings_datatable_updates_new(output = output, r = r, ns = ns, 
+      save_settings_datatable_updates(output = output, r = r, ns = ns, 
         table = "plugins", r_table = paste0(prefix, "_plugins"), i18n = i18n, duplicates_allowed = FALSE)
       
     })
@@ -959,7 +959,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     plugin_information_variable <- "plugin_deleted"
     plugin_delete_variable <- paste0(plugin_delete_prefix, "_open_dialog")
 
-    delete_element_new(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
+    delete_element(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
       delete_prefix = plugin_delete_prefix, dialog_title = plugin_dialog_title, dialog_subtext = plugin_dialog_subtext,
       react_variable = plugin_react_variable, table = plugin_table, id_var_sql = plugin_id_var_sql, id_var_r = plugin_id_var_r,
       delete_message = plugin_delete_message, translation = TRUE, reload_variable = plugin_reload_variable,
@@ -995,7 +995,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Reset "edit plugin code" fields and "plugin options" fields
       
-      options <- convert_tibble_to_list_new(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
 
       shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = NULL)
       shiny.fluent::updateComboBox.shinyInput(session, "thesaurus", options = list(), value = NULL)
@@ -1022,7 +1022,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
       
-      options <- convert_tibble_to_list_new(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       
       shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = value)
@@ -1037,7 +1037,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Get link_id variable, to update options div
       link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
       
-      options <- convert_tibble_to_list_new(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       
       shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = value)
@@ -1062,7 +1062,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       else code_link_id <- 0L
       
       if (link_id != code_link_id){
-        options <- convert_tibble_to_list_new(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+        options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
         shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = value)
       }
@@ -1099,7 +1099,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         value = options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value))
       
       output$users_allowed_read_div <- renderUI({
-        make_people_picker_new(
+        make_people_picker(
           i18n = i18n, ns = ns, id = "users_allowed_read", label = "users", options = picker_options, value = value,
           width = "100%", style = "padding-bottom:10px;")
       })
@@ -1109,7 +1109,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       plugin_folder <- paste0(app_folder, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
       files_list <- list.files(path = plugin_folder, pattern = "*.\\.(jpeg|jpg|JPG|JPEG|png|PNG)$")
       shiny.fluent::updateDropdown.shinyInput(session, "plugin_image", 
-        options = convert_tibble_to_list_new(tibble::tibble(text = c("", files_list), key = c("", files_list)), key_col = "key", text_col = "text"),
+        options = convert_tibble_to_list(tibble::tibble(text = c("", files_list), key = c("", files_list)), key_col = "key", text_col = "text"),
         value = options %>% dplyr::filter(name == "image") %>% dplyr::pull(value))
       
       for (field in c("version", "author")) shiny.fluent::updateTextField.shinyInput(session, 
@@ -1152,7 +1152,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       for (field in c("users_allowed_read_group", "plugin_version", "plugin_author", 
         "plugin_image", "plugin_description_fr", "plugin_description_en")) data[[stringr::str_replace(field, "plugin_", "")]] <- input[[field]]
       
-      save_settings_options_new(output = output, r = r, id = id, category = "plugin", code_id_input = paste0("options_", link_id),
+      save_settings_options(output = output, r = r, id = id, category = "plugin", code_id_input = paste0("options_", link_id),
         i18n = i18n, data = data, page_options = c("users_allowed_read", "version", "author", "image", "description_fr", "description_en"))
       
       r$show_plugin_details <- Sys.time()
@@ -1201,12 +1201,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         files_list <- list.files(path = plugin_folder, pattern = "*.\\.(jpeg|jpg|JPG|JPEG|png|PNG)$")
         shiny.fluent::updateDropdown.shinyInput(session, "plugin_image", 
-          options = convert_tibble_to_list_new(tibble::tibble(text = c("", files_list), key = c("", files_list)), key_col = "key", text_col = "text"),
+          options = convert_tibble_to_list(tibble::tibble(text = c("", files_list), key = c("", files_list)), key_col = "key", text_col = "text"),
           value = "")
         
-        show_message_bar_new(output, 4, "image_deleted", "success", i18n = i18n, ns = ns)
+        show_message_bar(output, 4, "image_deleted", "success", i18n = i18n, ns = ns)
         
-      }, error = function(e) report_bug_new(r = r, output = output, error_message = "error_deleting_image",
+      }, error = function(e) report_bug(r = r, output = output, error_message = "error_deleting_image",
         error_name = paste0(id, " - delete plugin image"), category = "Error", error_report = e, i18n = i18n))
       
       r[[paste0(prefix, "_plugins_delete_image")]] <- FALSE
@@ -1242,12 +1242,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         files_list <- list.files(path = plugin_folder, pattern = "*.\\.(jpeg|jpg|JPG|JPEG|png|PNG)$")
         shiny.fluent::updateDropdown.shinyInput(session, "plugin_image", 
-          options = convert_tibble_to_list_new(tibble::tibble(text = c("", files_list), key = c("", files_list)), key_col = "key", text_col = "text"),
+          options = convert_tibble_to_list(tibble::tibble(text = c("", files_list), key = c("", files_list)), key_col = "key", text_col = "text"),
           value = options %>% dplyr::filter(name == "image") %>% dplyr::pull(value))
         
-        show_message_bar_new(output, 4, "image_imported", "success", i18n = i18n, ns = ns)
+        show_message_bar(output, 4, "image_imported", "success", i18n = i18n, ns = ns)
         
-      }, error = function(e) report_bug_new(r = r, output = output, error_message = "error_importing_image",
+      }, error = function(e) report_bug(r = r, output = output, error_message = "error_importing_image",
           error_name = paste0(id, " - import plugin image"), category = "Error", error_report = e, i18n = i18n))
     })
     
@@ -1283,7 +1283,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Render UI of this edit_code card
       output$edit_code_card <- renderUI({
-        render_settings_code_card_new(ns = ns, r = r, id = id, title = paste0("edit_plugins_code"), code = code, link_id = link_id, i18n = i18n)
+        render_settings_code_card(ns = ns, r = r, id = id, title = paste0("edit_plugins_code"), code = code, link_id = link_id, i18n = i18n)
       })
 
       # Reset code_result textOutput
@@ -1313,16 +1313,16 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # ID between begin and last, so separated by commas
         thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
           grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
-        shiny.fluent::updateComboBox.shinyInput(session, "thesaurus", options = convert_tibble_to_list_new(data = thesaurus, key_col = "id", text_col = "name", i18n = i18n), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", i18n = i18n), value = NULL)
         
       })
       
       # Load thesaurus items
       observeEvent(input$thesaurus, {
         
-        r$plugin_thesaurus_items <- create_datatable_cache_new(output = output, r = r, i18 = i18, module_id = id, thesaurus_id = input$thesaurus$key, category = "plus_plugin")
+        r$plugin_thesaurus_items <- create_datatable_cache(output = output, r = r, i18 = i18, module_id = id, thesaurus_id = input$thesaurus$key, category = "plus_plugin")
         
-        colour_col <- create_datatable_cache_new(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = input$thesaurus$key, category = "colours_plugin")
+        colour_col <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = input$thesaurus$key, category = "colours_plugin")
         
         if (nrow(colour_col) > 0) r$plugin_thesaurus_items <- r$plugin_thesaurus_items %>%
           dplyr::left_join(colour_col %>% dplyr::select(id, colour), by = "id") %>% dplyr::relocate(colour, .before = "datetime")
@@ -1331,18 +1331,18 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         count_patients_rows <- tibble::tibble()
         
         # Add count_items_rows in the cache & get it if already in the cache
-        tryCatch(count_items_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
+        tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
           datamart_id = r$chosen_datamart, category = "count_items_rows"),
-          error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
             error_name = paste0("plugins - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n))
         
         # Add count_items_rows in the cache & get it if already in the cache
-        tryCatch(count_patients_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
+        tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
           datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
-          error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_datamart", 
+          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
             error_name = paste0("plugins - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n))
         
-        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar_new(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
+        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
         req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
         
         # Transform count_rows cols to integer, to be sortable
@@ -1366,11 +1366,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         column_widths <- c("id" = "80px", "action" = "80px", "display_name" = "300px", "unit" = "100px")
         sortable_cols <- c("id", "item_id", "name", "display_name", "count_patients_rows", "count_items_rows")
         centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-        col_names <- get_col_names_new(table_name = "modules_thesaurus_items_with_counts", i18n = i18n)
+        col_names <- get_col_names(table_name = "modules_thesaurus_items_with_counts", i18n = i18n)
         hidden_cols <- c("id", "name", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
         
         # Render datatable
-        render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r$plugin_thesaurus_items_temp,
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$plugin_thesaurus_items_temp,
           output_name = "plugin_thesaurus_items", col_names =  col_names,
           editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
           searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
@@ -1521,7 +1521,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         #   dplyr::bind_rows(r$plugin_thesaurus_selected_items)
         
         # Update dropdown of selected items
-        options <- convert_tibble_to_list_new(r$plugin_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", i18n = i18n)
+        options <- convert_tibble_to_list(r$plugin_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", i18n = i18n)
         value <- r$plugin_thesaurus_selected_items %>% dplyr::pull(id)
         shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
           options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
@@ -1553,7 +1553,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         # r$plugin_thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
         #   dplyr::filter(id %in% input$thesaurus_selected_items)
-        options <- convert_tibble_to_list_new(r$plugin_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", i18n = i18n)
+        options <- convert_tibble_to_list(r$plugin_thesaurus_selected_items %>% dplyr::arrange(thesaurus_item_display_name), key_col = "id", text_col = "input_text", i18n = i18n)
         value <- r$plugin_thesaurus_selected_items %>% dplyr::pull(id)
         shiny.fluent::updateDropdown.shinyInput(session, "thesaurus_selected_items",
           options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
@@ -1605,7 +1605,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           if (prefix == "patient_lvl" & is.na(m$chosen_patient)) var_check <- FALSE
         }
 
-        if (!var_check) show_message_bar_new(output = output, id = 3, message = "load_some_patient_data_plugin", i18n = i18n, ns = ns)
+        if (!var_check) show_message_bar(output = output, id = 3, message = "load_some_patient_data_plugin", i18n = i18n, ns = ns)
 
         req(var_check)
         
@@ -1670,13 +1670,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (input$ace_edit_code_translations != ""){
           
           tryCatch(input$ace_edit_code_translations %>% writeLines(paste0(r$app_folder, "/temp_files/plugin_translations.csv")),
-            error = function(e) report_bug_new(r = r, output = output, error_message = "error_creating_translations_file",
+            error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",
               error_name = paste0(id, " - create translations files"), category = "Error", error_report = e, i18n = i18n, ns = ns))
           
           tryCatch({
             i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = paste0(r$app_folder, "/temp_files")))
             i18np$set_translation_language(language)},
-            error = function(e) report_bug_new(r = r, output = output, error_message = "error_creating_new_translator",
+            error = function(e) report_bug(r = r, output = output, error_message = "error_creating_new_translator",
               error_name = paste0(id, " - create i18n translator"), category = "Error", error_report = e, i18n = i18n, ns = ns))
         }
         
@@ -1757,7 +1757,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # update_r(r = r, table = "plugins")
         
         # Notify user
-        show_message_bar_new(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
+        show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
         
       })
       
@@ -1943,15 +1943,15 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         shinyjs::show("imported_plugins_div")
         
-        render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = plugins,
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = plugins,
           output_name = "imported_plugins", col_names = col_names, centered_cols = centered_cols, column_widths = column_widths,
           filter = FALSE, hidden_cols = hidden_cols)
 
-        show_message_bar_new(output, 3, "success_importing_plugin", "success", i18n = i18n, time = 15000, ns = ns)
+        show_message_bar(output, 3, "success_importing_plugin", "success", i18n = i18n, time = 15000, ns = ns)
       },
-      error = function(e) report_bug_new(r = r, output = output, error_message = "error_importing_plugin",
+      error = function(e) report_bug(r = r, output = output, error_message = "error_importing_plugin",
         error_name = paste0(id, " - import plugins"), category = "Error", error_report = e, i18n = i18n, ns = ns),
-      warning = function(w) report_bug_new(r = r, output = output, error_message = "error_importing_plugin",
+      warning = function(w) report_bug(r = r, output = output, error_message = "error_importing_plugin",
         error_name = paste0(id, " - import plugins"), category = "Error", error_report = w, i18n = i18n, ns = ns))
     })
     
@@ -1976,7 +1976,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           dplyr::bind_rows(r[[paste0(prefix, "_export_plugins_selected")]])
         
         # Update dropdown of selected items
-        options <- convert_tibble_to_list_new(r[[paste0(prefix, "_export_plugins_selected")]], key_col = "id", text_col = "name", i18n = i18n)
+        options <- convert_tibble_to_list(r[[paste0(prefix, "_export_plugins_selected")]], key_col = "id", text_col = "name", i18n = i18n)
         value <- r[[paste0(prefix, "_export_plugins_selected")]] %>% dplyr::pull(id)
         shiny.fluent::updateDropdown.shinyInput(session, "plugins_to_export",
           options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
@@ -1990,7 +1990,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       r[[paste0(prefix, "_export_plugins_selected")]] <- r[[paste0(prefix, "_export_plugins_selected")]] %>%
         dplyr::filter(id %in% input$plugins_to_export)
 
-      options <- convert_tibble_to_list_new(r[[paste0(prefix, "_export_plugins_selected")]], key_col = "id", text_col = "name", i18n = i18n)
+      options <- convert_tibble_to_list(r[[paste0(prefix, "_export_plugins_selected")]], key_col = "id", text_col = "name", i18n = i18n)
       value <- r[[paste0(prefix, "_export_plugins_selected")]] %>% dplyr::pull(id)
       shiny.fluent::updateDropdown.shinyInput(session, "plugins_to_export",
         options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")

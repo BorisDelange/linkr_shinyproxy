@@ -37,7 +37,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
     content = div(
       actionButton(ns(paste0(prefix, "_close_add_module")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
       shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-        make_textfield_new(ns = ns, label = "name", id = "module_name", width = "300px", i18n = i18n),
+        make_textfield(ns = ns, label = "name", id = "module_name", width = "300px", i18n = i18n),
         div(shiny.fluent::ChoiceGroup.shinyInput(ns("add_module_type"), value = "same_level", 
           options = module_creation_options, className = "inline_choicegroup"), style = "padding-top:35px;")
       ), br(),
@@ -55,12 +55,12 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
       content = div(
         actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "module_element_creation_name", width = "300px"),
-          make_combobox_new(i18n = i18n, ns = ns, label = "plugin", id = "module_element_creation_plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px")
+          make_textfield(i18n = i18n, ns = ns, label = "name", id = "module_element_creation_name", width = "300px"),
+          make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "module_element_creation_plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px")
         ),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "module_element_creation_thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
-          make_dropdown_new(i18n = i18n, ns = ns, label = "items_mapping", id = "module_element_creation_thesaurus_mapping", multiSelect = TRUE, width = "300px",
+          make_combobox(i18n = i18n, ns = ns, label = "thesaurus", id = "module_element_creation_thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
+          make_dropdown(i18n = i18n, ns = ns, label = "items_mapping", id = "module_element_creation_thesaurus_mapping", multiSelect = TRUE, width = "300px",
             options = list(
               list(key = 1, text = i18n$t("equivalent_to")),
               list(key = 2, text = i18n$t("included_in")),
@@ -76,11 +76,11 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
               style = "margin-left:-28px;"
             )
           )
-          # make_toggle_new(i18n = i18n, ns = ns, id = paste0(prefix, "_merge_mapped_items"), label = "merge_mapped_items", inline = TRUE)
+          # make_toggle(i18n = i18n, ns = ns, id = paste0(prefix, "_merge_mapped_items"), label = "merge_mapped_items", inline = TRUE)
         ),
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 20),
-          # make_dropdown_new(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items", multiSelect = TRUE, width = "650px"),
+          # make_dropdown(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items", multiSelect = TRUE, width = "650px"),
           
           div(
             div(id = ns("module_element_creation_thesaurus_selected_items_title"), class = "input_title", i18n$t("thesaurus_selected_items")),
@@ -101,12 +101,12 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
       content = div(
         actionButton(ns(paste0(prefix, "_close_module_element_settings")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "module_element_settings_name", width = "300px"),
-          make_textfield_new(i18n = i18n, ns = ns, label = "plugin", id = "module_element_settings_plugin", width = "300px", disabled = TRUE)
+          make_textfield(i18n = i18n, ns = ns, label = "name", id = "module_element_settings_name", width = "300px"),
+          make_textfield(i18n = i18n, ns = ns, label = "plugin", id = "module_element_settings_plugin", width = "300px", disabled = TRUE)
         ),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_combobox_new(i18n = i18n, ns = ns, label = "thesaurus", id = "module_element_settings_thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
-          make_dropdown_new(i18n = i18n, ns = ns, label = "items_mapping", id = "module_element_settings_thesaurus_mapping", multiSelect = TRUE, width = "300px",
+          make_combobox(i18n = i18n, ns = ns, label = "thesaurus", id = "module_element_settings_thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
+          make_dropdown(i18n = i18n, ns = ns, label = "items_mapping", id = "module_element_settings_thesaurus_mapping", multiSelect = TRUE, width = "300px",
             options = list(
               list(key = 1, text = i18n$t("equivalent_to")),
               list(key = 2, text = i18n$t("included_in")),
@@ -122,11 +122,11 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
               style = "margin-left:-28px;"
             )
           )
-          # make_toggle_new(i18n = i18n, ns = ns, id = paste0(prefix, "_merge_mapped_items"), label = "merge_mapped_items", inline = TRUE)
+          # make_toggle(i18n = i18n, ns = ns, id = paste0(prefix, "_merge_mapped_items"), label = "merge_mapped_items", inline = TRUE)
         ),
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 20),
-          # make_dropdown_new(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items", multiSelect = TRUE, width = "650px"),
+          # make_dropdown(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items", multiSelect = TRUE, width = "650px"),
           
           div(
             div(id = ns("module_element_settings_thesaurus_selected_items_title"), class = "input_title", i18n$t("thesaurus_selected_items")),
@@ -150,8 +150,8 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
       content = div(
         actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_textfield_new(i18n = i18n, ns = ns, label = "name", id = "module_element_creation_name", width = "300px"),
-          make_combobox_new(i18n = i18n, ns = ns, label = "plugin", id = "module_element_creation_plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px")
+          make_textfield(i18n = i18n, ns = ns, label = "name", id = "module_element_creation_name", width = "300px"),
+          make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "module_element_creation_plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px")
         ), br(),
         div(shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), i18n$t("add_widget")))
       )
@@ -256,8 +256,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
-    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar1, show_message_bar(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar2, show_message_bar(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
     
     # --- --- --- --- --
     # Initiate vars ----
@@ -308,442 +308,442 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     # --- --- --- --- --- ---
     # Help for this page ----
     # --- --- --- --- --- ---
-    
-    # Help panel
-    
-    observeEvent(input$help, if (id == shiny.router::get_page()) r[[paste0(prefix, "_open_help_panel")]] <- TRUE)
-    observeEvent(input$hide_panel, r[[paste0(prefix, "_open_help_panel")]] <- FALSE)
-    
-    help_panel_words <- tibble::tribble(~language, ~reference_word, ~translated_word,
-      "EN", "load_data", "Load data",
-      "FR", "load_data", "Charger des données",
-      "EN", "data_model", "Understanding the data model",
-      "FR", "data_model", "Comprendre le modèle de données",
-      "EN", "ind_or_agg_data", "Individual or aggregated data ?",
-      "FR", "ind_or_agg_data", "Données individuelles ou agrégées ?",
-      "EN", "whats_a_module", "What is a tab ?",
-      "FR", "whats_a_module", "Qu'est ce qu'un onglet ?",
-      "EN", "add_module", "Add a tab",
-      "FR", "add_module", "Ajouter un onglet",
-      "EN", "delete_module", "Delete a tab",
-      "FR", "delete_module", "Supprimer un onglet",
-      "EN", "modules_elements", "Modules",
-      "FR", "modules_elements", "Modules",
-      "EN", "whats_a_module_element", "What is a module ?",
-      "FR", "whats_a_module_element", "Qu'est ce qu'un module ?",
-      "EN", "add_module_element", "Add a module",
-      "FR", "add_module_element", "Ajouter un module",
-      "EN", "delete_modul_elemente", "Delete a module",
-      "FR", "delete_module_element", "Supprimer un module"
-    )
-    
-    output$help_panel <- shiny.fluent::renderReact({
-      
-      shiny.fluent::Panel(
-        headerText = translate(language, "help", r$words),
-        isOpen = r[[paste0(prefix, "_open_help_panel")]], br(),
-        strong(translate(language, "data", r$words)), br(), br(),
-        shiny.fluent::Link(translate(language, "load_data", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_1', Math.random()); }"))), br(), br(),
-        shiny.fluent::Link(translate(language, "data_model", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_2', Math.random()); }"))), br(), br(),
-        shiny.fluent::Link(translate(language, "ind_or_agg_data", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_3', Math.random()); }"))), br(), br(),
-        strong(translate(language, "modules", r$words)), br(), br(),
-        shiny.fluent::Link(translate(language, "whats_a_module", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_4', Math.random()); }"))), br(), br(),
-        shiny.fluent::Link(translate(language, "add_module", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_5', Math.random()); }"))), br(), br(),
-        shiny.fluent::Link(translate(language, "delete_module", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_6', Math.random()); }"))), br(), br(),
-        strong(translate(language, "modules_elements", help_panel_words)), br(), br(),
-        shiny.fluent::Link(translate(language, "whats_a_module_element", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_7', Math.random()); }"))), br(), br(),
-        shiny.fluent::Link(translate(language, "add_module_element", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_8', Math.random()); }"))), br(), br(),
-        shiny.fluent::Link(translate(language, "delete_module_element", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_9', Math.random()); }"))), br(), br(),
-        isLightDismiss = r[[paste0(prefix, "_open_help_panel_light_dismiss")]],
-        isBlocking = r[[paste0(prefix, "_open_help_panel_light_dismiss")]],
-        onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_panel', Math.random()); }")),
-        onLightDismissClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_panel', Math.random()); }"))
-      )
-    })
-    
-    # Help modal
-    
-    observeEvent(input$show_modal, r[[paste0(prefix, "_open_help_modal")]] <- TRUE)
-    observeEvent(input$hide_modal, {
-      r[[paste0(prefix, "_open_help_modal")]] <- FALSE
-      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- TRUE
-    })
-    
-    observeEvent(input$help_1, {
-      
-      if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Charger des données"
-        
-        r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p(strong("1) Choisir un datamart")),
-          p("Un datamart est un ", strong("set de données"), ", auquel vous avez accès. Il contient les données d'un ", strong("groupe de patients"), "."),
-          p("Un même datamart peut contenir ", strong("plusieurs études différentes"), "."),
-          p("Choisissez le datamart sur la gauche de l'écran, dans le menu déroulant."),
-          p(strong("2) Chosir une étude")),
-          p("Choisissez ensuite une étude, dans le menu déroulant."),
-          p("Une même étude peut contenir ", strong("plusieurs subsets différents"), "."),
-          p(strong("3) Chosir un subset")),
-          p("Il existe trois subsets par défaut :"),
-          tags$ul(
-            tags$li("Tous les patients"),
-            tags$li("Patients inclus"),
-            tags$li("Patients exclus")
-          ),
-          p("Il est possible de ", strong("créer d'autres subsets"), " dans l'onglet ", tags$em("Mes subsets"), " en haut de l'écran."),
-          p(strong("4) Choisir un patient & un séjour")),
-          p("En chargeant un subset, la liste des patients appartenant à ce subset est chargée dans le menu déroulant ", tags$em("Patient"), 
-            ", seulement si l'on se trouve dans les ", tags$em("Données individuelles"), "."),
-          p("Les modules se ", strong("mettent en jour"), " à chaque changement de patient & de séjour.")
-        )
-      }
-      
-      else if (language == "EN"){
-        r[[paste0(prefix, "_help_modal_title")]] <- ""
-        r[[paste0(prefix, "_help_modal_text")]] <- div()
-      }
-      
-      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
-      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
-      
-    })
-    
-    observeEvent(input$help_2, {
-      
-      if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Comprendre le modèle de données"
-        
-        r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Au chargement d'un datamart, cinq variables se chargent."),
-          p("Les colonnes de chaque variable sont détaillées, avec les noms complets et le type de colonne (integer, character etc)."),
-          p(strong("1) d$patients")),
-          tags$ul(
-            tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
-            tags$li(strong("gender"), " : Sexe (M / F) (character)"),
-            tags$li(strong("age"), " : Age (character)"),
-            tags$li(strong("dod"), " : Date de décès (dod pour date of death) (datetime)")
-          ),
-          p(strong("2) d$stays")),
-          tags$ul(
-            tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
-            tags$li(strong("stay_id"), " : Identifiant unique du séjour hospitalier (integer)"),
-            tags$li(strong("unit_name"), " : Nom de l'unité / du service du séjour hospitalier (character)"),
-            tags$li(strong("admission_datetime"), " : Date & heure d'admission dans l'unité / dans le service (datetime)"),
-            tags$li(strong("discharge_datetime"), " : Date & heure de sortie de l'unité / de service (datetime)")
-          ),
-          p(strong("3) d$labs_vitals")),
-          tags$ul(
-            tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
-            tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
-            tags$li(strong("item_id"), " : Identifiant unique du concept (integer)"),
-            tags$li(strong("datetime_start"), " : Date & heure de début de valeur (datetime)"),
-            tags$li(strong("datetime_stop"), " : Date & heure de fin de la valeur, optionnel (datetime)"),
-            tags$li(strong("value"), " : Valeur textuelle (character)"),
-            tags$li(strong("value_num"), " : Valeur numérique (numeric)"),
-            tags$li(strong("unit"), " : Unité de la valeur (character)"),
-            tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
-          ),
-          p(strong("4) d$orders")),
-          tags$ul(
-            tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
-            tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
-            tags$li(strong("item_id"), " : Identifiant unique du concept (integer)"),
-            tags$li(strong("datetime_start"), " : Date & heure de début de valeur (datetime)"),
-            tags$li(strong("datetime_stop"), " : Date & heure de fin de la valeur (datetime)"),
-            tags$li(strong("route"), " : Voie d'administration du médicament (character)"),
-            tags$li(strong("continuous"), " : Administration continue ou non (logical)"),
-            tags$li(strong("amount"), " : Quantité du médicament / de la prescription non médicamenteuse (numeric)"),
-            tags$li(strong("amount_unit"), " : Unité de la quantité (character)"),
-            tags$li(strong("rate"), " : Débit du médicament (numeric)"),
-            tags$li(strong("rate_unit"), " : Unité du débit (character)"),
-            tags$li(strong("concentration"), " : Concentration du médicament (numeric)"),
-            tags$li(strong("concentration_unit"), " : Unité de la concentration(character)"),
-            tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
-          ),
-          p(strong("5) d$text")),
-          tags$ul(
-            tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
-            tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
-            tags$li(strong("item_id"), " : identifiant unique du concept (integer)"),
-            tags$li(strong("datetime_start"), " : Date & heure de début de valeur (datetime)"),
-            tags$li(strong("datetime_stop"), " : Date & heure de fin de la valeur, optionnel (datetime)"),
-            tags$li(strong("value"), " : Valeur textuelle (character)"),
-            tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
-          )
-        )
-      }
-      
-      else if (language == "EN"){
-        r[[paste0(prefix, "_help_modal_title")]] <- ""
-        r[[paste0(prefix, "_help_modal_text")]] <- div()
-      }
-      
-      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
-      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
-      
-    })
-    
-    observeEvent(input$help_3, {
-      
-      if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Données individuelles ou agrégées ?"
-        
-        r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Vous pouvez choisir dans le menu à gauche de charger les données individuelles ou agrégées."),
-          p(strong("1) Modules & plugins différents")),
-          p("Selon que vous choisissiez les données individuelles ou agrégées, les modules & plugins chargés diffèrent."),
-          p("Lorsque vous chargez une étude, vous chargez :"),
-          tags$ul(
-            tags$li("D'un côté les onglets & modules de données individuelles, permettant de ", strong("visualiser les données patient par patient")),
-            tags$li("De l'autre côté les onglets & modules de données agrégées, permettant de ", strong("visualiser les données sur l'ensemble des patients ou sur le subset sélectionné"))
-          ),
-          p("En pratique, cela crée de ", strong("nouvelles variables"), " filtrant les variables générales sur ", 
-            strong("le subset, le patient ou sur le séjour sélectionné"), "."),
-          p(strong("2) Données agrégées - Variables du subset sélectionné")),
-          p("Lorsque vous sélectionnez un subset, les variables suivantes sont créées, avec la même structure que détaillée dans ", tags$em("Comprendre le modèle de données"), " :"),
-          tags$ul(
-            tags$li(strong("d$data_subset$patients")),
-            tags$li(strong("d$data_subset$stays")),
-            tags$li(strong("d$data_subset$labs_vitals")),
-            tags$li(strong("d$data_subset$orders")),
-            tags$li(strong("d$data_subset$text"))
-          ),
-          p(strong("3) Données individuelles - Variables du patient sélectionné")),
-          p("Lorsque vous sélectionnez un patient, les variables suivantes sont créées :"),
-          tags$ul(
-            tags$li(strong("r$data_patient$stays")),
-            tags$li(strong("r$data_patient$labs_vitals")),
-            tags$li(strong("r$data_patient$orders")),
-            tags$li(strong("r$data_patient$text"))
-          ),
-          p(strong("4) Données individuelles - Variables du séjour sélectionné")),
-          p("De la même façon, lorsque vous sélectionnez un séjour, les variables suivantes sont créées :"),
-          tags$ul(
-            tags$li(strong("d$data_stay$labs_vitals")),
-            tags$li(strong("d$data_stay$orders")),
-            tags$li(strong("d$data_stay$text"))
-          )
-        )
-      }
-      
-      else if (language == "EN"){
-        r[[paste0(prefix, "_help_modal_title")]] <- ""
-        r[[paste0(prefix, "_help_modal_text")]] <- div()
-      }
-      
-      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
-      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
-      
-    })
-    
-    observeEvent(input$help_4, {
-      
-      if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un onglet ?"
-        
-        r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Une étude est ", strong("structurée autour d'onglets"), ", qui sont en quelque sorte des ", strong("pages personnalisées"),
-            " sur lesquelles je choisis ", strong("quelles données afficher et sous quelle forme"), "."),
-          p(strong("1) Onglets de données individuelles")),
-          p("Les onglets de données individuelles ", strong("reproduisent un dossier clinique"), "."),
-          p("Par exemple, si je fais une étude sur le choc septique, je crée un onglet de données individuelles ", tags$em("Hémodynamique"),
-              " où j'affiche la FC, la PAs, la PAd, la PAm & les doses reçues de Noradrénaline."),
-          p(strong("2) Onglets de données agrégées")),
-          p("Les onglets de données agrégées ", strong("permettent de conduire une étude"), " sur mes données."),
-          p("Sur cette même étude, je choisis de créer un onglet ", tags$em("Critères d'exclusion"), " où je vais créer mes critères ",
-            "d'exclusion et les appliquer à mes patients."),
-          p("Je peux également créer un onglet ", tags$em("Flowchart"), " pour afficher le flowchart de mon étude.")
-        )
-      }
-      
-      else if (language == "EN"){
-        r[[paste0(prefix, "_help_modal_title")]] <- ""
-        r[[paste0(prefix, "_help_modal_text")]] <- div()
-      }
-      
-      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
-      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
-      
-    })
-    
-    observeEvent(input$help_5, {
-      
-      if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un onglet"
-        
-        r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Pour ajouter un onglet, il faut ", strong("avoir chargé une étude"), " dans le menu déroulant à gauche de l'écran."),
-          p("Il faut ensuite cliquer sur l'icône :"),
-          div(shiny.fluent::Icon(iconName = "Add"), span(translate(language, "add_module", r$words), style = "padding:0px 0px 10px 10px;")), 
-          p("Elle se trouve sous le titre (", tags$em("Données individuelles"), " ou ",
-            tags$em("Données agrégées"), ")."),
-          p("Ensuite, :"),
-          tags$ul(
-            tags$li(strong("Choisissez un nom"), " pour cet onglet"),
-            tags$li(strong("Choisissez le niveau "), "de l'onglet. Faut-il qu'il soit au même niveau que l'onglet actuel,",
-              " ou est-ce un sous-onglet de l'onglet actuellement sélectionné ?")
-          ),
-          p("Lorsque le menu ", tags$em("Ajouter un onglet"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules.")
-        )
-      }
-      
-      else if (language == "EN"){
-        r[[paste0(prefix, "_help_modal_title")]] <- ""
-        r[[paste0(prefix, "_help_modal_text")]] <- div()
-      }
-      
-      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
-      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
-      
-    })
-    
-    observeEvent(input$help_6, {
-      
-      if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un onglet"
-        
-        r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Pour supprimer un onglet, ", strong("cliquez sur l'onglet en question"), " puis cliquez sur :"),
-          div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_help")), 
-            translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete"))),
-          p("Supprimer un onglet supprime ", strong("tous les modules situés dans cet onglet"),
-            ", ainsi que ", strong("tous les onglets situés sous cet onglet"), ".")
-        )
-      }
-      
-      else if (language == "EN"){
-        r[[paste0(prefix, "_help_modal_title")]] <- ""
-        r[[paste0(prefix, "_help_modal_text")]] <- div()
-      }
-      
-      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
-      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
-      
-    })
-    
-    observeEvent(input$help_7, {
-      
-      if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un module ?"
-        
-        r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Un onglet est ", strong("composé de modules"), ", qui sont des plugins appliqués à des données."),
-          p(strong("1) Plugins")),
-          p("Les plugins sont des scripts écrits en R - Shiny, permettant ", strong("d'ajouter une fonctionnalité à l'application"), "."),
-          p("Quelques exemples :"),
-          tags$ul(
-            tags$li(strong("Plugin Datatable"), " : permet d'afficher des données sous forme de tableau."),
-            tags$li(strong("Plugin Timeline"), " : permet d'afficher les données sous forme de timeline, utile pour les prescriptions par exemple."),
-            tags$li(strong("Plugin Flowchart"), " : permet de créer un Flowchart à partir des données d'une étude.")
-          ),
-          p("L'application a vocation à s'enrichir au fur et à mesure par la ", strong("création de nouveaux plugins"), "."),
-          p("Les plugins des données individuelles ou agrégées ne sont pas les mêmes."),
-          p(strong("2) Modules")),
-          p("Un module est donc un plugin appliqué à des données."),
-          p("Je choisis un plugin, quelles données vont être utilisées par ce plugin, puis le ",
-            strong("plugin affiche ces données sous la forme désirée"), " (timeline pour le plugin timeline etc).")
-        )
-      }
-      
-      else if (language == "EN"){
-        r[[paste0(prefix, "_help_modal_title")]] <- ""
-        r[[paste0(prefix, "_help_modal_text")]] <- div()
-      }
-      
-      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
-      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
-      
-    })
-    
-    observeEvent(input$help_8, {
-      
-      if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un module"
-        
-        r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Pour ajouter un module, il faut ", strong("avoir chargé une étude "), " dans le menu déroulant à gauche de l'écran puis ",
-            strong("avoir sélectionné un onglet"), "."),
-          p("Il faut ensuite cliquer sur :"),
-            div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_help")), 
-              translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add"))),
-          p("Ensuite, :"),
-          tags$ul(
-            tags$li(strong("Choisissez un nom"), " pour ce module"),
-            tags$li(strong("Choisissez le plugin "), " que vous souhaitez utiliser pour ce module")
-          ),
-          p("S'il s'agit d'un module de données agrégées, cliquez sur Ajouter et c'est terminé."),
-          p("S'il s'agit d'un module de données individuelles, vous devez :"),
-          tags$ul(
-            tags$li(strong("Sélectionner un thésaurus"), " : un thésaurus est un dictionnaire de concepts utilisés par un datamart."),
-            tags$li(strong("Sélectionner les items "), " que vous souhaitez utiliser pour cet élément de module, avec le plugin sélectionné.")
-          ),
-          p("Lorsque le tableau des ", strong("items du thésaurus"), " est chargé, vous pouvez filtrer les données pour trouver les items qui vous intéresent :"),
-          tags$ul(
-            tags$li(strong("Nom d'affichage"), " : cherchez dans la barre de texte les items. En double-cliquant sur un nom, vous pouvez le changer : il sera affiché avec ce nouveau nom."),
-            tags$li(strong("Catégorie"), " : filtrez les données sur les catégories, plusieurs catégories peuvent être sélectionnées à la fois."),
-            tags$li(strong("Unité"), " : utile essentiellement pour changer l'affichage de l'unité."),
-            tags$li(strong("Couleur de l'item"), " : utile pour différencier les items sur un graphique par ex."),
-            tags$li(strong("Patients"), " : affiche le nombre total de patients ayant au moins une fois l'item."),
-            tags$li(strong("Lignes"), " : nombre d'occurences de l'item dans le datamart, tous patients confondus.")
-          ),
-          p("Ajouter ensuite les items en cliquant sur l'icône "),
-          div(actionButton(ns(paste0(prefix, "_add_thesaurus_item_help")), "", icon = icon("plus"))),
-          p(" dans la dernière colonne du tableau."),
-          p("Lorsque le menu ", tags$em("Nouveau module"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules.")
-          
-        )
-      }
-      
-      else if (language == "EN"){
-        r[[paste0(prefix, "_help_modal_title")]] <- ""
-        r[[paste0(prefix, "_help_modal_text")]] <- div()
-      }
-      
-      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
-      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
-      
-    })
-    
-    observeEvent(input$help_9, {
-      
-      if (language == "FR"){
-        r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un module"
-        
-        r[[paste0(prefix, "_help_modal_text")]] <- div(
-          p("Pour supprimer un module, ", strong("cliquez sur "), " :"),
-          div(actionButton(ns(paste0(prefix, "_remove_module_element_help")), "", icon = icon("trash-alt"))),
-          p("Cette icône se trouve en haut à droite du module.")
-        )
-      }
-      
-      else if (language == "EN"){
-        r[[paste0(prefix, "_help_modal_title")]] <- ""
-        r[[paste0(prefix, "_help_modal_text")]] <- div()
-      }
-      
-      r[[paste0(prefix, "_open_help_modal")]] <- TRUE
-      r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
-      
-    })
-    
-    output$help_modal <- shiny.fluent::renderReact({
-      
-      shiny.fluent::Modal(
-        isOpen = r[[paste0(prefix, "_open_help_modal")]], dragOptions = TRUE, isModeless = TRUE, topOffsetFixed = TRUE,
-        onLightDismissClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_modal_2', Math.random()); }")),
-        div(
-          style = "width: 1000px; padding: 15px 10px 0px 15px;",
-          shiny.fluent::Stack(tokens = list(childrenGap = "10px"),
-            div(style = list(display = "flex"),
-              shiny.fluent::Text(r[[paste0(prefix, "_help_modal_title")]], variant = "large"),
-              div(style = list(flexGrow = 1)),
-              shiny.fluent::IconButton.shinyInput(ns("hide_modal"), iconProps = list(iconName = "Cancel")),
-            ),
-            r[[paste0(prefix, "_help_modal_text")]]
-          )
-        )
-      )
-    })
-    
+    # 
+    # # Help panel
+    # 
+    # observeEvent(input$help, if (id == shiny.router::get_page()) r[[paste0(prefix, "_open_help_panel")]] <- TRUE)
+    # observeEvent(input$hide_panel, r[[paste0(prefix, "_open_help_panel")]] <- FALSE)
+    # 
+    # help_panel_words <- tibble::tribble(~language, ~reference_word, ~translated_word,
+    #   "EN", "load_data", "Load data",
+    #   "FR", "load_data", "Charger des données",
+    #   "EN", "data_model", "Understanding the data model",
+    #   "FR", "data_model", "Comprendre le modèle de données",
+    #   "EN", "ind_or_agg_data", "Individual or aggregated data ?",
+    #   "FR", "ind_or_agg_data", "Données individuelles ou agrégées ?",
+    #   "EN", "whats_a_module", "What is a tab ?",
+    #   "FR", "whats_a_module", "Qu'est ce qu'un onglet ?",
+    #   "EN", "add_module", "Add a tab",
+    #   "FR", "add_module", "Ajouter un onglet",
+    #   "EN", "delete_module", "Delete a tab",
+    #   "FR", "delete_module", "Supprimer un onglet",
+    #   "EN", "modules_elements", "Modules",
+    #   "FR", "modules_elements", "Modules",
+    #   "EN", "whats_a_module_element", "What is a module ?",
+    #   "FR", "whats_a_module_element", "Qu'est ce qu'un module ?",
+    #   "EN", "add_module_element", "Add a module",
+    #   "FR", "add_module_element", "Ajouter un module",
+    #   "EN", "delete_modul_elemente", "Delete a module",
+    #   "FR", "delete_module_element", "Supprimer un module"
+    # )
+    # 
+    # output$help_panel <- shiny.fluent::renderReact({
+    #   
+    #   shiny.fluent::Panel(
+    #     headerText = translate(language, "help", r$words),
+    #     isOpen = r[[paste0(prefix, "_open_help_panel")]], br(),
+    #     strong(translate(language, "data", r$words)), br(), br(),
+    #     shiny.fluent::Link(translate(language, "load_data", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_1', Math.random()); }"))), br(), br(),
+    #     shiny.fluent::Link(translate(language, "data_model", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_2', Math.random()); }"))), br(), br(),
+    #     shiny.fluent::Link(translate(language, "ind_or_agg_data", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_3', Math.random()); }"))), br(), br(),
+    #     strong(translate(language, "modules", r$words)), br(), br(),
+    #     shiny.fluent::Link(translate(language, "whats_a_module", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_4', Math.random()); }"))), br(), br(),
+    #     shiny.fluent::Link(translate(language, "add_module", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_5', Math.random()); }"))), br(), br(),
+    #     shiny.fluent::Link(translate(language, "delete_module", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_6', Math.random()); }"))), br(), br(),
+    #     strong(translate(language, "modules_elements", help_panel_words)), br(), br(),
+    #     shiny.fluent::Link(translate(language, "whats_a_module_element", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_7', Math.random()); }"))), br(), br(),
+    #     shiny.fluent::Link(translate(language, "add_module_element", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_8', Math.random()); }"))), br(), br(),
+    #     shiny.fluent::Link(translate(language, "delete_module_element", help_panel_words), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_9', Math.random()); }"))), br(), br(),
+    #     isLightDismiss = r[[paste0(prefix, "_open_help_panel_light_dismiss")]],
+    #     isBlocking = r[[paste0(prefix, "_open_help_panel_light_dismiss")]],
+    #     onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_panel', Math.random()); }")),
+    #     onLightDismissClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_panel', Math.random()); }"))
+    #   )
+    # })
+    # 
+    # # Help modal
+    # 
+    # observeEvent(input$show_modal, r[[paste0(prefix, "_open_help_modal")]] <- TRUE)
+    # observeEvent(input$hide_modal, {
+    #   r[[paste0(prefix, "_open_help_modal")]] <- FALSE
+    #   r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- TRUE
+    # })
+    # 
+    # observeEvent(input$help_1, {
+    #   
+    #   if (language == "FR"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- "Charger des données"
+    #     
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div(
+    #       p(strong("1) Choisir un datamart")),
+    #       p("Un datamart est un ", strong("set de données"), ", auquel vous avez accès. Il contient les données d'un ", strong("groupe de patients"), "."),
+    #       p("Un même datamart peut contenir ", strong("plusieurs études différentes"), "."),
+    #       p("Choisissez le datamart sur la gauche de l'écran, dans le menu déroulant."),
+    #       p(strong("2) Chosir une étude")),
+    #       p("Choisissez ensuite une étude, dans le menu déroulant."),
+    #       p("Une même étude peut contenir ", strong("plusieurs subsets différents"), "."),
+    #       p(strong("3) Chosir un subset")),
+    #       p("Il existe trois subsets par défaut :"),
+    #       tags$ul(
+    #         tags$li("Tous les patients"),
+    #         tags$li("Patients inclus"),
+    #         tags$li("Patients exclus")
+    #       ),
+    #       p("Il est possible de ", strong("créer d'autres subsets"), " dans l'onglet ", tags$em("Mes subsets"), " en haut de l'écran."),
+    #       p(strong("4) Choisir un patient & un séjour")),
+    #       p("En chargeant un subset, la liste des patients appartenant à ce subset est chargée dans le menu déroulant ", tags$em("Patient"), 
+    #         ", seulement si l'on se trouve dans les ", tags$em("Données individuelles"), "."),
+    #       p("Les modules se ", strong("mettent en jour"), " à chaque changement de patient & de séjour.")
+    #     )
+    #   }
+    #   
+    #   else if (language == "EN"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- ""
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div()
+    #   }
+    #   
+    #   r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+    #   r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+    #   
+    # })
+    # 
+    # observeEvent(input$help_2, {
+    #   
+    #   if (language == "FR"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- "Comprendre le modèle de données"
+    #     
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div(
+    #       p("Au chargement d'un datamart, cinq variables se chargent."),
+    #       p("Les colonnes de chaque variable sont détaillées, avec les noms complets et le type de colonne (integer, character etc)."),
+    #       p(strong("1) d$patients")),
+    #       tags$ul(
+    #         tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
+    #         tags$li(strong("gender"), " : Sexe (M / F) (character)"),
+    #         tags$li(strong("age"), " : Age (character)"),
+    #         tags$li(strong("dod"), " : Date de décès (dod pour date of death) (datetime)")
+    #       ),
+    #       p(strong("2) d$stays")),
+    #       tags$ul(
+    #         tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
+    #         tags$li(strong("stay_id"), " : Identifiant unique du séjour hospitalier (integer)"),
+    #         tags$li(strong("unit_name"), " : Nom de l'unité / du service du séjour hospitalier (character)"),
+    #         tags$li(strong("admission_datetime"), " : Date & heure d'admission dans l'unité / dans le service (datetime)"),
+    #         tags$li(strong("discharge_datetime"), " : Date & heure de sortie de l'unité / de service (datetime)")
+    #       ),
+    #       p(strong("3) d$labs_vitals")),
+    #       tags$ul(
+    #         tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
+    #         tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
+    #         tags$li(strong("item_id"), " : Identifiant unique du concept (integer)"),
+    #         tags$li(strong("datetime_start"), " : Date & heure de début de valeur (datetime)"),
+    #         tags$li(strong("datetime_stop"), " : Date & heure de fin de la valeur, optionnel (datetime)"),
+    #         tags$li(strong("value"), " : Valeur textuelle (character)"),
+    #         tags$li(strong("value_num"), " : Valeur numérique (numeric)"),
+    #         tags$li(strong("unit"), " : Unité de la valeur (character)"),
+    #         tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
+    #       ),
+    #       p(strong("4) d$orders")),
+    #       tags$ul(
+    #         tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
+    #         tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
+    #         tags$li(strong("item_id"), " : Identifiant unique du concept (integer)"),
+    #         tags$li(strong("datetime_start"), " : Date & heure de début de valeur (datetime)"),
+    #         tags$li(strong("datetime_stop"), " : Date & heure de fin de la valeur (datetime)"),
+    #         tags$li(strong("route"), " : Voie d'administration du médicament (character)"),
+    #         tags$li(strong("continuous"), " : Administration continue ou non (logical)"),
+    #         tags$li(strong("amount"), " : Quantité du médicament / de la prescription non médicamenteuse (numeric)"),
+    #         tags$li(strong("amount_unit"), " : Unité de la quantité (character)"),
+    #         tags$li(strong("rate"), " : Débit du médicament (numeric)"),
+    #         tags$li(strong("rate_unit"), " : Unité du débit (character)"),
+    #         tags$li(strong("concentration"), " : Concentration du médicament (numeric)"),
+    #         tags$li(strong("concentration_unit"), " : Unité de la concentration(character)"),
+    #         tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
+    #       ),
+    #       p(strong("5) d$text")),
+    #       tags$ul(
+    #         tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
+    #         tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
+    #         tags$li(strong("item_id"), " : identifiant unique du concept (integer)"),
+    #         tags$li(strong("datetime_start"), " : Date & heure de début de valeur (datetime)"),
+    #         tags$li(strong("datetime_stop"), " : Date & heure de fin de la valeur, optionnel (datetime)"),
+    #         tags$li(strong("value"), " : Valeur textuelle (character)"),
+    #         tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
+    #       )
+    #     )
+    #   }
+    #   
+    #   else if (language == "EN"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- ""
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div()
+    #   }
+    #   
+    #   r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+    #   r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+    #   
+    # })
+    # 
+    # observeEvent(input$help_3, {
+    #   
+    #   if (language == "FR"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- "Données individuelles ou agrégées ?"
+    #     
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div(
+    #       p("Vous pouvez choisir dans le menu à gauche de charger les données individuelles ou agrégées."),
+    #       p(strong("1) Modules & plugins différents")),
+    #       p("Selon que vous choisissiez les données individuelles ou agrégées, les modules & plugins chargés diffèrent."),
+    #       p("Lorsque vous chargez une étude, vous chargez :"),
+    #       tags$ul(
+    #         tags$li("D'un côté les onglets & modules de données individuelles, permettant de ", strong("visualiser les données patient par patient")),
+    #         tags$li("De l'autre côté les onglets & modules de données agrégées, permettant de ", strong("visualiser les données sur l'ensemble des patients ou sur le subset sélectionné"))
+    #       ),
+    #       p("En pratique, cela crée de ", strong("nouvelles variables"), " filtrant les variables générales sur ", 
+    #         strong("le subset, le patient ou sur le séjour sélectionné"), "."),
+    #       p(strong("2) Données agrégées - Variables du subset sélectionné")),
+    #       p("Lorsque vous sélectionnez un subset, les variables suivantes sont créées, avec la même structure que détaillée dans ", tags$em("Comprendre le modèle de données"), " :"),
+    #       tags$ul(
+    #         tags$li(strong("d$data_subset$patients")),
+    #         tags$li(strong("d$data_subset$stays")),
+    #         tags$li(strong("d$data_subset$labs_vitals")),
+    #         tags$li(strong("d$data_subset$orders")),
+    #         tags$li(strong("d$data_subset$text"))
+    #       ),
+    #       p(strong("3) Données individuelles - Variables du patient sélectionné")),
+    #       p("Lorsque vous sélectionnez un patient, les variables suivantes sont créées :"),
+    #       tags$ul(
+    #         tags$li(strong("r$data_patient$stays")),
+    #         tags$li(strong("r$data_patient$labs_vitals")),
+    #         tags$li(strong("r$data_patient$orders")),
+    #         tags$li(strong("r$data_patient$text"))
+    #       ),
+    #       p(strong("4) Données individuelles - Variables du séjour sélectionné")),
+    #       p("De la même façon, lorsque vous sélectionnez un séjour, les variables suivantes sont créées :"),
+    #       tags$ul(
+    #         tags$li(strong("d$data_stay$labs_vitals")),
+    #         tags$li(strong("d$data_stay$orders")),
+    #         tags$li(strong("d$data_stay$text"))
+    #       )
+    #     )
+    #   }
+    #   
+    #   else if (language == "EN"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- ""
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div()
+    #   }
+    #   
+    #   r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+    #   r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+    #   
+    # })
+    # 
+    # observeEvent(input$help_4, {
+    #   
+    #   if (language == "FR"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un onglet ?"
+    #     
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div(
+    #       p("Une étude est ", strong("structurée autour d'onglets"), ", qui sont en quelque sorte des ", strong("pages personnalisées"),
+    #         " sur lesquelles je choisis ", strong("quelles données afficher et sous quelle forme"), "."),
+    #       p(strong("1) Onglets de données individuelles")),
+    #       p("Les onglets de données individuelles ", strong("reproduisent un dossier clinique"), "."),
+    #       p("Par exemple, si je fais une étude sur le choc septique, je crée un onglet de données individuelles ", tags$em("Hémodynamique"),
+    #           " où j'affiche la FC, la PAs, la PAd, la PAm & les doses reçues de Noradrénaline."),
+    #       p(strong("2) Onglets de données agrégées")),
+    #       p("Les onglets de données agrégées ", strong("permettent de conduire une étude"), " sur mes données."),
+    #       p("Sur cette même étude, je choisis de créer un onglet ", tags$em("Critères d'exclusion"), " où je vais créer mes critères ",
+    #         "d'exclusion et les appliquer à mes patients."),
+    #       p("Je peux également créer un onglet ", tags$em("Flowchart"), " pour afficher le flowchart de mon étude.")
+    #     )
+    #   }
+    #   
+    #   else if (language == "EN"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- ""
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div()
+    #   }
+    #   
+    #   r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+    #   r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+    #   
+    # })
+    # 
+    # observeEvent(input$help_5, {
+    #   
+    #   if (language == "FR"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un onglet"
+    #     
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div(
+    #       p("Pour ajouter un onglet, il faut ", strong("avoir chargé une étude"), " dans le menu déroulant à gauche de l'écran."),
+    #       p("Il faut ensuite cliquer sur l'icône :"),
+    #       div(shiny.fluent::Icon(iconName = "Add"), span(translate(language, "add_module", r$words), style = "padding:0px 0px 10px 10px;")), 
+    #       p("Elle se trouve sous le titre (", tags$em("Données individuelles"), " ou ",
+    #         tags$em("Données agrégées"), ")."),
+    #       p("Ensuite, :"),
+    #       tags$ul(
+    #         tags$li(strong("Choisissez un nom"), " pour cet onglet"),
+    #         tags$li(strong("Choisissez le niveau "), "de l'onglet. Faut-il qu'il soit au même niveau que l'onglet actuel,",
+    #           " ou est-ce un sous-onglet de l'onglet actuellement sélectionné ?")
+    #       ),
+    #       p("Lorsque le menu ", tags$em("Ajouter un onglet"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules.")
+    #     )
+    #   }
+    #   
+    #   else if (language == "EN"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- ""
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div()
+    #   }
+    #   
+    #   r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+    #   r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+    #   
+    # })
+    # 
+    # observeEvent(input$help_6, {
+    #   
+    #   if (language == "FR"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un onglet"
+    #     
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div(
+    #       p("Pour supprimer un onglet, ", strong("cliquez sur l'onglet en question"), " puis cliquez sur :"),
+    #       div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_help")), 
+    #         translate(language, "remove_module", isolate(r$words)), iconProps = list(iconName = "Delete"))),
+    #       p("Supprimer un onglet supprime ", strong("tous les modules situés dans cet onglet"),
+    #         ", ainsi que ", strong("tous les onglets situés sous cet onglet"), ".")
+    #     )
+    #   }
+    #   
+    #   else if (language == "EN"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- ""
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div()
+    #   }
+    #   
+    #   r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+    #   r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+    #   
+    # })
+    # 
+    # observeEvent(input$help_7, {
+    #   
+    #   if (language == "FR"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- "Qu'est ce qu'un module ?"
+    #     
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div(
+    #       p("Un onglet est ", strong("composé de modules"), ", qui sont des plugins appliqués à des données."),
+    #       p(strong("1) Plugins")),
+    #       p("Les plugins sont des scripts écrits en R - Shiny, permettant ", strong("d'ajouter une fonctionnalité à l'application"), "."),
+    #       p("Quelques exemples :"),
+    #       tags$ul(
+    #         tags$li(strong("Plugin Datatable"), " : permet d'afficher des données sous forme de tableau."),
+    #         tags$li(strong("Plugin Timeline"), " : permet d'afficher les données sous forme de timeline, utile pour les prescriptions par exemple."),
+    #         tags$li(strong("Plugin Flowchart"), " : permet de créer un Flowchart à partir des données d'une étude.")
+    #       ),
+    #       p("L'application a vocation à s'enrichir au fur et à mesure par la ", strong("création de nouveaux plugins"), "."),
+    #       p("Les plugins des données individuelles ou agrégées ne sont pas les mêmes."),
+    #       p(strong("2) Modules")),
+    #       p("Un module est donc un plugin appliqué à des données."),
+    #       p("Je choisis un plugin, quelles données vont être utilisées par ce plugin, puis le ",
+    #         strong("plugin affiche ces données sous la forme désirée"), " (timeline pour le plugin timeline etc).")
+    #     )
+    #   }
+    #   
+    #   else if (language == "EN"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- ""
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div()
+    #   }
+    #   
+    #   r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+    #   r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+    #   
+    # })
+    # 
+    # observeEvent(input$help_8, {
+    #   
+    #   if (language == "FR"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- "Ajouter un module"
+    #     
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div(
+    #       p("Pour ajouter un module, il faut ", strong("avoir chargé une étude "), " dans le menu déroulant à gauche de l'écran puis ",
+    #         strong("avoir sélectionné un onglet"), "."),
+    #       p("Il faut ensuite cliquer sur :"),
+    #         div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_help")), 
+    #           translate(language, "new_module_element", isolate(r$words)), iconProps = list(iconName = "Add"))),
+    #       p("Ensuite, :"),
+    #       tags$ul(
+    #         tags$li(strong("Choisissez un nom"), " pour ce module"),
+    #         tags$li(strong("Choisissez le plugin "), " que vous souhaitez utiliser pour ce module")
+    #       ),
+    #       p("S'il s'agit d'un module de données agrégées, cliquez sur Ajouter et c'est terminé."),
+    #       p("S'il s'agit d'un module de données individuelles, vous devez :"),
+    #       tags$ul(
+    #         tags$li(strong("Sélectionner un thésaurus"), " : un thésaurus est un dictionnaire de concepts utilisés par un datamart."),
+    #         tags$li(strong("Sélectionner les items "), " que vous souhaitez utiliser pour cet élément de module, avec le plugin sélectionné.")
+    #       ),
+    #       p("Lorsque le tableau des ", strong("items du thésaurus"), " est chargé, vous pouvez filtrer les données pour trouver les items qui vous intéresent :"),
+    #       tags$ul(
+    #         tags$li(strong("Nom d'affichage"), " : cherchez dans la barre de texte les items. En double-cliquant sur un nom, vous pouvez le changer : il sera affiché avec ce nouveau nom."),
+    #         tags$li(strong("Catégorie"), " : filtrez les données sur les catégories, plusieurs catégories peuvent être sélectionnées à la fois."),
+    #         tags$li(strong("Unité"), " : utile essentiellement pour changer l'affichage de l'unité."),
+    #         tags$li(strong("Couleur de l'item"), " : utile pour différencier les items sur un graphique par ex."),
+    #         tags$li(strong("Patients"), " : affiche le nombre total de patients ayant au moins une fois l'item."),
+    #         tags$li(strong("Lignes"), " : nombre d'occurences de l'item dans le datamart, tous patients confondus.")
+    #       ),
+    #       p("Ajouter ensuite les items en cliquant sur l'icône "),
+    #       div(actionButton(ns(paste0(prefix, "_add_thesaurus_item_help")), "", icon = icon("plus"))),
+    #       p(" dans la dernière colonne du tableau."),
+    #       p("Lorsque le menu ", tags$em("Nouveau module"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules.")
+    #       
+    #     )
+    #   }
+    #   
+    #   else if (language == "EN"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- ""
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div()
+    #   }
+    #   
+    #   r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+    #   r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+    #   
+    # })
+    # 
+    # observeEvent(input$help_9, {
+    #   
+    #   if (language == "FR"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- "Supprimer un module"
+    #     
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div(
+    #       p("Pour supprimer un module, ", strong("cliquez sur "), " :"),
+    #       div(actionButton(ns(paste0(prefix, "_remove_module_element_help")), "", icon = icon("trash-alt"))),
+    #       p("Cette icône se trouve en haut à droite du module.")
+    #     )
+    #   }
+    #   
+    #   else if (language == "EN"){
+    #     r[[paste0(prefix, "_help_modal_title")]] <- ""
+    #     r[[paste0(prefix, "_help_modal_text")]] <- div()
+    #   }
+    #   
+    #   r[[paste0(prefix, "_open_help_modal")]] <- TRUE
+    #   r[[paste0(prefix, "_open_help_panel_light_dismiss")]] <- FALSE
+    #   
+    # })
+    # 
+    # output$help_modal <- shiny.fluent::renderReact({
+    #   
+    #   shiny.fluent::Modal(
+    #     isOpen = r[[paste0(prefix, "_open_help_modal")]], dragOptions = TRUE, isModeless = TRUE, topOffsetFixed = TRUE,
+    #     onLightDismissClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_modal_2', Math.random()); }")),
+    #     div(
+    #       style = "width: 1000px; padding: 15px 10px 0px 15px;",
+    #       shiny.fluent::Stack(tokens = list(childrenGap = "10px"),
+    #         div(style = list(display = "flex"),
+    #           shiny.fluent::Text(r[[paste0(prefix, "_help_modal_title")]], variant = "large"),
+    #           div(style = list(flexGrow = 1)),
+    #           shiny.fluent::IconButton.shinyInput(ns("hide_modal"), iconProps = list(iconName = "Cancel")),
+    #         ),
+    #         r[[paste0(prefix, "_help_modal_text")]]
+    #       )
+    #     )
+    #   )
+    # })
+    # 
     # --- --- --- --
     # Load data ----
     # --- --- --- --
@@ -855,10 +855,10 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       r[[paste0(prefix, "_load_ui_stage")]] <- "first_time"
 
       # Load modules variables for this study
-      update_r_new(r = r, m = m, table = paste0(prefix, "_modules_families"))
-      update_r_new(r = r, m = m, table = paste0(prefix, "_modules"))
-      update_r_new(r = r, m = m, table = paste0(prefix, "_modules_elements"))
-      update_r_new(r = r, m = m, table = paste0(prefix, "_modules_elements_items"))
+      update_r(r = r, m = m, table = paste0(prefix, "_modules_families"))
+      update_r(r = r, m = m, table = paste0(prefix, "_modules"))
+      update_r(r = r, m = m, table = paste0(prefix, "_modules_elements"))
+      update_r(r = r, m = m, table = paste0(prefix, "_modules_elements_items"))
       
       # Reload create module element fields
       
@@ -887,7 +887,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
       
       sapply(c("module_element_creation_thesaurus", "module_element_settings_thesaurus"), function(name) shiny.fluent::updateComboBox.shinyInput(session, name, 
-        options = convert_tibble_to_list_new(data = thesaurus, key_col = "id", text_col = "name", i18n = i18n), value = NULL))
+        options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", i18n = i18n), value = NULL))
     })
     
     # Reload plugins dropdown
@@ -899,7 +899,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       
       plugins <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)
       
-      options <- convert_tibble_to_list_new(data = plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name", i18n = i18n)
+      options <- convert_tibble_to_list(data = plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name", i18n = i18n)
       shiny.fluent::updateComboBox.shinyInput(session, "module_element_creation_plugin", options = options, value = NULL)
     })
     
@@ -989,7 +989,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         shinyjs::hide("initial_breadcrumb")
         
         # Check if users has access only to aggregated data
-        if (prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) == 1) show_message_bar_new(output, 1, "only_aggregated_data_authorized", "severeWarning", i18n = i18n, ns = ns)
+        if (prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) == 1) show_message_bar(output, 1, "only_aggregated_data_authorized", "severeWarning", i18n = i18n, ns = ns)
         req((prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) != 1) | prefix == "aggregated")
         
         display_modules <- isolate(r[[paste0(prefix, "_display_modules")]])
@@ -1265,7 +1265,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
                 output[[paste0(prefix, "_group_", group_id)]] <- renderUI(element_code)
               },
               error = function(e){
-                report_bug_new(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
+                report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
                   error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, i18n = i18n)
               })
             })
@@ -1554,7 +1554,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           
           # Manque id que l'on doit récupérer dans thesaurus_items
           
-          options <- convert_tibble_to_list_new(r$module_element_settings_thesaurus_selected_items, key_col = "id", text_col = "input_text", i18n = i18n)
+          options <- convert_tibble_to_list(r$module_element_settings_thesaurus_selected_items, key_col = "id", text_col = "input_text", i18n = i18n)
           value <- r$module_element_settings_thesaurus_selected_items %>% dplyr::pull(id)
           shiny.fluent::updateDropdown.shinyInput(session, "module_element_settings_thesaurus_selected_items",
             options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
@@ -1619,7 +1619,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         
         sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {ids$module_id} AND id != {group_id}", .con = r$db)
         distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
-        if (new_data$name %in% distinct_values) show_message_bar_new(output, 2, "name_already_used", "severeWarning", i18n = i18n, ns = ns)
+        if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", i18n = i18n, ns = ns)
         req(new_data$name %not_in% distinct_values)
         
         # Update name in database & r var
@@ -1687,7 +1687,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           }
         }
         
-        show_message_bar_new(output = output, id = 3, message = "modif_saved", type = "success", i18n = i18n, ns = ns)
+        show_message_bar(output = output, id = 3, message = "modif_saved", type = "success", i18n = i18n, ns = ns)
         
         # Run server code
         
@@ -1914,7 +1914,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           if (input$add_module_type == "level_under"){
             modules_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_module")]], !deleted) %>%
               dplyr::rename(group_id = id)
-            if (nrow(modules_elements) > 0) show_message_bar_new(output = output, id = 3, message = "add_module_has_modules_elements", i18n = i18n)
+            if (nrow(modules_elements) > 0) show_message_bar(output = output, id = 3, message = "add_module_has_modules_elements", i18n = i18n)
             req(nrow(modules_elements) == 0)
           }
         }
@@ -1922,7 +1922,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_name", errorMessage = i18n$t("provide_valid_name"))
         req(!is.na(new_data$name))
 
-        add_settings_new_data_new(session = session, output = output, r = r, m = m, i18n = i18n, id = id,
+        add_settings_new_data(session = session, output = output, r = r, m = m, i18n = i18n, id = id,
           data = new_data, table = paste0(prefix, "_modules"), required_textfields = required_textfields, req_unique_values = req_unique_values)
 
         # Reset fields
@@ -2023,7 +2023,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       module_information_variable <- paste0(prefix, "_module_deleted")
       module_delete_variable <- paste0(module_delete_prefix, "_open_dialog")
 
-      delete_element_new(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
+      delete_element(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
         delete_prefix = module_delete_prefix, dialog_title = module_dialog_title, dialog_subtext = module_dialog_subtext,
         react_variable = module_react_variable, table = module_table, id_var_sql = module_id_var_sql, id_var_r = module_id_var_r,
         delete_message = module_delete_message, translation = TRUE, reload_variable = module_reload_variable,
@@ -2187,8 +2187,8 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_items")
           thesaurus_id <- input[[paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus")]]$key
           
-          r[[r_var]] <- create_datatable_cache_new(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_id, category = paste0("plus_", r[[paste0(prefix, "_module_element_card_selected_type")]]))
-          colour_col <- create_datatable_cache_new(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_id, category = paste0("colours_", r[[paste0(prefix, "_module_element_card_selected_type")]]))
+          r[[r_var]] <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_id, category = paste0("plus_", r[[paste0(prefix, "_module_element_card_selected_type")]]))
+          colour_col <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_id, category = paste0("colours_", r[[paste0(prefix, "_module_element_card_selected_type")]]))
 
           if (nrow(colour_col) > 0) r[[r_var]] <- r[[r_var]] %>%
             dplyr::left_join(colour_col %>% dplyr::select(id, colour), by = "id") %>% dplyr::relocate(colour, .before = "datetime")
@@ -2197,21 +2197,21 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           count_patients_rows <- tibble::tibble()
 
           # Add count_items_rows in the cache & get it if already in the cache
-          tryCatch(count_items_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
+          tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
             datamart_id = r$chosen_datamart, category = "count_items_rows"),
-              error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_thesaurus",
+              error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
                 error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
                   " - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n))
 
           # Add count_items_rows in the cache & get it if already in the cache
-          tryCatch(count_patients_rows <- create_datatable_cache_new(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
+          tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
             datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
-              error = function(e) if (nchar(e[1]) > 0) report_bug_new(r = r, output = output, error_message = "fail_load_thesaurus",
+              error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
                 error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
                   " - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n))
 
           if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0){
-            show_message_bar_new(output, 1, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
+            show_message_bar(output, 1, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
             r[[r_var]] <- r[[r_var]] %>% dplyr::slice(0)
             r[[paste0(r_var, "_temp")]] <- r[[r_var]] %>% dplyr::mutate(modified = FALSE)
           }
@@ -2241,11 +2241,11 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           column_widths <- c("id" = "80px", "action" = "80px", "display_name" = "300px", "unit" = "100px")
           sortable_cols <- c("id", "item_id", "name", "display_name", "count_patients_rows", "count_items_rows")
           centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-          col_names <- get_col_names_new(table_name = "modules_thesaurus_items_with_counts", i18n = i18n)
+          col_names <- get_col_names(table_name = "modules_thesaurus_items_with_counts", i18n = i18n)
           hidden_cols <- c("id", "name", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
 
           # Render datatable
-          render_datatable_new(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0(r_var, "_temp")]],
+          render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0(r_var, "_temp")]],
             output_name = r_var, col_names =  col_names,
             editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
             searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
@@ -2416,7 +2416,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
               dplyr::bind_rows(add_thesaurus_items)
             
             # Update dropdown of selected items
-            options <- convert_tibble_to_list_new(r[[r_var]], key_col = "id", text_col = "input_text", i18n = i18n)
+            options <- convert_tibble_to_list(r[[r_var]], key_col = "id", text_col = "input_text", i18n = i18n)
             value <- r[[r_var]]%>% dplyr::pull(id)
             shiny.fluent::updateDropdown.shinyInput(session, thesaurus_selected_items_input,
               options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
@@ -2463,7 +2463,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
                 dplyr::filter(is.na(mapped_to_item_id) | mapped_to_item_id %in% r[[r_var]]$id)
             }
   
-            options <- convert_tibble_to_list_new(r[[r_var]], key_col = "id", text_col = "input_text", i18n = i18n)
+            options <- convert_tibble_to_list(r[[r_var]], key_col = "id", text_col = "input_text", i18n = i18n)
             value <- r[[r_var]] %>% dplyr::pull(id)
             shiny.fluent::updateDropdown.shinyInput(session, input_thesaurus_selected_items,
               options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
@@ -2496,7 +2496,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
         sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {new_data$module_new_element}", .con = r$db)
         distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
-        if (new_data$name %in% distinct_values) show_message_bar_new(output, 2, "name_already_used", "severeWarning", i18n = i18n, ns = ns)
+        if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", i18n = i18n, ns = ns)
         req(new_data$name %not_in% distinct_values)
 
         # Check if dropdowns are not empty (if all are required)
@@ -2513,7 +2513,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         #   else if (is.na(new_data[[dropdown]])) dropdowns_check <<- FALSE
         # })
 
-        if (!dropdowns_check) show_message_bar_new(output, 2, "dropdown_empty", "severeWarning", i18n = i18n, ns = ns)
+        if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", i18n = i18n, ns = ns)
         req(dropdowns_check)
 
         # Get last_row nb
@@ -2591,9 +2591,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         #   last_row + 1, as.character(new_data$name), group_id, as.integer(new_data$module_new_element),
         #   as.integer(new_data$plugin), last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
         
-        show_message_bar_new(output = output, id = 3, message = paste0(get_singular(paste0(prefix, "_modules_elements")), "_added"), type = "success", i18n = i18n, ns = ns)
+        show_message_bar(output = output, id = 3, message = paste0(get_singular(paste0(prefix, "_modules_elements")), "_added"), type = "success", i18n = i18n, ns = ns)
 
-        # update_r_new(r = r, m = m, table = table, i18n = i18n)
+        # update_r(r = r, m = m, table = table, i18n = i18n)
 
         # Reset name textfield & dropdowns
         shiny.fluent::updateTextField.shinyInput(session, "module_element_creation_name", value = "")
@@ -2714,7 +2714,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
           )
         },
         error = function(e){
-          report_bug_new(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
+          report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
             error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, i18n = i18n)}
         )
         # Remove toggles UI for this module
@@ -2806,7 +2806,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       module_element_delete_variable <- paste0(module_element_delete_prefix, "_open_dialog")
       module_element_information_variable <- paste0(prefix, "_module_element_deleted")
 
-      delete_element_new(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
+      delete_element(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
         delete_prefix = module_element_delete_prefix, dialog_title = module_element_dialog_title, dialog_subtext = module_element_dialog_subtext,
         react_variable = module_element_react_variable, table = module_element_table, id_var_sql = module_element_id_var_sql, id_var_r = module_element_id_var_r,
         delete_message = module_element_delete_message, translation = TRUE, reload_variable = module_element_reload_variable,

@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_sidenav_ui <- function(id = character(), language = "EN", words = tibble::tibble(), i18n = R6::R6Class()){
+mod_page_sidenav_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   result <- ""
   
@@ -247,7 +247,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         # Update dropdown
         shiny.fluent::updateComboBox.shinyInput(session, "datamart", 
-          options = convert_tibble_to_list_new(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name"), value = NULL)
+          options = convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name"), value = NULL)
         
         sapply(c("study", "subset", "patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
@@ -296,7 +296,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       observeEvent(r$chosen_datamart, {
         
         shiny.fluent::updateComboBox.shinyInput(session, "datamart", options = 
-            convert_tibble_to_list_new(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name"), 
+            convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name"), 
           value = list(key = r$chosen_datamart))
         
         # Reset m$chosen_study (to reset main display)
@@ -327,7 +327,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           errorMessage = i18n$t("no_study_available"))
         
         if (nrow(r$studies) > 0) shiny.fluent::updateComboBox.shinyInput(session, "study",
-          options = convert_tibble_to_list_new(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name"), value = NULL)
+          options = convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name"), value = NULL)
       })
       
       observeEvent(input$study, {
@@ -338,7 +338,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (!is.na(m$chosen_study) & m$chosen_study != input$study$key) m$chosen_study <- input$study$key
 
         # Subsets depending on the chosen study
-        update_r_new(r = r, m = m, table = "subsets")
+        update_r(r = r, m = m, table = "subsets")
 
         # Reset dropdowns & uiOutput
         shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL)
@@ -355,7 +355,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
 
         # Update subset dropdown
         if (nrow(m$subsets) == 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = i18n$t("no_subset_available"))
-        if (nrow(m$subsets) > 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list_new(m$subsets, key_col = "id", text_col = "name"), value = NULL)
+        if (nrow(m$subsets) > 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(m$subsets, key_col = "id", text_col = "name"), value = NULL)
         
         # Load patients options
         sql <- glue::glue_sql("SELECT * FROM patients_options WHERE study_id = {m$chosen_study}", .con = m$db)
@@ -368,7 +368,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart$key)
         
         shiny.fluent::updateComboBox.shinyInput(session, "study", options =
-            convert_tibble_to_list(studies %>% dplyr::arrange(name), key_col = "id", text_col = "name", words = r$words),
+            convert_tibble_to_list(studies %>% dplyr::arrange(name), key_col = "id", text_col = "name"),
           value = list(key = m$chosen_study))
       })
       
@@ -392,10 +392,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         output$patient_info <- renderUI("")
         
         # Select patients belonging to subsets of this study
-        update_r_new(r = r, m = m, table = "subsets_patients")
+        update_r(r = r, m = m, table = "subsets_patients")
         
         # Select patients who belong to this subset
-        update_r_new(r = r, m = m, table = "subset_patients")
+        update_r(r = r, m = m, table = "subset_patients")
         
         patients <- tibble::tibble()
         
@@ -415,7 +415,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           
           # Update patients dropdown
           shiny.fluent::updateComboBox.shinyInput(session, "patient", 
-          options = convert_tibble_to_list_new(data = patients %>% 
+          options = convert_tibble_to_list(data = patients %>% 
             dplyr::mutate(name_display = paste0(patient_id, " - ", gender)),
             # dplyr::mutate(name_display = dplyr::case_when(
             #   age > 2 ~ paste0(patient_id, " - ", gender, " - ", age, " ", i18n$t("years")),
@@ -427,7 +427,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       
       observeEvent(m$chosen_subset, {
         req(input$study$key)
-        shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list_new(m$subsets, key_col = "id", text_col = "name"),
+        shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(m$subsets, key_col = "id", text_col = "name"),
           value = list(key = m$chosen_subset))
       })
       
@@ -455,10 +455,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           # 
           # unit_name <- unit_name %>% dplyr::mutate(name = dplyr::case_when(!is.na(display_name) ~ display_name, TRUE ~ name)) %>% dplyr::pull(name)
           
-          if (tolower(language) == "fr") stays <- convert_tibble_to_list_new(data = d$stays %>% dplyr::filter(patient_id == input$patient$key) %>% dplyr::mutate(name_display = paste0("Unit...", " - ", #paste0(unit_name, " - ", 
+          if (tolower(language) == "fr") stays <- convert_tibble_to_list(data = d$stays %>% dplyr::filter(patient_id == input$patient$key) %>% dplyr::mutate(name_display = paste0("Unit...", " - ", #paste0(unit_name, " - ", 
               format(as.POSIXct(admission_datetime), format = "%d-%m-%Y"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(discharge_datetime), format = "%d-%m-%Y"))),
               key_col = "stay_id", text_col = "name_display")
-          else stays <- convert_tibble_to_list_new(data = d$stays %>% dplyr::filter(patient_id == input$patient$key) %>% dplyr::mutate(name_display = paste0("Unit...", " - ", #paste0(unit_name, " - ", 
+          else stays <- convert_tibble_to_list(data = d$stays %>% dplyr::filter(patient_id == input$patient$key) %>% dplyr::mutate(name_display = paste0("Unit...", " - ", #paste0(unit_name, " - ", 
             format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
             key_col = "stay_id", text_col = "name_display")
           
@@ -611,8 +611,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       #   })
       # 
       #   # Reload r$subset_patients & r$subsets_patients
-      #   update_r_new(r = r, m = m, table = "subset_patients")
-      #   update_r_new(r = r, m = m, table = "subsets_patients")
+      #   update_r(r = r, m = m, table = "subset_patients")
+      #   update_r(r = r, m = m, table = "subsets_patients")
       # 
       #   # If choice is excluded, update exclusion reason dropdown & show dropdown
       #   if (input$patient_status$key == "excluded"){
@@ -655,7 +655,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       #     DBI::dbClearResult(query)
       #   }
       # 
-      #   update_r_new(r = r, m = m, table = "patients_options")
+      #   update_r(r = r, m = m, table = "patients_options")
       # })
 
     }

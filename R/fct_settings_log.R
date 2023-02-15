@@ -29,26 +29,13 @@ add_log_entry <- function(r, category, name, value){
 #' @param category Category : error or warning ? (character)
 #' @param error_report Report of the error (character)
 #' @param language Language used for translations (character)
-
 report_bug <- function(r = shiny::reactiveValues(), output, error_message = character(), 
-  error_name = character(), category = character(), error_report = character(), language = "EN"){
-  
-  print(error_report)
-  
-  # Notification to user
-  show_message_bar(output, 3, error_message, "severeWarning", language)
-  
-  # Add a log entry for bug report
-  add_log_entry(r = r, category = category, name = error_name, value = error_report)
-}
-
-report_bug_new <- function(r = shiny::reactiveValues(), output, error_message = character(), 
   error_name = character(), category = character(), error_report = character(), i18n = R6::R6Class(), ns = shiny::NS()){
   
   print(error_report)
   
   # Notification to user
-  if (error_message %not_in% c("fail_load_datamart", "fail_load_scripts")) show_message_bar_new(output, 3, error_message, "severeWarning", i18n = i18n, ns = ns)
+  if (error_message %not_in% c("fail_load_datamart", "fail_load_scripts")) show_message_bar(output, 3, error_message, "severeWarning", i18n = i18n, ns = ns)
   
   # Add a log entry for bug report
   add_log_entry(r = r, category = category, name = error_name, value = error_report)

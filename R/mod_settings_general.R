@@ -27,11 +27,11 @@ mod_settings_general_ui <- function(id = character(), i18n = R6::R6Class()){
     div(id = ns("change_password_card"),
       make_card(i18n$t("change_password"),
         div(
-          make_dropdown_new(i18n = i18n, ns = ns, label = "user", id = "user", width = "300px", disabled = TRUE),
+          make_dropdown(i18n = i18n, ns = ns, label = "user", id = "user", width = "300px", disabled = TRUE),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-            make_textfield_new(i18n = i18n, ns = ns, label = "old_password", type = "password", canRevealPassword = TRUE, width = "300px"),
-            make_textfield_new(i18n = i18n, ns = ns, label = "new_password", type = "password", canRevealPassword = TRUE, width = "300px"),
-            make_textfield_new(i18n = i18n, ns = ns, label = "new_password", id = "new_password_bis", type = "password", canRevealPassword = TRUE, width = "300px")
+            make_textfield(i18n = i18n, ns = ns, label = "old_password", type = "password", canRevealPassword = TRUE, width = "300px"),
+            make_textfield(i18n = i18n, ns = ns, label = "new_password", type = "password", canRevealPassword = TRUE, width = "300px"),
+            make_textfield(i18n = i18n, ns = ns, label = "new_password", id = "new_password_bis", type = "password", canRevealPassword = TRUE, width = "300px")
           ), br(),
           shiny.fluent::PrimaryButton.shinyInput(ns("save"), i18n$t("save"))
         )
@@ -120,7 +120,7 @@ mod_settings_general_server <- function(id = character(), r = shiny::reactiveVal
         
         # Notify the user
         
-        show_message_bar_new(output = output, id = 1, message = "password_changed", type = "success", i18n = i18n)
+        show_message_bar(output = output, id = 1, message = "password_changed", type = "success", i18n = i18n)
         
       }
       

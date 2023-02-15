@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_page_footer_ui <- function(words = tibble::tibble(), i18n = R6::R6Class()){
+mod_page_footer_ui <- function(i18n = R6::R6Class()){
   div(class = "footer", 
     shiny.fluent::Stack(
       horizontal = TRUE,
