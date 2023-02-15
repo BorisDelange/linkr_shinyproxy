@@ -10,6 +10,7 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
   perf_monitoring = FALSE){
   function(input, output, session ) {
     
+    # Language for translations / datetime format
     language <- tolower(language)
     
     # Create r reactive value, for the application processings
@@ -25,6 +26,12 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
     
     # Create o reactive values, for observers inactivation
     o <- reactiveValues()
+    
+    # App version
+    r$app_version <- "0.2.0"
+    
+    # Test internet connection
+    r$has_internet <- curl::has_internet()
     
     # If perf_monotoring activated
     r$perf_monitoring <- perf_monitoring
@@ -183,7 +190,7 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
       
       mod_my_studies_server("my_studies", r, d, m, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_my_studies_server")
-      mod_my_subsets_server("my_subsets", r, m, language, i18n)
+      mod_my_subsets_server("my_subsets", r, d, m, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_my_susbsets_server")
       mod_thesaurus_server("thesaurus", r, d, i18n)
       monitor_perf(r = r, action = "stop", task = "mod_thesaurus_server")

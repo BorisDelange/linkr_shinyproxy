@@ -7,10 +7,11 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble::tibble()){
+mod_my_subsets_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
   cards <- c("datatable_card", "creation_card", "management_card", "edit_code_card")
+  language <- "en"
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
@@ -21,30 +22,30 @@ mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble:
     class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "subset_main", text = translate(language, "my_subsets", words))
+      list(key = "subset_main", text = i18n$t("my_subsets"))
     ), maxDisplayedItems = 3),
     shinyjs::hidden(
       div(id = ns("menu"),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = translate(language, "subsets_management", words)),
-          shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = translate(language, "create_subset", words)),
-          shiny.fluent::PivotItem(id = "management_card", itemKey = "management_card", headerText = translate(language, "subset_management", words)),
-          shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = translate(language, "edit_subset_code", words))
+          shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("subsets_management")),
+          shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("create_subset")),
+          shiny.fluent::PivotItem(id = "management_card", itemKey = "management_card", headerText = i18n$t("subset_management")),
+          shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_subset_code"))
         )
       )
     ),
     forbidden_cards,
     div(
       id = ns("choose_a_study_card"),
-      make_card("", div(shiny.fluent::MessageBar(translate(language, "choose_a_study", words), messageBarType = 5), style = "margin-top:10px;"))
+      make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_a_study"), messageBarType = 5), style = "margin-top:10px;"))
     ),
     shinyjs::hidden(
       div(
         id = ns("datatable_card"),
-        make_card(translate(language, "subsets_management", words),
+        make_card(i18n$t("subsets_management"),
           div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;"), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5), style = "margin-top:10px;"), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -59,9 +60,9 @@ mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble:
     shinyjs::hidden(
       div(
         id = ns("creation_card"),
-        make_card(translate(language, "create_subset", words), 
+        make_card(i18n$t("create_subset"), 
           div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;"), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5), style = "margin-top:10px;"), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -76,9 +77,9 @@ mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble:
     shinyjs::hidden(
       div(
         id = ns("management_card"),
-        make_card(translate(language, "subset_management", words),
+        make_card(i18n$t("subset_management"),
           div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;"), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5), style = "margin-top:10px;"), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -100,9 +101,9 @@ mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble:
     shinyjs::hidden(
       div(
         id = ns("edit_code_card"),
-        make_card(translate(language, "edit_subset_code", words),
+        make_card(i18n$t("edit_subset_code"),
           div(
-            div(shiny.fluent::MessageBar(translate(language, "in_progress", words), messageBarType = 5), style = "margin-top:10px;"), br(),
+            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5), style = "margin-top:10px;"), br(),
             div(shiny.fluent::MessageBar(
               div(
                 strong("A faire"),
@@ -120,13 +121,16 @@ mod_my_subsets_ui <- function(id = character(), language = "EN", words = tibble:
 #' my_subsets Server Functions
 #'
 #' @noRd 
-mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(), language = "EN", i18n = R6::R6Class()){
+mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     # Prefix depending on page id
     # if (id == "patient_level_data_subsets") prefix <- "patient_lvl"
     # if (id == "aggregated_data_subsets") prefix <- "aggregated"
+    
+    # Close message bar
+    sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     # --- --- --- --- --- ---
     # Show or hide cards ----
@@ -145,8 +149,8 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n))
-    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n))
+    observeEvent(r$show_message_bar1, show_message_bar_new(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar2, show_message_bar_new(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
     
     # --- --- --- --- --- --
     # Render subsets UI ----

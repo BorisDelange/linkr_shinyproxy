@@ -12,16 +12,6 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
   
   if (id == "home"){
     
-    # if (!curl::has_internet()){
-    #   overview_div <- div("no_internet")
-    # }
-    # if (curl::has_internet()){
-    #   overview_md <- readLines(textConnection("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/overview.Md"))
-    #   overview_div <- div(
-    #     withMathJax(includeMarkdown(overview_md))
-    #   )
-    # }
-    
     main <- div(
       shiny.fluent::Breadcrumb(items = list(
         list(key = "home", text = i18n$t("home"))
@@ -260,13 +250,13 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
       
       cards <- c("overview_card", "news_card", "versions_card")
       
-      if (!curl::has_internet()){
+      if (!r$has_internet){
         default_div <- make_card("", shiny.fluent::MessageBar(i18n$t("error_connection_github"), messageBarType = 3))
         overview_div <- default_div
         news_div <- default_div
         versions_div <- default_div
       }
-      if (curl::has_internet()){
+      if (r$has_internet){
         
         # Overview div
         
@@ -277,7 +267,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
         # News div
         
         tryCatch(news_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/index.csv", col_types = "cc") %>%
-          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n), error = function(e) "")
+          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n), error = function(e) "", warning = function(w) "")
         
         news_div <- tagList()
         
@@ -314,7 +304,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
         versions_files <- tibble::tibble()
         
         tryCatch(versions_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/versions/index.csv", col_types = "cc") %>%
-          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n), error = function(e) "")
+          dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n), error = function(e) "", warning = function(w) "")
         
         versions_div <- tagList()
         

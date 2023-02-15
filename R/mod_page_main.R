@@ -27,7 +27,7 @@ mod_page_main_ui <- function(id = character(), language = "EN", words = tibble::
   ##########################################
   
   if (id == "my_studies") mod_my_studies_ui(id = "my_studies", i18n = i18n) -> result
-  if (id == "my_subsets") mod_my_subsets_ui(id = "my_subsets", language = language, words = words) -> result
+  if (id == "my_subsets") mod_my_subsets_ui(id = "my_subsets", i18n = i18n) -> result
   
   ##########################################
   # Thesaurus                              #

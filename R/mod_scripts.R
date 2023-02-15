@@ -114,9 +114,12 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
               style = "position:relative; z-index:1; width:500px;"
             ),
             div(DT::DTOutput(ns("scripts_datatable")), style = "margin-top:-30px; z-index:2"),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("save_scripts_management"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
+            div(
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::PrimaryButton.shinyInput(ns("save_scripts_management"), i18n$t("save")),
+                shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
+              ),
+              style = "position:relative; z-index:2; margin-top:-30px;"
             )
           )
         ), br()
