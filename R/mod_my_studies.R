@@ -10,9 +10,6 @@
 mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
-  # *** To be removed *** ----
-  language <- "EN"
-  
   cards <- c(#"datamarts_options_card", "datamarts_edit_code_card", 
     "study_messages_card", "studies_creation_card", "studies_datatable_card", "study_options_card"#,
     #"import_study_card", "export_study_card"#, 
@@ -230,8 +227,6 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     if (perf_monitoring) monitor_perf(r = r, action = "start")
     if (debug) print(paste0(Sys.time(), " - mod_my_studies - start"))
-    
-    language <- "en"
     
     sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     

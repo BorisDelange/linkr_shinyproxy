@@ -202,7 +202,7 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
       
       sapply(c("patient_level_data", "aggregated_data"), function(page){
         mod_patient_and_aggregated_data_server(page, r, d, m, o, i18n, perf_monitoring, debug)
-        mod_page_sidenav_server(page, r, d, m, i18n, language)
+        mod_page_sidenav_server(page, r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(page, r, language, i18n)
       })
       
@@ -213,13 +213,13 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_studies")
       mod_my_subsets_server("my_subsets", r, d, m, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_subsets")
-      mod_thesaurus_server("thesaurus", r, d, i18n)
+      mod_thesaurus_server("thesaurus", r, d, i18n, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - thesaurus")
       mod_scripts_server("scripts", r, d, m, language, i18n, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - scripts")
       
       sapply(c("my_studies", "my_subsets", "thesaurus", "scripts"), function(page){
-        mod_page_sidenav_server(page, r, d, m, i18n, language)
+        mod_page_sidenav_server(page, r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(page, r, language, i18n)
       })
       
@@ -227,26 +227,26 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
       if (debug) print(paste0(Sys.time(), " - server - load server modules - plugins"))
       
       sapply(c("plugins_patient_lvl", "plugins_aggregated"), function(page){
-        mod_plugins_server(page, r, d, m, o, language, i18n, app_folder)
+        mod_plugins_server(page, r, d, m, o, language, i18n, app_folder, perf_monitoring, debug)
         mod_page_header_server(page, r, language, i18n)
       })
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - plugins")
       if (debug) print(paste0(Sys.time(), " - server - load server modules - general_settings"))
     
       mod_settings_general_server("settings_general_settings", r, language, i18n)
-      mod_page_sidenav_server("settings_general_settings", r, d, m, i18n, language)
+      mod_page_sidenav_server("settings_general_settings", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_general_settings", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - general_settings")
       if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_app_db"))
     
       mod_settings_app_database_server("settings_app_db", r, language, i18n)
-      mod_page_sidenav_server("settings_app_db", r, d, m, i18n, language)
+      mod_page_sidenav_server("settings_app_db", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_app_db", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_app_db")
       if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_users"))
     
       mod_settings_users_server("settings_users", r, i18n)
-      mod_page_sidenav_server("settings_users", r, d, m, i18n, language)
+      mod_page_sidenav_server("settings_users", r, d, m, i18n, language, )
       mod_page_header_server("settings_users", r, language, i18n)
     
       sapply(c("users", "users_statuses", "users_accesses"), function(page){
@@ -258,21 +258,21 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
       if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_dev"))
     
       mod_settings_dev_server("settings_dev", r, d, m, i18n)
-      mod_page_sidenav_server("settings_dev", r, d, m, i18n, language)
+      mod_page_sidenav_server("settings_dev", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_dev", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_dev")
       if (debug) print(paste0(Sys.time(), " - server - load server modules - data_sources / datamarts / thesaurus"))
     
       sapply(c("data_sources", "datamarts", "thesaurus"), function(page){
-        mod_settings_data_management_server(paste0("settings_", page), r = r, d = d, m = m, i18n = i18n)
-        mod_page_sidenav_server(paste0("settings_", page), r, d, m, i18n, language)
+        mod_settings_data_management_server(paste0("settings_", page), r, d, m, i18n, perf_monitoring, debug)
+        mod_page_sidenav_server(paste0("settings_", page), r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(paste0("settings_", page), r, language, i18n)
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("server - load server modules - ", page))
       })
     
       if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_log"))
       mod_settings_log_server("settings_log", r, i18n)
-      mod_page_sidenav_server("settings_log", r, d, m, i18n, language)
+      mod_page_sidenav_server("settings_log", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_log", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_log")
       if (debug) print(paste0(Sys.time(), " - server - load server modules - end"))

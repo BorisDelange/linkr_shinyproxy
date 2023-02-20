@@ -46,9 +46,9 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    ##########################################
-    # Log / Render datatable                 #
-    ##########################################
+    # --- --- --- --- --- -
+    # Render datatable ----
+    # --- --- --- --- --- -
 
     if ("log" %in% r$user_accesses){
       
@@ -58,10 +58,6 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
       observeEvent(shiny.router::get_query_param(), {
         shinyjs::hide("log_card")
         shinyjs::show("log_card")
-        
-        # shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = FALSE)
-        # If this toggles was activated, reactivate it
-        # if (paste0(id, "log_card") %in% r$activated_toggles) shiny.fluent::updateToggle.shinyInput(session, "log_card_toggle", value = TRUE)
       })
     }
     else {

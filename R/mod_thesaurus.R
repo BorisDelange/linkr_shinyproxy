@@ -231,9 +231,13 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
 #' thesaurus Server Functions
 #'
 #' @noRd 
-mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), 
+  i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    if (perf_monitoring) monitor_perf(r = r, action = "start")
+    if (debug) print(paste0(Sys.time(), " - mod_thesaurus - start"))
     
     # Close message bar
     sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
@@ -267,6 +271,9 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     
     observeEvent(r$chosen_datamart, {
       
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$chosen_datamart 2"))
+      
       # Show first card & hide "choose a datamart" card
       shinyjs::hide("choose_a_datamart_card")
       shinyjs::show("menu")
@@ -290,12 +297,23 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       # Reset UI of selected item
       output$thesaurus_datatable_selected_item <- renderUI("")
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$chosen_datamart 2"))
     })
     
-    observeEvent(input$show_only_used_items, r$reload_thesaurus_datatable <- Sys.time())
-    observeEvent(input$thesaurus, r$reload_thesaurus_data <- Sys.time())
+    observeEvent(input$show_only_used_items, {
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$show_only_used_items"))
+      r$reload_thesaurus_datatable <- Sys.time()
+    })
+    observeEvent(input$thesaurus, {
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus"))
+      r$reload_thesaurus_data <- Sys.time()
+    })
     
     observeEvent(r$reload_thesaurus_data, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$reload_thesaurus_data"))
       
       req(length(input$thesaurus$key) > 0)
       
@@ -422,9 +440,13 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       r$reload_thesaurus_datatable <- Sys.time()
       r$reload_thesaurus_tree <- Sys.time()
       
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$reload_thesaurus_data"))
     })
     
     observeEvent(r$reload_thesaurus_datatable, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$reload_thesaurus_datatable"))
       
       req(nrow(r$datamart_thesaurus_items) > 0)
       
@@ -455,22 +477,28 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # Create a proxy for datatatable
       r$datamart_thesaurus_items_datatable_proxy <- DT::dataTableProxy("thesaurus_items", deferUntilFlush = FALSE)
  
-      # Trigger for shinyTree
-      # r$datamart_thesaurus_items_tree_trigger <- Sys.time()
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$reload_thesaurus_datatable"))
     })
     
     # Render shinyTree
     output$thesaurus_items_tree <- shinyTree::renderTree({
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - output$thesaurus_items_tree"))
       
       r$reload_thesaurus_tree
       
       # r$datamart_thesaurus_items_tree
       if (input$show_only_used_items) r$datamart_thesaurus_items_tree_filtered
       else r$datamart_thesaurus_items_tree_not_filtered
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - output$thesauurs_items_tree"))
     })
     
     # Updates on datatable data
     observeEvent(input$thesaurus_items_cell_edit, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_items_cell_edit"))
       
       edit_info <- input$thesaurus_items_cell_edit
       r$datamart_thesaurus_items_temp <- DT::editData(r$datamart_thesaurus_items_temp, edit_info, rownames = FALSE)
@@ -482,6 +510,9 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     # Save updates
     observeEvent(input$save_thesaurus_items, {
       
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$save_thesaurus_items"))
+      
       req(input$thesaurus)
       
       # Reset datamart_thesaurus_user_items variable, with updates
@@ -489,28 +520,33 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       r$datamart_thesaurus_user_items_temp <- r$datamart_thesaurus_items_temp %>% dplyr::mutate(user_id = r$user_id, .after = id) %>% dplyr::select(-parent_item_id)
       
       save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items_users", r_table = "datamart_thesaurus_user_items", duplicates_allowed = TRUE, i18n = i18n)
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer input$save_thesaurus_items"))
     })
     
     # When a tree element is selected
     observeEvent(input$thesaurus_items_tree, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_items_tree"))
       
       r$thesaurus_items_selected_item_id <- get_selected(input$thesaurus_items_tree, format = "classid") %>%
         lapply(attr, "stid") %>% unlist()
       r$thesaurus_items_selected_item_trigger <- Sys.time()
     })
     
-    # observeEvent(r$thesaurus_items_tree_selected_item_id, {
-    #   print(r$thesaurus_items_tree_selected_item_id)
-    # })
-    
     # When a row is selected
     observeEvent(input$thesaurus_items_rows_selected, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_items_rows_selected"))
       
       r$thesaurus_items_selected_item_id <- r$datamart_thesaurus_items_temp[input$thesaurus_items_rows_selected, ] %>% dplyr::pull(item_id)
       r$thesaurus_items_selected_item_trigger <- Sys.time()
     })
     
     observeEvent(r$thesaurus_items_selected_item_trigger, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$thesaurus_items_selected_item_trigger"))
       
       style <- "display:inline-block; width:200px; font-weight:bold;"
       
@@ -652,9 +688,14 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         conditionalPanel(condition = paste0("input.", prefix, "_show_plots == true"), ns = ns, br(), plots),
         style = "border:dashed 1px; padding:10px;"
       )))
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$thesaurus_items_seeclted_item_trigger"))
     })
     
     observeEvent(input$datatable_show_plots, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$datatable_show_plots"))
       
       if (is.null(input$thesaurus_items_pivot)) prefix <- "datatable"
       else if (input$thesaurus_items_pivot == "thesaurus_items_table_view") prefix <- "datatable"
@@ -704,6 +745,8 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       #     })
       #   }
       # }
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer input$datatable_show_plots"))
     })
     
     # --- --- --- --- --
@@ -714,10 +757,19 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       ## Create a mapping ----
       # --- --- --- --- --- --
       
-      observeEvent(input$thesaurus_mapping1, r$thesaurus_mapping_reload <- paste0(Sys.time(), "_mapping1"))
-      observeEvent(input$thesaurus_mapping2, r$thesaurus_mapping_reload <- paste0(Sys.time(), "_mapping2"))
+      observeEvent(input$thesaurus_mapping1, {
+        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_mapping1"))
+        r$thesaurus_mapping_reload <- paste0(Sys.time(), "_mapping1")
+      })
+      observeEvent(input$thesaurus_mapping2, {
+        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_mapping2"))
+        r$thesaurus_mapping_reload <- paste0(Sys.time(), "_mapping2")
+      })
       
       observeEvent(r$thesaurus_mapping_reload, {
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$thesaurus_mapping_reload"))
         
         if (grepl("mapping1", r$thesaurus_mapping_reload)) mapping <- "mapping1"
         else if (grepl("mapping2", r$thesaurus_mapping_reload)) mapping <- "mapping2"
@@ -796,15 +848,23 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
           searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
         
-        # Create a proxy for datatatable
-        # r$datamart_thesaurus_items_datatable_proxy <- DT::dataTableProxy("thesaurus_items", deferUntilFlush = FALSE)
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$thesaurus_mapping_reload"))
       })
       
       # When a row is selected
-      observeEvent(input$thesaurus_mapping1_dt_rows_selected, r$thesaurus_mapping_item_info <- paste0(Sys.time(), "_mapping1"))
-      observeEvent(input$thesaurus_mapping2_dt_rows_selected, r$thesaurus_mapping_item_info <- paste0(Sys.time(), "_mapping2"))
+      observeEvent(input$thesaurus_mapping1_dt_rows_selected, {
+        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_mapping1_dt_rows_selected"))
+        r$thesaurus_mapping_item_info <- paste0(Sys.time(), "_mapping1")
+      })
+      observeEvent(input$thesaurus_mapping2_dt_rows_selected, {
+        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_mapping2_dt_rows_selected"))
+        r$thesaurus_mapping_item_info <- paste0(Sys.time(), "_mapping2")
+      })
       
       observeEvent(r$thesaurus_mapping_item_info, {
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$thesaurus_mapping_item_info"))
         
         if (grepl("mapping1", r$thesaurus_mapping_item_info)) mapping <- "mapping1"
         else if (grepl("mapping2", r$thesaurus_mapping_item_info)) mapping <- "mapping2"
@@ -926,11 +986,16 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           span(i18n$t("unit"), style = style), ifelse(is.na(thesaurus_item$unit), "", thesaurus_item$unit), br(),
           values_text
         )))
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$thesaurus_mapping_item_info"))
       })
       
       # When a mapping id added
       
       observeEvent(input$add_mapping, {
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$add_mapping"))
         
         req(length(input$thesaurus_mapping1_dt_rows_selected) > 0)
         req(length(input$thesaurus_mapping2_dt_rows_selected) > 0)
@@ -1010,16 +1075,17 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           ) %>% dplyr::mutate(modified = FALSE) %>%
           dplyr::arrange(dplyr::desc(id))
 
-        # r$datamart_thesaurus_items_evaluate_mappings_temp <- r$datamart_thesaurus_items_evaluate_mappings %>%
-        #   dplyr::mutate(modified = FALSE)
-
         DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings, resetPaging = FALSE, rownames = FALSE)
 
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer input$add_mapping"))
       })
       
       # Table to summarize added mappings
       
       observeEvent(r$chosen_datamart, {
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$chosen_datamart 1"))
         
         r$thesaurus_added_mappings <- tibble::tibble(id = integer(), category = character(), thesaurus_id_1 = integer(), item_id_1 = integer(), 
           thesaurus_id_2 = integer(), item_id_2 = integer(), relation_id = integer(), creator_id = integer(), datetime = character(), deleted = logical())
@@ -1032,9 +1098,14 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         
         r$reload_thesaurus_added_mappings_datatable <- Sys.time()
         r$reload_thesaurus_evaluate_mappings_datatable <- Sys.time()
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$chosen_datamart 1"))
       })
       
       observeEvent(r$reload_thesaurus_added_mappings_datatable, {
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$reload_thesaurus_added_mappings_datatable"))
         
         r$thesaurus_added_mappings_temp <- r$thesaurus_added_mappings %>%
           dplyr::mutate_at(c("item_id_1", "item_id_2"), as.character) %>%
@@ -1046,10 +1117,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           dplyr::select(-thesaurus_id_1, -thesaurus_id_2, -relation_id) %>%
           dplyr::relocate(relation, .after = item_id_1) %>%
           dplyr::arrange(dplyr::desc(datetime))
-  
-        # editable_cols <- c("name", "display_name")
-        # searchable_cols <- c("item_id", "name", "display_name", "category", "unit")
-        # factorize_cols <- c("category", "unit")
+        
         centered_cols <- c("id", "item_id_1", "thesaurus_name_1", "item_id_2", "thesaurus_name_2", "relation")
         col_names <- get_col_names(table_name = "datamart_thesaurus_items_mapping", i18n = i18n)
         hidden_cols <- c("id", "creator_id", "datetime", "deleted", "category")
@@ -1060,6 +1128,8 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
   
         # Create a proxy for datatatable
         r$thesaurus_added_mappings_datatable_proxy <- DT::dataTableProxy("thesaurus_added_mappings", deferUntilFlush = FALSE)
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$reload_thesaurus_added_mappings_datatable"))
       })
       
     # --- --- --- --- - --
@@ -1069,6 +1139,9 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     # Reload datatable  
     
     observeEvent(r$reload_thesaurus_evaluate_mappings_datatable, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$reload_thesaurus_evaluate_mappings_datatable"))
       
       # Get all items mappings
       
@@ -1189,21 +1262,28 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       # Create a proxy for datatatable
       r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy <- DT::dataTableProxy("thesaurus_evaluate_mappings", deferUntilFlush = FALSE)
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$reload_thesaurus_evaluate_mappings_datatable"))
     })
       
     # When an evaluation button is clicked
       
     observeEvent(input$item_mapping_evaluated_positive, {
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$item_mapping_evaluated_positive"))
       r$item_mapping_evaluation_type <- "positive"
       r$item_mapping_evaluation_update <- Sys.time()
     })
     
     observeEvent(input$item_mapping_evaluated_negative, {
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$item_mapping_evaluated_positive"))
       r$item_mapping_evaluation_type <- "negative"
       r$item_mapping_evaluation_update <- Sys.time()
     })
     
     observeEvent(r$item_mapping_evaluation_update, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$item_mapping_evaluation_update"))
       
       prefix <- r$item_mapping_evaluation_type
       new_evaluation_id <- switch(r$item_mapping_evaluation_type, "positive" = 1L, "negative" = 2L)
@@ -1272,10 +1352,10 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           TRUE ~ modified
         ))
       
-      # r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings_temp %>% dplyr::select(-modified)
-      
       # Reload datatable
       DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings, resetPaging = FALSE, rownames = FALSE)
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$item_mapping_evaluation_update"))
     })
     
     # Delete a row or multiple rows in datatable
@@ -1302,6 +1382,8 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     # Delete one row (with icon on DT)
     
     observeEvent(input$item_mapping_deleted_pressed, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$item_mapping_deleted_pressed"))
 
       r$delete_mappings <- as.integer(substr(input$item_mapping_deleted_pressed, nchar("delete_") + 1, 100))
       r[[mappings_delete_variable]] <- TRUE
@@ -1313,6 +1395,8 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     # Delete multiple rows (with "Delete selection" button)
     
     observeEvent(input$mapping_delete_selection, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$mapping_delete_selection"))
 
       req(length(input$thesaurus_evaluate_mappings_rows_selected) > 0)
 
@@ -1323,15 +1407,19 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     # Reload data
     
     observeEvent(r[[mappings_reload_variable]], {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$reload_mappings_evals"))
 
       # Reload datatable
-      # r$datamart_thesaurus_items_evaluate_mappings_temp <- r$datamart_thesaurus_items_evaluate_mappings %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(dplyr::desc(id))
       DT::replaceData(r$datamart_thesaurus_items_evaluate_mappings_datatable_proxy, r$datamart_thesaurus_items_evaluate_mappings, resetPaging = FALSE, rownames = FALSE)
     })
 
     # Save updates
     
     observeEvent(input$save_mappings_evaluation, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$save_mappings_evaluation"))
       
       # Update database
       
@@ -1355,10 +1443,9 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         DBI::dbAppendTable(r$db, "thesaurus_items_mapping_evals", new_data)
       }
       
-      # Update r$datamart_thesaurus_items_evaluate_mappings from temp var
-      # r$datamart_thesaurus_items_evaluate_mappings <- r$datamart_thesaurus_items_evaluate_mappings %>% dplyr::select(-modified)
-      
       show_message_bar(output, 2, "modif_saved", "success", i18n = i18n, ns = ns)
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer input$save_mappings_evaluation"))
     })
     
     # When a row is selected

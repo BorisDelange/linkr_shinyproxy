@@ -331,9 +331,12 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
 #' @noRd 
 
 mod_settings_data_management_server <- function(id = character(), r = shiny::reactiveValues(),
-  d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
+  d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    if (perf_monitoring) monitor_perf(r = r, action = "start")
+    if (debug) print(paste0(Sys.time(), " - mod_settings_data_management_server - start"))
     
     # Dropdowns in the management datatable, by page
     dropdowns <- tibble::tribble(~id, ~dropdowns,
@@ -357,6 +360,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
     if (table %in% c("datamarts", "thesaurus")){
       observeEvent(r[[table]], {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$", table, " - updateComboBox"))
         
         options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         
@@ -399,6 +404,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           data_var <- get_plural(data_var)
           observeEvent(r[[data_var]], {
             
+            if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$", table))
+            
             # Convert options to list
             if (table == "subsets" & data_var == "studies") options <- list()
             else options <- convert_tibble_to_list(data = r[[data_var]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
@@ -410,6 +417,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Particular case for subsets, update study dropdown with current datamart
     if (table == "subsets"){
       observeEvent(input$datamart, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$datamart"))
+        
         studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
         options <- convert_tibble_to_list(data = studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         shiny.fluent::updateDropdown.shinyInput(session, "study", options = options)
@@ -418,6 +428,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
     # When add button is clicked
     observeEvent(input$add, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$add"))
       
       # Create a list with new data
       # If page = thesaurus, data_source is character, not integer (multiple choices)
@@ -442,6 +455,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         table = substr(id, nchar("settings_") + 1, nchar(id)), 
         required_textfields = "name", req_unique_values = "name",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist())
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$add"))
     })
     
     # --- --- --- --- --- ---
@@ -449,8 +464,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # --- --- --- --- --- ---
   
     table <- paste0(substr(id, nchar("settings_") + 1, nchar(id)))
-    
-    # observeEvent(r[[table]], {
       
     dropdowns_datatable <- switch(id,
       "settings_data_sources" = "",
@@ -504,6 +517,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Reload datatable
     
     observeEvent(r[[table]], {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$", table, " - reload datatable"))
+      
       if (nrow(r[[table]]) == 0){
         r[[paste0(table, "_temp")]] <- tibble::tibble()
         r[[paste0(table, "_datatable_loaded")]] <- FALSE 
@@ -512,6 +528,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     })
     
     observeEvent(r[[paste0(table, "_temp")]], {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$", table, "_temp"))
       
       if (nrow(r[[paste0(table, "_temp")]]) == 0){
         
@@ -554,6 +573,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         DT::replaceData(r[[paste0(table, "_datatable_proxy")]], data, resetPaging = FALSE, rownames = FALSE)
       }
       
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$", table, "_temp"))
     })
     
     # --- --- --- --- --- --- --- --
@@ -561,11 +581,17 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # --- --- --- --- --- --- --- --
   
       # Hide save button if user has no access
-      observeEvent(r$user_accesses, if (paste0(table, "_edit_data") %not_in% r$user_accesses) shinyjs::hide("management_save"))
+      observeEvent(r$user_accesses, {
+        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$user_accesses"))
+        if (paste0(table, "_edit_data") %not_in% r$user_accesses) shinyjs::hide("management_save")
+      })
   
       # Each time a row is updated, modify temp variable
       # Do that for main datatable (management_datatable) & sub_datatable
       observeEvent(input$management_datatable_cell_edit, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$management_datatable_cell_edit"))
+        
         edit_info <- input$management_datatable_cell_edit
         r[[paste0(table, "_temp")]] <- DT::editData(r[[paste0(table, "_temp")]], edit_info, rownames = FALSE)
         # Store that this row has been modified
@@ -573,32 +599,52 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       })
   
       observeEvent(input$sub_datatable_cell_edit, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$sub_datatable_cell_edit"))
+        
         edit_info <- input$sub_datatable_cell_edit
-        # edit_info$col <- edit_info$col + 2 # We have removed id & thesaurus_id cols, so need to add two to col index
         r$thesaurus_items_temp <- DT::editData(r$thesaurus_items_temp, edit_info, rownames = FALSE)
         r$thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
       })
     
       # Each time a dropdown is updated, modify temp variable
       observeEvent(r[[table]], {
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$", table, " - update dropdowns"))
+        
         update_settings_datatable(input = input, r = r, ns = ns, table = table, 
           dropdowns = dropdowns %>% dplyr::filter(id == id) %>% dplyr::pull(dropdowns) %>% unlist(), i18n = i18n)
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$", table, " - update dropdowns"))
       })
     
       # When save button is clicked
       # Do that for main datatable (management_datatable) & sub_datatable
       observeEvent(input$management_save, {
         
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$management_save"))
+        
         req(nrow(r[[paste0(table, "_temp")]]) > 0)
         
         duplicates_allowed <- FALSE
         if (table == "subsets") duplicates_allowed <- TRUE
         save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, i18n = i18n, duplicates_allowed = duplicates_allowed)
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$management_save"))
       })
+      
       observeEvent(input$sub_datatable_save, {
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$sub_datatable_save"))
+        
         req(input$items_chosen)
         save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", 
           r_table = "thesaurus_items", duplicates_allowed = TRUE, i18n = i18n)
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$sub_datatable_save"))
       })
       
       # --- --- --- --- --- --- --- --
@@ -626,6 +672,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       
       observeEvent(input$deleted_pressed, {
         
+        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$deleted_pressed"))
+        
         r[[paste0("delete_", get_plural(table))]] <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
         r[[settings_delete_variable]] <- TRUE
         
@@ -637,62 +685,14 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       
       observeEvent(input$delete_selection, {
         
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$delete_selection"))
+        
         req(length(input[["management_datatable_rows_selected"]]) > 0)
         
         r[[paste0("delete_", get_plural(table))]] <- r[[paste0(table, "_temp")]][input[["management_datatable_rows_selected"]], ] %>% dplyr::pull(id)
         r[[settings_delete_variable]] <- TRUE
       })
-      
-      # 
-      # # Create & show dialog box
-      # observeEvent(r[[paste0(table, "_delete_dialog")]] , {
-      #   output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = table, i18n = i18n))
-      # })
-      # 
-      # # Whether to close or not delete dialog box
-      # observeEvent(input$hide_dialog, r[[paste0(table, "_delete_dialog")]] <- FALSE)
-      # observeEvent(input$delete_canceled, r[[paste0(table, "_delete_dialog")]] <- FALSE)
-      # observeEvent(input$deleted_pressed, r[[paste0(table, "_delete_dialog")]] <- TRUE)
-      # 
-      # # When the delete is confirmed...
-      # observeEvent(input$delete_confirmed, {
-      # 
-      #   # If user has access
-      #   req(paste0(table, "_datatable_card") %in% r$user_accesses)
-      #   
-      #   # Get value of deleted row
-      #   row_deleted <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, nchar(input$deleted_pressed)))
-      # 
-      #   # Delete row in DB table
-      #   delete_settings_datatable_row(output = output, r = r, ns = ns, i18n = i18n, row_deleted = row_deleted, table = table)
-      # })
-      # 
-      # # The same for thesaurus_items / sub_datatable
-      # if (table == "thesaurus"){
-      #   observeEvent(r$thesaurus_items_delete_dialog , {
-      #     output$delete_confirm <- shiny.fluent::renderReact(render_settings_delete_react(r = r, ns = ns, table = "thesaurus_items", i18n = i18n))
-      #   })
-      #   
-      #   # Whether to close or not delete dialog box
-      #   observeEvent(input$thesaurus_items_hide_dialog, r$thesaurus_items_delete_dialog <- FALSE)
-      #   observeEvent(input$thesaurus_items_delete_canceled, r$thesaurus_items_delete_dialog <- FALSE)
-      #   observeEvent(input$thesaurus_items_deleted_pressed, r$thesaurus_items_delete_dialog <- TRUE)
-      #   
-      #   # When the delete is confirmed...
-      #   observeEvent(input$thesaurus_items_delete_confirmed, {
-      #     
-      #     # Get value of deleted row
-      #     row_deleted <- as.integer(substr(input$thesaurus_items_deleted_pressed, nchar("sub_delete_") + 1, nchar(input$thesaurus_items_deleted_pressed)))
-      #     
-      #     # Delete row in DB table
-      #     # Link_id is ID of thesaurus which sub_datatable depends on
-      #     # category is used to create the cache
-      #     link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
-      #   
-      #     delete_settings_datatable_row(output = output, id = id, r = r, ns = ns, i18n = i18n,
-      #       link_id = link_id, category = "delete", row_deleted = row_deleted, table = "thesaurus_items")
-      #   })
-      # }
       
       # --- --- --- --- --- --- --- --- -- -
       # Edit options by selecting a row ----
@@ -701,6 +701,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       if (table == "datamarts"){
           
         observeEvent(input$options, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$options"))
           
           # Get link_id variable, to update options div
           link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
@@ -719,6 +721,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         })
         
         observeEvent(input$options_chosen, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$options_chosen"))
           
           if (length(input$options_chosen) > 1) link_id <- input$options_chosen$key
           else link_id <- input$options_chosen
@@ -777,6 +781,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         
         observeEvent(input$options_save, {
           
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$options_save"))
+          
           req(input$options_chosen)
           
           if (length(input$options_chosen) > 1) link_id <- input$options_chosen$key
@@ -791,6 +798,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
   
           save_settings_options(output = output, r = r, id = id, category = category, code_id_input = paste0("options_", link_id), 
             i18n = i18n, data = data, page_options = c("show_only_aggregated_data", "users_allowed_read"))
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$options_save"))
         })
       }
       
@@ -802,6 +811,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         
         # Button "Edit code" is clicked on the datatable
         observeEvent(input$edit_code, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$edit_code"))
 
           # Get link_id variable, to update code editor
           link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
@@ -822,6 +833,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         })
         
         observeEvent(input$code_chosen, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$code_chosen"))
 
           if (length(input$code_chosen) > 1) link_id <- input$code_chosen$key
           else link_id <- input$code_chosen
@@ -874,9 +887,18 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         })
         
         # When save button is clicked, or CTRL+C or CMD+C si pushed
-        observeEvent(input$edit_code_save, r[[paste0(id, "_save")]] <- Sys.time())
-        observeEvent(input$ace_edit_code_save, r[[paste0(id, "_save")]] <- Sys.time())
+        observeEvent(input$edit_code_save, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$edit_code_save"))
+          r[[paste0(id, "_save")]] <- Sys.time()
+        })
+        observeEvent(input$ace_edit_code_save, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$ace_edit_code_save"))
+          r[[paste0(id, "_save")]] <- Sys.time()
+        })
         observeEvent(r[[paste0(id, "_save")]], {
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$.save"))
           
           req(input$code_chosen)
           
@@ -885,22 +907,32 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           save_settings_code(output = output, r = r, id = id, category = get_singular(id),
             code_id_input = paste0("edit_code_", link_id), edited_code = input$ace_edit_code, i18n = i18n)
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$..save"))
         })
         
         # When Execute code button is clicked
         
         observeEvent(input$execute_code, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$execute_code"))
           r[[paste0(id, "_code")]] <- input$ace_edit_code
         })
         
         observeEvent(input$ace_edit_code_run_selection, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$ace_edit_code_run_selection"))
           if(!shinyAce::is.empty(input$ace_edit_code_run_selection$selection)) r[[paste0(id, "_code")]] <- input$ace_edit_code_run_selection$selection
           else r[[paste0(id, "_code")]] <- input$ace_edit_code_run_selection$line
         })
         
-        observeEvent(input$ace_edit_code_run_all, r[[paste0(id, "_code")]] <- input$ace_edit_code)
+        observeEvent(input$ace_edit_code_run_all, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$ace_edit_code_run_all"))
+          r[[paste0(id, "_code")]] <- input$ace_edit_code
+        })
       
         observeEvent(r[[paste0(id, "_code")]], {
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$..code"))
           
           # Reset d variable
           vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
@@ -913,9 +945,15 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
               i18n = i18n, r = r, d = d, edited_code = edited_code))
           
           r[[paste0(id, "_code_datatable_trigger")]] <- Sys.time()
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$..code"))
         })
         
         observeEvent(r[[paste0(id, "_code_datatable_trigger")]], {
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$..code_datatable_trigger"))
+          
           data <- tibble::tibble(name = character(), rows = integer())
           
           vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
@@ -929,11 +967,16 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data,
             output_name = "code_datatable", col_names = c(i18n$t("table_name"), i18n$t("rows")),
             column_widths = c("rows" = "150px"), datatable_dom = "")
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$..code_datatable_trigger"))
         })
         
         # Hide editor
         
         observeEvent(input$hide_editor, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$hide_editor"))
+          
           if (input$hide_editor){
             shinyjs::hide("ace_edit_code")
             shinyjs::show("div_br") 
@@ -955,6 +998,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # It opens a tab with a datatable containing items of chosen thesaurus
 
         observeEvent(input$sub_datatable, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$sub_datatable"))
 
           # Get link id
           link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
@@ -970,6 +1015,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         })
 
         observeEvent(input$items_chosen, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$items_chosen"))
 
           if (length(input$items_chosen) > 1) link_id <- input$items_chosen$key
           else link_id <- input$items_chosen
@@ -1000,6 +1047,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         })
 
         observeEvent(input$show_only_used_items, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$show_only_used_items"))
+          
           if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- "only_used_items"
           else r$thesaurus_refresh_thesaurus_items <- "all_items"
         })
@@ -1009,11 +1059,17 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # (if I change datamart and keep "all_items"), it won't active observer cause value hasn't changed...
 
         observeEvent(input$thesaurus_datamart, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_datamart"))
+          
           if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- paste0(input$thesaurus_datamart, "only_used_items")
           else r$thesaurus_refresh_thesaurus_items <- r$thesaurus_refresh_thesaurus_items <- paste0(input$thesaurus_datamart, "all_items")
         })
 
         observeEvent(r$thesaurus_refresh_thesaurus_items, {
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$thesaurus_refresh_thesaurus_items"))
 
           req(r$thesaurus_link_id)
 
@@ -1096,6 +1152,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             # Reload data of datatable
             DT::replaceData(r$sub_thesaurus_datatable_proxy, r$thesaurus_items_temp, resetPaging = FALSE, rownames = FALSE)
           })
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$thesaurus_refresh_thesaurus_items"))
 
         })
 
@@ -1108,6 +1166,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         r[[thesaurus_reload_cache_variable]] <- FALSE
 
         output[[thesaurus_reload_cache_react_variable]] <- shiny.fluent::renderReact({
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - output$thesaurus_reload_cache_confirm"))
 
           shiny.fluent::Dialog(
             hidden = !r[[thesaurus_reload_cache_variable]],
@@ -1122,16 +1182,27 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         })
 
         # Whether to close or not delete dialog box
-        observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_hide_dialog")]], r[[thesaurus_reload_cache_variable]] <- FALSE)
-        observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_canceled")]], r[[thesaurus_reload_cache_variable]] <- FALSE)
+        observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_hide_dialog")]], {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_hide_dialog"))
+          r[[thesaurus_reload_cache_variable]] <- FALSE
+        })
+        observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_canceled")]], {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_canceled"))
+          r[[thesaurus_reload_cache_variable]] <- FALSE
+        })
 
         observeEvent(input$reload_thesaurus_cache, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$reload_thesaurus_cache"))
 
           req(length(input$items_chosen) > 1)
           r[[thesaurus_reload_cache_variable]] <- TRUE
         })
 
         observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_confirmed")]], {
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_confirmed"))
 
           r[[thesaurus_reload_cache_variable]] <- FALSE
 
@@ -1159,6 +1230,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
 
           # Reload datatable
           r$thesaurus_refresh_thesaurus_items <- paste0(Sys.time(), "reset")
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_confirmed"))
         })
 
         # Delete a row or multiple rows in datatable
@@ -1185,6 +1258,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # Delete one row (with icon on DT)
 
         observeEvent(input$thesaurus_items_deleted_pressed, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_items_deleted_pressed"))
 
           r[[paste0(id, "_delete_thesaurus_items")]] <- as.integer(substr(input$thesaurus_items_deleted_pressed, nchar("sub_delete_") + 1, 100))
           r[[thesaurus_items_delete_variable]] <- TRUE
@@ -1193,6 +1268,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         # Delete multiple rows (with "Delete selection" button)
 
         observeEvent(input$thesaurus_items_delete_selection, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_items_delete_selection"))
 
           req(length(input$sub_datatable_rows_selected) > 0)
 
@@ -1201,6 +1277,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         })
 
         observeEvent(r[[thesaurus_items_reload_variable]], {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$reload_thesaurus_items"))
 
           # Reload datatable
           r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
