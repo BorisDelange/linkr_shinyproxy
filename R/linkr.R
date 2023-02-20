@@ -43,10 +43,7 @@
 
 linkr <- function(
   language = "EN",
-  db_info = list(),
   app_folder = character(),
-  app_db_folder = character(),
-  datamarts_folder = character(),
   perf_monitoring = FALSE,
   debug = FALSE,
   options = list(),
@@ -134,9 +131,7 @@ linkr <- function(
   with_golem_options(
     app = shinyApp(
       ui = app_ui(css = css, page = page, language = language, debug = debug),
-      server = app_server(router = page, language = language, db_info = db_info, 
-        app_folder = app_folder, datamarts_folder = datamarts_folder, app_db_folder = app_db_folder,# initial_wd = initial_wd, 
-        perf_monitoring = perf_monitoring, debug = debug),
+      server = app_server(router = page, language = language, app_folder = app_folder, perf_monitoring = perf_monitoring, debug = debug),
       options = options
     ), 
     golem_opts = list()

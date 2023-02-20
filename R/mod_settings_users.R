@@ -591,7 +591,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         query <- DBI::dbSendStatement(r$db, sql)
         DBI::dbClearResult(query)
         r$options <- r$options %>% dplyr::filter(category != "users_accesses" | (category == "users_accesses" & link_id != !!link_id))
-        add_log_entry(r = r, category = "SQL query", name = "Update users accesses", value = sql)
+        add_log_entry(r = r, category = "SQL query", name = "Update users accesses", value = toString(sql))
         
         # Attribute id values
         

@@ -5,8 +5,7 @@
 #' @import shiny
 #' @noRd
 
-app_server <- function(router, language = "en", db_info = list(), app_folder = character(), datamarts_folder = character(), app_db_folder = character(),
-  perf_monitoring = FALSE, debug = FALSE){
+app_server <- function(router, language = "en", app_folder = character(), perf_monitoring = FALSE, debug = FALSE){
   function(input, output, session ) {
     
     if (debug) print(paste0(Sys.time(), " - server - init"))
@@ -47,17 +46,13 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
     r$server_modules_groups_loaded <- ""
     r$ui_modules_groups_loaded <- ""
     
-    # Save datamarts_folder in r variable
-    if (debug) print(paste0(Sys.time(), " - server - datamarts_folder"))
-    r$datamarts_folder <- datamarts_folder
-    
     # App folder
     if (debug) print(paste0(Sys.time(), " - server - app_folder"))
     r$app_folder <- app_folder
     
     # App db folder
     app_db_folder <- paste0(app_folder, "/app_database")
-    r$app_db_folder <- app_db_folder
+    # r$app_db_folder <- app_db_folder
     
     # Get translations
     # Update : use shiny.i18n instead. When it is done, delete get_translations
@@ -73,32 +68,13 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
     # Connection to database
     # If connection informations have been given in cdwtools() function, use these informations
     if (debug) print(paste0(Sys.time(), " - server - app_db"))
-    r$local_db <- get_local_db(app_db_folder = app_db_folder, type = "main")
+    r$local_db <- DBI::dbConnect(RSQLite::SQLite(), paste0(app_db_folder, "/linkr_main"))
+    m$local_db <- DBI::dbConnect(RSQLite::SQLite(), paste0(app_db_folder, "/linkr_public"))
     
-    # Add distant db informations in local database
+    get_db(r = r, m = m, app_db_folder = app_db_folder)
     
-    observeEvent(r$local_db, {
-      
-      if (debug) print(paste0(Sys.time(), " - server - observer r$local_db"))
-      if (length(db_info) > 0){
-        tryCatch({
-          
-          query <- DBI::dbSendStatement(r$local_db, "UPDATE options SET value = 'distant' WHERE category = 'distant_db' AND name = 'connection_type'")
-          DBI::dbClearResult(query)
-          
-          # Insert each parameter of db_info
-          sapply(names(db_info), function(name){
-            query <- DBI::dbSendStatement(r$local_db, paste0("UPDATE options SET value = '", db_info[[name]], "' WHERE category = 'distant_db' AND name = '", name, "'"))
-            DBI::dbClearResult(query)
-          })
-        },
-        error = function(e) print(i18n$t("error_insert_distant_db_info")),
-        warning = function(w) print(i18n$t("error_insert_distant_db_info")))
-      }
-    })
-    
-    r$db <- get_db(db_info = db_info, app_db_folder = app_db_folder, type = "main")
-    m$db <- get_db(db_info = db_info, app_db_folder = app_db_folder, type = "plugins")
+    # r$db <- get_db(r = r, app_db_folder = app_db_folder, type = "main")
+    # m$db <- get_db(r = r, app_db_folder = app_db_folder, type = "plugins")
     
     # Close DB connection on exit
     # And restore initial working directory
@@ -118,7 +94,7 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
       if (debug) print(paste0(Sys.time(), " - server - observer r$db"))
       
       # Add default values in database, if it is empty
-      # insert_default_values(output = output, r = r)
+      insert_default_values(output = output, r = r)
       
       # Load database
       load_database(r = r, i18n = i18n)
@@ -239,7 +215,7 @@ app_server <- function(router, language = "en", db_info = list(), app_folder = c
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - general_settings")
       if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_app_db"))
     
-      mod_settings_app_database_server("settings_app_db", r, language, i18n)
+      mod_settings_app_database_server("settings_app_db", r, m, i18n, app_folder, perf_monitoring, debug)
       mod_page_sidenav_server("settings_app_db", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_app_db", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_app_db")
