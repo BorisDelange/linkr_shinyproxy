@@ -209,97 +209,19 @@ get_authorized_data <- function(r, table, data = tibble::tibble()){
   data %>% dplyr::filter(id %in% data_allowed)
 }
 
-
-#' Connection to local database
+#' Connection to remote database
 #' 
-#' @description Get a connection to local application database. If tables do not already exist, there are created
-#' (with db_create_tables function). It uses RSQLite library.
-#' It also adds distant database connection informations in the options table, if they do not already exist.
-
-# get_local_db <- function(app_db_folder = character()){
-#   
-#   # Connect to local database
-#   
-#   db <- DBI::dbConnect(RSQLite::SQLite(), paste0(app_db_folder, "/linkr_main"))
-#   db_create_tables(db, type = type)
-#   # Add distant db rows if they do not already exist
-#   if (DBI::dbGetQuery(db, "SELECT COUNT(id) FROM options WHERE category = 'distant_db'") != 7){
-#     
-#     DBI::dbSendStatement(db, "DELETE FROM options WHERE category = 'distant_db'")
-#     
-#     last_row <- DBI::dbGetQuery(db, "SELECT COALESCE(MAX(id), 0) FROM options")
-#     
-#     sql <- paste0("INSERT INTO options(id, category, name, value, deleted) ",
-#                     "SELECT ", last_row + 1, ", 'distant_db', 'connection_type', 'local', FALSE ",
-#               "UNION SELECT ", last_row + 2, ", 'distant_db', 'sql_lib', 'postgres', FALSE ",
-#               "UNION SELECT ", last_row + 3, ", 'distant_db', 'dbname', '', FALSE ",
-#               "UNION SELECT ", last_row + 4, ", 'distant_db', 'host', '', FALSE ",
-#               "UNION SELECT ", last_row + 5, ", 'distant_db', 'port', '', FALSE ",
-#               "UNION SELECT ", last_row + 6, ", 'distant_db', 'user', '', FALSE ",
-#               "UNION SELECT ", last_row + 7, ", 'distant_db', 'password', '', FALSE")
-#     query <- DBI::dbSendStatement(db, sql)
-#     DBI::dbClearResult(query)
-#   }
-#   
-#   # Return DBI db object
-#   db
-# }
-
-#' Test connection to distant database
-#'
-#' @description Test the connection to a distant database. If gets the distant db informations in local database
-#' and then tries to connect to this distant database.
+#' @description Get a connection to a remote database. If the remote connection fails, returns local DBI connection object.
 #' @param local_db DBI db object of local database
 #' @param language Language used to display messages (character)
 
-# test_distant_db <- function(local_db){
-#   
-#   result <- "fail"
-#   
-#   # Get distant db informations in local database
-#   db_info <- DBI::dbGetQuery(local_db, "SELECT * FROM options WHERE category = 'distant_db'") %>% tibble::as_tibble()
-#   db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
-#   
-#   # Try the connection
-#   tryCatch({
-#     
-#     # Postgres
-#     if (db_info$sql_lib == "postgres"){
-#       # Main DB
-#       DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$main_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
-#       
-#       # Public DB
-#       DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$public_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
-#     } 
-#     
-#     # SQLite
-#     if (db_info$sql_lib == "postgres"){
-#       # Main DB
-#       DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$main_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
-#       
-#       # Public DB
-#       DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$public_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
-#     }
-#     
-#     result <- "success"
-#   }, error = function(e) "", warning = function(w) "")
-#   
-#   # Result is fail or success
-#   result
-# }
-
-#' Connection to distant database
-#' 
-#' @description Get a connection to a distant database. If the distant connection fails, returns local DBI connection object.
-#' @param local_db DBI db object of local database
-#' @param language Language used to display messages (character)
-
-get_distant_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), local_db){
+get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), output, i18n = R6::R6Class(), ns = character()){
   
-  result <- "fail"
+  result <- "failure"
   
-  db_info <- DBI::dbGetQuery(local_db, "SELECT * FROM options WHERE category = 'distant_db'") %>% tibble::as_tibble()
+  db_info <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'remote_db'") %>% tibble::as_tibble()
   db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
+  db <- list()
   
   # Try the connection
   tryCatch({
@@ -321,7 +243,8 @@ get_distant_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
     
     result <- "success"
     
-  }, error = function(e) "", warning = function(w) "")
+  }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_connect_remote_db", 
+    error_name = "get_remote_db", category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
   
   result
 }
@@ -331,7 +254,7 @@ get_distant_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
 #' @description Get final database connection DBI object.
 #' First, get local database connection. 
 #' Second, if db_info argument is not empty, try a connection with these informations.
-#' Third, if db_info argument is empty or connection fails and if the choice recorded in local database is distant db, try distant db connection.
+#' Third, if db_info argument is empty or connection fails and if the choice recorded in local database is remote db, try remote db connection.
 #' @param db_info DB informations given in cdwtools function
 #' @param language Language used to display messages (character)
 
@@ -350,37 +273,37 @@ get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app
   db_create_tables(db = db$local_main, type = "main")
   db_create_tables(db = db$local_public, type = "plugins")
   
-  # Add distant db rows if they do not already exist
+  # Add remote db rows if they do not already exist
   
-  if (DBI::dbGetQuery(db$local_main, "SELECT COUNT(id) FROM options WHERE category = 'distant_db'") != 8){
+  if (DBI::dbGetQuery(db$local_main, "SELECT COUNT(id) FROM options WHERE category = 'remote_db'") != 8){
     
-    DBI::dbSendStatement(db$local_main, "DELETE FROM options WHERE category = 'distant_db'")
+    DBI::dbSendStatement(db$local_main, "DELETE FROM options WHERE category = 'remote_db'")
     
     last_row <- DBI::dbGetQuery(db$local_main, "SELECT COALESCE(MAX(id), 0) FROM options")
     
     sql <- paste0("INSERT INTO options(id, category, name, value, deleted) ",
-      "SELECT ", last_row + 1, ", 'distant_db', 'connection_type', 'local', FALSE ",
-      "UNION SELECT ", last_row + 2, ", 'distant_db', 'sql_lib', 'postgres', FALSE ",
-      "UNION SELECT ", last_row + 3, ", 'distant_db', 'main_db_name', '', FALSE ",
-      "UNION SELECT ", last_row + 4, ", 'distant_db', 'public_db_name', '', FALSE ",
-      "UNION SELECT ", last_row + 5, ", 'distant_db', 'host', '', FALSE ",
-      "UNION SELECT ", last_row + 6, ", 'distant_db', 'port', '', FALSE ",
-      "UNION SELECT ", last_row + 7, ", 'distant_db', 'user', '', FALSE ",
-      "UNION SELECT ", last_row + 8, ", 'distant_db', 'password', '', FALSE")
+      "SELECT ", last_row + 1, ", 'remote_db', 'connection_type', 'local', FALSE ",
+      "UNION SELECT ", last_row + 2, ", 'remote_db', 'sql_lib', 'postgres', FALSE ",
+      "UNION SELECT ", last_row + 3, ", 'remote_db', 'main_db_name', '', FALSE ",
+      "UNION SELECT ", last_row + 4, ", 'remote_db', 'public_db_name', '', FALSE ",
+      "UNION SELECT ", last_row + 5, ", 'remote_db', 'host', '', FALSE ",
+      "UNION SELECT ", last_row + 6, ", 'remote_db', 'port', '', FALSE ",
+      "UNION SELECT ", last_row + 7, ", 'remote_db', 'user', '', FALSE ",
+      "UNION SELECT ", last_row + 8, ", 'remote_db', 'password', '', FALSE")
     query <- DBI::dbSendStatement(db$local_main, sql)
     DBI::dbClearResult(query)
   }
   
-  DBI::dbGetQuery(db$local_main, "SELECT value FROM options WHERE category = 'distant_db' AND name = 'connection_type'") %>% dplyr::pull() -> choice_distant_db
+  DBI::dbGetQuery(db$local_main, "SELECT value FROM options WHERE category = 'remote_db' AND name = 'connection_type'") %>% dplyr::pull() -> choice_remote_db
   
-  if (choice_distant_db == "distant"){
+  if (choice_remote_db == "remote"){
     
-    # Get distant DB parameters
+    # Get remote DB parameters
     
-    db_info <- DBI::dbGetQuery(db$local_main, "SELECT * FROM options WHERE category = 'distant_db'") %>% tibble::as_tibble()
+    db_info <- DBI::dbGetQuery(db$local_main, "SELECT * FROM options WHERE category = 'remote_db'") %>% tibble::as_tibble()
     db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
     
-    # Try distant connection
+    # Try remote connection
     
     result <- "failure"
     
@@ -401,7 +324,6 @@ get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app
       r$db <- db$remote_main
       m$db <- db$remote_public
       
-      print("create tables")
       db_create_tables(db = db$remote_main, type = "main")
       db_create_tables(db = db$remote_public, type = "plugins")
       
@@ -409,9 +331,9 @@ get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app
       
     }, error = function(e) "", warning = function(w) "")
     
-    # If didn't succeed to connect to distant DB, update database and set connection to local
+    # If didn't succeed to connect to remote DB, update database and set connection to local
     if (result != "success"){
-      sql <- glue::glue_sql("UPDATE options SET value = 'local' WHERE category = 'distant_db' AND name = 'connection_type'", .con = db$local_main)
+      sql <- glue::glue_sql("UPDATE options SET value = 'local' WHERE category = 'remote_db' AND name = 'connection_type'", .con = db$local_main)
       query <- DBI::dbSendStatement(db$local_main, sql)
       DBI::dbClearResult(query)
     }

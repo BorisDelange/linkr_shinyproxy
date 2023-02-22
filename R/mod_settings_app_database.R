@@ -53,11 +53,11 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
               div(class = "input_title", i18n$t("connection_type")),
               shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type"), options = list(
                   list(key = "local", text = i18n$t("local")),
-                  list(key = "distant", text = i18n$t("distant"))
+                  list(key = "remote", text = i18n$t("remote"))
                 ), className = "inline_choicegroup")
             ),
             shiny::conditionalPanel(
-              condition = "input.connection_type == 'distant'", ns = ns,
+              condition = "input.connection_type == 'remote'", ns = ns,
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
                 make_dropdown(i18n, ns, "sql_lib", options = list(
                   list(key = "postgres", text = "PostgreSQL"),
@@ -67,16 +67,16 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
               ),
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
                 make_textfield(i18n, ns, "main_db_name", width = "300px"),
-                shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, 
+                shiny::conditionalPanel(condition = "input.connection_type == 'remote'", ns = ns, 
                   div(shiny::textOutput(ns("test_connection_main_db_success")), style = "margin-top:44px; font-weight:bold; color:#0078D4;")),
-                shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, 
+                shiny::conditionalPanel(condition = "input.connection_type == 'remote'", ns = ns, 
                   div(shiny::textOutput(ns("test_connection_main_db_failure")), style = "margin-top:44px; margin-left:-30px; color:red;"))
               ),
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
                 make_textfield(i18n, ns, "public_db_name", width = "300px"),
-                shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, 
+                shiny::conditionalPanel(condition = "input.connection_type == 'remote'", ns = ns, 
                   div(shiny::textOutput(ns("test_connection_public_db_success")), style = "margin-top:44px; font-weight:bold; color:#0078D4;")),
-                shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, 
+                shiny::conditionalPanel(condition = "input.connection_type == 'remote'", ns = ns, 
                   div(shiny::textOutput(ns("test_connection_public_db_failure")), style = "margin-top:44px; margin-left:-30px; color:red;"))
               ),
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
@@ -86,7 +86,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
               )), htmltools::br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
               shiny.fluent::PrimaryButton.shinyInput(ns("db_connection_save"), i18n$t("save")), " ",
-              shiny::conditionalPanel(condition = "input.connection_type == 'distant'", ns = ns, shiny.fluent::DefaultButton.shinyInput(ns("test_connection"), i18n$t("test_connection")))
+              shiny::conditionalPanel(condition = "input.connection_type == 'remote'", ns = ns, shiny.fluent::DefaultButton.shinyInput(ns("test_connection"), i18n$t("test_connection")))
             ),
           )
         )
@@ -103,10 +103,22 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
         make_card(
           i18n$t("app_db_tables"),
           div(
-            br(), shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type_tables"), options = list(
-              list(key = "local", text = i18n$t("local")),
-              list(key = "distant", text = i18n$t("distant"))
-            ), className = "inline_choicegroup"),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              div(
+                div(class = "input_title", i18n$t("connection_type")),
+                shiny.fluent::ChoiceGroup.shinyInput(ns("app_db_tables_connection_type"), options = list(
+                  list(key = "local", text = i18n$t("local")),
+                  list(key = "remote", text = i18n$t("remote"))
+                ), className = "inline_choicegroup")
+              ),
+              div(
+                div(class = "input_title", i18n$t("database_short")),
+                shiny.fluent::ChoiceGroup.shinyInput(ns("app_db_tables_database"), options = list(
+                  list(key = "main_db", text = i18n$t("main_db")),
+                  list(key = "public_db", text = i18n$t("public_db"))
+                ), className = "inline_choicegroup", value = "main_db")
+              )
+            ),
             DT::DTOutput(ns("app_db_tables"))
           )
         )
@@ -123,10 +135,22 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
         make_card(
           i18n$t("app_db_request"),
           div(
-            shiny.fluent::ChoiceGroup.shinyInput(ns("connection_type_request"), options = list(
-              list(key = "local", text = i18n$t("local")),
-              list(key = "distant", text = i18n$t("distant"))
-            ), className = "inline_choicegroup"),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              div(
+                div(class = "input_title", i18n$t("connection_type")),
+                shiny.fluent::ChoiceGroup.shinyInput(ns("app_db_request_connection_type"), options = list(
+                  list(key = "local", text = i18n$t("local")),
+                  list(key = "remote", text = i18n$t("remote"))
+                ), className = "inline_choicegroup")
+              ),
+              div(
+                div(class = "input_title", i18n$t("database_short")),
+                shiny.fluent::ChoiceGroup.shinyInput(ns("app_db_request_database"), options = list(
+                  list(key = "main_db", text = i18n$t("main_db")),
+                  list(key = "public_db", text = i18n$t("public_db"))
+                ), className = "inline_choicegroup", value = "main_db"),
+              )
+            ),
             div(shinyAce::aceEditor(
               ns("app_db_request_code"), "", mode = "sql", 
               code_hotkeys = list(
@@ -190,7 +214,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
           )
         )
       )
-    )
+    ), br()
   )
 }
     
@@ -247,19 +271,29 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     if ("db_connection_infos_card" %in% r$user_accesses) shinyjs::show("db_connection_infos_card")
     else shinyjs::show("db_connection_infos_card_forbidden")
     
-    # --- --- --- --- --- --- --- --- ---
-    # Update connection type toggles ----
-    # --- --- --- --- --- --- --- --- ---
+    # --- --- --- --- --- -- -
+    # Update choiceGroups ----
+    # --- --- --- --- --- -- -
     
     observeEvent(r$db_connection_type, {
       if (debug) print(paste0(Sys.time(), " - mod_settings_app_database - observer r$db_connection_type"))
       shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type", value = r$db_connection_type)
-      shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type_request", value = r$db_connection_type)
-      shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type_tables", value = r$db_connection_type)
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "app_db_request_connection_type", value = r$db_connection_type)
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "app_db_tables_connection_type", value = r$db_connection_type)
     })
     
-    observeEvent(input$connection_type_request, r$db_connection_type <- input$connection_type_request)
-    observeEvent(input$connection_type_tables, r$db_connection_type <- input$connection_type_tables)
+    observeEvent(input$connection_type, r$db_connection_type <- input$connection_type)
+    observeEvent(input$app_db_request_connection_type, r$db_connection_type <- input$app_db_request_connection_type)
+    observeEvent(input$app_db_tables_connection_type, r$db_connection_type <- input$app_db_tables_connection_type)
+    
+    observeEvent(r$db_database, {
+      if (debug) print(paste0(Sys.time(), " - mod_settings_app_database - observer r$db_database"))
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "app_db_request_database", value = r$db_database)
+      shiny.fluent::updateChoiceGroup.shinyInput(session, "app_db_tables_database", value = r$db_database)
+    })
+    
+    observeEvent(input$app_db_request_database, r$db_database <- input$app_db_request_database)
+    observeEvent(input$app_db_tables_database, r$db_database <- input$app_db_tables_database)
     
     # --- --- --- --- --- -- -
     # Database connection ----
@@ -269,8 +303,8 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       
       if (debug) print(paste0(Sys.time(), " - mod_settings_app_database - observer r$local_db"))
 
-      # Get distant db informations
-      db_info <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'distant_db'") %>% tibble::as_tibble()
+      # Get remote db informations
+      db_info <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'remote_db'") %>% tibble::as_tibble()
       db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
 
       # Fill textfields & choicegroup with recorded informations in local database
@@ -290,15 +324,15 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_settings_app_database - observer input$db_connection_save"))
       
-      # If connection_type is local, save only connection_type but do not erase other informations (distant DB informations)
+      # If connection_type is local, save only connection_type but do not erase other informations (remote DB informations)
       if (input$connection_type == "local"){
-        query <- "UPDATE options SET value = 'local' WHERE category = 'distant_db' AND name = 'connection_type'"
+        query <- "UPDATE options SET value = 'local' WHERE category = 'remote_db' AND name = 'connection_type'"
         DBI::dbClearResult(DBI::dbSendStatement(r$local_db, query))
         add_log_entry(r = r, category = "SQL query", name = "Update SQL connection infos", value = query)
       }
       
-      # If connection_type is distant, save connection_type and other distant DB informations
-      if (input$connection_type == "distant"){
+      # If connection_type is remote, save connection_type and other remote DB informations
+      if (input$connection_type == "remote"){
         
         # Checks inputs
         db_checks <- c("main_db_name" = FALSE, "public_db_name" = FALSE, "host" = FALSE, "port" = FALSE, "user" = FALSE, "password" = FALSE)
@@ -317,7 +351,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         # If checks OK, insert data in database
         sapply(c("connection_type", "sql_lib", "main_db_name", "public_db_name", "host", "port", "user", "password"), function(name){
           sql <- glue::glue_sql(paste0("UPDATE options SET value = {as.character(input[[name]])}, creator_id = {r$user_id}, datetime = {as.character(Sys.time())} ",
-            "WHERE category = 'distant_db' AND name = {name}"), .con = r$local_db)
+            "WHERE category = 'remote_db' AND name = {name}"), .con = r$local_db)
           query <- DBI::dbSendStatement(r$local_db, sql)
           DBI::dbClearResult(query)
           add_log_entry(r = r, category = "SQL query", name = "Update SQL connection infos", value = toString(sql))
@@ -396,46 +430,42 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     # DB tables ----
     # --- --- --- --
     
-    observeEvent(input$connection_type, {
+    observeEvent(input$app_db_tables_connection_type, r$reload_app_db_tables <- Sys.time())
+    observeEvent(input$app_db_tables_database, r$reload_app_db_tables <- Sys.time())
+    
+    observeEvent(r$reload_app_db_tables, {
       
       req(r$local_db)
+      req(input$app_db_tables_connection_type)
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_settings_app_database - observer input$connection_type"))
-      
-      # Update other ChoiceGroups
-      
-      r$db_connection_type <- input$connection_type
-      # shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type_tables", value = input$connection_type)
-      # shiny.fluent::updateChoiceGroup.shinyInput(session, "connection_type_request", value = input$connection_type)
+      if (debug) print(paste0(Sys.time(), " - mod_settings_app_database - observer r$reload_app_db_tables"))
       
       # Local database tables
       
-      chosen_db <- ""
       data <- tibble::tibble(name = character(), row_number = integer())
       
-      if (input$connection_type == "local"){
-        chosen_db <- "local_db"
+      if (input$app_db_tables_connection_type == "local"){
+        if(input$app_db_tables_database == "main_db") chosen_db <- r$local_db
+        if(input$app_db_tables_database == "public_db") chosen_db <- m$local_db
       }
       
-      if (input$connection_type == "distant"){
-        result <- get_distant_db(r = r, m = m, local_db = r$local_db)
-        if (result == "success") chosen_db <- "remote_db"
+      if (input$app_db_tables_connection_type == "remote"){
+        result <- get_remote_db(r = r, m = m, output = output, i18n = i18n, ns = ns)
+        if (result == "success"){
+          if(input$app_db_tables_database == "main_db") chosen_db <- r$remote_db
+          if(input$app_db_tables_database == "public_db") chosen_db <- m$remote_db
+        }
       }
       
-      if (chosen_db != ""){
+      tryCatch(
         data <- tibble::tibble(
-          name = DBI::dbListTables(r[[chosen_db]]),
-          row_number = sapply(DBI::dbListTables(r[[chosen_db]]), function(table) DBI::dbGetQuery(r[[chosen_db]], paste0("SELECT COUNT(*) FROM ", table)) %>% dplyr::pull() %>% as.integer())
+          name = DBI::dbListTables(chosen_db),
+          row_number = sapply(DBI::dbListTables(chosen_db), function(table) DBI::dbGetQuery(chosen_db, paste0("SELECT COUNT(*) FROM ", table)) %>% dplyr::pull() %>% as.integer())
         ) %>%
-          dplyr::bind_rows(
-            tibble::tibble(
-              name = DBI::dbListTables(m[[chosen_db]]),
-              row_number = sapply(DBI::dbListTables(m[[chosen_db]]), function(table) DBI::dbGetQuery(m[[chosen_db]], paste0("SELECT COUNT(*) FROM ", table)) %>% dplyr::pull() %>% as.integer())
-            )
-          ) %>%
-          dplyr::arrange(name)
-      }
+        dplyr::arrange(name),
+        error = function(e) ""
+      )
       
       colnames(data) <- c(i18n$t("table_name"), i18n$t("row_number"))
       
@@ -456,7 +486,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           )),
         rownames = FALSE, selection = "none")
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_app_database - observer input$connection_type"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_app_database - observer r$reload_app_db_tables"))
     })
     
     # --- --- --- ---
@@ -493,37 +523,42 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       # Replace \r with \n to prevent bugs
       request <- isolate(r$app_db_request_code %>% stringr::str_replace_all("\r", "\n"))
       
-      # Get local or distant db DBI object
-      if (input$connection_type_request == "local") db <- r$local_db
-      if (input$connection_type_request == "distant") db <- get_distant_db(r$local_db, i18n = i18n)
+      result <- "failure"
+      if (input$app_db_request_connection_type == "remote") result <- get_remote_db(r = r, m = m, output = output, i18n = i18n, ns = ns)
       
-      # Change this option to display correctly tibble in textbox
-      options('cli.num_colors' = 1)
-      
-      # Capture console output of our code
-      
-      captured_output <-
-        capture.output(tryCatch({
-          # dbSendStatement if it is not a select
-          if (!grepl("^select", tolower(request))) capture.output({
-            DBI::dbSendStatement(db, request) -> query
-            print(query)
-            DBI::dbClearResult(query)
-          }) -> result
-          
-          # Else, a dbGetQuery
-          else capture.output(DBI::dbGetQuery(db, request) %>% tibble::as_tibble() %>% print(n = 1000)) -> result
-          
-          # Render result
-          result
-          
-        }, error = function(e) print(e), warning = function(w) print(w)))
-      
-      # Restore normal value
-      options('cli.num_colors' = NULL)
-      
-      # Display result
-      output$request_result <- renderText(paste(captured_output, collapse = "\n"))
+      if (input$app_db_request_connection_type == "local" | (input$app_db_request_connection_type == "remote" & result == "success")){
+        
+        if (input$app_db_request_database == "main_db") db <- r[[paste0(input$app_db_request_connection_type, "_db")]]
+        if (input$app_db_request_database == "public_db") db <- m[[paste0(input$app_db_request_connection_type, "_db")]]
+        
+        # Change this option to display correctly tibble in textbox
+        options('cli.num_colors' = 1)
+        
+        # Capture console output of our code
+        
+        captured_output <-
+          capture.output(tryCatch({
+            # dbSendStatement if it is not a select
+            if (!grepl("^select", tolower(request))) capture.output({
+              DBI::dbSendStatement(db, request) -> query
+              print(query)
+              DBI::dbClearResult(query)
+            }) -> result
+            
+            # Else, a dbGetQuery
+            else capture.output(DBI::dbGetQuery(db, request) %>% tibble::as_tibble() %>% print(n = 1000)) -> result
+            
+            # Render result
+            result
+            
+          }, error = function(e) print(e), warning = function(w) print(w)))
+        
+        # Restore normal value
+        options('cli.num_colors' = NULL)
+        
+        # Display result
+        output$request_result <- renderText(paste(captured_output, collapse = "\n"))
+      }
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_app_database - observer r$app_db_request_trigger_code"))
     })
@@ -545,13 +580,13 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
 
       output$last_db_save <- renderUI(tagList(strong(i18n$t("last_db_save")), " : ", last_save))
 
-      current_db <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'distant_db'")
+      current_db <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'remote_db'")
       connection_type <- current_db %>% dplyr::filter(name == "connection_type") %>% dplyr::pull(value)
       if (connection_type == "local") current_db_text <- paste0(i18n$t("local"), " (", app_db_folder, ")")
       else {
         sql_lib <- current_db %>% dplyr::filter(name == "sql_lib") %>% dplyr::pull(value)
         dbname <- current_db %>% dplyr::filter(name == "dbname") %>% dplyr::pull(value)
-        current_db_text <- paste0(i18n$t("distant"), " (", sql_lib, " - ", dbname, ")")
+        current_db_text <- paste0(i18n$t("remote"), " (", sql_lib, " - ", dbname, ")")
       }
 
       output$current_db_save <- renderUI(tagList(strong(i18n$t("current_db")), " : ", current_db_text))
