@@ -225,7 +225,6 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    if (perf_monitoring) monitor_perf(r = r, action = "start")
     if (debug) print(paste0(Sys.time(), " - mod_my_studies - start"))
     
     sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
@@ -247,9 +246,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar1, show_message_bar(output, 1, r$show_message_bar1$message, r$show_message_bar1$type, i18n = i18n, ns = ns))
-    observeEvent(r$show_message_bar2, show_message_bar(output, 2, r$show_message_bar2$message, r$show_message_bar2$type, i18n = i18n, ns = ns))
-    if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - show_message_bars"))
+    observeEvent(r$show_message_bar, show_message_bar(output, 1, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
     
     # --- --- --- --- --- --- --- --
     # When a datamart is chosen ----
@@ -308,12 +305,12 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
         capture.output(run_datamart_code(output, r = r, d = d, datamart_id = r$chosen_datamart, i18n = i18n, quiet = TRUE))
   
-        r$show_message_bar1 <- tibble::tibble(message = "import_datamart_success", type = "success", trigger = Sys.time())
+        r$show_message_bar <- tibble::tibble(message = "import_datamart_success", type = "success", trigger = Sys.time())
         
         r$load_scripts <- Sys.time()
       },
       error = function(e){
-        r$show_message_bar1 <- tibble::tibble(message = "fail_load_datamart", type = "severeWarning", trigger = Sys.time())
+        r$show_message_bar <- tibble::tibble(message = "fail_load_datamart", type = "severeWarning", trigger = Sys.time())
         report_bug(r = r, output = output, error_message = "fail_load_datamart",
           error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)
       })
@@ -360,7 +357,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
                 ))
               },
                 error = function(e){
-                  r$show_message_bar2 <- tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
+                  r$show_message_bar <- tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
                   report_bug(r = r, output = output, error_message = "fail_load_scripts",
                     error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)})
             )
@@ -417,9 +414,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         }
       }
       
-      if (nrow(r$datamart_loaded_scripts %>% dplyr::filter(status == "failure")) > 0) r$show_message_bar2 <- 
+      if (nrow(r$datamart_loaded_scripts %>% dplyr::filter(status == "failure")) > 0) r$show_message_bar <- 
           tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
-      else r$show_message_bar2 <- tibble::tibble(message = "run_scripts_success", type = "success", trigger = Sys.time())
+      else r$show_message_bar <- tibble::tibble(message = "run_scripts_success", type = "success", trigger = Sys.time())
       
       r$force_reload_scripts_cache <- FALSE
       r$update_scripts_cache_card <- Sys.time()

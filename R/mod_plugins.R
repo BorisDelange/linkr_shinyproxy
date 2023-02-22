@@ -1200,7 +1200,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     output$render_image <- renderImage({
       
-      if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_plugins - output$render_image"))
       
       req(length(input$plugin_image) > 0)
@@ -1211,8 +1210,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       plugin_folder <- paste0(app_folder, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
       
       list(src = paste0(plugin_folder, "/", input$plugin_image), width = 318, height = 200)
-      
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - output$render_image"))
     }, deleteFile = FALSE)
     
     # Save updates

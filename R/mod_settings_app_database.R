@@ -21,7 +21,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
   div(class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "app_db", text = i18n$t("app_db"))
+      list(key = "app_db", text = i18n$t("app_db_long"))
     ), maxDisplayedItems = 3),
     
     # --- --- -- -- --
@@ -101,7 +101,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
       div(
         id = ns("db_datatable_card"),
         make_card(
-          i18n$t("app_db_tables"),
+          i18n$t("app_db_tables_long"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
               div(
@@ -112,7 +112,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
                 ), className = "inline_choicegroup")
               ),
               div(
-                div(class = "input_title", i18n$t("database_short")),
+                div(class = "input_title", i18n$t("database")),
                 shiny.fluent::ChoiceGroup.shinyInput(ns("app_db_tables_database"), options = list(
                   list(key = "main_db", text = i18n$t("main_db")),
                   list(key = "public_db", text = i18n$t("public_db"))
@@ -133,7 +133,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
       div(
         id = ns("db_request_card"),
         make_card(
-          i18n$t("app_db_request"),
+          i18n$t("app_db_request_long"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
               div(
@@ -144,7 +144,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
                 ), className = "inline_choicegroup")
               ),
               div(
-                div(class = "input_title", i18n$t("database_short")),
+                div(class = "input_title", i18n$t("database")),
                 shiny.fluent::ChoiceGroup.shinyInput(ns("app_db_request_database"), options = list(
                   list(key = "main_db", text = i18n$t("main_db")),
                   list(key = "public_db", text = i18n$t("public_db"))
@@ -179,7 +179,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
       div(
         id = ns("db_save_card"),
         make_card(
-          i18n$t("db_save"),
+          i18n$t("db_save_long"),
           div(
             br(), uiOutput(ns("current_db_save")),
             br(), uiOutput(ns("last_db_save")), br(),
@@ -200,7 +200,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
       div(
         id = ns("db_restore_card"),
         make_card(
-          i18n$t("db_restore"),
+          i18n$t("db_restore_long"),
           div(
             br(), uiOutput(ns("current_db_restore")),
             br(), uiOutput(ns("last_db_restore")), br(),
@@ -475,16 +475,23 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         lengthMenu = i18n$t("dt_entries"),
         emptyTable = i18n$t("no_data_available"))
       
-      output$app_db_tables <- DT::renderDT(
-        data,
-        options = list(
-          dom = "t<'bottom'p>",
-          pageLength = 40,
-          language = dt_translation,
-          columnDefs = list(
-            list(className = "dt-left", targets = "_all")
-          )),
-        rownames = FALSE, selection = "none")
+      if (length(r$app_db_tables_datatable_proxy) == 0){
+        
+        output$app_db_tables <- DT::renderDT(
+          data,
+          options = list(
+            dom = "t<'bottom'p>",
+            pageLength = 40,
+            language = dt_translation,
+            columnDefs = list(
+              list(className = "dt-left", targets = "_all")
+            )),
+          rownames = FALSE, selection = "single")
+        
+        r$app_db_tables_datatable_proxy <- DT::dataTableProxy("app_db_tables", deferUntilFlush = FALSE)
+      }
+      
+      if (length(r$app_db_tables_datatable_proxy) > 0) DT::replaceData(r$app_db_tables_datatable_proxy, data, resetPaging = FALSE, rownames = FALSE)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_app_database - observer r$reload_app_db_tables"))
     })

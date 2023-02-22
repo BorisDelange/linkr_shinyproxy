@@ -75,46 +75,62 @@ render_settings_creation_card <- function(i18n = R6::R6Class(), ns = shiny::NS()
 #' \dontrun{
 #' render_settings_datatable_card(language = "EN", ns = ns, output_id = "management_datatable", title = "datamarts_management")
 #' }
-render_settings_datatable_card <- function(i18n = R6::R6Class(), ns = shiny::NS(), div_id = "datatable_card", 
-  output_id = "management_datatable", title = character(), add_textfield = FALSE){
+render_settings_datatable_card <- function(i18n = R6::R6Class(), ns = shiny::NS(), div_id = "datatable_card",
+  output_id = "management_datatable", title = character(), inputs = character(), dropdown_multiselect = FALSE){
   
-  if (add_textfield){
-    div(id = ns(div_id),
-      make_card(i18n$t(title),
+  inputs_div <- tagList()
+  
+  if (length(inputs) > 0){
+    
+    for (name in names(inputs)){
+      
+      input_type <- inputs[[name]]
+      if (input_type == "textfield") inputs_div <- tagList(inputs_div, make_textfield(i18n = i18n, ns = ns, label = name, id = name, width = "300px"))
+      if (input_type == "dropdown") inputs_div <- tagList(inputs_div, make_dropdown(i18n = i18n, ns = ns, label = name, id = name, width = "300px", multiSelect = dropdown_multiselect))
+    }
+    
+    inputs_div <- shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+      inputs_div,
+      div(shiny.fluent::PrimaryButton.shinyInput(ns("add"), i18n$t("add")), style = "margin-top:38px;")
+    )
+  }
+  
+  div(id = ns(div_id),
+    make_card(i18n$t(title),
+      div(
+        inputs_div,
+        div(DT::DTOutput(ns(output_id)), style = "z-index:2"),
         div(
-          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-            make_textfield(i18n = i18n, ns = ns, label = "name", id = "name", width = "300px"),
-            div(shiny.fluent::PrimaryButton.shinyInput(ns("add"), i18n$t("add")), style = "margin-top:38px;"),
-            style = "position:relative; z-index:1; width:500px;"
+          shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+            shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
+            shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
           ),
-          div(DT::DTOutput(ns(output_id)), style = "margin-top:-30px; z-index:2"),
-          div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
-            ),
-          style = "position:relative; z-index:1; margin-top:-30px;")
-        )
-        
-      ), br()
-    )
-  }
+        style = "position:relative; z-index:1; margin-top:-30px; width:500px;")
+      )
+    ), br()
+  )
   
-  else {
-    div(id = ns(div_id),
-      make_card(i18n$t(title),
-        div(
-          div(DT::DTOutput(ns(output_id)), style = "margin-top:-30px; z-index:2"),
-          div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
-            ),
-          style = "position:relative; z-index:1; margin-top:-30px; width:500px;")
-        )
-      ), br()
-    )
-  }
+  # if (length(textfields) > 0){
+  #   div(id = ns(div_id),
+  #     make_card(i18n$t(title),
+  #       div(
+  #         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+  #           sapply(textfields, function(textfield) make_textfield(i18n = i18n, ns = ns, label = "name", id = "name", width = "300px")),
+  #           make_textfield(i18n = i18n, ns = ns, label = "name", id = "name", width = "300px"),
+  #           div(shiny.fluent::PrimaryButton.shinyInput(ns("add"), i18n$t("add")), style = "margin-top:38px;"),
+  #           style = "position:relative; z-index:1; width:500px;"
+  #         ),
+  #         div(DT::DTOutput(ns(output_id)), style = "margin-top:-30px; z-index:2"),
+  #         div(
+  #           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+  #             shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
+  #             shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
+  #           ),
+  #           style = "position:relative; z-index:1; margin-top:-30px;")
+  #       )
+  #     ), br()
+  #   )
+  # }
 }
 
 #' Render UI of options card

@@ -19,7 +19,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
     "settings_subsets", c("datamart", "study"),
     "settings_thesaurus", "data_source")
   
-  cards <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card")#, "categories_card", "conversions_card", "mapping_card")
+  cards <- c("datatable_card", "edit_code_card", "options_card", "sub_datatable_card")#, "categories_card", "conversions_card", "mapping_card")
   forbidden_cards <- tagList()
   sapply(cards, function(card){
     forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, i18n = i18n))
@@ -51,7 +51,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
         # Management card ----
         # --- --- --- --- --- -
         
-        render_settings_datatable_card(i18n = i18n, ns = ns, div_id = "datatable_card", title = "data_sources_management", add_textfield = TRUE)
+        render_settings_datatable_card(i18n = i18n, ns = ns, div_id = "datatable_card", title = "data_sources_management", inputs = c("name" = "textfield"))
       ) -> result
     }
   
@@ -73,7 +73,6 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       shiny.fluent::Pivot(
         id = ns("datamarts_pivot"),
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-        shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("create_datamart")),
         shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("datamarts_management")),
         shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_datamart_code")),
         shiny.fluent::PivotItem(id = "options_card", itemKey = "options_card", headerText = i18n$t("datamart_options"))
@@ -81,28 +80,12 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       
       forbidden_cards,
       
-      # --- --- --- --- ---
-      # Creation card ----
-      # --- --- --- --- ---
-      
-      div(id = ns("creation_card"),
-        make_card(
-          i18n$t("create_datamart"),
-          div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_textfield(i18n = i18n, ns = ns, label = "name", width = "300px"),
-              make_dropdown(i18n = i18n, ns = ns, label = "data_source", multiSelect = FALSE, width = "300px"),
-            ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("add"), i18n$t("add"))
-          )
-        )
-      ),
-      
       # --- --- --- --- --- -
       # Management card ----
       # --- --- --- --- --- -
       
-      render_settings_datatable_card(i18n = i18n, ns = ns, div_id = "datatable_card", title = "datamarts_management"),
+      render_settings_datatable_card(i18n = i18n, ns = ns, div_id = "datatable_card", title = "datamarts_management", 
+        inputs = c("name" = "textfield", "data_source" = "dropdown")),
       
       # --- --- --- --- -- -
       # Edit code card ----
@@ -187,37 +170,20 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       shiny.fluent::Pivot(
         id = ns("thesaurus_pivot"),
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-        shiny.fluent::PivotItem(id = "creation_card", itemKey = "creation_card", headerText = i18n$t("create_thesaurus")),
         shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("thesaurus_management")),
         shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_thesaurus_code")),
-        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("items"))
+        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("thesaurus_items"))
       ),
       
       
       forbidden_cards,
       
-      # --- --- --- --- ---
-      # Creation card ----
-      # --- --- --- --- ---
-      
-      div(id = ns("creation_card"),
-        make_card(
-          i18n$t("create_thesaurus"),
-            div(
-              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_textfield(i18n = i18n, ns = ns, label = "name", width = "300px"),
-              make_dropdown(i18n = i18n, ns = ns, label = "data_source", multiSelect = TRUE, width = "300px"),
-            ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("add"), i18n$t("add"))
-          )
-        ), br()
-      ),
-      
       # --- --- --- --- --- -
       # Management card ----
       # --- --- --- --- --- -
       
-      render_settings_datatable_card(i18n = i18n, ns = ns, div_id = "datatable_card", title = "thesaurus_management"),
+      render_settings_datatable_card(i18n = i18n, ns = ns, div_id = "datatable_card", title = "thesaurus_management",
+        inputs = c("name" = "textfield", "data_source" = "dropdown"), dropdown_multiselect = TRUE),
       
       # --- --- --- --- -- -
       # Edit code card ----
@@ -258,7 +224,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
       # --- --- --- --- -- -
       
       div(id = ns("sub_datatable_card"),
-        make_card(i18n$t("all_items"),
+        make_card(i18n$t("thesaurus_items"),
           div(
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 50),
@@ -278,46 +244,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
             )
           )
         ), br()
-      ),
-      
-      # --- --- --- --- --- --
-      # Categories  card ----
-      # --- --- --- --- --- --
-      
-      div(id = ns("categories_card"),
-        make_card(i18n$t("categories"),
-          div(
-            
-          )
-        ), br()
-      ),
-      
-      # --- --- --- --- --- --
-      # Conversions card ----
-      # --- --- --- --- --- --
-      
-      div(id = ns("conversions_card"),
-        make_card(i18n$t("conversions"),
-          div(
-            
-          )
-        ), br()
-      ),
-      
-      # --- --- --- --- --- -- -
-      # Items mapping card ----
-      # --- --- --- --- --- -- -
-      
-      div(id = ns("mapping_card"),
-        make_card(i18n$t("items_mapping"),
-          div(
-            make_combobox(i18n = i18n, ns = ns, label = "thesaurus", id = "mapping_thesaurus_chosen",
-              width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("items_mapping_save"), i18n$t("save"))
-          )
-        ), br()
       )
-      
     ) -> result
   }
   result
@@ -342,8 +269,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     dropdowns <- tibble::tribble(~id, ~dropdowns,
       "settings_data_sources", "",
       "settings_datamarts", "data_source",
-      "settings_studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
-      "settings_subsets", c("datamart", "study"),
       "settings_thesaurus", "data_source")
     
     # Close message bar
@@ -352,7 +277,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Table name
     table <- substr(id, nchar("settings_") + 1, nchar(id))
     
-    r[[paste0(table, "_datatable_loaded")]] <- FALSE
     
     # --- --- --- --- --- -
     # Update dropdowns ----
@@ -382,11 +306,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     show_hide_cards(r = r, input = input, session = session, table = table, id = id, cards = cards)
     
     # Show first card
-    if (table == "data_sources") first_card <- "datatable_card"
-    else first_card <- "creation_card"
     
-    if (paste0(table, "_", first_card) %in% r$user_accesses) shinyjs::show(first_card)
-    else shinyjs::show(paste0(first_card, "_forbidden"))
+    if (paste0(table, "_datatable_card") %in% r$user_accesses) shinyjs::show("datatable_card")
+    else shinyjs::show("datatable_card_forbidden")
     
     # --- --- --- --- --- --
     # Add a new element ----
@@ -520,11 +442,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       
       if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$", table, " - reload datatable"))
       
-      if (nrow(r[[table]]) == 0){
-        r[[paste0(table, "_temp")]] <- tibble::tibble()
-        r[[paste0(table, "_datatable_loaded")]] <- FALSE 
-      }
-      else r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
+      r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
     })
     
     observeEvent(r[[paste0(table, "_temp")]], {

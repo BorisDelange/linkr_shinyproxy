@@ -22,7 +22,7 @@
 
 add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
   i18n = R6::R6Class(), id = character(), data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), 
-  required_dropdowns = "all", dropdowns = character()){
+  required_dropdowns = "all", dropdowns = character(), r_message_bar = FALSE){
   
   ns <- shiny::NS(id)
   
@@ -63,7 +63,10 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = r$db)
     distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull() %>% tolower()
     
-    if (tolower(data[[field]]) %in% distinct_values) show_message_bar(output = output, id = 2, message = paste0(field, "_already_used"), type = "severeWarning", i18n = i18n, ns = ns)
+    if (tolower(data[[field]]) %in% distinct_values) {
+      if (!r_message_bar) show_message_bar(output = output, id = 2, message = paste0(field, "_already_used"), type = "severeWarning", i18n = i18n, ns = ns)
+      if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = paste0(field, "_already_used"), type = "severeWarning", trigger = Sys.time())
+    }
     req(tolower(data[[field]]) %not_in% distinct_values)
   })
   
@@ -90,7 +93,10 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     }
   }
   
-  if (!dropdowns_check) show_message_bar(output = output, id = 2, message = "dropdown_empty", type = "severeWarning", i18n = i18n, ns = ns)
+  if (!dropdowns_check){
+    if (!r_message_bar) show_message_bar(output = output, id = 2, message = "dropdown_empty", type = "severeWarning", i18n = i18n, ns = ns)
+    if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "dropdown_empty", type = "severeWarning", trigger = Sys.time())
+  }
   req(dropdowns_check)
   
   # --- --- --- --- --- --- --- --- -- -
@@ -327,7 +333,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     }
   }
   
-  show_message_bar(output = output, id = 1, message = paste0(get_singular(table), "_added"), type = "success", i18n = i18n, ns = ns)
+  if (!r_message_bar) show_message_bar(output = output, id = 1, message = paste0(get_singular(table), "_added"), type = "success", i18n = i18n, ns = ns)
+  if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = paste0(get_singular(table), "_added"), type = "success", trigger = Sys.time())
   
   # Reset textfields
   if (table == "users") sapply(c("username", "firstname", "lastname", "password"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
@@ -638,7 +645,7 @@ delete_element <- function(r = shiny::reactiveValues(), session, input, output, 
   delete_prefix = character(), dialog_title = character(), dialog_subtext = character(),
   react_variable = character(), table = character(), r_table = character(), id_var_sql = character(), id_var_r = character(),
   delete_message = character(), reload_variable = character(), information_variable = character(), translation = TRUE, 
-  app_folder = character(), prefix = character()){
+  app_folder = character(), prefix = character(), r_message_bar = FALSE){
   
   delete_variable <- paste0(delete_prefix, "_open_dialog")
   
@@ -704,7 +711,8 @@ delete_element <- function(r = shiny::reactiveValues(), session, input, output, 
     else r[[table]] <- r[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
     
     # # Notify user
-    show_message_bar(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n, ns = ns)
+    if (!r_message_bar) show_message_bar(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n, ns = ns)
+    if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = delete_message, type = "severeWarning", trigger = Sys.time())
     
     # Activate reload variable
     if (length(reload_variable) > 0) r[[reload_variable]] <- Sys.time()
@@ -1366,7 +1374,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
 #' save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datamarts", language = "EN")
 #' }
 save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), 
-  table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = R6::R6Class()){
+  table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = R6::R6Class(), r_message_bar = FALSE){
   
   # Make sure there's no duplicate in names, if duplicates_allowed is set to FALSE
   
@@ -1409,10 +1417,22 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
           dplyr::group_by(module_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
       }
       
-      if (duplicates_name > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
-      if (duplicates_display_order > 0) show_message_bar(output, 1, "modif_display_order_duplicates", "severeWarning", i18n, ns = ns)
-      if (module_is_its_own_parent > 0) show_message_bar(output, 1, "module_cannot_be_its_own_parent", "severeWarning", i18n, ns = ns)
-      if (loop_over_modules > 0) show_message_bar(output, 1, "module_loop_between_modules", "severeWarning", i18n, ns = ns)
+      if (duplicates_name > 0){
+        if (!r_message_bar) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
+        if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_names_duplicates", type = "severeWarning", trigger = Sys.time())
+      }
+      if (duplicates_display_order > 0){
+        if (!r_message_bar) show_message_bar(output, 1, "modif_display_order_duplicates", "severeWarning", i18n, ns = ns)
+        if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_display_order_duplicates", type = "severeWarning", trigger = Sys.time())
+      } 
+      if (module_is_its_own_parent > 0){
+        if (!r_message_bar) show_message_bar(output, 1, "module_cannot_be_its_own_parent", "severeWarning", i18n, ns = ns)
+        if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "module_cannot_be_its_own_parent", type = "severeWarning", trigger = Sys.time())
+      }
+      if (loop_over_modules > 0){
+        if (!r_message_bar) show_message_bar(output, 1, "module_loop_between_modules", "severeWarning", i18n, ns = ns)
+        if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "module_loop_between_modules", type = "severeWarning", trigger = Sys.time())
+      }
       
     }
     
@@ -1425,7 +1445,10 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
       if (table != "users") duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
           dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
       
-      if (duplicates_name > 0) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
+      if (duplicates_name > 0){
+        if (!r_message_bar) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
+        if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_names_duplicates", type = "severeWarning", trigger = Sys.time())
+      }
     }
     
     req(duplicates_name == 0, duplicates_display_order == 0, module_is_its_own_parent == 0, loop_over_modules == 0)
@@ -1435,7 +1458,10 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   
   ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
   
-  if (length(ids_to_del) == 0) show_message_bar(output, 2, "modif_saved", "success", i18n, ns = ns)
+  if (length(ids_to_del) == 0){
+    if (!r_message_bar) show_message_bar(output, 2, "modif_saved", "success", i18n, ns = ns)
+    if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_saved", type = "success", trigger = Sys.time())
+  }
   
   req(length(ids_to_del) > 0)
   
@@ -1455,7 +1481,8 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   # else update_r(r = r, table = table, i18n = i18n)
   
   # Notify user
-  show_message_bar(output, 2, "modif_saved", "success", i18n, ns = ns)
+  if (!r_message_bar) show_message_bar(output, 2, "modif_saved", "success", i18n, ns = ns)
+  if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_saved", type = "success", trigger = Sys.time())
 }
 
 show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table = character(), id = character(), cards = character()){
