@@ -122,8 +122,106 @@ linkr <- function(
     "settings/thesaurus", 
     "settings/log")
   
-  do.call(shiny.router::make_router, lapply(pages, function(page) shiny.router::route(page, 
-    make_layout(language = language, page = page, i18n = i18n)))) -> page
+  # Toggles for users accesses
+  
+  options_toggles <- tibble::tribble(
+    ~name, ~toggles,
+    "general_settings", "change_password_card",
+    "app_db", c(
+      "db_connection_infos_card",
+      "db_datatable_card",
+      "db_request_card",
+      "db_save_card",
+      "db_restore_card"),
+    "users", c(
+      "users_creation_card",
+      "users_management_card",
+      "users_accesses_creation_card",
+      "users_accesses_management_card",
+      "users_accesses_options_card",
+      "users_statuses_creation_card",
+      "users_statuses_management_card",
+      "users_delete_data"),
+    "dev", c(
+      "dev_edit_code_card",
+      "dev_perf_monitoring_card",
+      "dev_to_do_list_card"),
+    "data_sources", c(
+      "data_sources_see_all_data",
+      "data_sources_creation_card",
+      "data_sources_datatable_card",
+      "data_sources_edit_data",
+      "data_sources_delete_data"),
+    "datamarts", c(
+      "datamarts_see_all_data",
+      "datamarts_creation_card",
+      "datamarts_datatable_card",
+      "datamarts_edit_data",
+      "datamarts_delete_data",
+      "datamarts_options_card",
+      "datamarts_edit_code_card"),
+    "studies", c(
+      "studies_see_all_data",
+      "study_messages_card",
+      "studies_creation_card",
+      "studies_datatable_card",
+      "studies_edit_data",
+      "studies_delete_data",
+      "study_options_card",
+      "import_study_card",
+      "export_study_card"),
+    "subsets", c(
+      "subsets_see_all_data",
+      "subsets_creation_card",
+      "subsets_datatable_card",
+      "subsets_edit_data",
+      "subsets_delete_data",
+      "subsets_edit_code_card"),
+    "thesaurus", c(
+      "thesaurus_see_all_data",
+      "thesaurus_creation_card",
+      "thesaurus_datatable_card",
+      "thesaurus_edit_data",
+      "thesaurus_delete_data",
+      "thesaurus_sub_datatable_card",
+      "thesaurus_edit_code_card",
+      "thesaurus_items_card",
+      "thesaurus_categories_card",
+      "thesaurus_conversions_card",
+      "thesaurus_mapping_card"),
+    "plugins", c(
+      "plugins_see_all_data",
+      "all_plugins_card",
+      "plugins_creation_card",
+      "plugins_datatable_card",
+      "plugins_edit_data",
+      "plugins_delete_data",
+      #"plugins_description_card",
+      "plugins_options_card",
+      "plugins_edit_code_card",
+      "import_plugin_card",
+      "export_plugin_card"),
+    "scripts", c(
+      "scripts_see_all_data",
+      "scripts_creation_card",
+      "scripts_datatable_card",
+      "scripts_descriptions_card",
+      "datamart_scripts_card",
+      "scripts_edit_code_card",
+      "scripts_options_card"
+      #"scripts_thesaurus_card"
+    ),
+    "log", c(
+      "all_users",
+      "only_me")
+  )
+  
+  do.call(shiny.router::make_router, 
+    lapply(pages, function(page){
+      if (debug) print(paste0(Sys.time(), " - linkr - make_router - ", page))
+      shiny.router::route(page, make_layout(language = language, page = page, i18n = i18n, options_toggles = options_toggles))
+    })
+  ) -> page
   
   # Load UI & server
   
@@ -131,7 +229,8 @@ linkr <- function(
   with_golem_options(
     app = shinyApp(
       ui = app_ui(css = css, page = page, language = language, debug = debug),
-      server = app_server(router = page, language = language, app_folder = app_folder, perf_monitoring = perf_monitoring, debug = debug),
+      server = app_server(router = page, language = language, app_folder = app_folder, 
+        perf_monitoring = perf_monitoring, debug = debug, options_toggles = options_toggles),
       options = options
     ), 
     golem_opts = list()

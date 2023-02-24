@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_main_ui <- function(id = character(), language = "en", i18n = R6::R6Class()){
+mod_page_main_ui <- function(id = character(), language = "en", i18n = R6::R6Class(), options_toggles = tibble::tibble()){
   ns <- NS(id)
   result <- ""
   
@@ -63,7 +63,7 @@ mod_page_main_ui <- function(id = character(), language = "en", i18n = R6::R6Cla
     
     if (id == "settings_general_settings") mod_settings_general_ui(id = "settings_general_settings", i18n = i18n) -> result
     if (id == "settings_app_db") mod_settings_app_database_ui(id = "settings_app_db", i18n = i18n) -> result
-    if (id == "settings_users") mod_settings_users_ui(id = "settings_users", i18n = i18n) -> result
+    if (id == "settings_users") mod_settings_users_ui(id = "settings_users", i18n = i18n, options_toggles = options_toggles) -> result
     if (id == "settings_dev") mod_settings_dev_ui(id = "settings_dev", i18n = i18n) -> result
     
     # Subpages of Settings / data management

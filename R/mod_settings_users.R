@@ -7,31 +7,34 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_settings_users_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_settings_users_ui <- function(id = character(), i18n = R6::R6Class(), options_toggles = tibble::tibble()){
   ns <- NS(id)
   
   # Three distinct pages in the settings/users page : users, accesses & statuses
   # For each "sub page", create a creation & a management cards
   
-  pages <- c("users", "users_accesses", "users_statuses")
+  # pages <- c("users", "users_accesses", "users_statuses")
   cards <- tagList()
   
   # We create one module by "sub page"
   
-  sapply(pages, function(page){
-    
-    cards <<- tagList(cards,
-      div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_creation"), i18n = i18n)),
-      div(id = ns(paste0(page, "_management_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_management"), i18n = i18n)))
-    
-    if (page == "users_accesses") cards <<- tagList(cards,
-      div(id = ns(paste0(page, "_options_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_options"), i18n = i18n)))
-  })
+  # sapply(pages, function(page){
+  #   
+  #   cards <<- tagList(cards,
+  #     div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_creation"), i18n = i18n)),
+  #     div(id = ns(paste0(page, "_management_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_management"), i18n = i18n)))
+  #   
+  #   if (page == "users_accesses") cards <<- tagList(cards,
+  #     div(id = ns(paste0(page, "_options_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_options"), i18n = i18n)))
+  # })
   
   cards_names <- c(
     "users_creation_card", "users_management_card", 
     "users_accesses_management_card", "users_accesses_options_card",
     "users_statuses_management_card")
+  
+  sapply(cards_names, function(card) cards <<- tagList(cards, 
+    div(id = ns(card), mod_settings_sub_users_ui(id = paste0("settings_users_", substr(card, 1, nchar(card) - 5)), i18n = i18n, options_toggles = options_toggles))))
   
   pivots <- tagList()
   forbidden_cards <- tagList()
@@ -57,7 +60,7 @@ mod_settings_users_ui <- function(id = character(), i18n = R6::R6Class()){
   )
 }
 
-mod_settings_sub_users_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_settings_sub_users_ui <- function(id = character(), i18n = R6::R6Class(), options_toggles = tibble::tibble()){
   ns <- NS(id)
   
   page <- substr(id, nchar("settings_users_") + 1, nchar(id))
@@ -85,36 +88,38 @@ mod_settings_sub_users_ui <- function(id = character(), i18n = R6::R6Class()){
     ) -> result
   }
   
-  if (page == "users_accesses_creation"){
-    result <- ""
-    # render_settings_creation_card(i18n = i18n, ns = ns, id = id, title = "add_access",
-    #   textfields = c("name", "description"), textfields_width = "300px") -> result
-  }
-  
-  if (page == "users_statuses_creation"){
-    result <- ""
-    # render_settings_creation_card(i18n = i18n, ns = ns, id = id, title = "add_status",
-    #   textfields = c("name", "description"), textfields_width = "300px") -> result
-  }
-  
   if (page == "users_management") result <- render_settings_datatable_card(i18n = i18n, ns = ns, title = page)
   
   if (page %in% c("users_accesses_management", "users_statuses_management")) result <- render_settings_datatable_card(i18n = i18n, ns = ns, title = page, 
     inputs = c("name" = "textfield", "description" = "textfield"))
   
-  # if (page == "users_statuses_management") result <- tagList(
-  #   render_settings_creation_card(i18n = i18n, ns = ns, id = id, title = "add_status", textfields = c("name", "description"), textfields_width = "300px"),
-  #   render_settings_datatable_card(i18n = i18n, ns = ns, title = page)
-  # )
-  
-  # if (grepl("management", page)){
-  #   tagList(
-  #     render_settings_creation_card(i18n = i18n, ns = ns, id = id, title = "add_access", textfields = c("name", "description"), textfields_width = "300px"),
-  #     render_settings_datatable_card(i18n = i18n, ns = ns, title = page)
-  #   ) -> result
-  # }
-  
   if (page == "users_accesses_options"){
+    
+    # Create options_toggles_result
+    
+    options_toggles_result <- tagList()
+    
+    for (i in 1:nrow(options_toggles)){
+      sub_results <- tagList()
+      
+      if (options_toggles[[i, "toggles"]] != ""){
+        # j <- 0
+        for (toggle in options_toggles[[i, "toggles"]][[1]]){
+
+          # Create toggle
+          sub_results <- tagList(sub_results, shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), 
+            make_toggle(i18n = i18n, ns = ns, label = toggle, id = paste0("toggle_", toggle), inline = TRUE, value = FALSE, bold = FALSE)))
+        }
+      }
+        
+      label <- options_toggles[[i, "name"]]
+      
+      options_toggles_result <- tagList(options_toggles_result, br(), shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+        make_toggle(i18n = i18n, ns = ns, label = label, id = paste0("toggle_", label), inline = TRUE, value = FALSE)),
+        conditionalPanel(condition = paste0("input.toggle_", label, " == 1"), ns = ns, br(), sub_results), hr()
+      )
+    }
+    
     tagList(
       forbidden_card(ns = ns, name = "options_card", i18n = i18n),
       div(id = ns("options_card"),
@@ -122,8 +127,9 @@ mod_settings_sub_users_ui <- function(id = character(), i18n = R6::R6Class()){
           div(
             make_combobox(i18n = i18n, ns = ns, label = "user_access", id = "options_chosen",
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
-            uiOutput(ns("options_toggles_result")), br(),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+            options_toggles_result, br(),
+            # uiOutput(ns("options_toggles_result")), br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::DefaultButton.shinyInput(ns("select_all"), i18n$t("select_all")),
               shiny.fluent::DefaultButton.shinyInput(ns("unselect_all"), i18n$t("unselect_all")),
               shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("save")))
@@ -133,14 +139,14 @@ mod_settings_sub_users_ui <- function(id = character(), i18n = R6::R6Class()){
     ) -> result
   }
   
-  tagList(render_settings_default_elements(ns = ns), result)
+  tagList(render_settings_default_elements(ns = ns), result, br())
 }
     
 #' settings_users Server Functions
 #'
 #' @noRd 
 mod_settings_users_server <- function(id = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
+  i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE, options_toggles = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -448,249 +454,143 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
     
     if (page == "users_accesses_options"){
       
-      options_toggles <- tibble::tribble(
-        ~name, ~toggles,
-        "general_settings", "change_password_card",
-        "app_db", c(
-          "db_connection_infos_card", 
-          "db_datatable_card", 
-          "db_request_card", 
-          "db_save_card", 
-          "db_restore_card"),
-        "users", c(
-          "users_creation_card", 
-          "users_management_card",
-          "users_accesses_creation_card", 
-          "users_accesses_management_card",
-          "users_accesses_options_card",
-          "users_statuses_creation_card", 
-          "users_statuses_management_card",
-          "users_delete_data"),
-        "dev", c(
-          "dev_edit_code_card",
-          "dev_perf_monitoring_card",
-          "dev_to_do_list_card"),
-        "data_sources", c(
-          "data_sources_see_all_data", 
-          "data_sources_creation_card",
-          "data_sources_datatable_card",
-          "data_sources_edit_data",
-          "data_sources_delete_data"),
-        "datamarts", c(
-          "datamarts_see_all_data", 
-          "datamarts_creation_card", 
-          "datamarts_datatable_card", 
-          "datamarts_edit_data", 
-          "datamarts_delete_data", 
-          "datamarts_options_card", 
-          "datamarts_edit_code_card"),
-        "studies", c(
-          "studies_see_all_data",
-          "study_messages_card", 
-          "studies_creation_card", 
-          "studies_datatable_card",
-          "studies_edit_data", 
-          "studies_delete_data", 
-          "study_options_card",
-          "import_study_card", 
-          "export_study_card"),
-        "subsets", c(
-          "subsets_see_all_data",
-          "subsets_creation_card", 
-          "subsets_datatable_card", 
-          "subsets_edit_data", 
-          "subsets_delete_data", 
-          "subsets_edit_code_card"),
-        "thesaurus", c(
-          "thesaurus_see_all_data",
-          "thesaurus_creation_card",
-          "thesaurus_datatable_card",
-          "thesaurus_edit_data", 
-          "thesaurus_delete_data",
-          "thesaurus_sub_datatable_card",
-          "thesaurus_edit_code_card", 
-          "thesaurus_items_card",
-          "thesaurus_categories_card", 
-          "thesaurus_conversions_card", 
-          "thesaurus_mapping_card"),
-        "plugins", c(
-          "plugins_see_all_data",
-          "all_plugins_card", 
-          "plugins_creation_card", 
-          "plugins_datatable_card",
-          "plugins_edit_data", 
-          "plugins_delete_data", 
-          #"plugins_description_card", 
-          "plugins_options_card",
-          "plugins_edit_code_card",
-          "import_plugin_card", 
-          "export_plugin_card"),
-        "scripts", c(
-          "scripts_see_all_data", 
-          "scripts_creation_card",
-          "scripts_datatable_card",
-          "scripts_descriptions_card",
-          "datamart_scripts_card", 
-          "scripts_edit_code_card", 
-          "scripts_options_card"
-          #"scripts_thesaurus_card"
-          ),
-        "log", c(
-          "all_users", 
-          "only_me")
-      )
-      
       observeEvent(r$users_statuses_options, {
-        
+
         options <- convert_tibble_to_list(r$users_accesses %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = r$users_statuses_options, text = r$users_accesses %>% dplyr::filter(id == r$users_statuses_options) %>% dplyr::pull(name))
-        
+
         shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
       })
-      
+
       observeEvent(input$options_chosen, {
-        
+
         req(input$options_chosen)
         if (length(input$options_chosen) > 1) link_id <- input$options_chosen$key
         else link_id <- input$options_chosen
-        
+
         # Get current data
-        current_data <- DBI::dbGetQuery(r$db, paste0("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND link_id = ", link_id))
+        current_data <- DBI::dbGetQuery(r$db, paste0("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND ",
+          "link_id = ", link_id, " AND value_num = 1"))
+
+        # Inactivate all toggles
         
-        options_toggles_result <- tagList()
-
-        sapply(1:nrow(options_toggles), function(i){
-
-          sub_results <- tagList()
+        for (i in 1:nrow(options_toggles)){
+          
+          shiny.fluent::updateToggle.shinyInput(session, paste0("toggle_", options_toggles[[i, "name"]]), value = FALSE)
           
           if (options_toggles[[i, "toggles"]] != ""){
-            j <<- 0
-            sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
-              
-              # Get current value
-              value <- current_data %>% dplyr::filter(name == toggle)
-              if (nrow(value) == 0) value <- FALSE
-              else value <- current_data %>% dplyr::filter(name == toggle) %>% dplyr::pull(value_num) %>% as.logical()
-              
-              # Create toggle
-              sub_results <<- tagList(sub_results, 
-                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), make_toggle(i18n = i18n, ns = ns, label = toggle, inline = TRUE, value = value, bold = FALSE)))
-            })
+            for (toggle in options_toggles[[i, "toggles"]][[1]]){
+              shiny.fluent::updateToggle.shinyInput(session, paste0("toggle_", toggle), value = FALSE)
+            }
           }
-          
-          label <- options_toggles[[i, "name"]]
-          
-          # Get current value
-          value <- current_data %>% dplyr::filter(name == label)
-          if (nrow(value) == 0) value <- FALSE
-          else value <- current_data %>% dplyr::filter(name == label) %>% dplyr::pull(value_num) %>% as.logical()
-
-          # Create final toggle
-          options_toggles_result <<- tagList(options_toggles_result, br(),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle(i18n = i18n, ns = ns, label = label, inline = TRUE, value = value)),
-            conditionalPanel(condition = paste0("input.", label, " == 1"), ns = ns,
-              br(), sub_results), hr()
-          )
-        })
+        }
         
-        output$options_toggles_result <- renderUI(options_toggles_result)
+        # Activate toggles with loaded data
+        
+        sapply(1:nrow(current_data), function(i){
+          toggle <- current_data[i, "name"]
+          
+          shiny.fluent::updateToggle.shinyInput(session, paste0("toggle_", toggle), value = TRUE)
+        })
         
         shinyjs::runjs(glue::glue("$('#settings_users-users_pivot button[name=\"{i18n$t('users_accesses_options_card')}\"]').click();"))
 
       })
-      
+
       # When select all button is clicked, put all toggles to TRUE
       observeEvent(input$select_all,{
-        
+
         req(input$options_chosen)
-        
-        sapply(1:nrow(options_toggles), function(i){
-          shiny.fluent::updateToggle.shinyInput(session, options_toggles[[i, "name"]], value = TRUE)
-          if (options_toggles[[i, "toggles"]] != ""){
-            sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
-              shiny.fluent::updateToggle.shinyInput(session, toggle, value = TRUE)
-            })
-          }
-        })
+        r$reload_all_users_accesses_toggles <- Sys.time()
+        r$reload_all_users_accesses_toggles_value <- TRUE
       })
-      
+
       # When unselect all button is clicked, put all toggles to FALSE
       observeEvent(input$unselect_all,{
         
         req(input$options_chosen)
-        
-        sapply(1:nrow(options_toggles), function(i){
-          shiny.fluent::updateToggle.shinyInput(session, options_toggles[[i, "name"]], value = FALSE)
-          if (options_toggles[[i, "toggles"]] != ""){
-            sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
-              shiny.fluent::updateToggle.shinyInput(session, toggle, value = FALSE)
-            })
-          }
-        })
+        r$reload_all_users_accesses_toggles <- Sys.time()
+        r$reload_all_users_accesses_toggles_value <- FALSE
       })
       
+      observeEvent(r$reload_all_users_accesses_toggles, {
+        
+        value <- r$reload_all_users_accesses_toggles_value
+        
+        for (i in 1:nrow(options_toggles)){
+          
+          shiny.fluent::updateToggle.shinyInput(session, paste0("toggle_", options_toggles[[i, "name"]]), value = value)
+          
+          if (options_toggles[[i, "toggles"]] != ""){
+            for (toggle in options_toggles[[i, "toggles"]][[1]]){
+              shiny.fluent::updateToggle.shinyInput(session, paste0("toggle_", toggle), value = value)
+            }
+          }
+        }
+      })
+
       # When save button is clicked
       observeEvent(input$options_save, {
-        
+
         req(input$options_chosen)
         if (length(input$options_chosen) > 1) link_id <- input$options_chosen$key
         else link_id <- input$options_chosen
-        
+
         # Create a data variable to insert data in database
-        data <- tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted)
-        
+        data <- tibble::tibble(category = character(), link_id = integer(), name = character(), value = character(),
+          value_num = numeric(), creator_id = integer(), datetime = character(), deleted = logical())
+
         # Loop over all toggles, set 0 to value_num is toggle is FALSE, 1 else
-        sapply(1:nrow(options_toggles), function(i){
-          data <<- data %>% dplyr::bind_rows(
+        for (i in 1:nrow(options_toggles)){
+          data <- data %>% dplyr::bind_rows(
             tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-              "users_accesses", link_id, options_toggles[[i, "name"]], "", as.integer(isolate(input[[options_toggles[[i, "name"]]]])),
-              r$user_id, as.character(Sys.time()), FALSE)
+              "users_accesses", as.integer(link_id), options_toggles[[i, "name"]], "", as.numeric(input[[paste0("toggle_", options_toggles[[i, "name"]])]]),
+              as.integer(r$user_id), as.character(Sys.time()), FALSE)
           )
           if (options_toggles[[i, "toggles"]] != ""){
-            sapply(options_toggles[[i, "toggles"]][[1]], function(toggle){
-              
-              value_num <- as.integer(isolate(input[[toggle]]))
-              
+            for (toggle in options_toggles[[i, "toggles"]][[1]]){
+
+              value_num <- as.numeric(isolate(input[[paste0("toggle_", toggle)]]))
+
               # If category toggle is FALSE, set children to FALSE
-              if (isolate(input[[options_toggles[[i, "name"]]]] == 0)) value_num <- 0
+              if (isolate(input[[paste0("toggle_", options_toggles[[i, "name"]])]] == 0)) value_num <- 0
               
-              data <<- data %>% dplyr::bind_rows(
+              data <- data %>% dplyr::bind_rows(
                 tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-                  "users_accesses", link_id, toggle, "", value_num,
-                  r$user_id, as.character(Sys.time()), FALSE)
+                  "users_accesses", as.integer(link_id), toggle, "", value_num,
+                  as.integer(r$user_id), as.character(Sys.time()), FALSE)
               )
-            })
+            }
           }
-        })
-        
+        }
+
         # Delete old data from options
-        
+
         sql <- paste0("DELETE FROM options WHERE category = 'users_accesses' AND link_id = ", link_id)
         query <- DBI::dbSendStatement(r$db, sql)
         DBI::dbClearResult(query)
         r$options <- r$options %>% dplyr::filter(category != "users_accesses" | (category == "users_accesses" & link_id != !!link_id))
         add_log_entry(r = r, category = "SQL query", name = "Update users accesses", value = toString(sql))
-        
+
         # Attribute id values
-        
+
         last_row <- get_last_row(con = r$db, table = "options")
         data$id <- seq.int(nrow(data)) + last_row
-        
+
         # Add new values to database
         DBI::dbAppendTable(r$db, "options", data)
         add_log_entry(r = r, category = "SQL query", name = "Update users accesses", value = toString(data))
         r$options <- r$options %>% dplyr::bind_rows(data)
-        
+
         # Remove because of lag
         # Update r$user_accesses
         # update_r(r = r, table = "options")
         user_access_id <- r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::pull(user_access_id)
         r$user_accesses <- r$options %>% dplyr::filter(category == "users_accesses" & link_id == user_access_id & value_num == 1) %>% dplyr::pull(name)
-        
+
         # Notify the user
         r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_saved", type = "success", trigger = Sys.time())
-        
+
       })
     }
     

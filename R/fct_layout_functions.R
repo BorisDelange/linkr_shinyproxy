@@ -50,11 +50,11 @@ make_page <- function (title = character(), subtitle = character(), contents = c
 }
 
 #' Make a complete layout with header, sidenav, main & footer
-make_layout <- function(language = "EN", page = character(), i18n = R6::R6Class()){
+make_layout <- function(language = "EN", page = character(), i18n = R6::R6Class(), options_toggles = tibble::tibble()){
   div(class = "grid-container",
     mod_page_header_ui(id = stringr::str_replace(page, "/", "_"), i18n = i18n),
     mod_page_sidenav_ui(id = stringr::str_replace(page, "/", "_"), i18n = i18n),
-    mod_page_main_ui(id = stringr::str_replace(page, "/", "_"), language = language, i18n = i18n),
+    mod_page_main_ui(id = stringr::str_replace(page, "/", "_"), language = language, i18n = i18n, options_toggles = options_toggles),
     mod_page_footer_ui(i18n = i18n)
   )
 }
