@@ -441,3 +441,21 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
       # });")
   )
 }
+
+format_datetime <- function(datetime = character(), language = "en", sec = TRUE){
+  tryCatch({
+    
+    datetime <- as.character(datetime)
+    
+    if (tolower(language) == "fr"){
+      if (sec) datetime <- format(as.POSIXct(datetime), format = "%d-%m-%Y %H:%M:%S")
+      else datetime <- format(as.POSIXct(datetime), format = "%d-%m-%Y %H:%M")
+    }
+    if (tolower(language) == "en"){
+      if (sec) datetime <- format(as.POSIXct(datetime), format = "%Y-%m-%d %H:%M:%S")
+      else datetime <- format(as.POSIXct(datetime), format = "%Y-%m-%d %H:%M")
+    }
+  }, error = function(e) "")
+  
+  datetime
+}

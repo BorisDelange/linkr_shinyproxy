@@ -1,3 +1,22 @@
+#' Check user authentification
+#' 
+#' @param r shiny r reactive value
+
+check_authentification <- function(db){
+  
+  function(user, password) {
+    
+    password <- rlang::hash(password)
+    
+    res <- DBI::dbGetQuery(db, paste0("SELECT * FROM users WHERE username = '", user, "' AND password = '", password, "'"))
+    
+    
+    if (nrow(res) > 0) list(result = TRUE, user_info = list(user = user, id = res$id))
+    else list(result = FALSE)
+    
+  }
+}
+
 #' Create a new table
 #' 
 #' @description Create a new table in the database
@@ -10,8 +29,37 @@
 #'   db_create_table(db, "my_new_table", tibble::tibble(id = integer(), name = character()))
 #' }
 
-db_create_table <- function(db, table_name, dataframe){
-  if (table_name %not_in% DBI::dbListTables(db)) DBI::dbWriteTable(db, table_name, dataframe)
+db_create_table <- function(db, table_name = character(), dataframe = tibble::tibble(), dbms = character(), 
+  primary_key_cols = character(), unique_cols = character(), not_null_cols = character(), text_cols = character()){
+  if (table_name %not_in% DBI::dbListTables(db)){
+    # DBI::dbWriteTable(db, table_name, dataframe)
+    
+    sql <- ""
+    
+    for (i in 1:ncol(dataframe)){
+      col_class <- dataframe[, i] %>% dplyr::pull() %>% class()
+      col_name <- colnames(dataframe[, i])
+      
+      if (dbms == "postgres"){
+        if (col_name %in% text_cols) col_type <- "TEXT"
+        else col_type <- switch(col_class, "integer" = "INT", "character" = "VARCHAR(255)", "logical" = "BOOLEAN", "numeric" = "REAL")
+      }
+      else if (dbms == "sqlite"){
+        col_type <- switch(col_class, "integer" = "INTEGER", "character" = "TEXT", "logical" = "INTEGER", "numeric" = "DOUBLE PRECISION")
+      }
+      
+      if (col_name %in% primary_key_cols) primary_key_constraint <- " PRIMARY KEY" else primary_key_constraint <-  ""
+      if (col_name %in% unique_cols) unique_constraint <- " UNIQUE" else unique_constraint <- ""
+      if (col_name %in% not_null_cols) not_null_constraint <- " NOT NULL" else not_null_constraint <- ""
+     
+      if (i == 1) sql <- paste0(sql, col_name, " ", col_type, primary_key_constraint, unique_constraint, not_null_constraint)
+      else sql <- paste0(sql, ", ", col_name, " ", col_type, primary_key_constraint, unique_constraint, not_null_constraint)
+    }
+    
+    sql <- glue::glue_sql("CREATE TABLE {`table_name`} (", sql, ")", .con = db)
+    query <- DBI::dbSendStatement(db, sql)
+    DBI::dbClearResult(query)
+  }
 }
 
 #' Create tables
@@ -19,7 +67,7 @@ db_create_table <- function(db, table_name, dataframe){
 #' @description Create all application database required tables. It creates the tables if they do not already exist.
 #' @param db Database connection object (DBI)
 
-db_create_tables <- function(db, type = character()){
+db_create_tables <- function(db, type = character(), dbms = character()){
   
   # Create tables if doest not exist
   
@@ -28,149 +76,140 @@ db_create_tables <- function(db, type = character()){
   
   if (type == "main"){
     # In table users, create an admin user
-    db_create_table(db, "users",
+    db_create_table(db, "users", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), username = character(), firstname = character(), lastname = character(), password = character(),
         user_access_id = integer(), user_status_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "users_accesses",
+    db_create_table(db, "users_accesses", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), description = character(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "users_statuses",
+    db_create_table(db, "users_statuses", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), description = character(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "data_sources",
+    db_create_table(db, "data_sources", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "datamarts",
+    db_create_table(db, "datamarts", primary_key_cols = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "studies",
+    db_create_table(db, "studies", primary_key_cols = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), datamart_id = integer(),
         patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "thesaurus",
+    db_create_table(db, "thesaurus", primary_key_cols = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = character(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "thesaurus_items",
+    db_create_table(db, "thesaurus_items", primary_key_cols = "id", dbms = dbms, text_cols = c("name", "display_name"),
       tibble::tibble(id = integer(), thesaurus_id = integer(), item_id = integer(),
         name = character(), display_name = character(), unit = character(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "thesaurus_items_users",
+    db_create_table(db, "thesaurus_items_users", primary_key_cols = "id", dbms = dbms, text_cols = c("name", "display_name"),
       tibble::tibble(id = integer(), user_id = integer(), thesaurus_id = integer(), item_id = integer(),
         name = character(), display_name = character(), unit = character(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "thesaurus_items_mapping",
+    db_create_table(db, "thesaurus_items_mapping", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), category = character(), thesaurus_id_1 = integer(), item_id_1 = integer(), thesaurus_id_2 = integer(), item_id_2 = integer(),
         relation_id = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "thesaurus_items_mapping_evals",
+    db_create_table(db, "thesaurus_items_mapping_evals", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), mapping_id = integer(), creator_id = integer(), evaluation_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "plugins",
+    db_create_table(db, "plugins", primary_key_cols = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "scripts",
+    db_create_table(db, "scripts", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), data_source_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "patient_lvl_modules_families",
+    db_create_table(db, "patient_lvl_modules_families", primary_key_cols = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
         deleted = logical()))
     
-    db_create_table(db, "patient_lvl_modules",
+    db_create_table(db, "patient_lvl_modules", primary_key_cols = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    # db_create_table(db, "patient_lvl_modules_elements",
-    #   tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
-    #     thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
-    #     thesaurus_item_colour = character(), display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
-    
-    db_create_table(db, "patient_lvl_modules_elements",
+    db_create_table(db, "patient_lvl_modules_elements", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), module_id = integer(), plugin_id = integer(), 
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "patient_lvl_modules_elements_items",
+    db_create_table(db, "patient_lvl_modules_elements_items", primary_key_cols = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
       tibble::tibble(id = integer(), db_item_id = integer(), group_id = integer(),
         thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
         thesaurus_item_colour = character(), mapped_to_item_id = integer(), merge_items = logical(),
         creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "aggregated_modules_families",
+    db_create_table(db, "aggregated_modules_families", primary_key_cols = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
         deleted = logical()))
     
-    db_create_table(db, "aggregated_modules",
+    db_create_table(db, "aggregated_modules", primary_key_cols = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    # db_create_table(db, "aggregated_modules_elements",
-    #   tibble::tibble(id = integer(), name = character(), group_id = integer(), module_id = integer(), plugin_id = integer(), 
-    #     display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
-    
-    db_create_table(db, "aggregated_modules_elements",
+    db_create_table(db, "aggregated_modules_elements", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), module_id = integer(), plugin_id = integer(), 
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "aggregated_modules_elements_items",
+    db_create_table(db, "aggregated_modules_elements_items", primary_key_cols = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
       tibble::tibble(id = integer(), group_id = integer(),
         thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
-        thesaurus_item_colour = character(), mapped_to_widget_item_id = integer(), merge_items = logical(),
+        thesaurus_item_colour = character(), mapped_to_item_id = integer(), merge_items = logical(),
         creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "code",
+    db_create_table(db, "code", primary_key_cols = "id", dbms = dbms, text_cols = "code",
       tibble::tibble(id = integer(), category = character(), link_id = integer(), code = character(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "options",
+    db_create_table(db, "options", primary_key_cols = "id", dbms = dbms, text_cols = "value",
       tibble::tibble(id = integer(), category = character(), link_id = integer(), name = character(), value = character(),
         value_num = numeric(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "messages",
+    db_create_table(db, "messages", primary_key_cols = "id", dbms = dbms, text_cols = c("message", "filepath"),
       tibble::tibble(id = integer(), conversation_id = integer(), study_id = integer(), category = character(), 
         message = character(), filepath = character(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "conversations",
+    db_create_table(db, "conversations", primary_key_cols = "id", dbms = dbms, text_cols = "name",
         tibble::tibble(id = integer(), name = character(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "inbox_messages",
+    db_create_table(db, "inbox_messages", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), message_id = integer(), receiver_id = integer(), read = logical(), 
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "cache",
+    db_create_table(db, "cache", primary_key_cols = "id", dbms = dbms, text_cols = "value",
       tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
     
-    db_create_table(db, "log",
+    db_create_table(db, "log", primary_key_cols = "id", dbms = dbms, text_cols = "value",
       tibble::tibble(id = integer(), category = character(), name = character(), value = character(), creator_id = integer(), datetime = character()))
   }
   
   if (type == "plugins"){
   
-  db_create_table(db, "patients_options",
+  db_create_table(db, "patients_options", primary_key_cols = "id", dbms = dbms, text_cols = "value",
     tibble::tibble(id = integer(), datamart_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
       category = character(), link_id = integer(), name = character(), value = character(), value_num = numeric(), 
       creator_id = integer(), datetime = character(), deleted = logical()))
   
-  db_create_table(db, "modules_elements_options",
+  db_create_table(db, "modules_elements_options", primary_key_cols = "id", dbms = dbms, text_cols = "value",
     tibble::tibble(id = integer(), group_id = integer(), study_id = integer(), patient_id = integer(), link_id = integer(),
       category = character(), name = character(), value = character(), value_num = numeric(),
       creator_id = integer(), datetime = character(), deleted = logical()))
   
-  db_create_table(db, "subsets",
+  db_create_table(db, "subsets", primary_key_cols = "id", dbms = dbms, text_cols = "description",
     tibble::tibble(id = integer(), name = character(), description = character(), study_id = integer(), creator_id = integer(),
       datetime = character(), deleted = logical()))
   
-  db_create_table(db, "subset_patients",
+  db_create_table(db, "subset_patients", primary_key_cols = "id", dbms = dbms,
     tibble::tibble(id = integer(), subset_id = integer(), patient_id = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
   }
 }
@@ -209,46 +248,6 @@ get_authorized_data <- function(r, table, data = tibble::tibble()){
   data %>% dplyr::filter(id %in% data_allowed)
 }
 
-#' Connection to remote database
-#' 
-#' @description Get a connection to a remote database. If the remote connection fails, returns local DBI connection object.
-#' @param local_db DBI db object of local database
-#' @param language Language used to display messages (character)
-
-get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), output, i18n = R6::R6Class(), ns = character()){
-  
-  result <- "failure"
-  
-  db_info <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'remote_db'") %>% tibble::as_tibble()
-  db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
-  db <- list()
-  
-  # Try the connection
-  tryCatch({
-    
-    # Postgres
-    if (db_info$sql_lib == "postgres"){
-      db$main <- DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$main_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
-      db$plugins <- DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$public_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
-    } 
-    
-    # SQLite
-    if (db_info$sql_lib == "sqlite"){
-      db$main <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$main_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
-      db$plugins <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$public_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
-    }
-    
-    r$remote_db <- db$main
-    m$remote_db <- db$plugins
-    
-    result <- "success"
-    
-  }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_connect_remote_db", 
-    error_name = "get_remote_db", category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
-  
-  result
-}
-
 #' Get database DBI object
 #'
 #' @description Get final database connection DBI object.
@@ -262,6 +261,8 @@ get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app
   
   # Get local database connection
   
+  r$db_connection <- "local"
+  
   db <- list()
   db$local_main <- DBI::dbConnect(RSQLite::SQLite(), paste0(app_db_folder, "/linkr_main"))
   r$db <- db$local_main
@@ -270,8 +271,8 @@ get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app
   
   # Create tables for local databases
   
-  db_create_tables(db = db$local_main, type = "main")
-  db_create_tables(db = db$local_public, type = "plugins")
+  db_create_tables(db = db$local_main, type = "main", dbms = "sqlite")
+  db_create_tables(db = db$local_public, type = "plugins", dbms = "sqlite")
   
   # Add remote db rows if they do not already exist
   
@@ -309,25 +310,30 @@ get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app
     
     tryCatch({
       
-      # Postgres
-      if (db_info$sql_lib == "postgres"){
-        db$remote_main <- DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$main_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
-        db$remote_public <- DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$public_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
-      } 
+      if (db_info$main_db_name != "" & db_info$public_db_name != ""){
       
-      # SQLite
-      if (db_info$sql_lib == "sqlite"){
-        db$remote_main <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$main_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
-        db$remote_public <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$public_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
+        # Postgres
+        if (db_info$sql_lib == "postgres"){
+          db$remote_main <- DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$main_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
+          db$remote_public <- DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$public_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
+        } 
+        
+        # SQLite
+        if (db_info$sql_lib == "sqlite"){
+          db$remote_main <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$main_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
+          db$remote_public <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$public_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
+        }
+        
+        r$db_connection <- "remote"
+        
+        r$db <- db$remote_main
+        m$db <- db$remote_public
+        
+        db_create_tables(db = db$remote_main, type = "main", dbms = db_info$sql_lib)
+        db_create_tables(db = db$remote_public, type = "plugins", dbms = db_info$sql_lib)
+        
+        result <- "success"
       }
-      
-      r$db <- db$remote_main
-      m$db <- db$remote_public
-      
-      db_create_tables(db = db$remote_main, type = "main")
-      db_create_tables(db = db$remote_public, type = "plugins")
-      
-      result <- "success"
       
     }, error = function(e) "", warning = function(w) "")
     
@@ -340,6 +346,58 @@ get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app
   }
 }
 
+#' Get last row ID of a table
+#'
+#' @param con DBI connection object to the database
+#' @param table Name of the table
+
+get_last_row <- function(con, table){
+  glue::glue_sql("SELECT COALESCE(MAX(id), 0) FROM {`table`}", .con = con) -> sql
+  DBI::dbGetQuery(con, sql) %>% dplyr::pull() %>% as.integer()
+}
+
+#' Connection to remote database
+#' 
+#' @description Get a connection to a remote database. If the remote connection fails, returns local DBI connection object.
+#' @param local_db DBI db object of local database
+#' @param language Language used to display messages (character)
+
+get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), output, i18n = R6::R6Class(), ns = character()){
+  
+  result <- "failure"
+  
+  db_info <- DBI::dbGetQuery(r$local_db, "SELECT * FROM options WHERE category = 'remote_db'") %>% tibble::as_tibble()
+  db_info <- db_info %>% dplyr::pull(value, name) %>% as.list()
+  db <- list()
+  
+  # Try the connection
+  tryCatch({
+    
+    if (db_info$main_db_name != "" & db_info$public_db_name != ""){
+      
+      # Postgres
+      if (db_info$sql_lib == "postgres"){
+        db$main <- DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$main_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
+        db$plugins <- DBI::dbConnect(RPostgres::Postgres(), dbname = db_info$public_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
+      } 
+      
+      # SQLite
+      if (db_info$sql_lib == "sqlite"){
+        db$main <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$main_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
+        db$plugins <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_info$public_db_name, host = db_info$host, port = db_info$port, user = db_info$user, password = db_info$password)
+      }
+      
+      r$remote_db <- db$main
+      m$remote_db <- db$plugins
+      
+      result <- "success"
+    }
+    
+  }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_connect_remote_db", 
+    error_name = "get_remote_db", category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+  
+  result
+}
 
 #' Load database
 #' 
@@ -362,34 +420,4 @@ load_database <- function(r = shiny::reactiveValues(), i18n = R6::R6Class()){
   
   # Add a module_types variable, for settings/plugins dropdown
   r$module_types <- tibble::tribble(~id, ~name, 1, i18n$t("patient_level_data"), 2, i18n$t("aggregated_data"))
-}
-
-
-#' Check user authentification
-#' 
-#' @param r shiny r reactive value
-
-check_authentification <- function(db){
-  
-  function(user, password) {
-    
-    password <- rlang::hash(password)
-    
-    res <- DBI::dbGetQuery(db, paste0("SELECT * FROM users WHERE username = '", user, "' AND password = '", password, "'"))
-    
-    
-    if (nrow(res) > 0) list(result = TRUE, user_info = list(user = user, id = res$id))
-    else list(result = FALSE)
-    
-  }
-}
-
-#' Get last row ID of a table
-#'
-#' @param con DBI connection object to the database
-#' @param table Name of the table
-
-get_last_row <- function(con, table){
-  glue::glue_sql("SELECT COALESCE(MAX(id), 0) FROM {`table`}", .con = con) -> sql
-  DBI::dbGetQuery(con, sql) %>% dplyr::pull() %>% as.integer()
 }

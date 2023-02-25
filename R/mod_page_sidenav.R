@@ -499,13 +499,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (age > 2) age_div <- tagList(age, " ", i18n$t("years"))
         else age_div <- tagList(round(age * 12, 0), " ", i18n$t("months"))
         
-        admission_datetime <- d$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::pull(admission_datetime)
-        discharge_datetime <- d$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::pull(discharge_datetime)
-        
-        if (tolower(language) == "fr"){
-          admission_datetime <- admission_datetime %>% format(format = "%d-%m-%Y %H:%M:%S")
-          discharge_datetime <- discharge_datetime %>% format(format = "%d-%m-%Y %H:%M:%S")
-        }
+        admission_datetime <- d$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::pull(admission_datetime) %>% format_datetime(language)
+        discharge_datetime <- d$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::pull(discharge_datetime) %>% format_datetime(language)
         
         thesaurus_name <- d$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::pull(thesaurus_name)
         thesaurus_id <- r$thesaurus %>% dplyr::filter(name == thesaurus_name) %>% dplyr::pull(id)

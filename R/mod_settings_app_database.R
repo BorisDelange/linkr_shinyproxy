@@ -162,10 +162,10 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
               ),
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
             ), style = "width: 100%;"),
+            shiny.fluent::PrimaryButton.shinyInput(ns("request"), i18n$t("request")), br(), br(),
+            div(textOutput(ns("datetime_request_execution")), style = "color:#878787;"), br(),
             div(shiny::verbatimTextOutput(ns("request_result")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
-            htmltools::br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("request"), i18n$t("request"))
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
         )
       )
@@ -223,7 +223,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
 #' @noRd 
 
 mod_settings_app_database_server <- function(id = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class(),
-  app_folder = character(), perf_monitoring = FALSE, debug = FALSE){
+  language = "en", app_folder = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -241,23 +241,31 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       "data_sources", "iccicl",
       "datamarts", "icciicl",
       "studies", "icciiiicl",
-      "subsets", "icciicl",
-      "subset_patients", "iiiicl",
       "thesaurus", "icccicl",
-      "thesaurus_items", "iiicccccl",
+      "thesaurus_items", "iiiccccl",
+      "thesaurus_items_users", "iiiiccccl",
+      "thesaurus_items_mapping", "iciiiiiicl",
+      "thesaurus_items_mapping_evals", "iiiicl",
       "plugins", "iccicl",
       "scripts", "iciicl",
-      "patients_options", "iiiiiiciccnicl",
-      "modules_elements_options", "iiiiicccnicl",
       "patient_lvl_modules_families", "iccicl",
       "aggregated_modules_families", "iccicl",
       "patient_lvl_modules", "icciiiicl",
       "aggregated_modules", "icciiiicl",
       "patient_lvl_modules_elements", "iciiiciccciicl",
       "aggregated_modules_elements", "iciiiiicl",
+      "patient_lvl_modules_elements_items", "iiicicccilicl",
+      "aggregated_modules_elements_items", "iicicccilicl",
       "code", "icicicl",
       "options", "iciccnicl",
-      "log", "icccic"
+      "messages", "iiicccicl",
+      "conversations", "iccl",
+      "inbox_messages", "iiilcl",
+      "log", "icccic",
+      "patients_options", "iiiiiiciccnicl",
+      "modules_elements_options", "iiiiicccnicl",
+      "subsets", "icciicl",
+      "subset_patients", "iiiicl"
     )
     
     # --- --- --- --- --- ---
@@ -334,21 +342,6 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       # If connection_type is remote, save connection_type and other remote DB informations
       if (input$connection_type == "remote"){
         
-        # Checks inputs
-        db_checks <- c("main_db_name" = FALSE, "public_db_name" = FALSE, "host" = FALSE, "port" = FALSE, "user" = FALSE, "password" = FALSE)
-        
-        sapply(names(db_checks), function(name){
-          shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = NULL)
-          if (!is.null(input[[name]])){
-            if (name != "port" & input[[name]] != "") db_checks[[name]] <<- TRUE
-            if (name == "port" & input[[name]] != "" & grepl("^[0-9]+$", input[[name]])) db_checks[[name]] <<- TRUE
-          }
-        })
-        sapply(names(db_checks), function(name) if (!db_checks[[name]]) shiny.fluent::updateTextField.shinyInput(session, name, errorMessage = i18n$t(paste0("provide_valid_", name))))
-        
-        req(db_checks[["main_db_name"]], db_checks[["public_db_name"]], db_checks[["host"]], db_checks[["port"]], db_checks[["user"]], db_checks[["password"]])
-        
-        # If checks OK, insert data in database
         sapply(c("connection_type", "sql_lib", "main_db_name", "public_db_name", "host", "port", "user", "password"), function(name){
           sql <- glue::glue_sql(paste0("UPDATE options SET value = {as.character(input[[name]])}, creator_id = {r$user_id}, datetime = {as.character(Sys.time())} ",
             "WHERE category = 'remote_db' AND name = {name}"), .con = r$local_db)
@@ -450,20 +443,38 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         if(input$app_db_tables_database == "public_db") chosen_db <- m$local_db
       }
       
+      result <- "failure"
+      
       if (input$app_db_tables_connection_type == "remote"){
-        result <- get_remote_db(r = r, m = m, output = output, i18n = i18n, ns = ns)
-        if (result == "success"){
-          if(input$app_db_tables_database == "main_db") chosen_db <- r$remote_db
-          if(input$app_db_tables_database == "public_db") chosen_db <- m$remote_db
+        
+        # Check if fields are not empty
+        
+        db_checks <- c("main_db_name" = FALSE, "public_db_name" = FALSE, "host" = FALSE, "port" = FALSE, "user" = FALSE, "password" = FALSE)
+        sapply(names(db_checks), function(name){
+          if (!is.null(input[[name]])){
+            if (name != "port" & input[[name]] != "") db_checks[[name]] <<- TRUE
+            if (name == "port" & input[[name]] != "" & grepl("^[0-9]+$", input[[name]])) db_checks[[name]] <<- TRUE
+          }
+        })
+        
+        if(db_checks[["main_db_name"]] & db_checks[["public_db_name"]] & db_checks[["host"]] & db_checks[["port"]] & db_checks[["user"]] & db_checks[["password"]]){
+          
+          result <- get_remote_db(r = r, m = m, output = output, i18n = i18n, ns = ns)
+          if (result == "success"){
+            if(input$app_db_tables_database == "main_db") chosen_db <- r$remote_db
+            if(input$app_db_tables_database == "public_db") chosen_db <- m$remote_db
+          }
         }
       }
       
       tryCatch(
-        data <- tibble::tibble(
-          name = DBI::dbListTables(chosen_db),
-          row_number = sapply(DBI::dbListTables(chosen_db), function(table) DBI::dbGetQuery(chosen_db, paste0("SELECT COUNT(*) FROM ", table)) %>% dplyr::pull() %>% as.integer())
-        ) %>%
-        dplyr::arrange(name),
+        if (input$app_db_tables_connection_type == "local" | (input$app_db_tables_connection_type == "remote" & result == "success")){
+          data <- tibble::tibble(
+            name = DBI::dbListTables(chosen_db),
+            row_number = sapply(DBI::dbListTables(chosen_db), function(table) DBI::dbGetQuery(chosen_db, paste0("SELECT COUNT(*) FROM ", table)) %>% dplyr::pull() %>% as.integer())
+          ) %>%
+          dplyr::arrange(name)
+        },
         error = function(e) ""
       )
       
@@ -530,10 +541,10 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       # Replace \r with \n to prevent bugs
       request <- isolate(r$app_db_request_code %>% stringr::str_replace_all("\r", "\n"))
       
-      result <- "failure"
-      if (input$app_db_request_connection_type == "remote") result <- get_remote_db(r = r, m = m, output = output, i18n = i18n, ns = ns)
+      result_connection <- "failure"
+      if (input$app_db_request_connection_type == "remote") result_connection <- get_remote_db(r = r, m = m, output = output, i18n = i18n, ns = ns)
       
-      if (input$app_db_request_connection_type == "local" | (input$app_db_request_connection_type == "remote" & result == "success")){
+      if (input$app_db_request_connection_type == "local" | (input$app_db_request_connection_type == "remote" & result_connection == "success")){
         
         if (input$app_db_request_database == "main_db") db <- r[[paste0(input$app_db_request_connection_type, "_db")]]
         if (input$app_db_request_database == "public_db") db <- m[[paste0(input$app_db_request_connection_type, "_db")]]
@@ -562,10 +573,13 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         
         # Restore normal value
         options('cli.num_colors' = NULL)
-        
+          
         # Display result
         output$request_result <- renderText(paste(captured_output, collapse = "\n"))
       }
+      else output$request_result <- renderText(i18n$t("fail_connect_remote_db"))
+      
+      output$datetime_request_execution <- renderText(format_datetime(Sys.time(), language))
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_app_database - observer r$app_db_request_trigger_code"))
     })
@@ -582,7 +596,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
 
       last_save <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_save' AND name = 'last_db_save'")
 
-      if (nrow(last_save) > 0) last_save <- last_save %>% dplyr::pull(value)
+      if (nrow(last_save) > 0) last_save <- last_save %>% dplyr::pull(value) %>% format_datetime(language = language)
       else last_save <- i18n$t("never")
 
       output$last_db_save <- renderUI(tagList(strong(i18n$t("last_db_save")), " : ", last_save))
@@ -592,8 +606,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       if (connection_type == "local") current_db_text <- paste0(i18n$t("local"), " (", app_db_folder, ")")
       else {
         sql_lib <- current_db %>% dplyr::filter(name == "sql_lib") %>% dplyr::pull(value)
-        dbname <- current_db %>% dplyr::filter(name == "dbname") %>% dplyr::pull(value)
-        current_db_text <- paste0(i18n$t("remote"), " (", sql_lib, " - ", dbname, ")")
+        current_db_text <- paste0(i18n$t("remote"), " (", sql_lib, ")")
       }
 
       output$current_db_save <- renderUI(tagList(strong(i18n$t("current_db")), " : ", current_db_text))
@@ -603,7 +616,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       
       last_restore <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_restore' AND name = 'last_db_restore'")
       
-      if (nrow(last_restore) > 0) last_restore <- last_restore %>% dplyr::pull(value)
+      if (nrow(last_restore) > 0) last_restore <- last_restore %>% dplyr::pull(value) %>% format_datetime(language = language)
       else last_restore <- i18n$t("never")
       
       output$last_db_restore <- renderUI(tagList(strong(i18n$t("last_db_restore")), " : ", last_restore))
@@ -630,7 +643,6 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           NA_real_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
         DBI::dbAppendTable(r$db, "options", new_data)
         r$options <- r$options %>% dplyr::bind_rows(new_data)
-        
       }
       
       else {
@@ -652,7 +664,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     
     output$db_save <- downloadHandler(
       
-      filename = function() paste0("cdwtools_svg_", as.character(Sys.Date()), ".zip"),
+      filename = function() paste0("linkr_db_backup_", Sys.time() %>% as.character() %>% stringr::str_replace_all(" |:|-", "_"), ".zip"),
       
       content = function(file){
         
@@ -664,20 +676,35 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         
         files <- NULL
         
-        tables <- DBI::dbListTables(r$db)
-
-        for (table in tables){
-          # Download all tables, except cache table
-          if (table != "cache"){
-            
-            # Download log if user choice is TRUE
-            if (table != "log" | (table == "log" & input$db_export_log)){
-              file_name <- paste0(table, ".csv")
-              readr::write_csv(DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", table)), file_name)
-              files <- c(file_name, files)
+        db_list <- list()
+        db_list$main_db <- r$db
+        db_list$public_db <- m$db
+        
+        for (db in db_list){
+          
+          tables <- DBI::dbListTables(db)
+  
+          for (table in tables){
+            # Download all tables, except cache table
+            if (table != "cache"){
+              
+              # Download log if user choice is TRUE
+              if (table != "log" | (table == "log" & input$db_export_log)){
+                file_name <- paste0(table, ".csv")
+                readr::write_csv(DBI::dbGetQuery(db, paste0("SELECT * FROM ", table)), file_name)
+                files <- c(file_name, files)
+              }
             }
           }
         }
+        
+        # XML file for app version
+        
+        xml <- XML::newXMLDoc()
+        db_node <- XML::newXMLNode("db", doc = xml)
+        XML::newXMLNode("app_version", r$app_version, parent = db_node)
+        XML::saveXML(xml, file = "db_info.xml")
+        files <- c("db_info.xml", files)
         
         zip::zipr(file, files, include_directories = FALSE)
         
@@ -700,6 +727,8 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     output$db_restore_status <- renderUI({
       if (debug) print(paste0(Sys.time(), " - mod_settings_app_database - output$db_restore_status"))
       
+      req(input$db_restore$name)
+      
       tagList(div(
       span(i18n$t("loaded_file"), " : ", style = "padding-top:5px;"), 
       span(input$db_restore$name, style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;"))
@@ -716,48 +745,38 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       
       tryCatch({
         
-        exdir <- paste0(find.package("cdwtools"), "/data/temp/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"))
-        dir.create(paste0(find.package("cdwtools"), "/data/"), showWarnings = FALSE)
-        dir.create(paste0(find.package("cdwtools"), "/data/temp/"), showWarnings = FALSE)
+        exdir <- paste0(app_folder, "/temp_files/", as.character(Sys.time()) %>% stringr::str_replace_all(":| |-", "_"))
         dir.create(exdir)
         
         zip::unzip(input$db_restore$datapath, exdir = exdir)
         csv_files <- zip::zip_list(input$db_restore$datapath)
         
         lapply(csv_files$filename, function(file_name){
-          
-          # Name of the table
-          table <- substr(file_name, 1, nchar(file_name) - 4)
-          
-          # For older versions (when cache was downloaded when you clicked on save database)
-          # (and when plugins_options table existed)
-          if (table %not_in% c("cache", "plugins_options")){
             
+          if (grepl(".csv$", file_name)){
+            
+            # Name of the table
+            table <- substr(file_name, 1, nchar(file_name) - 4)
+ 
             if (table != "log" | (table == "log" & input$db_import_log)){
             
+              if (table %in% c("modules_elements_options", "patients_options", "subset_patients", "subsets")) db <- m$db
+              else db <- r$db
+              
               # Load CSV file
               col_types_temp <- col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
               temp <- readr::read_csv(paste0(exdir, "/", file_name), col_types = col_types_temp, show_col_types = FALSE)
   
               # Delete data from old table
-              sql <- glue::glue_sql("DELETE FROM {`table`}", .con = r$db)
-              query <- DBI::dbSendStatement(r$db, sql)
+              sql <- glue::glue_sql("DELETE FROM {`table`}", .con = db)
+              query <- DBI::dbSendStatement(db, sql)
               DBI::dbClearResult(query)
   
               # Insert new data in table
-              DBI::dbAppendTable(r$db, table, temp)
+              DBI::dbAppendTable(db, table, temp)
             }
           }
-          
-          # Delete temp file
-          # file.remove(paste0(exdir, "/", file_name))
         })
-        
-        # Remove temp dir
-        unlink(paste0(find.package("cdwtools"), "/data/temp"), recursive = TRUE, force = TRUE)
-        
-        # Load database, restored
-        load_database(r = r, i18n = i18n)
         
         # If restore is a success, save in database
         
@@ -786,11 +805,10 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           )
         }
         
-        # update_r(r = r, table = "options")
-        
-        show_message_bar(output, 3, "database_restored", "success", i18n = i18n, ns = ns, time = 15000)
+        show_message_bar(output, 3, "database_restored", "success", i18n = i18n, ns = ns)
+        show_message_bar(output, 2, "reload_app_to_take_into_account_changes", "warning", i18n = i18n, ns = ns)
       },
-      error = function(e) report_bug(r = r, output = output, error_message = "error_restoring_database", 
+      error = function(e) report_bug(r = r, output = output, error_message = "error_restoring_database",
         error_name = paste0(id, " - restore database"), category = "Error", error_report = e, i18n = i18n, ns = ns))
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_app_database - observer input$db_restore_button"))

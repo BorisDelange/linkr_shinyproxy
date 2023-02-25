@@ -416,9 +416,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       if (nrow(datamart_loaded_scripts) > 0){
         
-        datetime <- datamart_loaded_scripts %>% dplyr::slice(1) %>% dplyr::pull(datetime)
-        if (tolower(language) == "fr") datetime <- format(as.POSIXct(datetime), format = "%d-%m-%Y %H:%M")
-        if (tolower(language) == "en") datetime <- format(as.POSIXct(datetime), format = "%Y-%m-%d %H:%M")
+        datetime <- datamart_loaded_scripts %>% dplyr::slice(1) %>% dplyr::pull(datetime) %>% format_datetime(language, sec = FALSE)
         
         datamart_loaded_scripts <- datamart_loaded_scripts %>%
           dplyr::left_join(r$scripts %>% dplyr::select(id, name), by = "id") %>%

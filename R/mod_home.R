@@ -235,9 +235,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
             
             news_file <- news_files[i, ]
             
-            datetime <- substr(news_file$file, 1, 16) %>% as.POSIXct(format = "%Y-%m-%d_%H-%M")
-            if (tolower(language) == "fr") datetime <- format(as.POSIXct(datetime), format = "%d-%m-%Y %H:%M")
-            if (tolower(language) == "en") datetime <- format(as.POSIXct(datetime), format = "%Y-%m-%d %H:%M")
+            datetime <- substr(news_file$file, 1, 16) %>% as.POSIXct(format = "%Y-%m-%d_%H-%M") %>% format_datetime(language, sec = FALSE)
             
             filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/", tolower(language), "/", news_file$file)
             con <- textConnection(filepath_github)
@@ -279,9 +277,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
             
             versions_file <- versions_files[i, ]
             
-            datetime <- substr(versions_file$file, 1, 16) %>% as.POSIXct(format = "%Y-%m-%d_%H-%M")
-            if (tolower(language) == "fr") datetime <- format(as.POSIXct(datetime), format = "%d-%m-%Y %H:%M")
-            if (tolower(language) == "en") datetime <- format(as.POSIXct(datetime), format = "%Y-%m-%d %H:%M")
+            datetime <- substr(versions_file$file, 1, 16) %>% as.POSIXct(format = "%Y-%m-%d_%H-%M") %>% format_datetime(language, sec = FALSE)
             
             filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/versions/", tolower(language), "/", versions_file$file)
             con <- textConnection(filepath_github)

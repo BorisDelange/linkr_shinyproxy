@@ -47,20 +47,23 @@ mod_settings_dev_ui <- function(id = character(), i18n = R6::R6Class()){
               ),
               style = "width: 100%;"
             ),
-
-            shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
-            div(shiny::verbatimTextOutput(ns("code_result")),
+            shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
+            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
+            div(verbatimTextOutput(ns("code_result")),
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
-        ), br()
+        )
       )
     ),
     
     shinyjs::hidden(
       div(id = ns("dev_perf_monitoring_card"),
         make_card(i18n$t("perf_monitoring"),
-          DT::DTOutput(ns("perf_monitoring_datatable"))
-        ), br()
+          div(
+            DT::DTOutput(ns("perf_monitoring_datatable")),
+            shiny.fluent::DefaultButton.shinyInput(ns("reset_perf_monitoring"), i18n$t("reset"))
+          )
+        )
       )
     ),
     
@@ -93,9 +96,9 @@ mod_settings_dev_ui <- function(id = character(), i18n = R6::R6Class()){
               ),
               messageBarType = 4)
           )
-        ), br()
+        )
       )
-    )
+    ), br()
   )
 }
     
@@ -103,7 +106,8 @@ mod_settings_dev_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 
-mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class()){
+mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
+  i18n = R6::R6Class(), language = "en"){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -135,18 +139,21 @@ mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(
     
     observeEvent(input$execute_code, {
       r$r_console_code <- input$ace_code
+      r$r_console_code_trigger <- Sys.time()
     })
     
     observeEvent(input$ace_code_run_selection, {
       if(!shinyAce::is.empty(input$ace_code_run_selection$selection)) r$r_console_code <- input$ace_code_run_selection$selection
       else r$r_console_code <- input$ace_code_run_selection$line
+      r$r_console_code_trigger <- Sys.time()
     })
 
     observeEvent(input$ace_code_run_all, {
       r$r_console_code <- input$ace_code
+      r$r_console_code_trigger <- Sys.time()
     })
 
-    observeEvent(r$r_console_code, {
+    observeEvent(r$r_console_code_trigger, {
 
       if ("dev_edit_code_card" %in% r$user_accesses){
         edited_code <- r$r_console_code %>% stringr::str_replace_all("\r", "\n")
@@ -154,6 +161,7 @@ mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(
         output$code_result <- renderText(
           execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, r = r, d = d, m = m,
             edited_code = edited_code, code_type = "server"))
+        output$datetime_code_execution <- renderText(format_datetime(Sys.time(), language))
       }
     })
     
@@ -161,21 +169,22 @@ mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(
     # Perf monitoring ----
     # --- --- --- --- -- -
     
+    searchable_cols <- c("task")
+    column_widths <- c("elapsed_time" = "120px", "datetime_start" = "150px", "datetime_stop" = "150px")
+    sortable_cols <- c("elapsed_time", "datetime_start", "datetime_stop", "task")
+    centered_cols <- c("elapsed_time", "datetime_start", "datetime_stop")
+    col_names <- get_col_names(table_name = "perf_monitoring", i18n = i18n)
+    
     observeEvent(r$perf_monitoring_table, {
-      req(nrow(r$perf_monitoring_table) > 0)
       
-      perf_monitoring_table <- r$perf_monitoring_table %>%
+      perf_monitoring_table <- r$perf_monitoring_table 
+      
+      if (nrow(perf_monitoring_table) > 0) perf_monitoring_table <- perf_monitoring_table %>%
         dplyr::mutate(elapsed_time = round(datetime_stop - datetime_start, 2), .before = "task") %>%
         dplyr::mutate_at(c("datetime_start", "datetime_stop"), as.character) %>%
         dplyr::mutate(row_num = 1:dplyr::n()) %>%
         dplyr::arrange(dplyr::desc(row_num)) %>%
         dplyr::select(-row_num)
-      
-      searchable_cols <- c("task")
-      column_widths <- c("elapsed_time" = "120px", "datetime_start" = "150px", "datetime_stop" = "150px")
-      sortable_cols <- c("elapsed_time", "datetime_start", "datetime_stop", "task")
-      centered_cols <- c("elapsed_time", "datetime_start", "datetime_stop")
-      col_names <- get_col_names(table_name = "perf_monitoring", i18n = i18n)
       
       # Render datatable
       if (length(r$perf_monitoring_datatable_proxy) == 0){
@@ -191,6 +200,12 @@ mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(
       
       if (length(r$perf_monitoring_datatable_proxy) > 0) DT::replaceData(r$perf_monitoring_datatable_proxy, 
         perf_monitoring_table, resetPaging = FALSE, rownames = FALSE)
+    })
+    
+    # Reset perf monitoring
+    
+    observeEvent(input$reset_perf_monitoring, {
+      r$perf_monitoring_table <- r$perf_monitoring_table %>% dplyr::slice(0)
     })
   })
 }
