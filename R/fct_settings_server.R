@@ -194,16 +194,16 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
   
   # Add a new thesaurus if a new data source is created
-  if (table == "data_sources"){
-    
-    new_thesaurus <- tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
-      last_row$thesaurus + 1, paste0(data$name, " - scripts items"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
-  
-    # Add also the code for the new thesaurus
-    
-    new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row$code + 1, "thesaurus", last_row$thesaurus + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
-  }
+  # if (table == "data_sources"){
+  #   
+  #   new_data$thesaurus <- tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
+  #     last_row$thesaurus + 1, paste0(data$name, " - scripts items"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+  # 
+  #   # Add also the code for the new thesaurus
+  #   
+  #   new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+  #     last_row$code + 1, "thesaurus", last_row$thesaurus + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+  # }
   
   # For options of plugins, add one row for long description (Markdown) & 2 rows for users allowed to use this plugin
   # The value is the default syntax of a plugin description
@@ -1319,7 +1319,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
     # Don't need to delete each users allowed if you change from "choose people" to "everybody"
     option_id <- options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(id)
     sql <- glue::glue_sql("UPDATE options SET value = {data$users_allowed_read_group} WHERE id = {option_id}", .con = r$db)
-    query <- DBI::dbSendStatement(sql)
+    query <- DBI::dbSendStatement(r$db, sql)
     DBI::dbClearResult(query)
     r$options <- r$options %>% dplyr::mutate(value = dplyr::case_when(id == option_id ~ data$users_allowed_read_group, TRUE ~ value))
     

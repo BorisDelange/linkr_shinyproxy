@@ -79,9 +79,14 @@ app_server <- function(router, language = "en", app_folder = character(),
     
     # Close DB connection on exit
     # And restore initial working directory
+    trad <- list()
+    trad$session <- switch(language, "fr" = "Session", "en" = "Session")
+    trad$session_starts <- switch(language, "fr" = "Début de la session", "en" = "Session starts")
+    trad$session_ends <- switch(language, "fr" = "Fin de la session", "en" = "Session ends")
+    
     onStop(function() {
       if (debug) print(paste0(Sys.time(), " - server - observer onStop"))
-      add_log_entry(r = isolate(r), category = "Connection ends", name = "Connection ends", value = "")
+      add_log_entry(r = isolate(r), category = trad$session, name = trad$session_ends, value = "")
       DBI::dbDisconnect(isolate(r$db))
     })
     
@@ -113,7 +118,7 @@ app_server <- function(router, language = "en", app_folder = character(),
     observeEvent(r$res_auth, {
       if (debug) print(paste0(Sys.time(), " - server - observer r$res_auth"))
       r$user_id <- as.integer(reactiveValuesToList(r$res_auth)$id)
-      add_log_entry(r = r, category = "Connection starts", name = "Connection starts", value = "")
+      add_log_entry(r = r, category = trad$session, name = trad$session_starts, value = "")
     })
 
 
@@ -248,7 +253,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       })
     
       if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_log"))
-      mod_settings_log_server("settings_log", r, i18n)
+      mod_settings_log_server("settings_log", r, i18n, perf_monitoring, debug)
       mod_page_sidenav_server("settings_log", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_log", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_log")

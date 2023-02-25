@@ -816,7 +816,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         observeEvent(r[[paste0(id, "_save")]], {
           
           if (perf_monitoring) monitor_perf(r = r, action = "start")
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$.save"))
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$..save"))
           
           req(input$code_chosen)
           
