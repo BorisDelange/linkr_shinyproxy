@@ -215,7 +215,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - plugins")
       if (debug) print(paste0(Sys.time(), " - server - load server modules - general_settings"))
     
-      mod_settings_general_server("settings_general_settings", r, language, i18n)
+      mod_settings_general_server("settings_general_settings", r, i18n, perf_monitoring, debug)
       mod_page_sidenav_server("settings_general_settings", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_general_settings", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - general_settings")

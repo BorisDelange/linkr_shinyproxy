@@ -22,12 +22,9 @@ mod_settings_general_ui <- function(id = character(), i18n = R6::R6Class()){
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
       shiny.fluent::PivotItem(id = "change_password_card", itemKey = "change_password", headerText = i18n$t("change_password"))
     ),
-    # render_settings_toggle_card(language = language, ns = ns, cards = list(
-    #   list(key = "change_password_card", label = "change_password")), words = words),
     div(id = ns("change_password_card"),
       make_card(i18n$t("change_password"),
         div(
-          make_dropdown(i18n = i18n, ns = ns, label = "user", id = "user", width = "300px", disabled = TRUE),
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
             make_textfield(i18n = i18n, ns = ns, label = "old_password", type = "password", canRevealPassword = TRUE, width = "300px"),
             make_textfield(i18n = i18n, ns = ns, label = "new_password", type = "password", canRevealPassword = TRUE, width = "300px"),
@@ -44,9 +41,12 @@ mod_settings_general_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 
-mod_settings_general_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", i18n = R6::R6Class()){
+mod_settings_general_server <- function(id = character(), r = shiny::reactiveValues(), i18n = R6::R6Class(),
+  perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    if (debug) print(paste0(Sys.time(), " - mod_settings_general - start"))
     
     # --- --- --- --- --- ---
     # Show or hide cards ----
@@ -66,6 +66,8 @@ mod_settings_general_server <- function(id = character(), r = shiny::reactiveVal
     # --- --- --- -- -- --
     
     observeEvent(input$save, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_settings_general - observer input$save"))
       
       # Check if textfields are not empty
       
@@ -120,7 +122,7 @@ mod_settings_general_server <- function(id = character(), r = shiny::reactiveVal
         
         # Notify the user
         
-        show_message_bar(output = output, id = 1, message = "password_changed", type = "success", i18n = i18n)
+        show_message_bar(output = output, id = 1, message = "password_changed", type = "success", i18n = i18n, ns = ns)
         
       }
       

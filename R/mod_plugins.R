@@ -603,6 +603,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           "**Version** : ", plugin_options %>% dplyr::filter(name == "version") %>% dplyr::pull(value), "\n\n",
           plugin_options %>% dplyr::filter(name == paste0("description_", tolower(language))) %>% dplyr::pull(value)
         )
+        
+        plugin_folder <- paste0(app_folder, "/plugins/", prefix, "/", plugin_options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
       }
       
       # For github plugins
@@ -615,7 +617,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           "**Version** : ", plugin$version, "\n\n",
           plugin %>% dplyr::pull(paste0("description_", tolower(language)))
         )
+        
+        plugin_folder <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id)
       }
+      
+      # Change %plugin_folder% for images
+      plugin_description <- plugin_description %>% stringr::str_replace_all("%plugin_folder%", plugin_folder)
       
       markdown_file <- paste0(markdown_settings, plugin_description)
       

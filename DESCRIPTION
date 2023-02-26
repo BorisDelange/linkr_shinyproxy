@@ -51,8 +51,6 @@ RoxygenNote: 7.1.2
 URL: https://github.com/BorisDelange/cdwtools
 BugReports: https://github.com/BorisDelange/cdwtools/issues
 Language: en-US
-Remotes: 
-    Appsilon/shiny.react,
-    Appsilon/shiny.fluent,
+Remotes:
     JohnCoene/marker
 VignetteBuilder: knitr

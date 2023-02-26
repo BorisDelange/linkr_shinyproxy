@@ -167,7 +167,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
             div(
               div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
               shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
-                list(key = "everybody", text = i18n$t("everybody")),
+                list(key = "everybody", text = i18n$t("everybody_who_has_access_to_datamart")),
                 list(key = "people_picker", text = i18n$t("choose_users"))
               ), className = "inline_choicegroup"),
               conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,

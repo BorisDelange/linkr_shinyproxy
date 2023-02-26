@@ -73,21 +73,17 @@ mod_settings_dev_ui <- function(id = character(), i18n = R6::R6Class()){
           div(br(),
             shiny.fluent::MessageBar(
               div(
-                strong("A faire pour la version 0.2.0"),
+                strong("A faire pour la version 0.2.1"),
                 p(
                   tags$ul(
-                    tags$li("Résoudre les bugs suivants ",
-                      tags$ul(
-                        tags$li("Lors connexion à BDD appli distante, switch pour la nouvelle BDD sans changer de compte"),
-                      )  
-                    )
-                  )  
+
+                  )
                 )
               ),
               messageBarType = 5), br(),
             shiny.fluent::MessageBar(
               div(
-                strong("Fait pour la version 0.2.0"),
+                strong("Fait pour la version 0.2.1"),
                 p(
                   tags$ul(
                     

@@ -1325,7 +1325,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
               },
               error = function(e){
                 report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
-                  error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, i18n = i18n)
+                  error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, i18n = i18n, ns = ns)
               })
             })
           }
@@ -2267,14 +2267,14 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
             datamart_id = r$chosen_datamart, category = "count_items_rows"),
               error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
                 error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
-                  " - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n))
+                  " - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
 
           # Add count_items_rows in the cache & get it if already in the cache
           tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
             datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
               error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
                 error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
-                  " - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n))
+                  " - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
 
           if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0){
             show_message_bar(output, 1, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
@@ -2803,7 +2803,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         },
         error = function(e){
           report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
-            error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, i18n = i18n)}
+            error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, i18n = i18n, ns = ns)}
         )
         # Remove toggles UI for this module
         # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", module_id))))
