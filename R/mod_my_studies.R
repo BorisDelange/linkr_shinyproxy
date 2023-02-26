@@ -63,12 +63,43 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
           make_card(i18n$t("messages"),
             div(
               shiny.fluent::Pivot(
+                id = ns("study_messages_pivot"),
                 onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-messages_current_tab', item.props.id)")),
                 shiny.fluent::PivotItem(id = "all_messages", itemKey = "all_messages", headerText = i18n$t("all_messages")),
                 shiny.fluent::PivotItem(id = "new_conversation", itemKey = "new_conversation", headerText = i18n$t("new_conversation"))
               ),
               conditionalPanel(condition = "input.messages_current_tab == null || input.messages_current_tab == 'all_messages'", ns = ns,
                 DT::DTOutput(ns("study_conversations")),
+                uiOutput(ns("conversation_object")), br(),
+                shinyjs::hidden(
+                  div(
+                    id = ns("conversation_new_message_div"),
+                    shiny.fluent::DefaultButton.shinyInput(ns("conversation_new_message"), i18n$t("new_message")),
+                    shinyjs::hidden(
+                      div(id = ns("conversation_hide_new_message_div"),
+                        shiny.fluent::DefaultButton.shinyInput(ns("conversation_hide_new_message"), i18n$t("hide_editor")))
+                    ),
+                    shinyjs::hidden(
+                      div(
+                        id = ns("new_message_text_div"),
+                        div(
+                          shinyAce::aceEditor(
+                            ns("new_message_text"), "", mode = "markdown",
+                            code_hotkeys = list("markdown", list(run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"))),
+                            autoScrollEditorIntoView = TRUE, minLines = 10, maxLines = 1000
+                          ), style = "width: 100%;"),
+                        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                          shiny.fluent::PrimaryButton.shinyInput(ns("send_new_message"), i18n$t("send")), " ",
+                          shiny.fluent::DefaultButton.shinyInput(ns("preview_new_message"), i18n$t("preview")),
+                          shiny.fluent::Toggle.shinyInput(ns("new_message_as_rmarkdown"), value = FALSE, style = "margin-top:6px;"),
+                          div(class = "toggle_title", i18n$t("rmarkdown"), style = "padding-top:6px;")
+                        ),
+                        uiOutput(ns("new_message_preview")),
+                        style = "float:left; width:100%;"
+                      )
+                    ), br()
+                  )
+                ),
                 uiOutput(ns("selected_conversation"))
               ),
               conditionalPanel(condition = "input.messages_current_tab == 'new_conversation'", ns = ns,
@@ -270,8 +301,11 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       shinyjs::hide("study_messages_content")
       shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", value = "")
       shinyAce::updateAceEditor(session, "new_conversation_text", value = "")
+      shinyAce::updateAceEditor(session, "new_message_text", value = "")
+      output$conversation_object <- renderUI("")
       output$new_conversation_preview <- renderUI("")
       output$selected_conversation <- renderUI("")
+      shinyjs::hide("conversation_new_message_div")
       
       # The datamart is loaded here, and not in sidenav
       # Placed in sidenav, the datamart is loaded multiple times (each time a page loads its own sidenav)
@@ -453,8 +487,11 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # Reset new conversation fields
       shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", value = "")
       shinyAce::updateAceEditor(session, "new_conversation_text", value = "")
+      shinyAce::updateAceEditor(session, "new_message_text", value = "")
+      output$conversation_object <- renderUI("")
       output$new_conversation_preview <- renderUI("")
       output$selected_conversation <- renderUI("")
+      shinyjs::hide("conversation_new_message_div")
       
       # Update study options combobox
       options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
@@ -476,6 +513,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer m$chosen_study"))
 
         req(!is.na(m$chosen_study))
+        
+        # All users of the study have access to the study conversations
 
         sql <- glue::glue_sql(paste0(
           "SELECT m.id, c.id AS conversation_id, c.name AS conversation_name, m.message, m.filepath, m.creator_id, m.datetime, im.read ",
@@ -491,54 +530,56 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           dplyr::group_by(conversation_id) %>%
           dplyr::summarize(conversation_name = max(conversation_name), datetime = max(datetime), read = min(read)) %>%
           dplyr::ungroup() %>%
-          dplyr::arrange(read, dplyr::desc(datetime)) %>%
-          dplyr::mutate(unread_messages = dplyr::case_when(read == 1 ~ i18n$t("no"), TRUE ~ i18n$t("yes"))) %>%
+          dplyr::mutate(unread_messages = dplyr::case_when(read == 1 ~ 0, TRUE ~ 1)) %>%
           dplyr::select(-read) %>%
+          dplyr::arrange(dplyr::desc(unread_messages), dplyr::desc(datetime)) %>%
           dplyr::relocate(unread_messages, .after = "datetime") %>%
           dplyr::mutate_at("datetime", as.character) %>%
           dplyr::mutate(datetime = stringr::str_replace_all(datetime, "T|Z", ""))
 
         if (nrow(r$study_messages) == 0) r$study_conversations <- tibble::tibble(conversation_id = integer(),
-          conversation_name = character(), datetime = character(), unread_messages = character())
+          conversation_name = character(), datetime = character(), unread_messages = character(), unread_messages_binary = integer())
         
         r$study_conversations_temp <- r$study_conversations %>% dplyr::mutate(modified = FALSE)
-
-        searchable_cols <- c("conversation_name", "unread_messages")
-        factorize_cols <- c("unread_messages")
-        column_widths <- c("datetime" = "150px", "unread_messages" = "150px")
-        sortable_cols <- c("id", "conversation_name", "datetime", "unread_messages")
-        centered_cols <- c("id", "datetime", "unread_messages")
-        col_names <- get_col_names(table_name = "study_conversations", i18n = i18n)
-        hidden_cols <- c("conversation_id", "modified")
-
-        # Render datatable
-        if (length(r$study_conversations_datatable_proxy) == 0){
-          render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$study_conversations_temp,
-            output_name = "study_conversations", col_names = col_names,
-            sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-            searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
-          
-          # Create a proxy for datatatable
-          r$study_conversations_datatable_proxy <- DT::dataTableProxy("study_conversations", deferUntilFlush = FALSE)
-        }
         
-        if (length(r$study_conversations_datatable_proxy) > 0) DT::replaceData(r$study_conversations_datatable_proxy, 
-          r$study_conversations_temp, resetPaging = FALSE, rownames = FALSE)
+        r$study_reload_conversations_datatable_clear_selection <- "all"
+        r$study_reload_conversations_datatable <- Sys.time()
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer m$chosen_study"))
       })
-
-      # When a conversation is selected
-      observeEvent(input$study_conversations_rows_selected, {
+    
+      study_conversations_searchable_cols <- c("conversation_name", "unread_messages")
+      study_conversations_factorize_cols <- c("unread_messages")
+      study_conversations_column_widths <- c("datetime" = "150px", "unread_messages" = "150px")
+      study_conversations_sortable_cols <- c("id", "conversation_name", "datetime", "unread_messages")
+      study_conversations_centered_cols <- c("id", "datetime", "unread_messages")
+      study_conversations_col_names <- get_col_names(table_name = "study_conversations", i18n = i18n)
+      study_conversations_hidden_cols <- c("conversation_id", "unread_messages_binary", "modified", "unread_messages")
+    
+      # Reload conversations
+      
+      observeEvent(r$study_reload_conversations_datatable, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$study_conversations_rows_selected"))
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$study_reload_conversations_datatable"))
+        
+        # Render datatable
+        if (length(r$study_conversations_datatable_proxy) == 0){
+          render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$study_conversations_temp,
+            output_name = "study_conversations", col_names = study_conversations_col_names,
+            sortable_cols = study_conversations_sortable_cols, centered_cols = study_conversations_centered_cols, column_widths = study_conversations_column_widths,
+            searchable_cols = study_conversations_searchable_cols, filter = TRUE, factorize_cols = study_conversations_factorize_cols, 
+            hidden_cols = study_conversations_hidden_cols, bold_rows = c("unread_messages" = 1))
 
-        r$study_reload_conversation <- Sys.time()
-        r$study_selected_conversation <- r$study_conversations_temp[input$study_conversations_rows_selected, ]
+          # Create a proxy for datatatable
+          r$study_conversations_datatable_proxy <- DT::dataTableProxy("study_conversations", deferUntilFlush = FALSE)
+        }
+
+        if (length(r$study_conversations_datatable_proxy) > 0) DT::replaceData(r$study_conversations_datatable_proxy,
+          r$study_conversations_temp, resetPaging = FALSE, rownames = FALSE, clearSelection = r$study_reload_conversations_datatable_clear_selection)
       })
-
-      # Timer to update messages
-
+      
+      # Timer to update conversations & messages
+      
       observe({
         
         # if (perf_monitoring) monitor_perf(r = r, action = "start")
@@ -546,40 +587,71 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         
         messages_timer()
         req(!is.na(m$chosen_study))
-
+        
         sql <- glue::glue_sql(paste0(
           "SELECT m.id, c.id AS conversation_id, c.name AS conversation_name, m.message, m.filepath, m.creator_id, m.datetime, im.read ",
           "FROM messages m ",
           "INNER JOIN conversations c ON m.conversation_id = c.id AND m.deleted IS FALSE ",
           "LEFT JOIN inbox_messages im ON m.id = im.message_id AND im.receiver_id = {r$user_id} AND im.deleted IS FALSE ",
           "WHERE category = 'study_message' AND m.study_id = {m$chosen_study} AND m.deleted IS FALSE"), .con = r$db)
-
+        
         study_messages <- DBI::dbGetQuery(r$db, sql) %>%
           tibble::as_tibble() %>% dplyr::mutate_at("datetime", as.POSIXct) %>% dplyr::arrange(dplyr::desc(datetime))
-
+        
         if (study_messages %>% dplyr::select(id) %>% dplyr::anti_join(r$study_messages %>% dplyr::select(id), by = "id") %>% nrow() > 0 & nrow(study_messages) > 0){
-
+          
           r$study_messages <- study_messages
-
+          
           r$study_conversations <- r$study_messages %>%
             dplyr::group_by(conversation_id) %>%
             dplyr::summarize(conversation_name = max(conversation_name), datetime = max(datetime), read = min(read)) %>%
             dplyr::ungroup() %>%
-            dplyr::arrange(read, dplyr::desc(datetime)) %>%
-            dplyr::mutate(unread_messages = dplyr::case_when(read == 1 ~ i18n$t("no"), TRUE ~ i18n$t("yes"))) %>%
+            dplyr::mutate(unread_messages = dplyr::case_when(read == 1 ~ 0, TRUE ~ 1)) %>%
             dplyr::select(-read) %>%
+            dplyr::arrange(dplyr::desc(unread_messages), dplyr::desc(datetime)) %>%
             dplyr::relocate(unread_messages, .after = "datetime") %>%
             dplyr::mutate_at("datetime", as.character) %>%
             dplyr::mutate(datetime = stringr::str_replace_all(datetime, "T|Z", ""))
-
+          
           r$study_conversations_temp <- r$study_conversations %>% dplyr::mutate(modified = FALSE)
-
-          DT::replaceData(r$study_conversations_datatable_proxy, r$study_conversations_temp, resetPaging = FALSE, rownames = FALSE)
-
+          
+          # Unselect rows
+          r$study_reload_conversations_datatable_clear_selection <- "all"
+          
+          # Reload datatable
+          r$study_reload_conversations_datatable <- Sys.time()
+          
           r$study_reload_conversation <- Sys.time()
+          r$study_reload_conversation_type <- "refresh_conversation"
         }
         
         # if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer to update messages"))
+      })
+      
+      # --- --- --- --- --- --- --- --- --- -
+      ## When a conversation is selected ----
+      # --- --- --- --- --- --- --- --- --- -
+      
+      observeEvent(input$study_conversations_rows_selected, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$study_conversations_rows_selected"))
+
+        # Show conversation messages
+        
+        r$study_reload_conversation <- Sys.time()
+        r$study_reload_conversation_type <- "select_conversation"
+        r$study_selected_conversation <- r$study_conversations_temp[input$study_conversations_rows_selected, ]
+        
+        # Mark conversation as read
+        r$study_conversations_temp <- r$study_conversations_temp %>%
+          dplyr::mutate(unread_messages = dplyr::case_when(
+            conversation_id == r$study_conversations_temp[input$study_conversations_rows_selected, "conversation_id"] %>% dplyr::pull() ~ 0,
+            TRUE ~ unread_messages
+          ))
+        
+        # Reload datatable
+        r$study_reload_conversations_datatable_clear_selection <- "none"
+        r$study_reload_conversations_datatable <- Sys.time()
       })
 
       observeEvent(r$study_reload_conversation, {
@@ -587,8 +659,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$study_reload_conversation"))
 
-        # selected_conversation <- r$study_conversations_temp[input$study_conversations_rows_selected, ]
-        # r$study_selected_conversation <- selected_conversation %>% dplyr::select(conversation_id, conversation_name)
+        req(r$study_selected_conversation)
+        
         conversation_messages <- r$study_messages %>% dplyr::inner_join(r$study_selected_conversation %>% dplyr::select(conversation_id), by = "conversation_id") %>%
           dplyr::arrange(dplyr::desc(datetime))
 
@@ -628,7 +700,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
             )
           }
           else {
-            if (study_message$read) study_message_style <- "background-color:#F5F5F5; margin-top:10px; padding:15px; border-radius:10px;"
+            if (is.na(study_message$read) | study_message$read) study_message_style <- "background-color:#F5F5F5; margin-top:10px; padding:15px; border-radius:10px;"
             else study_message_style <- "background-color:#ECF8E7; margin-top:10px; padding:15px; border-radius:10px;"
 
             creator_name <- r$users %>% dplyr::filter(id == study_message$creator_id) %>%
@@ -664,41 +736,29 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           conversation_messages_ui <- tagList(conversation_messages_ui, study_message_ui)
         }
 
-        output$selected_conversation <- renderUI(tagList(
-          shiny.fluent::DefaultButton.shinyInput(ns("conversation_new_message"), i18n$t("new_message")),
-          shinyjs::hidden(
-            div(id = ns("conversation_hide_new_message_div"),
-            shiny.fluent::DefaultButton.shinyInput(ns("conversation_hide_new_message"), i18n$t("hide_editor")))
-          ),
-          shinyjs::hidden(
-            div(
-              id = ns("new_message_text_div"),
-              div(
-                shinyAce::aceEditor(
-                  ns("new_message_text"), "", mode = "markdown",
-                  code_hotkeys = list("markdown", list(run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"))),
-                  autoScrollEditorIntoView = TRUE, minLines = 10, maxLines = 1000
-              ), style = "width: 100%;"),
-              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::PrimaryButton.shinyInput(ns("send_new_message"), i18n$t("send")), " ",
-                shiny.fluent::DefaultButton.shinyInput(ns("preview_new_message"), i18n$t("preview")),
-                shiny.fluent::Toggle.shinyInput(ns("new_message_as_rmarkdown"), value = FALSE, style = "margin-top:6px;"),
-                div(class = "toggle_title", i18n$t("rmarkdown"), style = "padding-top:6px;")
-              ),
-              uiOutput(ns("new_message_preview")),
-              style = "float:left; width:100%;"
-            )
-          ), br(),
-          conversation_messages_ui
-        ))
+        output$selected_conversation <- renderUI(conversation_messages_ui)
+        shinyjs::show("conversation_new_message_div")
 
-        # Clear message preview and aceEditor
-        output$new_message_preview <- renderUI("")
-        shinyAce::updateAceEditor(session, "new_message_text", value = "")
-        sapply(c("new_message_text_div", "conversation_hide_new_message_div"), function(name) shinyjs::hide(name))
-        shinyjs::show("conversation_new_message")
+        if (r$study_reload_conversation_type != "refresh_conversation"){
+          output$new_message_preview <- renderUI("")
+          output$conversation_object <- renderUI(tagList(i18n$t("object"), " : ", strong(r$study_selected_conversation$conversation_name)))
+          shinyAce::updateAceEditor(session, "new_message_text", value = "")
+          sapply(c("new_message_text_div", "conversation_hide_new_message_div"), function(name) shinyjs::hide(name))
+          shinyjs::show("conversation_new_message")
+        }
 
         # Update inbox_messages
+        # Create a row if user hasn't a row (admin who has access to all studies or an account created after the conversation was sent)
+        
+        sql <- glue::glue_sql("SELECT * FROM inbox_messages WHERE receiver_id = {r$user_id} AND message_id IN ({conversation_messages$id*})", .con = r$db)
+        has_inbox_messages <- DBI::dbGetQuery(r$db, sql)
+        if (nrow(has_inbox_messages) == 0){
+          new_data <- conversation_messages %>% dplyr::select(message_id = id) %>%
+            dplyr::mutate(id = 1:dplyr::n() + get_last_row(r$db, "inbox_messages"), .before = "message_id") %>%
+            dplyr::mutate(receiver_id = as.integer(r$user_id), read = TRUE, datetime = as.character(Sys.time()), deleted = FALSE)
+          DBI::dbAppendTable(r$db, "inbox_messages", new_data)
+        }
+        
         sql <- glue::glue_sql("UPDATE inbox_messages SET read = TRUE WHERE receiver_id = {r$user_id} AND message_id IN ({conversation_messages$id*})", .con = r$db)
         query <- DBI::dbSendStatement(r$db, sql)
         DBI::dbClearResult(query)
@@ -763,7 +823,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         req(input[[paste0("new_", type, "_text")]] != "")
 
         if (input[[paste0("new_", type, "_as_rmarkdown")]]){
-
+ 
           tryCatch({
 
             new_text <- input[[paste0("new_", type, "_text")]] %>% stringr::str_replace_all("\r", "\n")
@@ -784,8 +844,14 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
             new_file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
             if (!dir.exists(dir)) dir.create(dir)
 
+            # Variables to hide
+            new_env_vars <- list("r" = NA)
+            # Variables to keep
+            for (var in c("d", "m", "i18n")) new_env_vars[[var]] <- eval(parse(text = var))
+            new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
+            
             # Create the markdown file
-            knitr::knit(text = markdown_file, output = new_file, quiet = TRUE)
+            knitr::knit(text = markdown_file, envir = new_env, output = new_file, quiet = TRUE)
 
             output[[paste0("new_", type, "_preview")]] <- renderUI(
               div(
@@ -877,9 +943,15 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
             # Create new dir
             new_file <- paste0(new_dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":| |-", ""), ".Md")
             if (!dir.exists(new_dir)) dir.create(new_dir)
+            
+            # Variables to hide
+            new_env_vars <- list("r" = NA)
+            # Variables to keep
+            for (var in c("d", "m", "i18n")) new_env_vars[[var]] <- eval(parse(text = var))
+            new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
 
             # Create the markdown file
-            knitr::knit(text = markdown_file, output = new_file, quiet = TRUE)
+            knitr::knit(text = markdown_file, envir = new_env, output = new_file, quiet = TRUE)
 
           }, error = function(e) "")
         }
@@ -936,14 +1008,18 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if (type == "conversation"){
 
           # Reload conversations datatable
+          
           r$study_conversations_temp <- r$study_conversations_temp %>%
             dplyr::bind_rows(
               tibble::tribble(
-                ~conversation_id, ~conversation_name, ~datetime, ~unread_messages, ~modified,
-                conversation_id, conversation_name, as.character(Sys.time()), i18n$t("yes"), FALSE
+                ~conversation_id, ~conversation_name, ~datetime, ~unread_messages,
+                conversation_id, conversation_name, as.character(Sys.time()), 1
               )
-            )
-          DT::replaceData(r$study_conversations_datatable_proxy, r$study_conversations_temp, resetPaging = FALSE, rownames = FALSE)
+            ) %>%
+            dplyr::arrange(dplyr::desc(unread_messages), dplyr::desc(datetime))
+          
+          r$study_reload_conversations_datatable_clear_selection <- "all"
+          r$study_reload_conversations_datatable <- Sys.time()
         }
 
         # Reload conversation
@@ -957,10 +1033,20 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           ) %>%
           dplyr::arrange(dplyr::desc(datetime))
 
-        if (type == "message") r$study_reload_conversation <- Sys.time()
+        if (type == "message"){
+          r$study_reload_conversation <- Sys.time()
+          r$study_reload_conversation_type <- "add_message"
+        } 
 
-        # Notify user
-        show_message_bar(output = output, id = 4, message = paste0("new_", type, "_added"), type = "success", i18n = i18n, ns = ns)
+        # Notify user only for conversation
+        # Set current pivot to messages
+        # Hide messages for selected conversation
+        if (type == "conversation"){
+          show_message_bar(output = output, id = 4, message = "new_conversation_added", type = "success", i18n = i18n, ns = ns)
+          shinyjs::runjs(glue::glue("$('#{id}-study_messages_pivot button[name=\"{i18n$t('all_messages')}\"]').click();"))
+          output$selected_conversation <- renderUI("")
+          shinyjs::hide("conversation_new_message_div")
+        }
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$study_save_message_conversation_trigger"))
       })
@@ -982,7 +1068,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       new_data$aggregated_module_family <- get_last_row(r$db, "aggregated_modules_families") + 1
       new_data$datamart <- r$chosen_datamart
       
-      add_settings_new_data(session = session, output = output, r = r, d = d, m = m, i18n = i18n, id = "settings_studies", 
+      add_settings_new_data(session = session, output = output, r = r, d = d, m = m, i18n = i18n, id = "my_studies", 
         data = new_data, table = "studies", required_textfields = "study_name", req_unique_values = "name")
       
       # Reload datatable
@@ -998,14 +1084,14 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # Action buttons for each module / page
     action_buttons <- c("options", "delete")
     
-    editable_cols <- c("name")
-    sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
-    column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
-    centered_cols <- c("id", "creator", "datetime", "action")
-    searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
-    factorize_cols <- c("datamart_id", "creator_id")
-    hidden_cols <- c("id", "description", "datamart_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "deleted", "modified")
-    col_names <- get_col_names("studies", i18n)
+    study_management_editable_cols <- c("name")
+    study_management_sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
+    study_management_column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
+    study_management_centered_cols <- c("id", "creator", "datetime", "action")
+    study_management_searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
+    study_management_factorize_cols <- c("datamart_id", "creator_id")
+    study_management_hidden_cols <- c("id", "description", "datamart_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "deleted", "modified")
+    study_management_col_names <- get_col_names("studies", i18n)
     
     # Prepare data for datatable
     
@@ -1028,7 +1114,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         # Prepare data for datatable
         
         r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
-          table = "studies", factorize_cols = factorize_cols, action_buttons = action_buttons, data_input = r$studies_temp)
+          table = "studies", factorize_cols = study_management_factorize_cols, action_buttons = action_buttons, data_input = r$studies_temp)
         data <- r$studies_datatable_temp
       }
         
@@ -1038,8 +1124,10 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         
         render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data,
           output_name = "studies_datatable", col_names = get_col_names("studies", i18n),
-          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
+          editable_cols = study_management_editable_cols, sortable_cols = study_management_sortable_cols, centered_cols = study_management_centered_cols, 
+          column_widths = study_management_column_widths, searchable_cols = study_management_searchable_cols, 
+          filter = TRUE, factorize_cols = study_management_factorize_cols, hidden_cols = study_management_hidden_cols,
+          selection = "multiple")
         
         # Create a proxy for datatable
         
@@ -1062,7 +1150,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         deleted = integer(), modified = logical(), action = character())
       
       if (nrow(r$studies_temp) > 0) r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
-        table = "studies", factorize_cols = factorize_cols, action_buttons = action_buttons, data_input = r$studies_temp)
+        table = "studies", factorize_cols = study_management_factorize_cols, action_buttons = action_buttons, data_input = r$studies_temp)
 
       # Reload data of datatable
       if (length(r$studies_datatable_proxy) > 0) DT::replaceData(r$studies_datatable_proxy, 
@@ -1252,27 +1340,27 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     ## Debug - Execute code ----
     # --- --- --- --- --- --- --
     
-    observeEvent(input$execute_code, {
-      
-      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$execute_code"))
-      
-      code <- input$ace_edit_code %>% stringr::str_replace_all("\r", "\n")
-      
-      output$code_result <- renderText({
-        
-        options('cli.num_colors' = 1)
-        
-        # Capture console output of our code
-        captured_output <- capture.output(
-          tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
-        
-        # Restore normal value
-        options('cli.num_colors' = NULL)
-        
-        # Display result
-        paste(strwrap(captured_output), collapse = "\n")
-      })
-    })
+    # observeEvent(input$execute_code, {
+    #   
+    #   if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$execute_code"))
+    #   
+    #   code <- input$ace_edit_code %>% stringr::str_replace_all("\r", "\n")
+    #   
+    #   output$code_result <- renderText({
+    #     
+    #     options('cli.num_colors' = 1)
+    #     
+    #     # Capture console output of our code
+    #     captured_output <- capture.output(
+    #       tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
+    #     
+    #     # Restore normal value
+    #     options('cli.num_colors' = NULL)
+    #     
+    #     # Display result
+    #     paste(strwrap(captured_output), collapse = "\n")
+    #   })
+    # })
     
   })
 }

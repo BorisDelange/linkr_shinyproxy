@@ -48,10 +48,6 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     ns <- session$ns
     
     if (debug) print(paste0(Sys.time(), " - mod_settings_log - start"))
-    
-    # --- --- --- --- --- -
-    # Render datatable ----
-    # --- --- --- --- --- -
 
     if ("log" %in% r$user_accesses){
       
@@ -67,6 +63,8 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
       shinyjs::hide("log_card")
       shinyjs::show("log_card_forbidden")
     }
+    
+    # Render main UI, depending on r$user_accesses
     
     output$main <- renderUI({
       
@@ -110,19 +108,27 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
       div(
         result,
         shiny.fluent::DefaultButton.shinyInput(ns("reload_log"), i18n$t("reload_log")),
-        DT::DTOutput(ns("datatable")), br(),
+        DT::DTOutput(ns("log_datatable")), br(),
         div(verbatimTextOutput(ns("log_details")), 
           style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
       )
     })
     
-    # When a user is chosen
+    col_names <- get_col_names("log", i18n = i18n)
+    page_length <- 100
+    centered_cols <- c("id", "name", "creator_id", "datetime")
+    sortable_cols <- c("id", "category", "name", "creator_id", "datetime")
+    searchable_cols <- c("category", "name", "creator_id", "datetime")
+    factorize_cols <- c("category")
+    hidden_cols <- "value_long"
     
-    observeEvent(input$see_log_of, {
+    # Reload datatable
+    
+    observeEvent(input$reload_log, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_settings_log - observer input$see_log_of"))
-     
+      if (debug) print(paste0(Sys.time(), " - mod_settings_log - observer input$reload_log"))
+      
       r$log <- tibble::tibble()
       
       if (input$see_log_of == "only_me"){
@@ -130,28 +136,14 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
         r$log <- DBI::dbGetQuery(r$db, sql)
       }
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_log - observer input$see_log_of"))
-    })
-    
-    observeEvent(input$users, {
+      if (input$see_log_of == "people_picker"){
+        sql <- glue::glue_sql("SELECT id, category, name, value, creator_id, datetime FROM log WHERE creator_id IN ({input$users*}) ORDER BY datetime DESC", .con = r$db)
+        r$log <- DBI::dbGetQuery(r$db, sql)
+      }
       
-      if (debug) print(paste0(Sys.time(), " - mod_settings_log - observer input$users"))
-      
-      sql <- glue::glue_sql("SELECT id, category, name, value, creator_id, datetime FROM log WHERE creator_id IN ({input$users*}) ORDER BY datetime DESC", .con = r$db)
-      r$log <- DBI::dbGetQuery(r$db, sql)
-      
-    })
-    
-    observeEvent(input$reload_log, {
-      
-      if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_settings_log - observer input$reload_log"))
-      
-      r$selected_log <- r$log
-      
-      if (nrow(r$selected_log) > 0){
+      if (nrow(r$log) > 0){
         
-        r$selected_log <- r$selected_log %>% dplyr::left_join(
+        r$log <- r$log %>% dplyr::left_join(
           r$users %>% dplyr::mutate(display_name = paste0(firstname, " ", lastname)) %>% dplyr::select(creator_id = id, display_name),
           by = "creator_id") %>% 
           dplyr::relocate(display_name, .before = "datetime") %>%
@@ -161,29 +153,28 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
           dplyr::arrange(desc(datetime))
       }
       
-      if (nrow(r$selected_log) == 0) r$selected_log <- r$selected_log %>% dplyr::mutate(value_long = "", .after = "value")
+      if (nrow(r$log) == 0) r$log <- r$log %>% dplyr::mutate(value_long = "", .after = "value")
       
-      col_names <- get_col_names("log", i18n = i18n)
-      page_length <- 100
-      centered_cols <- c("id", "name", "creator_id", "datetime")
-      sortable_cols <- c("id", "category", "name", "creator_id", "datetime")
-      searchable_cols <- c("category", "name", "creator_id", "datetime")
-      factorize_cols <- c("category")
-      hidden_cols <- "value_long"
+      if (length(r$log_datatable_proxy) > 0) DT::replaceData(r$log_datatable_proxy, r$log, resetPaging = FALSE, rownames = FALSE) 
       
-      render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$selected_log, output_name = "datatable", col_names = col_names,
-        page_length = page_length, centered_cols = centered_cols, sortable_cols = sortable_cols,
-        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
-      
+      if (length(r$log_datatable_proxy) == 0){
+        
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$log, output_name = "log_datatable", col_names = col_names,
+          page_length = page_length, centered_cols = centered_cols, sortable_cols = sortable_cols,
+          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+        
+        r$log_datatable_proxy <- DT::dataTableProxy("log_datatable", deferUntilFlush = FALSE)
+      }
+        
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_log - observer input$reload_log"))
     })
     
     # When a row is selected
     
-    observeEvent(input$datatable_rows_selected, {
+    observeEvent(input$log_datatable_rows_selected, {
       
       output$log_details <- renderText(
-        text <- r$selected_log[input$datatable_rows_selected, ] %>% dplyr::pull(value_long) %>%
+        r$log[input$log_datatable_rows_selected, ] %>% dplyr::pull(value_long) %>%
           strwrap(width = 100) %>% paste(collase = "\n")
       )
     })

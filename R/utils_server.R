@@ -187,7 +187,8 @@ get_col_names <- function(table_name = character(), i18n = R6::R6Class()){
   }
   
   if (table_name == "study_conversations"){
-    result <- c(i18n$t("conversation_id"), i18n$t("conversation_name"), i18n$t("datetime"), i18n$t("unread_messages"), i18n$t("modified"))
+    result <- c(i18n$t("conversation_id"), i18n$t("object"), i18n$t("datetime"), 
+      i18n$t("unread_messages"), i18n$t("modified"))
   }
   
   if (table_name == "thesaurus_items"){

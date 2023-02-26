@@ -800,9 +800,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       edited_code <- r$script_code %>% stringr::str_replace_all("\r", "\n")
       
       # Variables to hide
-      new_env_vars <- list()
+      new_env_vars <- list("r" = NA)
       # Variables to keep
-      for (var in c("d", "m", "r", "output", "i18n",)) new_env_vars[[var]] <- eval(parse(text = var))
+      for (var in c("d", "m", "r", "output", "i18n")) new_env_vars[[var]] <- eval(parse(text = var))
       new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
       
       # if (input$output_type == "console"){

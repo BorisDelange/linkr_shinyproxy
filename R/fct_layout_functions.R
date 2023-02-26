@@ -295,9 +295,9 @@ make_choicegroup <- function(language = "EN", ns = shiny::NS(), label = characte
 #' @param column_widths Columns widths (named character vector)
 render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(), data = tibble::tibble(),
   output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top't><'bottom'p>", page_length = 10, start = 0,
-  editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), 
-  filter = FALSE, factorize_cols = character(), column_widths = character(), hidden_cols = character(), truncated_cols = character(),
-  selection = "single", default_tibble = tibble::tibble()
+  editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), filter = FALSE, 
+  factorize_cols = character(), column_widths = character(), hidden_cols = character(), truncated_cols = character(), selection = "single",
+  bold_rows = character()
 ){
   
   # Translation for datatable
@@ -306,20 +306,6 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
     search = i18n$t("dt_search"),
     lengthMenu = i18n$t("dt_entries"),
     emptyTable = i18n$t("dt_empty"))
-  
-  # If no row in dataframe, stop here
-  # if (nrow(data) == 0){
-  #   
-  #   if (length(names(default_tibble)) == 0) return({
-  #     data <- tibble::tribble(~id)
-  #     names(data) <- c("")
-  #     output[[output_name]] <- DT::renderDT(data, options = list(dom = datatable_dom, language = dt_translation), 
-  #       rownames = FALSE, selection = "single", escape = FALSE, server = TRUE)
-  #   })
-  #   
-  #   if (length(names(default_tibble)) > 0) data <- default_tibble
-  # }
-  
   
   # Which columns are non editable
   
@@ -362,12 +348,6 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
     truncated_cols_vec <<- c(truncated_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   
-  # Which cols are with non-selection attribute
-  # no_selection_cols_vec <- integer()
-  # sapply(no_selection_cols, function(col){
-  #   no_selection_cols_vec <<- c(no_selection_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
-  # })
-  
   # If filter is TRUE
   if (filter) filter_list <- list(position = "top")
   if (!filter) filter_list <- list()
@@ -407,11 +387,8 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
   
   # So data is ready to be rendered in the datatable
   
-  output[[output_name]] <- DT::renderDT(
-    # Data
+  data <- DT::datatable(
     data,
-    
-    # Options of the datatable
     options = list(
       dom = datatable_dom,
       pageLength = page_length, displayStart = start,
@@ -424,22 +401,27 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS
     selection = selection,
     
     # Default options
-    rownames = FALSE, escape = FALSE, server = TRUE,
+    rownames = FALSE, escape = FALSE,
     
     # Javascript code allowing to have dropdowns & actionButtons on the DataTable
     callback = htmlwidgets::JS("table.rows().every(function(i, tab, row) {
-      var $this = $(this.node());
-      $this.attr('id', this.data()[0]);
-      $this.addClass('shiny-input-container');
-      });
-      Shiny.unbindAll(table.table().node());
-      Shiny.bindAll(table.table().node());")
-      # table.on('select.dt', function(e, dt, type, indexes) {
-      #   if (table.columns('.no-selection').indexes().length) {
-      #     table.rows(indexes).deselect();
-      #   }
-      # });")
+        var $this = $(this.node());
+        $this.attr('id', this.data()[0]);
+        $this.addClass('shiny-input-container');
+        });
+        Shiny.unbindAll(table.table().node());
+        Shiny.bindAll(table.table().node());")
   )
+  
+  # Bold rows with condition
+  
+  if (length(bold_rows) > 0){
+    for (col_name in names(bold_rows)){
+      data <- data %>% DT::formatStyle(i18n$t(col_name), target = "row", fontWeight = DT::styleEqual(bold_rows[col_name], "bold"))
+    }
+  }
+  
+  output[[output_name]] <- DT::renderDT(data, server = TRUE)
 }
 
 format_datetime <- function(datetime = character(), language = "en", sec = TRUE){
