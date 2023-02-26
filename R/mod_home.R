@@ -22,7 +22,7 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
         shiny.fluent::PivotItem(id = "news_card", itemKey = "news", headerText = i18n$t("news")),
         shiny.fluent::PivotItem(id = "versions_card", itemKey = "versions", headerText = i18n$t("versions"))
       ),
-      div(id = ns("overview_card"), make_card(i18n$t("overview"), uiOutput(ns("overview_div")))),
+      div(id = ns("overview_card"), uiOutput(ns("overview_div"))),
       shinyjs::hidden(div( id = ns("news_card"), uiOutput(ns("news_div")))),
       shinyjs::hidden(div( id = ns("versions_card"), uiOutput(ns("versions_div")))),
     )

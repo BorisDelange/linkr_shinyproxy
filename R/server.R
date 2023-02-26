@@ -6,7 +6,7 @@
 #' @noRd
 
 app_server <- function(router, language = "en", app_folder = character(), 
-  perf_monitoring = FALSE, debug = FALSE, options_toggles = tibble::tibble()){
+  perf_monitoring = FALSE, debug = FALSE, local = FALSE, options_toggles = tibble::tibble()){
   function(input, output, session ) {
     
     if (debug) print(paste0(Sys.time(), " - server - init"))
@@ -32,8 +32,10 @@ app_server <- function(router, language = "en", app_folder = character(),
     r$app_version <- "0.2.0"
     
     # Test internet connection
+    # If local is TRUE, don't use internet connection
     if (debug) print(paste0(Sys.time(), " - server - has_internet"))
-    r$has_internet <- curl::has_internet()
+    if (local) r$has_internet <- FALSE
+    else r$has_internet <- curl::has_internet()
     
     # If perf_monotoring activated
     if (debug) print(paste0(Sys.time(), " - server - perf_monitoring"))

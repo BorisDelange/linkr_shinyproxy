@@ -99,9 +99,9 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
                     list(key = "github", text = i18n$t("git_remote_plugins"))
                   ), className = "inline_choicegroup"),
                   style = "width:320px;"
-                ),
-                conditionalPanel(condition = "input.all_plugins_source == 'github'", ns = ns, 
-                  div(shiny.fluent::Dropdown.shinyInput(ns("github_source"), i18n$t("remote_git_repo")), style = "width:322px; margin-top:2px;"))
+                )#,
+                # conditionalPanel(condition = "input.all_plugins_source == 'github'", ns = ns, 
+                  # div(shiny.fluent::Dropdown.shinyInput(ns("github_source"), i18n$t("remote_git_repo")), style = "width:322px; margin-top:2px;"))
               ),
               conditionalPanel(condition = "input.all_plugins_source == 'github'", ns = ns,
                 uiOutput(ns("all_plugins_github"))),

@@ -46,6 +46,7 @@ linkr <- function(
   app_folder = character(),
   perf_monitoring = FALSE,
   debug = FALSE,
+  local = FALSE,
   options = list(),
   ...
 ) {
@@ -230,7 +231,7 @@ linkr <- function(
     app = shinyApp(
       ui = app_ui(css = css, page = page, language = language, debug = debug),
       server = app_server(router = page, language = language, app_folder = app_folder, 
-        perf_monitoring = perf_monitoring, debug = debug, options_toggles = options_toggles),
+        perf_monitoring = perf_monitoring, debug = debug, local = local, options_toggles = options_toggles),
       options = options
     ), 
     golem_opts = list()

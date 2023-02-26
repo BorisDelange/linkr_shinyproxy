@@ -223,7 +223,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row$options + 5, "plugin", last_row$data + 1, "author", username, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row$options + 6, "plugin", last_row$data + 1, "image", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row$options + 7, "plugin", last_row$data + 1, "description_fr", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 8, "plugin", last_row$data + 1, "description_en", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
+      last_row$options + 8, "plugin", last_row$data + 1, "description_en", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 9, "plugin", last_row$data + 1, "category", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
       )
     # Add code rows
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
@@ -238,7 +239,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     # Add options rows
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row$options + 1, "script", last_row$data + 1, "markdown_description", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$options + 1, "script", last_row$data + 1, "markdown_description", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 2, "script", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add code rows
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
@@ -252,7 +254,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row$options + 1, "datamart", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row$options + 2, "datamart", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row$options + 3, "datamart", last_row$data + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 4, "datamart", last_row$data + 1, "activate_scripts_cache", "", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$options + 4, "datamart", last_row$data + 1, "activate_scripts_cache", "", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 5, "datamart", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # For studies, need to add one row in options and add rows of code for subsets, with default value
@@ -260,7 +263,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, "study", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 2, "study", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$options + 2, "study", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 3, "study", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add rows in subsets table, for inclusion / exclusion subsets
     # Add also code corresponding to each subset

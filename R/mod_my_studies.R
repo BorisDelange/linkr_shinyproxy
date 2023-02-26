@@ -538,7 +538,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           dplyr::mutate(datetime = stringr::str_replace_all(datetime, "T|Z", ""))
 
         if (nrow(r$study_messages) == 0) r$study_conversations <- tibble::tibble(conversation_id = integer(),
-          conversation_name = character(), datetime = character(), unread_messages = character(), unread_messages_binary = integer())
+          conversation_name = character(), datetime = character(), unread_messages = integer())
         
         r$study_conversations_temp <- r$study_conversations %>% dplyr::mutate(modified = FALSE)
         
@@ -554,7 +554,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       study_conversations_sortable_cols <- c("id", "conversation_name", "datetime", "unread_messages")
       study_conversations_centered_cols <- c("id", "datetime", "unread_messages")
       study_conversations_col_names <- get_col_names(table_name = "study_conversations", i18n = i18n)
-      study_conversations_hidden_cols <- c("conversation_id", "unread_messages_binary", "modified", "unread_messages")
+      study_conversations_hidden_cols <- c("conversation_id", "modified", "unread_messages")
     
       # Reload conversations
       
@@ -997,7 +997,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         # Inbox_messages table
         new_data <- tibble::tibble(
           id = seq(get_last_row(r$db, "inbox_messages") + 1, get_last_row(r$db, "inbox_messages") + length(receivers_ids), 1),
-          message_id = new_message_id, receiver_id = receivers_ids, read = FALSE, datetime = as.character(Sys.time()), deleted = FALSE)
+          message_id = new_message_id, receiver_id = receivers_ids, read = FALSE, datetime = as.character(Sys.time()), deleted = FALSE) %>%
+          dplyr::mutate(read = dplyr::case_when(receiver_id == r$user_id ~ TRUE, TRUE ~ read))
         DBI::dbAppendTable(r$db, "inbox_messages", new_data)
 
         # Reset fields
@@ -1013,7 +1014,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
             dplyr::bind_rows(
               tibble::tribble(
                 ~conversation_id, ~conversation_name, ~datetime, ~unread_messages,
-                conversation_id, conversation_name, as.character(Sys.time()), 1
+                conversation_id, conversation_name, as.character(Sys.time()), 0
               )
             ) %>%
             dplyr::arrange(dplyr::desc(unread_messages), dplyr::desc(datetime))
@@ -1084,14 +1085,14 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # Action buttons for each module / page
     action_buttons <- c("options", "delete")
     
-    study_management_editable_cols <- c("name")
-    study_management_sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
-    study_management_column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
-    study_management_centered_cols <- c("id", "creator", "datetime", "action")
-    study_management_searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
-    study_management_factorize_cols <- c("datamart_id", "creator_id")
-    study_management_hidden_cols <- c("id", "description", "datamart_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "deleted", "modified")
-    study_management_col_names <- get_col_names("studies", i18n)
+    studies_management_editable_cols <- c("name")
+    studies_management_sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
+    studies_management_column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
+    studies_management_centered_cols <- c("id", "creator", "datetime", "action")
+    studies_management_searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
+    studies_management_factorize_cols <- c("datamart_id", "creator_id")
+    studies_management_hidden_cols <- c("id", "description", "datamart_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "deleted", "modified")
+    studies_management_col_names <- get_col_names("studies", i18n)
     
     # Prepare data for datatable
     
@@ -1114,7 +1115,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         # Prepare data for datatable
         
         r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
-          table = "studies", factorize_cols = study_management_factorize_cols, action_buttons = action_buttons, data_input = r$studies_temp)
+          table = "studies", factorize_cols = studies_management_factorize_cols, action_buttons = action_buttons, data_input = r$studies_temp)
         data <- r$studies_datatable_temp
       }
         
@@ -1124,9 +1125,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         
         render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data,
           output_name = "studies_datatable", col_names = get_col_names("studies", i18n),
-          editable_cols = study_management_editable_cols, sortable_cols = study_management_sortable_cols, centered_cols = study_management_centered_cols, 
-          column_widths = study_management_column_widths, searchable_cols = study_management_searchable_cols, 
-          filter = TRUE, factorize_cols = study_management_factorize_cols, hidden_cols = study_management_hidden_cols,
+          editable_cols = studies_management_editable_cols, sortable_cols = studies_management_sortable_cols, centered_cols = studies_management_centered_cols, 
+          column_widths = studies_management_column_widths, searchable_cols = studies_management_searchable_cols, 
+          filter = TRUE, factorize_cols = studies_management_factorize_cols, hidden_cols = studies_management_hidden_cols,
           selection = "multiple")
         
         # Create a proxy for datatable
@@ -1145,12 +1146,12 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$studies_temp"))
 
       # Reload datatable_temp variable
-      if (nrow(r$studies_temp) == 0) r$studies_datatable_temp <- tibble::tibble(id = integer(), name = character(), description = character(), datamart_id = integer(),
-        patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = integer(), datetime = character(),
+      if (nrow(r$studies_temp) == 0) r$studies_datatable_temp <- tibble::tibble(id = integer(), name = character(), description = character(), datamart_id = factor(),
+        patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = factor(), datetime = character(),
         deleted = integer(), modified = logical(), action = character())
       
       if (nrow(r$studies_temp) > 0) r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
-        table = "studies", factorize_cols = study_management_factorize_cols, action_buttons = action_buttons, data_input = r$studies_temp)
+        table = "studies", factorize_cols = studies_management_factorize_cols, action_buttons = action_buttons, data_input = r$studies_temp)
 
       # Reload data of datatable
       if (length(r$studies_datatable_proxy) > 0) DT::replaceData(r$studies_datatable_proxy, 

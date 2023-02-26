@@ -72,7 +72,10 @@ db_create_tables <- function(db, type = character(), dbms = character()){
   # Create tables if doest not exist
   
   # Type = main for main database
-  # Type = plugins for plugins / modules database
+  # Type = public for plugins / modules database
+  
+  # Don't forget to add table characteristics in mod_settings_app_database when you add a new table
+  # (for import database)
   
   if (type == "main"){
     # In table users, create an admin user
@@ -191,6 +194,10 @@ db_create_tables <- function(db, type = character(), dbms = character()){
     
     db_create_table(db, "log", primary_key_cols = "id", dbms = dbms, text_cols = "value",
       tibble::tibble(id = integer(), category = character(), name = character(), value = character(), creator_id = integer(), datetime = character()))
+    
+    db_create_table(db, "git_sources", primary_key_cols = "id", dbms = dbms, text_cols = c("description", "link"),
+      tibble::tibble(id = integer(), name = character(), description = character(), category = character(),
+        value = character(), creator_id = integer(), datetime = character(), deleted = logical()))
   }
   
   if (type == "plugins"){

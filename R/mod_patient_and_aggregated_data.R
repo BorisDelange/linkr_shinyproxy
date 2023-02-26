@@ -122,12 +122,9 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
               style = "margin-left:-28px;"
             )
           )
-          # make_toggle(i18n = i18n, ns = ns, id = paste0(prefix, "_merge_mapped_items"), label = "merge_mapped_items", inline = TRUE)
         ),
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 20),
-          # make_dropdown(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items", multiSelect = TRUE, width = "650px"),
-          
           div(
             div(id = ns("module_element_settings_thesaurus_selected_items_title"), class = "input_title", i18n$t("thesaurus_selected_items")),
             div(shiny.fluent::Dropdown.shinyInput(ns("module_element_settings_thesaurus_selected_items"), value = NULL, options = list(), multiSelect = TRUE,
@@ -137,8 +134,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
           div(shiny.fluent::DefaultButton.shinyInput(ns("module_element_settings_reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
         ),
         div(DT::DTOutput(ns("module_element_settings_thesaurus_items")), class = "thesaurus_table"), br(),
-        div(shiny.fluent::PrimaryButton.shinyInput(ns("edit_module_element_button"), i18n$t("save")))#, br(),
-        # DT::DTOutput(ns("thesaurus_items"))
+        div(shiny.fluent::PrimaryButton.shinyInput(ns("edit_module_element_button"), i18n$t("save")))
       )
     )
     
@@ -157,7 +153,17 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
       )
     )
     
-    module_element_settings_card <- div()
+    module_element_settings_card <- make_card(
+      title = i18n$t("module_element_settings"),
+      content = div(
+        actionButton(ns(paste0(prefix, "_close_module_element_settings")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+          make_textfield(i18n = i18n, ns = ns, label = "name", id = "module_element_settings_name", width = "300px"),
+          make_textfield(i18n = i18n, ns = ns, label = "plugin", id = "module_element_settings_plugin", width = "300px", disabled = TRUE)
+        ), br(),
+        div(shiny.fluent::PrimaryButton.shinyInput(ns("edit_module_element_button"), i18n$t("save")))
+      )
+    )
   }
   
   div(
