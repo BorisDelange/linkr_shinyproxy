@@ -333,6 +333,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer input$study"))
 
+        req(input$study$key)
+        
         # Prevent multiple changes of m$chosen_study
         # We have to keep multiple observers, cause we use input variable
         if (is.na(m$chosen_study)) m$chosen_study <- input$study$key
@@ -381,12 +383,28 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       # Chosen subset ----
       # --- --- --- --- --
       
+      observeEvent(m$subsets, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer m$subsets"))
+        
+        if (nrow(m$subsets) == 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL, 
+          errorMessage = i18n$t("no_study_available"))
+        
+        if (nrow(m$subsets) > 0) shiny.fluent::updateComboBox.shinyInput(session, "subset",
+          options = convert_tibble_to_list(m$subsets %>% dplyr::arrange(name), key_col = "id", text_col = "name"), value = NULL)
+      })
+      
       observeEvent(input$subset, {
         
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer input$subset"))
         
-        m$chosen_subset <- input$subset$key
+        req(input$subset$key)
+        
+        # Prevent multiple changes of m$chosen_study
+        # We have to keep multiple observers, cause we use input variable
+        if (is.na(m$chosen_subset)) m$chosen_subset <- input$subset$key
+        if (!is.na(m$chosen_subset) & m$chosen_subset != input$subset$key) m$chosen_subset <- input$subset$key
         
         # Reset dropdown & uiOutput
         shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
@@ -398,34 +416,37 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         sapply(c("patient", "hr1"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         shinyjs::hide("exclusion_reason_div")
         output$patient_info <- renderUI("")
-        
-        # Select patients belonging to subsets of this study
-        update_r(r = r, m = m, table = "subsets_patients")
-        
-        # Select patients who belong to this subset
-        update_r(r = r, m = m, table = "subset_patients")
-        
-        patients <- tibble::tibble()
-        
-        if (nrow(m$subset_patients) > 0 & nrow(d$patients) > 0){
-          patients <- d$patients %>% dplyr::inner_join(m$subset_patients %>% dplyr::select(patient_id), by = "patient_id")
-        }
-        
-        if (nrow(patients) == 0){
-          # Set chosen_patient to NA, not to display a chart when no patient is chosen
-          m$chosen_patient <- NA_integer_
-          shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = i18n$t("no_patient_in_subset")) 
-        }
-        
-        if (nrow(patients) > 0){
-          # Order patients by patient_id
-          patients <- patients %>% dplyr::arrange(patient_id)
+ 
+        if (!is.na(m$chosen_subset)){
+            
+          # Select patients belonging to subsets of this study
+          update_r(r = r, m = m, table = "subsets_patients")
+  
+          # Select patients who belong to this subset
+          update_r(r = r, m = m, table = "subset_patients")
           
-          # Update patients dropdown
-          shiny.fluent::updateComboBox.shinyInput(session, "patient", 
-          options = convert_tibble_to_list(data = patients %>% 
-            dplyr::mutate(name_display = paste0(patient_id, " - ", gender)),
-            key_col = "patient_id", text_col = "name_display"))
+          patients <- tibble::tibble()
+  
+          if (nrow(m$subset_patients) > 0 & nrow(d$patients) > 0){
+            patients <- d$patients %>% dplyr::inner_join(m$subset_patients %>% dplyr::select(patient_id), by = "patient_id")
+          }
+  
+          if (nrow(patients) == 0){
+            # Set chosen_patient to NA, not to display a chart when no patient is chosen
+            m$chosen_patient <- NA_integer_
+            shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = i18n$t("no_patient_in_subset")) 
+          }
+    
+          if (nrow(patients) > 0){
+            # Order patients by patient_id
+            patients <- patients %>% dplyr::arrange(patient_id)
+            
+            # Update patients dropdown
+            shiny.fluent::updateComboBox.shinyInput(session, "patient", 
+            options = convert_tibble_to_list(data = patients %>% 
+              dplyr::mutate(name_display = paste0(patient_id, " - ", gender)),
+              key_col = "patient_id", text_col = "name_display"))
+          }
         }
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$subset"))

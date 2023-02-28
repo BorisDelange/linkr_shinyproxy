@@ -26,6 +26,11 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   
   ns <- shiny::NS(id)
   
+  # db variable depending on table
+  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients")
+  if (table %in% m_tables) db <- m$db
+  else db <- r$db
+  
   # --- --- --- --- --- --- --- --- -
   # Check textfields & dropdowns ----
   # --- --- --- --- --- --- --- --- -
@@ -58,10 +63,13 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     }
     else if (table == "studies") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
       AND datamart_id = {data$datamart}", .con = r$db)
+    else if (table == "subsets") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
+      AND study_id = {data$study_id}", .con = r$db)
     else if (table == "plugins") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
       AND module_type_id = {data$module_type}", .con = r$db)
     else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = r$db)
-    distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull() %>% tolower()
+    
+    distinct_values <- DBI::dbGetQuery(db, sql) %>% dplyr::pull() %>% tolower()
     
     if (tolower(data[[field]]) %in% distinct_values) {
       if (!r_message_bar) show_message_bar(output = output, id = 2, message = paste0(field, "_already_used"), type = "severeWarning", i18n = i18n, ns = ns)
@@ -102,11 +110,6 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # --- --- --- --- --- --- --- --- -- -
   # Add data in data specific table ----
   # --- --- --- --- --- --- --- --- -- -
-  
-  # db variable depending on table
-  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients")
-  if (table %in% m_tables) db <- m$db
-  else db <- r$db
   
   # Get last_row nb
   last_row <- list()
@@ -269,9 +272,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     # Add rows in subsets table, for inclusion / exclusion subsets
     # Add also code corresponding to each subset
     new_data$subsets <- tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id,  ~datetime, ~deleted,
-      last_row$subsets + 1, i18n$t("subset_all_patients"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$subsets + 2, i18n$t("subset_included_patients"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$subsets + 3, i18n$t("subset_excluded_patients"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$subsets + 1, i18n$t("subset_all_patients"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add code for creating subset with all patients
     code <- paste0('run_datamart_code(output = output, r = r, d = d, datamart_id = %datamart_id%)\n\n',
@@ -279,9 +280,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       'add_patients_to_subset(output = output, r = r, m = m, patients = patients, subset_id = %subset_id%)\n\n',
       'update_r(r = r, m = m, table = "subset_patients")')
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row$code + 1, "subset", last_row$subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$code + 2, "subset", last_row$subsets + 2, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$code + 3, "subset", last_row$subsets + 3, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$code + 1, "subset", last_row$subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add patient_lvl & aggregated modules families
     
@@ -342,7 +341,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   
   # Reset textfields
   if (table == "users") sapply(c("username", "firstname", "lastname", "password"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
-  else sapply(c("plugin_name", "script_name", "study_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
+  else sapply(c("plugin_name", "script_name", "study_name", "subset_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
 #' Create cache for datatable data
@@ -645,7 +644,7 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
 
 #' Delete element
 #' 
-delete_element <- function(r = shiny::reactiveValues(), session, input, output, ns = shiny::NS(), i18n = R6::R6Class(),
+delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), session, input, output, ns = shiny::NS(), i18n = R6::R6Class(),
   delete_prefix = character(), dialog_title = character(), dialog_subtext = character(),
   react_variable = character(), table = character(), r_table = character(), id_var_sql = character(), id_var_r = character(),
   delete_message = character(), reload_variable = character(), information_variable = character(), translation = TRUE, 
@@ -688,6 +687,11 @@ delete_element <- function(r = shiny::reactiveValues(), session, input, output, 
   # When the deletion is confirmed
   observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
     
+    m_tables <- c("modules_elements_options", "patients_options", "subset_patients", "subsets")
+    
+    if (table %in% m_tables) db <- m$db
+    else db <- r$db
+    
     r[[delete_variable]] <- FALSE
     
     # Remove files if this is a plugin
@@ -699,8 +703,8 @@ delete_element <- function(r = shiny::reactiveValues(), session, input, output, 
     }
     
     # Delete row in DB table and associated tables
-    sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE {`id_var_sql`} IN ({r[[id_var_r]]*})" , .con = r$db)
-    DBI::dbSendStatement(r$db, sql) -> query
+    sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE {`id_var_sql`} IN ({r[[id_var_r]]*})" , .con = db)
+    DBI::dbSendStatement(db, sql) -> query
     DBI::dbClearResult(query)
     
     sql <- glue::glue_sql("UPDATE options SET deleted = TRUE WHERE category = {table} AND link_id IN ({r[[id_var_r]]*})" , .con = r$db)
@@ -711,8 +715,14 @@ delete_element <- function(r = shiny::reactiveValues(), session, input, output, 
     DBI::dbSendStatement(r$db, sql) -> query
     DBI::dbClearResult(query)
     
-    if (length(r_table) > 0) r[[r_table]] <- r[[r_table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
-    else r[[table]] <- r[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
+    if (table %in% m_tables){
+      if (length(r_table) > 0) m[[r_table]] <- m[[r_table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
+      else m[[table]] <- m[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]]) 
+    }
+    else {
+      if (length(r_table) > 0) r[[r_table]] <- r[[r_table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
+      else r[[table]] <- r[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
+    }
     
     # # Notify user
     if (!r_message_bar) show_message_bar(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n, ns = ns)
@@ -1377,8 +1387,13 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
 #' \dontrun{
 #' save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datamarts", language = "EN")
 #' }
-save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), 
+save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), ns = shiny::NS(), 
   table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = R6::R6Class(), r_message_bar = FALSE){
+  
+  m_tables <- c("modules_elements_options", "patients_options", "subset_patients", "subsets")
+  
+  if (table %in% m_tables) db <- m$db
+  else db <- r$db
   
   # Make sure there's no duplicate in names, if duplicates_allowed is set to FALSE
   
@@ -1446,8 +1461,12 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
       if (table == "users") duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("username", tolower) %>%
           dplyr::group_by(username) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
       
-      if (table != "users") duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
-          dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+      if (table != "users"){
+        if (table %in% m_tables) duplicates_name <- m[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+            dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow() 
+        else duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+          dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow() 
+      }
       
       if (duplicates_name > 0){
         if (!r_message_bar) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
@@ -1459,28 +1478,33 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   }
   
   # Save changes in database
-  
-  ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
-  
+
+  if (table %in% m_tables) ids_to_del <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+  else ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+
   if (length(ids_to_del) == 0){
     if (!r_message_bar) show_message_bar(output, 2, "modif_saved", "success", i18n, ns = ns)
     if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_saved", type = "success", trigger = Sys.time())
   }
   
   req(length(ids_to_del) > 0)
-  
-  DBI::dbSendStatement(r$db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
+
+  DBI::dbSendStatement(db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
   DBI::dbClearResult(query)
-  
+
   # If action in columns, remove before insert into database (for thesaurus_items with cache system)
   # Same with count_items_rows (and count_patients_rows, always with count_items_rows)
-  data <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
+  if (table %in% m_tables) data <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
+  else data <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
+  
   if ("action" %in% names(data)) data <- data %>% dplyr::select(-action)
   if ("count_items_rows" %in% names(data)) data <- data %>% dplyr::select(-count_items_rows, -count_patients_rows)
-  DBI::dbAppendTable(r$db, table, data)
   
+  DBI::dbAppendTable(db, table, data)
+
   # Reload r variable
-  r[[r_table]] <- r[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
+  if (table %in% m_tables) m[[r_table]] <- m[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
+  else r[[r_table]] <- r[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
   # if (table == "thesaurus_items") r$datamart_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
   # else update_r(r = r, table = table, i18n = i18n)
   

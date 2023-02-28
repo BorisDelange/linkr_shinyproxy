@@ -195,7 +195,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       
       mod_my_studies_server("my_studies", r, d, m, i18n, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_studies")
-      mod_my_subsets_server("my_subsets", r, d, m, i18n)
+      mod_my_subsets_server("my_subsets", r, d, m, i18n, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_subsets")
       mod_thesaurus_server("thesaurus", r, d, i18n, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - thesaurus")

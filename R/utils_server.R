@@ -32,12 +32,12 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
       }
       
       else {
-        
+
         tables <- tibble::tribble(~name, ~col_name, ~col_value,
           "subsets", "study_id", m$chosen_study,
           "subset_patients", "subset_id", m$chosen_subset,
           "patients_options", "study_id", m$chosen_study)
-        
+
         row <- tables %>% dplyr::filter(name == table)
         
         sql <- glue::glue_sql("SELECT * FROM {`row$name`} WHERE deleted IS FALSE AND {`row$col_name`} = {row$col_value}", .con = db)

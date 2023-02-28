@@ -1233,8 +1233,6 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$reload_studies"))
       
-      # Reload sidenav dropdown with reloading studies
-      update_r(r = r, table = "studies")
       r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       # Reset chosen study
