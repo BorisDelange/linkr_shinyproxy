@@ -84,7 +84,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   if (required_dropdowns == "all"){
     for(dropdown in dropdowns){
       if (dropdown != ""){
-        if (length(data[[dropdown]]) > 1) {break}
+        if (length(data[[dropdown]]) > 1) break
         if (is.null(data[[dropdown]])) dropdowns_check <- FALSE
         else if (is.na(data[[dropdown]])) dropdowns_check <- FALSE
       }
@@ -94,7 +94,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   else {
     for(dropdown in required_dropdowns){
       if (dropdown != ""){
-        if (length(data[[dropdown]]) > 1) {break}
+        if (length(data[[dropdown]]) > 1) break
         if (is.null(data[[dropdown]])) dropdowns_check <- FALSE
         else if (is.na(data[[dropdown]])) dropdowns_check <- FALSE
       }
@@ -275,10 +275,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row$subsets + 1, i18n$t("subset_all_patients"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add code for creating subset with all patients
-    code <- paste0('run_datamart_code(output = output, r = r, d = d, datamart_id = %datamart_id%)\n\n',
-      'patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)\n\n',
-      'add_patients_to_subset(output = output, r = r, m = m, patients = patients, subset_id = %subset_id%)\n\n',
-      'update_r(r = r, m = m, table = "subset_patients")')
+    code <- paste0("patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at(\"patient_id\", as.integer)\n\n",
+      "add_patients_to_subset(output = output, r = r, m = m, patients = patients, subset_id = %subset_id%)")
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row$code + 1, "subset", last_row$subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
@@ -304,6 +302,15 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     # Select new study as current study
     m$chosen_study <- last_row$data + 1
     r$study_page <- Sys.time()
+  }
+  
+  # For subsets, need to add one row in code
+  if (table == "subsets"){
+    # Add code for creating subset with all patients
+    code <- paste0("patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at(\"patient_id\", as.integer)\n\n",
+      "add_patients_to_subset(output = output, r = r, m = m, patients = patients, subset_id = %subset_id%)")
+    new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+      last_row$code + 1, "subset", last_row$subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # For options of patient_lvl & aggregated modules families, need to add two rows, for users accesses

@@ -175,38 +175,41 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
               ),
               style = "z-index:2"
             ),
-            shinyjs::hidden(div(id = ns("div_br"), br())),
+            conditionalPanel(condition = "input.hide_editor == true", ns = ns, br()),
             
-            conditionalPanel(condition = "input.edit_code_ui_server == 'ui'", ns = ns,
-              div(shinyAce::aceEditor(
-                ns("ace_edit_code_ui"), "", mode = "r", 
-                code_hotkeys = list(
-                  "r", list(
-                    run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
-                    run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
-                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
-                  )
-                ),
-                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
-              ), style = "width: 100%;")),
-            conditionalPanel(condition = "input.edit_code_ui_server == 'server'", ns = ns,
-              div(shinyAce::aceEditor(
-                ns("ace_edit_code_server"), "", mode = "r", 
-                code_hotkeys = list(
-                  "r", list(
-                    run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
-                    run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
-                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
-                  )
-                ),
-                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
-              ), style = "width: 100%;")),
-            conditionalPanel(condition = "input.edit_code_ui_server == 'translations'", ns = ns,
-              div(shinyAce::aceEditor(
-                ns("ace_edit_code_translations"), "", mode = "text",
-                code_hotkeys = list("r", list(save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"))),
-                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
-              ), style = "width: 100%;")),
+            conditionalPanel(condition = "input.hide_editor == false", ns = ns,
+              
+              conditionalPanel(condition = "input.edit_code_ui_server == 'ui'", ns = ns,
+                div(shinyAce::aceEditor(
+                  ns("ace_edit_code_ui"), "", mode = "r", 
+                  code_hotkeys = list(
+                    "r", list(
+                      run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+                      run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+                      save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
+                    )
+                  ),
+                  autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+                ), style = "width: 100%;")),
+              conditionalPanel(condition = "input.edit_code_ui_server == 'server'", ns = ns,
+                div(shinyAce::aceEditor(
+                  ns("ace_edit_code_server"), "", mode = "r", 
+                  code_hotkeys = list(
+                    "r", list(
+                      run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+                      run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+                      save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
+                    )
+                  ),
+                  autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+                ), style = "width: 100%;")),
+              conditionalPanel(condition = "input.edit_code_ui_server == 'translations'", ns = ns,
+                div(shinyAce::aceEditor(
+                  ns("ace_edit_code_translations"), "", mode = "text",
+                  code_hotkeys = list("r", list(save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"))),
+                  autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
+                ), style = "width: 100%;"))
+            ),
             
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
@@ -214,6 +217,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
                 shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
               )
             ),
+            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
             shiny::uiOutput(ns("code_result_ui")), br(),
             div(verbatimTextOutput(ns("code_result_server")), 
                 style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
@@ -1410,6 +1414,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       })
 
       # Reset code_result textOutput
+      output$datetime_code_execution <- renderText("")
       output$code_result_ui <- renderUI("")
       output$code_result_server <- renderText("")
       
@@ -1851,11 +1856,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Restore normal value
         options('cli.num_colors' = NULL)
         
-        output$code_result_server <- renderText({
-          
-          # Display result
-          paste(paste(captured_output), collapse = "\n")
-        })
+        output$code_result_server <- renderText(paste(paste(captured_output), collapse = "\n"))
+        
+        output$datetime_code_execution <- renderText(format_datetime(Sys.time(), language))
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer r$..trigger_code"))
       })
@@ -1930,22 +1933,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer r$..save_code"))
-      })
-      
-      # Hide ace editor
-      
-      observeEvent(input$hide_editor, {
-        
-        if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$hide_editor"))
-        
-        if (input$hide_editor){
-          sapply(c("ace_edit_code_ui", "ace_edit_code_server"), shinyjs::hide)
-          shinyjs::show("div_br") 
-        }
-        else {
-          sapply(c("ace_edit_code_ui", "ace_edit_code_server"), shinyjs::show)
-          shinyjs::hide("div_br") 
-        }
       })
     
     # --- --- --- --- -- -

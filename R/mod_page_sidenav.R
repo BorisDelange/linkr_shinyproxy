@@ -79,7 +79,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = R6::R6Class()){
   # My subsets ----
   # --- --- --- ---
   
-  if (id == "my_subsets") div(class = "sidenav", dropdowns(c("datamart", "study", "subset"))) -> result
+  if (id == "my_subsets") div(class = "sidenav", dropdowns(c("datamart", "study"))) -> result
   
   # --- --- --- --
   # Thesaurus ----

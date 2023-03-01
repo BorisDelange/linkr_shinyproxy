@@ -101,18 +101,22 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
               div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
               div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:45px; margin-right:30px;"), 
             ),
-            shinyjs::hidden(div(id = ns("div_br"), br())),
-            div(shinyAce::aceEditor(
-              ns("ace_edit_code"), "", mode = "r", 
-              code_hotkeys = list("r", list(
-                run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
-                run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
-                save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"))
-              ),
-              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), 
-            style = "width: 100%;"),
+            conditionalPanel(condition = "input.hide_editor == true", ns = ns, br()),
+            conditionalPanel(condition = "input.hide_editor == false", ns = ns,
+              div(shinyAce::aceEditor(
+                ns("ace_edit_code"), "", mode = "r", 
+                code_hotkeys = list("r", list(
+                  run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+                  run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+                  save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"))
+                ),
+                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000),
+                style = "width: 100%;"
+              )
+            ),
             shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
             shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
+            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
             div(shiny::verbatimTextOutput(ns("code_result")), 
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"), br(),
             DT::DTOutput(ns("code_datatable"))
@@ -199,20 +203,23 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
               div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
               div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:45px; margin-right:30px;"), 
             ),
-            shinyjs::hidden(div(id = ns("div_br"), br())),
-            div(shinyAce::aceEditor(
-              ns("ace_edit_code"), "", mode = "r", 
-              code_hotkeys = list(
-                "r", list(
-                  run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
-                  run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
-                  save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
-                )
-              ),
-              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), 
-            style = "width: 100%;"),
+            conditionalPanel(condition = "input.hide_editor == true", ns = ns, br()),
+            conditionalPanel(condition = "input.hide_editor == false", ns = ns,
+              div(shinyAce::aceEditor(
+                ns("ace_edit_code"), "", mode = "r", 
+                code_hotkeys = list(
+                  "r", list(
+                    run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+                    run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
+                  )
+                ),
+                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), 
+              style = "width: 100%;")
+            ),
             shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
             shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
+            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
             div(shiny::verbatimTextOutput(ns("code_result")), 
               style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
@@ -430,8 +437,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     factorize_cols <- switch(id,
       "settings_data_sources" = "creator_id",
       "settings_datamarts" = c("data_source_id", "creator_id"),
-      # "settings_studies" = c("datamart_id", "creator_id"),
-      # "settings_subsets" = c("study_id", "creator_id"),
       "settings_thesaurus" = "creator_id")
     
     hidden_cols <- c("id", "description", "deleted", "modified")
@@ -801,10 +806,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           shinyAce::updateAceEditor(session, "ace_edit_code", value = code)
 
           # Reset code_result textOutput
+          output$datetime_code_execution <- renderText("")
           output$code_result <- renderText("")
         })
         
-        # When save button is clicked, or CTRL+C or CMD+C si pushed
+        # When save button is clicked, or CTRL+C or CMD+C is pushed
         observeEvent(input$edit_code_save, {
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$edit_code_save"))
           r[[paste0(id, "_save")]] <- Sys.time()
@@ -834,23 +840,26 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         observeEvent(input$execute_code, {
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$execute_code"))
           r[[paste0(id, "_code")]] <- input$ace_edit_code
+          r[[paste0(id, "_code_trigger")]] <- Sys.time()
         })
         
         observeEvent(input$ace_edit_code_run_selection, {
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$ace_edit_code_run_selection"))
           if(!shinyAce::is.empty(input$ace_edit_code_run_selection$selection)) r[[paste0(id, "_code")]] <- input$ace_edit_code_run_selection$selection
           else r[[paste0(id, "_code")]] <- input$ace_edit_code_run_selection$line
+          r[[paste0(id, "_code_trigger")]] <- Sys.time()
         })
         
         observeEvent(input$ace_edit_code_run_all, {
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$ace_edit_code_run_all"))
           r[[paste0(id, "_code")]] <- input$ace_edit_code
+          r[[paste0(id, "_code_trigger")]] <- Sys.time()
         })
       
-        observeEvent(r[[paste0(id, "_code")]], {
+        observeEvent(r[[paste0(id, "_code_trigger")]], {
           
           if (perf_monitoring) monitor_perf(r = r, action = "start")
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$..code"))
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$..code_trigger"))
           
           # Reset d variable
           vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
@@ -858,6 +867,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           edited_code <- r[[paste0(id, "_code")]] %>% stringr::str_replace_all("\r", "\n")
           
+          output$datetime_code_execution <- renderText(format_datetime(Sys.time(), language))
           output$code_result <- renderText(
             execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
               i18n = i18n, r = r, d = d, edited_code = edited_code))
@@ -888,22 +898,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$..code_datatable_trigger"))
         })
-        
-        # Hide editor
-        
-        observeEvent(input$hide_editor, {
-          
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$hide_editor"))
-          
-          if (input$hide_editor){
-            shinyjs::hide("ace_edit_code")
-            shinyjs::show("div_br") 
-          }
-          else {
-            shinyjs::show("ace_edit_code")
-            shinyjs::hide("div_br") 
-          }
-        })
       }
       
       # --- --- --- --- --- --- --- --- --- --- --- --
@@ -929,7 +923,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           shiny.fluent::updateComboBox.shinyInput(session, "code_chosen", options = options, value = value)
 
           # Set current pivot to edit_code_card
-          shinyjs::runjs(glue::glue("$('#{id}-thesaurus_pivot button[name=\"{i18n$t('items')}\"]').click();"))
+          shinyjs::runjs(glue::glue("$('#{id}-thesaurus_pivot button[name=\"{i18n$t('thesaurus_items')}\"]').click();"))
         })
 
         observeEvent(input$items_chosen, {

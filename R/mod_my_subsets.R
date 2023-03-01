@@ -10,8 +10,7 @@
 mod_my_subsets_ui <- function(id = character(), i18n = R6::R6Class()){
   ns <- NS(id)
   
-  cards <- c("datatable_card", "management_card", "edit_code_card")
-  language <- "en"
+  cards <- c("datatable_card", "subset_patients_card", "edit_code_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
@@ -27,10 +26,11 @@ mod_my_subsets_ui <- function(id = character(), i18n = R6::R6Class()){
     shinyjs::hidden(
       div(id = ns("menu"),
         shiny.fluent::Pivot(
+          id = ns("subsets_pivot"),
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("subsets_management")),
-          shiny.fluent::PivotItem(id = "management_card", itemKey = "management_card", headerText = i18n$t("subset_management")),
-          shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_subset_code"))
+          shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_subset_code")),
+          shiny.fluent::PivotItem(id = "subset_patients_card", itemKey = "subset_patients_card", headerText = i18n$t("subset_management"))
         )
       )
     ),
@@ -67,14 +67,14 @@ mod_my_subsets_ui <- function(id = character(), i18n = R6::R6Class()){
       )
     ),
     
-    # --- --- --- --- --- -- -- -
-    # Subset management card ----
-    # --- --- --- --- --- -- -- -
+    # --- --- --- --- --- -- --
+    # Subset patients card ----
+    # --- --- --- --- --- -- --
     
     shinyjs::hidden(
       div(
-        id = ns("management_card"),
-        make_card(i18n$t("subset_management"),
+        id = ns("subset_patients_card"),
+        make_card(i18n$t("subset_patients"),
           div(
             div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5), style = "margin-top:10px;"), br(),
             div(shiny.fluent::MessageBar(
@@ -105,14 +105,32 @@ mod_my_subsets_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("edit_code_card"),
         make_card(i18n$t("edit_subset_code"),
           div(
-            div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5), style = "margin-top:10px;"), br(),
-            div(shiny.fluent::MessageBar(
-              div(
-                strong("A faire"),
-                p("Création de subsets avec du code, directement.")
-              ),
-              messageBarType = 0)
-            )
+            make_combobox(i18n = i18n, ns = ns, label = "subset", id = "chosen_code_subset",
+              width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
+              div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+            ),
+            conditionalPanel(condition = "input.hide_editor == false", ns = ns,
+              div(shinyAce::aceEditor(
+                ns("ace_edit_code"), "", mode = "r", 
+                code_hotkeys = list(
+                  "r", list(
+                    run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
+                    run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
+                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
+                  )
+                ),
+                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000))
+            ),
+            conditionalPanel(condition = "input.hide_editor == true", ns = ns, br()),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")),
+              shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
+            ), br(),
+            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
+            div(verbatimTextOutput(ns("code_result")), 
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
         )
       )
@@ -124,7 +142,7 @@ mod_my_subsets_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
+  i18n = R6::R6Class(), language = "en", perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -139,7 +157,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     # Show or hide cards ----
     # --- --- --- --- --- ---
     
-    cards <- c("management_card", "edit_code_card", "datatable_card")
+    cards <- c("datatable_card", "subset_patients_card", "edit_code_card")
     # show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     observeEvent(input$current_tab, {
       sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
@@ -154,14 +172,22 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     
     observeEvent(r$show_message_bar, show_message_bar(output, 1, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
     
-    # --- --- --- --- --- --
-    # Render subsets UI ----
-    # --- --- --- --- --- --
+    # --- --- --- --- --- --- --- --
+    # When a datamart is chosen ----
+    # --- --- --- --- --- --- --- --
     
     observeEvent(r$chosen_datamart, {
       shinyjs::show("choose_a_study_card")
-      sapply(c("datatable_card", "management_card", "edit_code_card", "menu"), shinyjs::hide)
+      sapply(c("datatable_card", "subset_patients_card", "edit_code_card", "menu"), shinyjs::hide)
+      
+      # Reset fields
+      shiny.fluent::updateComboBox.shinyInput(session, "chosen_code_subset", options = list(), value = NULL)
+      shinyAce::updateAceEditor(session, "ace_edit_code", value = "")
     })
+    
+    # --- --- --- --- --- --- ---
+    # When a study is chosen ----
+    # --- --- --- --- --- --- ---
     
     observeEvent(m$chosen_study, {
       req(!is.na(m$chosen_study))
@@ -177,16 +203,19 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       else shinyjs::show(input$current_tab)
       
       r$reload_subsets_datatable <- Sys.time()
+      
+      # Reset fields
+      shiny.fluent::updateComboBox.shinyInput(session, "chosen_code_subset", options = list(), value = NULL)
+      shinyAce::updateAceEditor(session, "ace_edit_code", value = "")
     })
     
-    observeEvent(m$chosen_subset, {
-      
-      req(!is.na(m$chosen_subset))
-      
-      # Update subset options combobox
-      # options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-      # value <- list(key = m$chosen_study, text = r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(name))
-      # shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
+    # --- --- --- --- --- -
+    # Update dropdowns ----
+    # --- --- --- --- --- -
+    
+    observeEvent(m$subsets, {
+      options <- convert_tibble_to_list(m$subsets %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      shiny.fluent::updateComboBox.shinyInput(session, "chosen_code_subset", options = options)
     })
     
     # --- --- --- --- -- -
@@ -218,7 +247,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- --- ---
     
     # Action buttons for each module / page
-    action_buttons <- c("options", "edit_code", "delete")
+    action_buttons <- c("sub_datatable", "edit_code", "delete")
     
     subsets_management_editable_cols <- c("name")
     subsets_management_sortable_cols <- c("id", "name", "description", "study_id", "creator_id", "datetime")
@@ -363,6 +392,158 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
 
       # Reset chosen subset
       m$chosen_subset <- NA_integer_
+    })
+    
+    # --- --- --- --- --- -
+    # Edit subset code ----
+    # --- --- --- --- --- -
+    
+    # Button "Edit code" is clicked on the datatable
+    observeEvent(input$edit_code, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$edit_code"))
+      
+      # Get link_id variable, to update code editor
+      link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
+      
+      options <- convert_tibble_to_list(m$subsets %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      value <- list(key = link_id, text = m$subsets %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+      shiny.fluent::updateComboBox.shinyInput(session, "chosen_code_subset", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "chosen_patients_subset", options = options, value = value)
+      
+      # Reload datatable (to unselect rows)
+      DT::replaceData(m$subsets_datatable_proxy, m$subsets_datatable_temp, resetPaging = FALSE, rownames = FALSE)
+      
+      # Set current pivot to edit_code_card
+      shinyjs::runjs(glue::glue("$('#{id}-subsets_pivot button[name=\"{i18n$t('edit_subset_code')}\"]').click();"))
+      
+    })
+    
+    observeEvent(input$chosen_code_subset, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer input$chosen_code_subset"))
+      
+      if (length(input$chosen_code_subset) > 1) link_id <- input$chosen_code_subset$key
+      else link_id <- input$chosen_code_subset
+      # if (length(input$options_chosen_plugin) > 0){
+      #   if (length(input$options_chosen_plugin) > 1) options_link_id <- input$options_chosen_plugin$key
+      #   else options_link_id <- input$options_chosen_plugin
+      # }
+      # else options_link_id <- 0L
+      # 
+      # if (link_id != options_link_id){
+      #   options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      #   value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+      #   shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = value)
+      # }
+      
+      # Get code from database
+      code <- r$code %>% dplyr::filter(category == "subset" & link_id == !!link_id) %>% dplyr::pull(code)
+      
+      shinyAce::updateAceEditor(session, "ace_edit_code", value = code)
+      output$code_result <- renderText("")
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_subsets - observer input$chosen_code_subset"))
+    })
+    
+    # When save button is clicked, or CTRL+C or CMD+C is pushed
+    
+    observeEvent(input$save_code, {
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer input$save_code"))
+      r$subset_code_save <- Sys.time()
+    })
+    
+    observeEvent(input$ace_edit_code_save, {
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer input$ace_edit_code_save"))
+      r$subset_code_save <- Sys.time()
+    })
+    
+    observeEvent(r$subset_code_save, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer r$subset_code_save"))
+      
+      req(input$chosen_code_subset)
+      
+      if (length(input$chosen_code_subset) > 1) link_id <- input$chosen_code_subset$key
+      else link_id <- input$chosen_code_subset
+      
+      subset_code <- input$ace_edit_code %>%
+        stringr::str_replace_all("'", "''") %>%
+        stringr::str_replace_all("%datamart_id%", as.character(r$chosen_datamart)) %>%
+        stringr::str_replace_all("%subset_id%", as.character(link_id)) %>%
+        stringr::str_replace_all("\r", "\n")
+      
+      subset_code_id <- r$code %>% dplyr::filter(category == "subset" & link_id == !!link_id) %>% dplyr::pull(id)
+      
+      sql <- glue::glue_sql("UPDATE code SET code = {subset_code} WHERE id = {subset_code_id}", .con = m$db)
+      DBI::dbSendStatement(r$db, sql) -> query
+      DBI::dbClearResult(query)
+      
+      r$code <- r$code %>% dplyr::mutate(code = dplyr::case_when(id == subset_code_id ~ subset_code, TRUE ~ code)) 
+      
+      # Update datetime in subsets table
+
+      new_datetime <- as.character(Sys.time())
+      sql <- glue::glue_sql("UPDATE subsets SET datetime = {new_datetime} WHERE id = {link_id}", .con = m$db)
+      DBI::dbSendStatement(m$db, sql) -> query
+      DBI::dbClearResult(query)
+      m$subsets <- m$subsets %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ new_datetime, TRUE ~ datetime))
+
+      # Notify user
+      show_message_bar(output, 1, "modif_saved", "success", i18n = i18n, ns = ns)
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_subsets - observer r$subset_code_save"))
+    })
+    
+    # When Execute code button is clicked
+    
+    observeEvent(input$execute_code, {
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer input$execute_code"))
+      r$subset_execute_code <- input$ace_edit_code
+      r$subset_execute_code_trigger <- Sys.time()
+    })
+
+    observeEvent(input$ace_edit_code_run_selection, {
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer input$ace_edit_code_run_selection"))
+      if(!shinyAce::is.empty(input$ace_edit_code_run_selection$selection)) r$subset_execute_code <- input$ace_edit_code_run_selection$selection
+      else r$subset_execute_code <- input$ace_edit_code_run_selection$line
+      r$subset_execute_code_trigger <- Sys.time()
+    })
+
+    observeEvent(input$ace_edit_code_run_all, {
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer input$ace_edit_code_run_all"))
+      r$subset_execute_code <- input$ace_edit_code
+      r$subset_execute_code_trigger <- Sys.time()
+    })
+
+    observeEvent(r$subset_execute_code_trigger, {
+
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer r$subset_execute_code_trigger"))
+
+      edited_code <- r$subset_execute_code %>% stringr::str_replace_all("\r", "\n")
+
+      # Variables to hide
+      new_env_vars <- list("r" = NA)
+      # Variables to keep
+      for (var in c("d", "m", "i18n")) new_env_vars[[var]] <- eval(parse(text = var))
+      new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
+      
+      options('cli.num_colors' = 1)
+      
+      # Capture console output of our code
+      captured_output <- capture.output(
+        tryCatch(eval(parse(text = edited_code), envir = new_env), error = function(e) print(e), warning = function(w) print(w)))
+      
+      # Restore normal value
+      options('cli.num_colors' = NULL)
+      
+      output$datetime_code_execution <- renderText(format_datetime(Sys.time(), language))
+      output$code_result <- renderText(paste(paste(captured_output), collapse = "\n"))
+
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_subsets - observer r$subset_execute_code"))
     })
     
   })
