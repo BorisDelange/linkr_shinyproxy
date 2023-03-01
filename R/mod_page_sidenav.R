@@ -360,6 +360,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (nrow(m$subsets) == 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = i18n$t("no_subset_available"))
         if (nrow(m$subsets) > 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(m$subsets, key_col = "id", text_col = "name"), value = NULL)
         
+        m$chosen_subset <- NA_integer_
+        
         # Load patients options
         sql <- glue::glue_sql("SELECT * FROM patients_options WHERE study_id = {m$chosen_study}", .con = m$db)
         m$patients_options <- DBI::dbGetQuery(m$db, sql)
@@ -405,7 +407,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         # We have to keep multiple observers, cause we use input variable
         if (is.na(m$chosen_subset)) m$chosen_subset <- input$subset$key
         if (!is.na(m$chosen_subset) & m$chosen_subset != input$subset$key) m$chosen_subset <- input$subset$key
-        
+
         # Reset dropdown & uiOutput
         shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "patient_status", options = list(), value = NULL)
@@ -416,27 +418,27 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         sapply(c("patient", "hr1"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         shinyjs::hide("exclusion_reason_div")
         output$patient_info <- renderUI("")
- 
+
         if (!is.na(m$chosen_subset)){
-            
+
           # Select patients belonging to subsets of this study
           update_r(r = r, m = m, table = "subsets_patients")
   
           # Select patients who belong to this subset
           update_r(r = r, m = m, table = "subset_patients")
-          
+
           patients <- tibble::tibble()
   
           if (nrow(m$subset_patients) > 0 & nrow(d$patients) > 0){
             patients <- d$patients %>% dplyr::inner_join(m$subset_patients %>% dplyr::select(patient_id), by = "patient_id")
           }
-  
+
           if (nrow(patients) == 0){
             # Set chosen_patient to NA, not to display a chart when no patient is chosen
             m$chosen_patient <- NA_integer_
             shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = i18n$t("no_patient_in_subset")) 
           }
-    
+
           if (nrow(patients) > 0){
             # Order patients by patient_id
             patients <- patients %>% dplyr::arrange(patient_id)

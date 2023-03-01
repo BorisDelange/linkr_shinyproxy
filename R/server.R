@@ -248,7 +248,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       if (debug) print(paste0(Sys.time(), " - server - load server modules - data_sources / datamarts / thesaurus"))
     
       sapply(c("data_sources", "datamarts", "thesaurus"), function(page){
-        mod_settings_data_management_server(paste0("settings_", page), r, d, m, i18n, perf_monitoring, debug)
+        mod_settings_data_management_server(paste0("settings_", page), r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_sidenav_server(paste0("settings_", page), r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(paste0("settings_", page), r, language, i18n)
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("server - load server modules - ", page))
