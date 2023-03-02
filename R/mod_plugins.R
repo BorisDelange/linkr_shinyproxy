@@ -1157,6 +1157,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Plugin options
       
       options <- r$options %>% dplyr::filter(category == "plugin", link_id == !!link_id)
+      req(nrow(options) > 0)
       
       # All users
       picker_options <-
@@ -1424,6 +1425,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       }
 
       # Get code from database
+      
+      req(r$code %>% dplyr::filter(category == "plugin_ui" & link_id == !!link_id) %>% nrow() > 0)
+      
       code <- list()
       code$ui <- r$code %>% dplyr::filter(category == "plugin_ui" & link_id == !!link_id) %>% dplyr::pull(code)
       code$server <- r$code %>% dplyr::filter(category == "plugin_server" & link_id == !!link_id) %>% dplyr::pull(code)
@@ -1661,7 +1665,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             ) %>%
             dplyr::transmute(
               id, thesaurus_id, thesaurus_name, thesaurus_item_id, thesaurus_item_display_name,
-              thesaurus_item_unit, thesaurus_item_colour = as.character(input[[paste0("colour_", link_id)]]), 
+              thesaurus_item_unit, thesaurus_item_colour = as.character(input[[paste0("colours_", link_id)]]), 
               input_text = paste0(thesaurus_name, " - ", thesaurus_item_display_name, " (", tolower(i18n$t("mapped_item")), ")"),
               mapped_to_item_id = link_id, merge_items = input$merge_mapped_items
             ) %>%
@@ -1676,7 +1680,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name,
             ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text, ~mapped_to_item_id, ~merge_items,
             as.integer(link_id), as.integer(input$thesaurus$key), as.character(thesaurus_name), as.integer(item$item_id), as.character(item$display_name),
-            as.character(item$unit), as.character(input[[paste0("colour_", link_id)]]), as.character(item$input_text),
+            as.character(item$unit), as.character(input[[paste0("colours_", link_id)]]), as.character(item$input_text),
             NA_integer_, FALSE)
         # )
         if (nrow(thesaurus_mapped_items) > 0) add_thesaurus_items <-
@@ -1875,7 +1879,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Variables to hide
         new_env_vars <- list("r" = NA)
         # Variables to keep
-        for (var in c("d", "m", "o", "session_code", "session_num", "i18n", "i18np")) new_env_vars[[var]] <- eval(parse(text = var))
+        for (var in c("d", "m", "o", "thesaurus_selected_items", "session_code", "session_num", "i18n", "i18np")) new_env_vars[[var]] <- eval(parse(text = var))
         new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
         
         options('cli.num_colors' = 1)
