@@ -315,23 +315,34 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       r$aggregated_selected_key <- NA_integer_
       
       # Reset d variables
-      d$patients <- tibble::tibble(patient_id = integer(), gender = character(), dod = lubridate::ymd_hms())
-      d$stays <- tibble::tibble(patient_id = integer(), stay_id = integer(), age = numeric(), thesaurus_name = character(),
+      # Reset data variables
+      
+      default_data <- list()
+      default_data$patients <- tibble::tibble(patient_id = integer(), gender = character(), dod = lubridate::ymd_hms())
+      default_data$stays <- tibble::tibble(patient_id = integer(), stay_id = integer(), age = numeric(), thesaurus_name = character(),
         item_id = integer(), admission_datetime = lubridate::ymd_hms(), discharge_datetime = lubridate::ymd_hms())
-      d$labs_vitals <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+      default_data$labs_vitals <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
         datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(),
         value_num = numeric(), unit = character(), comments = character())
-      d$text <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+      default_data$text <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
         datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(), comments = character())
-      d$orders <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+      default_data$orders <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
         datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), route = character(),
         continuous = integer(), amount = numeric(), amount_unit = character(), rate = numeric(), rate_unit = character(),
         concentration = numeric(), concentration_unit = character(), comments = character())
-      d$diagnoses <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+      default_data$diagnoses <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
         datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), comments = character())
       
-      # Status of loaded scripts
-      # r$datamart_loaded_scripts <- tibble::tibble(id = integer(), status = character(), datetime = character())
+      sapply(c("patients", "stays", "labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_subset[[table]] <- default_data[[table]])
+      sapply(c("stays", "labs_vitals", "text", "orders", "diagnoses"), function(table){
+        d$data_patient[[table]] <- default_data[[table]]
+        d[[table]] <- default_data[[table]]
+      })
+      sapply(c("labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_stay[[table]] <- default_data[[table]])
+      
+      # Reset chosen_study variable
+      m$chosen_study <- NA_integer_
+      m$chosen_patient <- NA_integer_ # To prevent bug when execute plugin code from plugin page
       
       # A r variable to update study dropdown, when the load of datamart is finished
       r$loaded_datamart <- r$chosen_datamart
@@ -358,6 +369,41 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       })
       
       r$reload_studies_datatable <- Sys.time()
+      
+      # Load thesaurus associated to data_source
+      # If thesaurus contains no data, maybe thesaurus code hasn't been run yet
+      
+      data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)
+      selected_thesaurus <- r$thesaurus %>%
+        dplyr::filter(
+          grepl(paste0("^", data_source, "$"), data_source_id) | 
+            grepl(paste0(", ", data_source, "$"), data_source_id) | 
+            grepl(paste0("^", data_source, ","), data_source_id) |
+            grepl(paste0(", ", data_source, ","), data_source_id)
+        ) %>% 
+        dplyr::inner_join(
+          r$code %>% dplyr::filter(category == "thesaurus") %>% dplyr::select(id = link_id, code),
+          by = "id"
+        )
+      
+      if (nrow(selected_thesaurus) > 0){
+        for (i in 1:nrow(selected_thesaurus)){
+          row <- selected_thesaurus[i, ]
+          thesaurus_code <- r$code %>% dplyr::filter(category == "thesaurus", link_id == row$id) %>% dplyr::pull(code) %>%
+            stringr::str_replace_all("\r", "\n") %>%
+            stringr::str_replace_all("%datamart_id%", as.character(r$chosen_datamart)) %>%
+            stringr::str_replace_all("%thesaurus_id%", as.character(row$id))
+          
+          sql <- glue::glue_sql("SELECT COUNT(*) AS count FROM thesaurus_items WHERE thesaurus_id = {row$id} AND deleted IS FALSE", .con = r$db)
+          thesaurus_items_count <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(count)
+          
+          if (thesaurus_items_count == 0){
+            tryCatch(eval(parse(text = thesaurus_code)),
+              error = function(e) ""
+            )
+          }
+        }
+      }
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$chosen_datamart"))
     })
@@ -505,6 +551,69 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = m$chosen_study, text = r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(name))
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
+      
+      # Subsets depending on the chosen study
+      update_r(r = r, m = m, table = "subsets")
+
+      # Reset chosen_subset
+      m$chosen_subset <- NA_integer_
+      
+      # Load patients options
+      sql <- glue::glue_sql("SELECT * FROM patients_options WHERE study_id = {m$chosen_study}", .con = m$db)
+      m$patients_options <- DBI::dbGetQuery(m$db, sql)
+    })
+    
+    # --- --- --- --- --- --- --- --
+    # When a subset is chosen ----
+    # --- --- --- --- --- --- --- --
+    
+    observeEvent(m$chosen_subset, {
+      if (!is.na(m$chosen_subset)){
+        
+        # Select patients who belong to this subset
+        update_r(r = r, m = m, table = "subset_patients")
+        
+        # If this subset contains no patient, maybe the code has not been run yet
+        if (nrow(m$subset_patients) == 0){
+          subset_code <- r$code %>% dplyr::filter(category == "subset" & link_id == m$chosen_subset) %>% dplyr::pull(code) %>%
+            stringr::str_replace_all("%datamart_id%", as.character(r$chosen_datamart)) %>%
+            stringr::str_replace_all("%subset_id%", as.character(m$chosen_subset)) %>%
+            stringr::str_replace_all("\r", "\n")
+          
+          tryCatch(eval(parse(text = subset_code)),
+            error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_execute_subset_code", 
+              error_name = paste0("sidenav - execute_subset_code  - id = ", m$chosen_subset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
+          )
+          
+          update_r(r = r, m = m, table = "subset_patients")
+        }
+        
+        # Select patients belonging to subsets of this study
+        update_r(r = r, m = m, table = "subsets_patients")
+        
+        patients <- tibble::tibble()
+        
+        if (nrow(m$subset_patients) > 0 & nrow(d$patients) > 0){
+          patients <- d$patients %>% dplyr::inner_join(m$subset_patients %>% dplyr::select(patient_id), by = "patient_id")
+        }
+        
+        if (nrow(patients) == 0){
+          # Set chosen_patient to NA, not to display a chart when no patient is chosen
+          m$chosen_patient <- NA_integer_
+          shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = i18n$t("no_patient_in_subset")) 
+        }
+        
+        if (nrow(patients) > 0){
+          # Order patients by patient_id
+          patients <- patients %>% dplyr::arrange(patient_id)
+          
+          # Update patients dropdown
+          shiny.fluent::updateComboBox.shinyInput(session, "patient", 
+            options = convert_tibble_to_list(data = patients %>% 
+                dplyr::mutate(name_display = paste0(patient_id, " - ", gender)),
+              key_col = "patient_id", text_col = "name_display"))
+        }
+      }
     })
     
     # --- --- --- -

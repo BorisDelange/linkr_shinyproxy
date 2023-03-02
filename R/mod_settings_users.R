@@ -355,7 +355,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       # Each time a dropdown is updated, modify temp variable
       if (table == "users"){
         observeEvent(r$users, {
-          update_settings_datatable(input = input, r = r, ns = ns, table = table, dropdowns = dropdowns, i18n = i18n)
+          update_settings_datatable(input = input, module_id = id, r = r, ns = ns, table = table, dropdowns = dropdowns, i18n = i18n)
         })
       }
   

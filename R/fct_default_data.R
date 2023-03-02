@@ -48,7 +48,7 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
   # Add default datamart
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM datamarts")) == 0){
     DBI::dbAppendTable(r$db, "datamarts", tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
-      1, "MIMIC-IV ", i18n$t("mimic_iv_test_datamart"), 1, 1, as.character(Sys.time()), FALSE))
+      1, "MIMIC-IV", i18n$t("mimic_iv_test_datamart"), 1, 1, as.character(Sys.time()), FALSE))
   }
   
   # Add default study
@@ -218,16 +218,10 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
       thesaurus_code <- readLines("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/thesaurus/mimic_iv_1.0.R", warn = FALSE) %>%
         paste(collapse = "\n")
     }
-    print("1")
     
     # Subset code
     subset_code <- paste0("patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at(\"patient_id\", as.integer)\n\n",
       "add_patients_to_subset(output = output, m = m, patients = patients, subset_id = %subset_id%, i18n = i18n, ns = ns)")
-    print("2")
-    print(tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      1, "datamart", 1, datamart_code, 1, as.character(Sys.time()), FALSE,
-      2, "thesaurus", 1, thesaurus_code, 1, as.character(Sys.time()), FALSE,
-      3, "subset", 1, subset_code, 1, as.character(Sys.time()), FALSE))
     
     if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM code")) == 0){
       DBI::dbAppendTable(r$db, "code", tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
@@ -235,8 +229,6 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
         2, "thesaurus", 1, thesaurus_code, 1, as.character(Sys.time()), FALSE,
         3, "subset", 1, subset_code, 1, as.character(Sys.time()), FALSE))
     }
-    
-    print("end")
   # --- --- --- -- -
   # Add plugins ----
   # --- --- --- -- -

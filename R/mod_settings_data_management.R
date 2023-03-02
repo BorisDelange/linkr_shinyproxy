@@ -537,7 +537,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$", table, " - update dropdowns"))
         
-        update_settings_datatable(input = input, r = r, ns = ns, table = table, 
+        update_settings_datatable(input = input, module_id = id, r = r, ns = ns, table = table, 
           dropdowns = dropdowns %>% dplyr::filter(id == id) %>% dplyr::pull(dropdowns) %>% unlist(), i18n = i18n)
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$", table, " - update dropdowns"))

@@ -927,8 +927,13 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       
       data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id) %>% as.character()
-      thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) |
-          grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
+      thesaurus <- r$thesaurus %>% 
+        dplyr::filter(
+          grepl(paste0("^", data_source, "$"), data_source_id) | 
+            grepl(paste0(", ", data_source, "$"), data_source_id) | 
+            grepl(paste0("^", data_source, ","), data_source_id) |
+            grepl(paste0(", ", data_source, ","), data_source_id)
+        ) %>% dplyr::arrange(name)
       
       sapply(c("module_element_creation_thesaurus", "module_element_settings_thesaurus"), function(name) shiny.fluent::updateComboBox.shinyInput(session, name, 
         options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", i18n = i18n), value = NULL))

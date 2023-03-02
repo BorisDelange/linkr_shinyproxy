@@ -813,7 +813,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         show_message_bar(output, 3, "success_installing_github_plugin", "success", i18n = i18n, ns = ns)
         
       }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_install_github_plugin", 
-        error_name = paste0("install_github_plugin - id = ", plugin$unique_id), category = "Error", error_report = toString(e), i18n = i18n))
+        error_name = paste0("install_github_plugin - id = ", plugin$unique_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
 
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer r$install_update_plugin_trigger"))
     })
@@ -1442,8 +1442,14 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Only one ID, so it's the beginning and the end
         # Last ID, so it's the end
         # ID between begin and last, so separated by commas
-        thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
-          grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
+        thesaurus <- r$thesaurus %>% 
+          dplyr::filter(
+            grepl(paste0("^", data_source, "$"), data_source_id) | 
+            grepl(paste0(", ", data_source, "$"), data_source_id) | 
+            grepl(paste0("^", data_source, ","), data_source_id) |
+            grepl(paste0(", ", data_source, ","), data_source_id)
+          ) %>% 
+          dplyr::arrange(name)
         shiny.fluent::updateComboBox.shinyInput(session, "thesaurus", options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", i18n = i18n), value = NULL)
         
       })
@@ -1468,13 +1474,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
           datamart_id = r$chosen_datamart, category = "count_items_rows"),
           error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("plugins - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n))
+            error_name = paste0("plugins - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
         
         # Add count_items_rows in the cache & get it if already in the cache
         tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
           datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
           error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("plugins - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n))
+            error_name = paste0("plugins - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
         
         if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
         req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)

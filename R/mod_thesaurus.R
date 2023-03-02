@@ -287,8 +287,13 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # Only one ID, so it's the beginning and the end
       # Last ID, so it's the end
       # ID between begin and last, so separated by commas
-      thesaurus <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
-        grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::arrange(name)
+      thesaurus <- r$thesaurus %>% 
+        dplyr::filter(
+          grepl(paste0("^", data_source, "$"), data_source_id) | 
+            grepl(paste0(", ", data_source, "$"), data_source_id) | 
+            grepl(paste0("^", data_source, ","), data_source_id) |
+            grepl(paste0(", ", data_source, ","), data_source_id)
+        ) %>% dplyr::arrange(name)
       thesaurus_options <- convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", i18n = i18n)
       for (var in c("thesaurus", "thesaurus_mapping1", "thesaurus_mapping2")) shiny.fluent::updateComboBox.shinyInput(session, var, options = thesaurus_options, value = NULL)
       
@@ -1146,8 +1151,13 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)
       
-      thesaurus_ids <- r$thesaurus %>% dplyr::filter(grepl(paste0("^", data_source, "$"), data_source_id) | 
-          grepl(paste0(", ", data_source, "$"), data_source_id) | grepl(paste0("^", data_source, ","), data_source_id)) %>% dplyr::pull(id)
+      thesaurus_ids <- r$thesaurus %>% 
+        dplyr::filter(
+          grepl(paste0("^", data_source, "$"), data_source_id) | 
+            grepl(paste0(", ", data_source, "$"), data_source_id) | 
+            grepl(paste0("^", data_source, ","), data_source_id) |
+            grepl(paste0(", ", data_source, ","), data_source_id)
+        ) %>% dplyr::pull(id)
       
       sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping WHERE (thesaurus_id_1 IN ({thesaurus_ids*}) OR thesaurus_id_2 IN ({thesaurus_ids*})) ",
         "AND category = 'user_added_mapping' AND deleted IS FALSE"), .con = r$db)
