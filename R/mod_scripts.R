@@ -156,19 +156,11 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
 
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
-              shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))#,
-              # div(i18n$t("output"), " : ", style = "margin:5px 0px 0px 30px; font-weight:bold;"),
-              # div(shiny.fluent::ChoiceGroup.shinyInput(ns("output_type"), value = "console", 
-              #   options = list(
-              #     list(key = "console", text = i18n$t("console")),
-              #     list(key = "table", text = i18n$t("table"))
-              #   ), 
-              # className = "inline_choicegroup"), 
-              # style = "margin:-3px 0px 0px 20px;")
+              shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
             ), br(),
+            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
             div(id = ns("console_output"), verbatimTextOutput(ns("console_result")),
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")#,
-            # shinyjs::hidden(div(id = ns("table_output"), DT::DTOutput(ns("table_result")), style = "width: 99%; margin-right: 5px;"))
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
         ), br()
       )
@@ -267,6 +259,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       output$scripts_description_markdown_result <- renderUI("")
       shinyAce::updateAceEditor(session, "ace_edit_code", value = "")
       output$console_result <- renderText("")
+      output$datetime_code_execution <- renderText("")
       blank_data <- data <- tibble::tribble(~id)
       names(blank_data) <- c("")
       output$table_result <- DT::renderDT(blank_data, options = list(dom = "<'datatable_length'l><'top't><'bottom'p>"), 
@@ -552,7 +545,11 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
       if(nrow(r$scripts %>% dplyr::filter(data_source_id == !!data_source_id)) == 0){
         render_datatable(output = output, r = r, ns = ns, i18n = i18n,
-          data = tibble::tribble(~name, ~creator_id, ~datetime, ~action), output_name = "scripts_datatable")
+          data = tibble::tibble(id = integer(), name = character(), data_source_id = integer(), creator_id = factor(),
+            datetime = character(), deleted = integer(), modified = logical(), action = character()), 
+          col_names = get_col_names(table_name = "scripts", i18n = i18n), output_name = "scripts_datatable",
+          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
       }
 
       req(nrow(r$scripts %>% dplyr::filter(data_source_id == !!data_source_id)) > 0)
@@ -645,6 +642,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       r[[script_delete_variable]] <- TRUE
 
       reset_scripts_fields(session = session)
+      
+      # Reload datatable (to unselect rows)
+      DT::replaceData(r$scripts_datatable_proxy, r$scripts_datatable_temp, resetPaging = FALSE, rownames = FALSE)
     })
 
     observeEvent(r$reload_scripts, {
@@ -742,7 +742,6 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       req(!is.null(link_id))
       
       # Update code
-      # DON'T USE glue_sql, it adds some quotes in the code
       
       code_id <- r$code %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(id)
 
@@ -758,9 +757,6 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
       r$scripts <- r$scripts %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ as.character(Sys.time()), TRUE ~ datetime))
-      
-      # update_r(r = r, table = "code")
-      # update_r(r = r, table = "scripts")
       
       # Notify user
       show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)
@@ -805,10 +801,6 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       for (var in c("d", "m", "r", "output", "i18n")) new_env_vars[[var]] <- eval(parse(text = var))
       new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
       
-      # if (input$output_type == "console"){
-      # shinyjs::show("console_output")
-      # shinyjs::hide("table_output")
-      
       options('cli.num_colors' = 1)
       
       # Capture console output of our code
@@ -818,6 +810,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Restore normal value
       options('cli.num_colors' = NULL)
       
+      output$datetime_code_execution <- renderText(format_datetime(Sys.time(), language))
       output$console_result <- renderText(paste(paste(captured_output), collapse = "\n"))
     })
     

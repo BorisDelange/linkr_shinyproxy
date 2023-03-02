@@ -1370,7 +1370,8 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
     }
   }
   
-  for (field in c("markdown_description", "version", "author", "image", "description_fr", "description_en")){
+  for (field in c("markdown_description", "version", "author", "image", "description_fr", "description_en",
+    "name_fr", "name_en", "category_fr", "category_en")){
     if (field %in% page_options){
       option_id <- options %>% dplyr::filter(name == field) %>% dplyr::pull(id)
       new_value <- stringr::str_replace_all(data[[field]], "'", "''")
@@ -1447,23 +1448,6 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
           dplyr::group_by(module_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
       }
       
-      if (duplicates_name > 0){
-        if (!r_message_bar) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
-        if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_names_duplicates", type = "severeWarning", trigger = Sys.time())
-      }
-      if (duplicates_display_order > 0){
-        if (!r_message_bar) show_message_bar(output, 1, "modif_display_order_duplicates", "severeWarning", i18n, ns = ns)
-        if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_display_order_duplicates", type = "severeWarning", trigger = Sys.time())
-      } 
-      if (module_is_its_own_parent > 0){
-        if (!r_message_bar) show_message_bar(output, 1, "module_cannot_be_its_own_parent", "severeWarning", i18n, ns = ns)
-        if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "module_cannot_be_its_own_parent", type = "severeWarning", trigger = Sys.time())
-      }
-      if (loop_over_modules > 0){
-        if (!r_message_bar) show_message_bar(output, 1, "module_loop_between_modules", "severeWarning", i18n, ns = ns)
-        if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "module_loop_between_modules", type = "severeWarning", trigger = Sys.time())
-      }
-      
     }
     
     # For other tables
@@ -1478,15 +1462,37 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
         else duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
           dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow() 
       }
-      
-      if (duplicates_name > 0){
-        if (!r_message_bar) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
-        if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_names_duplicates", type = "severeWarning", trigger = Sys.time())
-      }
+    }
+    
+    if (duplicates_display_order > 0){
+      if (!r_message_bar) show_message_bar(output, 1, "modif_display_order_duplicates", "severeWarning", i18n, ns = ns)
+      if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_display_order_duplicates", type = "severeWarning", trigger = Sys.time())
+    } 
+    if (module_is_its_own_parent > 0){
+      if (!r_message_bar) show_message_bar(output, 1, "module_cannot_be_its_own_parent", "severeWarning", i18n, ns = ns)
+      if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "module_cannot_be_its_own_parent", type = "severeWarning", trigger = Sys.time())
+    }
+    if (loop_over_modules > 0){
+      if (!r_message_bar) show_message_bar(output, 1, "module_loop_between_modules", "severeWarning", i18n, ns = ns)
+      if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "module_loop_between_modules", type = "severeWarning", trigger = Sys.time())
+    }
+    if (duplicates_name > 0){
+      if (!r_message_bar) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
+      if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_names_duplicates", type = "severeWarning", trigger = Sys.time())
     }
     
     req(duplicates_name == 0, duplicates_display_order == 0, module_is_its_own_parent == 0, loop_over_modules == 0)
   }
+  
+  names_empty <- 0
+  names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(name == "") %>% nrow()
+  
+  if (names_empty > 0){
+    if (!r_message_bar) show_message_bar(output, 1, "names_empty", "severeWarning", i18n, ns = ns)
+    if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "names_empty", type = "severeWarning", trigger = Sys.time())
+  }
+  
+  req(names_empty == 0)
   
   # Save changes in database
 

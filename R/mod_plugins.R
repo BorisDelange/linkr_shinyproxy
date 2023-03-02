@@ -138,10 +138,7 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             ),
             div(DT::DTOutput(ns("plugins_datatable")), style = "margin-top:-30px; z-index:2"),
             div(
-              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::PrimaryButton.shinyInput(ns("save_plugins_management"), i18n$t("save")),
-                shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
-              ),
+              shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection")),
               style = "position:relative; z-index:2; margin-top:-30px;"
             )
           )
@@ -216,8 +213,8 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
               conditionalPanel(condition = "input.edit_code_ui_server != 'translations'", ns = ns,
                 shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
               )
-            ),
-            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
+            ), br(),
+            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"),
             shiny::uiOutput(ns("code_result_ui")), br(),
             div(verbatimTextOutput(ns("code_result_server")), 
                 style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
@@ -240,7 +237,16 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
                 width = "320px", allowFreeform = FALSE, multiSelect = FALSE),
               make_textfield(i18n = i18n, ns = ns, label = "author", id = "plugin_author", width = "320px"),
               make_textfield(i18n = i18n, ns = ns, label = "version", id = "plugin_version", width = "60px")
-            ), br(),
+            ),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_textfield(i18n = i18n, ns = ns, label = "name_fr", id = "plugin_name_fr", width = "320px"),
+              make_textfield(i18n = i18n, ns = ns, label = "name_en", id = "plugin_name_en", width = "320px")
+            ),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_textfield(i18n = i18n, ns = ns, label = "category_fr", id = "plugin_category_fr", width = "320px"),
+              make_textfield(i18n = i18n, ns = ns, label = "category_en", id = "plugin_category_en", width = "320px")
+            ),
+            br(),
             div(
               div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
               shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
@@ -254,8 +260,6 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
             div(
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
                 make_dropdown(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "320px"),
-                # make_textfield(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "700px"),
-                # div(shiny.fluent::DefaultButton.shinyInput(ns("browse_image"), i18n$t("browse")), style = "margin-top:39px;"),
                 div(shiny.fluent::DefaultButton.shinyInput(ns("delete_image"), i18n$t("delete_this_image")), style = "margin-top:39px;"),
                 div(shiny.fluent::DefaultButton.shinyInput(ns("import_image"), i18n$t("import_image")), style = "margin-top:39px;")
               )
@@ -854,7 +858,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     action_buttons_plugins_management <- c("delete", "edit_code", "options")
     action_buttons_export_plugins <- "add"
     
-    editable_cols <- c("name")
+    editable_cols <- ""
     sortable_cols <- c("id", "name", "datetime")
     column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
     centered_cols <- c("id", "datetime", "action")
@@ -1076,23 +1080,20 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
 
-      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = NULL)
-      shiny.fluent::updateComboBox.shinyInput(session, "thesaurus", options = list(), value = NULL)
-      shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_selected_items", options = list(), value = NULL)
+      sapply(c("code_chosen_plugin", "thesaurus", "thesaurus_selected_items"), 
+        function(name) shiny.fluent::updateComboBox.shinyInput(session, name, options = options, value = NULL))
       shiny.fluent::updateChoiceGroup.shinyInput(session, "edit_code_ui_server", value = "ui")
       shiny.fluent::updateToggle.shinyInput(session, "hide_editor", value = FALSE)
-      shinyAce::updateAceEditor(session, "ace_edit_code_ui", value = "")
-      shinyAce::updateAceEditor(session, "ace_edit_code_server", value = "")
-      shinyAce::updateAceEditor(session, "ace_edit_code_translations", value = "")
+      sapply(c("ace_edit_code_ui", "ace_edit_code_server", "ace_edit_code_translations"),
+        function(name) shinyAce::updateAceEditor(session, name, value = ""))
 
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = NULL)
-      shiny.fluent::updateTextField.shinyInput(session, "plugin_author", value = "")
-      shiny.fluent::updateTextField.shinyInput(session, "plugin_version", value = "")
+      sapply(c("plugin_author", "plugin_version", "plugin_name_fr", "plugin_name_en", "plugin_category_fr", "plugin_category_en"),
+        function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
       shiny.fluent::updateChoiceGroup.shinyInput(session, "users_allowed_read_group", value = "everybody")
       shiny.fluent::updateDropdown.shinyInput(session, "plugin_image", options = list(), value = NULL)
       shiny.fluent::updateChoiceGroup.shinyInput(session, "plugin_description_language", value = "fr")
-      shinyAce::updateAceEditor(session, "plugin_description_fr", value = "")
-      shinyAce::updateAceEditor(session, "plugin_description_en", value = "")
+      sapply(c("plugin_description_fr", "plugin_description_en"), function(name) shinyAce::updateAceEditor(session, name, value = ""))
 
       shiny.fluent::updateComboBox.shinyInput(session, "plugins_to_export", value = "")
     })
@@ -1198,11 +1199,15 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         options = convert_tibble_to_list(tibble::tibble(text = c("", files_list), key = c("", files_list)), key_col = "key", text_col = "text"),
         value = options %>% dplyr::filter(name == "image") %>% dplyr::pull(value))
       
-      for (field in c("version", "author")) shiny.fluent::updateTextField.shinyInput(session, 
+      for (field in c("version", "author", "name_fr", "name_en", "category_fr", "category_en")) shiny.fluent::updateTextField.shinyInput(session,
         paste0("plugin_", field), value = options %>% dplyr::filter(name == field) %>% dplyr::pull(value))
       
       for (field in c("description_fr", "description_en")) shinyAce::updateAceEditor(session,
         paste0("plugin_", field), value = options %>% dplyr::filter(name == field) %>% dplyr::pull(value))
+      
+      # Update plugin name if open in options
+      # shiny.fluent::updateTextField.shinyInput(session, paste0("plugin_name_", language),
+      #   value = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$options_chosen_plugin"))
     })
@@ -1243,17 +1248,37 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$..save_options"))
       
+      plugin_name <- input[[paste0("plugin_name_", language)]]
+      if (is.na(plugin_name) | plugin_name == "") shiny.fluent::updateTextField.shinyInput(session, 
+        paste0("plugin_name_", language), errorMessage = i18n$t("provide_valid_name"))
+      
+      req(!is.na(plugin_name) | plugin_name != "")
+      
+      if (!is.na(plugin_name) | plugin_name != "") shiny.fluent::updateTextField.shinyInput(session, 
+        paste0("plugin_name_", language), errorMessage = NULL)
+      
       req(length(input$options_chosen_plugin) > 0)
       if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
       else link_id <- input$code_chosen_plugin
       
       data <- list()
       data$users_allowed_read <- unique(input$users_allowed_read)
-      for (field in c("users_allowed_read_group", "plugin_version", "plugin_author", 
+      for (field in c("users_allowed_read_group", "plugin_version", "plugin_author",
+        "plugin_name_fr", "plugin_name_en", "plugin_category_fr", "plugin_category_en",
         "plugin_image", "plugin_description_fr", "plugin_description_en")) data[[stringr::str_replace(field, "plugin_", "")]] <- input[[field]]
       
       save_settings_options(output = output, r = r, id = id, category = "plugin", code_id_input = paste0("options_", link_id),
-        i18n = i18n, data = data, page_options = c("users_allowed_read", "version", "author", "image", "description_fr", "description_en"))
+        i18n = i18n, data = data, page_options = c("users_allowed_read", "version", "author", "image", "description_fr", "description_en",
+          "name_fr", "name_en", "category_fr", "category_en"))
+      
+      # Change plugin_name in plugins table
+      sql <- glue::glue_sql("UPDATE plugins SET name = {plugin_name} WHERE id = {link_id}", .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql)
+      DBI::dbClearResult(query)
+      
+      r$plugins <- r$plugins %>% dplyr::mutate(name = dplyr::case_when(id == link_id ~ plugin_name, TRUE ~ name))
+      r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>%
+        dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       r$show_plugin_details <- Sys.time()
       
@@ -1932,9 +1957,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         DBI::dbClearResult(query)
         r$plugins <- r$plugins %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ new_datetime, TRUE ~ datetime))
         
-        # update_r(r = r, table = "code")
-        # update_r(r = r, table = "plugins")
-        
         # Notify user
         show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
         
@@ -1989,6 +2011,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             dplyr::select(id, unique_id),
             by = "unique_id"
           ) %>%
+          dplyr::mutate(name = dplyr::case_when(
+            language == "fr" ~ name_fr, TRUE ~ name_en
+          )) %>%
           dplyr::relocate(id)
         
         if (!input$replace_already_existing_plugins) plugins <- plugins %>% dplyr::filter(is.na(id))
@@ -2027,7 +2052,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
   
             new_data <- tibble::tribble(
               ~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
-              new_row, as.character(plugin$name), "", as.integer(module_type_id), as.character(Sys.time()), FALSE)
+              new_row, as.character(plugin[[paste0("name_", language)]]), "", as.integer(module_type_id), as.character(Sys.time()), FALSE)
   
             DBI::dbAppendTable(r$db, "plugins", new_data)
             r$plugins <- r$plugins %>% dplyr::bind_rows(new_data)
@@ -2045,7 +2070,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
               last_row_options + 5, "plugin", new_row, "author", plugin$author, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
               last_row_options + 6, "plugin", new_row, "image", plugin$image, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
               last_row_options + 7, "plugin", new_row, "description_fr", plugin$description_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 8, "plugin", new_row, "description_en", plugin$description_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
+              last_row_options + 8, "plugin", new_row, "description_en", plugin$description_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+              last_row_options + 9, "plugin", new_row, "category_fr", plugin$category_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+              last_row_options + 10, "plugin", new_row, "category_en", plugin$category_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+              last_row_options + 11, "plugin", new_row, "name_fr", plugin$name_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+              last_row_options + 12, "plugin", new_row, "name_en", plugin$name_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
             )
   
             DBI::dbAppendTable(r$db, "options", new_options)
@@ -2063,7 +2092,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
               last_row_code + 1, "plugin_ui", new_row, plugin_ui_code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
               last_row_code + 2, "plugin_server", new_row, plugin_server_code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_code + 2, "plugin_translations", new_row, plugin_translations_code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+              last_row_code + 3, "plugin_translations", new_row, plugin_translations_code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
   
             DBI::dbAppendTable(r$db, "code", new_code)
             r$code <- r$code %>% dplyr::bind_rows(new_code)
@@ -2084,7 +2113,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             )
   
             r$show_plugin_details <- Sys.time()
-            # r$reload_plugins <- Sys.time()
             
             # Reload datatable
             r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
@@ -2094,10 +2122,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Show imported plugins
         
         col_names <- c(i18n$t("id"), i18n$t("type"), i18n$t("name"), i18n$t("version"), i18n$t("unique_id"), i18n$t("author"), i18n$t("image"),
-          i18n$t("description_fr"), i18n$t("description_en"), i18n$t("app_version"))
+          i18n$t("description_fr"), i18n$t("description_en"), i18n$t("app_version"), 
+          i18n$t("name"), i18n$t("name"), i18n$t("category"), i18n$t("category"))
         centered_cols <- c("author", "version", "id")
         column_widths <- c("author" = "100px", "version" = "80px", "id" = "50px")
-        hidden_cols <- c("type", "unique_id", "image", "app_version", "description_fr", "description_en")
+        hidden_cols <- c("id", "type", "unique_id", "image", "app_version", "description_fr", "description_en", 
+         "name_en", "name_fr", "category_en", "category_fr")
         
         shinyjs::show("imported_plugins_div")
         
@@ -2207,8 +2237,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           plugin_node <- XML::newXMLNode("plugin", parent = plugins_node, doc = xml)
           XML::newXMLNode("app_version", r$app_version, parent = plugin_node)
           XML::newXMLNode("type", module_type_id, parent = plugin_node)
-          XML::newXMLNode("name", plugin$name, parent = plugin_node)
-          sapply(c("version", "unique_id", "author", "image", "description_fr", "description_en"), function(name){
+          sapply(c("version", "unique_id", "author", "image", "description_fr", "description_en",
+            "name_fr", "name_en", "category_fr", "category_en"), function(name){
             XML::newXMLNode(name, options %>% dplyr::filter(name == !!name) %>% dplyr::pull(value), parent = plugin_node)
           })
           XML::saveXML(xml, file = paste0(plugin_dir, "/plugin.xml"))
