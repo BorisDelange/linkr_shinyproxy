@@ -404,6 +404,34 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           value = list(key = m$chosen_subset))
       })
       
+      observeEvent(m$subset_patients, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer m$subset_patients"))
+        
+        patients <- tibble::tibble()
+        
+        if (nrow(m$subset_patients) > 0 & nrow(d$patients) > 0){
+          patients <- d$patients %>% dplyr::inner_join(m$subset_patients %>% dplyr::select(patient_id), by = "patient_id")
+        }
+        
+        if (nrow(patients) == 0){
+          # Set chosen_patient to NA, not to display a chart when no patient is chosen
+          m$chosen_patient <- NA_integer_
+          shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = i18n$t("no_patient_in_subset")) 
+        }
+        
+        if (nrow(patients) > 0){
+          # Order patients by patient_id
+          patients <- patients %>% dplyr::arrange(patient_id)
+          
+          # Update patients dropdown
+          shiny.fluent::updateComboBox.shinyInput(session, "patient", 
+            options = convert_tibble_to_list(data = patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender)),
+              key_col = "patient_id", text_col = "name_display"))
+        }
+        
+      })
+      
       # --- --- --- --- ---
       # Chosen patient ----
       # --- --- --- --- ---

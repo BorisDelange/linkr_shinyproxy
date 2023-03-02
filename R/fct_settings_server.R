@@ -283,7 +283,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     
     # Add code for creating subset with all patients
     code <- paste0("patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at(\"patient_id\", as.integer)\n\n",
-      "add_patients_to_subset(output = output, r = r, m = m, patients = patients, subset_id = %subset_id%)")
+      "add_patients_to_subset(output = output, m = m, patients = patients, subset_id = %subset_id%, i18n = i18n, ns = ns)")
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row$code + 1, "subset", last_row$subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
@@ -298,7 +298,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     # Add patients to subset
     tryCatch({
       patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
-      add_patients_to_subset(output, r, m, patients, last_row$subsets + 1)
+      add_patients_to_subset(output = output, m = m, patients = patients, subset_id = last_row$subsets + 1, i18n = i18n, ns = ns)
     }, 
       error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
         error_name = paste0("add study - add_patients_to_subsets - id = ", last_row$subsets + 1), category = "Error", error_report = toString(e), i18n = i18n))
@@ -313,11 +313,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   
   # For subsets, need to add one row in code
   if (table == "subsets"){
-    # Add code for creating subset with all patients
-    code <- paste0("patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at(\"patient_id\", as.integer)\n\n",
-      "add_patients_to_subset(output = output, r = r, m = m, patients = patients, subset_id = %subset_id%)")
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row$code + 1, "subset", last_row$subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$code + 1, "subset", last_row$subsets + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # For options of patient_lvl & aggregated modules families, need to add two rows, for users accesses
@@ -729,7 +726,7 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
     DBI::dbSendStatement(r$db, sql) -> query
     DBI::dbClearResult(query)
     
-    if (table %in% m_tables){
+    if (table %in% m_tables & table != "subset_patients"){
       if (length(r_table) > 0) m[[r_table]] <- m[[r_table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
       else m[[table]] <- m[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]]) 
     }

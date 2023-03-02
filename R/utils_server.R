@@ -197,6 +197,15 @@ get_col_names <- function(table_name = character(), i18n = R6::R6Class()){
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
+  if (table_name == "subset_patients"){
+    result <- c(i18n$t("id"), i18n$t("subset"), i18n$t("patient"),
+      i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"))
+  }
+  
+  if (table_name == "subset_add_patients"){
+    result <- c(i18n$t("patient"))
+  }
+  
   if (table_name == "thesaurus_items"){
     result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
       i18n$t("abbreviation"), i18n$t("unit"),

@@ -333,7 +333,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       default_data$diagnoses <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
         datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), comments = character())
       
-      sapply(c("patients", "stays", "labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_subset[[table]] <- default_data[[table]])
+    sapply(c("patients", "stays", "labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_subset[[table]] <- default_data[[table]])
       sapply(c("stays", "labs_vitals", "text", "orders", "diagnoses"), function(table){
         d$data_patient[[table]] <- default_data[[table]]
         d[[table]] <- default_data[[table]]
@@ -558,6 +558,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # Reset chosen_subset
       m$chosen_subset <- NA_integer_
       
+      # Select patients belonging to subsets of this study
+      update_r(r = r, m = m, table = "subsets_patients")
+      
       # Load patients options
       sql <- glue::glue_sql("SELECT * FROM patients_options WHERE study_id = {m$chosen_study}", .con = m$db)
       m$patients_options <- DBI::dbGetQuery(m$db, sql)
@@ -586,32 +589,6 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           )
           
           update_r(r = r, m = m, table = "subset_patients")
-        }
-        
-        # Select patients belonging to subsets of this study
-        update_r(r = r, m = m, table = "subsets_patients")
-        
-        patients <- tibble::tibble()
-        
-        if (nrow(m$subset_patients) > 0 & nrow(d$patients) > 0){
-          patients <- d$patients %>% dplyr::inner_join(m$subset_patients %>% dplyr::select(patient_id), by = "patient_id")
-        }
-        
-        if (nrow(patients) == 0){
-          # Set chosen_patient to NA, not to display a chart when no patient is chosen
-          m$chosen_patient <- NA_integer_
-          shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = i18n$t("no_patient_in_subset")) 
-        }
-        
-        if (nrow(patients) > 0){
-          # Order patients by patient_id
-          patients <- patients %>% dplyr::arrange(patient_id)
-          
-          # Update patients dropdown
-          shiny.fluent::updateComboBox.shinyInput(session, "patient", 
-            options = convert_tibble_to_list(data = patients %>% 
-                dplyr::mutate(name_display = paste0(patient_id, " - ", gender)),
-              key_col = "patient_id", text_col = "name_display"))
         }
       }
     })
@@ -1212,6 +1189,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     studies_management_col_names <- get_col_names("studies", i18n)
     
     # Prepare data for datatable
+    # This is on a different observer, because r$studies is loaded just before r$reload_studies_datatable is set to Sys.time()
+    # If we put this code in the observer of r$chosen_datamart, it has no time to execute update_r for studies
+    # So r$studies is not updated
     
     observeEvent(r$reload_studies_datatable, {
       

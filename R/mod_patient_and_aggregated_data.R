@@ -298,6 +298,23 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     # Initiate var for list of cards
     r[[paste0(prefix, "_cards")]] <- character()
     
+    # Default data
+    default_data <- list()
+    default_data$patients <- tibble::tibble(patient_id = integer(), gender = character(), dod = lubridate::ymd_hms())
+    default_data$stays <- tibble::tibble(patient_id = integer(), stay_id = integer(), age = numeric(), thesaurus_name = character(),
+      item_id = integer(), admission_datetime = lubridate::ymd_hms(), discharge_datetime = lubridate::ymd_hms())
+    default_data$labs_vitals <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+      datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(),
+      value_num = numeric(), unit = character(), comments = character())
+    default_data$text <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+      datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(), comments = character())
+    default_data$orders <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+      datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), route = character(),
+      continuous = integer(), amount = numeric(), amount_unit = character(), rate = numeric(), rate_unit = character(),
+      concentration = numeric(), concentration_unit = character(), comments = character())
+    default_data$diagnoses <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+      datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), comments = character())
+    
     # Load page from header
     
     observeEvent(shiny.router::get_page(), {
@@ -776,13 +793,9 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         # Reset variables
-        d$data_patient$stays <- tibble::tibble()
-        d$data_patient$labs_vitals <- tibble::tibble()
-        d$data_patient$text <- tibble::tibble()
-        d$data_patient$orders <- tibble::tibble()
-        d$data_stay$labs_vitals <- tibble::tibble()
-        d$data_stay$text <- tibble::tibble()
-        d$data_stay$orders <- tibble::tibble()
+        
+        sapply(c("stays", "labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_patient[[table]] <- default_data[[table]])
+        sapply(c("labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_stay[[table]] <- default_data[[table]])
         
         if (length(m$chosen_patient) > 0){
           if (!is.na(m$chosen_patient) & m$chosen_patient != ""){
@@ -803,7 +816,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         
         req(d$data_patient)
         
-        d$data_stay <- list()
+        sapply(c("labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_stay[[table]] <- default_data[[table]])
         
         if (length(m$chosen_stay) > 0){
           if (!is.na(m$chosen_stay) & m$chosen_stay != ""){
@@ -822,28 +835,20 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     
     if (prefix == "aggregated"){
       
-      observeEvent(m$chosen_subset, {
+      observeEvent(m$subset_patients, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer m$chosen_subset"))
+        if (debug) print(paste0(Sys.time(), " - mod_patient_and_aggregated_data - ", id, " - observer m$subset_patients"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
-        
-        d$data_subset <- list()
-        patients <- tibble::tibble()
         
         # Reset variables
         vars <- c("patients", "stays", "labs_vitals", "text", "orders", "diagnoses")
-        lapply(vars, function(var) d$data_subset[[var]] <- tibble::tibble())
+        sapply(vars, function(table) d$data_subset[[table]] <- default_data[[table]])
         
-        if (length(m$chosen_subset) > 0){
-          if (!is.na(m$chosen_subset) & m$chosen_subset != "") patients <- m$subset_patients %>% dplyr::filter(subset_id == m$chosen_subset)
+        if (nrow(m$subset_patients) > 0){
+          lapply(vars, function(var) if (nrow(d[[var]]) > 0) d$data_subset[[var]] <- d[[var]] %>% dplyr::inner_join(m$subset_patients %>% dplyr::select(patient_id), by = "patient_id"))
         }
         
-        if (nrow(patients) > 0){
-          patients <- patients %>% dplyr::select(patient_id)
-          lapply(vars, function(var) if (nrow(d[[var]]) > 0) d$data_subset[[var]] <- d[[var]] %>% dplyr::inner_join(patients, by = "patient_id"))
-        }
-        
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer m$chosen_subset"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - observer m$subset_patients"))
       })
     }
     

@@ -155,7 +155,7 @@ mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(
         edited_code <- r$r_console_code %>% stringr::str_replace_all("\r", "\n")
         
         output$code_result <- renderText(
-          execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, r = r, d = d, m = m,
+          execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, i18n = i18n, r = r, d = d, m = m,
             edited_code = edited_code, code_type = "server"))
         output$datetime_code_execution <- renderText(format_datetime(Sys.time(), language))
       }

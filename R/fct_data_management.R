@@ -122,10 +122,11 @@ add_patients_to_subset <- function(output, m = shiny::reactiveValues(), patients
   )
   
   # Keep only patients not already in the subset
-  sql <- glue::glue_sql("SELECT patient_id FROM subset_patients WHERE subset_id = {subset_id}", .con = m$db)
+  sql <- glue::glue_sql("SELECT patient_id FROM subset_patients WHERE subset_id = {subset_id} AND deleted IS FALSE", .con = m$db)
   actual_patients <- DBI::dbGetQuery(m$db, sql)
   
   patients <- patients %>% dplyr::anti_join(actual_patients, by = "patient_id")
+  print(patients)
   
   # If there are patients to add
   if (nrow(patients) > 0){

@@ -20,6 +20,7 @@ mod_my_subsets_ui <- function(id = character(), i18n = R6::R6Class()){
   div(
     class = "main",
     render_settings_default_elements(ns = ns),
+    shiny.fluent::reactOutput(ns("subset_patients_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "subset_main", text = i18n$t("my_subsets"))
     ), maxDisplayedItems = 3),
@@ -76,17 +77,31 @@ mod_my_subsets_ui <- function(id = character(), i18n = R6::R6Class()){
         id = ns("subset_patients_card"),
         make_card(i18n$t("subset_patients"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "subset", id = "patients_chosen_subset",
-              width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
-            div(DT::DTOutput(ns("subset_patients_datatable")), style = "margin-top:-30px; z-index:2"),
             div(
-              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::PrimaryButton.shinyInput(ns("save_patients_subset"), i18n$t("save")),
-                shiny.fluent::DefaultButton.shinyInput(ns("delete_selected_patients"), i18n$t("delete_selection"))
-              ),
-              style = "position:relative; z-index:2; margin-top:-30px;"
-            )
+              make_combobox(i18n = i18n, ns = ns, label = "subset", id = "patients_chosen_subset", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+              style = "position:relative; z-index:1; width:500px;"
+            ),
+            div(DT::DTOutput(ns("subset_patients_datatable")), style = "margin-top:-30px; z-index:2"),
+            shinyjs::hidden(
+              div(
+                id = ns("subset_patients_buttons"),
+                shiny.fluent::DefaultButton.shinyInput(ns("delete_selected_patients"), i18n$t("delete_selection")),
+                style = "position:relative; z-index:1; margin-top:-30px; width:500px;"
+              )
+            ), br()
           )
+        ),
+        make_card(i18n$t("add_patients_to_subset"),
+          div(
+            div(DT::DTOutput(ns("subset_add_patients_datatable")), style = "margin-top:-30px; z-index:2"),
+            shinyjs::hidden(
+              div(
+                id = ns("subset_add_patients_buttons"),
+                shiny.fluent::PrimaryButton.shinyInput(ns("subset_add_patients"), i18n$t("add")),
+                style = "position:relative; z-index:1; margin-top:-30px; width:500px;"
+              )
+            ), br()
+          )  
         )
       )
     ),
@@ -198,12 +213,17 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       }
       else shinyjs::show(input$current_tab)
       
-      r$reload_subsets_datatable <- Sys.time()
-      
       # Reset fields
       shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_subset", options = list(), value = NULL)
       shiny.fluent::updateComboBox.shinyInput(session, "patients_chosen_subset", options = list(), value = NULL)
       shinyAce::updateAceEditor(session, "ace_edit_code", value = "")
+      
+      if (length(r$subset_patients_datatable_proxy) > 0){
+        DT::replaceData(r$subset_patients_datatable_proxy,
+          tibble::tibble(id = integer(), subset_id = integer(), patient_id = integer(),
+            creator_id = factor(), datetime = character(), deleted = integer(), modified = logical()), 
+          resetPaging = FALSE, rownames = FALSE)
+      }
     })
     
     # --- --- --- --- --- -
@@ -256,44 +276,15 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     subsets_management_hidden_cols <- c("id", "description", "study_id","deleted", "modified")
     subsets_management_col_names <- get_col_names("subsets", i18n)
     
-    # Prepare data for datatable
-    
-    observeEvent(r$reload_subsets_datatable, {
-
-      if (nrow(m$subsets) == 0) {
-
-        data <- tibble::tibble(id = integer(), name = character(), description = character(), study_id = factor(),
-          creator_id = factor(), datetime = character(), deleted = integer(), modified = logical(), action = character())
-      }
-
-      if (nrow(m$subsets) > 0){
-
-        m$subsets_temp <- m$subsets %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
-
-        # Prepare data for datatable
-
-        m$subsets_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
-          table = "subsets", factorize_cols = subsets_management_factorize_cols, action_buttons = action_buttons, data_input = m$subsets_temp)
-        data <- m$subsets_datatable_temp
-      }
-
-      if (length(m$subsets_datatable_proxy) == 0){
-
-        # Render datatable
-
-        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data,
-          output_name = "subsets_datatable", col_names = get_col_names("subsets", i18n),
-          editable_cols = subsets_management_editable_cols, sortable_cols = subsets_management_sortable_cols, centered_cols = subsets_management_centered_cols,
-          column_widths = subsets_management_column_widths, searchable_cols = subsets_management_searchable_cols,
-          filter = TRUE, factorize_cols = subsets_management_factorize_cols, hidden_cols = subsets_management_hidden_cols,
-          selection = "multiple")
-
-        # Create a proxy for datatable
-
-        m$subsets_datatable_proxy <- DT::dataTableProxy("subsets_datatable", deferUntilFlush = FALSE)
-      }
-
-      if (length(m$subsets_datatable_proxy) > 0) DT::replaceData(m$subsets_datatable_proxy, data, resetPaging = FALSE, rownames = FALSE)
+    # Load data for datatable
+    observeEvent(m$subsets, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer m$subsets"))
+      
+      if (nrow(m$subsets) == 0) data <- tibble::tibble(id = integer(), name = character(), description = character(), study_id = factor(),
+        creator_id = factor(), datetime = character(), deleted = integer(), modified = logical(), action = character())
+      
+      if (nrow(m$subsets) > 0) m$subsets_temp <- m$subsets %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
     })
     
     # Reload datatable
@@ -307,8 +298,23 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
         table = "subsets", factorize_cols = subsets_management_factorize_cols, action_buttons = action_buttons, data_input = m$subsets_temp)
 
       # Reload data of datatable
-      if (length(m$subsets_datatable_proxy) > 0) DT::replaceData(m$subsets_datatable_proxy,
-        m$subsets_datatable_temp, resetPaging = FALSE, rownames = FALSE)
+      if (length(m$subsets_datatable_proxy) == 0){
+        
+        # Render datatable
+        
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = m$subsets_datatable_temp,
+          output_name = "subsets_datatable", col_names = get_col_names("subsets", i18n),
+          editable_cols = subsets_management_editable_cols, sortable_cols = subsets_management_sortable_cols, centered_cols = subsets_management_centered_cols,
+          column_widths = subsets_management_column_widths, searchable_cols = subsets_management_searchable_cols,
+          filter = TRUE, factorize_cols = subsets_management_factorize_cols, hidden_cols = subsets_management_hidden_cols,
+          selection = "multiple")
+        
+        # Create a proxy for datatable
+        
+        m$subsets_datatable_proxy <- DT::dataTableProxy("subsets_datatable", deferUntilFlush = FALSE)
+      }
+      
+      if (length(m$subsets_datatable_proxy) > 0) DT::replaceData(m$subsets_datatable_proxy, m$subsets_datatable_temp, resetPaging = FALSE, rownames = FALSE)
     })
     
     # Updates on datatable data
@@ -593,155 +599,180 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       # Get patients for this subset
       
       sql <- glue::glue_sql("SELECT * FROM subset_patients WHERE deleted IS FALSE AND subset_id = {link_id}", .con = db)
-      r$subset_patients <- DBI::dbGetQuery(m$db, sql)
+      data <- DBI::dbGetQuery(m$db, sql)
+      r$subset_patients <- data
+      
+      # Load data for datatable
+      if (nrow(data) == 0) {
+        
+        r$subset_patients_temp <- tibble::tibble(id = integer(), subset_id = integer(), patient_id = character(),
+          creator_id = factor(), datetime = character(), deleted = integer(), modified = logical())
+      }
+      
+      if (nrow(data) > 0){
+        
+        r$subset_patients_temp <- data %>% 
+          dplyr::mutate(modified = FALSE) %>% dplyr::arrange(patient_id) %>%
+          dplyr::mutate_at("patient_id", as.character) %>%
+          dplyr::mutate_at("creator_id", as.factor)
+      }
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_subsets - observer input$patients_chosen_subset"))
     })
     
-    # subsets_management_editable_cols <- c("name")
-    # subsets_management_sortable_cols <- c("id", "name", "description", "study_id", "creator_id", "datetime")
-    # subsets_management_column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
-    # subsets_management_centered_cols <- c("id", "creator", "datetime", "action")
-    # subsets_management_searchable_cols <- c("name", "description", "creator_id")
-    # subsets_management_factorize_cols <- c("study_id", "creator_id")
-    # subsets_management_hidden_cols <- c("id", "description", "study_id","deleted", "modified")
-    # subsets_management_col_names <- get_col_names("subsets", i18n)
+    subset_patients_sortable_cols <- c("patient_id", "creator_id", "datetime")
+    subset_patients_column_widths <- c("datetime" = "130px", "creator_id" = "200px")
+    subset_patients_centered_cols <- c("creator", "datetime")
+    subset_patients_searchable_cols <- c("patient_id", "creator_id")
+    subset_patients_factorize_cols <- c("creator_id")
+    subset_patients_hidden_cols <- c("id", "subset_id", "deleted", "creator_id", "modified")
+    subset_patients_col_names <- get_col_names("subset_patients", i18n)
     
-    # Prepare data for datatable
+    # Prepare data for subset_patients_datatable
     
-    # observeEvent(r$reload_subsets_datatable, {
-    #   
-    #   if (nrow(m$subsets) == 0) {
-    #     
-    #     data <- tibble::tibble(id = integer(), name = character(), description = character(), study_id = factor(),
-    #       creator_id = factor(), datetime = character(), deleted = integer(), modified = logical(), action = character())
-    #   }
-    #   
-    #   if (nrow(m$subsets) > 0){
-    #     
-    #     m$subsets_temp <- m$subsets %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
-    #     
-    #     # Prepare data for datatable
-    #     
-    #     m$subsets_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
-    #       table = "subsets", factorize_cols = subsets_management_factorize_cols, action_buttons = action_buttons, data_input = m$subsets_temp)
-    #     data <- m$subsets_datatable_temp
-    #   }
-    #   
-    #   if (length(m$subsets_datatable_proxy) == 0){
-    #     
-    #     # Render datatable
-    #     
-    #     render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data,
-    #       output_name = "subsets_datatable", col_names = get_col_names("subsets", i18n),
-    #       editable_cols = subsets_management_editable_cols, sortable_cols = subsets_management_sortable_cols, centered_cols = subsets_management_centered_cols,
-    #       column_widths = subsets_management_column_widths, searchable_cols = subsets_management_searchable_cols,
-    #       filter = TRUE, factorize_cols = subsets_management_factorize_cols, hidden_cols = subsets_management_hidden_cols,
-    #       selection = "multiple")
-    #     
-    #     # Create a proxy for datatable
-    #     
-    #     m$subsets_datatable_proxy <- DT::dataTableProxy("subsets_datatable", deferUntilFlush = FALSE)
-    #   }
-    #   
-    #   if (length(m$subsets_datatable_proxy) > 0) DT::replaceData(m$subsets_datatable_proxy, data, resetPaging = FALSE, rownames = FALSE)
-    # })
-    # 
-    # # Reload datatable
-    # observeEvent(m$subsets_temp, {
-    #   
-    #   # Reload datatable_temp variable
-    #   if (nrow(m$subsets_temp) == 0) m$subsets_datatable_temp <- tibble::tibble(id = integer(), name = character(), description = character(), study_id = factor(),
-    #     creator_id = factor(), datetime = character(), deleted = integer(), modified = logical(), action = character())
-    #   
-    #   if (nrow(m$subsets_temp) > 0) m$subsets_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
-    #     table = "subsets", factorize_cols = subsets_management_factorize_cols, action_buttons = action_buttons, data_input = m$subsets_temp)
-    #   
-    #   # Reload data of datatable
-    #   if (length(m$subsets_datatable_proxy) > 0) DT::replaceData(m$subsets_datatable_proxy,
-    #     m$subsets_datatable_temp, resetPaging = FALSE, rownames = FALSE)
-    # })
-    # 
-    # # Updates on datatable data
-    # observeEvent(input$subsets_datatable_cell_edit, {
-    #   
-    #   if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subsets_datatable_cell_edit"))
-    #   
-    #   edit_info <- input$subsets_datatable_cell_edit
-    #   m$subsets_temp <- DT::editData(m$subsets_temp, edit_info, rownames = FALSE)
-    #   
-    #   # Store that this row has been modified
-    #   m$subsets_temp[[edit_info$row, "modified"]] <- TRUE
-    # })
-    # 
-    # # Save updates
-    # observeEvent(input$save_subsets_management, {
-    #   
-    #   if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$save_subsets_management"))
-    #   
-    #   req(nrow(m$subsets %>% dplyr::filter(study_id == m$chosen_study)) > 0)
-    #   
-    #   save_settings_datatable_updates(output = output, r = r, m = m, ns = ns,
-    #     table = "subsets", r_table = "subsets", i18n = i18n, duplicates_allowed = FALSE)
-    #   
-    #   # Update sidenav dropdown with the new study
-    #   r$reload_subsets <- Sys.time()
-    # })
-    # 
-    # # Delete a row in datatable
-    # 
-    # subset_delete_prefix <- "subset"
-    # subset_dialog_title <- "subsets_delete"
-    # subset_dialog_subtext <- "subsets_delete_subtext"
-    # subset_react_variable <- "delete_confirm"
-    # subset_table <- "subsets"
-    # subset_id_var_sql <- "id"
-    # subset_id_var_r <- "delete_subset"
-    # subset_delete_message <- "subsets_deleted"
-    # subset_reload_variable <- "reload_subsets"
-    # subset_information_variable <- "subset_deleted"
-    # subset_delete_variable <- paste0(subset_delete_prefix, "_open_dialog")
-    # 
-    # delete_element(r = r, m = m, input = input, output = output, session = session, ns = ns, i18n = i18n,
-    #   delete_prefix = subset_delete_prefix, dialog_title = subset_dialog_title, dialog_subtext = subset_dialog_subtext,
-    #   react_variable = subset_react_variable, table = subset_table, id_var_sql = subset_id_var_sql, id_var_r = subset_id_var_r,
-    #   delete_message = subset_delete_message, translation = TRUE, reload_variable = subset_reload_variable,
-    #   information_variable = subset_information_variable)
-    # 
-    # # Delete one row (with icon on DT)
-    # 
-    # observeEvent(input$deleted_pressed, {
-    #   
-    #   if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$deleted_pressed"))
-    #   
-    #   r$delete_subset <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
-    #   r[[subset_delete_variable]] <- TRUE
-    #   
-    #   # Reload datatable (to unselect rows)
-    #   DT::replaceData(m$subsets_datatable_proxy, m$subsets_datatable_temp, resetPaging = FALSE, rownames = FALSE)
-    # })
-    # 
-    # # Delete multiple rows (with "Delete selection" button)
-    # 
-    # observeEvent(input$delete_selection, {
-    #   
-    #   if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$delete_selection"))
-    #   
-    #   req(length(input$subsets_datatable_rows_selected) > 0)
-    #   
-    #   r$delete_subset <- m$subsets_temp[input$subsets_datatable_rows_selected, ] %>% dplyr::pull(id)
-    #   r[[subset_delete_variable]] <- TRUE
-    # })
-    # 
-    # observeEvent(r$reload_subsets, {
-    #   
-    #   if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer r$reload_subsets"))
-    #   
-    #   m$subsets_temp <- m$subsets %>% dplyr::filter(study_id == m$chosen_study) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
-    #   
-    #   # Reset chosen subset
-    #   m$chosen_subset <- NA_integer_
-    # })
+    observeEvent(r$subset_patients_temp, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer r$subset_patients_temp"))
+      
+      # Subset patients datatable
+
+      if (length(r$subset_patients_datatable_proxy) == 0){
+
+        # Render datatable
+
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$subset_patients_temp,
+          output_name = "subset_patients_datatable", col_names = get_col_names("subset_patients", i18n),
+          sortable_cols = subset_patients_sortable_cols, centered_cols = subset_patients_centered_cols,
+          column_widths = subset_patients_column_widths, searchable_cols = subset_patients_searchable_cols,
+          filter = TRUE, factorize_cols = subset_patients_factorize_cols, hidden_cols = subset_patients_hidden_cols,
+          selection = "multiple")
+
+        # Create a proxy for datatable
+
+        r$subset_patients_datatable_proxy <- DT::dataTableProxy("subset_patients_datatable", deferUntilFlush = FALSE)
+        
+        # Hide no data div
+        
+        shinyjs::show("subset_patients_buttons")
+      }
+
+      if (length(r$subset_patients_datatable_proxy) > 0) DT::replaceData(r$subset_patients_datatable_proxy, r$subset_patients_temp, 
+        resetPaging = FALSE, rownames = FALSE)
+      
+      # Update patients not already added in subset
+      
+      r$subset_add_patients <-
+        d$patients %>%
+        dplyr::select(patient_id) %>%
+        dplyr::anti_join(r$subset_patients_temp %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer), by = "patient_id") %>%
+        dplyr::mutate_at("patient_id", as.character)
+    })
+    
+    # Prepare data for subset_add_patients_datatable
+    
+    observeEvent(r$subset_add_patients, {
+      
+      # Subset patients datatable
+      
+      if (length(r$subset_add_patients_datatable_proxy) == 0){
+        
+        # Render datatable
+        
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$subset_add_patients,
+          output_name = "subset_add_patients_datatable", col_names = get_col_names("subset_add_patients", i18n),
+          filter = TRUE, sortable_cols = "patient_id", searchable_cols = "patient_id", selection = "multiple")
+        
+        # Create a proxy for datatable
+        
+        r$subset_add_patients_datatable_proxy <- DT::dataTableProxy("subset_add_patients_datatable", deferUntilFlush = FALSE)
+        
+        # Hide no data div
+        
+        shinyjs::show("subset_add_patients_buttons")
+      }
+      
+      if (length(r$subset_add_patients_datatable_proxy) > 0) DT::replaceData(r$subset_add_patients_datatable_proxy, r$subset_add_patients, 
+        resetPaging = FALSE, rownames = FALSE)
+    })
+
+    # Delete rows in datatable
+
+    subset_patients_delete_prefix <- "subset_patients"
+    subset_patients_dialog_title <- "subset_patients_delete"
+    subset_patients_dialog_subtext <- "subset_patients_delete_subtext"
+    subset_patients_react_variable <- "subset_patients_delete_confirm"
+    subset_patients_table <- "subset_patients"
+    subset_patients_id_var_sql <- "id"
+    subset_patients_id_var_r <- "delete_subset_patients"
+    subset_patients_delete_message <- "subset_patients_deleted"
+    subset_patients_reload_variable <- "reload_subset_patients"
+    subset_patients_information_variable <- "subset_patients_deleted"
+    subset_patients_delete_variable <- paste0(subset_patients_delete_prefix, "_open_dialog")
+
+    delete_element(r = r, m = m, input = input, output = output, session = session, ns = ns, i18n = i18n,
+      delete_prefix = subset_patients_delete_prefix, dialog_title = subset_patients_dialog_title, dialog_subtext = subset_patients_dialog_subtext,
+      react_variable = subset_patients_react_variable, table = subset_patients_table, id_var_sql = subset_patients_id_var_sql, id_var_r = subset_patients_id_var_r,
+      delete_message = subset_patients_delete_message, translation = TRUE, reload_variable = subset_patients_reload_variable,
+      information_variable = subset_patients_information_variable)
+
+    # Delete multiple rows (with "Delete selection" button)
+
+    observeEvent(input$delete_selected_patients, {
+
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$delete_selected_patients"))
+
+      req(length(input$subset_patients_datatable_rows_selected) > 0)
+
+      r$delete_subset_patients <- r$subset_patients_temp[input$subset_patients_datatable_rows_selected, ] %>% dplyr::pull(id)
+      r[[subset_patients_delete_variable]] <- TRUE
+    })
+
+    observeEvent(r$reload_subset_patients, {
+
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer r$reload_subset_patients"))
+
+      r$subset_patients_temp <- r$subset_patients %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+    })
+    
+    # Add patients to subset
+    
+    observeEvent(input$subset_add_patients, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_add_patients"))
+      
+      if (length(input$patients_chosen_subset) > 1) link_id <- input$patients_chosen_subset$key
+      else link_id <- input$patients_chosen_subset
+      
+      # Selected patients
+      patients <- r$subset_add_patients[input$subset_add_patients_datatable_rows_selected, ] %>% 
+        dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)
+      
+      print(link_id)
+      print(patients)
+      
+      # Add patients to subset
+      add_patients_to_subset(output = output, m = m, patients = patients, subset_id = link_id, i18n = i18n, ns = ns)
+      
+      # Reload r$subset_patients
+      r$reload_subset_add_patients <- Sys.time()
+    })
+    
+    observeEvent(r$reload_subset_add_patients, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer r$reload_subset_add_patients"))
+      
+      if (length(input$patients_chosen_subset) > 1) link_id <- input$patients_chosen_subset$key
+      else link_id <- input$patients_chosen_subset
+      
+      sql <- glue::glue_sql("SELECT * FROM subset_patients WHERE deleted IS FALSE AND subset_id = {link_id}", .con = db)
+      r$subset_patients <- DBI::dbGetQuery(m$db, sql)
+      
+      r$subset_patients_temp <- r$subset_patients %>% 
+        dplyr::mutate(modified = FALSE) %>%
+        dplyr::arrange(patient_id) %>%
+        dplyr::mutate_at("patient_id", as.character) %>%
+        dplyr::mutate_at("creator_id", as.factor)
+    })
     
   })
 }
