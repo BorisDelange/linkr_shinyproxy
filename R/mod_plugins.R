@@ -784,11 +784,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         plugin_ui_code <- 
           paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id, "/ui.R") %>%
-          readLines() %>% paste(collapse = "\n")
+          readLines(warn = FALSE) %>% paste(collapse = "\n")
         
         plugin_server_code <-
           paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id, "/server.R") %>%
-          readLines() %>% paste(collapse = "\n")
+          readLines(warn = FALSE) %>% paste(collapse = "\n")
         
         last_row_code <- get_last_row(r$db, "code")
         
@@ -2048,9 +2048,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
   
             # Code table
   
-            plugin_ui_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/ui.R") %>% readLines() %>% paste(collapse = "\n")
-            plugin_server_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/server.R") %>% readLines() %>% paste(collapse = "\n")
-            plugin_translations_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/translations.csv") %>% readLines() %>% paste(collapse = "\n")
+            plugin_ui_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/ui.R") %>% readLines(warn = FALSE) %>% paste(collapse = "\n")
+            plugin_server_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/server.R") %>% readLines(warn = FALSE) %>% paste(collapse = "\n")
+            plugin_translations_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/translations.csv") %>% readLines(warn = FALSE) %>% paste(collapse = "\n")
   
             last_row_code <- get_last_row(r$db, "code")
   

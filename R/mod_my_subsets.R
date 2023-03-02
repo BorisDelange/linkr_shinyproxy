@@ -467,11 +467,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       if (length(input$code_chosen_subset) > 1) link_id <- input$code_chosen_subset$key
       else link_id <- input$code_chosen_subset
       
-      subset_code <- input$ace_edit_code %>%
-        stringr::str_replace_all("'", "''") %>%
-        stringr::str_replace_all("%datamart_id%", as.character(r$chosen_datamart)) %>%
-        stringr::str_replace_all("%subset_id%", as.character(link_id)) %>%
-        stringr::str_replace_all("\r", "\n")
+      subset_code <- input$ace_edit_code %>% stringr::str_replace_all("'", "''")
       
       subset_code_id <- r$code %>% dplyr::filter(category == "subset" & link_id == !!link_id) %>% dplyr::pull(id)
       
@@ -521,12 +517,18 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_subsets - observer r$subset_execute_code_trigger"))
 
-      edited_code <- r$subset_execute_code %>% stringr::str_replace_all("\r", "\n")
+      if (length(input$code_chosen_subset) > 1) link_id <- input$code_chosen_subset$key
+      else link_id <- input$code_chosen_subset
+      
+      edited_code <- r$subset_execute_code %>% 
+        stringr::str_replace_all("%datamart_id%", as.character(r$chosen_datamart)) %>%
+        stringr::str_replace_all("%subset_id%", as.character(link_id)) %>%
+        stringr::str_replace_all("\r", "\n")
 
       # Variables to hide
       new_env_vars <- list("r" = NA)
       # Variables to keep
-      for (var in c("d", "m", "i18n")) new_env_vars[[var]] <- eval(parse(text = var))
+      for (var in c("d", "m", "i18n", "output", "ns")) new_env_vars[[var]] <- eval(parse(text = var))
       new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
       
       options('cli.num_colors' = 1)
@@ -590,8 +592,8 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       
       # Get patients for this subset
       
-      sql <- glue::glue_sql("SELECT * FROM subset_patients WHERE deleted IS FALSE AND subset_id = {link_id})", .con = db)
-      r$subset_patients <- DBI::dbGetQuery(db, sql)
+      sql <- glue::glue_sql("SELECT * FROM subset_patients WHERE deleted IS FALSE AND subset_id = {link_id}", .con = db)
+      r$subset_patients <- DBI::dbGetQuery(m$db, sql)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_subsets - observer input$patients_chosen_subset"))
     })

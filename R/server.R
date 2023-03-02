@@ -34,8 +34,9 @@ app_server <- function(router, language = "en", app_folder = character(),
     # Test internet connection
     # If local is TRUE, don't use internet connection
     if (debug) print(paste0(Sys.time(), " - server - has_internet"))
-    if (local) r$has_internet <- FALSE
-    else r$has_internet <- curl::has_internet()
+    if (local) has_internet <- FALSE
+    else has_internet <- curl::has_internet()
+    r$has_internet <- has_internet
     
     # If perf_monotoring activated
     if (debug) print(paste0(Sys.time(), " - server - perf_monitoring"))
@@ -102,7 +103,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       if (debug) print(paste0(Sys.time(), " - server - observer r$db"))
       
       # Add default values in database, if it is empty
-      insert_default_values(output = output, r = r, options_toggles = options_toggles)
+      insert_default_values(output = output, r = r, m = m, i18n = i18n, has_internet = has_internet, options_toggles = options_toggles)
       
       # Load database
       load_database(r = r, i18n = i18n)
@@ -119,7 +120,9 @@ app_server <- function(router, language = "en", app_folder = character(),
 
     observeEvent(r$res_auth, {
       if (debug) print(paste0(Sys.time(), " - server - observer r$res_auth"))
-      r$user_id <- as.integer(reactiveValuesToList(r$res_auth)$id)
+      user_id <- as.integer(reactiveValuesToList(r$res_auth)$id)
+      r$user_id <- user_id
+      m$user_id <- user_id
       add_log_entry(r = r, category = trad$session, name = trad$session_starts, value = "")
     })
 

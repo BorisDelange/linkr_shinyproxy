@@ -3,7 +3,7 @@
 #'
 #' @param r shiny reactive value, used to communicate between modules
 
-insert_default_values <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), 
+insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), 
   i18n = R6::R6Class(), has_internet = FALSE, options_toggles = tibble::tibble()){
   
   # --- --- --- --- --- --- --- --- --- --- ---

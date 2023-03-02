@@ -212,7 +212,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
         
         if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - download overview.Md"))
         con <- textConnection("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/overview.Md")
-        overview_div <- readLines(con) %>% includeMarkdown() %>% withMathJax()
+        overview_div <- readLines(con, warn = FALSE) %>% includeMarkdown() %>% withMathJax()
         close(con)
         if(perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home_server - ", id, " - download overview.Md"))
         
@@ -239,7 +239,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
             
             filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/", tolower(language), "/", news_file$file)
             con <- textConnection(filepath_github)
-            news_md <- readLines(textConnection(filepath_github)) %>% includeMarkdown() %>% withMathJax()
+            news_md <- readLines(textConnection(filepath_github), warn = FALSE) %>% includeMarkdown() %>% withMathJax()
             close(con)
             
             output_name <- paste0("news_", substr(news_file$file, 1, 16))
@@ -281,7 +281,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
             
             filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/versions/", tolower(language), "/", versions_file$file)
             con <- textConnection(filepath_github)
-            news_md <- readLines(con) %>% includeMarkdown() %>% withMathJax()
+            news_md <- readLines(con, warn = FALSE) %>% includeMarkdown() %>% withMathJax()
             close(con)
             
             output_name <- paste0("news_", substr(versions_file$file, 1, 16))

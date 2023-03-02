@@ -29,8 +29,20 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), d = shiny::re
     stringr::str_replace_all("\r", "\n")
   
   # Reset r variables
-  vars <- c("patients", "stays", "labs_vitals", "text", "orders", "diagnoses")
-  for (var in vars) d[[var]] <- tibble::tibble()
+  d$patients <- tibble::tibble(patient_id = integer(), gender = character(), dod = lubridate::ymd_hms())
+  d$stays <- tibble::tibble(patient_id = integer(), stay_id = integer(), age = numeric(), thesaurus_name = character(),
+    item_id = integer(), admission_datetime = lubridate::ymd_hms(), discharge_datetime = lubridate::ymd_hms())
+  d$labs_vitals <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+    datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(),
+    value_num = numeric(), unit = character(), comments = character())
+  d$text <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+    datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(), comments = character())
+  d$orders <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+    datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), route = character(),
+    continuous = integer(), amount = numeric(), amount_unit = character(), rate = numeric(), rate_unit = character(),
+    concentration = numeric(), concentration_unit = character(), comments = character())
+  d$diagnoses <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+    datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), comments = character())
   
   # Load data from datamart
   
@@ -60,25 +72,25 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), d = shiny::re
 #' patients <- tibble::tribble(~patient_id, 123L, 456L, 789L)
 #' subset_add_patients(output = output, r = r, patients = patients, subset_id = 3, language = "EN")
 #' }
-add_patients_to_subset <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), patients = tibble::tibble(),
-  subset_id = integer(), success_notification = FALSE, i18n = R6::R6Class()){
+add_patients_to_subset <- function(output, m = shiny::reactiveValues(), patients = tibble::tibble(),
+  subset_id = integer(), success_notification = TRUE, i18n = R6::R6Class(), ns = character()){
   
   # Check subset_id
   
   if (length(subset_id) == 0){
-    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n)
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("invalid_subset_id_value"))
   }
   
   tryCatch(subset_id <- as.integer(subset_id), 
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_subset_id_value", 
-        error_name = paste0("add_patients_to_subset - invalid_subset_id - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n)
+        error_name = paste0("add_patients_to_subset - invalid_subset_id - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
       stop(i18n$t("invalid_subset_id_value"))}
   )
   
   if (is.na(subset_id)){
-    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n)
+    show_message_bar(output, 1, "invalid_subset_id_value", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("invalid_subset_id_value"))
   }
   
@@ -88,7 +100,7 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), m = shin
   
   # Check col names
   if (!identical(names(patients), "patient_id")){
-    show_message_bar(output, 1, "invalid_col_names", "severeWarning", i18n = i18n)
+    show_message_bar(output, 1, "invalid_col_names", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
   }
   
@@ -96,7 +108,7 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), m = shin
   sapply(1:nrow(var_cols), function(i){
     var_name <- var_cols[[i, "name"]]
     if (var_cols[[i, "type"]] == "integer" & !is.integer(patients[[var_name]])){
-      show_message_bar(output, 1, "invalid_col_types", "severeWarning", i18n = i18n)
+      show_message_bar(output, 1, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
     }
   })
@@ -105,12 +117,13 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), m = shin
   tryCatch(patients <- tibble::as_tibble(patients), 
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = paste0("add_patients_to_subset - error_transforming_tibble - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n)
+        error_name = paste0("add_patients_to_subset - error_transforming_tibble - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
       stop(i18n$t("error_transforming_tibble"))}
   )
   
   # Keep only patients not already in the subset
-  actual_patients <- DBI::dbGetQuery(m$db, paste0("SELECT patient_id FROM subset_patients WHERE subset_id = ", subset_id))
+  sql <- glue::glue_sql("SELECT patient_id FROM subset_patients WHERE subset_id = {subset_id}", .con = m$db)
+  actual_patients <- DBI::dbGetQuery(m$db, sql)
   
   patients <- patients %>% dplyr::anti_join(actual_patients, by = "patient_id")
   
@@ -121,20 +134,20 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), m = shin
     tryCatch({
       last_id <- DBI::dbGetQuery(m$db, "SELECT COALESCE(MAX(id), 0) FROM subset_patients") %>% dplyr::pull()
       other_cols <- tibble::tibble(
-        id = 1:nrow(patients) + last_id, subset_id = subset_id, creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE
+        id = 1:nrow(patients) + last_id, subset_id = subset_id, creator_id = m$user_id, datetime = as.character(Sys.time()), deleted = FALSE
       )
       patients <- patients %>% dplyr::bind_cols(other_cols) %>% dplyr::relocate(patient_id, .after = "subset_id")
       DBI::dbAppendTable(m$db, "subset_patients", patients)
     },
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_inserting_data", 
-          error_name = paste0("add_patients_to_subset - error_inserting_data - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = paste0("add_patients_to_subset - error_inserting_data - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
         stop(i18n$t("error_inserting_data"))}
     )
   }
   
   if (success_notification){
-    show_message_bar(output, 1, "add_patients_subset_success", "success", i18n = i18n)
+    show_message_bar(output, 1, "add_patients_subset_success", "success", i18n = i18n, ns = ns)
     print(i18n$t("add_patients_subset_success"))
   }
 }

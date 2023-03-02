@@ -315,12 +315,20 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       r$aggregated_selected_key <- NA_integer_
       
       # Reset d variables
-      d$patients <- tibble::tibble()
-      d$stays <- tibble::tibble()
-      d$labs_vitals <- tibble::tibble()
-      d$text <- tibble::tibble()
-      d$orders <- tibble::tibble()
-      d$diagnoses <- tibble::tibble()
+      d$patients <- tibble::tibble(patient_id = integer(), gender = character(), dod = lubridate::ymd_hms())
+      d$stays <- tibble::tibble(patient_id = integer(), stay_id = integer(), age = numeric(), thesaurus_name = character(),
+        item_id = integer(), admission_datetime = lubridate::ymd_hms(), discharge_datetime = lubridate::ymd_hms())
+      d$labs_vitals <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+        datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(),
+        value_num = numeric(), unit = character(), comments = character())
+      d$text <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+        datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(), comments = character())
+      d$orders <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+        datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), route = character(),
+        continuous = integer(), amount = numeric(), amount_unit = character(), rate = numeric(), rate_unit = character(),
+        concentration = numeric(), concentration_unit = character(), comments = character())
+      d$diagnoses <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
+        datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), comments = character())
       
       # Status of loaded scripts
       # r$datamart_loaded_scripts <- tibble::tibble(id = integer(), status = character(), datetime = character())
