@@ -38,9 +38,10 @@ app_server <- function(router, language = "en", app_folder = character(),
     else has_internet <- curl::has_internet()
     r$has_internet <- has_internet
     
-    # If perf_monotoring activated
+    # Perf monitoring & debug
     if (debug) print(paste0(Sys.time(), " - server - perf_monitoring"))
-    # r$perf_monitoring <- perf_monitoring
+    r$perf_monitoring <- perf_monitoring
+    r$debug <- debug
     
     r$perf_monitoring_table <- tibble::tibble(task = character(), datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms())
     datetime_start <- Sys.time()

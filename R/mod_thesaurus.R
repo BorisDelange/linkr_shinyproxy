@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_thesaurus_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
   cards <- c("thesaurus_items_card", "thesaurus_categories_card", "thesaurus_conversions_card", "thesaurus_mapping_card")
@@ -232,7 +232,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), 
-  i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
+  i18n = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -255,7 +255,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar, show_message_bar(output, 1, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar, show_message_bar(output, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
     
     # --- --- --- --- --- -- -
     # Thesaurus items ----
@@ -383,7 +383,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus", 
           error_name = paste0("thesaurus - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       
-      if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
+      if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
       req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
       
       # Transform count_rows cols to integer, to be sortable
@@ -401,8 +401,8 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       datamart_thesaurus_items_tree <-
         r$datamart_thesaurus_items %>%
         dplyr::select(-action) %>%
-        get_thesaurus_items_levels() %>%
-        get_thesaurus_items_paths()
+        get_thesaurus_items_levels(r = r) %>%
+        get_thesaurus_items_paths(r = r)
       
       # Create a first file to save the list without count_items_rows selected
       
@@ -822,7 +822,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus", 
             error_name = paste0("thesaurus - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
         
-        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
+        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
         req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
   
         # Transform count_rows cols to integer, to be sortable
@@ -1020,10 +1020,10 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           "category = 'user_added_mapping' AND deleted IS FALSE"), .con = r$db)
         existing_mapping <- DBI::dbGetQuery(r$db, sql)
         
-        if (nrow(existing_mapping) > 0) show_message_bar(output, 3, "thesaurus_mapping_already_exists", "severeWarning", i18n, ns = ns)
+        if (nrow(existing_mapping) > 0) show_message_bar(output,  "thesaurus_mapping_already_exists", "severeWarning", i18n, ns = ns)
         req(nrow(existing_mapping) == 0)
         
-        if (item_1$thesaurus_id == item_2$thesaurus_id & item_1$item_id == item_2$item_id) show_message_bar(output, 3, "thesaurus_mapping_same_items", "severeWarning", i18n, ns = ns)
+        if (item_1$thesaurus_id == item_2$thesaurus_id & item_1$item_id == item_2$item_id) show_message_bar(output,  "thesaurus_mapping_same_items", "severeWarning", i18n, ns = ns)
         req(item_1$thesaurus_id != item_2$thesaurus_id | item_1$item_id != item_2$item_id)
         
         last_row <- get_last_row(r$db, "thesaurus_items_mapping")
@@ -1041,7 +1041,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         DBI::dbAppendTable(r$db, "thesaurus_items_mapping", new_row)
 
         # Notify user
-        show_message_bar(output, 3, "thesaurus_mapping_added", "success", i18n, ns = ns)
+        show_message_bar(output,  "thesaurus_mapping_added", "success", i18n, ns = ns)
 
         # Update datatables
         r$reload_thesaurus_added_mappings_datatable <- Sys.time()
@@ -1432,7 +1432,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       # Update database
       
-      if (nrow(r$datamart_thesaurus_items_evaluate_mappings %>% dplyr::filter(modified)) == 0) show_message_bar(output, 2, "modif_saved", "success", i18n = i18n, ns = ns)
+      if (nrow(r$datamart_thesaurus_items_evaluate_mappings %>% dplyr::filter(modified)) == 0) show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
       
       req(nrow(r$datamart_thesaurus_items_evaluate_mappings %>% dplyr::filter(modified)) > 0)
       
@@ -1452,7 +1452,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         DBI::dbAppendTable(r$db, "thesaurus_items_mapping_evals", new_data)
       }
       
-      show_message_bar(output, 2, "modif_saved", "success", i18n = i18n, ns = ns)
+      show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer input$save_mappings_evaluation"))
     })

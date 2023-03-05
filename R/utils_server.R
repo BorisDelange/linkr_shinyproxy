@@ -8,7 +8,7 @@
 #' \dontrun{
 #' update_r(r = r, table = "subsets")
 #' }
-update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), table = character(), i18n = R6::R6Class()){
+update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), table = character(), i18n = character()){
   tables <- c("users", "users_accesses", "users_statuses",
     "data_sources", "datamarts", "studies", "subsets", "subset_patients", "subsets_patients", "thesaurus", "thesaurus_items",
     "plugins", "scripts",
@@ -160,7 +160,7 @@ get_page_options <- function(id = character()){
 #' @param language Language used (charater)
 #' @examples 
 #' get_col_names(table_name = "datamarts", language = "EN")
-get_col_names <- function(table_name = character(), i18n = R6::R6Class()){
+get_col_names <- function(table_name = character(), i18n = character()){
   result <- ""
   
   if (table_name %in% c("data_sources", "datamarts", "studies", "subsets", "thesaurus")){

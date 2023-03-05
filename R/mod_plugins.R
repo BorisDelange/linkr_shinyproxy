@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_plugins_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
   cards <- c("all_plugins_card", "plugins_datatable_card", "plugins_edit_code_card", "plugins_options_card", "import_plugin_card", "export_plugin_card")
@@ -350,11 +350,10 @@ mod_plugins_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), o = shiny::reactiveValues(),
-  language = character(), i18n = R6::R6Class(), app_folder = character(), perf_monitoring = FALSE, debug = FALSE){
+  language = character(), i18n = character(), app_folder = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    if (perf_monitoring) monitor_perf(r = r, action = "start")
     if (debug) print(paste0(Sys.time(), " - mod_plugins - start"))
     
     col_types <- tibble::tribble(
@@ -377,7 +376,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
  
     # Close message bar
     sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
-    if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - show_message_bars"))
     
     # --- --- --- --- --- ---
     # Show or hide cards ----
@@ -417,7 +415,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$has_internet"))
       
       tryCatch({
-        xml2::download_xml("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/plugins.xml", plugins_file)
+        xml2::download_xml("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/plugins/plugins.xml", plugins_file)
         error_loading_github <- FALSE
       }, error = function(e) "")
     }
@@ -484,7 +482,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             
             if (type == "github"){
               plugin <- plugins$github %>% dplyr::filter(id == plugin_id)
-              if (plugin$image != "") plugin$image_url <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id, "/", plugin$image)
+              if (plugin$image != "") plugin$image_url <- paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/plugins/", prefix, "/", plugin$unique_id, "/", plugin$image)
               else plugin$image_url <- ""
             }
             
@@ -626,7 +624,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           plugin %>% dplyr::pull(paste0("description_", tolower(language)))
         )
         
-        plugin_folder <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id)
+        plugin_folder <- paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/plugins/", prefix, "/", plugin$unique_id)
       }
       
       # Change %plugin_folder% for images
@@ -787,11 +785,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Code table
         
         plugin_ui_code <- 
-          paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id, "/ui.R") %>%
+          paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/plugins/", prefix, "/", plugin$unique_id, "/ui.R") %>%
           readLines(warn = FALSE) %>% paste(collapse = "\n")
         
         plugin_server_code <-
-          paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/plugins/", prefix, "/", plugin$unique_id, "/server.R") %>%
+          paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/plugins/", prefix, "/", plugin$unique_id, "/server.R") %>%
           readLines(warn = FALSE) %>% paste(collapse = "\n")
         
         last_row_code <- get_last_row(r$db, "code")
@@ -814,7 +812,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Reload datatable
         r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
         
-        show_message_bar(output, 3, "success_installing_github_plugin", "success", i18n = i18n, ns = ns)
+        show_message_bar(output,  "success_installing_github_plugin", "success", i18n = i18n, ns = ns)
         
       }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_install_github_plugin", 
         error_name = paste0("install_github_plugin - id = ", plugin$unique_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
@@ -845,7 +843,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       }
       
-      else show_message_bar(output, 2, "unauthorized_action", "severeWarning", i18n = i18n, ns = ns)
+      else show_message_bar(output,  "unauthorized_action", "severeWarning", i18n = i18n, ns = ns)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$add_plugin"))
     })
@@ -1012,7 +1010,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$save_plugins_management"))
       
-      if (nrow(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(modified)) == 0) show_message_bar(output, 2, "modif_saved", "success", i18n = i18n, ns = ns)
+      if (nrow(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(modified)) == 0) show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
       
       req(nrow(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(modified)) > 0)
       
@@ -1346,7 +1344,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           options = convert_tibble_to_list(tibble::tibble(text = c("", files_list), key = c("", files_list)), key_col = "key", text_col = "text"),
           value = "")
         
-        show_message_bar(output, 4, "image_deleted", "success", i18n = i18n, ns = ns)
+        show_message_bar(output,  "image_deleted", "success", i18n = i18n, ns = ns)
         
       }, error = function(e) report_bug(r = r, output = output, error_message = "error_deleting_image",
         error_name = paste0(id, " - delete plugin image"), category = "Error", error_report = e, i18n = i18n))
@@ -1393,7 +1391,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           options = convert_tibble_to_list(tibble::tibble(text = c("", files_list), key = c("", files_list)), key_col = "key", text_col = "text"),
           value = options %>% dplyr::filter(name == "image") %>% dplyr::pull(value))
         
-        show_message_bar(output, 4, "image_imported", "success", i18n = i18n, ns = ns)
+        show_message_bar(output,  "image_imported", "success", i18n = i18n, ns = ns)
         
       }, error = function(e) report_bug(r = r, output = output, error_message = "error_importing_image",
           error_name = paste0(id, " - import plugin image"), category = "Error", error_report = e, i18n = i18n))
@@ -1511,7 +1509,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
             error_name = paste0("plugins - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
         
-        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
+        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
         req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
         
         # Transform count_rows cols to integer, to be sortable
@@ -1962,7 +1960,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         r$plugins <- r$plugins %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ new_datetime, TRUE ~ datetime))
         
         # Notify user
-        show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
+        show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer r$..save_code"))
       })
@@ -2139,7 +2137,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           output_name = "imported_plugins", col_names = col_names, centered_cols = centered_cols, column_widths = column_widths,
           filter = FALSE, hidden_cols = hidden_cols)
 
-        show_message_bar(output, 3, "success_importing_plugin", "success", i18n = i18n, time = 15000, ns = ns)
+        show_message_bar(output,  "success_importing_plugin", "success", i18n = i18n, time = 15000, ns = ns)
       },
       error = function(e) report_bug(r = r, output = output, error_message = "error_importing_plugin",
         error_name = paste0(id, " - import plugins"), category = "Error", error_report = e, i18n = i18n, ns = ns),

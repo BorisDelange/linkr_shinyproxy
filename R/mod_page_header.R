@@ -9,7 +9,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_header_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_page_header_ui <- function(id = character(), i18n = character()){
   
   ns <- NS(id)
 
@@ -48,7 +48,7 @@ mod_page_header_ui <- function(id = character(), i18n = R6::R6Class()){
 #' page_header Server Functions
 #'
 #' @noRd 
-mod_page_header_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", i18n = R6::R6Class()){
+mod_page_header_server <- function(id = character(), r = shiny::reactiveValues(), language = "EN", i18n = character()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

@@ -11,7 +11,7 @@
 #' data <- tibble::tribble(~key, ~text, "my_key1", "my_text1", "my_key2", "my_text2")
 #' my_list <- convert_tibble_to_list(data = data, key_col = "key", text_col = "text", null_value = TRUE, language = "EN")
 #' print(my_list)
-convert_tibble_to_list <- function(data = tibble::tibble(), key_col = character(), text_col = character(), null_value = FALSE, i18n = R6::R6Class()){
+convert_tibble_to_list <- function(data = tibble::tibble(), key_col = character(), text_col = character(), null_value = FALSE, i18n = character()){
   
   # Create a null / an empty value (used in dropdowns)
   if (null_value) my_list <- list(list(key = "", text = i18n$t("none")))

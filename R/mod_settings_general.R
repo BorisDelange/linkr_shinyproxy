@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_settings_general_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_settings_general_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   div(class = "main",
       
@@ -41,7 +41,7 @@ mod_settings_general_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 
-mod_settings_general_server <- function(id = character(), r = shiny::reactiveValues(), i18n = R6::R6Class(),
+mod_settings_general_server <- function(id = character(), r = shiny::reactiveValues(), i18n = character(),
   perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns

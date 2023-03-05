@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_scripts_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
   cards <- c("scripts_descriptions_card", "datamart_scripts_card", "scripts_datatable_card", 
@@ -201,7 +201,7 @@ mod_scripts_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  language = "en", i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
+  language = "en", i18n = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -225,7 +225,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar, show_message_bar(output, 1, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar, show_message_bar(output, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
     if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - show_message_bars"))
     
     # --- --- --- --- --- -
@@ -371,7 +371,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # update_r(r = r, table = "options")
       
-      show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)
+      show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
         
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input_save_datamart_scripts"))
     })
@@ -392,7 +392,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         TRUE ~ value_num
       ))
       
-      show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)
+      show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input$save_cache_settings"))
     })
     
@@ -759,7 +759,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       r$scripts <- r$scripts %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ as.character(Sys.time()), TRUE ~ datetime))
       
       # Notify user
-      show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)
+      show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$scripts_save_code"))
     })
@@ -893,7 +893,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # update_r(r = r, table = "scripts")
 
       # Notify user
-      show_message_bar(output, 4, "modif_saved", "success", i18n, ns = ns)
+      show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input$save_options_description"))
     })

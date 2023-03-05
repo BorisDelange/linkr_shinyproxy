@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_my_subsets_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_my_subsets_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
   cards <- c("datatable_card", "subset_patients_card", "edit_code_card")
@@ -152,7 +152,7 @@ mod_my_subsets_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  i18n = R6::R6Class(), language = "en", perf_monitoring = FALSE, debug = FALSE){
+  i18n = character(), language = "en", perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -180,13 +180,16 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar, show_message_bar(output, 1, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar, show_message_bar(output, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
     
     # --- --- --- --- --- --- --- --
     # When a datamart is chosen ----
     # --- --- --- --- --- --- --- --
     
     observeEvent(r$chosen_datamart, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer r$chosen_datamart"))
+      
       shinyjs::show("choose_a_study_card")
       sapply(c("datatable_card", "subset_patients_card", "edit_code_card", "menu"), shinyjs::hide)
       
@@ -201,6 +204,10 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- --- --- ---
     
     observeEvent(m$chosen_study, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer m$chosen_study"))
+      
       req(!is.na(m$chosen_study))
       
       # Show first card & hide "choose a study" card
@@ -224,6 +231,8 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
             creator_id = factor(), datetime = character(), deleted = integer(), modified = logical()), 
           resetPaging = FALSE, rownames = FALSE)
       }
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_subsets - observer m$chosen_study"))
     })
     
     # --- --- --- --- --- -
@@ -231,6 +240,9 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- --- -
     
     observeEvent(m$subsets, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer m$subsets"))
+      
       options <- convert_tibble_to_list(m$subsets %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_subset", options = options)
       shiny.fluent::updateComboBox.shinyInput(session, "patients_chosen_subset", options = options)
@@ -289,6 +301,9 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     
     # Reload datatable
     observeEvent(m$subsets_temp, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer m$subsets_temp"))
 
       # Reload datatable_temp variable
       if (nrow(m$subsets_temp) == 0) m$subsets_datatable_temp <- tibble::tibble(id = integer(), name = character(), description = character(), study_id = factor(),
@@ -315,6 +330,8 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       }
       
       if (length(m$subsets_datatable_proxy) > 0) DT::replaceData(m$subsets_datatable_proxy, m$subsets_datatable_temp, resetPaging = FALSE, rownames = FALSE)
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_subsets - observer m$subsets_temp"))
     })
     
     # Updates on datatable data
@@ -492,7 +509,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       m$subsets <- m$subsets %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ new_datetime, TRUE ~ datetime))
 
       # Notify user
-      show_message_bar(output, 1, "modif_saved", "success", i18n = i18n, ns = ns)
+      show_message_bar(output, "modif_saved", "success", i18n = i18n, ns = ns)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_subsets - observer r$subset_code_save"))
     })
@@ -672,6 +689,9 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     
     observeEvent(r$subset_add_patients, {
       
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer r$subset_add_patients"))
+      
       # Subset patients datatable
       
       if (length(r$subset_add_patients_datatable_proxy) == 0){
@@ -693,6 +713,8 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       
       if (length(r$subset_add_patients_datatable_proxy) > 0) DT::replaceData(r$subset_add_patients_datatable_proxy, r$subset_add_patients, 
         resetPaging = FALSE, rownames = FALSE)
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_subsets - observer r$subset_add_patients"))
     })
 
     # Delete rows in datatable

@@ -21,7 +21,7 @@
 #' }
 
 add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
-  i18n = R6::R6Class(), id = character(), data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), 
+  i18n = character(), id = character(), data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), 
   required_dropdowns = "all", dropdowns = character(), r_message_bar = FALSE){
   
   ns <- shiny::NS(id)
@@ -365,7 +365,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' @param datamart_id ID of datamart to count rows by item of the thesaurus (integer)
 #' @param category Category of cache, depending of the page of Settings (character)
 
-create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = R6::R6Class(), module_id = character(), 
+create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = character(), module_id = character(), 
   thesaurus_id = integer(), datamart_id = 0, category = character()){
   
   # Load join between our data and the cache
@@ -655,7 +655,7 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
 
 #' Delete element
 #' 
-delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), session, input, output, ns = shiny::NS(), i18n = R6::R6Class(),
+delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), session, input, output, ns = character(), i18n = character(),
   delete_prefix = character(), dialog_title = character(), dialog_subtext = character(),
   react_variable = character(), table = character(), r_table = character(), id_var_sql = character(), id_var_r = character(),
   delete_message = character(), reload_variable = character(), information_variable = character(), translation = TRUE, 
@@ -760,7 +760,7 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
 #' \dontrun{
 #' delete_settings_datatable_row(output = output, r = r, ns = ns, language = "EN", row_deleted = 13, table = "datamarts")
 #' }
-delete_settings_datatable_row <- function(output, id = character(), r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(),
+delete_settings_datatable_row <- function(output, id = character(), r = shiny::reactiveValues(), ns = character(), i18n = character(),
   link_id = integer(), category = character(), row_deleted = integer(), table = character()){
   
   # Close dialog box
@@ -871,7 +871,7 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
 #' \dontrun{
 #'  execute_settings_code(output = output, r = r, edited_code = "print('test')")
 #' }
-execute_settings_code <- function(input, output, session, id = character(), ns = shiny::NS(), i18n = R6::R6Class(), 
+execute_settings_code <- function(input, output, session, id = character(), ns = character(), i18n = character(), 
   r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
   edited_code = character(), code_type = "", data = list()){
   
@@ -946,7 +946,7 @@ monitor_perf <- function(r = shiny::reactiveValues(), action = "stop", task = ch
   }
 }
 
-prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(), id = character(),
+prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = character(), i18n = character(), id = character(),
   table = character(), dropdowns = character(), dropdowns_multiselect = character(), dropdowns_null_value = character(), factorize_cols = character(),
   action_buttons = character(), data_input = tibble::tibble(), data_output = tibble::tibble()){
 
@@ -1233,7 +1233,7 @@ reload_cache_for_settings <- function(r = shiny::reactiveValues(), table = chara
 #' \dontrun{
 #' render_settings_delete_react(r = r, table = "datamarts")
 #' }
-render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), i18n = R6::R6Class()){
+render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = character(), table = character(), i18n = character()){
   prefix <- ""
   if (table == "thesaurus_items") prefix <- "thesaurus_items_"
   
@@ -1271,7 +1271,7 @@ render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = shiny
 #'   edited_code = "print('test code edition')", language = "EN")
 #' }
 save_settings_code <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
-  code_id_input = integer(), edited_code = character(), i18n = R6::R6Class()){
+  code_id_input = integer(), edited_code = character(), i18n = character()){
   
   # Get link_id variable to update code table
   link_id <- as.integer(substr(code_id_input, nchar("edit_code_") + 1, nchar(code_id_input)))
@@ -1293,7 +1293,7 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
     ))
   
   # Notify user
-  show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = shiny::NS(id))
+  show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = shiny::NS(id))
 }
 
 #' Save options
@@ -1314,7 +1314,7 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
 #'   data = data, language = "EN")
 #' }
 save_settings_options <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
-  code_id_input = integer(), data = data, i18n = R6::R6Class(), page_options = character()){
+  code_id_input = integer(), data = data, i18n = character(), page_options = character()){
   
   ns <- shiny::NS(id)
   
@@ -1324,7 +1324,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   # Get options with category & link_id
   options <- r$options %>% dplyr::filter(category == !!category, link_id == !!link_id)
   
-  if (nrow(options) == 0) show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
+  if (nrow(options) == 0) show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
   req (nrow(options) > 0)
   
   # Get options with page ID
@@ -1384,7 +1384,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   
   # update_r(r = r, table = "options")
   
-  show_message_bar(output, 4, "modif_saved", "success", i18n = i18n, ns = ns)
+  show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
 }
 
 #' Save changes in datatable
@@ -1399,8 +1399,8 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
 #' \dontrun{
 #' save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datamarts", language = "EN")
 #' }
-save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), ns = shiny::NS(), 
-  table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = R6::R6Class(), r_message_bar = FALSE){
+save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), ns = character(), 
+  table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = character(), r_message_bar = FALSE){
   
   m_tables <- c("modules_elements_options", "patients_options", "subset_patients", "subsets")
   
@@ -1465,19 +1465,19 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
     }
     
     if (duplicates_display_order > 0){
-      if (!r_message_bar) show_message_bar(output, 1, "modif_display_order_duplicates", "severeWarning", i18n, ns = ns)
+      if (!r_message_bar) show_message_bar(output, "modif_display_order_duplicates", "severeWarning", i18n, ns = ns)
       if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_display_order_duplicates", type = "severeWarning", trigger = Sys.time())
     } 
     if (module_is_its_own_parent > 0){
-      if (!r_message_bar) show_message_bar(output, 1, "module_cannot_be_its_own_parent", "severeWarning", i18n, ns = ns)
+      if (!r_message_bar) show_message_bar(output, "module_cannot_be_its_own_parent", "severeWarning", i18n, ns = ns)
       if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "module_cannot_be_its_own_parent", type = "severeWarning", trigger = Sys.time())
     }
     if (loop_over_modules > 0){
-      if (!r_message_bar) show_message_bar(output, 1, "module_loop_between_modules", "severeWarning", i18n, ns = ns)
+      if (!r_message_bar) show_message_bar(output, "module_loop_between_modules", "severeWarning", i18n, ns = ns)
       if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "module_loop_between_modules", type = "severeWarning", trigger = Sys.time())
     }
     if (duplicates_name > 0){
-      if (!r_message_bar) show_message_bar(output, 1, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
+      if (!r_message_bar) show_message_bar(output, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
       if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_names_duplicates", type = "severeWarning", trigger = Sys.time())
     }
     
@@ -1488,7 +1488,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(name == "") %>% nrow()
   
   if (names_empty > 0){
-    if (!r_message_bar) show_message_bar(output, 1, "names_empty", "severeWarning", i18n, ns = ns)
+    if (!r_message_bar) show_message_bar(output, "names_empty", "severeWarning", i18n, ns = ns)
     if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "names_empty", type = "severeWarning", trigger = Sys.time())
   }
   
@@ -1500,7 +1500,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   else ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
 
   if (length(ids_to_del) == 0){
-    if (!r_message_bar) show_message_bar(output, 2, "modif_saved", "success", i18n, ns = ns)
+    if (!r_message_bar) show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
     if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_saved", type = "success", trigger = Sys.time())
   }
   
@@ -1526,7 +1526,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   # else update_r(r = r, table = table, i18n = i18n)
   
   # Notify user
-  if (!r_message_bar) show_message_bar(output, 2, "modif_saved", "success", i18n, ns = ns)
+  if (!r_message_bar) show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
   if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_saved", type = "success", trigger = Sys.time())
 }
 
@@ -1558,7 +1558,7 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
 #' \dontrun{
 #' update_settings_datatable(r = r, ns = ns, table = "datamarts", dropdowns = "data_source", language = "EN")
 #' }
-update_settings_datatable <- function(input, module_id = character(), r = shiny::reactiveValues(), ns = shiny::NS(), table = character(), dropdowns = character(), i18n = R6::R6Class()){
+update_settings_datatable <- function(input, module_id = character(), r = shiny::reactiveValues(), ns = character(), table = character(), dropdowns = character(), i18n = character()){
   
   sapply(r[[table]] %>% dplyr::pull(id), function(id){
     sapply(dropdowns, function(dropdown){

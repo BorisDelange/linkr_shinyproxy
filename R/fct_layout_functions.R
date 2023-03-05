@@ -50,7 +50,7 @@ make_page <- function (title = character(), subtitle = character(), contents = c
 }
 
 #' Make a complete layout with header, sidenav, main & footer
-make_layout <- function(language = "EN", page = character(), i18n = R6::R6Class(), options_toggles = tibble::tibble()){
+make_layout <- function(language = "EN", page = character(), i18n = character(), options_toggles = tibble::tibble()){
   div(class = "grid-container",
     mod_page_header_ui(id = stringr::str_replace(page, "/", "_"), i18n = i18n),
     mod_page_sidenav_ui(id = stringr::str_replace(page, "/", "_"), i18n = i18n),
@@ -64,7 +64,7 @@ make_layout <- function(language = "EN", page = character(), i18n = R6::R6Class(
 #' @return Shiny UI elements / HTML code
 #' @examples
 #' 
-make_textfield <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), id = NA_character_, 
+make_textfield <- function(i18n = character(), ns = character(), label = character(), id = NA_character_, 
   value = NULL, type = NULL, canRevealPassword = NULL, width = NULL, min_width = NULL, max_width = NULL, 
   margin_right = NULL, disabled = FALSE){
   if (is.na(id)) id <- label
@@ -97,7 +97,7 @@ make_textfield <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = chara
 #' make_dropdown(language = "EN", ns = NS("settings_datamarts"), label = "my_dropdown", id = "my_dropdown",
 #'   options = options, multiSelect = FALSE, value = "my_key1", width = "100%")
 #' }
-make_dropdown <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
+make_dropdown <- function(i18n = character(), ns = character(), label = character(), options = list(), multiSelect = FALSE,
   id = NA_character_, value = NULL, width = NULL, disabled = FALSE){
   
   if (is.na(id)) id <- label
@@ -120,7 +120,7 @@ make_dropdown <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = charac
 #' @param multiSelect Is multiselection of options is possible ? (logical)
 #' @param width Width of the dropdown, CSS code so "300px" or "100\%" are accepted
 #' @param allowFreeForm Allows user to enter free text, not provided by options (logical)
-make_combobox <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), options = list(), multiSelect = FALSE,
+make_combobox <- function(i18n = character(), ns = character(), label = character(), options = list(), multiSelect = FALSE,
   allowFreeform = FALSE, autoComplete = "on", id = NA_character_, value = NULL, width = NULL){
   
   style <- ""
@@ -155,7 +155,7 @@ make_combobox <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = charac
 #'   2, "DA", "Doug Altman", "Statistician")
 #' make_people_picker(language = "EN", ns = ns, id = "my_people_picker", "My people picker", options = options, value = 2, width = "200px")
 #' }
-make_people_picker <- function(i18n = R6::R6Class(), ns = shiny::NS(), id = NA_character_, label = character(), 
+make_people_picker <- function(i18n = character(), ns = character(), id = NA_character_, label = character(), 
   options = tibble::tibble(), value = NULL, width = NULL, style = character()){
   
   if (!is.null(value)) default_selected_items <- options %>% dplyr::filter(key %in% value)
@@ -194,7 +194,7 @@ make_people_picker <- function(i18n = R6::R6Class(), ns = shiny::NS(), id = NA_c
 #' \dontrun{
 #' make_toggle(language = "EN", ns = ns, label = "My toggle", id = "my_toggle", value = TRUE, inline = FALSE)
 #' }
-make_toggle <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = character(), id = NULL, value = FALSE, inline = FALSE, translate = TRUE, bold = TRUE){
+make_toggle <- function(i18n = character(), ns = character(), label = character(), id = NULL, value = FALSE, inline = FALSE, translate = TRUE, bold = TRUE){
   if (is.null(id)) id <- label
   if (translate) label <- i18n$t(label)
   if (bold) style <- "" else style <- "font-weight:normal;"
@@ -228,7 +228,7 @@ make_toggle <- function(i18n = R6::R6Class(), ns = shiny::NS(), label = characte
 #' \dontrun{
 #' message_bar(id = 2, message = "name_already_used", type = "severeWarning", language = language, time = 5000)
 #' }
-show_message_bar <- function(output, id = integer(), message = character(), type = "severeWarning", i18n = R6::R6Class(), time = 7000, ns = character()){
+show_message_bar <- function(output, message = character(), type = "severeWarning", i18n = character(), time = 7000, ns = character()){
   type <- switch(type, "info" = 0, "error" = 1, "blocked" = 2, "severeWarning" = 3, "success" = 4, "warning" = 5)
   
   id <- sample(1:20, 1)
@@ -265,7 +265,7 @@ show_message_bar <- function(output, id = integer(), message = character(), type
 #' @param value Value of the choiceGroup (character)
 #' @param inline Is the choiceGroup displayed inline ? (logical)
 
-make_choicegroup <- function(language = "EN", ns = shiny::NS(), label = character(), id = NA_character_, options = list(), value = character(), inline = FALSE){
+make_choicegroup <- function(language = "EN", ns = character(), label = character(), id = NA_character_, options = list(), value = character(), inline = FALSE){
   
   if (is.na(id)) id <- label
   if (inline) shiny.fluent::ChoiceGroup.shinyInput(ns(id), options = options, value = value, className = "inline_choicegroup")
@@ -293,7 +293,7 @@ make_choicegroup <- function(language = "EN", ns = shiny::NS(), label = characte
 #' @param searchable_cols If filter is TRUE, choose which columns are searchable (character)
 #' @param factorize_cols Which columns are factorized (to be filtered with a dropdown) (character)
 #' @param column_widths Columns widths (named character vector)
-render_datatable <- function(output, r = shiny::reactiveValues(), ns = shiny::NS(), i18n = R6::R6Class(), data = tibble::tibble(),
+render_datatable <- function(output, r = shiny::reactiveValues(), ns = character(), i18n = character(), data = tibble::tibble(),
   output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top't><'bottom'p>", page_length = 10, start = 0,
   editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), filter = FALSE, 
   factorize_cols = character(), column_widths = character(), hidden_cols = character(), truncated_cols = character(), selection = "single",

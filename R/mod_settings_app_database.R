@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_settings_app_database_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
   cards <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card")
@@ -222,7 +222,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = R6::R6Class())
 #'
 #' @noRd 
 
-mod_settings_app_database_server <- function(id = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class(),
+mod_settings_app_database_server <- function(id = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character(),
   language = "en", app_folder = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
@@ -355,8 +355,8 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       # Reload r$db variable
       # get_db(r = r, m = m, app_db_folder = app_db_folder)
       
-      show_message_bar(output, 1, "modif_saved", "success", i18n = i18n, ns = ns)
-      show_message_bar(output, 2, "reload_app_to_take_into_account_changes", "warning", i18n = i18n, ns = ns)
+      show_message_bar(output, "modif_saved", "success", i18n = i18n, ns = ns)
+      show_message_bar(output,  "reload_app_to_take_into_account_changes", "warning", i18n = i18n, ns = ns)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_app_database - observer input$db_connection_save"))
     })
@@ -806,8 +806,8 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           )
         }
         
-        show_message_bar(output, 3, "database_restored", "success", i18n = i18n, ns = ns)
-        show_message_bar(output, 2, "reload_app_to_take_into_account_changes", "warning", i18n = i18n, ns = ns)
+        show_message_bar(output,  "database_restored", "success", i18n = i18n, ns = ns)
+        show_message_bar(output,  "reload_app_to_take_into_account_changes", "warning", i18n = i18n, ns = ns)
       },
       error = function(e) report_bug(r = r, output = output, error_message = "error_restoring_database",
         error_name = paste0(id, " - restore database"), category = "Error", error_report = e, i18n = i18n, ns = ns))

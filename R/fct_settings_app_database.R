@@ -369,7 +369,7 @@ get_last_row <- function(con, table){
 #' @param local_db DBI db object of local database
 #' @param language Language used to display messages (character)
 
-get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), output, i18n = R6::R6Class(), ns = character()){
+get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), output, i18n = character(), ns = character()){
   
   result <- "failure"
   
@@ -409,7 +409,7 @@ get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues
 #' Load database
 #' 
 #' @param r Shiny r reactive value, used to communicate between modules
-load_database <- function(r = shiny::reactiveValues(), i18n = R6::R6Class()){
+load_database <- function(r = shiny::reactiveValues(), i18n = character()){
   
   # Database tables to load
   tables <- c(

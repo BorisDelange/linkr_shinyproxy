@@ -7,7 +7,7 @@
 #' @examples
 #' render_settings_default_elements(ns = NS("settings_datamart"))
 
-render_settings_default_elements <- function(ns = shiny::NS()){
+render_settings_default_elements <- function(ns = character()){
   
   message_bars <- tagList()
   for (i in 1:20) message_bars <- tagList(message_bars, shiny::uiOutput(ns(paste0("message_bar", i))))
@@ -33,7 +33,7 @@ render_settings_default_elements <- function(ns = shiny::NS()){
 #' render_settings_creation_card(language = "EN", ns = NS("settings_datamart"), title = "create_datamart",
 #' textfields = c("name", "description"), dropdowns = "data_source")
 
-render_settings_creation_card <- function(i18n = R6::R6Class(), ns = shiny::NS(), id = character(), title = character(), 
+render_settings_creation_card <- function(i18n = character(), ns = character(), id = character(), title = character(), 
   textfields = character(), textfields_width = "200px", dropdowns = character(), dropdowns_width = "200px"){
   
   div(id = ns("creation_card"),
@@ -75,7 +75,7 @@ render_settings_creation_card <- function(i18n = R6::R6Class(), ns = shiny::NS()
 #' \dontrun{
 #' render_settings_datatable_card(language = "EN", ns = ns, output_id = "management_datatable", title = "datamarts_management")
 #' }
-render_settings_datatable_card <- function(i18n = R6::R6Class(), ns = shiny::NS(), div_id = "datatable_card",
+render_settings_datatable_card <- function(i18n = character(), ns = character(), div_id = "datatable_card",
   output_id = "management_datatable", title = character(), inputs = character(), dropdown_multiselect = FALSE){
   
   inputs_div <- tagList()
@@ -144,8 +144,8 @@ render_settings_datatable_card <- function(i18n = R6::R6Class(), ns = shiny::NS(
 #' @param link_id ID allowing to link with code table (integer)
 #' @param language Language used (character)
 # 
-# render_settings_options_card <- function(ns = shiny::NS(), r = r, id = character(), title = character(), code = character(), 
-#   category = character(), link_id = integer(), i18n = R6::R6Class()){
+# render_settings_options_card <- function(ns = character(), r = r, id = character(), title = character(), code = character(), 
+#   category = character(), link_id = integer(), i18n = character()){
 #   
 #   # Get options with category & link_id
 #   options <- r$options %>% dplyr::filter(category == !!category, link_id == !!link_id)
@@ -273,8 +273,8 @@ render_settings_datatable_card <- function(i18n = R6::R6Class(), ns = shiny::NS(
 #' render_settings_code_card(ns = NS("settings_datamarts"), r = r, id = "settings_datamarts", title = "edit_datamart_code",
 #'   code = "Enter your code here", link_id = 3, language = "EN")
 #' }
-render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValues(), id = character(), title = character(), code = list(), 
-  link_id = integer(), i18n = R6::R6Class()){
+render_settings_code_card <- function(ns = character(), r = shiny::reactiveValues(), id = character(), title = character(), code = list(), 
+  link_id = integer(), i18n = character()){
   
   choice_ui_server <- tagList()
   choice_data <- tagList()
@@ -388,7 +388,7 @@ render_settings_code_card <- function(ns = shiny::NS(), r = shiny::reactiveValue
 
 #' Forbidden card
 #' 
-forbidden_card <- function(ns = shiny::NS(), name = character(), i18n = R6::R6Class()){
+forbidden_card <- function(ns = character(), name = character(), i18n = character()){
   shinyjs::hidden(
     div(
       id = ns(paste0(name, "_forbidden")),

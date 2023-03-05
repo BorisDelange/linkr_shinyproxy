@@ -1,4 +1,4 @@
-Package: LinkR
+Package: linkr
 Title: Clinical Data Warehouses Tools
 Version: 0.1.2
 Authors@R: person('Boris', 'Delange', email = 'boris.delange@gmail.com', role = c('cre', 'aut', 'cph'))

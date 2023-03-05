@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_sidenav_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_page_sidenav_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   result <- ""
   
@@ -203,7 +203,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), 
-  m = shiny::reactiveValues(), i18n = R6::R6Class(), language = "en", perf_monitoring = FALSE, debug = FALSE){
+  m = shiny::reactiveValues(), i18n = character(), language = "en", perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_my_studies_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
   cards <- c(#"datamarts_options_card", "datamarts_edit_code_card", 
@@ -252,7 +252,7 @@ mod_my_studies_ui <- function(id = character(), i18n = R6::R6Class()){
 #'
 #' @noRd 
 mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
+  i18n = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -277,7 +277,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar, show_message_bar(output, 1, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar, show_message_bar(output, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
     
     # --- --- --- --- --- --- --- --
     # When a datamart is chosen ----

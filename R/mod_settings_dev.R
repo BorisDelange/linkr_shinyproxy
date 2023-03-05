@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_settings_dev_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_settings_dev_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
   cards <- c("dev_edit_code_card", "dev_perf_monitoring_card", "dev_to_do_list_card")
@@ -103,7 +103,7 @@ mod_settings_dev_ui <- function(id = character(), i18n = R6::R6Class()){
 #' @noRd 
 
 mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  i18n = R6::R6Class(), language = "en"){
+  i18n = character(), language = "en"){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

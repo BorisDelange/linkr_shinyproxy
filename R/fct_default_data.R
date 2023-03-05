@@ -4,7 +4,7 @@
 #' @param r shiny reactive value, used to communicate between modules
 
 insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  i18n = R6::R6Class(), has_internet = FALSE, options_toggles = tibble::tibble()){
+  i18n = character(), has_internet = FALSE, options_toggles = tibble::tibble()){
   
   # --- --- --- --- --- --- --- --- --- --- ---
   # Add default users, accesses & statuses ----
@@ -213,11 +213,11 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
     if (has_internet){
       
       # Datamart code
-      datamart_code <- readLines("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/datamarts/mimic_iv_demo_1.0.R", warn = FALSE) %>%
+      datamart_code <- readLines("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/datamarts/mimic_iv_demo_1.0.R", warn = FALSE) %>%
         paste(collapse = "\n")
       
       # Thesaurus code
-      thesaurus_code <- readLines("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/thesaurus/mimic_iv_1.0.R", warn = FALSE) %>%
+      thesaurus_code <- readLines("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/thesaurus/mimic_iv_1.0.R", warn = FALSE) %>%
         paste(collapse = "\n")
     }
     

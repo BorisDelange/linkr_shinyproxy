@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   result <- ""
   language <- "EN"
@@ -227,7 +227,7 @@ mod_patient_and_aggregated_data_ui <- function(id = character(), i18n = R6::R6Cl
 #' @noRd 
 
 mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  o = shiny::reactiveValues(), i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
+  o = shiny::reactiveValues(), i18n = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -265,7 +265,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
     
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
-    observeEvent(r$show_message_bar, show_message_bar(output, 1, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
+    observeEvent(r$show_message_bar, show_message_bar(output, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
     if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_patient_and_aggregated_data - ", id, " - show_message_bars"))
     
     # --- --- --- --- --
@@ -1060,7 +1060,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         shinyjs::hide("initial_breadcrumb")
         
         # Check if users has access only to aggregated data
-        if (prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) == 1) show_message_bar(output, 1, "only_aggregated_data_authorized", "severeWarning", i18n = i18n, ns = ns)
+        if (prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) == 1) show_message_bar(output, "only_aggregated_data_authorized", "severeWarning", i18n = i18n, ns = ns)
         req((prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) != 1) | prefix == "aggregated")
         
         display_modules <- isolate(r[[paste0(prefix, "_display_modules")]])
@@ -1686,7 +1686,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         
         sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {ids$module_id} AND id != {group_id}", .con = r$db)
         distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
-        if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", i18n = i18n, ns = ns)
+        if (new_data$name %in% distinct_values) show_message_bar(output,  "name_already_used", "severeWarning", i18n = i18n, ns = ns)
         req(new_data$name %not_in% distinct_values)
         
         # Update name in database & r var
@@ -2293,7 +2293,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
                   " - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
 
           if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0){
-            show_message_bar(output, 1, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
+            show_message_bar(output, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
             r[[r_var]] <- r[[r_var]] %>% dplyr::slice(0)
             r[[paste0(r_var, "_temp")]] <- r[[r_var]] %>% dplyr::mutate(modified = FALSE)
           }
@@ -2600,7 +2600,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
 
         sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {new_data$module_new_element}", .con = r$db)
         distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
-        if (new_data$name %in% distinct_values) show_message_bar(output, 2, "name_already_used", "severeWarning", i18n = i18n, ns = ns)
+        if (new_data$name %in% distinct_values) show_message_bar(output,  "name_already_used", "severeWarning", i18n = i18n, ns = ns)
         req(new_data$name %not_in% distinct_values)
 
         # Check if dropdowns are not empty (if all are required)
@@ -2617,7 +2617,7 @@ mod_patient_and_aggregated_data_server <- function(id = character(), r = shiny::
         #   else if (is.na(new_data[[dropdown]])) dropdowns_check <<- FALSE
         # })
 
-        if (!dropdowns_check) show_message_bar(output, 2, "dropdown_empty", "severeWarning", i18n = i18n, ns = ns)
+        if (!dropdowns_check) show_message_bar(output,  "dropdown_empty", "severeWarning", i18n = i18n, ns = ns)
         req(dropdowns_check)
 
         # Get last_row nb

@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_home_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
   if (id == "home"){
@@ -182,7 +182,7 @@ mod_home_ui <- function(id = character(), i18n = R6::R6Class()){
 #' home Server Functions
 #'
 #' @noRd 
-mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6Class(), perf_monitoring = FALSE, debug = FALSE){
+mod_home_server <- function(id = character(), r, language = "en", i18n = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
  
@@ -211,7 +211,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
         # Overview div
         
         if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - download overview.Md"))
-        con <- textConnection("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/overview.Md")
+        con <- textConnection("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/overview.Md")
         overview_div <- readLines(con, warn = FALSE) %>% includeMarkdown() %>% withMathJax()
         close(con)
         if(perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home_server - ", id, " - download overview.Md"))
@@ -219,7 +219,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
         # News div
         
         if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - download news/index.csv"))
-        tryCatch(news_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/index.csv",
+        tryCatch(news_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/news/index.csv",
           col_types = "cc", show_col_types = FALSE) %>%
           dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n), error = function(e) "", warning = function(w) "")
         if(perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home_server - ", id, " - download news/index.csv"))
@@ -237,7 +237,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
             
             datetime <- substr(news_file$file, 1, 16) %>% as.POSIXct(format = "%Y-%m-%d_%H-%M") %>% format_datetime(language, sec = FALSE)
             
-            filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/news/", tolower(language), "/", news_file$file)
+            filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/news/", tolower(language), "/", news_file$file)
             con <- textConnection(filepath_github)
             news_md <- readLines(textConnection(filepath_github), warn = FALSE) %>% includeMarkdown() %>% withMathJax()
             close(con)
@@ -261,7 +261,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
         versions_files <- tibble::tibble()
         
         if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - download versions/index.csv"))
-        tryCatch(versions_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/versions/index.csv", 
+        tryCatch(versions_files <- readr::read_csv("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/versions/index.csv", 
           col_types = "cc", show_col_types = FALSE) %>%
           dplyr::mutate(n = 1:dplyr::n()) %>% dplyr::arrange(dplyr::desc(n)) %>% dplyr::select(-n), error = function(e) "", warning = function(w) "")
         if(perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home_server - ", id, " - download versions/index.csv"))
@@ -279,7 +279,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = R6::R6C
             
             datetime <- substr(versions_file$file, 1, 16) %>% as.POSIXct(format = "%Y-%m-%d_%H-%M") %>% format_datetime(language, sec = FALSE)
             
-            filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/LinkR-content/main/home/versions/", tolower(language), "/", versions_file$file)
+            filepath_github <- paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/versions/", tolower(language), "/", versions_file$file)
             con <- textConnection(filepath_github)
             news_md <- readLines(con, warn = FALSE) %>% includeMarkdown() %>% withMathJax()
             close(con)

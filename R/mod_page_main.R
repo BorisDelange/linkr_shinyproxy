@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 
-mod_page_main_ui <- function(id = character(), language = "en", i18n = R6::R6Class(), options_toggles = tibble::tibble()){
+mod_page_main_ui <- function(id = character(), language = "en", i18n = character(), options_toggles = tibble::tibble()){
   ns <- NS(id)
   result <- ""
   

@@ -7,7 +7,7 @@
 #' @noRd 
 #' @importFrom shiny NS tagList 
 
-mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class()){
+mod_settings_data_management_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   result <- div()
  
@@ -265,7 +265,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = R6::R6Class
 #' @noRd 
 
 mod_settings_data_management_server <- function(id = character(), r = shiny::reactiveValues(),
-  d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = R6::R6Class(), 
+  d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character(), 
   language = "en", perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
@@ -1008,7 +1008,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
                 error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart",
                   error_name = paste0(id, " - count_patients_rows"), category = "Error", error_report = toString(e), i18n = i18n))
 
-              if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, 1, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
+              if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
               req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
 
               # Transform count_rows cols to integer, to be sortable
