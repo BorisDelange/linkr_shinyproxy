@@ -72,7 +72,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     distinct_values <- DBI::dbGetQuery(db, sql) %>% dplyr::pull() %>% tolower()
     
     if (tolower(data[[field]]) %in% distinct_values) {
-      if (!r_message_bar) show_message_bar(output = output, id = 2, message = paste0(field, "_already_used"), type = "severeWarning", i18n = i18n, ns = ns)
+      if (!r_message_bar) show_message_bar(output, message = paste0(field, "_already_used"), type = "severeWarning", i18n = i18n, ns = ns)
       if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = paste0(field, "_already_used"), type = "severeWarning", trigger = Sys.time())
     }
     req(tolower(data[[field]]) %not_in% distinct_values)
@@ -102,7 +102,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
   
   if (!dropdowns_check){
-    if (!r_message_bar) show_message_bar(output = output, id = 2, message = "dropdown_empty", type = "severeWarning", i18n = i18n, ns = ns)
+    if (!r_message_bar) show_message_bar(output, message = "dropdown_empty", type = "severeWarning", i18n = i18n, ns = ns)
     if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "dropdown_empty", type = "severeWarning", trigger = Sys.time())
   }
   req(dropdowns_check)
@@ -347,7 +347,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     }
   }
   
-  if (!r_message_bar) show_message_bar(output = output, id = 1, message = paste0(get_singular(table), "_added"), type = "success", i18n = i18n, ns = ns)
+  if (!r_message_bar) show_message_bar(output, message = paste0(get_singular(table), "_added"), type = "success", i18n = i18n, ns = ns)
   if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = paste0(get_singular(table), "_added"), type = "success", trigger = Sys.time())
   
   # Reset textfields
@@ -736,7 +736,7 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
     }
     
     # # Notify user
-    if (!r_message_bar) show_message_bar(output = output, id = 4, delete_message, type ="severeWarning", i18n = i18n, ns = ns)
+    if (!r_message_bar) show_message_bar(output, delete_message, type ="severeWarning", i18n = i18n, ns = ns)
     if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = delete_message, type = "severeWarning", trigger = Sys.time())
     
     # Activate reload variable
@@ -850,7 +850,7 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
   # if (table != "thesaurus_items") update_r(r = r, table = table)
   
   # Notification to user
-  show_message_bar(output = output, id = 3, paste0(get_singular(word = table), "_deleted"), type = "severeWarning", i18n = i18n, ns = ns)
+  show_message_bar(output, paste0(get_singular(word = table), "_deleted"), type = "severeWarning", i18n = i18n, ns = ns)
 }
 
 #' Execute / test code after edition

@@ -1137,7 +1137,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         # Set current pivot to messages
         # Hide messages for selected conversation
         if (type == "conversation"){
-          show_message_bar(output = output, id = 4, message = "new_conversation_added", type = "success", i18n = i18n, ns = ns)
+          show_message_bar(output, message = "new_conversation_added", type = "success", i18n = i18n, ns = ns)
           shinyjs::runjs(glue::glue("$('#{id}-study_messages_pivot button[name=\"{i18n$t('all_messages')}\"]').click();"))
           output$selected_conversation <- renderUI("")
           shinyjs::hide("conversation_new_message_div")

@@ -59,6 +59,8 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
   div(
     class = "main",
     render_settings_default_elements(ns = ns),
+    shiny.fluent::reactOutput(ns("help_panel")),
+    shiny.fluent::reactOutput(ns("help_modal")),
     shiny.fluent::reactOutput(ns("plugin_delete_confirm")),
     shiny.fluent::reactOutput(ns("plugin_image_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
@@ -402,6 +404,25 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options)
       shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options)
     })
+    
+    # --- --- --- --- --- ---
+    # Help for this page ----
+    # --- --- --- --- --- ---
+    
+    observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r[[paste0("help_plugins_", prefix, "_open_panel")]] <- TRUE)
+    observeEvent(input$hide_panel, r[[paste0("help_plugins_", prefix, "_open_panel")]] <- FALSE)
+    
+    observeEvent(input$show_modal, r[[paste0("help_plugins_", prefix, "_open_modal")]] <- TRUE)
+    observeEvent(input$hide_modal, {
+      r[[paste0("help_plugins_", prefix, "_open_modal")]] <- FALSE
+      r[[paste0("help_plugins_", prefix, "_open_panel_light_dismiss")]] <- TRUE
+    })
+    
+    sapply(1:10, function(i){
+      observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_plugins_", prefix, "_page_", i)]] <- Sys.time())
+    })
+    
+    help_plugins(output = output, r = r, id = id, prefix = prefix, language = language, i18n = i18n, ns = ns)
     
     # --- --- --- --- -- -
     # Plugins catalog ----
@@ -1796,7 +1817,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           if (prefix == "patient_lvl" & is.na(m$chosen_patient)) var_check <- FALSE
         }
 
-        if (!var_check) show_message_bar(output = output, id = 3, message = "load_some_patient_data_plugin", i18n = i18n, ns = ns)
+        if (!var_check) show_message_bar(output, message = "load_some_patient_data_plugin", i18n = i18n, ns = ns)
 
         req(var_check)
         

@@ -13,16 +13,30 @@ create_scripts_thesaurus(
 )
 }
 \arguments{
-\item{output}{output}
+\item{output}{Output variable from Shiny, used to render messages on message bars}
 
-\item{r}{r}
+\item{r}{A shiny::reactiValues object, used to communicate between modules}
 
-\item{data_source_id}{data_source_id}
+\item{data_source_id}{ID of the data source where the script is recorded}
 
-\item{i18n}{i18n}
+\item{i18n}{shiny.i18n object for translations}
 
-\item{ns}{ns}
+\item{ns}{shiny namespace object, used to render messages on message bars}
 }
 \description{
-Create scripts thesaurus
+Create a thesaurus for the items created in the scripts
+}
+\details{
+A script is a code executed each time we load a datamart.
+In some scripts, we create new thesaurus items.
+The scripts are attached to data sources. 
+This function creates a new thesaurus, for a data source, named [data_source_name - scripts], which will include
+all items created in the scripts depending of this data source.
+}
+\examples{
+\dontrun{
+# If my script depends of the data source with ID 13, named "My data source", this function will create a thesaurus
+called "My data source - scripts".
+create_scripts_thesaurus(output = output, r = r, data_source_id = 13, i18n = i18n, ns = ns)
+}
 }

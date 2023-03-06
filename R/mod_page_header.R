@@ -37,7 +37,6 @@ mod_page_header_ui <- function(id = character(), i18n = character()){
         shiny.fluent::CommandBar(),
         div(uiOutput(ns("username")), style = "font-weight:bold; padding: 12px 10px 0px 0px;"),
         shiny.fluent::CommandBarButton.shinyInput(ns("help"), iconProps = list("iconName" = "Help")),
-        # shiny.fluent::CommandBarButton.shinyInput("github_ref", iconProps = list("iconName" = "Info"), href = "https://borisdelange.github.io/cdwtools/articles/", target = "_blank"),
         shiny.fluent::CommandBarButton.shinyInput("settings", iconProps = list("iconName" = "Settings"), href = shiny.router::route_link("settings/general_settings")),
         shiny.fluent::CommandBarButton.shinyInput(".shinymanager_logout", iconProps = list("iconName" = "PowerButton"))
       )

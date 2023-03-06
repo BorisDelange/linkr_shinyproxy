@@ -33,8 +33,6 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "thesaurus_items_card", itemKey = "thesaurus_items_card", headerText = i18n$t("items")),
-          # shiny.fluent::PivotItem(id = "thesaurus_categories_card", itemKey = "thesaurus_categories_card", headerText = i18n$t("categories")),
-          # shiny.fluent::PivotItem(id = "thesaurus_conversions_card", itemKey = "thesaurus_conversions_card", headerText = i18n$t("conversions")),
           shiny.fluent::PivotItem(id = "thesaurus_mapping_card", itemKey = "thesaurus_mapping_card", headerText = i18n$t("items_mapping"))
         )
       )
@@ -55,23 +53,23 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
         id = ns("thesaurus_items_card"),
         make_card(i18n$t("items"),
           div(
-            shiny.fluent::Pivot(
-              onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-thesaurus_items_pivot', item.props.id)")),
-              shiny.fluent::PivotItem(id = "thesaurus_items_table_view", itemKey = "thesaurus_items_table_view", headerText = i18n$t("datatable_view")),
-              shiny.fluent::PivotItem(id = "thesaurus_items_tree_view", itemKey = "thesaurus_items_tree_view", headerText = i18n$t("tree_view"))
-            ),
+            # shiny.fluent::Pivot(
+            #   onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-thesaurus_items_pivot', item.props.id)")),
+            #   shiny.fluent::PivotItem(id = "thesaurus_items_table_view", itemKey = "thesaurus_items_table_view", headerText = i18n$t("datatable_view")),
+            #   shiny.fluent::PivotItem(id = "thesaurus_items_tree_view", itemKey = "thesaurus_items_tree_view", headerText = i18n$t("tree_view"))
+            # ),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
               make_combobox(i18n = i18n, ns = ns, label = "thesaurus", id = "thesaurus", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-              conditionalPanel(
-                condition = "input.thesaurus != null", ns = ns,
+              # conditionalPanel(
+                # condition = "input.thesaurus != null", ns = ns,
                 div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
-                  shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")#,
+                  shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"),
                 # conditionalPanel(
                 #   condition = "input.thesaurus_items_pivot == 'thesaurus_items_tree_view'", ns = ns,
                 #   div(strong(i18n$t("unroll_tree"), style = "display:block; padding-bottom:12px;"),
                 #     shiny.fluent::Toggle.shinyInput(ns("unroll_tree"), value = TRUE), style = "margin-top:15px;")
                 # )
-              ),
+              # ),
               style = "position:relative; z-index:1; width:800px;"
             ),
             conditionalPanel(
@@ -83,36 +81,36 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
                 shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), i18n$t("save")),
                 uiOutput(ns("thesaurus_datatable_selected_item"))
               )
-            ),
-            conditionalPanel(
-              condition = "input.thesaurus_items_pivot == 'thesaurus_items_tree_view'", ns = ns, br(),
-              div(
-                div(
-                  shinyTree::shinyTree(
-                    ns("thesaurus_items_tree"),
-                    search = FALSE,
-                    checkbox = FALSE,
-                    dragAndDrop = FALSE,
-                    theme = "proton",
-                    themeIcons = FALSE,
-                    wholerow = FALSE,
-                    stripes = FALSE,
-                    animation = 100,
-                    contextmenu = FALSE,
-                    unique = FALSE,
-                    types =
-                      "{
-                        '#': { 'max_children' : 2, 'max_depth' : 6, 'valid_children' : ['root'] },
-                        'root' : { 'valid_children' : ['file'] },
-                        'default' : { 'valid_children' : ['default','file'] },
-                        'file' : { 'icon' : 'fa fa-file', 'valid_children' : [] }
-                      }"
-                  ),
-                  style = "width:45%; float:left;"
-                ),
-                div(uiOutput(ns("thesaurus_tree_selected_item")), style = "width:50%; float:right;")
-              )
-            )
+            )#,
+            # conditionalPanel(
+            #   condition = "input.thesaurus_items_pivot == 'thesaurus_items_tree_view'", ns = ns, br(),
+            #   div(
+            #     div(
+            #       shinyTree::shinyTree(
+            #         ns("thesaurus_items_tree"),
+            #         search = FALSE,
+            #         checkbox = FALSE,
+            #         dragAndDrop = FALSE,
+            #         theme = "proton",
+            #         themeIcons = FALSE,
+            #         wholerow = FALSE,
+            #         stripes = FALSE,
+            #         animation = 100,
+            #         contextmenu = FALSE,
+            #         unique = FALSE,
+            #         types =
+            #           "{
+            #             '#': { 'max_children' : 2, 'max_depth' : 6, 'valid_children' : ['root'] },
+            #             'root' : { 'valid_children' : ['file'] },
+            #             'default' : { 'valid_children' : ['default','file'] },
+            #             'file' : { 'icon' : 'fa fa-file', 'valid_children' : [] }
+            #           }"
+            #       ),
+            #       style = "width:45%; float:left;"
+            #     ),
+            #     div(uiOutput(ns("thesaurus_tree_selected_item")), style = "width:50%; float:right;")
+            #   )
+            # )
           )
         ), br(),
         #shinyjs::hidden(
@@ -396,53 +394,53 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # Order by name
       r$datamart_thesaurus_items <- r$datamart_thesaurus_items %>% dplyr::arrange(name)
       
-      # Prepare data for shinyTree
-      
-      datamart_thesaurus_items_tree <-
-        r$datamart_thesaurus_items %>%
-        dplyr::select(-action) %>%
-        get_thesaurus_items_levels(r = r) %>%
-        get_thesaurus_items_paths(r = r)
-      
-      # Create a first file to save the list without count_items_rows selected
-      
-      not_filtered_list_file <- paste0(r$app_folder, "/thesaurus/thesaurus_", input$thesaurus$key, "_datamart_", r$chosen_datamart, "_not_filtered.rds")
-      filtered_list_file <- paste0(r$app_folder, "/thesaurus/thesaurus_", input$thesaurus$key, "_datamart_", r$chosen_datamart, "_filtered.rds")
-      
-      # If file exists, load it
-      if (file.exists(filtered_list_file) & file.exists(not_filtered_list_file)) tryCatch({
-        
-        #if (input$show_only_used_items) 
-        r$datamart_thesaurus_items_tree_filtered <- rlist::list.load(filtered_list_file)
-        r$datamart_thesaurus_items_tree_not_filtered <- rlist::list.load(not_filtered_list_file)
-        
-      }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_list_file", 
-        error_name = paste0("thesaurus - shiny_tree - load_list_file - thesaurus_id = ", input$thesaurus$key), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
-      
-      if (!file.exists(filtered_list_file)) tryCatch({
-        
-        r$datamart_thesaurus_items_tree_not_filtered <- datamart_thesaurus_items_tree %>%
-          # dplyr::sample_n(400) %>%
-          dplyr::arrange(path, dplyr::desc(count_items_rows), name) %>%
-          prepare_data_shiny_tree() 
-        
-        r$datamart_thesaurus_items_tree_filtered <- datamart_thesaurus_items_tree %>%
-          # dplyr::sample_n(400) %>%
-          dplyr::filter(has_children | (!has_children & count_items_rows > 0)) %>%
-          dplyr::arrange(path, dplyr::desc(count_items_rows), name) %>%
-          prepare_data_shiny_tree()
-        
-        r$datamart_thesaurus_items_tree_not_filtered %>% rlist::list.save(not_filtered_list_file)
-        r$datamart_thesaurus_items_tree_filtered %>% rlist::list.save(filtered_list_file)
-        
-        # r$datamart_thesaurus_items_tree <- datamart_thesaurus_items_tree_filtered
-        # else r$datamart_thesaurus_items_tree <- datamart_thesaurus_items_tree_not_filtered
-        
-      }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_save_list_file", 
-        error_name = paste0("thesaurus - shiny_tree - save_list_file - thesaurus_id = ", input$thesaurus$key), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+      # # Prepare data for shinyTree
+      # 
+      # datamart_thesaurus_items_tree <-
+      #   r$datamart_thesaurus_items %>%
+      #   dplyr::select(-action) %>%
+      #   get_thesaurus_items_levels(r = r) %>%
+      #   get_thesaurus_items_paths(r = r)
+      # 
+      # # Create a first file to save the list without count_items_rows selected
+      # 
+      # not_filtered_list_file <- paste0(r$app_folder, "/thesaurus/thesaurus_", input$thesaurus$key, "_datamart_", r$chosen_datamart, "_not_filtered.rds")
+      # filtered_list_file <- paste0(r$app_folder, "/thesaurus/thesaurus_", input$thesaurus$key, "_datamart_", r$chosen_datamart, "_filtered.rds")
+      # 
+      # # If file exists, load it
+      # if (file.exists(filtered_list_file) & file.exists(not_filtered_list_file)) tryCatch({
+      #   
+      #   #if (input$show_only_used_items) 
+      #   r$datamart_thesaurus_items_tree_filtered <- rlist::list.load(filtered_list_file)
+      #   r$datamart_thesaurus_items_tree_not_filtered <- rlist::list.load(not_filtered_list_file)
+      #   
+      # }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_list_file", 
+      #   error_name = paste0("thesaurus - shiny_tree - load_list_file - thesaurus_id = ", input$thesaurus$key), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+      # 
+      # if (!file.exists(filtered_list_file)) tryCatch({
+      #   
+      #   r$datamart_thesaurus_items_tree_not_filtered <- datamart_thesaurus_items_tree %>%
+      #     # dplyr::sample_n(400) %>%
+      #     dplyr::arrange(path, dplyr::desc(count_items_rows), name) %>%
+      #     prepare_data_shiny_tree() 
+      #   
+      #   r$datamart_thesaurus_items_tree_filtered <- datamart_thesaurus_items_tree %>%
+      #     # dplyr::sample_n(400) %>%
+      #     dplyr::filter(has_children | (!has_children & count_items_rows > 0)) %>%
+      #     dplyr::arrange(path, dplyr::desc(count_items_rows), name) %>%
+      #     prepare_data_shiny_tree()
+      #   
+      #   r$datamart_thesaurus_items_tree_not_filtered %>% rlist::list.save(not_filtered_list_file)
+      #   r$datamart_thesaurus_items_tree_filtered %>% rlist::list.save(filtered_list_file)
+      #   
+      #   # r$datamart_thesaurus_items_tree <- datamart_thesaurus_items_tree_filtered
+      #   # else r$datamart_thesaurus_items_tree <- datamart_thesaurus_items_tree_not_filtered
+      #   
+      # }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_save_list_file", 
+      #   error_name = paste0("thesaurus - shiny_tree - save_list_file - thesaurus_id = ", input$thesaurus$key), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       
       r$reload_thesaurus_datatable <- Sys.time()
-      r$reload_thesaurus_tree <- Sys.time()
+      # r$reload_thesaurus_tree <- Sys.time()
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$reload_thesaurus_data"))
     })
@@ -485,19 +483,19 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     })
     
     # Render shinyTree
-    output$thesaurus_items_tree <- shinyTree::renderTree({
-      
-      if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - output$thesaurus_items_tree"))
-      
-      r$reload_thesaurus_tree
-      
-      # r$datamart_thesaurus_items_tree
-      if (input$show_only_used_items) r$datamart_thesaurus_items_tree_filtered
-      else r$datamart_thesaurus_items_tree_not_filtered
-      
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - output$thesauurs_items_tree"))
-    })
+    # output$thesaurus_items_tree <- shinyTree::renderTree({
+    #   
+    #   if (perf_monitoring) monitor_perf(r = r, action = "start")
+    #   if (debug) print(paste0(Sys.time(), " - mod_thesaurus - output$thesaurus_items_tree"))
+    #   
+    #   r$reload_thesaurus_tree
+    #   
+    #   # r$datamart_thesaurus_items_tree
+    #   if (input$show_only_used_items) r$datamart_thesaurus_items_tree_filtered
+    #   else r$datamart_thesaurus_items_tree_not_filtered
+    #   
+    #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - output$thesauurs_items_tree"))
+    # })
     
     # Updates on datatable data
     observeEvent(input$thesaurus_items_cell_edit, {

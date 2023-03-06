@@ -15,20 +15,30 @@ add_thesaurus_item(
 )
 }
 \arguments{
-\item{output}{output}
+\item{output}{Output variable from Shiny, used to render messages on message bars}
 
-\item{r}{r}
+\item{r}{A shiny::reactiValues object, used to communicate between modules}
 
-\item{thesaurus_name}{thesaurus_name}
+\item{thesaurus_name}{Name of the thesaurus where the item will be added (character)}
 
-\item{item_name}{item_name}
+\item{item_name}{Name of the item (character)}
 
-\item{item_unit}{item_unit}
+\item{item_unit}{Unit of the item (character)}
 
-\item{i18n}{i18n}
+\item{i18n}{shiny.i18n object for translations}
 
-\item{ns}{ns}
+\item{ns}{shiny namespace object, used to render messages on message bars}
 }
 \description{
 Add an item to a thesaurus
+}
+\details{
+To add an item in a thesaurus, you need to specify its name and unit.
+The item ID will be the ID of the last item of this thesaurus, plus one.
+}
+\examples{
+\dontrun{
+# Create item "Heart rate" in thesaurus "MIMIC-IV"
+add_thesaurus_item(output = output, r = r, thesaurus_name = "MIMIC-IV", item_name = "Heart rate", item_unit = "bpm")
+}
 }

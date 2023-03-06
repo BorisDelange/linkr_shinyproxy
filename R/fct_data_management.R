@@ -14,7 +14,6 @@
 run_datamart_code <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), i18n = character(), quiet = TRUE){
   
   if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-  if (r$debug) print(paste0(Sys.time(), " - fct_run_datamart_code"))
   
   # Get code from datamart
   tryCatch(r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code),
@@ -76,7 +75,6 @@ add_patients_to_subset <- function(output, m = shiny::reactiveValues(), patients
   subset_id = integer(), i18n = character(), ns = character()){
   
   if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-  if (r$debug) print(paste0(Sys.time(), " - fct_add_patients_to_subset"))
   
   # Check subset_id
   
@@ -173,7 +171,6 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), pat
   subset_id = integer(), i18n = character(), ns = character()){
   
   if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-  if (r$debug) print(paste0(Sys.time(), " - fct_remove_patients_from_subset"))
   
   # Check subset_id
   
@@ -253,122 +250,114 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), pat
 #' @description Get levels of thesaurus items to create thesaurus tree
 #' @param data datatable containing thesaurus items
 #' @param r A shiny::reactiValues object, used to communicate between modules
-get_thesaurus_items_levels <- function(data = tibble::tibble(), r = shiny::reactiveValues()){
-  
-  if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-  if (r$debug) print(paste0(Sys.time(), " - fct_get_thesaurus_items_levels"))
-  
-  data_with_levels <- tibble::tibble()
-  
-  i <- 1
-  while (i > 0){
-    if (i == 1){
-      if (nrow(data %>% dplyr::filter(is.na(parent_item_id))) == 0) i <- -1
-      temp <-
-        data %>%
-        dplyr::filter(is.na(parent_item_id)) %>%
-        dplyr::mutate(level = i)
-      
-      data_with_levels <- temp
-    }
-    
-    temp <-
-      temp %>%
-      dplyr::select(parent_item_id = item_id, parent_name = name, dplyr::starts_with("name_level_")) %>%
-      dplyr::inner_join(data, by = "parent_item_id") %>%
-      dplyr::mutate(level = i + 1, !!paste0("name_level_", i) := parent_name) %>%
-      dplyr::select(-parent_name)
-    
-    if (nrow(temp) == 0) i <- -1
-    else {
-      data_with_levels <-
-        data_with_levels %>%
-        dplyr::bind_rows(temp)
-      
-      temp <- temp %>% dplyr::filter(level == i + 1)
-      
-      i <- i + 1
-    }
-  }
-  
-  data_with_levels <- data_with_levels %>%
-    dplyr::left_join(data %>% dplyr::select(item_id = parent_item_id, children_item_id = item_id), by = "item_id") %>%
-    dplyr::group_by(item_id, parent_item_id, name, unit, count_patients_rows, count_items_rows, level, dplyr::across(dplyr::starts_with("name_level_"))) %>%
-    dplyr::summarize(n_children = max(children_item_id)) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(has_children = dplyr::case_when(is.na(n_children) ~ FALSE, TRUE ~ TRUE)) %>%
-    dplyr::select(-n_children)
-  
-  if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_get_thesaurus_items_levels"))
-  
-  data_with_levels
-}
+# get_thesaurus_items_levels <- function(data = tibble::tibble(), r = shiny::reactiveValues()){
+#   
+#   if (r$perf_monitoring) monitor_perf(r = r, action = "start")
+#   if (r$debug) print(paste0(Sys.time(), " - fct_get_thesaurus_items_levels"))
+#   
+#   data_with_levels <- tibble::tibble()
+#   
+#   i <- 1
+#   while (i > 0){
+#     if (i == 1){
+#       if (nrow(data %>% dplyr::filter(is.na(parent_item_id))) == 0) i <- -1
+#       temp <-
+#         data %>%
+#         dplyr::filter(is.na(parent_item_id)) %>%
+#         dplyr::mutate(level = i)
+#       
+#       data_with_levels <- temp
+#     }
+#     
+#     temp <-
+#       temp %>%
+#       dplyr::select(parent_item_id = item_id, parent_name = name, dplyr::starts_with("name_level_")) %>%
+#       dplyr::inner_join(data, by = "parent_item_id") %>%
+#       dplyr::mutate(level = i + 1, !!paste0("name_level_", i) := parent_name) %>%
+#       dplyr::select(-parent_name)
+#     
+#     if (nrow(temp) == 0) i <- -1
+#     else {
+#       data_with_levels <-
+#         data_with_levels %>%
+#         dplyr::bind_rows(temp)
+#       
+#       temp <- temp %>% dplyr::filter(level == i + 1)
+#       
+#       i <- i + 1
+#     }
+#   }
+#   
+#   data_with_levels <- data_with_levels %>%
+#     dplyr::left_join(data %>% dplyr::select(item_id = parent_item_id, children_item_id = item_id), by = "item_id") %>%
+#     dplyr::group_by(item_id, parent_item_id, name, unit, count_patients_rows, count_items_rows, level, dplyr::across(dplyr::starts_with("name_level_"))) %>%
+#     dplyr::summarize(n_children = max(children_item_id)) %>%
+#     dplyr::ungroup() %>%
+#     dplyr::mutate(has_children = dplyr::case_when(is.na(n_children) ~ FALSE, TRUE ~ TRUE)) %>%
+#     dplyr::select(-n_children)
+#   
+#   if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_get_thesaurus_items_levels"))
+#   
+#   data_with_levels
+# }
 
 #' Get thesaurus items paths
 #'
 #' @description Get paths of thesaurus items to create thesaurus tree
 #' @param data datatable containing thesaurus items
 #' @param r A shiny::reactiValues object, used to communicate between modules
-get_thesaurus_items_paths <- function(data = tibble::tibble(), r = shiny::reactiveValues()){
-  
-  if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-  if (r$debug) print(paste0(Sys.time(), " - fct_get_thesaurus_items_paths"))
-  
-  data_with_paths <- data %>% dplyr::mutate(path = "")
-  
-  full_list <- list()
-  
-  if (nrow(data) > 0){
-    
-    # Loop over categories levels
-    for (i in 1:(max(data$level))){
-      
-      if (i > 1) {
-        
-        filtered_categories <- data %>% dplyr::filter(level == i)
-        
-        # Create path column
-        paths <- data %>% 
-          dplyr::filter(level == i) %>%
-          dplyr::select(-item_id, -parent_item_id, -unit, -level, -name, -count_patients_rows, -count_items_rows) %>%
-          dplyr::select(seq(1, i - 1)) %>%
-          tidyr::unite("path", sep = "$", na.rm = TRUE, remove = TRUE) %>%
-          dplyr::mutate_at("path", stringr::str_replace_all, "\\$", "`$`") %>%
-          dplyr::mutate(path = paste0("`", path, "`" )) %>%
-          dplyr::pull()
-        
-        filtered_categories$path <- paths
-        
-        data_with_paths <- data_with_paths %>%
-          dplyr::filter(level != i) %>%
-          dplyr::bind_rows(filtered_categories)
-      }
-    }
-  }
-  
-  if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_get_thesaurus_items_paths"))
-  
-  data_with_paths
-}
+# get_thesaurus_items_paths <- function(data = tibble::tibble(), r = shiny::reactiveValues()){
+#   
+#   if (r$perf_monitoring) monitor_perf(r = r, action = "start")
+#   if (r$debug) print(paste0(Sys.time(), " - fct_get_thesaurus_items_paths"))
+#   
+#   data_with_paths <- data %>% dplyr::mutate(path = "")
+#   
+#   full_list <- list()
+#   
+#   if (nrow(data) > 0){
+#     
+#     # Loop over categories levels
+#     for (i in 1:(max(data$level))){
+#       
+#       if (i > 1) {
+#         
+#         filtered_categories <- data %>% dplyr::filter(level == i)
+#         
+#         # Create path column
+#         paths <- data %>% 
+#           dplyr::filter(level == i) %>%
+#           dplyr::select(-item_id, -parent_item_id, -unit, -level, -name, -count_patients_rows, -count_items_rows) %>%
+#           dplyr::select(seq(1, i - 1)) %>%
+#           tidyr::unite("path", sep = "$", na.rm = TRUE, remove = TRUE) %>%
+#           dplyr::mutate_at("path", stringr::str_replace_all, "\\$", "`$`") %>%
+#           dplyr::mutate(path = paste0("`", path, "`" )) %>%
+#           dplyr::pull()
+#         
+#         filtered_categories$path <- paths
+#         
+#         data_with_paths <- data_with_paths %>%
+#           dplyr::filter(level != i) %>%
+#           dplyr::bind_rows(filtered_categories)
+#       }
+#     }
+#   }
+#   
+#   if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_get_thesaurus_items_paths"))
+#   
+#   data_with_paths
+# }
 
 #' Get thesaurus name
 #'
 #' @description Get thesaurus name from its ID
 #' @param r A shiny::reactiValues object, used to communicate between modules
-#' @param datamart_id ID of a datamart, to get related data_source_id and then create a thesaurus for scripts associated with this data_source (integer)
 #' @param thesaurus_id ID of the thesaurus (integer)
-get_thesaurus_name <- function(r = shiny::reactiveValues(), datamart_id = integer(), thesaurus_id = integer()){
+get_thesaurus_name <- function(r = shiny::reactiveValues(), thesaurus_id = integer()){
   
   if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-  if (r$debug) print(paste0(Sys.time(), " - fct_get_thesaurus_name"))
   
   result <- NA_character_
-  
-  if (length(datamart_id) > 0){
-    data_source_id <- r$datamarts %>% dplyr::filter(id == datamart_id) %>% dplyr::pull(data_source_id)
-    if (length(data_source_id) > 0) data_source_name <- r$data_sources %>% dplyr::filter(id == data_source_id) %>% dplyr::pull(name)
-    result <- paste0(data_source_name, " - scripts")
-  }
   
   if (length(thesaurus_id) > 0){
     result <- r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% dplyr::pull(name)
@@ -381,23 +370,31 @@ get_thesaurus_name <- function(r = shiny::reactiveValues(), datamart_id = intege
 
 #' Get thesaurus item
 #'
-#' @description Get a thesaurus item
-#' @param output output 
-#' @param r r
-#' @param thesaurus_name thesaurus_name
-#' @param item_name item_name
-#' @param item_id item_id
-#' @param method method
-#' @param create create
-#' @param item_unit item_unit
-#' @param i18n i18n
-#' @param ns ns
+#' @description Get a thesaurus item, from the thesaurus name and ID or name of the item.
+#' @param output Output variable from Shiny, used to render messages on message bars
+#' @param r A shiny::reactiValues object, used to communicate between modules
+#' @param thesaurus_name Name of the thesaurus (character)
+#' @param item_name Name of the item to get, if method = "item_name" (character)
+#' @param item_id ID of the item to get, if method = "item_id" (integer)
+#' @param method Method used to get the thesaurus item. Could be "item_name" or "item_id" (character).
+#' @param create If the item is not found and create is TRUE, the item is created, with add_thesaurus_item function (logical).
+#' @param item_unit Unit of the item, if it is not found and create is TRUE (character).
+#' @param i18n shiny.i18n object for translations
+#' @param ns shiny namespace object, used to render messages on message bars
+#' @examples 
+#' \dontrun{
+#' # Search item "Respiratory rate" from thesaurus "MIMIC-IV"
+#' get_thesaurus_item(output = output, r = r, thesaurus_name = "MIMIC-IV", item_name = "Respiratory rate", method = "item_name", i18n = i18n, ns = ns)
+#' 
+#' # Search item 83748 from thesaurus "MIMIC-IV", and create it if not found
+#' get_thesaurus_item(output = output, r = r, thesaurus_name = "MIMIC-IV", item_id = 83746, 
+#'  item_name = "Heart rate", item_unit = "bpm", method = "item_id", i18n = i18n, ns = ns)
+#' }
 get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_name = character(), 
   item_name = character(), item_id = integer(), method = character(), create = FALSE, item_unit = NA_character_, 
   i18n = character(), ns = character()){
   
   if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-  if (r$debug) print(paste0(Sys.time(), " - fct_get_thesaurus_item"))
   
   stop_fct <- FALSE
   
@@ -420,14 +417,14 @@ get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
     stop(i18n$t("thesaurus_id_not_found"))
   }
   
-  # Search by item name
-  
   if (length(method) == 0) stop_fct <- TRUE
   else if (is.na(method)) stop_fct <- TRUE
   if (stop_fct){
     show_message_bar(output, "invalid_thesaurus_search_method", "severeWarning", i18n = i18n, ns = ns)
     stop(i18n$t("invalid_thesaurus_search_method"))
   }
+  
+  # Search by item name
   
   if (method == "item_name"){
     
@@ -471,18 +468,24 @@ get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
 #' Add thesaurus item
 #'
 #' @description Add an item to a thesaurus
-#' @param output output
-#' @param r r
-#' @param thesaurus_name thesaurus_name
-#' @param item_name item_name
-#' @param item_unit item_unit
-#' @param i18n i18n
-#' @param ns ns
+#' @details To add an item in a thesaurus, you need to specify its name and unit.
+#' The item ID will be the ID of the last item of this thesaurus, plus one.
+#' @param output Output variable from Shiny, used to render messages on message bars
+#' @param r A shiny::reactiValues object, used to communicate between modules
+#' @param thesaurus_name Name of the thesaurus where the item will be added (character)
+#' @param item_name Name of the item (character)
+#' @param item_unit Unit of the item (character)
+#' @param i18n shiny.i18n object for translations
+#' @param ns shiny namespace object, used to render messages on message bars
+#' @examples 
+#' \dontrun{
+#' # Create item "Heart rate" in thesaurus "MIMIC-IV"
+#' add_thesaurus_item(output = output, r = r, thesaurus_name = "MIMIC-IV", item_name = "Heart rate", item_unit = "bpm")
+#' }
 add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_name = character(), item_name = character(), 
   item_unit = NA_character_, i18n = character(), ns = character()){
   
   if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-  if (r$debug) print(paste0(Sys.time(), " - fct_add_thesaurus_item"))
   
   stop_fct <- FALSE
   
@@ -546,17 +549,27 @@ add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
 
 #' Create scripts thesaurus
 #'
-#' @description Create scripts thesaurus
-#' @param output output
-#' @param r r
-#' @param data_source_id data_source_id
-#' @param i18n i18n
-#' @param ns ns
+#' @description Create a thesaurus for the items created in the scripts
+#' @details A script is a code executed each time we load a datamart.
+#' In some scripts, we create new thesaurus items.
+#' The scripts are attached to data sources. 
+#' This function creates a new thesaurus, for a data source, named [data_source_name - scripts], which will include
+#' all items created in the scripts depending of this data source.
+#' @param output Output variable from Shiny, used to render messages on message bars
+#' @param r A shiny::reactiValues object, used to communicate between modules
+#' @param data_source_id ID of the data source where the script is recorded
+#' @param i18n shiny.i18n object for translations
+#' @param ns shiny namespace object, used to render messages on message bars
+#' @examples 
+#' \dontrun{
+#' # If my script depends of the data source with ID 13, named "My data source", this function will create a thesaurus
+#' called "My data source - scripts".
+#' create_scripts_thesaurus(output = output, r = r, data_source_id = 13, i18n = i18n, ns = ns)
+#' }
 create_scripts_thesaurus <- function(output, r = shiny::reactiveValues(), data_source_id = integer(), 
   i18n = character(), ns = character()){
   
   if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-  if (r$debug) print(paste0(Sys.time(), " - fct_create_scripts_thesaurus"))
   
   # Check if thesaurus exists
   data_source_name <- r$data_sources %>% dplyr::filter(id == data_source_id) %>% dplyr::pull(name)

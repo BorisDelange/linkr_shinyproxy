@@ -2,21 +2,21 @@
 % Please edit documentation in R/fct_data_management.R
 \name{get_thesaurus_name}
 \alias{get_thesaurus_name}
-\title{Get thesaurus name}
+\title{Get thesaurus items levels}
 \usage{
-get_thesaurus_name(
-  r = shiny::reactiveValues(),
-  datamart_id = integer(),
-  thesaurus_id = integer()
-)
+get_thesaurus_name(r = shiny::reactiveValues(), thesaurus_id = integer())
 }
 \arguments{
 \item{r}{A shiny::reactiValues object, used to communicate between modules}
 
-\item{datamart_id}{ID of a datamart, to get related data_source_id and then create a thesaurus for scripts associated with this data_source (integer)}
-
 \item{thesaurus_id}{ID of the thesaurus (integer)}
+
+\item{data}{datatable containing thesaurus items}
 }
 \description{
+Get levels of thesaurus items to create thesaurus tree
+
+Get paths of thesaurus items to create thesaurus tree
+
 Get thesaurus name from its ID
 }

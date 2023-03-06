@@ -186,15 +186,15 @@ app_server <- function(router, language = "en", app_folder = character(),
       })
      
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - home")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - mod_patient_and_aggregated_data"))
+      if (debug) print(paste0(Sys.time(), " - server - load server modules - mod_data"))
       
       sapply(c("patient_level_data", "aggregated_data"), function(page){
-        mod_patient_and_aggregated_data_server(page, r, d, m, o, i18n, perf_monitoring, debug)
+        mod_data_server(page, r, d, m, o, language, i18n, perf_monitoring, debug)
         mod_page_sidenav_server(page, r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(page, r, language, i18n)
       })
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - mod_patient_and_aggregated_data")
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - mod_data")
       if (debug) print(paste0(Sys.time(), " - server - load server modules - my_studies / my_subsets / thesaurus / scripts"))
       
       mod_my_studies_server("my_studies", r, d, m, i18n, perf_monitoring, debug)

@@ -122,7 +122,7 @@ mod_settings_general_server <- function(id = character(), r = shiny::reactiveVal
         
         # Notify the user
         
-        show_message_bar(output = output, id = 1, message = "password_changed", type = "success", i18n = i18n, ns = ns)
+        show_message_bar(output, message = "password_changed", type = "success", i18n = i18n, ns = ns)
         
       }
       

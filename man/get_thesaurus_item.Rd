@@ -18,26 +18,36 @@ get_thesaurus_item(
 )
 }
 \arguments{
-\item{output}{output}
+\item{output}{Output variable from Shiny, used to render messages on message bars}
 
-\item{r}{r}
+\item{r}{A shiny::reactiValues object, used to communicate between modules}
 
-\item{thesaurus_name}{thesaurus_name}
+\item{thesaurus_name}{Name of the thesaurus (character)}
 
-\item{item_name}{item_name}
+\item{item_name}{Name of the item to get, if method = "item_name" (character)}
 
-\item{item_id}{item_id}
+\item{item_id}{ID of the item to get, if method = "item_id" (integer)}
 
-\item{method}{method}
+\item{method}{Method used to get the thesaurus item. Could be "item_name" or "item_id" (character).}
 
-\item{create}{create}
+\item{create}{If the item is not found and create is TRUE, the item is created, with add_thesaurus_item function (logical).}
 
-\item{item_unit}{item_unit}
+\item{item_unit}{Unit of the item, if it is not found and create is TRUE (character).}
 
-\item{i18n}{i18n}
+\item{i18n}{shiny.i18n object for translations}
 
-\item{ns}{ns}
+\item{ns}{shiny namespace object, used to render messages on message bars}
 }
 \description{
-Get a thesaurus item
+Get a thesaurus item, from the thesaurus name and ID or name of the item.
+}
+\examples{
+\dontrun{
+# Search item "Respiratory rate" from thesaurus "MIMIC-IV"
+get_thesaurus_item(output = output, r = r, thesaurus_name = "MIMIC-IV", item_name = "Respiratory rate", method = "item_name", i18n = i18n, ns = ns)
+
+# Search item 83748 from thesaurus "MIMIC-IV", and create it if not found
+get_thesaurus_item(output = output, r = r, thesaurus_name = "MIMIC-IV", item_id = 83746, 
+ item_name = "Heart rate", item_unit = "bpm", method = "item_id", i18n = i18n, ns = ns)
+}
 }
