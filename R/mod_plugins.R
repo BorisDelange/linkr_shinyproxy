@@ -46,8 +46,6 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
           div(shiny.fluent::Dropdown.shinyInput(ns("thesaurus_selected_items"), value = NULL, options = list(), multiSelect = TRUE,
             onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-thesaurus_selected_items_trigger', Math.random())"))), style = "width:650px;")
         ),
-        # make_dropdown(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items",
-        #   multiSelect = TRUE, width = "650px"),
         div(shiny.fluent::DefaultButton.shinyInput(ns("reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
       ),
       div(DT::DTOutput(ns("plugin_thesaurus_items")), class = "thesaurus_table"), 
@@ -97,7 +95,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
                 horizontal = TRUE, tokens = list(childrenGap = 20),
                 div(
                   shiny.fluent::ChoiceGroup.shinyInput(ns("all_plugins_source"), value = "local", options = list(
-                    list(key = "local", text = i18n$t("local_plugins")),
+                    list(key = "local", text = i18n$t("local")),
                     list(key = "github", text = i18n$t("git_remote_plugins"))
                   ), className = "inline_choicegroup"),
                   style = "width:320px;"

@@ -234,8 +234,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     if (perf_monitoring) monitor_perf(r = r, action = "start")
     if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - start"))
     
-    language <- "en"
-    
     sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     # --- --- --- --- --- --- -

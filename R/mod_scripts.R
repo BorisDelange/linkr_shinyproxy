@@ -21,6 +21,8 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
   div(
     class = "main",
     render_settings_default_elements(ns = ns),
+    shiny.fluent::reactOutput(ns("help_panel")),
+    shiny.fluent::reactOutput(ns("help_modal")),
     shiny.fluent::reactOutput(ns("script_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = id, text = i18n$t("scripts"))
@@ -227,6 +229,25 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     observeEvent(r$show_message_bar, show_message_bar(output, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
     if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - show_message_bars"))
+    
+    # --- --- --- --- --- ---
+    # Help for this page ----
+    # --- --- --- --- --- ---
+    
+    observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r$help_scripts_open_panel <- TRUE)
+    observeEvent(input$hide_panel, r$help_scripts_open_panel <- FALSE)
+    
+    observeEvent(input$show_modal, r$help_scripts_open_modal <- TRUE)
+    observeEvent(input$hide_modal, {
+      r$help_scripts_open_modal <- FALSE
+      r$help_scripts_open_panel_light_dismiss <- TRUE
+    })
+    
+    sapply(1:10, function(i){
+      observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_scripts_page_", i)]] <- Sys.time())
+    })
+    
+    help_scripts(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
     
     # --- --- --- --- --- -
     # Update dropdowns ----

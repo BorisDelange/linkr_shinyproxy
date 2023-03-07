@@ -175,6 +175,8 @@ mod_home_ui <- function(id = character(), i18n = character()){
   
   div(class = "main",
     render_settings_default_elements(ns = ns),
+    shiny.fluent::reactOutput(ns("help_panel")),
+    shiny.fluent::reactOutput(ns("help_modal")),
     main
   )
 }
@@ -189,7 +191,36 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
     if(perf_monitoring) monitor_perf(r = r, action = "start")
     if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - start"))
     
-    # Show or hide datamart cards
+    observeEvent(input$current_tab, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - observer input$current_tab"))
+      
+      sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
+      shinyjs::show(input$current_tab)
+    })
+    
+    # --- --- --- --- --- ---
+    # Help for this page ----
+    # --- --- --- --- --- ---
+    
+    observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r[[paste0("help_home_", id, "_open_panel")]] <- TRUE)
+    observeEvent(input$hide_panel, r[[paste0("help_home_", id, "_open_panel")]] <- FALSE)
+    
+    observeEvent(input$show_modal, r[[paste0("help_home_", id, "_open_modal")]] <- TRUE)
+    observeEvent(input$hide_modal, {
+      r[[paste0("help_home_", id, "_open_modal")]] <- FALSE
+      r[[paste0("help_home_", id, "_open_panel_light_dismiss")]] <- TRUE
+    })
+    
+    sapply(1:10, function(i){
+      observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_home_", id, "_page_", i)]] <- Sys.time())
+    })
+    
+    help_home(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
+    
+    # --- --- -
+    # Home ----
+    # --- --- -
     
     if (id == "home"){
       
@@ -212,7 +243,9 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
         
         if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - download overview.Md"))
         con <- textConnection("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/overview.Md")
-        overview_div <- readLines(con, warn = FALSE) %>% includeMarkdown() %>% withMathJax()
+        overview_md <- readLines(con, warn = FALSE) %>% includeMarkdown() %>% withMathJax()
+        overview_div <- make_card("", uiOutput(ns("overview_ui")))
+        output$overview_ui <- renderUI(overview_md)
         close(con)
         if(perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home_server - ", id, " - download overview.Md"))
         
@@ -303,18 +336,24 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
       output$versions_div <- renderUI(versions_div)
       
     } 
-    if (id == "home_get_started") cards <- c("import_excel_card", "import_csv_card", "connect_db_card")
-    if (id == "home_tutorials") cards <- c("tutorials_card")
-    if (id == "home_resources") cards <- c("resources_card")
-    if (id == "home_dev") cards <- c("dev_card")
     
-    observeEvent(input$current_tab, {
-      
-      if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - observer input$current_tab"))
-      
-      sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
-      shinyjs::show(input$current_tab)
-    })
+    # --- --- --- -- -
+    # Get started ----
+    # --- --- --- -- -
+    
+    if (id == "home_get_started") cards <- c("import_excel_card", "import_csv_card", "connect_db_card")
+    
+    # --- --- --- --
+    # Tutorials ----
+    # --- --- --- --
+    
+    if (id == "home_tutorials") cards <- c("tutorials_card")
+    
+    # --- --- --- --
+    # Resources ----
+    # --- --- --- --
+    
+    if (id == "home_resources") cards <- c("resources_card")
     
     if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - end"))
   })

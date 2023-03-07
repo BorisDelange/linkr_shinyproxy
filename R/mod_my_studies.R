@@ -24,6 +24,8 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
   div(
     class = "main",
     render_settings_default_elements(ns = ns),
+    shiny.fluent::reactOutput(ns("help_panel")),
+    shiny.fluent::reactOutput(ns("help_modal")),
     shiny.fluent::reactOutput(ns("study_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "datamart_main", text = i18n$t("my_studies"))
@@ -278,6 +280,25 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
     
     observeEvent(r$show_message_bar, show_message_bar(output, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
+    
+    # --- --- --- --- --- ---
+    # Help for this page ----
+    # --- --- --- --- --- ---
+    
+    observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r$help_my_studies_open_panel <- TRUE)
+    observeEvent(input$hide_panel, r$help_my_studies_open_panel <- FALSE)
+    
+    observeEvent(input$show_modal, r$help_my_studies_open_modal <- TRUE)
+    observeEvent(input$hide_modal, {
+      r$help_my_studies_open_modal <- FALSE
+      r$help_my_studies_open_panel_light_dismiss <- TRUE
+    })
+    
+    sapply(1:10, function(i){
+      observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_my_studies_page_", i)]] <- Sys.time())
+    })
+    
+    help_my_studies(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
     
     # --- --- --- --- --- --- --- --
     # When a datamart is chosen ----
