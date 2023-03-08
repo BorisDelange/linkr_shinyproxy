@@ -71,7 +71,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
         p(strong("4) Choisir un patient & un séjour")),
         p("En chargeant un subset, la liste des patients appartenant à ce subset est chargée dans le menu déroulant ", tags$em("Patient"),
           ", seulement si l'on se trouve dans les ", tags$em("Données individuelles"), "."),
-        p("Les ", strong("widgets se mettent à jour"), " à chaque changement de patient & de séjour.")
+        p("Les ", strong("widgets se mettent à jour"), " à chaque changement de patient & de séjour."), br()
       )
     }
     
@@ -163,7 +163,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
             tags$li(strong("datetime_start"), " : Date & heure de début de valeur (datetime)"),
             tags$li(strong("datetime_stop"), " : Date & heure de fin de la valeur, optionnel (datetime)"),
             tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
-          )
+          ), br()
       ) 
     }
     
@@ -218,7 +218,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
           tags$li(strong("d$data_stay$orders")),
           tags$li(strong("d$data_stay$text")),
           tags$li(strong("d$data_stay$diagnoses"))
-        )
+        ), br()
       ) 
     }
     
@@ -247,7 +247,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
         p("Les onglets de données agrégées ", strong("permettent de conduire une étude"), " sur mes données."),
         p("Par exemple, je peux créer un onglet ", tags$em("Critères d'exclusion"), " où je vais créer mes critères ",
           "d'exclusion et les appliquer à mes patients."),
-        p("Je peux également créer un onglet ", tags$em("Flowchart"), " pour afficher le flowchart de mon étude.")
+        p("Je peux également créer un onglet ", tags$em("Flowchart"), " pour afficher le flowchart de mon étude."), br()
       )
     }
     
@@ -276,7 +276,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
           tags$li(strong("Choisissez le niveau "), "de l'onglet. Faut-il qu'il soit au même niveau que l'onglet actuel,",
             " ou est-ce un sous-onglet de l'onglet actuellement sélectionné ?")
         ),
-        p("Lorsque le menu ", tags$em("Ajouter un onglet"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules.")
+        p("Lorsque le menu ", tags$em("Ajouter un onglet"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules."), br()
       ) 
     }
     
@@ -297,7 +297,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
         p("Un onglet est ", strong("composé de widgets"), ", qui sont des plugins appliqués à des données."),
         p(strong("1) Plugins")),
-        p("Les plugins sont des scripts écrits en R - Shiny, permettant ", strong("d'ajouter des fonctionnalités à l'application"), "."),
+        p("Les plugins sont des scripts écrits en R - Shiny permettant ", strong("d'ajouter des fonctionnalités à l'application"), "."),
         p("Quelques exemples :"),
         tags$ul(
           tags$li(strong("Plugin Datatable"), " : permet d'afficher des données sous forme de tableau."),
@@ -309,7 +309,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
         p(strong("2) Widgets")),
         p("Un widget est donc un plugin appliqué à des données."),
         p("Je choisis un plugin, quelles données vont être utilisées par ce plugin, puis le ",
-        strong("plugin affiche ces données sous la forme désirée"), " (timeline pour le plugin timeline etc).")
+        strong("plugin affiche ces données sous la forme désirée"), " (timeline pour le plugin timeline etc)."), br()
       )
     }
     
@@ -360,7 +360,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
         p("Si le bouton ", tags$em("Fusionner les concepts alignés"), " est activé, les différents items liés seront fusionnés dans le widget."),
         p("Par exemple, si j'ajoute le concept ", tags$em("Fréquence cardiaque"), " et que les items ", tags$em("FC"), " et ", tags$em("Fréq card"), " sont également ajoutés, ",
         "si je sélectionne la fusion, les différents items apparaîtront sous le nom ", tags$em("Fréquence cardiaque"), "."),
-        p("Lorsque le menu ", tags$em("Nouveau widget"), " est ouvert, cliquez sur la croix à droite du menu pour retourner à l'onglet actuel.")
+        p("Lorsque le menu ", tags$em("Nouveau widget"), " est ouvert, cliquez sur la croix à droite du menu pour retourner à l'onglet actuel."), br()
       ) 
     }
     

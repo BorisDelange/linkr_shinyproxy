@@ -1821,6 +1821,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         # Get thesaurus items
         
+        thesaurus_selected_items <- tibble::tibble(thesaurus_name = character(), item_id = integer(), display_name = character(),
+          thesaurus_item_unit = character(), colour = character(), mapped_to_item_id = integer(), merge_items = logical())
+        
         if (prefix == "patient_lvl"){
           
           # Check if some thesaurus items selected (not necessary)
