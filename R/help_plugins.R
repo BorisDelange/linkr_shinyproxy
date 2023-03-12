@@ -14,8 +14,7 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
       shiny.fluent::Link(i18n$t("edit_plugin_code"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_4', Math.random()); }"))), br(), br(),
       shiny.fluent::Link(i18n$t("plugin_options"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_5', Math.random()); }"))), br(), br(),
       strong(i18n$t("import_and_export_plugins")), br(), br(),
-      shiny.fluent::Link(i18n$t("import_plugin"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_6', Math.random()); }"))), br(), br(),
-      shiny.fluent::Link(i18n$t("export_plugin"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_7', Math.random()); }"))), br(), br(),
+      shiny.fluent::Link(i18n$t("import_and_export_plugins"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_6', Math.random()); }"))), br(), br(),
       isLightDismiss = r[[paste0("help_plugins_", prefix, "_open_panel_light_dismiss")]],
       isBlocking = r[[paste0("help_plugins_", prefix, "_open_panel_light_dismiss")]],
       onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_panel', Math.random()); }")),
@@ -114,8 +113,8 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
       p("Vous pouvez également supprimer un plugin en cliquant sur l'icône ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), "."),
       p(strong("3) Editer le code ou les options d'un plugin")),
       p("Cliquez sur"),
-      p(shiny::actionButton("delete_button_help", "", icon = icon("cog")), " pour ", strong("éditer les options"), " du plugin"),
       p(shiny::actionButton("delete_button_help", "", icon = icon("table")), " pour ", strong("éditer le code"), " du plugin"),
+      p(shiny::actionButton("delete_button_help", "", icon = icon("cog")), " pour ", strong("éditer les options"), " du plugin"),
       br()
     )
   })
@@ -129,7 +128,7 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
     r[[paste0("help_plugins_", prefix, "_modal_title")]] <- i18n$t("edit_plugin_code")
     r[[paste0("help_plugins_", prefix, "_modal_text")]] <- div(
       p("Dans cette rubrique, vous pouvez ", strong("écrire le code"), " d'un plugin et le ", strong("tester"), " en chargeant au préalable des données."),
-      p("Pour les plugins de données individuelles, il faut charger les données d'un patient. Pour les plugins de données agrégées, charger les données d'une étude suffit."),
+      p("Pour les plugins de données individuelles, il faut ", strong("charger les données"), " d'un patient. Pour les plugins de données agrégées, charger les données d'une étude suffit."),
       p(strong("1) UI (user interface) code")),
       p("Vous codez ici ", strong("l'interface utilisateur"), " du plugin."),
       p("Voici un exemple de code :"),
@@ -156,22 +155,90 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
       p("Cela fonctionne exactement comme une application Shiny."),
       p("Voici un exemple de code :"),
       div(
-        span(), br(),
+        span("observeEvent(input$submit_%widget_id%, {"), br(),
+        span("req(o[[session_code]] == session_num)", style = "padding-left:20px;"), br(),
+        span("output$text_output_%widget_id% <- renderText(paste0(i18np$t(\"input_text_is\"), \" : \", isolate(input$text_input_%widget_id%)))", style = "padding-left:20px;"), br(),
+        span("})"),
         style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
       ),
+      p("A chaque début d'observer, vous devez ", strong("insérer ce code"), " : ", tags$em("req(o[[session_code]] == session_num)"), 
+        ", permettant d'éviter que le code se lance plusieurs fois pour un même observer en cas de modification d'un widget."),
       p(strong("3) Traductions")),
-      p(),
+      p("Vous pouvez ici créer un fichier CSV permettant d'utiliser des traductions au sein du plugin."),
+      p("Le fichier doit être sous la forme suivante."),
+      div(
+        span("base,en,fr"), br(),
+        span("my_word,English traduction of my word,Traduction française de mon mot"), br(),
+        span("show,Show,Afficher"), br(),
+        span("input_text_is,Input text is,Le texte entré est"), br(),
+        style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+      ),
+      p("Vous pouvez ensuite utiliser la fonction ", strong("i18np$t"), " pour traduire des mots dans le plugin."),
+      p(strong("4) Bugs possibles")),
+      p("Pour éviter les bugs, les codes UI & server du plugin sont appelés au sein d'une fonction ", strong("tryCatch"), "."),
+      p("En cas d'erreur à l'éxécution du code, un message d'erreur s'affichera et le log des bugs sera stocké, disponible depuis la ", strong("page Log"), "."),
+      p("Cependant, certains bugs ne peuvent pas être évités."),
+      p("Les choses suivantes feront crasher l'application :"),
+      tags$ul(
+        tags$li("Appeler la fonction i18np$t avec une traduction qui n'existe pas dans le fichier de traduction"),
+        tags$li("Avoir des duplicats dans le fichier de traduction."),
+        tags$li("Créer un observer contenant un bug.")
+      ),
       br()
     )
   })
+  
+  # Plugin options
   
   observeEvent(r[[paste0("help_plugins_", prefix, "_page_5")]], {
     
     load_help_page(r)
     
-    r[[paste0("help_plugins_", prefix, "_modal_title")]] <- i18n$t("local_and_remote_plugins")
+    r[[paste0("help_plugins_", prefix, "_modal_title")]] <- i18n$t("plugin_options")
     r[[paste0("help_plugins_", prefix, "_modal_text")]] <- div(
-      p(), br()
+      p(strong("1) Auteur & version")),
+      p("Le nom de l'auteur et la version du plugin seront visibles depuis l'onglet ", tags$em("Tous les plugins"), "."),
+      p("Pensez à ", strong("modifier la version du plugin"), " lorsque des modifications sont réalisées dans le code."),
+      p(strong("2) Nom et catégorie")),
+      p("Nom et catégorie s'affichant dans l'onglet ", tags$em("Tous les plugins"), ", selon la langue choisie au démarrage de l'application."),
+      tags$em("Les catégories seront utilisées dans l'onglet Tous les plugins dans une prochaine version de l'application."),
+      p(strong("3) Accès")),
+      p("Choisissez ici qui peut avoir accès à ce plugin."),
+      p("Il peut être utile de restreindre l'accès à un plugin en cours de création, en ajoutant uniquement les personnes travaillant sur ce plugin."),
+      p(strong("4) Images")),
+      p("Vous pouvez importer des images en cliquant sur ", tags$em("Importer une image"), "."),
+      p("Cette image peut alors être choisie dans le menu déroulant pour être ", strong("l'image présentant le plugin"), " dans l'onglet ", tags$em("Tous les plugins"), "."),
+      p("Vous pouvez également utiliser les images importées dans la description du plugin."),
+      p(strong("5) Description")),
+      p("La description s'affiche dans l'onglet ", tags$em("Tous les plugins"), ", lorsque l'on clique sur un plugin."),
+      p("Le code ici est du ", strong("Markdown"), ", dont voici un exemple."),
+      div(
+        span("## Description"), br(), br(),
+        span("Ce plugin permet de créer un Flowchart à partir des données d'une étude."), br(), br(),
+        span("## Utilisation"), br(), br(),
+        span("Voici un exemple d'utilisation de ce plugin."), br(), br(),
+        span("![Texte si l'image ne s'affiche pas](%plugin_folder%/my_image.jpg)"),
+        style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+      ),
+      p("Pour ajouter une image, utilisez la balise ", strong("%plugin_folder%"), " qui sera remplacée par le dossier du plugin."),
+      br()
+    )
+  })
+  
+  # Import / export a plugin
+  
+  observeEvent(r[[paste0("help_plugins_", prefix, "_page_6")]], {
+    
+    load_help_page(r)
+    
+    r[[paste0("help_plugins_", prefix, "_modal_title")]] <- i18n$t("import_and_export_plugins")
+    r[[paste0("help_plugins_", prefix, "_modal_text")]] <- div(
+      p(strong("1) Importer un plugin")),
+      p("Vous pouvez importer un ou plusieurs plugins ", strong("à partir d'un fichier ZIP"), ", crée depuis l'onglet ", tags$em("Exporter un plugin"), "."),
+      p("Si le plugin existe déjà, il ne sera remplacé que si l'option ", tags$em("Remplacer les plugins déjà existants"), " est cochée."),
+      p(strong("2) Exporter un plugin")),
+      p("Vous pouvez exporter un ou plusieurs plugins, ils seront téléchargés dans un fichier ZIP, que vous pouvez ", strong("partager"), " avec d'autres utilisateurs utilisant LinkR."),
+      br()
     )
   })
 }

@@ -210,9 +210,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
             
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
-              conditionalPanel(condition = "input.edit_code_ui_server != 'translations'", ns = ns,
-                shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
-              )
+              shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
             ), br(),
             div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"),
             shiny::uiOutput(ns("code_result_ui")), br(),
@@ -388,6 +386,21 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Show first card
     if ("all_plugins_card" %in% r$user_accesses) shinyjs::show("all_plugins_card")
     else shinyjs::show("all_plugins_card_forbidden")
+    
+    # --- --- --- --- --- --- --
+    # Load page from header ----
+    # --- --- --- --- --- --- --
+    
+    observeEvent(shiny.router::get_page(), {
+      if (debug) print(paste0(Sys.time(), " - mod_plugins - ", id, " - observer shiny_router::change_page"))
+      
+      if (prefix == "aggregated" & shiny.router::get_page() == "plugins" & r$plugins_page == "plugins_patient_lvl") shiny.router::change_page("plugins_patient_lvl")
+      else if (prefix == "patient_lvl" & shiny.router::get_page() == "plugins" & r$plugins_page == "plugins_aggregated") shiny.router::change_page("plugins_aggregated")
+      
+      # Close help pages when page changes
+      r[[paste0("help_plugins_", prefix, "_open_panel")]] <- FALSE
+      r[[paste0("help_plugins_", prefix, "_open_modal")]] <- FALSE
+    })
     
     # --- --- --- --- --- -
     # Update dropdowns ----
@@ -747,6 +760,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       plugin <- r$github_plugins %>% dplyr::filter(unique_id == input$plugin_id)
       
       tryCatch({
+        
+        # Delete translations file
+        # Create plugin folder in translations folder if doesn't exist
+        translations_dir <- paste0(r$app_folder, "/translations/", plugin$unique_id)
+        if (dir.exists(translations_dir)) unlink(translations_dir, recursive = TRUE)
         
         # Delete old rows
         
@@ -1844,7 +1862,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         # Replace %group_id% in ui_code with 1 for our example
         
-        group_id <- get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10^6
+        group_id <- get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10^6 %>% as.integer()
         
         # Create a session number, to inactivate older observers
         # Reset all older observers
@@ -1882,12 +1900,21 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         if (input$ace_edit_code_translations != ""){
           
-          tryCatch(input$ace_edit_code_translations %>% writeLines(paste0(r$app_folder, "/temp_files/plugin_translations.csv")),
-            error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",
-              error_name = paste0(id, " - create translations files"), category = "Error", error_report = e, i18n = i18n, ns = ns))
+          tryCatch({
+            # Get plugin unique_id
+            plugin_unique_id <- r$options %>% dplyr::filter(category == "plugin", name == "unique_id", link_id == !!link_id) %>% dplyr::pull(value)
+            
+            # Create plugin folder in translations folder if doesn't exist
+            new_dir <- paste0(r$app_folder, "/translations/", plugin_unique_id)
+            if (!dir.exists(new_dir)) dir.create(new_dir)
+            
+            writeLines(input$ace_edit_code_translations, paste0(new_dir, "/plugin_translations.csv"))
+          },
+          error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",
+            error_name = paste0(id, " - create translations files"), category = "Error", error_report = e, i18n = i18n, ns = ns))
           
           tryCatch({
-            i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = paste0(r$app_folder, "/temp_files")))
+            i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = new_dir))
             i18np$set_translation_language(language)},
             error = function(e) report_bug(r = r, output = output, error_message = "error_creating_new_translator",
               error_name = paste0(id, " - create i18n translator"), category = "Error", error_report = e, i18n = i18n, ns = ns))

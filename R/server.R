@@ -216,6 +216,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       
       sapply(c("plugins_patient_lvl", "plugins_aggregated"), function(page){
         mod_plugins_server(page, r, d, m, o, language, i18n, app_folder, perf_monitoring, debug)
+        mod_page_sidenav_server(page, r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(page, r, language, i18n)
       })
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - plugins")

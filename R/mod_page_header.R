@@ -28,7 +28,7 @@ mod_page_header_ui <- function(id = character(), i18n = character()){
           shiny.fluent::CommandBarItem(i18n$t("data"), "BIDashboard", href = shiny.router::route_link("data")),
           shiny.fluent::CommandBarItem(i18n$t("thesaurus"), "AllApps", href = shiny.router::route_link("thesaurus")),
           shiny.fluent::CommandBarItem(i18n$t("scripts"), "CodeEdit", href = shiny.router::route_link("scripts")),
-          shiny.fluent::CommandBarItem(i18n$t("plugins"), "Code", href = shiny.router::route_link("plugins/patient_lvl"))
+          shiny.fluent::CommandBarItem(i18n$t("plugins"), "Code", href = shiny.router::route_link("plugins"))
         )
       )
     ),

@@ -863,11 +863,39 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               # check_deleted_plugin <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM plugins WHERE id = ", plugin_id)) %>% dplyr::pull(deleted)
               check_deleted_plugin <- r$plugins %>% dplyr::filter(id == plugin_id)
               if (nrow(check_deleted_plugin) == 0) code_ui_card <- paste0("div(shiny.fluent::MessageBar('", i18n$t("plugin_deleted"), "', messageBarType = 3), style = 'margin-top:10px;')")
-              if (nrow(check_deleted_plugin) > 0) code_ui_card <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_ui") %>% dplyr::pull(code)
-              
-              # if (check_deleted_plugin){
-              #   code_ui_card <- paste0("div(shiny.fluent::MessageBar('", i18n$t("plugin_deleted"), "', messageBarType = 3), style = 'margin-top:10px;')")
-              # }
+              if (nrow(check_deleted_plugin) > 0){
+                
+                code_ui_card <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_ui") %>% dplyr::pull(code)
+                
+                # Create translations file & var
+                
+                i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
+                
+                plugin_translations <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_translations") %>% dplyr::pull(code)
+                
+                if (plugin_translations != ""){
+                  
+                  tryCatch({
+                    # Get plugin unique_id
+                    plugin_unique_id <- r$options %>% dplyr::filter(category == "plugin", name == "unique_id", link_id == plugin_id) %>% dplyr::pull(value)
+                    
+                    # Create plugin folder in translations folder if doesn't exist
+                    new_dir <- paste0(r$app_folder, "/translations/", plugin_unique_id)
+                    if (!dir.exists(new_dir)) dir.create(new_dir)
+                    
+                    new_file <- paste0(new_dir, "/plugin_translations.csv")
+                    if (!file.exists(new_file)) writeLines(plugin_translations, new_file)
+                  },
+                    error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",
+                      error_name = paste0(id, " - create translations files - plugin_id ", plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+                  
+                  tryCatch({
+                    i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = new_dir))
+                    i18np$set_translation_language(language)},
+                    error = function(e) report_bug(r = r, output = output, error_message = "error_creating_new_translator",
+                      error_name = paste0(id, " - create i18n translator - plugin_id ", plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+                }
+              }
 
               # Get name of module element
               module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
@@ -1049,11 +1077,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             thesaurus_selected_items <- tibble::tibble()
             
             if (prefix == "patient_lvl"){
-
-              # Get thesaurus items with thesaurus own item_id
-              # thesaurus_selected_items <- module_elements %>% dplyr::filter(group_id == !!group_id) %>%
-              #   dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
-              #     thesaurus_item_unit, colour = thesaurus_item_colour)
               
               thesaurus_selected_items <- module_elements_items %>% dplyr::filter(group_id == !!group_id) %>%
                 dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
@@ -1080,6 +1103,37 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               if (length(m$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$chosen_study))
             }
             else code_server_card <- ""
+            
+            # Create translations file & var
+            
+            i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
+            
+            plugin_translations <- r$code %>%
+              dplyr::filter(link_id == ids$plugin_id, category == "plugin_translations") %>%
+              dplyr::pull(code)
+            
+            if (plugin_translations != ""){
+              
+              tryCatch({
+                # Get plugin unique_id
+                plugin_unique_id <- r$options %>% dplyr::filter(category == "plugin", name == "unique_id", link_id == !!ids$plugin_id) %>% dplyr::pull(value)
+                
+                # Create plugin folder in translations folder if doesn't exist
+                new_dir <- paste0(r$app_folder, "/translations/", plugin_unique_id)
+                if (!dir.exists(new_dir)) dir.create(new_dir)
+                
+                new_file <- paste0(new_dir, "/plugin_translations.csv")
+                if (!file.exists(new_file)) writeLines(plugin_translations, new_file)
+              },
+                error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",
+                  error_name = paste0(id, " - create translations files - plugin_id ", ids$plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+              
+              tryCatch({
+                i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = new_dir))
+                i18np$set_translation_language(language)},
+                error = function(e) report_bug(r = r, output = output, error_message = "error_creating_new_translator",
+                  error_name = paste0(id, " - create i18n translator - plugin_id ", ids$plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+            }
 
             # Create a session number, to inactivate older observers
             # Reset all older observers for this group_id
@@ -1097,9 +1151,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             for (var in c("d", "m", "o", "thesaurus_selected_items", "session_code", "session_num")) new_env_vars[[var]] <- eval(parse(text = var))
             new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
             tryCatch(eval(parse(text = code_server_card), envir = new_env), error = function(e) print(e), warning = function(w) print(w))
-            
-            # Update items datatable for this widget
-            
             
             # --- --- --- --- --- ---
             #### Delete a widget ----
@@ -1333,6 +1384,35 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         }
         
         show_message_bar(output, message = "modif_saved", type = "success", i18n = i18n, ns = ns)
+        
+        # Load translations file
+        
+        i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
+        
+        plugin_translations <- r$code %>% dplyr::filter(link_id == ids$plugin_id, category == "plugin_translations") %>% dplyr::pull(code)
+        
+        if (plugin_translations != ""){
+          
+          tryCatch({
+            # Get plugin unique_id
+            plugin_unique_id <- r$options %>% dplyr::filter(category == "plugin", name == "unique_id", link_id == ids$plugin_id) %>% dplyr::pull(value)
+            
+            # Create plugin folder in translations folder if doesn't exist
+            new_dir <- paste0(r$app_folder, "/translations/", plugin_unique_id)
+            if (!dir.exists(new_dir)) dir.create(new_dir)
+            
+            new_file <- paste0(new_dir, "/plugin_translations.csv")
+            if (!file.exists(new_file)) writeLines(plugin_translations, new_file)
+          },
+            error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",
+              error_name = paste0(id, " - create translations files - plugin_id ", plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+          
+          tryCatch({
+            i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = new_dir))
+            i18np$set_translation_language(language)},
+            error = function(e) report_bug(r = r, output = output, error_message = "error_creating_new_translator",
+              error_name = paste0(id, " - create i18n translator - plugin_id ", plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+        }
         
         # Run server code
         

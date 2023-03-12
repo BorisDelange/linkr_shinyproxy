@@ -77,7 +77,7 @@ linkr <- function(
   
   # Create app sub-dirs
   if (debug) print(paste0(Sys.time(), " - linkr - app sub-dirs"))
-  sub_dirs <- c("app_database", "datamarts", "messages", "plugins", "studies", "temp_files", "thesaurus")
+  sub_dirs <- c("app_database", "datamarts", "messages", "plugins", "studies", "temp_files", "thesaurus", "translations")
   for (sub_dir in sub_dirs) if (!dir.exists(paste0(app_folder, "/", sub_dir))) dir.create(paste0(app_folder, "/", sub_dir))
   
   # Initial wd
@@ -112,8 +112,9 @@ linkr <- function(
     "scripts", 
     "patient_level_data", 
     "aggregated_data",
-    "plugins/patient_lvl",
-    "plugins/aggregated",
+    "plugins",
+    "plugins_patient_lvl",
+    "plugins_aggregated",
     "settings/general_settings",
     "settings/app_db",
     "settings/users", 

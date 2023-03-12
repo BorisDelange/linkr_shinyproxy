@@ -129,29 +129,38 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
     dropdowns(c("datamart", "study", "subset"))
   ) -> result
   
-  # --- --- -- -
-  # Plugins ----
-  # --- --- -- -
+  # --- --- --- --- --- --- --
+  # Plugins patient-level ----
+  # --- --- --- --- --- --- --
   
-  if (grepl("^plugins", id)){
-    div(class = "sidenav",
-      shiny.fluent::Nav(
-        groups = list(
-          list(links = list(
-            list(name = i18n$t("patient_level_data"),
-              key = "patient_lvl", url = shiny.router::route_link("plugins/patient_lvl")),
-            list(name = i18n$t("aggregated_data"),
-              key = "aggregated", url = shiny.router::route_link("plugins/aggregated"))
-          ))
-        ),
-        selectedKey = substr(id, nchar("plugins") + 2, 100),
-        styles = list(
-          root = list(
-            height = "100%",
-            boxSizing = "border-box",
-            overflowY = "auto"
-          )
-        )
+  if (id == "plugins_patient_lvl"){
+    
+    div(
+      class = "sidenav", 
+      div(i18n$t("data"), class = "input_title", style = "font-size:14.5px;"),
+      div(
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
+          shiny.fluent::PrimaryButton.shinyInput(ns("plugins_page_ind"), i18n$t("individual"), style = "width:125px;"), 
+          shiny.fluent::DefaultButton.shinyInput(ns("plugins_page_agg"), i18n$t("aggregated"), style = "width:125px;")
+        ), style = "width:250px;"
+      )
+    ) -> result
+  }
+  
+  # --- --- --- --- --- ---
+  # Plugins aggregated ----
+  # --- --- --- --- --- ---
+  
+  if (id == "plugins_aggregated"){
+    
+    div(
+      class = "sidenav", 
+      div(i18n$t("data"), class = "input_title", style = "font-size:14.5px;"),
+      div(
+        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
+          shiny.fluent::DefaultButton.shinyInput(ns("plugins_page_ind"), i18n$t("individual"), style = "width:125px;"), 
+          shiny.fluent::PrimaryButton.shinyInput(ns("plugins_page_agg"), i18n$t("aggregated"), style = "width:125px;")
+        ), style = "width:250px;"
       )
     ) -> result
   }
@@ -208,6 +217,26 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
     ns <- session$ns
     
     if (debug) print(paste0(Sys.time(), " - mod_plugins - start"))
+    
+    # --- --- -- -
+    # Plugins ----
+    # --- --- -- -
+    
+    if (id %in% c("plugins_patient_lvl", "plugins_aggregated")){
+      
+      # Changing page between patient-lvl & aggregated plugins
+      
+      r$plugins_page <- "plugins_patient_lvl"
+      
+      if (id == "plugins_patient_lvl") observeEvent(input$plugins_page_agg, {
+        shiny.router::change_page("plugins_aggregated")
+        r$plugins_page <- "plugins_aggregated"
+      })
+      if (id == "plugins_aggregated") observeEvent(input$plugins_page_ind, {
+        shiny.router::change_page("plugins_patient_lvl")
+        r$plugins_page <- "plugins_patient_lvl"
+      })
+    }
     
     if (id %in% c("my_studies", "my_subsets", "thesaurus", "scripts", "patient_level_data", "aggregated_data")){
       
