@@ -191,10 +191,19 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r$help_my_subsets_open_panel <- TRUE)
     observeEvent(input$hide_panel, r$help_my_subsets_open_panel <- FALSE)
     
+    r$help_my_subsets_open_panel_light_dismiss <- TRUE
     observeEvent(input$show_modal, r$help_my_subsets_open_modal <- TRUE)
     observeEvent(input$hide_modal, {
       r$help_my_subsets_open_modal <- FALSE
       r$help_my_subsets_open_panel_light_dismiss <- TRUE
+    })
+    
+    observeEvent(shiny.router::get_page(), {
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - ", id, " - observer shiny_router::change_page"))
+      
+      # Close help pages when page changes
+      r$help_my_subsets_open_panel <- FALSE
+      r$help_my_subsets_open_modal <- FALSE
     })
     
     sapply(1:10, function(i){
@@ -650,6 +659,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       if (nrow(data) > 0){
         
         r$subset_patients_temp <- data %>% 
+          dplyr::arrange(patient_id) %>%
           dplyr::mutate(modified = FALSE) %>% dplyr::arrange(patient_id) %>%
           dplyr::mutate_at("patient_id", as.character) %>%
           dplyr::mutate_at("creator_id", as.factor)
@@ -740,23 +750,56 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
 
     # Delete rows in datatable
 
-    subset_patients_delete_prefix <- "subset_patients"
-    subset_patients_dialog_title <- "subset_patients_delete"
-    subset_patients_dialog_subtext <- "subset_patients_delete_subtext"
-    subset_patients_react_variable <- "subset_patients_delete_confirm"
-    subset_patients_table <- "subset_patients"
-    subset_patients_id_var_sql <- "id"
-    subset_patients_id_var_r <- "delete_subset_patients"
-    subset_patients_delete_message <- "subset_patients_deleted"
-    subset_patients_reload_variable <- "reload_subset_patients"
-    subset_patients_information_variable <- "subset_patients_deleted"
-    subset_patients_delete_variable <- paste0(subset_patients_delete_prefix, "_open_dialog")
-
-    delete_element(r = r, m = m, input = input, output = output, session = session, ns = ns, i18n = i18n,
-      delete_prefix = subset_patients_delete_prefix, dialog_title = subset_patients_dialog_title, dialog_subtext = subset_patients_dialog_subtext,
-      react_variable = subset_patients_react_variable, table = subset_patients_table, id_var_sql = subset_patients_id_var_sql, id_var_r = subset_patients_id_var_r,
-      delete_message = subset_patients_delete_message, translation = TRUE, reload_variable = subset_patients_reload_variable,
-      information_variable = subset_patients_information_variable)
+    r$subset_patients_open_dialog <- FALSE
+    
+    output$subset_patients_delete_confirm <- shiny.fluent::renderReact({
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - output$subset_patients_delete_confirm"))
+      
+      shiny.fluent::Dialog(
+        hidden = !r$subset_patients_open_dialog,
+        onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('subset_patients_hide_dialog', Math.random()); }")),
+        dialogContentProps = list(
+          type = 0,
+          title = i18n$t("subset_patients_delete"),
+          closeButtonAriaLabel = "Close",
+          subText = tagList(i18n$t("subset_patients_delete_subtext"), br(), br())
+        ),
+        modalProps = list(),
+        shiny.fluent::DialogFooter(
+          shiny.fluent::PrimaryButton.shinyInput(ns("subset_patients_delete_confirmed"), text = i18n$t("delete")),
+          shiny.fluent::DefaultButton.shinyInput(ns("subset_patients_delete_canceled"), text = i18n$t("dont_delete"))
+        )
+      )
+    })
+    
+    # Whether to close or not delete dialog box
+    observeEvent(input$subset_patients_hide_dialog, {
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_patients_hide_dialog"))
+      r$subset_patients_open_dialog <- FALSE 
+    })
+    observeEvent(input$subset_patients_delete_canceled, {
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_patients_delete_canceled"))
+      r$subset_patients_open_dialog <- FALSE
+    })
+    
+    # When the deletion is confirmed
+    
+    observeEvent(input$subset_patients_delete_confirmed, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_patients_delete_confirmed"))
+      
+      if (length(input$patients_chosen_subset) > 1) link_id <- input$patients_chosen_subset$key
+      else link_id <- input$patients_chosen_subset
+      
+      remove_patients_from_subset(output = output, r = r, m = m, patients = r$delete_subset_patients, subset_id = link_id, i18n = i18n, ns = ns)
+      
+      r$subset_patients <- r$subset_patients %>% dplyr::anti_join(r$delete_subset_patients %>% dplyr::select(patient_id), by = "patient_id")
+      
+      r$subset_patients_open_dialog <- FALSE
+      
+      r$reload_subset_patients <- Sys.time()
+    })
 
     # Delete multiple rows (with "Delete selection" button)
 
@@ -766,15 +809,16 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
 
       req(length(input$subset_patients_datatable_rows_selected) > 0)
 
-      r$delete_subset_patients <- r$subset_patients_temp[input$subset_patients_datatable_rows_selected, ] %>% dplyr::pull(id)
-      r[[subset_patients_delete_variable]] <- TRUE
+      r$delete_subset_patients <- r$subset_patients_temp[input$subset_patients_datatable_rows_selected, ] %>% 
+        dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)
+      r$subset_patients_open_dialog <- TRUE
     })
 
     observeEvent(r$reload_subset_patients, {
 
       if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer r$reload_subset_patients"))
 
-      r$subset_patients_temp <- r$subset_patients %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+      r$subset_patients_temp <- r$subset_patients %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(patient_id)
     })
     
     # Add patients to subset
@@ -790,11 +834,8 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       patients <- r$subset_add_patients[input$subset_add_patients_datatable_rows_selected, ] %>% 
         dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)
       
-      print(link_id)
-      print(patients)
-      
       # Add patients to subset
-      add_patients_to_subset(output = output, m = m, patients = patients, subset_id = link_id, i18n = i18n, ns = ns)
+      add_patients_to_subset(output = output, r = r, m = m, patients = patients, subset_id = link_id, i18n = i18n, ns = ns)
       
       # Reload r$subset_patients
       r$reload_subset_add_patients <- Sys.time()

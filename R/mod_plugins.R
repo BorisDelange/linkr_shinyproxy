@@ -423,6 +423,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r[[paste0("help_plugins_", prefix, "_open_panel")]] <- TRUE)
     observeEvent(input$hide_panel, r[[paste0("help_plugins_", prefix, "_open_panel")]] <- FALSE)
     
+    r[[paste0("help_plugins_", prefix, "_open_panel_light_dismiss")]] <- TRUE
     observeEvent(input$show_modal, r[[paste0("help_plugins_", prefix, "_open_modal")]] <- TRUE)
     observeEvent(input$hide_modal, {
       r[[paste0("help_plugins_", prefix, "_open_modal")]] <- FALSE
@@ -514,6 +515,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             
             if (type == "github"){
               plugin <- plugins$github %>% dplyr::filter(id == plugin_id)
+              
+              plugin$name <- plugin[[paste0("name_", language)]]
+              
               if (plugin$image != "") plugin$image_url <- paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/plugins/", prefix, "/", plugin$unique_id, "/", plugin$image)
               else plugin$image_url <- ""
             }
@@ -650,6 +654,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (input$all_plugins_source == "github"){
         plugin <- r$github_plugins %>% dplyr::filter(unique_id == input$plugin_id)
 
+        plugin$name <- plugin[[paste0("name_", language)]]
+        
         plugin_description <- paste0(
           "**Auteur** : ", plugin$name, "<br />",
           "**Version** : ", plugin$version, "\n\n",
@@ -677,7 +683,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         plugins <- 
           r$plugins %>%
-          dplyr::filter(!deleted) %>%
+          dplyr::filter(!deleted, module_type_id == !!module_type_id) %>%
           dplyr::left_join(
             r$options %>% dplyr::filter(category == "plugin", name == "unique_id") %>% dplyr::select(id = link_id, unique_id = value),
             by = "id"
@@ -780,22 +786,26 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           sql <- glue::glue_sql("DELETE FROM plugins WHERE id = {new_row}", .con = r$db)
           query <- DBI::dbSendStatement(r$db, sql)
           DBI::dbClearResult(query)
+          r$plugins <- r$plugins %>% dplyr::filter(id != new_row)
           
           sql <- glue::glue_sql("DELETE FROM options WHERE category = 'plugin' AND link_id = {new_row}", .con = r$db)
           query <- DBI::dbSendStatement(r$db, sql)
           DBI::dbClearResult(query)
+          r$options <- r$options %>% dplyr::filter(category != "plugin" | (category == "plugin" & link_id != new_row))
           
-          sql <- glue::glue_sql("DELETE FROM code WHERE category IN ('plugin_ui', 'plugin_server') AND link_id = {new_row}", .con = r$db)
+          sql <- glue::glue_sql("DELETE FROM code WHERE category IN ('plugin_ui', 'plugin_server', 'plugin_translations') AND link_id = {new_row}", .con = r$db)
           query <- DBI::dbSendStatement(r$db, sql)
           DBI::dbClearResult(query)
+          r$code <- r$code %>% dplyr::filter(category %not_in% c("plugin_ui", "plugin_server", "plugin_translations") | 
+            (category %in% c("plugin_ui", "plugin_server", "plugin_translations") & link_id != new_row))
         }
         
         # Plugin table
         
         new_data <- tibble::tribble(
           ~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
-          new_row, as.character(plugin$name), "", as.integer(module_type_id), as.character(Sys.time()), FALSE)
-        
+          new_row, as.character(plugin[[paste0("name_", language)]]), "", as.integer(module_type_id), as.character(Sys.time()), FALSE)
+        print(new_data)
         DBI::dbAppendTable(r$db, "plugins", new_data)
         add_log_entry(r = r, category = paste0("plugins - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
         r$plugins <- r$plugins %>% dplyr::bind_rows(new_data)
@@ -812,7 +822,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           last_row_options + 5, "plugin", new_row, "author", plugin$author, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
           last_row_options + 6, "plugin", new_row, "image", plugin$image, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
           last_row_options + 7, "plugin", new_row, "description_fr", plugin$description_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 8, "plugin", new_row, "description_en", plugin$description_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
+          last_row_options + 8, "plugin", new_row, "description_en", plugin$description_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_options + 9, "plugin", new_row, "category_fr", plugin$category_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_options + 10, "plugin", new_row, "category_en", plugin$category_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_options + 11, "plugin", new_row, "name_fr", plugin$name_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_options + 12, "plugin", new_row, "name_en", plugin$name_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
         )
         
         DBI::dbAppendTable(r$db, "options", new_options)
@@ -829,11 +843,16 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/plugins/", prefix, "/", plugin$unique_id, "/server.R") %>%
           readLines(warn = FALSE) %>% paste(collapse = "\n")
         
+        plugin_translations_code <-
+          paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/plugins/", prefix, "/", plugin$unique_id, "/translations.csv") %>%
+          readLines(warn = FALSE) %>% paste(collapse = "\n")
+        
         last_row_code <- get_last_row(r$db, "code")
         
         new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
           last_row_code + 1, "plugin_ui", new_row, plugin_ui_code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_code + 2, "plugin_server", new_row, plugin_server_code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+          last_row_code + 2, "plugin_server", new_row, plugin_server_code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+          last_row_code + 3, "plugin_translations", new_row, plugin_translations_code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
         
         DBI::dbAppendTable(r$db, "code", new_code)
         add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))

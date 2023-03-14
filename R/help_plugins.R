@@ -113,8 +113,8 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
       p("Vous pouvez également supprimer un plugin en cliquant sur l'icône ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), "."),
       p(strong("3) Editer le code ou les options d'un plugin")),
       p("Cliquez sur"),
-      p(shiny::actionButton("delete_button_help", "", icon = icon("table")), " pour ", strong("éditer le code"), " du plugin"),
-      p(shiny::actionButton("delete_button_help", "", icon = icon("cog")), " pour ", strong("éditer les options"), " du plugin"),
+      p(shiny::actionButton("edit_plugin_code_button_help", "", icon = icon("file-code")), " pour ", strong("éditer le code"), " du plugin,"),
+      p(shiny::actionButton("edit_plugin_options_button_help", "", icon = icon("cog")), " pour ", strong("éditer les options"), " du plugin."),
       br()
     )
   })

@@ -214,6 +214,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
       r[[paste0("help_home_", id, "_open_modal")]] <- FALSE
     })
     
+    r[[paste0("help_home_", id, "_open_panel_light_dismiss")]] <- TRUE
     observeEvent(input$show_modal, r[[paste0("help_home_", id, "_open_modal")]] <- TRUE)
     observeEvent(input$hide_modal, {
       r[[paste0("help_home_", id, "_open_modal")]] <- FALSE

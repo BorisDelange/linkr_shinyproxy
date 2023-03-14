@@ -61,6 +61,7 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), d = shiny::re
 #'
 #' @description Add patients to a subset, only if not already in the subset
 #' @param output Output variable from Shiny, used to render messages on message bars
+#' @param r A shiny::reactiValues object, used to communicate between modules
 #' @param m A shiny::reactiValues object, used to communicate between modules
 #' @param patients data variable containing patients (data.frame / tibble)
 #' @param subset_id ID of the subset (integer)
@@ -69,12 +70,12 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), d = shiny::re
 #' @examples 
 #' \dontrun{
 #' patients <- tibble::tribble(~patient_id, 123L, 456L, 789L)
-#' subset_add_patients(output = output, m = m, patients = patients, subset_id = 3, i18n = i18n, ns = ns)
+#' subset_add_patients(output = output, r = r, m = m, patients = patients, subset_id = 3, i18n = i18n, ns = ns)
 #' }
-add_patients_to_subset <- function(output, m = shiny::reactiveValues(), patients = tibble::tibble(),
+add_patients_to_subset <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), patients = tibble::tibble(),
   subset_id = integer(), i18n = character(), ns = character()){
   
-  if (r$perf_monitoring) monitor_perf(r = r, action = "start")
+  if (length(r$perf_monitoring) > 0) if (r$perf_monitoring) monitor_perf(r = r, action = "start")
   
   # Check subset_id
   
@@ -127,7 +128,6 @@ add_patients_to_subset <- function(output, m = shiny::reactiveValues(), patients
   actual_patients <- DBI::dbGetQuery(m$db, sql)
   
   patients <- patients %>% dplyr::anti_join(actual_patients, by = "patient_id")
-  print(patients)
   
   # If there are patients to add
   if (nrow(patients) > 0){
@@ -150,7 +150,7 @@ add_patients_to_subset <- function(output, m = shiny::reactiveValues(), patients
   
   show_message_bar(output, "add_patients_subset_success", "success", i18n = i18n, ns = ns)
   
-  if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_add_patients_to_subset"))
+  if (length(r$perf_monitoring) > 0) if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_add_patients_to_subset"))
 }
 
 #' Remove patients from a subset
@@ -158,6 +158,7 @@ add_patients_to_subset <- function(output, m = shiny::reactiveValues(), patients
 #' @description Remove patients from a subset
 #' @param output Output variable from Shiny, used to render messages on message bars
 #' @param r A shiny::reactiValues object, used to communicate between modules
+#' @param m A shiny::reactiValues object, used to communicate between modules
 #' @param patients data variable containing patients (data.frame / tibble)
 #' @param subset_id ID of subset (integer)
 #' @param i18n shiny.i18n object for translations
@@ -165,12 +166,12 @@ add_patients_to_subset <- function(output, m = shiny::reactiveValues(), patients
 #' @examples 
 #' \dontrun{
 #' patients <- tibble::tribble(~patient_id, 123L, 456L, 789L)
-#' remove_patients_from_subset(output = output, r = r, patients = patients, subset_id = 3, i18n = i18n, ns = ns)
+#' remove_patients_from_subset(output = output, r = r, m = m, patients = patients, subset_id = 3, i18n = i18n, ns = ns)
 #' }
-remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), patients = tibble::tibble(), 
+remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), patients = tibble::tibble(), 
   subset_id = integer(), i18n = character(), ns = character()){
   
-  if (r$perf_monitoring) monitor_perf(r = r, action = "start")
+  if (length(r$perf_monitoring) > 0) if (r$perf_monitoring) monitor_perf(r = r, action = "start")
   
   # Check subset_id
   
@@ -228,8 +229,8 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), pat
   
   tryCatch({ 
     sql <- glue::glue_sql(paste0("DELETE FROM subset_patients WHERE subset_id = {subset_id} AND ",
-      "patient_id IN ({patients %>% dplyr::pull(patient_id)*})"), .con = r$db)
-    query <- DBI::dbSendStatement(r$db, sql)
+      "patient_id IN ({patients %>% dplyr::pull(patient_id)*})"), .con = m$db)
+    query <- DBI::dbSendStatement(m$db, sql)
     DBI::dbClearResult(query)
   }, 
   error = function(e){
@@ -242,7 +243,9 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), pat
     stop(i18n$t("error_removing_patients_from_subset"))}
   )
   
-  if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_add_patients_to_subset"))
+  show_message_bar(output, "remove_patients_subset_success", "success", i18n = i18n, ns = ns)
+  
+  if (length(r$perf_monitoring) > 0) if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_add_patients_to_subset"))
 }
 
 #' Get thesaurus items levels
