@@ -39,7 +39,6 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "datamart_scripts_card", itemKey = "datamart_scripts_card", headerText = i18n$t("choose_datamart_scripts")),
           shiny.fluent::PivotItem(id = "scripts_descriptions_card", itemKey = "scripts_descriptions_card", headerText = i18n$t("scripts_descriptions_card")),
-          # shiny.fluent::PivotItem(id = "scripts_creation_card", itemKey = "scripts_creation_card", headerText = i18n$t("create_script")),
           shiny.fluent::PivotItem(id = "scripts_datatable_card", itemKey = "scripts_datatable_card", headerText = i18n$t("scripts_management")),
           shiny.fluent::PivotItem(id = "scripts_edit_code_card", itemKey = "scripts_edit_code_card", headerText = i18n$t("edit_script_code")),
           shiny.fluent::PivotItem(id = "scripts_options_card", itemKey = "scripts_options_card", headerText = i18n$t("script_options"))
@@ -237,10 +236,19 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r$help_scripts_open_panel <- TRUE)
     observeEvent(input$hide_panel, r$help_scripts_open_panel <- FALSE)
     
+    r$help_scripts_open_panel_light_dismiss <- TRUE
     observeEvent(input$show_modal, r$help_scripts_open_modal <- TRUE)
     observeEvent(input$hide_modal, {
       r$help_scripts_open_modal <- FALSE
       r$help_scripts_open_panel_light_dismiss <- TRUE
+    })
+    
+    observeEvent(shiny.router::get_page(), {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - ", id, " - observer shiny_router::change_page"))
+      
+      # Close help pages when page changes
+      r$help_scripts_open_panel <- FALSE
+      r$help_scripts_open_modal <- FALSE
     })
     
     sapply(1:10, function(i){
