@@ -45,6 +45,8 @@ mod_settings_users_ui <- function(id = character(), i18n = character(), options_
   
   div(class = "main",
     render_settings_default_elements(ns = ns),
+    shiny.fluent::reactOutput(ns("help_panel")),
+    shiny.fluent::reactOutput(ns("help_modal")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "users", text = i18n$t("users"))
     ), maxDisplayedItems = 3),
@@ -233,6 +235,34 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       #   }
       # })
     }
+    
+    # --- --- --- --- --- ---
+    # Help for this page ----
+    # --- --- --- --- --- ---
+    
+    observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r$help_settings_users_open_panel <- TRUE)
+    observeEvent(input$hide_panel, r$help_settings_users_open_panel <- FALSE)
+    
+    r$help_settings_users_open_panel_light_dismiss <- TRUE
+    observeEvent(input$show_modal, r$help_settings_users_open_modal <- TRUE)
+    observeEvent(input$hide_modal, {
+      r$help_settings_users_open_modal <- FALSE
+      r$help_settings_users_open_panel_light_dismiss <- TRUE
+    })
+    
+    observeEvent(shiny.router::get_page(), {
+      if (debug) print(paste0(Sys.time(), " - mod_settings_users - ", id, " - observer shiny_router::change_page"))
+      
+      # Close help pages when page changes
+      r$help_settings_users_open_panel <- FALSE
+      r$help_settings_users_open_modal <- FALSE
+    })
+    
+    sapply(1:10, function(i){
+      observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_settings_users_page_", i)]] <- Sys.time())
+    })
+    
+    help_settings_users(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
     
     # --- --- --- --- --- --
     # Add a new element ----

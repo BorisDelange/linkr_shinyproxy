@@ -15,6 +15,8 @@ mod_settings_general_ui <- function(id = character(), i18n = character()){
     # Hidden aceEditor, allows the other to be displayed...
     div(shinyAce::aceEditor("hidden"), style = "display: none;"),
     render_settings_default_elements(ns = ns),
+    shiny.fluent::reactOutput(ns("help_panel")),
+    shiny.fluent::reactOutput(ns("help_modal")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "general_settings", text = i18n$t("general_settings"))
     ), maxDisplayedItems = 3),
@@ -60,6 +62,34 @@ mod_settings_general_server <- function(id = character(), r = shiny::reactiveVal
     # toggles <- c("change_password_card")
     # 
     # show_hide_cards(r = r, input = input, session = session, id = id, toggles = toggles)
+    
+    # --- --- --- --- --- ---
+    # Help for this page ----
+    # --- --- --- --- --- ---
+    
+    observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r$help_settings_general_open_panel <- TRUE)
+    observeEvent(input$hide_panel, r$help_settings_general_open_panel <- FALSE)
+    
+    r$help_settings_general_open_panel_light_dismiss <- TRUE
+    observeEvent(input$show_modal, r$help_settings_general_open_modal <- TRUE)
+    observeEvent(input$hide_modal, {
+      r$help_settings_general_open_modal <- FALSE
+      r$help_settings_general_open_panel_light_dismiss <- TRUE
+    })
+    
+    observeEvent(shiny.router::get_page(), {
+      if (debug) print(paste0(Sys.time(), " - mod_settings_general - ", id, " - observer shiny_router::change_page"))
+      
+      # Close help pages when page changes
+      r$help_settings_general_open_panel <- FALSE
+      r$help_settings_general_open_modal <- FALSE
+    })
+    
+    sapply(1:10, function(i){
+      observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_settings_general_page_", i)]] <- Sys.time())
+    })
+    
+    help_settings_general(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
     
     # --- --- --- -- -- --
     # Change password ----

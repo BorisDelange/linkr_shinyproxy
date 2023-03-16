@@ -54,7 +54,7 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
       p(strong("2) Changer le nom d'une étude")),
       p("Pour changer le nom d'une étude, double-cliquez sur le nom, changez-le, faites-en sorte qu'il ne soit pas déjà utilisé, puis cliquez sur ", tags$em("Sauvegarder"), "."),
       p(strong("3) Supprimer une ou des études")),
-      p("Pour supprimer une ou plusieurs études, sélectionnez-les en cliquant dessus dans le datatable puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
+      p("Pour supprimer une ou plusieurs études, sélectionnez-les en cliquant dessus dans le tableau puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
       p("Vous pouvez également supprimer une étude en cliquant sur l'icône ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), "."),
       p(strong("4) Editer les options d'une étude")),
       p("Cliquez sur ", shiny::actionButton("study_options_button_help", "", icon = icon("cog")), " pour ", strong("éditer les options"), " de l'étude."),

@@ -13,6 +13,8 @@ mod_settings_log_ui <- function(id = character(), i18n = character()){
   
   div(class = "main",
       
+    shiny.fluent::reactOutput(ns("help_panel")),
+    shiny.fluent::reactOutput(ns("help_modal")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "log", text = i18n$t("log"))
     ), maxDisplayedItems = 3),
@@ -46,6 +48,38 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
   perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    # --- --- --- --- --- ---
+    # Help for this page ----
+    # --- --- --- --- --- ---
+    
+    observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r$help_settings_log_open_panel <- TRUE)
+    observeEvent(input$hide_panel, r$help_settings_log_open_panel <- FALSE)
+    
+    r$help_settings_log_open_panel_light_dismiss <- TRUE
+    observeEvent(input$show_modal, r$help_settings_log_open_modal <- TRUE)
+    observeEvent(input$hide_modal, {
+      r$help_settings_log_open_modal <- FALSE
+      r$help_settings_log_open_panel_light_dismiss <- TRUE
+    })
+    
+    observeEvent(shiny.router::get_page(), {
+      if (debug) print(paste0(Sys.time(), " - mod_settings_log - ", id, " - observer shiny_router::change_page"))
+      
+      # Close help pages when page changes
+      r$help_settings_log_open_panel <- FALSE
+      r$help_settings_log_open_modal <- FALSE
+    })
+    
+    sapply(1:10, function(i){
+      observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_settings_log_page_", i)]] <- Sys.time())
+    })
+    
+    help_settings_log(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
+    
+    # --- -- -
+    # Log ----
+    # --- -- -
     
     if (debug) print(paste0(Sys.time(), " - mod_settings_log - start"))
 

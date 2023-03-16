@@ -32,6 +32,8 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
   if (id == "settings_data_sources"){
       div(class = "main",
         render_settings_default_elements(ns = ns),
+        shiny.fluent::reactOutput(ns("help_panel")),
+        shiny.fluent::reactOutput(ns("help_modal")),
         shiny.fluent::Breadcrumb(items = list(
           list(key = "data_sources", text = i18n$t("data_sources"))
         ), maxDisplayedItems = 3),
@@ -62,6 +64,8 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
   if (id == "settings_datamarts"){
     div(class = "main",
       render_settings_default_elements(ns = ns),
+      shiny.fluent::reactOutput(ns("help_panel")),
+      shiny.fluent::reactOutput(ns("help_modal")),
       shiny.fluent::Breadcrumb(items = list(
         list(key = "datamarts", text = i18n$t("datamarts"))
       ), maxDisplayedItems = 3),
@@ -161,6 +165,8 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
   if (id == "settings_thesaurus"){
     div(class = "main",
       render_settings_default_elements(ns = ns),
+      shiny.fluent::reactOutput(ns("help_panel")),
+      shiny.fluent::reactOutput(ns("help_modal")),
       shiny.fluent::reactOutput(ns("thesaurus_reload_cache_confirm")),
       shiny.fluent::reactOutput(ns("thesaurus_items_delete_confirm")),
       shiny.fluent::Breadcrumb(items = list(
@@ -285,7 +291,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Table name
     table <- substr(id, nchar("settings_") + 1, nchar(id))
     
-    
     # --- --- --- --- --- -
     # Update dropdowns ----
     # --- --- --- --- --- -
@@ -317,6 +322,26 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
     if (paste0(table, "_datatable_card") %in% r$user_accesses) shinyjs::show("datatable_card")
     else shinyjs::show("datatable_card_forbidden")
+    
+    # --- --- --- --- --- ---
+    # Help for this page ----
+    # --- --- --- --- --- ---
+    
+    observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r[[paste0("help_settings_data_management_", table, "_open_panel")]] <- TRUE)
+    observeEvent(input$hide_panel, r[[paste0("help_settings_data_management_", table, "_open_panel")]] <- FALSE)
+    
+    r[[paste0("help_settings_data_management_", table, "_open_panel_light_dismiss")]] <- TRUE
+    observeEvent(input$show_modal, r[[paste0("help_settings_data_management_", table, "_open_modal")]] <- TRUE)
+    observeEvent(input$hide_modal, {
+      r[[paste0("help_settings_data_management_", table, "_open_modal")]] <- FALSE
+      r[[paste0("help_settings_data_management_", table, "_open_panel_light_dismiss")]] <- TRUE
+    })
+    
+    sapply(1:10, function(i){
+      observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_settings_data_management_", table, "_page_", i)]] <- Sys.time())
+    })
+    
+    help_settings_data_management(output = output, r = r, id = id, prefix = table, language = language, i18n = i18n, ns = ns)
     
     # --- --- --- --- --- --
     # Add a new element ----

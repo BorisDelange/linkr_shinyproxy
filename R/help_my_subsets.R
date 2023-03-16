@@ -54,7 +54,7 @@ help_my_subsets <- function(output, r = shiny::reactiveValues(), id = character(
       p(strong("2) Changer le nom d'un subset")),
       p("Pour changer le nom d'un subset, double-cliquez sur le nom, changez-le, faites-en sorte qu'il ne soit pas déjà utilisé, puis cliquez sur ", tags$em("Sauvegarder"), "."),
       p(strong("3) Supprimer un ou des subsets")),
-      p("Pour supprimer un ou plusieurs subsets, sélectionnez-les en cliquant dessus dans le datatable puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
+      p("Pour supprimer un ou plusieurs subsets, sélectionnez-les en cliquant dessus dans le tableau puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
       p("Vous pouvez également supprimer un subset en cliquant sur l'icône ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), "."),
       p(strong("4) Editer le code d'un subset")),
       p("Cliquez sur"),
@@ -102,10 +102,10 @@ help_my_subsets <- function(output, r = shiny::reactiveValues(), id = character(
     r$help_my_subsets_modal_title <- i18n$t("subset_patients")
     r$help_my_subsets_modal_text <- div(
       p(strong("1) Ajouter des patients au subset")),
-      p("Pour ajouter des patients au subset sélectionné dans le menu déroulant, ", strong("sélectionnez les patients dans le datatable du haut"),
+      p("Pour ajouter des patients au subset sélectionné dans le menu déroulant, ", strong("sélectionnez les patients dans le tableau du haut"),
         " puis cliquez sur ", tags$em("Ajouter"), "."),
       p(strong("2) Supprimer des patients du subset")),
-      p("De la même façon, ", strong("sélectionnez les patients dans le datatable du bas"), 
+      p("De la même façon, ", strong("sélectionnez les patients dans le tableau du bas"), 
         " puis cliquez sur ", tags$em("Supprimer la sélection"), " pour retirer les patients du subset."),
       br()
     )
