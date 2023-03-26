@@ -200,7 +200,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         value = character(), creator_id = integer(), datetime = character(), deleted = logical()))
   }
   
-  if (type == "plugins"){
+  if (type == "public"){
   
   db_create_table(db, "patients_options", primary_key_cols = "id", dbms = dbms, text_cols = "value",
     tibble::tibble(id = integer(), datamart_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
@@ -279,7 +279,7 @@ get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app
   # Create tables for local databases
   
   db_create_tables(db = db$local_main, type = "main", dbms = "sqlite")
-  db_create_tables(db = db$local_public, type = "plugins", dbms = "sqlite")
+  db_create_tables(db = db$local_public, type = "public", dbms = "sqlite")
   
   # Add remote db rows if they do not already exist
   
@@ -337,7 +337,7 @@ get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app
         m$db <- db$remote_public
         
         db_create_tables(db = db$remote_main, type = "main", dbms = db_info$sql_lib)
-        db_create_tables(db = db$remote_public, type = "plugins", dbms = db_info$sql_lib)
+        db_create_tables(db = db$remote_public, type = "public", dbms = db_info$sql_lib)
         
         result <- "success"
       }

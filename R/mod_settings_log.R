@@ -44,7 +44,7 @@ mod_settings_log_ui <- function(id = character(), i18n = character()){
 #'
 #' @noRd 
 
-mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess(), i18n = character(),
+mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess(), i18n = character(), language = "en",
   perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns

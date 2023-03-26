@@ -260,7 +260,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       })
     
       if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_log"))
-      mod_settings_log_server("settings_log", r, i18n, perf_monitoring, debug)
+      mod_settings_log_server("settings_log", r, i18n, language, perf_monitoring, debug)
       mod_page_sidenav_server("settings_log", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_log", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_log")
