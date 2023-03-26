@@ -27,8 +27,8 @@ mod_settings_dev_ui <- function(id = character(), i18n = character()){
     shiny.fluent::Pivot(
       onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
       shiny.fluent::PivotItem(id = "dev_edit_code_card", itemKey = "dev_edit_code_card", headerText = i18n$t("r_console")),
-      shiny.fluent::PivotItem(id = "dev_perf_monitoring_card", itemKey = "dev_perf_monitoring_card", headerText = i18n$t("perf_monitoring")),
-      shiny.fluent::PivotItem(id = "dev_to_do_list_card", itemKey = "dev_to_do_list_card", headerText = i18n$t("to_do_list"))
+      shiny.fluent::PivotItem(id = "dev_perf_monitoring_card", itemKey = "dev_perf_monitoring_card", headerText = i18n$t("perf_monitoring"))#,
+      # shiny.fluent::PivotItem(id = "dev_to_do_list_card", itemKey = "dev_to_do_list_card", headerText = i18n$t("to_do_list"))
     ),
     forbidden_cards,
     

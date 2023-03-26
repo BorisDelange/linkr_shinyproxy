@@ -1485,7 +1485,8 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   }
   
   names_empty <- 0
-  names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(name == "") %>% nrow()
+  if (table == "users") names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(username == "") %>% nrow()
+  else names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(name == "") %>% nrow()
   
   if (names_empty > 0){
     if (!r_message_bar) show_message_bar(output, "names_empty", "severeWarning", i18n, ns = ns)

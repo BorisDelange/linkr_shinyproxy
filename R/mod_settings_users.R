@@ -148,7 +148,7 @@ mod_settings_sub_users_ui <- function(id = character(), i18n = character(), opti
 #'
 #' @noRd 
 mod_settings_users_server <- function(id = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  i18n = character(), perf_monitoring = FALSE, debug = FALSE, options_toggles = tibble::tibble()){
+  i18n = character(), language = "en", perf_monitoring = FALSE, debug = FALSE, options_toggles = tibble::tibble()){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

@@ -54,7 +54,8 @@ help_settings_log <- function(output, r = shiny::reactiveValues(), id = characte
         p("Le log est utile notamment ", strong("en cas de bug de l'application"), ", afin d'identifier plus précisément le bug."),
         p(strong("2) Accéder au log des utilisateurs")),
         p("Si vous avez les droits nécessaires pour, accéder au log des autres utilisateurs en cliquant sur ", tags$em("Choisir les utilisateurs"), 
-          ", puis sur ", tags$em("Recharger le log"), ".")
+          ", puis sur ", tags$em("Recharger le log"), "."),
+        br()
       )
     }
     
@@ -65,7 +66,8 @@ help_settings_log <- function(output, r = shiny::reactiveValues(), id = characte
         p("When you click on a line, the ", strong("log detail appears"), " at the bottom of the page."),
         p("The log is useful especially in case of ", strong("application bug"), " to more precisely identify the bug."),
         p(strong("2) Accessing users logs")),
-        p("If you have the necessary rights, access other users' logs by clicking on ", tags$em("Select users"), ", then on ", tags$em("Reload log"), ".")
+        p("If you have the necessary rights, access other users' logs by clicking on ", tags$em("Select users"), ", then on ", tags$em("Reload log"), "."),
+        br()
       )
     }
   })

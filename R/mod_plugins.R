@@ -348,7 +348,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
 #'
 #' @noRd 
 mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), o = shiny::reactiveValues(),
-  language = character(), i18n = character(), app_folder = character(), perf_monitoring = FALSE, debug = FALSE){
+  language = "en", i18n = character(), app_folder = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
