@@ -254,7 +254,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
 #'
 #' @noRd 
 mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  i18n = character(), perf_monitoring = FALSE, debug = FALSE){
+  i18n = character(), language = "en", perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

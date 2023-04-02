@@ -34,8 +34,8 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
       div(id = ns("menu"),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "thesaurus_items_card", itemKey = "thesaurus_items_card", headerText = i18n$t("items")),
-          shiny.fluent::PivotItem(id = "thesaurus_mapping_card", itemKey = "thesaurus_mapping_card", headerText = i18n$t("items_mapping"))
+          shiny.fluent::PivotItem(id = "thesaurus_items_card", itemKey = "thesaurus_items_card", headerText = i18n$t("concepts")),
+          shiny.fluent::PivotItem(id = "thesaurus_mapping_card", itemKey = "thesaurus_mapping_card", headerText = i18n$t("concepts_mapping"))
         )
       )
     ),
@@ -53,7 +53,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
     shinyjs::hidden(
       div(
         id = ns("thesaurus_items_card"),
-        make_card(i18n$t("items"),
+        make_card(i18n$t("concepts"),
           div(
             # shiny.fluent::Pivot(
             #   onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-thesaurus_items_pivot', item.props.id)")),
@@ -166,7 +166,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
     shinyjs::hidden(
       div(
         id = ns("thesaurus_mapping_card"),
-        make_card(i18n$t("items_mapping"),
+        make_card(i18n$t("concepts_mapping"),
           div(
             shiny.fluent::reactOutput(ns("mappings_delete_confirm")),
             div(
@@ -232,7 +232,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
 #'
 #' @noRd 
 mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), 
-  i18n = character(), perf_monitoring = FALSE, debug = FALSE){
+  i18n = character(), language = "en", perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     

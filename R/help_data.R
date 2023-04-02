@@ -59,25 +59,41 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
         p(strong("1) Choisir un set de données")),
         p("Un set de données contient les données d'un ", strong("groupe de patients"), "."),
-        p("Un même set de données peut contenir ", strong("plusieurs études différentes"), "."),
-        p("Choisissez le set de données dans le menu déroulant sur la gauche de l'écran."), br(),
+        p("Un même set de données peut contenir ", strong("plusieurs études"), "."),
+        p("Choisissez le set de données dans le menu déroulant sur la gauche de l'écran."),
         p(strong("2) Chosir une étude")),
         p("Choisissez ensuite une étude, dans le menu déroulant."),
         p("Vous pouvez créer des études depuis l'onglet ", tags$em("Mes études"), " en haut de l'écran."),
-        p("Une même étude peut contenir ", strong("plusieurs subsets différents"), "."), br(),
+        p("Une même étude peut contenir ", strong("plusieurs subsets"), "."),
         p(strong("3) Chosir un subset")),
         p("Un subset est un sous-ensemble du set de données, sur des patients sélectionnés."),
-        p("Il est possible de ", strong("créer d'autres subsets"), " depuis l'onglet ", tags$em("Mes subsets"), "."), br(),
+        p("Il est possible de ", strong("créer d'autres subsets"), " depuis l'onglet ", tags$em("Mes subsets"), "."),
         p(strong("4) Choisir un patient & un séjour")),
         p("En chargeant un subset, la liste des patients appartenant à ce subset est chargée dans le menu déroulant ", tags$em("Patient"),
           ", seulement si l'on se trouve dans les ", tags$em("Données individuelles"), "."),
-        p("Les ", strong("widgets se mettent à jour"), " à chaque changement de patient & de séjour."), br()
+        p("Les ", strong("widgets se mettent à jour"), " à chaque changement de patient & de séjour."), 
+        br()
       )
     }
     
     if (language == "en"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
-        
+        p(strong("1) Choose a datamart")),
+        p("A datamart contains the data of a ", strong("group of patients"), "."),
+        p("The same datamart can contain ", strong("multiple studies"), "."),
+        p("Choose the datamart from the dropdown menu on the left of the screen."),
+        p(strong("2) Choose a study")),
+        p("Next, choose a study from the dropdown menu."),
+        p("You can create studies from the ", tags$em("My studies"), " tab at the top of the screen."),
+        p("The same study can contain ", strong("multiple subsets"), "."),
+        p(strong("3) Choose a subset")),
+        p("A subset is a subset of the datamart, containing selected patients."),
+        p("It is possible to ", strong("create other subsets"), " from the ", tags$em("My subsets"), " tab."),
+        p(strong("4) Choose a patient & a stay")),
+        p("When loading a subset, the list of patients belonging to that subset is loaded into the ", tags$em("Patient"),
+          " dropdown menu, only if you are in the ", tags$em("Individual data"), " section."),
+        p("The ", strong("widgets update"), " every time the patient & stay are changed."), 
+        br()
       )
     }
   })
@@ -168,7 +184,9 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     }
     
     if (language == "en"){
-      
+      r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
+        
+      )
     }
   })
   
@@ -223,7 +241,9 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     }
     
     if (language == "en"){
-      
+      r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
+        
+      )
     }
   })
   
@@ -252,7 +272,19 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     }
     
     if (language == "en"){
-      
+      r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
+        p("An study is ", strong("structured around tabs"), ", which are ", strong("custom pages"),
+          " where I choose ", strong("which data to display and in what form"), "."),
+        p(strong("1) Individual data tabs")),
+        p("Individual data tabs ", strong("reproduce a clinical folder"), "."),
+        p("For example, if I am conducting a study on septic shock, I can create a ", tags$em("Hemodynamics"),
+          " tab where I display HR, SBP, DBP, MAP & the received doses of Norepinephrine."),
+        p(strong("2) Aggregate data tabs")),
+        p("Aggregate data tabs ", strong("allow to conduct a study"), " on my data."),
+        p("For example, I can create an ", tags$em("Exclusion criteria"), " tab where I will create my exclusion criteria ",
+          "and apply them to my patients."),
+        p("I can also create a ", tags$em("Flowchart"), " tab to display the flowchart of my study."), br()
+      )
     }
   })
   
@@ -276,12 +308,24 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
           tags$li(strong("Choisissez le niveau "), "de l'onglet. Faut-il qu'il soit au même niveau que l'onglet actuel,",
             " ou est-ce un sous-onglet de l'onglet actuellement sélectionné ?")
         ),
-        p("Lorsque le menu ", tags$em("Ajouter un onglet"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux modules."), br()
+        p("Lorsque le menu ", tags$em("Ajouter un onglet"), " est ouvert, cliquez sur la croix à droite du menu pour retourner aux widgets."), br()
       ) 
     }
     
     if (language == "en"){
-      
+      r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
+        p("To add a tab, you must ", strong("have loaded a study"), " in the dropdown menu on the left side of the screen."),
+        p("Then click on the icon:"),
+        div(shiny.fluent::Icon(iconName = "Add"), span(i18n$t("add_a_tab"), style = "padding:0px 0px 10px 10px;")),
+        p("It is located under the title (", tags$em("Individual Data"), " or ", tags$em("Aggregate Data"), ")."),
+        p("Then:"),
+        tags$ul(
+          tags$li(strong("Choose a name"), " for this tab."),
+          tags$li(strong("Choose the level"), " of the tab. Should it be at the same level as the currently selected tab,",
+            " or is it a sub-tab of the currently selected tab ?")
+        ),
+        p("When the ", tags$em("Add a Tab"), " menu is open, click on the cross on the right side of the menu to return to the widgets."), br()
+      )
     }
   })
   
@@ -314,7 +358,23 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     }
     
     if (language == "en"){
-      
+      r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
+        p("A tab is ", strong("composed of widgets"), ", which are plugins applied to data."),
+        p(strong("1) Plugins")),
+        p("Plugins are R scripts - Shiny allowing ", strong("to add features to the application"), "."),
+        p("Some examples:"),
+        tags$ul(
+          tags$li(strong("Datatable Plugin"), " : allows displaying data in the form of a table."),
+          tags$li(strong("Timeline Plugin"), " : allows displaying data in the form of a timeline, useful for prescriptions for example."),
+          tags$li(strong("Flowchart Plugin"), " : allows creating a Flowchart from study data.")
+        ),
+        p("The application is intended to become richer over time by ", strong("creating new plugins"), "."),
+        p("The plugins for individual or aggregated data are not the same."),
+        p(strong("2) Widgets")),
+        p("A widget is therefore a plugin applied to data."),
+        p("I choose a plugin, which data will be used by this plugin, and then the ",
+          strong("plugin displays this data in the desired form"), " (timeline for the timeline plugin, etc.)."), br()
+      )
     }
   })
   
@@ -332,7 +392,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
         strong("avoir sélectionné un onglet"), "."),
         p("Il faut ensuite cliquer sur :"),
           div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_help")),
-            i18n$t("new_module_element"), iconProps = list(iconName = "Add"))),
+            i18n$t("add_a_widget"), iconProps = list(iconName = "Add"))),
         p("Ensuite, :"),
         tags$ul(
           tags$li(strong("Choisissez un nom"), " pour ce widget."),
@@ -353,18 +413,51 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
           tags$li(strong("Patients"), " : affiche le nombre total de patients ayant au moins une fois l'item."),
           tags$li(strong("Lignes"), " : nombre d'occurences de l'item dans le set de données, tous patients confondus.")
         ),
-        p("Ajouter ensuite les items en cliquant sur l'icône "),
-        div(actionButton(ns(paste0(prefix, "_add_thesaurus_item_help")), "", icon = icon("plus"))),
-        p(" dans la dernière colonne du tableau."),
+        p("Ajouter ensuite les items en cliquant sur l'icône ", actionButton(ns(paste0(prefix, "_add_thesaurus_item_help")), "", icon = icon("plus")),
+        " dans la dernière colonne du tableau."),
         p("Lorsque j'ajoute un item et que le menu ", tags$em("Alignement de concepts"), " contient une valeur, les items / concepts liés à l'item ajouté seront également ajoutés."),
         p("Si le bouton ", tags$em("Fusionner les concepts alignés"), " est activé, les différents items liés seront fusionnés dans le widget."),
         p("Par exemple, si j'ajoute le concept ", tags$em("Fréquence cardiaque"), " et que les items ", tags$em("FC"), " et ", tags$em("Fréq card"), " sont également ajoutés, ",
         "si je sélectionne la fusion, les différents items apparaîtront sous le nom ", tags$em("Fréquence cardiaque"), "."),
         p("Lorsque le menu ", tags$em("Nouveau widget"), " est ouvert, cliquez sur la croix à droite du menu pour retourner à l'onglet actuel."), br()
-      ) 
+      )
     }
     
     if (language == "en"){
+      r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
+        p("To add a widget, you need to ", strong("load a study "), "from the dropdown menu on the left side of the screen, and then ",
+          strong("select a tab"), "."),
+        p("Then, click on:"),
+        div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_help")),
+          i18n$t("add_a_widget"), iconProps = list(iconName = "Add"))),
+        p("Next, you need to:"),
+        tags$ul(
+          tags$li("Choose a name for this widget."),
+          tags$li("Choose the plugin you want to use for this widget.")
+        ),
+        p("If it is an aggregate data widget, just click on Add and it's done."),
+        p("If it is an individual data widget, you need to:"),
+        tags$ul(
+          tags$li("Select a thesaurus : a thesaurus is a dictionary of concepts used by a datamart."),
+          tags$li("Select the items / concepts you want to use for this widget, with the selected plugin."),
+          tags$li("You can choose items related to the selected item via the ", tags$em("Concept Alignment"), " dropdown menu.")
+        ),
+        p("When the table of ", strong("thesaurus items"), " is loaded, you can filter the data to find the items you are interested in:"),
+        tags$ul(
+          tags$li(strong("Name / abbreviation"), " : search for items in the text box. By double-clicking on a name, you can change it: it will be displayed with this new name."),
+          tags$li(strong("Unit"), " : mainly useful for changing the display of the unit."),
+          tags$li(strong("Item color"), " : useful for differentiating items on a graph, for example."),
+          tags$li(strong("Patients"), " : displays the total number of patients who have had the item at least once."),
+          tags$li(strong("Rows"), " : number of occurrences of the item in the dataset, for all patients.")
+        ),
+        p("Then, add the items by clicking on the ", tags$em("Add item"), " icon ", actionButton(ns(paste0(prefix, "_add_thesaurus_item_help")), "", icon = icon("plus")),
+        " in the last column of the table."),
+        p("When I add an item and the ", tags$em("Concept Alignment"), " menu contains a value, the items / concepts linked to the added item will also be added."),
+        p("If the ", tags$em("Merge aligned concepts"), " button is enabled, the different linked items will be merged in the widget."),
+        p("For example, if I add the concept ", tags$em("Heart rate"), " and the items ", tags$em("HR"), " and ", tags$em("H. rate"), " are also added, ",
+          "if I select the merge, the different items will appear under the name ", tags$em("Heart rate"), "."),
+        p("When the ", tags$em("New widget"), " menu is open, click on the cross on the right side of the menu to return to the current tab."), br()
+      )
       
     }
   })
