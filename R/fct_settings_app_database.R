@@ -108,11 +108,33 @@ db_create_tables <- function(db, type = character(), dbms = character()){
       tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = character(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
+    db_create_table(db, "vocabulary", primary_key_cols = "id", dbms = dbms,
+      tibble::tibble(id = integer(), vocabulary_id = character(), vocabulary_name = character(), vocabulary_reference = character(),
+        vocabulary_version = character(), vocabulary_concept_id = integer()))
+    
     db_create_table(db, "thesaurus_items", primary_key_cols = "id", dbms = dbms, text_cols = c("name", "display_name"),
       tibble::tibble(id = integer(), thesaurus_id = integer(), item_id = integer(),
         name = character(), display_name = character(), unit = character(),
         datetime = character(), deleted = logical()))
     
+    db_create_table(db, "concept", primary_key_cols = "id", dbms = dbms, 
+      tibble::tibble(id = integer(), concept_id = integer(), concept_name = character(), domain_id = character(), vocabulary_id = character(),
+        concept_class_id = character(), standard_concept = character(), concept_code = character(), valid_start_date = character(),
+        valid_end_date = character(), invalid_reason = character()))
+    
+    db_create_table(db, "concept_synonym", primary_key_cols = "id", dbms = dbms,
+      tibble::tibble(id = integer(), concept_id = integer(), concept_synonym_name = character(), language = character()))
+    
+    db_create_table(db, "concept_ancestor", primary_key_cols = "id", dbms = dbms,
+      tibble::tibble(id = integer(), ancestor_concept_id = integer(), descendant_concept_id = integer(),
+        min_levels_of_separation = integer(), max_levels_of_separation = integer()))
+
+    db_create_table(db, "drug_strength", primary_key_cols = "id", dbms = dbms,
+      tibble::tibble(id = integer(), drug_concept_id = integer(), ingredient_concept_id = integer(), amount_value = numeric(),
+        amount_unit_concept_id = integer(), numerator_value = numeric(), numerator_unit_concept_id = integer(),
+        denominator_value = numeric(), denominator_unit_concept_id = integer(), box_size = integer(),
+        valid_start_date = character(), valid_end_date = character(), invalid_reason = character()))
+        
     db_create_table(db, "thesaurus_items_users", primary_key_cols = "id", dbms = dbms, text_cols = c("name", "display_name"),
       tibble::tibble(id = integer(), user_id = integer(), thesaurus_id = integer(), item_id = integer(),
         name = character(), display_name = character(), unit = character(),
@@ -125,6 +147,10 @@ db_create_tables <- function(db, type = character(), dbms = character()){
     db_create_table(db, "thesaurus_items_mapping_evals", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), mapping_id = integer(), creator_id = integer(), evaluation_id = integer(),
         datetime = character(), deleted = logical()))
+    
+    db_create_table(db, "concept_relationship", primary_key_cols = "id", dbms = dbms,
+      tibble::tibble(id = integer(), concept_id_1 = integer(), concept_id_2 = integer(), relationship_id = character(),
+        valid_start_date = character(), valid_end_date = character(), invalid_reason = character()))
     
     db_create_table(db, "plugins", primary_key_cols = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 

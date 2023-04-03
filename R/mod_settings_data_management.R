@@ -508,12 +508,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Save updates in datatable ----
     # --- --- --- --- --- --- --- --
   
-      # Hide save button if user has no access
-      observeEvent(r$user_accesses, {
-        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$user_accesses"))
-        if (paste0(table, "_edit_data") %not_in% r$user_accesses) shinyjs::hide("management_save")
-      })
-  
       # Each time a row is updated, modify temp variable
       # Do that for main datatable (management_datatable) & sub_datatable
       observeEvent(input$management_datatable_cell_edit, {
