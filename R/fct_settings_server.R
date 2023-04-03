@@ -113,7 +113,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   
   # Get last_row nb
   last_row <- list()
-  for (var in c("code", "options", "subsets", "thesaurus")){
+  for (var in c("code", "options", "subsets", "vocabulary")){
     if (var == "subsets") last_row[[var]] <- get_last_row(m$db, "subsets") 
     else last_row[[var]] <- get_last_row(r$db, var)
   }
@@ -123,7 +123,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   new_data <- list()
   
   # Creation of new_data$data variable for data_management pages
-  if (table %in% c("data_sources", "datamarts", "studies", "subsets", "thesaurus")){
+  if (table %in% c("data_sources", "datamarts", "studies", "subsets")){
     
     # These columns are found in all of these tables
     new_data$data <- tibble::tribble(~id, ~name, ~description, last_row$data + 1, as.character(data$name), as.character(data$description))
@@ -139,51 +139,60 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     # Add them at last to respect the order of cols
     new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~creator_id, ~datetime, ~deleted, r$user_id, as.character(Sys.time()), FALSE))
   }
+
+  # Creation of new_data$data variable for vocabulary page
+  else if (table == "vocabulary"){
+    new_data$data <- tibble::tribble(~id, ~vocabulary_id, ~vocabulary_name, ~vocabulary_reference, ~vocabulary_version,
+      ~data_source_id, ~creator_id, ~datetime, ~deleted,
+      last_row$data + 1, as.character(data$vocabulary_id), as.character(data$vocabulary_name), "", "",
+      data$data_source, r$user_id, as.character(Sys.time()), FALSE)
+  }
   
   # Creation of new_data$data variable for plugins page
-  if (table == "plugins"){
+  else if (table == "plugins"){
     new_data$data <- tibble::tribble(~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
       last_row$data + 1, as.character(data$name), "", as.integer(data$module_type), as.character(Sys.time()), FALSE)
   }
   
   # Creation of new_data$data variable for scripts page
-  if (table == "scripts"){
+  else if (table == "scripts"){
     new_data$data <- tibble::tribble(~id, ~name, ~data_source_id, ~creator_id, ~datetime, ~deleted,
       last_row$data + 1, as.character(data$name), as.integer(data$data_source), r$user_id, as.character(Sys.time()), FALSE)
   }
   
   # Creation of new_data$data variable for users sub-pages
   # Password is hashed
-  if (table == "users"){
+  else if (table == "users"){
     new_data$data <- tibble::tribble(~id, ~username, ~firstname, ~lastname, ~password, ~user_access_id, ~user_status_id, ~datetime, ~deleted,
       last_row$data + 1, as.character(data$username), as.character(data$firstname), as.character(data$lastname),
       rlang::hash(data$password), as.integer(data$user_access), as.integer(data$user_status), as.character(Sys.time()), FALSE)
   }
   
-  if (table %in% c("users_accesses", "users_statuses")){
+  else if (table %in% c("users_accesses", "users_statuses")){
     new_data$data <- tibble::tribble(~id, ~name, ~description, ~datetime, ~deleted,
       last_row$data + 1, as.character(data$name), as.character(data$description), as.character(Sys.time()), FALSE)
   }
   
-  if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+  else if (table %in% c("patient_lvl_modules", "aggregated_modules")){
     new_data$data <- tibble::tribble(~id, ~name,  ~description, ~module_family_id, ~parent_module_id,  ~display_order, ~creator_id, ~datetime, ~deleted,
       last_row$data + 1, as.character(data$name), as.character(data$description), as.integer(data$module_family), as.integer(data$parent_module),
       as.integer(data$display_order), r$user_id, as.character(Sys.time()), FALSE)
   }
   
-  if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
+  else if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
     new_data$data <- tibble::tribble(~id, ~name,  ~description, ~creator_id, ~datetime, ~deleted,
       last_row$data + 1, as.character(data$name), as.character(data$description), r$user_id, as.character(Sys.time()), FALSE)
   }
   
   # Append data to the table and to r / m variables
+  print(new_data$data)
   DBI::dbAppendTable(db, table, new_data$data)
   if (table %in% m_tables) m[[table]] <- m[[table]] %>% dplyr::bind_rows(new_data$data)
   else r[[table]] <- r[[table]] %>% dplyr::bind_rows(new_data$data)
   add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data$data))
   
   # Empty new variables
-  new_data_vars <- c("options", "subsets", "code", "patient_lvl_modules_families", "aggregated_modules_families", "thesaurus")
+  new_data_vars <- c("options", "subsets", "code", "patient_lvl_modules_families", "aggregated_modules_families", "vocabulary")
   for(var in new_data_vars) new_data[[var]] <- tibble::tibble()
   
   # --- --- --- --- --- --- --- --- --- --
@@ -191,27 +200,15 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # --- --- --- --- --- --- --- --- --- --
   
   # Add a row in code if table is datamarts, thesaurus
-  if (table %in% c("datamarts", "thesaurus")){
+  if (table %in% c("datamarts", "vocabulary")){
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row$code + 1, get_singular(word = table), last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
-  # Add a new thesaurus if a new data source is created
-  # if (table == "data_sources"){
-  #   
-  #   new_data$thesaurus <- tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
-  #     last_row$thesaurus + 1, paste0(data$name, " - scripts items"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
-  # 
-  #   # Add also the code for the new thesaurus
-  #   
-  #   new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-  #     last_row$code + 1, "thesaurus", last_row$thesaurus + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
-  # }
-  
   # For options of plugins, add one row for long description (Markdown) & 2 rows for users allowed to use this plugin
   # The value is the default syntax of a plugin description
   # For code of plugins, add two rows, one for UI code & one for server code
-  if (grepl("plugins", id)){
+  else if (grepl("plugins", id)){
     
     # Add options rows
     # value <- paste0("- **Version** : 0.0.1\n- **Libraries** : *put libraries needed here*\n- **Data allowed** : *put data allowed here*\n",
@@ -240,7 +237,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
 
   # For options of scripts, add one row for long description (Markdown)
-  if (id == "scripts"){
+  else if (table == "scripts"){
     
     # Add options rows
     
@@ -258,7 +255,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
   
   # For datamarts options, need to add 3 rows in options
-  if (table == "datamarts"){
+  else if (table == "datamarts"){
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, "datamart", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
@@ -269,7 +266,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
   
   # For studies, need to add one row in options and add rows of code for subsets, with default value
-  if (table == "studies"){
+  else if (table == "studies"){
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, "study", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
@@ -312,13 +309,13 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
   
   # For subsets, need to add one row in code
-  if (table == "subsets"){
+  else if (table == "subsets"){
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row$code + 1, "subset", last_row$subsets + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # For options of patient_lvl & aggregated modules families, need to add two rows, for users accesses
-  if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
+  else if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, get_singular(word = table), last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row$options + 2, get_singular(word = table), last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)

@@ -302,7 +302,7 @@ import_datamart <- function(output, ns = character(), r = shiny::reactiveValues(
 #'   
 #' import_thesaurus(output = output, r = r, thesaurus_id = 5, thesaurus = thesaurus, language = language)
 #' }
-import_thesaurus <- function(output, ns = character(), r = shiny::reactiveValues(), thesaurus_id = integer(), category = "character", thesaurus = tibble::tibble(), i18n = character()){
+import_thesaurus <- function(output, ns = character(), r = shiny::reactiveValues(), thesaurus_id = integer(), category = character(), thesaurus = tibble::tibble(), i18n = character()){
   # Check thesaurus_id
   tryCatch(thesaurus_id <- as.integer(thesaurus_id), 
     error = function(e){
@@ -470,4 +470,124 @@ import_thesaurus <- function(output, ns = character(), r = shiny::reactiveValues
   }
   
   show_message_bar(output, "import_thesaurus_success", "success", i18n, ns = ns)
+}
+
+import_vocabulary_concepts <- function(output, ns = character(), r = shiny::reactiveValues(), vocabulary_id = integer(), category = character(), concepts = tibble::tibble(), i18n = character()){
+ 
+  # Check vocabulary_id
+  tryCatch(vocabulary_id <- as.integer(vocabulary_id), 
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_vocabulary_id_value", 
+        error_name = paste0("import_vocabulary_concepts - invalid_vocabulary_id_value - id = ", vocabulary_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("invalid_vocabulary_id_value"))}
+  )
+  
+  if (is.na(vocabulary_id) | length(vocabulary_id) == 0){
+    show_message_bar(output, "invalid_vocabulary_id_value", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_vocabulary_id_value"))
+  }
+  
+  if (category %not_in% c("concepts", "concepts_mapping")){
+    show_message_bar(output, "invalid_category", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_category"))
+  }
+  
+  if (category == "concepts") var_cols <- tibble::tribble(
+    ~name, ~type,
+    "concept_id", "integer",
+    "concept_name", "character",
+    "domain_id", "character",
+    "vocabulary_id", "character",
+    "concept_class_id", "character",
+    "standard_concept", "character",
+    "concept_code", "character",
+    "valid_start_date", "character",
+    "valid_end_date", "character",
+    "invalid_reason", "character")
+  
+  else if (category == "concepts_mapping") var_cols <- tibble::tribble(
+    ~name, ~type,
+    "concept_id_1", "integer",
+    "concept_id_2", "integer",
+    "relation_id", "character",
+    "valid_start_date", "character",
+    "valid_end_date", "character",
+    "invalid_reason", "character")
+  
+  # Check col names
+  if (!identical(names(concepts), var_cols$name)){
+    show_message_bar(output, "invalid_col_names", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
+  }
+  
+  # Check col types
+  sapply(1:nrow(var_cols), function(i){
+    var_name <- var_cols[[i, "name"]]
+    if (var_cols[[i, "type"]] == "integer" & !is.integer(concepts[[var_name]])){
+      show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
+    }
+    if (var_cols[[i, "type"]] == "character" & !is.character(concepts[[var_name]])){
+      show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_character")))
+    }
+  })
+  
+  # Transform as tibble
+  tryCatch(concepts <- tibble::as_tibble(concepts), 
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
+        error_name = paste0("import_vocabulary_concepts - error_transforming_tibble - id = ", vocabulary_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("error_transforming_tibble"))}
+  )
+  
+  if (category == "concepts"){
+    
+    # Get actual concepts saved in the database
+    # concept_id is unique between different vocabularies, so we do not filter with current vocabulary_id
+    tryCatch({
+      sql <- glue::glue_sql("SELECT concept_id FROM concept WHERE deleted IS FALSE", .con = r$db)
+      actual_concepts <- DBI::dbGetQuery(r$db, sql)
+    },
+      error = function(e){
+        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_get_actuel_concepts", 
+          error_name = paste0("import_vocabulary_concepts - error_get_actuel_concepts - id = ", vocabulary_id), category = "Error", error_report = toString(e), i18n = i18n)
+        stop(i18n$t("error_get_actuel_concepts"))}
+    )
+    
+    # Get items to insert with an anti-join
+    concepts_to_insert <- concepts %>% dplyr::anti_join(actual_concepts, by = "concept_id")
+    
+    # Last ID in concept table
+    last_id <- DBI::dbGetQuery(r$db, "SELECT COALESCE(MAX(id), 0) AS id FROM concept") %>% dplyr::pull()
+    
+    if (nrow(concepts_to_insert) == 0){
+      show_message_bar(output, "vocabulary_no_concepts_to_insert", "severeWarning", i18n = i18n, ns = ns)
+      stop(i18n$t("vocabulary_no_concepts_to_insert")) 
+    }
+    
+    concepts_to_insert <- 
+      concepts_to_insert %>% 
+      dplyr::transmute(
+        id = 1:dplyr::n() + last_id,
+        concept_id,
+        concept_name,
+        domain_id,
+        vocabulary_id = !!vocabulary_id,
+        concept_class_id,
+        standard_concept,
+        concept_code,
+        valid_start_date,
+        valid_end_date,
+        invalid_reason, 
+        datetime = as.character(Sys.time()),
+        deleted = FALSE)
+    
+    tryCatch(DBI::dbAppendTable(r$db, "concept", concepts_to_insert),
+      error = function(e){
+        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "vocabulary_error_append_table", 
+          error_name = paste0("import_vocabulary_concepts - vocabulary_error_append_table - id = ", vocabulary_id), category = "Error", error_report = toString(e), i18n = i18n)
+        stop(i18n$t("vocabulary_error_append_table"))}
+    )
+  }
 }

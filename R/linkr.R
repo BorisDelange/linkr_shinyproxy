@@ -77,7 +77,7 @@ linkr <- function(
   
   # Create app sub-dirs
   if (debug) print(paste0(Sys.time(), " - linkr - app sub-dirs"))
-  sub_dirs <- c("app_database", "datamarts", "messages", "plugins", "studies", "temp_files", "thesaurus", "translations")
+  sub_dirs <- c("app_database", "datamarts", "messages", "plugins", "studies", "temp_files", "vocabularies", "translations")
   for (sub_dir in sub_dirs) if (!dir.exists(paste0(app_folder, "/", sub_dir))) dir.create(paste0(app_folder, "/", sub_dir))
   
   # Initial wd
@@ -103,8 +103,7 @@ linkr <- function(
     "home", 
       "home/get_started", 
       "home/tutorials", 
-      "home/resources", 
-      # "home/dev",
+      "home/resources",
     "my_studies", 
     "my_subsets", 
     "thesaurus", 
@@ -121,7 +120,7 @@ linkr <- function(
     "settings/dev", 
     "settings/data_sources",
     "settings/datamarts", 
-    "settings/thesaurus", 
+    "settings/thesaurus",
     "settings/log")
   
   # Toggles for users accesses

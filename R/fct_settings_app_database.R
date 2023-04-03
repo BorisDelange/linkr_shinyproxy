@@ -109,8 +109,9 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         datetime = character(), deleted = logical()))
     
     db_create_table(db, "vocabulary", primary_key_cols = "id", dbms = dbms,
-      tibble::tibble(id = integer(), vocabulary_id = character(), vocabulary_name = character(), vocabulary_reference = character(),
-        vocabulary_version = character(), vocabulary_concept_id = integer()))
+      tibble::tibble(id = integer(), vocabulary_id = character(), vocabulary_name = character(), 
+        vocabulary_reference = character(), vocabulary_version = character(), data_source_id = character(), creator_id = integer(),
+        datetime = character(), deleted = logical()))
     
     db_create_table(db, "thesaurus_items", primary_key_cols = "id", dbms = dbms, text_cols = c("name", "display_name"),
       tibble::tibble(id = integer(), thesaurus_id = integer(), item_id = integer(),
@@ -120,7 +121,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
     db_create_table(db, "concept", primary_key_cols = "id", dbms = dbms, 
       tibble::tibble(id = integer(), concept_id = integer(), concept_name = character(), domain_id = character(), vocabulary_id = character(),
         concept_class_id = character(), standard_concept = character(), concept_code = character(), valid_start_date = character(),
-        valid_end_date = character(), invalid_reason = character()))
+        valid_end_date = character(), invalid_reason = character(), datetime = character(), deleted = logical()))
     
     db_create_table(db, "concept_synonym", primary_key_cols = "id", dbms = dbms,
       tibble::tibble(id = integer(), concept_id = integer(), concept_synonym_name = character(), language = character()))
@@ -440,7 +441,7 @@ load_database <- function(r = shiny::reactiveValues(), i18n = character()){
   # Database tables to load
   tables <- c(
     "users", "users_accesses", "users_statuses",
-    "data_sources", "datamarts", "thesaurus",
+    "data_sources", "datamarts", "thesaurus", "vocabulary",
     "plugins",
     "code", 
     "options"

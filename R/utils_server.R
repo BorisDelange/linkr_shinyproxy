@@ -10,7 +10,7 @@
 #' }
 update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), table = character(), i18n = character()){
   tables <- c("users", "users_accesses", "users_statuses",
-    "data_sources", "datamarts", "studies", "subsets", "subset_patients", "subsets_patients", "thesaurus", "thesaurus_items",
+    "data_sources", "datamarts", "studies", "subsets", "subset_patients", "subsets_patients", "vocabulary", "thesaurus", "thesaurus_items",
     "plugins", "scripts",
     "patient_lvl_modules_families", "patient_lvl_modules", "patient_lvl_modules_elements", "patient_lvl_modules_elements_items",
     "aggregated_modules_families", "aggregated_modules", "aggregated_modules_elements", "aggregated_modules_elements_items", 
