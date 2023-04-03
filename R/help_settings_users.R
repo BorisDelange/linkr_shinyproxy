@@ -116,7 +116,7 @@ help_settings_users <- function(output, r = shiny::reactiveValues(), id = charac
         p(strong("3) Configurer les droits des utilisateurs")),
         p("Allez dans l'onglet ", tags$em("Configurer les acès"), " puis choisissez un accès utilisateur dans le menu déroulant."),
         p("Les droits des utilisateurs sont classés par catégories."),
-        p(strong("Cochez les droits"), " pour l'accès utilisateur sélectionné puis cliquez sur ", tags$em("Sauvegarder"), "."),
+        p(strong("Cochez les droits"), " que vous voulez pour l'accès utilisateur sélectionné puis cliquez sur ", tags$em("Sauvegarder"), "."),
         br()
       )
     }
@@ -134,7 +134,7 @@ help_settings_users <- function(output, r = shiny::reactiveValues(), id = charac
           p(strong("3) Configure users rights")),
           p("Go to the ", tags$em("Configure users accesses"), " tab and choose a user access from the dropdown menu."),
           p("Users rights are classified by categories."),
-          p(strong("Check the rights"), " for the selected user access, then click on ", tags$em("Save"), "."),
+          p(strong("Check the rights"), " you want for the selected user access, then click on ", tags$em("Save"), "."),
           br()
         )
       )

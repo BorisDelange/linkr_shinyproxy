@@ -83,7 +83,7 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     
     if (debug) print(paste0(Sys.time(), " - mod_settings_log - start"))
 
-    if ("log" %in% r$user_accesses){
+    if ("log" %in% r$user_accesses & ("all_users" %in% r$user_accesses | "only_me" %in% r$user_accesses)){
       
       shinyjs::show("log_card")
       shinyjs::hide("log_card_forbidden")
@@ -129,7 +129,7 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
         ) -> result
       }
       
-      if ("all_users" %not_in% r$user_accesses & "only_me" %in% r$user_accesses){
+      else if ("all_users" %not_in% r$user_accesses & "only_me" %in% r$user_accesses){
         tagList(
           shiny.fluent::ChoiceGroup.shinyInput(ns("see_log_of"), value = "only_me", options = list(
             list(key = "only_me", text = i18n$t("only_me"))

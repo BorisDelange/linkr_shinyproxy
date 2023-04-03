@@ -10,7 +10,7 @@
 mod_my_subsets_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
-  cards <- c("datatable_card", "subset_patients_card", "edit_code_card")
+  cards <- c("subsets_datatable_card", "subsets_patients_card", "subsets_edit_code_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
@@ -31,9 +31,9 @@ mod_my_subsets_ui <- function(id = character(), i18n = character()){
         shiny.fluent::Pivot(
           id = ns("subsets_pivot"),
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("subsets_management")),
-          shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_subset_code")),
-          shiny.fluent::PivotItem(id = "subset_patients_card", itemKey = "subset_patients_card", headerText = i18n$t("subset_patients"))
+          shiny.fluent::PivotItem(id = "subsets_datatable_card", itemKey = "datatable_card", headerText = i18n$t("subsets_management")),
+          shiny.fluent::PivotItem(id = "subsets_edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_subset_code")),
+          shiny.fluent::PivotItem(id = "subsets_patients_card", itemKey = "subsets_patients_card", headerText = i18n$t("subset_patients"))
         )
       )
     ),
@@ -49,7 +49,7 @@ mod_my_subsets_ui <- function(id = character(), i18n = character()){
     
     shinyjs::hidden(
       div(
-        id = ns("datatable_card"),
+        id = ns("subsets_datatable_card"),
         make_card(i18n$t("subsets_management"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
@@ -76,7 +76,7 @@ mod_my_subsets_ui <- function(id = character(), i18n = character()){
     
     shinyjs::hidden(
       div(
-        id = ns("subset_patients_card"),
+        id = ns("subsets_patients_card"),
         make_card(i18n$t("subset_patients"),
           div(
             div(
@@ -114,7 +114,7 @@ mod_my_subsets_ui <- function(id = character(), i18n = character()){
     
     shinyjs::hidden(
       div(
-        id = ns("edit_code_card"),
+        id = ns("subsets_edit_code_card"),
         make_card(i18n$t("edit_subset_code"),
           div(
             make_combobox(i18n = i18n, ns = ns, label = "subset", id = "code_chosen_subset",
@@ -158,10 +158,6 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    # Prefix depending on page id
-    # if (id == "patient_level_data_subsets") prefix <- "patient_lvl"
-    # if (id == "aggregated_data_subsets") prefix <- "aggregated"
-    
     # Close message bar
     sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
@@ -169,12 +165,8 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     # Show or hide cards ----
     # --- --- --- --- --- ---
     
-    cards <- c("datatable_card", "subset_patients_card", "edit_code_card")
-    # show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
-    observeEvent(input$current_tab, {
-      sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
-      shinyjs::show(input$current_tab)
-    })
+    cards <- c("subsets_datatable_card", "subsets_patients_card", "subsets_edit_code_card")
+    show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     # --- --- --- --- --- -
     # Show message bar ----
@@ -221,7 +213,8 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       if (debug) print(paste0(Sys.time(), " - mod_subsets - observer r$chosen_datamart"))
       
       shinyjs::show("choose_a_study_card")
-      sapply(c("datatable_card", "subset_patients_card", "edit_code_card", "menu"), shinyjs::hide)
+      sapply(c("subsets_datatable_card", "subsets_datatable_card_forbidden", "subsets_patients_card", "subsets_patients_card_forbidden",
+        "subsets_edit_code_card", "subsets_edit_code_card_forbidden", "menu"), shinyjs::hide)
       
       # Reset fields
       shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_subset", options = list(), value = NULL)
@@ -244,11 +237,13 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       shinyjs::hide("choose_a_study_card")
       shinyjs::show("menu")
       if (length(input$current_tab) == 0){
-        shinyjs::show("datatable_card")
-        # if ("subset_datatable_card" %in% r$user_accesses) shinyjs::show("subset_datatable_card")
-        # else shinyjs::show("subset_datatable_card_forbidden")
+        if ("subsets_datatable_card" %in% r$user_accesses) shinyjs::show("subsets_datatable_card")
+        else shinyjs::show("subsets_datatable_card_forbidden")
       }
-      else shinyjs::show(input$current_tab)
+      else {
+        if (input$current_tab %in% r$user_accesses) shinyjs::show(input$current_tab)
+        else shinyjs::show(paste0(input$current_tab, "_forbidden"))
+      }
       
       # Reset fields
       shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_subset", options = list(), value = NULL)
@@ -619,7 +614,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       # Reload datatable (to unselect rows)
       DT::replaceData(m$subsets_datatable_proxy, m$subsets_datatable_temp, resetPaging = FALSE, rownames = FALSE)
       
-      # Set current pivot to subset_patients_card
+      # Set current pivot to subsets_patients_card
       shinyjs::runjs(glue::glue("$('#{id}-subsets_pivot button[name=\"{i18n$t('subset_patients')}\"]').click();"))
     })
     

@@ -13,20 +13,9 @@ mod_settings_users_ui <- function(id = character(), i18n = character(), options_
   # Three distinct pages in the settings/users page : users, accesses & statuses
   # For each "sub page", create a creation & a management cards
   
-  # pages <- c("users", "users_accesses", "users_statuses")
   cards <- tagList()
   
   # We create one module by "sub page"
-  
-  # sapply(pages, function(page){
-  #   
-  #   cards <<- tagList(cards,
-  #     div(id = ns(paste0(page, "_creation_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_creation"), i18n = i18n)),
-  #     div(id = ns(paste0(page, "_management_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_management"), i18n = i18n)))
-  #   
-  #   if (page == "users_accesses") cards <<- tagList(cards,
-  #     div(id = ns(paste0(page, "_options_card")), mod_settings_sub_users_ui(id = paste0("settings_users_", page, "_options"), i18n = i18n)))
-  # })
   
   cards_names <- c(
     "users_creation_card", "users_management_card", 
@@ -110,7 +99,7 @@ mod_settings_sub_users_ui <- function(id = character(), i18n = character(), opti
 
           # Create toggle
           sub_results <- tagList(sub_results, shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), 
-            make_toggle(i18n = i18n, ns = ns, label = toggle, id = paste0("toggle_", toggle), inline = TRUE, value = FALSE, bold = FALSE)))
+            make_toggle(i18n = i18n, ns = ns, label = paste0(toggle, "_user_access_description"), id = paste0("toggle_", toggle), inline = TRUE, value = FALSE, bold = FALSE)))
         }
       }
         
@@ -648,12 +637,6 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         DBI::dbAppendTable(r$db, "options", data)
         add_log_entry(r = r, category = "SQL query", name = "Update users accesses", value = toString(data))
         r$options <- r$options %>% dplyr::bind_rows(data)
-
-        # Remove because of lag
-        # Update r$user_accesses
-        # update_r(r = r, table = "options")
-        user_access_id <- r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::pull(user_access_id)
-        r$user_accesses <- r$options %>% dplyr::filter(category == "users_accesses" & link_id == user_access_id & value_num == 1) %>% dplyr::pull(name)
 
         # Notify user
         r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_saved", type = "success", trigger = Sys.time())

@@ -58,10 +58,8 @@ mod_settings_general_server <- function(id = character(), r = shiny::reactiveVal
     
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
-    # Toggles IDs
-    # toggles <- c("change_password_card")
-    # 
-    # show_hide_cards(r = r, input = input, session = session, id = id, toggles = toggles)
+    # Close message bar
+    sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     # --- --- --- --- --- ---
     # Help for this page ----

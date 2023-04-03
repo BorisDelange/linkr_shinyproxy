@@ -10,11 +10,7 @@
 mod_my_studies_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
-  cards <- c(#"datamarts_options_card", "datamarts_edit_code_card", 
-    "study_messages_card", "studies_creation_card", "studies_datatable_card", "study_options_card"#,
-    #"import_study_card", "export_study_card"#, 
-    #"modules_families_card", "thesaurus_datamart_card"
-    )
+  cards <- c("studies_messages_card", "studies_creation_card", "studies_datatable_card", "studies_options_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
@@ -40,11 +36,9 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
         shiny.fluent::Pivot(
           id = ns("studies_pivot"),
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "study_messages_card", itemKey = "study_messages_card", headerText = i18n$t("messages")),
+          shiny.fluent::PivotItem(id = "studies_messages_card", itemKey = "studies_messages_card", headerText = i18n$t("messages")),
           shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = i18n$t("studies_management")),
-          shiny.fluent::PivotItem(id = "study_options_card", itemKey = "study_options_card", headerText = i18n$t("study_options"))#,
-          # shiny.fluent::PivotItem(id = "import_study_card", itemKey = "import_study_card", headerText = i18n$t("import_study")),
-          # shiny.fluent::PivotItem(id = "export_study_card", itemKey = "export_study_card", headerText = i18n$t("export_study"))
+          shiny.fluent::PivotItem(id = "studies_options_card", itemKey = "studies_options_card", headerText = i18n$t("study_options"))
         )
       )
     ),
@@ -60,7 +54,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
     
     shinyjs::hidden(
       div(
-        id = ns("study_messages_card"),
+        id = ns("studies_messages_card"),
         div(id = ns("study_messages_content"),
           make_card(i18n$t("messages"),
             div(
@@ -162,7 +156,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
     
     shinyjs::hidden(
       div(
-        id = ns("study_options_card"),
+        id = ns("studies_options_card"),
         make_card(i18n$t("study_options"),
           div(
             make_combobox(i18n = i18n, ns = ns, label = "study", id = "options_chosen", width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
@@ -232,20 +226,6 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
         )
       )
     ),
-    # div(shinyAce::aceEditor(
-    #   ns("ace_edit_code"), "", mode = "r",
-    #   code_hotkeys = list(
-    #     "r", list(
-    #       run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
-    #       run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
-    #       save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
-    #     )
-    #   ),
-    #   autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
-    # ), style = "width: 100%;"),
-    # shiny.fluent::PrimaryButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(),
-    # div(verbatimTextOutput(ns("code_result")),
-    #   style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"),
     br()
   )
 }
@@ -268,9 +248,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # Show or hide cards ----
     # --- --- --- --- --- ---
     
-    cards <- c(#"datamarts_options_card", "datamarts_edit_code_card", 
-      "study_messages_card", "studies_datatable_card", "study_options_card",
-      "import_study_card", "export_study_card")
+    cards <- c("studies_messages_card", "studies_datatable_card", "studies_options_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
 
     # --- --- --- --- --- -
@@ -322,8 +300,12 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       shinyjs::hide("choose_a_datamart_card")
       shinyjs::show("menu")
       if (length(input$current_tab) == 0){
-        if ("study_messages_card" %in% r$user_accesses) shinyjs::show("study_messages_card")
-        else shinyjs::show("study_messages_card_forbidden")
+        if ("studies_messages_card" %in% r$user_accesses) shinyjs::show("studies_messages_card")
+        else shinyjs::show("studies_messages_card_forbidden")
+      }
+      else{
+        if (input$current_tab %in% r$user_accesses) shinyjs::show(input$current_tab)
+        else shinyjs::show(paste0(input$current_tab, "_forbidden"))
       }
       
       # Hide messages card & reset fields

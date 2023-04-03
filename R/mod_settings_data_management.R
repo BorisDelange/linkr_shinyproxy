@@ -15,8 +15,6 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
   dropdowns <- tibble::tribble(~id, ~dropdowns,
     "settings_data_sources", "",
     "settings_datamarts", "data_source",
-    "settings_studies", c("datamart", "patient_lvl_module_family", "aggregated_module_family"),
-    "settings_subsets", c("datamart", "study"),
     "settings_thesaurus", "data_source")
   
   cards <- c("datatable_card", "edit_code_card", "options_card", "sub_datatable_card")#, "categories_card", "conversions_card", "mapping_card")
@@ -182,7 +180,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
         shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("thesaurus_management")),
         shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_thesaurus_code")),
-        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("thesaurus_items"))
+        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("thesaurus_concepts"))
       ),
       
       
@@ -237,7 +235,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       # --- --- --- --- -- -
       
       div(id = ns("sub_datatable_card"),
-        make_card(i18n$t("thesaurus_items"),
+        make_card(i18n$t("thesaurus_concepts"),
           div(
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 50),
@@ -362,24 +360,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$", table))
             
             # Convert options to list
-            if (table == "subsets" & data_var == "studies") options <- list()
-            else options <- convert_tibble_to_list(data = r[[data_var]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+            options <- convert_tibble_to_list(data = r[[data_var]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
             shiny.fluent::updateDropdown.shinyInput(session, get_singular(word = data_var), options = options)
           })
         }
       })
-    
-    # Particular case for subsets, update study dropdown with current datamart
-    if (table == "subsets"){
-      observeEvent(input$datamart, {
-        
-        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$datamart"))
-        
-        studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart)
-        options <- convert_tibble_to_list(data = studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-        shiny.fluent::updateDropdown.shinyInput(session, "study", options = options)
-      })
-    }
     
     # When add button is clicked
     observeEvent(input$add, {
@@ -423,8 +408,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     dropdowns_datatable <- switch(id,
       "settings_data_sources" = "",
       "settings_datamarts" = "",
-      "settings_studies" = c("patient_lvl_module_family_id" = "patient_lvl_modules_families", "aggregated_module_family_id" = "aggregated_modules_families"),
-      "settings_subsets" = "",
       "settings_thesaurus" = c("data_source_id" = "data_sources"))
     
     # Dropdowns with multiSelect
@@ -432,18 +415,14 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     if (table == "thesaurus") dropdowns_multiselect <- "data_source_id"
     
     # Action buttons for each module / page
-    if (paste0(table, "_delete_data") %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
     action_buttons = switch(table,
-      "data_sources" = action_buttons,
-      "datamarts" = c(action_buttons, "edit_code", "options"),
-      "studies" = c(action_buttons, "options"),
-      "subsets" = c(action_buttons, "edit_code"),
-      "thesaurus" = c(action_buttons, "edit_code", "sub_datatable")
+      "data_sources" = "delete",
+      "datamarts" = c("delete", "edit_code", "options"),
+      "thesaurus" = c("delete", "edit_code", "sub_datatable")
     )
     
     # Editable cols
-    if (id != "settings_subsets") editable_cols <- c("name", "description")
-    if (id == "settings_subsets") editable_cols <- "description"
+    editable_cols <- c("name", "description")
     
     # Sortable cols
     if (id == "settings_thesaurus") sortable_cols <- c("id", "name", "description", "creator_id", "datetime")
@@ -577,9 +556,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         
         req(nrow(r[[paste0(table, "_temp")]]) > 0)
         
-        duplicates_allowed <- FALSE
-        if (table == "subsets") duplicates_allowed <- TRUE
-        save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, i18n = i18n, duplicates_allowed = duplicates_allowed)
+        save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, i18n = i18n, duplicates_allowed = FALSE)
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$management_save"))
       })

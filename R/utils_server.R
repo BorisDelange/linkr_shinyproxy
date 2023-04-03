@@ -207,20 +207,20 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   if (table_name == "thesaurus_items"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("name"), 
       i18n$t("abbreviation"), i18n$t("unit"),
       i18n$t("datetime"), i18n$t("deleted"), i18n$t("action"), i18n$t("modified"))
   }
   
   if (table_name == "modules_thesaurus_items"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("name"), 
       i18n$t("abbreviation"), i18n$t("unit"),
       i18n$t("colour"), i18n$t("datetime"), i18n$t("deleted"),
       i18n$t("action"), i18n$t("modified"))
   }
   
   if (table_name == "thesaurus_items_with_counts"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("name"), 
       i18n$t("abbreviation"), i18n$t("unit"),
       i18n$t("datetime"), i18n$t("deleted"),
       i18n$t("num_patients"), i18n$t("num_rows"),
@@ -228,7 +228,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   if (table_name == "modules_thesaurus_items_with_counts"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("name"), 
       i18n$t("name_abbreviation"), i18n$t("unit"),
       i18n$t("item_colour"), i18n$t("datetime"), i18n$t("deleted"),
       i18n$t("num_patients"), i18n$t("num_rows"),
@@ -236,7 +236,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   if (table_name == "datamart_thesaurus_items_with_counts"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("parent_item_id"), i18n$t("name"), 
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("parent_concept_id"), i18n$t("name"), 
       i18n$t("abbreviation"), i18n$t("unit"),
       i18n$t("datetime"), i18n$t("deleted"),
       i18n$t("num_patients"), i18n$t("num_rows"),
@@ -244,7 +244,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   if (table_name == "mapping_thesaurus_items_with_counts"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("item_id"), i18n$t("name"), 
+    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("name"), 
       i18n$t("abbreviation"), i18n$t("unit"),
       i18n$t("datetime"), i18n$t("deleted"),
       i18n$t("num_patients"), i18n$t("num_rows"),
@@ -252,12 +252,12 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   if (table_name == "datamart_thesaurus_items_mapping"){
-    result <- c(i18n$t("id"), i18n$t("category"), i18n$t("thesaurus1"), i18n$t("item_id"), i18n$t("relation"), i18n$t("thesaurus2"), i18n$t("item_id"),
+    result <- c(i18n$t("id"), i18n$t("category"), i18n$t("thesaurus1"), i18n$t("concept_id"), i18n$t("relation"), i18n$t("thesaurus2"), i18n$t("concept_id"),
       i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"))
   }
   
   if (table_name == "datamart_thesaurus_items_mapping_evals"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus1"), i18n$t("item_id"), i18n$t("relation"), i18n$t("thesaurus2"), i18n$t("item_id"),
+    result <- c(i18n$t("id"), i18n$t("thesaurus1"), i18n$t("concept_id"), i18n$t("relation"), i18n$t("thesaurus2"), i18n$t("concept_id"),
       i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("positive_evals_short"), i18n$t("negative_evals_short"), 
       i18n$t("action"), i18n$t("user_evaluation_id"), i18n$t("modified"))
   }

@@ -373,7 +373,20 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       # If connection_type is remote, save connection_type and other remote DB informations
       if (input$connection_type == "remote"){
         
-        sapply(c("connection_type", "sql_lib", "main_db_name", "public_db_name", "host", "port", "user", "password"), function(name){
+        # Make sure fields are not empty
+        # Password is not required
+        required_textfields <- c("sql_lib", "main_db_name", "public_db_name", "host", "port", "user")
+        textfields_checks <- TRUE
+        
+        for (textfield in required_textfields){
+          if (is.na(input[[textfield]]) | input[[textfield]] == "") shiny.fluent::updateTextField.shinyInput(session, textfield, errorMessage = i18n$t(paste0("provide_valid_", textfield)))
+          else shiny.fluent::updateTextField.shinyInput(session, textfield, errorMessage = NULL)
+          if(is.na(input[[textfield]]) | input[[textfield]] == "") textfields_checks <- FALSE
+        }
+        
+        req(textfields_checks)
+        
+        sapply(c(required_textfields, "connection_type", "password"), function(name){
           sql <- glue::glue_sql(paste0("UPDATE options SET value = {as.character(input[[name]])}, creator_id = {r$user_id}, datetime = {as.character(Sys.time())} ",
             "WHERE category = 'remote_db' AND name = {name}"), .con = r$local_db)
           query <- DBI::dbSendStatement(r$local_db, sql)

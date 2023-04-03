@@ -137,7 +137,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
     
     div(
       class = "sidenav", 
-      div(i18n$t("data"), class = "input_title", style = "font-size:14.5px;"),
+      div(i18n$t("plugins"), class = "input_title", style = "font-size:14.5px;"),
       div(
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
           shiny.fluent::PrimaryButton.shinyInput(ns("plugins_page_ind"), i18n$t("individual"), style = "width:125px;"), 
@@ -155,7 +155,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
     
     div(
       class = "sidenav", 
-      div(i18n$t("data"), class = "input_title", style = "font-size:14.5px;"),
+      div(i18n$t("plugins"), class = "input_title", style = "font-size:14.5px;"),
       div(
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
           shiny.fluent::DefaultButton.shinyInput(ns("plugins_page_ind"), i18n$t("individual"), style = "width:125px;"), 
