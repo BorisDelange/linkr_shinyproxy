@@ -29,11 +29,11 @@ mod_page_main_ui <- function(id = character(), language = "en", i18n = character
   if (id == "my_studies") mod_my_studies_ui(id = "my_studies", i18n = i18n) -> result
   if (id == "my_subsets") mod_my_subsets_ui(id = "my_subsets", i18n = i18n) -> result
   
-  # --- --- --- --
-  # Thesaurus ----
-  # --- --- --- --
+  # --- --- --- --- -
+  # Vocabularies ----
+  # --- --- --- --- -
   
-  if (id == "thesaurus") mod_thesaurus_ui(id = "thesaurus", i18n = i18n) -> result
+  if (id == "vocabularies") mod_thesaurus_ui(id = "vocabularies", i18n = i18n) -> result
  
   # --- --- -- -
   # Scripts ----
@@ -67,7 +67,7 @@ mod_page_main_ui <- function(id = character(), language = "en", i18n = character
     if (id == "settings_dev") mod_settings_dev_ui(id = "settings_dev", i18n = i18n) -> result
     
     # Subpages of Settings / data management
-    sapply(c("data_sources", "datamarts", "studies", "subsets", "thesaurus"), function(page_settings){
+    sapply(c("data_sources", "datamarts", "studies", "subsets", "vocabularies"), function(page_settings){
       if (id == paste0("settings_", page_settings)) mod_settings_data_management_ui(id = paste0("settings_", page_settings), i18n = i18n) ->> result
     })
     

@@ -27,7 +27,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   ns <- shiny::NS(id)
   
   # db variable depending on table
-  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients")
+  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients",
+    "concept", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
   if (table %in% m_tables) db <- m$db
   else db <- r$db
   
@@ -57,17 +58,17 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     # If it is a new module, group by module family, so a name musn't be unique in distinct modules families
     if (table %in% c("patient_lvl_modules", "aggregated_modules")){
       if (is.na(data$parent_module)) sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE 
-        AND module_family_id = {data$module_family} AND parent_module_id IS NULL", .con = r$db)
+        AND module_family_id = {data$module_family} AND parent_module_id IS NULL", .con = db)
       if (!is.na(data$parent_module)) sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
-        AND module_family_id = {data$module_family} AND parent_module_id = {data$parent_module}", .con = r$db)
+        AND module_family_id = {data$module_family} AND parent_module_id = {data$parent_module}", .con = db)
     }
     else if (table == "studies") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
-      AND datamart_id = {data$datamart}", .con = r$db)
+      AND datamart_id = {data$datamart}", .con = db)
     else if (table == "subsets") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
-      AND study_id = {data$study_id}", .con = r$db)
+      AND study_id = {data$study_id}", .con = db)
     else if (table == "plugins") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
-      AND module_type_id = {data$module_type}", .con = r$db)
-    else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = r$db)
+      AND module_type_id = {data$module_type}", .con = db)
+    else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = db)
     
     distinct_values <- DBI::dbGetQuery(db, sql) %>% dplyr::pull() %>% tolower()
     
@@ -113,8 +114,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   
   # Get last_row nb
   last_row <- list()
-  for (var in c("code", "options", "subsets", "vocabulary")){
-    if (var == "subsets") last_row[[var]] <- get_last_row(m$db, "subsets") 
+  for (var in c("code", "options", "subsets")){
+    if (var == "subsets") last_row[[var]] <- get_last_row(m$db, "subsets")
     else last_row[[var]] <- get_last_row(r$db, var)
   }
   last_row$data <- get_last_row(db, table)
@@ -143,8 +144,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # Creation of new_data$data variable for vocabulary page
   else if (table == "vocabulary"){
     new_data$data <- tibble::tribble(~id, ~vocabulary_id, ~vocabulary_name, ~vocabulary_reference, ~vocabulary_version,
-      ~data_source_id, ~creator_id, ~datetime, ~deleted,
-      last_row$data + 1, as.character(data$vocabulary_id), as.character(data$vocabulary_name), "", "",
+      ~vocabulary_concept_id, ~display_order, ~data_source_id, ~creator_id, ~datetime, ~deleted,
+      last_row$data + 1, as.character(data$vocabulary_id), as.character(data$vocabulary_name), "", "", "", NA_integer_,
       data$data_source, r$user_id, as.character(Sys.time()), FALSE)
   }
   
@@ -185,16 +186,16 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
   
   # Append data to the table and to r / m variables
-  print(new_data$data)
   DBI::dbAppendTable(db, table, new_data$data)
-  if (table %in% m_tables) m[[table]] <- m[[table]] %>% dplyr::bind_rows(new_data$data)
-  else r[[table]] <- r[[table]] %>% dplyr::bind_rows(new_data$data)
+
+  if (table %not_in% m_tables | table == "vocabulary") r[[table]] <- r[[table]] %>% dplyr::bind_rows(new_data$data)
+  else m[[table]] <- m[[table]] %>% dplyr::bind_rows(new_data$data)
   add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data$data))
   
   # Empty new variables
-  new_data_vars <- c("options", "subsets", "code", "patient_lvl_modules_families", "aggregated_modules_families", "vocabulary")
+  new_data_vars <- c("options", "subsets", "code", "patient_lvl_modules_families", "aggregated_modules_families")
   for(var in new_data_vars) new_data[[var]] <- tibble::tibble()
-  
+
   # --- --- --- --- --- --- --- --- --- --
   # Add data in code & options tables ----
   # --- --- --- --- --- --- --- --- --- --
@@ -349,6 +350,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   
   # Reset textfields
   if (table == "users") sapply(c("username", "firstname", "lastname", "password"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
+  else if (table == "vocabulary") sapply(c("vocabulary_id", "vocabulary_name"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
   else sapply(c("plugin_name", "script_name", "study_name", "subset_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
@@ -695,7 +697,8 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
   # When the deletion is confirmed
   observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
     
-    m_tables <- c("modules_elements_options", "patients_options", "subset_patients", "subsets")
+    m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients",
+      "concept", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
     
     if (table %in% m_tables) db <- m$db
     else db <- r$db
@@ -1399,7 +1402,8 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
 save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), ns = character(), 
   table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = character(), r_message_bar = FALSE){
   
-  m_tables <- c("modules_elements_options", "patients_options", "subset_patients", "subsets")
+  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients",
+    "concept", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
   
   if (table %in% m_tables) db <- m$db
   else db <- r$db
@@ -1533,7 +1537,7 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
   # If user has access, show or hide card when Pivot is clicked
   observeEvent(input$current_tab, {
     
-    if (length(table > 0)) card_user_access <- paste0(table, "_", input$current_tab)
+    if (length(table > 0)) card_user_access <- paste0(get_plural(table), "_", input$current_tab)
     else card_user_access <- input$current_tab
     
     sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
@@ -1575,8 +1579,8 @@ update_settings_datatable <- function(input, module_id = character(), r = shiny:
           old_value <- r[[paste0(table, "_temp")]][[which(r[[paste0(table, "_temp")]]["id"] == id), paste0(dropdown_table, "_id")]]
           new_value <- NA_integer_
           
-          # If thesaurus, data_source_id can accept multiple values (converting to string)
-          if (table == "thesaurus") new_value <- toString(as.integer(input[[paste0("data_sources", id)]]))
+          # If vocabulary, data_source_id can accept multiple values (converting to string)
+          if (table == "vocabulary") new_value <- toString(as.integer(input[[paste0("data_sources", id)]]))
           if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins", "users", "patient_lvl_modules", "aggregated_modules")){
             new_value <- coalesce2("int", input[[paste0(get_plural(word = dropdown_input), id)]])
           }

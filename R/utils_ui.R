@@ -49,12 +49,17 @@ get_plural <- function(word = character(), language = "EN"){
   if (grepl("settings_", word)) word <- substr(word, nchar("settings_") + 1, nchar(word))
   switch(word, 
     "data_source" = "data_sources",
+    "data_sources" = "data_sources",
     "datamart" = "datamarts",
+    "datamarts" = "datamarts",
     "study" = "studies",
+    "studies" = "studies",
     "subset" = "subsets",
+    "subsets" = "subsets",
     "thesaurus" = "thesaurus",
     "thesaurus_item" = "thesaurus_items",
     "vocabulary" = "vocabularies",
+    "vocabularies" = "vocabularies",
     "patient_lvl_module" = "patient_lvl_modules",
     "patient_lvl_parent_module" = "patient_lvl_parent_modules",
     "patient_lvl_module_family" = "patient_lvl_modules_families",
@@ -65,9 +70,14 @@ get_plural <- function(word = character(), language = "EN"){
     "aggregated_module_element" = "aggregated_modules_elements",
     "module_type" = "module_types",
     "plugin" = "plugins",
+    "plugins" = "plugins",
     "script" = "scripts",
+    "scripts" = "scripts",
     "user" = "users",
+    "users" = "users",
     "user_access" = "users_accesses",
-    "user_status" = "users_statuses") -> result
+    "users_accesses" = "users_accesses",
+    "user_status" = "users_statuses",
+    "users_statuses" = "users_statuses") -> result
   result
 }

@@ -46,7 +46,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
   # Dropdowns ----
   # --- --- --- --
   
-  if (id %in% c("my_studies", "my_subsets", "thesaurus", "scripts", "patient_level_data", "aggregated_data")){
+  if (id %in% c("my_studies", "my_subsets", "vocabularies", "scripts", "patient_level_data", "aggregated_data")){
     
     dropdowns <- function(names){
       
@@ -80,11 +80,11 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
   
   if (id == "my_subsets") div(class = "sidenav", dropdowns(c("datamart", "study"))) -> result
   
-  # --- --- --- --
-  # Thesaurus ----
-  # --- --- --- --
+  # --- --- --- --- -
+  # Vocabularies ----
+  # --- --- --- --- -
   
-  if (id == "thesaurus") div(class = "sidenav", dropdowns(c("datamart"))) -> result
+  if (id == "vocabularies") div(class = "sidenav", dropdowns(c("datamart"))) -> result
   
   # --- --- -- -
   # Scripts ----
@@ -172,7 +172,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
   if (grepl("^settings", id)){
     
     links_data_management <- list()
-    lapply(c("data_sources", "datamarts", "thesaurus"), function(page){
+    lapply(c("data_sources", "datamarts", "vocabularies"), function(page){
       links_data_management <<- rlist::list.append(links_data_management, list(name = i18n$t(page),
         id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
     })
@@ -238,7 +238,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
     }
     
-    if (id %in% c("my_studies", "my_subsets", "thesaurus", "scripts", "patient_level_data", "aggregated_data")){
+    if (id %in% c("my_studies", "my_subsets", "vocabularies", "scripts", "patient_level_data", "aggregated_data")){
       
       # --- --- --- --- --- --- --- --- -
       # Patient-lvl & agregated data ----
@@ -312,7 +312,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (length(m$chosen_study) == 0) m$chosen_study <- NA_integer_
         if (!is.na(m$chosen_study)) m$chosen_study <- NA_integer_
         
-        # Reset of data variables, load of thesaurus code happens in mod_my_studies.R
+        # Reset of data variables, load of vocabulary code happens in mod_my_studies.R
         # With this solution, code is run only one time
         # Here, code is run for each page
       })

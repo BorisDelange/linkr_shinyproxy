@@ -106,7 +106,7 @@ linkr <- function(
       "home/resources",
     "my_studies", 
     "my_subsets", 
-    "thesaurus", 
+    "vocabularies", 
     "data", 
     "scripts", 
     "patient_level_data", 
@@ -120,7 +120,7 @@ linkr <- function(
     "settings/dev", 
     "settings/data_sources",
     "settings/datamarts", 
-    "settings/thesaurus",
+    "settings/vocabularies",
     "settings/log")
   
   # Toggles for users accesses
@@ -159,12 +159,12 @@ linkr <- function(
       "subsets_datatable_card",
       "subsets_edit_code_card",
       "subsets_patients_card"),
-    "thesaurus", c(
-      "thesaurus_items_card",
-      "thesaurus_mapping_card",
-      "thesaurus_datatable_card",
-      "thesaurus_sub_datatable_card",
-      "thesaurus_edit_code_card"),
+    "vocabularies", c(
+      "vocabularies_items_card",
+      "vocabularies_mapping_card",
+      "vocabularies_datatable_card",
+      "vocabularies_sub_datatable_card",
+      "vocabularies_edit_code_card"),
     "plugins", c(
       "plugins_see_all_data",
       "all_plugins_card",

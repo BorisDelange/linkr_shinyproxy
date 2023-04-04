@@ -15,9 +15,9 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
   dropdowns <- tibble::tribble(~id, ~dropdowns,
     "settings_data_sources", "",
     "settings_datamarts", "data_source",
-    "settings_thesaurus", "data_source")
+    "settings_vocabularies", "data_source")
   
-  cards <- c("datatable_card", "edit_code_card", "options_card", "sub_datatable_card")#, "categories_card", "conversions_card", "mapping_card")
+  cards <- c("datatable_card", "edit_code_card", "options_card", "sub_datatable_card")
   forbidden_cards <- tagList()
   sapply(cards, function(card){
     forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, i18n = i18n))
@@ -156,11 +156,11 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
     ) -> result
   }
   
-  # --- --- --- --- ---
-  # Thesaurus card ----
-  # --- --- --- --- ---
+  # --- --- --- --- --- --
+  # Vocabularies card ----
+  # --- --- --- --- --- --
   
-  if (id == "settings_thesaurus"){
+  if (id == "settings_vocabularies"){
     div(class = "main",
       render_settings_default_elements(ns = ns),
       shiny.fluent::reactOutput(ns("help_panel")),
@@ -168,7 +168,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       shiny.fluent::reactOutput(ns("thesaurus_reload_cache_confirm")),
       shiny.fluent::reactOutput(ns("thesaurus_items_delete_confirm")),
       shiny.fluent::Breadcrumb(items = list(
-        list(key = "thesaurus", text = i18n$t("thesaurus"))
+        list(key = "vocabularies", text = i18n$t("vocabularies"))
       ), maxDisplayedItems = 3),
       
       # --- --- --- --- -
@@ -176,11 +176,11 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       # --- --- --- --- -
       
       shiny.fluent::Pivot(
-        id = ns("thesaurus_pivot"),
+        id = ns("vocabularies_pivot"),
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-        shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("thesaurus_management")),
-        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_thesaurus_code")),
-        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("thesaurus_items"))
+        shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("vocabularies_management")),
+        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_vocabulary_code")),
+        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("vocabulary_concepts"))
       ),
       
       
@@ -194,8 +194,8 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
         make_card(i18n$t("vocabularies_management"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_textfield(i18n = i18n, ns = ns, label = "vocabulary_id_textfield", id = "vocabulary_id", width = "300px"),
-              make_textfield(i18n = i18n, ns = ns, label = "vocabulary_name_textfield", id = "vocabulary_name", width = "300px"),
+              make_textfield(i18n = i18n, ns = ns, label = "id", id = "vocabulary_id", width = "300px"),
+              make_textfield(i18n = i18n, ns = ns, label = "name", id = "vocabulary_name", width = "300px"),
               make_dropdown(i18n = i18n, ns = ns, label = "data_source", id = "data_source", width = "300px", multiSelect = TRUE),
             div(shiny.fluent::PrimaryButton.shinyInput(ns("add"), i18n$t("add")), style = "margin-top:38px;")),
             div(DT::DTOutput(ns("management_datatable")), style = "z-index:2"),
@@ -204,7 +204,8 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
                 shiny.fluent::PrimaryButton.shinyInput(ns("management_save"), i18n$t("save")),
                 shiny.fluent::DefaultButton.shinyInput(ns("delete_selection"), i18n$t("delete_selection"))
               ),
-              style = "position:relative; z-index:1; margin-top:-30px; width:500px;")
+              style = "position:relative; z-index:1; margin-top:-30px; width:500px;"
+            )
           )
         ), br()
       ),
@@ -251,7 +252,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       # --- --- --- --- -- -
       
       div(id = ns("sub_datatable_card"),
-        make_card(i18n$t("thesaurus_items"),
+        make_card(i18n$t("vocabulary_concepts"),
           div(
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 50),
@@ -297,27 +298,34 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     dropdowns <- tibble::tribble(~id, ~dropdowns,
       "settings_data_sources", "",
       "settings_datamarts", "data_source",
-      "settings_thesaurus", "data_source")
+      "settings_vocabularies", "data_source")
     
     # Close message bar
     sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     # Table name
     table <- substr(id, nchar("settings_") + 1, nchar(id))
+    if (id == "settings_vocabularies") table <- "vocabulary"
     
     # --- --- --- --- --- -
     # Update dropdowns ----
     # --- --- --- --- --- -
     
-    if (table %in% c("datamarts", "thesaurus")){
+    if (table %in% c("datamarts", "vocabulary")){
       observeEvent(r[[table]], {
         
         if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$", table, " - updateComboBox"))
         
-        options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+        if (table == "datamarts"){
+          options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_datamart_thesaurus", options = options)
+        }
         
-        if (table == "datamarts") shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_datamart_thesaurus", options = options)
-        if (table == "thesaurus") shiny.fluent::updateComboBox.shinyInput(session, "items_chosen_thesaurus", options = options)
+        if (table == "vocabulary"){
+          options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(vocabulary_id), key_col = "id", text_col = "vocabulary_id")
+          shiny.fluent::updateComboBox.shinyInput(session, "items_chosen_thesaurus", options = options)
+        }
+        
         shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_datamart_thesaurus", options = options)
       })
     }
@@ -327,14 +335,14 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # --- --- --- --- --- ---
     
     # Toggles IDs
-    cards <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card", "categories_card", "conversions_card", "mapping_card")
+    cards <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card")
     sapply(cards, shinyjs::hide)
     
     show_hide_cards(r = r, input = input, session = session, table = table, id = id, cards = cards)
     
     # Show first card
     
-    if (paste0(table, "_datatable_card") %in% r$user_accesses) shinyjs::show("datatable_card")
+    if (paste0(get_plural(table), "_datatable_card") %in% r$user_accesses) shinyjs::show("datatable_card")
     else shinyjs::show("datatable_card_forbidden")
     
     # --- --- --- --- --- ---
@@ -389,9 +397,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$add"))
       
       # Create a list with new data
-      # If page = thesaurus, data_source is character, not integer (multiple choices)
+      # If page = vocabulary, data_source is character, not integer (multiple choices)
       new_data <- list()
-      if (id == "settings_thesaurus") new_data_var <- c("vocabulary_id" = "char", "vocabulary_name" = "char", "data_source" = "char")
+      if (id == "settings_vocabularies") new_data_var <- c("vocabulary_id" = "char", "vocabulary_name" = "char", "data_source" = "char")
       else new_data_var <- c("name" = "char", "description" = "char", "data_source" = "int", "datamart" = "int", 
         "study" = "int", "patient_lvl_module_family" = "int", "aggregated_module_family" = "int")
       
@@ -400,13 +408,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           new_data[[input_name]] <<- coalesce2(type = new_data_var[[input_name]], x = input[[input_name]])
       })
       
-      # Convert data_source to string, for page thesaurus
-      if (id == "settings_thesaurus"){
+      # Convert data_source to string, for page vocabularies
+      if (id == "settings_vocabularies"){
         if (length(new_data$data_source) == 1) new_data$data_source <- coalesce2(type = "char", x = input$data_source)
         else new_data$data_source <- toString(as.integer(new_data$data_source))
-      }
-      
-      if (id == "settings_thesaurus"){
+        
         add_settings_new_data(session = session, output = output, r = r, m = m, i18n = i18n, id = id, 
           data = new_data, table = "vocabulary", required_textfields = "vocabulary_id", req_unique_values = "vocabulary_id",
           dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist())
@@ -416,7 +422,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         required_textfields = "name", req_unique_values = "name",
         dropdowns = dropdowns %>% dplyr::filter(id == !!id) %>% dplyr::pull(dropdowns) %>% unlist())
       
-      
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$add"))
     })
     
@@ -424,48 +429,49 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Generate datatable ----
     # --- --- --- --- --- ---
   
-    table <- paste0(substr(id, nchar("settings_") + 1, nchar(id)))
-      
-    dropdowns_datatable <- switch(id,
-      "settings_data_sources" = "",
-      "settings_datamarts" = "",
-      "settings_thesaurus" = c("data_source_id" = "data_sources"))
+    dropdowns_datatable <- switch(table,
+      "data_sources" = "",
+      "datamarts" = "",
+      "vocabulary" = c("data_source_id" = "data_sources"))
     
     # Dropdowns with multiSelect
     dropdowns_multiselect <- ""
-    if (table == "thesaurus") dropdowns_multiselect <- "data_source_id"
+    if (table == "vocabulary") dropdowns_multiselect <- "data_source_id"
     
     # Action buttons for each module / page
     action_buttons = switch(table,
       "data_sources" = "delete",
       "datamarts" = c("delete", "edit_code", "options"),
-      "thesaurus" = c("delete", "edit_code", "sub_datatable")
+      "vocabulary" = c("delete", "edit_code", "sub_datatable")
     )
     
     # Editable cols
-    editable_cols <- c("name", "description")
+    if (table == "vocabulary") editable_cols <- c("vocabulary_id", "vocabulary_name")
+    else editable_cols <- c("name", "description")
     
     # Sortable cols
-    if (id == "settings_thesaurus") sortable_cols <- c("id", "name", "description", "creator_id", "datetime")
-    if (id != "settings_thesaurus") sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
+    if (table == "vocabulary") sortable_cols <- c("vocabulary_id", "vocabulary_name", "datetime")
+    else sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
     
     # Column widths
-    column_widths <- c("id" = "80px", "datetime" = "130px", "creator_id" = "200px", "action" = "80px")
+    column_widths <- c("datetime" = "130px", "creator_id" = "200px", "action" = "80px")
     
     # Centered columns
-    centered_cols <- c("id", "creator", "datetime", "action")
+    centered_cols <- c("creator_id", "datetime", "action")
     
     # Searchable_cols
-    if (id != "settings_thesaurus") searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
-    if (id == "settings_thesaurus") searchable_cols <- c("name", "description", "creator_id")
+    if (table == "vocabulary") searchable_cols <- c("vocabulary_id", "vocabulary_name")
+    else searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
     
     # Factorize_cols
-    factorize_cols <- switch(id,
-      "settings_data_sources" = "creator_id",
-      "settings_datamarts" = c("data_source_id", "creator_id"),
-      "settings_thesaurus" = "creator_id")
+    factorize_cols <- switch(table,
+      "data_sources" = "creator_id",
+      "datamarts" = c("data_source_id", "creator_id"),
+      "vocabulary" = "creator_id")
     
-    hidden_cols <- c("id", "description", "deleted", "modified")
+    if (table == "vocabulary") hidden_cols <- c("id", "vocabulary_reference", "vocabulary_version", "vocabulary_concept_id",
+      "display_order", "creator_id", "deleted", "modified")
+    else hidden_cols <- c("id", "description", "deleted", "modified")
     
     # Reload datatable
     
@@ -487,15 +493,18 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           creator_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
         if (table == "datamarts") data <- tibble::tibble(id = integer(), name = character(), description = character(),
           data_source_id = character(), creator_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
-        if (table == "thesaurus") data <- tibble::tibble(id = integer(), name = character(), description = character(),
-          data_source_id = character(), creator_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
+        if (table == "vocabulary") data <- tibble::tibble(id = integer(), vocabulary_id = character(), vocabulary_name = character(), 
+          vocabulary_reference = character(), vocabulary_version = character(), vocabulary_concept_id = character(), data_source_id = character(), 
+          display_order = integer(), creator_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
       }
       
       if (nrow(r[[paste0(table, "_temp")]]) > 0){
 
+        print("1")
         r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
           table = table, dropdowns = dropdowns_datatable, dropdowns_multiselect = dropdowns_multiselect, factorize_cols = factorize_cols,
           action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]])
+        print("2")
         
         # Replace empty data_source_id by "deleted data source"
         if (table == "datamarts"){
@@ -576,17 +585,17 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$management_save"))
       })
       
-      observeEvent(input$sub_datatable_save, {
-        
-        if (perf_monitoring) monitor_perf(r = r, action = "start")
-        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$sub_datatable_save"))
-        
-        req(input$items_chosen_thesaurus)
-        save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", 
-          r_table = "thesaurus_items", duplicates_allowed = TRUE, i18n = i18n)
-        
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$sub_datatable_save"))
-      })
+      # observeEvent(input$sub_datatable_save, {
+      #   
+      #   if (perf_monitoring) monitor_perf(r = r, action = "start")
+      #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$sub_datatable_save"))
+      #   
+      #   req(input$items_chosen_thesaurus)
+      #   save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", 
+      #     r_table = "thesaurus_items", duplicates_allowed = TRUE, i18n = i18n)
+      #   
+      #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$sub_datatable_save"))
+      # })
       
       # --- --- --- --- --- --- --- --
       # Delete a row in datatable ----
@@ -748,7 +757,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Edit code by selecting a row ----
       # --- --- --- --- --- --- --- -- --
       
-      if (table %in% c("datamarts", "thesaurus")){
+      if (table %in% c("datamarts", "vocabulary")){
         
         # Button "Edit code" is clicked on the datatable
         observeEvent(input$edit_code, {
@@ -763,7 +772,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_datamart_thesaurus", options = options, value = value)
           if (table == "datamarts") shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_datamart_thesaurus", options = options, value = value)
-          if (table == "thesaurus") shiny.fluent::updateComboBox.shinyInput(session, "items_chosen_thesaurus", options = options, value = value)
+          if (table == "vocabulary") shiny.fluent::updateComboBox.shinyInput(session, "items_chosen_thesaurus", options = options, value = value)
           
           # Reload datatable (to unselect rows)
           DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
@@ -794,7 +803,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             }
           }
           
-          if (table == "thesaurus"){
+          if (table == "vocabulary"){
             if (length(input$items_chosen_thesaurus) > 0){
               if (length(input$items_chosen_thesaurus) > 1) items_link_id <- input$items_chosen_thesaurus$key
               else items_link_id <- input$items_chosen_thesaurus
@@ -815,7 +824,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           r$thesaurus_id <- NA_integer_
 
           if (id == "settings_datamarts") r$datamart_id <- link_id
-          if (id == "settings_thesaurus") r$thesaurus_id <- link_id
+          if (id == "settings_vocabularies") r$thesaurus_id <- link_id
 
           category <- get_singular(id)
 
@@ -922,7 +931,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Generate sub datatable with action button ----
       # --- --- --- --- --- --- --- --- --- --- --- --
         
-      if (table == "thesaurus"){
+      if (table == "vocabulary"){
 
         # Sub datatable is a datatable in thesaurus page, when we click on the subdatatable button of a thesaurus row
         # It opens a tab with a datatable containing items of chosen thesaurus

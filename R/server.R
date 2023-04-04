@@ -107,7 +107,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       insert_default_data(output = output, r = r, m = m, i18n = i18n, has_internet = has_internet, options_toggles = options_toggles)
       
       # Load database
-      load_database(r = r, i18n = i18n)
+      load_database(r = r, m = m, i18n = i18n)
       
     })
 
@@ -195,7 +195,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       })
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - mod_data")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - my_studies / my_subsets / thesaurus / scripts"))
+      if (debug) print(paste0(Sys.time(), " - server - load server modules - my_studies / my_subsets / vocabularies / scripts"))
       
       mod_my_studies_server("my_studies", r, d, m, i18n, language, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_studies")
@@ -206,12 +206,12 @@ app_server <- function(router, language = "en", app_folder = character(),
       mod_scripts_server("scripts", r, d, m, language, i18n, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - scripts")
       
-      sapply(c("my_studies", "my_subsets", "thesaurus", "scripts"), function(page){
+      sapply(c("my_studies", "my_subsets", "vocabularies", "scripts"), function(page){
         mod_page_sidenav_server(page, r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(page, r, language, i18n)
       })
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_studies / my_subsets / thesaurus / scripts - sidenav")
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_studies / my_subsets / vocabularies / scripts - sidenav")
       if (debug) print(paste0(Sys.time(), " - server - load server modules - plugins"))
       
       sapply(c("plugins_patient_lvl", "plugins_aggregated"), function(page){
@@ -250,9 +250,9 @@ app_server <- function(router, language = "en", app_folder = character(),
       mod_page_sidenav_server("settings_dev", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_dev", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_dev")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - data_sources / datamarts / thesaurus"))
+      if (debug) print(paste0(Sys.time(), " - server - load server modules - data_sources / datamarts / vocabularies"))
     
-      sapply(c("data_sources", "datamarts", "thesaurus"), function(page){
+      sapply(c("data_sources", "datamarts", "vocabularies"), function(page){
         mod_settings_data_management_server(paste0("settings_", page), r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_sidenav_server(paste0("settings_", page), r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(paste0("settings_", page), r, language, i18n)
