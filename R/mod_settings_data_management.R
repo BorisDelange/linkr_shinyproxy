@@ -17,7 +17,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
     "settings_datamarts", "data_source",
     "settings_vocabularies", "data_source")
   
-  cards <- c("datatable_card", "edit_code_card", "options_card", "sub_datatable_card")
+  cards <- c("datatable_card", "edit_code_card", "options_card", "vocabulary_tables_datatable_card", "import_vocabulary_card")
   forbidden_cards <- tagList()
   sapply(cards, function(card){
     forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, i18n = i18n))
@@ -47,9 +47,9 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
         
         forbidden_cards,
         
-        # --- --- --- --- --- -
+        # --- --- --- --- -- -
         # Management card ----
-        # --- --- --- --- --- -
+        # --- --- --- --- -- -
         
         render_settings_datatable_card(i18n = i18n, ns = ns, div_id = "datatable_card", title = "data_sources_management", inputs = c("name" = "textfield"))
       ) -> result
@@ -82,9 +82,9 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       
       forbidden_cards,
       
-      # --- --- --- --- --- -
+      # --- --- --- --- -- -
       # Management card ----
-      # --- --- --- --- --- -
+      # --- --- --- --- -- -
       
       render_settings_datatable_card(i18n = i18n, ns = ns, div_id = "datatable_card", title = "datamarts_management", 
         inputs = c("name" = "textfield", "data_source" = "dropdown")),
@@ -97,7 +97,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
         make_card(i18n$t("edit_datamart_code"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_combobox(i18n = i18n, ns = ns, label = "datamart", id = "code_chosen_datamart_thesaurus",
+              make_combobox(i18n = i18n, ns = ns, label = "datamart", id = "code_selected_datamart_or_vocabulary",
                 width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
               div(style = "width:20px;"),
               div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
@@ -133,7 +133,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       div(id = ns("options_card"),
         make_card(i18n$t("datamart_options"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "datamart", id = "options_chosen_datamart_thesaurus",
+            make_combobox(i18n = i18n, ns = ns, label = "datamart", id = "options_selected_datamart_or_vocabulary",
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(), br(),
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 10),
@@ -165,8 +165,8 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       render_settings_default_elements(ns = ns),
       shiny.fluent::reactOutput(ns("help_panel")),
       shiny.fluent::reactOutput(ns("help_modal")),
-      shiny.fluent::reactOutput(ns("thesaurus_reload_cache_confirm")),
-      shiny.fluent::reactOutput(ns("thesaurus_items_delete_confirm")),
+      shiny.fluent::reactOutput(ns("vocabulary_reload_cache_confirm")),
+      shiny.fluent::reactOutput(ns("vocabulary_concepts_delete_confirm")),
       shiny.fluent::Breadcrumb(items = list(
         list(key = "vocabularies", text = i18n$t("vocabularies"))
       ), maxDisplayedItems = 3),
@@ -180,15 +180,16 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
         shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("vocabularies_management")),
         shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_vocabulary_code")),
-        shiny.fluent::PivotItem(id = "sub_datatable_card", itemKey = "sub_datatable_card", headerText = i18n$t("vocabulary_concepts"))
+        shiny.fluent::PivotItem(id = "vocabulary_tables_datatable_card", itemKey = "vocabulary_tables_datatable_card", headerText = i18n$t("vocabulary_tables")),
+        shiny.fluent::PivotItem(id = "import_vocabulary_card", itemKey = "import_vocabulary_card", headerText = i18n$t("import_vocabulary"))
       ),
       
       
       forbidden_cards,
       
-      # --- --- --- --- --- -
+      # --- --- --- --- -- -
       # Management card ----
-      # --- --- --- --- --- -
+      # --- --- --- --- -- -
       
       div(id = ns("datatable_card"),
         make_card(i18n$t("vocabularies_management"),
@@ -218,7 +219,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
         make_card(i18n$t("edit_vocabulary_code"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "code_chosen_datamart_thesaurus",
+              make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "code_selected_datamart_or_vocabulary",
                 width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
               div(style = "width:20px;"),
               div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
@@ -247,32 +248,73 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
         ), br()
       ),
       
-      # --- --- --- --- -- -
-      # All items card ----
-      # --- --- --- --- -- -
+      # --- --- --- --- --- --- ---
+      # Vocabulary tables card ----
+      # --- --- --- --- --- --- ---
       
-      div(id = ns("sub_datatable_card"),
-        make_card(i18n$t("vocabulary_concepts"),
+      div(id = ns("vocabulary_tables_datatable_card"),
+        make_card(i18n$t("vocabulary_tables"),
           div(
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_combobox(i18n = i18n, ns = ns, label = "thesaurus_single", id = "items_chosen_thesaurus",
-                width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-              make_dropdown(i18n = i18n, ns = ns, label = "datamart", id = "thesaurus_datamart", width = "300px"),
-              conditionalPanel(condition = "input.datamart !== ''", ns = ns,
-                div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
-                  shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
+              make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "vocabulary_tables_selected_vocabulary", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+              make_dropdown(i18n = i18n, ns = ns, label = "vocabulary_table", id = "vocabulary_table", width = "300px", value = "concept",
+                options = list(
+                  list(key = "concept", text = "CONCEPT"),
+                  list(key = "domain", text = "DOMAIN"),
+                  list(key = "concept_class", text = "CONCEPT CLASS"),
+                  list(key = "concept_relationship", text = "CONCEPT RELATIONSHIP"),
+                  list(key = "relationship", text = "RELATIONSHIP"),
+                  list(key = "concept_synonym", text = "CONCEPT SYNONYM"),
+                  list(key = "concept_ancestor", text = "CONCEPT ANCESTOR"),
+                  list(key = "drug_strength", text = "DRUG STRENGTH")
+                )),
             ),
-            DT::DTOutput(ns("sub_datatable")), br(),
+            conditionalPanel(condition = "input.vocabulary_table == 'concept'", ns = ns,
+              shiny.fluent::Stack(
+                horizontal = TRUE, tokens = list(childrenGap = 50),
+                make_dropdown(i18n = i18n, ns = ns, label = "datamart", id = "vocabulary_datamart", width = "300px"),
+                conditionalPanel(condition = "input.datamart !== ''", ns = ns,
+                  div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
+                    shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
+              )
+            ),
+            DT::DTOutput(ns("vocabulary_tables_datatable")), br(),
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("sub_datatable_save"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("thesaurus_items_delete_selection"), i18n$t("delete_selection")),
-              shiny.fluent::DefaultButton.shinyInput(ns("reload_thesaurus_cache"), i18n$t("reload_cache"))
+              shiny.fluent::PrimaryButton.shinyInput(ns("vocabulary_tables_datatable_save"), i18n$t("save")),
+              shiny.fluent::DefaultButton.shinyInput(ns("vocabulary_tables_delete_selection"), i18n$t("delete_selection")),
+              conditionalPanel(condition = "input.vocabulary_table == 'concept'", ns = ns,
+                shiny.fluent::DefaultButton.shinyInput(ns("reload_vocabulary_tables_cache"), i18n$t("reload_cache")))
             )
           )
         ), br()
+      ),
+      
+      # --- --- --- --- --- --- ---
+      # Import vocabulary card ----
+      # --- --- --- --- --- --- ---
+      
+      div(id = ns("import_vocabulary_card"),
+        make_card(i18n$t("import_vocabulary"),
+          div(
+            br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::DefaultButton.shinyInput(ns("import_vocabulary_browse"), i18n$t("choose_zip_file")),
+              uiOutput(ns("import_vocabulary_status"))), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("import_vocabulary_button"), i18n$t("import_vocabulary"), iconProps = list(iconName = "Download")), br(),
+            shinyjs::hidden(
+              div(
+                id = ns("imported_vocabularies_div"), br(),
+                strong(i18n$t("imported_vocabularies")),
+                div(DT::DTOutput(ns("imported_vocabularies")))
+              )
+            ),
+            div(style = "display:none;", fileInput(ns("import_vocabulary_upload"), label = "", multiple = FALSE, accept = ".zip"))
+          )
+        )
       )
+      
     ) -> result
   }
   result
@@ -318,15 +360,15 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         
         if (table == "datamarts"){
           options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-          shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_datamart_thesaurus", options = options)
+          shiny.fluent::updateComboBox.shinyInput(session, "options_selected_datamart_or_vocabulary", options = options)
         }
         
         if (table == "vocabulary"){
           options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(vocabulary_id), key_col = "id", text_col = "vocabulary_id")
-          shiny.fluent::updateComboBox.shinyInput(session, "items_chosen_thesaurus", options = options)
+          shiny.fluent::updateComboBox.shinyInput(session, "vocabulary_tables_selected_vocabulary", options = options)
         }
         
-        shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_datamart_thesaurus", options = options)
+        shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options)
       })
     }
     
@@ -335,7 +377,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # --- --- --- --- --- ---
     
     # Toggles IDs
-    cards <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "sub_datatable_card")
+    cards <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "vocabulary_tables_datatable_card", "import_vocabulary_card")
     sapply(cards, shinyjs::hide)
     
     show_hide_cards(r = r, input = input, session = session, table = table, id = id, cards = cards)
@@ -500,11 +542,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       
       if (nrow(r[[paste0(table, "_temp")]]) > 0){
 
-        print("1")
         r[[paste0(table, "_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
           table = table, dropdowns = dropdowns_datatable, dropdowns_multiselect = dropdowns_multiselect, factorize_cols = factorize_cols,
           action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]])
-        print("2")
         
         # Replace empty data_source_id by "deleted data source"
         if (table == "datamarts"){
@@ -539,7 +579,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # --- --- --- --- --- --- --- --
     
       # Each time a row is updated, modify temp variable
-      # Do that for main datatable (management_datatable) & sub_datatable
+      # Do that for main datatable (management_datatable) & vocabulary_tables_datatable
       observeEvent(input$management_datatable_cell_edit, {
         
         if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$management_datatable_cell_edit"))
@@ -550,14 +590,14 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
       })
   
-      observeEvent(input$sub_datatable_cell_edit, {
-        
-        if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$sub_datatable_cell_edit"))
-        
-        edit_info <- input$sub_datatable_cell_edit
-        r$thesaurus_items_temp <- DT::editData(r$thesaurus_items_temp, edit_info, rownames = FALSE)
-        r$thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
-      })
+      # observeEvent(input$vocabulary_tables_datatable_cell_edit, {
+      #   
+      #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabulary_tables_datatable_cell_edit"))
+      #   
+      #   edit_info <- input$vocabulary_tables_datatable_cell_edit
+      #   r$thesaurus_items_temp <- DT::editData(r$thesaurus_items_temp, edit_info, rownames = FALSE)
+      #   r$thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
+      # })
     
       # Each time a dropdown is updated, modify temp variable
       observeEvent(r[[table]], {
@@ -572,7 +612,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       })
     
       # When save button is clicked
-      # Do that for main datatable (management_datatable) & sub_datatable
+      # Do that for main datatable (management_datatable) & vocabulary_tables_datatable
       observeEvent(input$management_save, {
         
         if (perf_monitoring) monitor_perf(r = r, action = "start")
@@ -580,21 +620,21 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         
         req(nrow(r[[paste0(table, "_temp")]]) > 0)
         
-        save_settings_datatable_updates(output = output, r = r, ns = ns, table = table, i18n = i18n, duplicates_allowed = FALSE)
+        save_settings_datatable_updates(output = output, r = r, m = m, ns = ns, table = table, i18n = i18n, duplicates_allowed = FALSE)
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$management_save"))
       })
       
-      # observeEvent(input$sub_datatable_save, {
+      # observeEvent(input$vocabulary_tables_datatable_save, {
       #   
       #   if (perf_monitoring) monitor_perf(r = r, action = "start")
-      #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$sub_datatable_save"))
+      #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabulary_tables_datatable_save"))
       #   
-      #   req(input$items_chosen_thesaurus)
+      #   req(input$vocabulary_tables_selected_vocabulary)
       #   save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", 
       #     r_table = "thesaurus_items", duplicates_allowed = TRUE, i18n = i18n)
       #   
-      #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$sub_datatable_save"))
+      #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$vocabulary_tables_datatable_save"))
       # })
       
       # --- --- --- --- --- --- --- --
@@ -612,7 +652,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       settings_information_variable <- paste0(table, "_deleted")
       settings_delete_variable <- paste0(table, "_open_dialog")
       
-      delete_element(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
+      delete_element(r = r, m = m, input = input, output = output, session = session, ns = ns, i18n = i18n,
         delete_prefix = settings_delete_prefix, dialog_title = settings_dialog_title, dialog_subtext = settings_dialog_subtext,
         react_variable = settings_react_variable, table = table, id_var_sql = settings_id_var_sql, id_var_r = settings_id_var_r,
         delete_message = settings_delete_message, translation = TRUE, reload_variable = settings_reload_variable,
@@ -660,32 +700,32 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           options <- convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
           value <- list(key = link_id, text = r$datamarts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
           
-          shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_datamart_thesaurus", options = options, value = value)
-          shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_datamart_thesaurus", options = options, value = value)
+          shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options, value = value)
+          shiny.fluent::updateComboBox.shinyInput(session, "options_selected_datamart_or_vocabulary", options = options, value = value)
           
           # Reload datatable (to unselect rows)
           DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
           
           # Set current pivot to options_card
-          shinyjs::runjs(glue::glue("$('#{id}-{paste0(table, '_pivot')} button[name=\"{i18n$t(paste0(get_singular(table), '_options'))}\"]').click();"))
+          shinyjs::runjs(glue::glue("$('#{id}-{paste0(get_plural(table), '_pivot')} button[name=\"{i18n$t(paste0(get_singular(table), '_options'))}\"]').click();"))
         })
         
-        observeEvent(input$options_chosen_datamart_thesaurus, {
+        observeEvent(input$options_selected_datamart_or_vocabulary, {
           
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$options_chosen_datamart_thesaurus"))
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$options_selected_datamart_or_vocabulary"))
           
-          if (length(input$options_chosen_datamart_thesaurus) > 1) link_id <- input$options_chosen_datamart_thesaurus$key
-          else link_id <- input$options_chosen_datamart_thesaurus
-          if (length(input$code_chosen_datamart_thesaurus) > 0){
-            if (length(input$code_chosen_datamart_thesaurus) > 1) code_link_id <- input$code_chosen_datamart_thesaurus$key
-            else code_link_id <- input$code_chosen_datamart_thesaurus
+          if (length(input$options_selected_datamart_or_vocabulary) > 1) link_id <- input$options_selected_datamart_or_vocabulary$key
+          else link_id <- input$options_selected_datamart_or_vocabulary
+          if (length(input$code_selected_datamart_or_vocabulary) > 0){
+            if (length(input$code_selected_datamart_or_vocabulary) > 1) code_link_id <- input$code_selected_datamart_or_vocabulary$key
+            else code_link_id <- input$code_selected_datamart_or_vocabulary
           }
           else code_link_id <- 0L
           
           if (link_id != code_link_id){
             options <- convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
             value <- list(key = link_id, text = r$datamarts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-            shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_datamart_thesaurus", options = options, value = value)
+            shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options, value = value)
           }
           
           category <- get_singular(word = id)
@@ -734,10 +774,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (perf_monitoring) monitor_perf(r = r, action = "start")
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$options_save"))
           
-          req(input$options_chosen_datamart_thesaurus)
+          req(input$options_selected_datamart_or_vocabulary)
           
-          if (length(input$options_chosen_datamart_thesaurus) > 1) link_id <- input$options_chosen_datamart_thesaurus$key
-          else link_id <- input$options_chosen_datamart_thesaurus
+          if (length(input$options_selected_datamart_or_vocabulary) > 1) link_id <- input$options_selected_datamart_or_vocabulary$key
+          else link_id <- input$options_selected_datamart_or_vocabulary
           
           category <- get_singular(id)
           
@@ -767,53 +807,60 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # Get link_id variable, to update code editor
           link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
           
-          options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-          value <- list(key = link_id, text = r[[table]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+          if (table == "vocabulary") {
+            options <- convert_tibble_to_list(r$vocabulary %>% dplyr::arrange(vocabulary_id), key_col = "id", text_col = "vocabulary_id")
+            value <- list(key = link_id, text = r$vocabulary %>% dplyr::filter(id == link_id) %>% dplyr::pull(vocabulary_id))
+          }
+          else {
+            options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+            value <- list(key = link_id, text = r[[table]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+          }
           
-          shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_datamart_thesaurus", options = options, value = value)
-          if (table == "datamarts") shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_datamart_thesaurus", options = options, value = value)
-          if (table == "vocabulary") shiny.fluent::updateComboBox.shinyInput(session, "items_chosen_thesaurus", options = options, value = value)
+          shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options, value = value)
+          if (table == "datamarts") shiny.fluent::updateComboBox.shinyInput(session, "options_selected_datamart_or_vocabulary", options = options, value = value)
+          if (table == "vocabulary") shiny.fluent::updateComboBox.shinyInput(session, "vocabulary_tables_selected_vocabulary", options = options, value = value)
           
           # Reload datatable (to unselect rows)
           DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
           
           # Set current pivot to edit_code_card
-          shinyjs::runjs(glue::glue("$('#{id}-{paste0(table, '_pivot')} button[name=\"{i18n$t(paste0('edit_', get_singular(table), '_code'))}\"]').click();"))
+          shinyjs::runjs(glue::glue("$('#{id}-{paste0(get_plural(table), '_pivot')} button[name=\"{i18n$t(paste0('edit_', get_singular(table), '_code'))}\"]').click();"))
           
         })
         
-        observeEvent(input$code_chosen_datamart_thesaurus, {
+        observeEvent(input$code_selected_datamart_or_vocabulary, {
           
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$code_chosen_datamart_thesaurus"))
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$code_selected_datamart_or_vocabulary"))
 
-          if (length(input$code_chosen_datamart_thesaurus) > 1) link_id <- input$code_chosen_datamart_thesaurus$key
-          else link_id <- input$code_chosen_datamart_thesaurus
+          if (length(input$code_selected_datamart_or_vocabulary) > 1) link_id <- input$code_selected_datamart_or_vocabulary$key
+          else link_id <- input$code_selected_datamart_or_vocabulary
           
           if (table == "datamarts"){
-            if (length(input$options_chosen_datamart_thesaurus) > 0){
-              if (length(input$options_chosen_datamart_thesaurus) > 1) options_link_id <- input$options_chosen_datamart_thesaurus$key
-              else options_link_id <- input$options_chosen_datamart_thesaurus
+            if (length(input$options_selected_datamart_or_vocabulary) > 0){
+              if (length(input$options_selected_datamart_or_vocabulary) > 1) options_link_id <- input$options_selected_datamart_or_vocabulary$key
+              else options_link_id <- input$options_selected_datamart_or_vocabulary
             }
             else options_link_id <- 0L
 
             if (link_id != options_link_id){
               options <- convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
               value <- list(key = link_id, text = r$datamarts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-              shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_datamart_thesaurus", options = options, value = value)
+              shiny.fluent::updateComboBox.shinyInput(session, "options_selected_datamart_or_vocabulary", options = options, value = value)
             }
           }
           
           if (table == "vocabulary"){
-            if (length(input$items_chosen_thesaurus) > 0){
-              if (length(input$items_chosen_thesaurus) > 1) items_link_id <- input$items_chosen_thesaurus$key
-              else items_link_id <- input$items_chosen_thesaurus
+            print(input$vocabulary_tables_selected_vocabulary)
+            if (length(input$vocabulary_tables_selected_vocabulary) > 0){
+              if (length(input$vocabulary_tables_selected_vocabulary) > 1) items_link_id <- input$vocabulary_tables_selected_vocabulary$key
+              else items_link_id <- input$vocabulary_tables_selected_vocabulary
             }
             else items_link_id <- 0L
             
             if (link_id != items_link_id){
-              options <- convert_tibble_to_list(r$thesaurus %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-              value <- list(key = link_id, text = r$thesaurus %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-              shiny.fluent::updateComboBox.shinyInput(session, "items_chosen_thesaurus", options = options, value = value)
+              options <- convert_tibble_to_list(r$vocabulary %>% dplyr::arrange(vocabulary_id), key_col = "id", text_col = "vocabulary_id")
+              value <- list(key = link_id, text = r$vocabulary %>% dplyr::filter(id == link_id) %>% dplyr::pull(vocabulary_id))
+              shiny.fluent::updateComboBox.shinyInput(session, "vocabulary_tables_selected_vocabulary", options = options, value = value)
             }
           }
 
@@ -821,10 +868,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # Before, restart these variables
           r$datamart_id <- NA_integer_
           r$subset_id <- NA_integer_
-          r$thesaurus_id <- NA_integer_
+          r$vocabulary_id <- NA_integer_
 
           if (id == "settings_datamarts") r$datamart_id <- link_id
-          if (id == "settings_vocabularies") r$thesaurus_id <- link_id
+          if (id == "settings_vocabularies") r$vocabulary_id <- link_id
 
           category <- get_singular(id)
 
@@ -851,10 +898,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (perf_monitoring) monitor_perf(r = r, action = "start")
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$..save"))
           
-          req(input$code_chosen_datamart_thesaurus)
+          req(input$code_selected_datamart_or_vocabulary)
           
-          if (length(input$code_chosen_datamart_thesaurus) > 1) link_id <- input$code_chosen_datamart_thesaurus$key
-          else link_id <- input$code_chosen_datamart_thesaurus
+          if (length(input$code_selected_datamart_or_vocabulary) > 1) link_id <- input$code_selected_datamart_or_vocabulary$key
+          else link_id <- input$code_selected_datamart_or_vocabulary
           
           save_settings_code(output = output, r = r, id = id, category = get_singular(id),
             code_id_input = paste0("edit_code_", link_id), edited_code = input$ace_edit_code, i18n = i18n)
@@ -927,174 +974,174 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         })
       }
       
-      # --- --- --- --- --- --- --- --- --- --- --- --
-      # Generate sub datatable with action button ----
-      # --- --- --- --- --- --- --- --- --- --- --- --
+      # --- --- --- --- --- --- --- --- --- --- -
+      # Generate vocabulary tables datatable ----
+      # --- --- --- --- --- --- --- --- --- --- -
         
       if (table == "vocabulary"){
 
         # Sub datatable is a datatable in thesaurus page, when we click on the subdatatable button of a thesaurus row
-        # It opens a tab with a datatable containing items of chosen thesaurus
+        # It opens a tab with a datatable containing items of selected thesaurus
 
         observeEvent(input$sub_datatable, {
-          
+
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$sub_datatable"))
 
           # Get link id
           link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
 
-          options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-          value <- list(key = link_id, text = r[[table]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+          options <- convert_tibble_to_list(r$vocabulary %>% dplyr::arrange(vocabulary_id), key_col = "id", text_col = "vocabulary_id")
+          value <- list(key = link_id, text = r$vocabulary %>% dplyr::filter(id == link_id) %>% dplyr::pull(vocabulary_id))
 
-          shiny.fluent::updateComboBox.shinyInput(session, "items_chosen_thesaurus", options = options, value = value)
-          shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_datamart_thesaurus", options = options, value = value)
+          shiny.fluent::updateComboBox.shinyInput(session, "vocabulary_tables_selected_vocabulary", options = options, value = value)
+          shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options, value = value)
 
           # Set current pivot to edit_code_card
-          shinyjs::runjs(glue::glue("$('#{id}-thesaurus_pivot button[name=\"{i18n$t('thesaurus_items')}\"]').click();"))
+          shinyjs::runjs(glue::glue("$('#{id}-vocabularies_pivot button[name=\"{i18n$t('vocabulary_tables')}\"]').click();"))
         })
 
-        observeEvent(input$items_chosen_thesaurus, {
-          
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$items_chosen_thesaurus"))
+        observeEvent(input$vocabulary_tables_selected_vocabulary, {
 
-          if (length(input$items_chosen_thesaurus) > 1) link_id <- input$items_chosen_thesaurus$key
-          else link_id <- input$items_chosen_thesaurus
-          if (length(input$code_chosen_datamart_thesaurus) > 0){
-            if (length(input$code_chosen_datamart_thesaurus) > 1) code_link_id <- input$code_chosen_datamart_thesaurus$key
-            else code_link_id <- input$code_chosen_datamart_thesaurus
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabulary_tables_selected_vocabulary"))
+
+          if (length(input$vocabulary_tables_selected_vocabulary) > 1) link_id <- input$vocabulary_tables_selected_vocabulary$key
+          else link_id <- input$vocabulary_tables_selected_vocabulary
+          if (length(input$code_selected_datamart_or_vocabulary) > 0){
+            if (length(input$code_selected_datamart_or_vocabulary) > 1) code_link_id <- input$code_selected_datamart_or_vocabulary$key
+            else code_link_id <- input$code_selected_datamart_or_vocabulary
           }
           else code_link_id <- 0L
 
           if (link_id != code_link_id){
-            options <- convert_tibble_to_list(r$thesaurus %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-            value <- list(key = link_id, text = r$thesaurus %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-            shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_datamart_thesaurus", options = options, value = value)
+            options <- convert_tibble_to_list(r$vocabulary %>% dplyr::arrange(vocabulary_id), key_col = "id", text_col = "vocabulary_id")
+            value <- list(key = link_id, text = r$vocabulary %>% dplyr::filter(id == link_id) %>% dplyr::pull(vocabulary_id))
+            shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options, value = value)
           }
 
           # Create a r var to export value to other observers
-          r$thesaurus_link_id <- link_id
+          r$vocabulary_link_id <- link_id
 
-          # Get datamarts linked to this thesaurus
-          data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
+          # Get datamarts linked to this vocabulary
+          data_sources <- stringr::str_split(r$vocabulary %>% dplyr::filter(id == link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
           datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
 
           options <- convert_tibble_to_list(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-          shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_datamart", options = options, value = NULL)
+          shiny.fluent::updateComboBox.shinyInput(session, "vocabulary_datamart", options = options, value = NULL)
 
-          # Set r$thesaurus_refresh_thesaurus_items to "all_items", cause we havn't chosen yet the thesaurus or the datamart
-          r$thesaurus_refresh_thesaurus_items <- paste0(link_id, "reset_all_items")
+          # Set r$vocabulary_refresh_vocabulary_concepts to "all_items", cause we havn't selected yet the vocabulary or the datamart
+          r$vocabulary_refresh_vocabulary_concepts <- paste0(link_id, "reset_all_items")
         })
 
-        observeEvent(input$show_only_used_items, {
-          
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$show_only_used_items"))
-          
-          if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- "only_used_items"
-          else r$thesaurus_refresh_thesaurus_items <- "all_items"
-        })
+        # observeEvent(input$show_only_used_items, {
+        # 
+        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$show_only_used_items"))
+        # 
+        #   if (input$show_only_used_items) r$vocabulary_refresh_vocabulary_concepts <- "only_used_items"
+        #   else r$vocabulary_refresh_vocabulary_concepts <- "all_items"
+        # })
 
         # When value of datamart changes, change value or r$thesaurus_refresh_thesaurus_items, depending on show_only_used_items
-        # Add input$thesaurus_datamart in the value, to refresh even if the value doesn't change
+        # Add input$vocabulary_datamart in the value, to refresh even if the value doesn't change
         # (if I change datamart and keep "all_items"), it won't active observer cause value hasn't changed...
 
-        observeEvent(input$thesaurus_datamart, {
-          
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_datamart"))
-          
-          if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- paste0(input$thesaurus_datamart, "only_used_items")
-          else r$thesaurus_refresh_thesaurus_items <- r$thesaurus_refresh_thesaurus_items <- paste0(input$thesaurus_datamart, "all_items")
-        })
+        # observeEvent(input$vocabulary_datamart, {
+        #   
+        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabulary_datamart"))
+        #   
+        #   if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- paste0(input$vocabulary_datamart, "only_used_items")
+        #   else r$thesaurus_refresh_thesaurus_items <- r$thesaurus_refresh_thesaurus_items <- paste0(input$vocabulary_datamart, "all_items")
+        # })
 
-        observeEvent(r$thesaurus_refresh_thesaurus_items, {
-          
-          if (perf_monitoring) monitor_perf(r = r, action = "start")
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$thesaurus_refresh_thesaurus_items"))
-
-          req(r$thesaurus_link_id)
-
-          # Get all items from the chosen thesaurus
-
-          r$thesaurus_items <- create_datatable_cache(output = output, r = r, d = d, i18n = i18n, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
-
-          if (length(input$thesaurus_datamart) > 0 & !grepl("reset", r$thesaurus_refresh_thesaurus_items)){
-            if (input$thesaurus_datamart != ""){
-
-              count_items_rows <- tibble::tibble()
-              count_patients_rows <- tibble::tibble()
-
-              # Add count_items_rows in the cache & get it if already in the cache
-              tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, d = d, i18n = i18n, thesaurus_id = r$thesaurus_link_id,
-                datamart_id = as.integer(input$thesaurus_datamart), category = "count_items_rows"),
-                error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart",
-                  error_name = paste0(id, " - count_items_rows"), category = "Error", error_report = toString(e), i18n = i18n))
-
-              # Add count_items_rows in the cache & get it if already in the cache
-              tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, d = d, i18n = i18n, thesaurus_id = r$thesaurus_link_id,
-                datamart_id = as.integer(input$thesaurus_datamart), category = "count_patients_rows"),
-                error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart",
-                  error_name = paste0(id, " - count_patients_rows"), category = "Error", error_report = toString(e), i18n = i18n))
-
-              if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
-              req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
-
-              # Transform count_rows cols to integer, to be sortable
-              r$thesaurus_items <- r$thesaurus_items %>%
-                dplyr::left_join(count_items_rows, by = "item_id") %>%
-                dplyr::left_join(count_patients_rows, by = "item_id") %>%
-                dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
-                dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
-
-              # If r$thesaurus_refresh_thesaurus_items is set to "only_used_items", filter on count_items_rows > 0
-              if (grepl("only_used_items", r$thesaurus_refresh_thesaurus_items)) r$thesaurus_items <- r$thesaurus_items %>% dplyr::filter(count_items_rows > 0)
-
-              # r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-            }
-          }
-
-          r$thesaurus_items_temp <- r$thesaurus_items %>%
-            dplyr::mutate(modified = FALSE) %>%
-            dplyr::mutate_at("item_id", as.character) %>%
-            dplyr::arrange(name)
-
-          action_buttons <- "delete"
-
-          editable_cols <- c("name", "display_name", "unit")
-          searchable_cols <- c("item_id", "name", "display_name", "unit")
-          factorize_cols <- c("unit")
-          column_widths <- c("item_id" = "80px", "action" = "80px", "unit" = "100px")
-
-          if ("count_patients_rows" %in% names(r$thesaurus_items)){
-            sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
-            centered_cols <- c("id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-            col_names <- get_col_names(table_name = "thesaurus_items_with_counts", i18n = i18n)
-          }
-          else {
-            sortable_cols <- c("id", "name", "display_name", "category")
-            centered_cols <- c("id", "unit", "datetime", "action")
-            col_names <- get_col_names(table_name = "thesaurus_items", i18n = i18n)
-          }
-
-          hidden_cols <- c("id", "thesaurus_id", "datetime", "deleted", "modified")
-
-          # Render datatable
-          render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$thesaurus_items_temp,
-            output_name = "sub_datatable", col_names =  col_names,
-            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-            searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
-
-          # Create a proxy for datatatable
-          r$sub_thesaurus_datatable_proxy <- DT::dataTableProxy("sub_datatable", deferUntilFlush = FALSE)
-
-          # Reload datatable
-          observeEvent(r$thesaurus_items_temp, {
-
-            # Reload data of datatable
-            DT::replaceData(r$sub_thesaurus_datatable_proxy, r$thesaurus_items_temp, resetPaging = FALSE, rownames = FALSE)
-          })
-          
-          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$thesaurus_refresh_thesaurus_items"))
-
-        })
+        # observeEvent(r$thesaurus_refresh_thesaurus_items, {
+        #   
+        #   if (perf_monitoring) monitor_perf(r = r, action = "start")
+        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$thesaurus_refresh_thesaurus_items"))
+        # 
+        #   req(r$thesaurus_link_id)
+        # 
+        #   # Get all items from the selected thesaurus
+        # 
+        #   r$thesaurus_items <- create_datatable_cache(output = output, r = r, d = d, i18n = i18n, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
+        # 
+        #   if (length(input$vocabulary_datamart) > 0 & !grepl("reset", r$thesaurus_refresh_thesaurus_items)){
+        #     if (input$vocabulary_datamart != ""){
+        # 
+        #       count_items_rows <- tibble::tibble()
+        #       count_patients_rows <- tibble::tibble()
+        # 
+        #       # Add count_items_rows in the cache & get it if already in the cache
+        #       tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, d = d, i18n = i18n, thesaurus_id = r$thesaurus_link_id,
+        #         datamart_id = as.integer(input$vocabulary_datamart), category = "count_items_rows"),
+        #         error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart",
+        #           error_name = paste0(id, " - count_items_rows"), category = "Error", error_report = toString(e), i18n = i18n))
+        # 
+        #       # Add count_items_rows in the cache & get it if already in the cache
+        #       tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, d = d, i18n = i18n, thesaurus_id = r$thesaurus_link_id,
+        #         datamart_id = as.integer(input$vocabulary_datamart), category = "count_patients_rows"),
+        #         error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart",
+        #           error_name = paste0(id, " - count_patients_rows"), category = "Error", error_report = toString(e), i18n = i18n))
+        # 
+        #       if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
+        #       req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
+        # 
+        #       # Transform count_rows cols to integer, to be sortable
+        #       r$thesaurus_items <- r$thesaurus_items %>%
+        #         dplyr::left_join(count_items_rows, by = "item_id") %>%
+        #         dplyr::left_join(count_patients_rows, by = "item_id") %>%
+        #         dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
+        #         dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
+        # 
+        #       # If r$thesaurus_refresh_thesaurus_items is set to "only_used_items", filter on count_items_rows > 0
+        #       if (grepl("only_used_items", r$thesaurus_refresh_thesaurus_items)) r$thesaurus_items <- r$thesaurus_items %>% dplyr::filter(count_items_rows > 0)
+        # 
+        #       # r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+        #     }
+        #   }
+        # 
+        #   r$thesaurus_items_temp <- r$thesaurus_items %>%
+        #     dplyr::mutate(modified = FALSE) %>%
+        #     dplyr::mutate_at("item_id", as.character) %>%
+        #     dplyr::arrange(name)
+        # 
+        #   action_buttons <- "delete"
+        # 
+        #   editable_cols <- c("name", "display_name", "unit")
+        #   searchable_cols <- c("item_id", "name", "display_name", "unit")
+        #   factorize_cols <- c("unit")
+        #   column_widths <- c("item_id" = "80px", "action" = "80px", "unit" = "100px")
+        # 
+        #   if ("count_patients_rows" %in% names(r$thesaurus_items)){
+        #     sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
+        #     centered_cols <- c("id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
+        #     col_names <- get_col_names(table_name = "thesaurus_items_with_counts", i18n = i18n)
+        #   }
+        #   else {
+        #     sortable_cols <- c("id", "name", "display_name", "category")
+        #     centered_cols <- c("id", "unit", "datetime", "action")
+        #     col_names <- get_col_names(table_name = "thesaurus_items", i18n = i18n)
+        #   }
+        # 
+        #   hidden_cols <- c("id", "thesaurus_id", "datetime", "deleted", "modified")
+        # 
+        #   # Render datatable
+        #   render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$thesaurus_items_temp,
+        #     output_name = "vocabulary_tables_datatable", col_names =  col_names,
+        #     editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+        #     searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
+        # 
+        #   # Create a proxy for datatatable
+        #   r$sub_thesaurus_datatable_proxy <- DT::dataTableProxy("vocabulary_tables_datatable", deferUntilFlush = FALSE)
+        # 
+        #   # Reload datatable
+        #   observeEvent(r$thesaurus_items_temp, {
+        # 
+        #     # Reload data of datatable
+        #     DT::replaceData(r$sub_thesaurus_datatable_proxy, r$thesaurus_items_temp, resetPaging = FALSE, rownames = FALSE)
+        #   })
+        #   
+        #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$thesaurus_refresh_thesaurus_items"))
+        # 
+        # })
 
         # Reload cache
 
@@ -1104,74 +1151,74 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
 
         r[[thesaurus_reload_cache_variable]] <- FALSE
 
-        output[[thesaurus_reload_cache_react_variable]] <- shiny.fluent::renderReact({
-          
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - output$thesaurus_reload_cache_confirm"))
-
-          shiny.fluent::Dialog(
-            hidden = !r[[thesaurus_reload_cache_variable]],
-            onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", thesaurus_reload_cache_prefix, "_hide_dialog', Math.random()); }")),
-            dialogContentProps = list(type = 0, title = i18n$t("thesaurus_reload_cache_text"), closeButtonAriaLabel = "Close", subText = tagList(i18n$t("thesaurus_reload_cache_subtext"), br(), br())),
-            modalProps = list(),
-            shiny.fluent::DialogFooter(
-              shiny.fluent::PrimaryButton.shinyInput(ns(paste0(thesaurus_reload_cache_prefix, "_reload_cache_confirmed")), text = i18n$t("yes")),
-              shiny.fluent::DefaultButton.shinyInput(ns(paste0(thesaurus_reload_cache_prefix, "_reload_cache_canceled")), text = i18n$t("no"))
-            )
-          )
-        })
+        # output[[thesaurus_reload_cache_react_variable]] <- shiny.fluent::renderReact({
+        #   
+        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - output$thesaurus_reload_cache_confirm"))
+        # 
+        #   shiny.fluent::Dialog(
+        #     hidden = !r[[thesaurus_reload_cache_variable]],
+        #     onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", thesaurus_reload_cache_prefix, "_hide_dialog', Math.random()); }")),
+        #     dialogContentProps = list(type = 0, title = i18n$t("thesaurus_reload_cache_text"), closeButtonAriaLabel = "Close", subText = tagList(i18n$t("thesaurus_reload_cache_subtext"), br(), br())),
+        #     modalProps = list(),
+        #     shiny.fluent::DialogFooter(
+        #       shiny.fluent::PrimaryButton.shinyInput(ns(paste0(thesaurus_reload_cache_prefix, "_reload_cache_confirmed")), text = i18n$t("yes")),
+        #       shiny.fluent::DefaultButton.shinyInput(ns(paste0(thesaurus_reload_cache_prefix, "_reload_cache_canceled")), text = i18n$t("no"))
+        #     )
+        #   )
+        # })
 
         # Whether to close or not delete dialog box
-        observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_hide_dialog")]], {
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_hide_dialog"))
-          r[[thesaurus_reload_cache_variable]] <- FALSE
-        })
-        observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_canceled")]], {
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_canceled"))
-          r[[thesaurus_reload_cache_variable]] <- FALSE
-        })
+        # observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_hide_dialog")]], {
+        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_hide_dialog"))
+        #   r[[thesaurus_reload_cache_variable]] <- FALSE
+        # })
+        # observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_canceled")]], {
+        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_canceled"))
+        #   r[[thesaurus_reload_cache_variable]] <- FALSE
+        # })
 
-        observeEvent(input$reload_thesaurus_cache, {
-          
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$reload_thesaurus_cache"))
+        # observeEvent(input$reload_vocabulary_tables_cache, {
+        #   
+        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$reload_vocabulary_tables_cache"))
+        # 
+        #   req(length(input$vocabulary_tables_selected_vocabulary) > 1)
+        #   r[[thesaurus_reload_cache_variable]] <- TRUE
+        # })
 
-          req(length(input$items_chosen_thesaurus) > 1)
-          r[[thesaurus_reload_cache_variable]] <- TRUE
-        })
-
-        observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_confirmed")]], {
-          
-          if (perf_monitoring) monitor_perf(r = r, action = "start")
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_confirmed"))
-
-          r[[thesaurus_reload_cache_variable]] <- FALSE
-
-          sql <- glue::glue_sql("SELECT id FROM thesaurus_items WHERE thesaurus_id = {r$thesaurus_link_id}", .con = r$db)
-          thesaurus_items <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
-
-          sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
-            "link_id IN ({thesaurus_items*})"), .con = r$db)
-
-          # Delete cache
-          sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
-            "link_id IN ({thesaurus_items*})"), .con = r$db)
-          query <- DBI::dbSendStatement(r$db, sql)
-          DBI::dbClearResult(query)
-
-          sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
-            "link_id IN ({thesaurus_items*})"), .con = r$db)
-
-          # Reset datamart dropdown
-          data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == r$thesaurus_link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
-          datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
-
-          options <- convert_tibble_to_list(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-          shiny.fluent::updateComboBox.shinyInput(session, "thesaurus_datamart", options = options, value = NULL)
-
-          # Reload datatable
-          r$thesaurus_refresh_thesaurus_items <- paste0(Sys.time(), "reset")
-          
-          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_confirmed"))
-        })
+        # observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_confirmed")]], {
+        #   
+        #   if (perf_monitoring) monitor_perf(r = r, action = "start")
+        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_confirmed"))
+        # 
+        #   r[[thesaurus_reload_cache_variable]] <- FALSE
+        # 
+        #   sql <- glue::glue_sql("SELECT id FROM thesaurus_items WHERE thesaurus_id = {r$thesaurus_link_id}", .con = r$db)
+        #   thesaurus_items <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
+        # 
+        #   sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
+        #     "link_id IN ({thesaurus_items*})"), .con = r$db)
+        # 
+        #   # Delete cache
+        #   sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
+        #     "link_id IN ({thesaurus_items*})"), .con = r$db)
+        #   query <- DBI::dbSendStatement(r$db, sql)
+        #   DBI::dbClearResult(query)
+        # 
+        #   sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
+        #     "link_id IN ({thesaurus_items*})"), .con = r$db)
+        # 
+        #   # Reset datamart dropdown
+        #   data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == r$thesaurus_link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
+        #   datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
+        # 
+        #   options <- convert_tibble_to_list(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+        #   shiny.fluent::updateComboBox.shinyInput(session, "vocabulary_datamart", options = options, value = NULL)
+        # 
+        #   # Reload datatable
+        #   r$thesaurus_refresh_thesaurus_items <- paste0(Sys.time(), "reset")
+        #   
+        #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_confirmed"))
+        # })
 
         # Delete a row or multiple rows in datatable
 
@@ -1196,32 +1243,40 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
 
         # Delete one row (with icon on DT)
 
-        observeEvent(input$thesaurus_items_deleted_pressed, {
-          
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_items_deleted_pressed"))
-
-          r[[paste0(id, "_delete_thesaurus_items")]] <- as.integer(substr(input$thesaurus_items_deleted_pressed, nchar("sub_delete_") + 1, 100))
-          r[[thesaurus_items_delete_variable]] <- TRUE
-        })
+        # observeEvent(input$thesaurus_items_deleted_pressed, {
+        #   
+        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_items_deleted_pressed"))
+        # 
+        #   r[[paste0(id, "_delete_thesaurus_items")]] <- as.integer(substr(input$thesaurus_items_deleted_pressed, nchar("sub_delete_") + 1, 100))
+        #   r[[thesaurus_items_delete_variable]] <- TRUE
+        # })
 
         # Delete multiple rows (with "Delete selection" button)
 
-        observeEvent(input$thesaurus_items_delete_selection, {
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_items_delete_selection"))
+        # observeEvent(input$vocabulary_tables_delete_selection, {
+        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabulary_tables_delete_selection"))
+        # 
+        #   req(length(input$vocabulary_tables_datatable_rows_selected) > 0)
+        # 
+        #   r[[paste0(id, "_delete_thesaurus_items")]] <- r$thesaurus_items_temp[input$vocabulary_tables_datatable_rows_selected, ] %>% dplyr::pull(id)
+        #   r[[thesaurus_items_delete_variable]] <- TRUE
+        # })
 
-          req(length(input$sub_datatable_rows_selected) > 0)
-
-          r[[paste0(id, "_delete_thesaurus_items")]] <- r$thesaurus_items_temp[input$sub_datatable_rows_selected, ] %>% dplyr::pull(id)
-          r[[thesaurus_items_delete_variable]] <- TRUE
-        })
-
-        observeEvent(r[[thesaurus_items_reload_variable]], {
-          
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$reload_thesaurus_items"))
-
-          # Reload datatable
-          r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-        })
+        # observeEvent(r[[thesaurus_items_reload_variable]], {
+        #   
+        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$reload_thesaurus_items"))
+        # 
+        #   # Reload datatable
+        #   r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
+        # })
+      }
+      
+      # --- --- --- --- --- -- -
+      # Import a vocabulary ----
+      # --- --- --- --- --- -- -
+      
+      if (table == "vocabulary"){
+        
       }
   })
 }

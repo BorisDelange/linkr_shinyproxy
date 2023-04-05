@@ -177,7 +177,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   
   if (table_name == "vocabulary") result <- c(i18n$t("id"), i18n$t("vocabulary_id_col"), i18n$t("vocabulary_name_col"),
     i18n$t("vocabulary_reference"), i18n$t("vocabulary_version"), i18n$t("vocabulary_concept_id"), i18n$t("data_source_id"),
-    i18n$t("display_order"), i18n$t("creator_id"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+    i18n$t("display_order"), i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   
   if (table_name == "studies"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"),

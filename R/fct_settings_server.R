@@ -414,8 +414,6 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
   # Reload cache if necessary
   if (data %>% dplyr::filter(is.na(data$value) | data$value == "") %>% nrow() > 0){
     
-    # print(paste0("reload cache ", category))
-    
     # Reload data
     if (category %in% c("count_items_rows", "count_patients_rows")){
       sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} ",
@@ -726,13 +724,13 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
     DBI::dbSendStatement(r$db, sql) -> query
     DBI::dbClearResult(query)
     
-    if (table %in% m_tables){
-      if (length(r_table) > 0) m[[r_table]] <- m[[r_table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
-      else m[[table]] <- m[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]]) 
-    }
-    else {
+    if (table %not_in% m_tables | table == "vocabulary"){
       if (length(r_table) > 0) r[[r_table]] <- r[[r_table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
       else r[[table]] <- r[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
+    }
+    else {
+      if (length(r_table) > 0) m[[r_table]] <- m[[r_table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
+      else m[[table]] <- m[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]]) 
     }
     
     # # Notify user
@@ -1404,7 +1402,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   
   m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients",
     "concept", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
-  
+
   if (table %in% m_tables) db <- m$db
   else db <- r$db
   
@@ -1414,7 +1412,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   if (length(r_table) == 0) r_table <- table
   
   if (!duplicates_allowed){
-    
+
     duplicates_name <- 0
     duplicates_display_order <- 0
     module_is_its_own_parent <- 0
@@ -1423,7 +1421,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
     # For modules tables (patient_lvl & aggregated, modules / modules_families / modules_elements)
     # Duplicates names are grouped (by family for modules, by module for modules elements)
     # It's the same with the display order
-    
+
     if (grepl("modules", table)){
       if (table %in% c("patient_lvl_modules", "aggregated_modules")){
         
@@ -1451,18 +1449,17 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
       
     }
     
-    # For other tables
-    if (!grepl("modules", table)){
-      
-      if (table == "users") duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("username", tolower) %>%
-          dplyr::group_by(username) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-      
-      if (table != "users"){
-        if (table %in% m_tables) duplicates_name <- m[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
-            dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow() 
-        else duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+    else if (table == "users") duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("username", tolower) %>%
+      dplyr::group_by(username) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+    
+    else if (table == "vocabulary") duplicates_name <- r[[paste0(r_table, "_temp")]] %>%
+      dplyr::group_by(vocabulary_id) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+    
+    else {
+      if (table %in% m_tables) duplicates_name <- m[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
           dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow() 
-      }
+      else duplicates_name <- r[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
+        dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow() 
     }
     
     if (duplicates_display_order > 0){
@@ -1487,8 +1484,10 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   
   names_empty <- 0
   if (table == "users") names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(username == "") %>% nrow()
+  else if (table == "vocabulary") names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(vocabulary_id == "") %>% nrow()
+  else if (table %in% m_tables) names_empty <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(name == "") %>% nrow()
   else names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(name == "") %>% nrow()
-  
+
   if (names_empty > 0){
     if (!r_message_bar) show_message_bar(output, "names_empty", "severeWarning", i18n, ns = ns)
     if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "names_empty", type = "severeWarning", trigger = Sys.time())
@@ -1498,23 +1497,24 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   
   # Save changes in database
 
-  if (table %in% m_tables) ids_to_del <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
-  else ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+  if (table %not_in% m_tables | table == "vocabulary") ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+  else ids_to_del <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
 
   if (length(ids_to_del) == 0){
     if (!r_message_bar) show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
     if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_saved", type = "success", trigger = Sys.time())
   }
-  
+
   req(length(ids_to_del) > 0)
 
-  DBI::dbSendStatement(db, paste0("DELETE FROM ", table, " WHERE id IN (", paste(ids_to_del, collapse = ","), ")")) -> query
+  sql <- glue::glue_sql("DELETE FROM {`table`} WHERE id IN ({ids_to_del*})", .con = db)
+  DBI::dbSendStatement(db, sql) -> query
   DBI::dbClearResult(query)
 
   # If action in columns, remove before insert into database (for thesaurus_items with cache system)
   # Same with count_items_rows (and count_patients_rows, always with count_items_rows)
-  if (table %in% m_tables) data <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
-  else data <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
+  if (table %not_in% m_tables | table == "vocabulary") data <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
+  else data <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
   
   if ("action" %in% names(data)) data <- data %>% dplyr::select(-action)
   if ("count_items_rows" %in% names(data)) data <- data %>% dplyr::select(-count_items_rows, -count_patients_rows)
@@ -1522,11 +1522,11 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   DBI::dbAppendTable(db, table, data)
 
   # Reload r variable
-  if (table %in% m_tables) m[[r_table]] <- m[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
-  else r[[r_table]] <- r[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
+  if (table %not_in% m_tables | table == "vocabulary") r[[r_table]] <- r[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
+  else m[[r_table]] <- m[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
   # if (table == "thesaurus_items") r$datamart_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
   # else update_r(r = r, table = table, i18n = i18n)
-  
+
   # Notify user
   if (!r_message_bar) show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
   if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_saved", type = "success", trigger = Sys.time())

@@ -163,8 +163,9 @@ linkr <- function(
       "vocabularies_items_card",
       "vocabularies_mapping_card",
       "vocabularies_datatable_card",
-      "vocabularies_sub_datatable_card",
-      "vocabularies_edit_code_card"),
+      "vocabularies_vocabulary_tables_datatable_card",
+      "vocabularies_edit_code_card",
+      "vocabularies_import_vocabulary_card"),
     "plugins", c(
       "plugins_see_all_data",
       "all_plugins_card",
