@@ -213,12 +213,12 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
     if (has_internet){
       
       # Datamart code
-      try(datamart_code <- readLines("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/datamarts/mimic_iv_demo_1.0.R", warn = FALSE) %>%
-        paste(collapse = "\n"))
+      tryCatch(datamart_code <- readLines("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/datamarts/mimic_iv_demo_1.0.R", warn = FALSE) %>%
+        paste(collapse = "\n"), error = function(e) "", warning = function(w) "")
       
       # Thesaurus code
-      try(thesaurus_code <- readLines("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/thesaurus/mimic_iv_1.0.R", warn = FALSE) %>%
-        paste(collapse = "\n"))
+      tryCatch(thesaurus_code <- readLines("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/thesaurus/mimic_iv_1.0.R", warn = FALSE) %>%
+        paste(collapse = "\n"), error = function(e) "", warning = function(w) "")
     }
     
     # Subset code

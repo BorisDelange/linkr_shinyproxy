@@ -215,7 +215,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
             div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"),
             shiny::uiOutput(ns("code_result_ui")), br(),
             div(verbatimTextOutput(ns("code_result_server")), 
-                style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
         ), br()
       )

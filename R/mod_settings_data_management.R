@@ -255,37 +255,57 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       div(id = ns("vocabularies_tables_datatable_card"),
         make_card(i18n$t("vocabularies_tables"),
           div(
-          shiny.fluent::Stack(
-            horizontal = TRUE, tokens = list(childrenGap = 50),
-             make_dropdown(i18n = i18n, ns = ns, label = "table", id = "vocabularies_table", width = "300px",
-              options = list(
-                list(key = "concept", text = "CONCEPT"),
-                list(key = "domain", text = "DOMAIN"),
-                list(key = "concept_class", text = "CONCEPT CLASS"),
-                list(key = "concept_relationship", text = "CONCEPT RELATIONSHIP"),
-                list(key = "relationship", text = "RELATIONSHIP"),
-                list(key = "concept_synonym", text = "CONCEPT SYNONYM"),
-                list(key = "concept_ancestor", text = "CONCEPT ANCESTOR"),
-                list(key = "drug_strength", text = "DRUG STRENGTH")
-              )),
-              make_dropdown(i18n = i18n, ns = ns, label = "columns", id = "vocabularies_table_cols", width = "300px", multiSelect = TRUE)
-            ),
-            conditionalPanel(condition = "input.vocabulary_table == 'concept'", ns = ns,
-              shiny.fluent::Stack(
-                horizontal = TRUE, tokens = list(childrenGap = 50),
-                make_dropdown(i18n = i18n, ns = ns, label = "datamart", id = "vocabularies_datamart", width = "300px"),
-                conditionalPanel(condition = "input.datamart !== ''", ns = ns,
-                  div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
-                    shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
-              )
-            ),
-            DT::DTOutput(ns("vocabularies_tables_datatable")), br(),
             shiny.fluent::Stack(
-              horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("vocabularies_tables_datatable_save"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("vocabularies_tables_delete_selection"), i18n$t("delete_selection")),
+              horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_dropdown(i18n = i18n, ns = ns, label = "table", id = "vocabularies_table", width = "300px",
+                options = list(
+                  list(key = "concept", text = "CONCEPT"),
+                  list(key = "domain", text = "DOMAIN"),
+                  list(key = "concept_class", text = "CONCEPT CLASS"),
+                  list(key = "concept_relationship", text = "CONCEPT RELATIONSHIP"),
+                  list(key = "relationship", text = "RELATIONSHIP"),
+                  list(key = "concept_synonym", text = "CONCEPT SYNONYM"),
+                  list(key = "concept_ancestor", text = "CONCEPT ANCESTOR"),
+                  list(key = "drug_strength", text = "DRUG STRENGTH")
+                )),
+              make_dropdown(i18n = i18n, ns = ns, label = "columns", id = "vocabularies_table_cols", width = "300px", multiSelect = TRUE),
               conditionalPanel(condition = "input.vocabularies_table == 'concept'", ns = ns,
-                shiny.fluent::DefaultButton.shinyInput(ns("reload_vocabularies_tables_cache"), i18n$t("reload_cache")))
+                div(shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                  make_toggle(i18n = i18n, ns = ns, label = "vocabularies_datatable_show_mapped_concepts", inline = TRUE), style = "margin-top:45px;"))),
+              conditionalPanel(condition = "['concept_relationship', 'concept_synonym', 'concept_ancestor', 'drug_strength'].includes(input.vocabularies_table)", ns = ns,
+                div(shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                  make_toggle(i18n = i18n, ns = ns, label = "vocabularies_datatable_show_row_details", inline = TRUE), style = "margin-top:45px;")))
+            ),
+            # conditionalPanel(condition = "input.vocabularies_table == 'concept'", ns = ns,
+            #   shiny.fluent::Stack(
+            #     horizontal = TRUE, tokens = list(childrenGap = 50),
+            #     make_dropdown(i18n = i18n, ns = ns, label = "datamart", id = "vocabularies_datamart", width = "300px"),
+            #     conditionalPanel(condition = "input.datamart !== ''", ns = ns,
+            #       div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
+            #         shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
+            #   )
+            # ),
+            DT::DTOutput(ns("vocabularies_tables_datatable")), br(),
+            conditionalPanel(condition = "input.vocabularies_table == null", ns = ns, div(br(), br(), br())),
+            div(
+              shiny.fluent::Stack(
+                horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::PrimaryButton.shinyInput(ns("vocabularies_tables_datatable_save"), i18n$t("save")),
+                shiny.fluent::DefaultButton.shinyInput(ns("vocabularies_tables_delete_selection"), i18n$t("delete_selection")),
+                conditionalPanel(condition = "input.vocabularies_table == 'concept'", ns = ns,
+                  shiny.fluent::DefaultButton.shinyInput(ns("reload_vocabularies_tables_cache"), i18n$t("reload_cache")))
+              ),
+              style = "position:relative; margin-top:-50px;"
+            ),
+            conditionalPanel(condition = "input.vocabularies_datatable_show_mapped_concepts == true && input.vocabularies_table == 'concept'", ns = ns, 
+              br(), hr(), br(),
+              DT::DTOutput(ns("vocabularies_tables_mapped_concepts_datatable"))
+            ),
+            conditionalPanel(condition = paste0("['concept_relationship', 'concept_synonym', 'concept_ancestor', 'drug_strength'].includes(input.vocabularies_table) && ",
+              "input.vocabularies_datatable_show_row_details == true"), ns = ns, 
+              br(),
+              div(uiOutput(ns("vocabularies_datatable_row_details")), 
+                style = "width: 99%; border-style: dashed; border-width: 1px; padding: 8px; margin-right: 5px;")
             )
           )
         ), br()
@@ -1056,11 +1076,13 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           list(key = 11, text = "valid_end_date"),
           list(key = 12, text = "invalid_reason"))
         table_cols_options_value$drug_strength <- c(1, 2, 3, 4, 5, 6, 7, 8, 9)
-
+        
         observeEvent(input$vocabularies_table, {
           
-          if (perf_monitoring) monitor_perf(r = r, action = "start")
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_table"))
+          
+          # Reset vocabularies_datatable_row_details div
+          output$vocabularies_datatable_row_details <- renderUI("")
           
           # Update dropdown with which cols to show
           
@@ -1074,6 +1096,27 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           }
           
           # Render datatable
+          r$vocabularies_table_render_datatable <- Sys.time()
+        })
+        
+        # Reload datatable when toggle row_details is updated, to change selection (single / multiple)
+        observeEvent(input$vocabularies_datatable_show_row_details, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_datatable_show_row_details"))
+          r$vocabularies_table_render_datatable <- Sys.time()
+        })
+        
+        # Render datatable
+        observeEvent(r$vocabularies_table_render_datatable, {
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$vocabularies_table_render_datatable"))
+          
+          req(input$vocabularies_table)
+          
+          # Reset vocabularies_datatable_row_details output
+          output$vocabularies_datatable_row_details <- renderUI("")
+          
+          # Datatable args
           
           editable_cols <- switch(input$vocabularies_table,
             "concept" = c("concept_id", "concept_name", "domain_id", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code",
@@ -1147,22 +1190,99 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           data <- r[[input$vocabularies_table]] %>% dplyr::mutate_at(cols_to_char, as.character)
           
+          if (input$vocabularies_datatable_show_row_details) selection <- "single" else selection <- "multiple"
+          
           render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data,
             output_name = "vocabularies_tables_datatable", editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
-            hidden_cols = c("id", "modified"), searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, selection = "multiple")
+            hidden_cols = c("id", "modified"), searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, selection = selection)
           
           # Create a proxy
           
-          r$vocabularies_tables_datatable_proxy <- DT::dataTableProxy("vocabularies_tables_datatable", deferUntilFlush = FALSE)
+          if (length(r$vocabularies_tables_datatable_proxy) == 0) r$vocabularies_tables_datatable_proxy <- 
+              DT::dataTableProxy("vocabularies_tables_datatable", deferUntilFlush = FALSE)
           
-          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$vocabularies_table"))
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$vocabularies_table_render_datatable"))
         })
         
         # Update which cols are hidden
         observeEvent(input$vocabularies_table_cols, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_table_cols"))
+          
           r$vocabularies_tables_datatable_proxy %>%
             DT::showCols(1:length(table_cols_options[[input$vocabularies_table]])) %>%
             DT::hideCols(setdiff(1:(length(table_cols_options[[input$vocabularies_table]])), input$vocabularies_table_cols))
+        })
+        
+        # Show row details
+        observeEvent(input$vocabularies_tables_datatable_rows_selected, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_tables_datatable_rows_selected"))
+          
+          req(input$vocabularies_table %in% c("concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength"))
+          req(input$vocabularies_datatable_show_row_details)
+          
+          if (length(input$vocabularies_tables_datatable_rows_selected) == 0) output$vocabularies_datatable_row_details <- renderUI("")
+          else if (length(input$vocabularies_tables_datatable_rows_selected) > 1) output$vocabularies_datatable_row_details <- 
+            renderUI(i18n$t("select_only_one_row_for_details"))
+          else if (length(input$vocabularies_tables_datatable_rows_selected) == 1){
+            
+            result <- ""
+            
+            if (length(r$concept) == 0) result <- div(i18n$t("load_concept_data_before"))
+            
+            selected_row <- r[[input$vocabularies_table]][input$vocabularies_tables_datatable_rows_selected, ]
+            
+            if (length(r$concept) > 0){
+              if (input$vocabularies_table == "concept_relationship"){
+                result <- div(
+                  strong("concept_id_1"), " : ", selected_row$concept_id_1, br(),
+                  strong("concept_name_1"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$concept_id_1) %>% dplyr::pull(concept_name), br(),
+                  strong("relationship_id"), " : ", selected_row$relationship_id, br(),
+                  strong("concept_id_2"), " : ", selected_row$concept_id_2, br(),
+                  strong("concept_name_2"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$concept_id_2) %>% dplyr::pull(concept_name), br(),
+                )
+              }
+              
+              else if (input$vocabularies_table == "concept_synonym"){
+                result <- div(
+                  strong("concept_id"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("concept_synonym_name"), " : ", selected_row$concept_synonym_name, br(),
+                  strong("language_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$language_concept_id) %>% dplyr::pull(concept_name), br()
+                )
+              }
+              
+              else if (input$vocabularies_table == "concept_ancestor"){
+                result <- div(
+                  strong("ancestor_concept_id"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$ancestor_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("descendant_concept_id"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$descendant_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("min_level_of_separation"), " : ", selected_row$min_level_of_separation, br(),
+                  strong("max_level_of_separation"), " : ", selected_row$max_level_of_separation, br()
+                )
+              }
+              
+              else if (input$vocabularies_table == "drug_strength"){
+                result <- div(
+                  strong("drug_concept_id"), " : ", selected_row$drug_concept_id, br(),
+                  strong("drug_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$drug_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("ingredient_concept_id"), " : ", selected_row$ingredient_concept_id, br(),
+                  strong("ingredient_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$ingredient_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("amount_value"), " : ", selected_row$amount_value, br(),
+                  strong("amount_unit_concept_id"), " : ", selected_row$amount_unit_concept_id, br(),
+                  strong("amount_unit_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$amount_unit_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("numerator_value"), " : ", selected_row$numerator_value, br(),
+                  strong("numerator_unit_concept_id"), " : ", selected_row$numerator_unit_concept_id, br(),
+                  strong("numerator_unit_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$numerator_unit_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("denominator_value"), " : ", selected_row$denominator_value, br(),
+                  strong("denominator_unit_concept_id"), " : ", selected_row$denominator_unit_concept_id, br(),
+                  strong("denominator_unit_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$denominator_unit_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("box_size"), " : ", selected_row$box_size, br(),
+                )
+              }
+            }
+            
+            output$vocabularies_datatable_row_details <- renderUI(result)
+          }
         })
         
         # --- --- --- --- --- --- --- --- --- -- -
@@ -1188,10 +1308,54 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           if (nrow(r[[input$vocabularies_table]] %>% dplyr::filter(modified)) == 0) show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
           
-          req(nrow(rr[[input$vocabularies_table]] %>% dplyr::filter(modified)) > 0)
+          ids_to_del <- r[[input$vocabularies_table]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+          req(length(ids_to_del) > 0)
           
-          # save_settings_datatable_updates(output = output, r = r, ns = ns, 
-          #   table = "plugins", r_table = paste0(prefix, "_plugins"), i18n = i18n, duplicates_allowed = FALSE)
+          # Check if there are duplicates
+          
+          data_check_duplicates_cols <- switch(input$vocabularies_table,
+            "concept" = "concept_id",
+            "domain" = "domain_id",
+            "concept_class" = "concept_class_id",
+            "concept_relationship" = c("concept_id_1", "concept_id_2", "relationship_id"),
+            "relationship" = "relationship_id",
+            "concept_synonym" = c("concept_id", "concept_synonym_name", "language_concept_id"),
+            "concept_ancestor" = c("ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation"),
+            "drug_strength" = c("drug_concept_id", "ingredient_concept_id", "amount_value", "amount_unit_concept_id", "numerator_value", "numerator_unit_concept_id",
+              "denominator_value", "denominator_unit_concept_id", "box_size")
+          )
+          
+          check_duplicates <- r[[input$vocabularies_table]] %>% dplyr::group_by_at(data_check_duplicates_cols) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+          
+          if (check_duplicates > 0) show_message_bar(output, "vocab_tables_duplicates_cols", "severeWarning", i18n, ns = ns)
+          
+          data_required_cols <- switch(input$vocabularies_table,
+            "concept" = c("concept_id", "concept_name", "domain_id", "vocabulary_id", "concept_class_id", 
+              "concept_code", "valid_start_date", "valid_end_date"),
+            "domain" = c("domain_id", "domain_name", "domain_concept_id"),
+            "concept_class" = c("concept_class_id", "concept_class_name", "concept_class_concept_id"),
+            "concept_relationship" = c("concept_id_1", "concept_id_2", "relationship_id", "valid_start_date", "valid_end_date"),
+            "relationship" = "relationship_id",
+            "concept_synonym" = c("concept_id", "concept_synonym_name", "language_concept_id"),
+            "concept_ancestor" = c("ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation"),
+            "drug_strength" = c("drug_concept_id", "ingredient_concept_id", "valid_start_date", "valid_end_date")
+          )
+          
+          check_required_cols <- r[[input$vocabularies_table]] %>% dplyr::filter(dplyr::if_any(dplyr::all_of(data_required_cols), ~ . %in% c("", NA_character_, NA_integer_))) %>% nrow()
+            
+          if (check_required_cols > 0) show_message_bar(output, "vocab_tables_empty_cols", "severeWarning", i18n, ns = ns)
+          
+          req(check_duplicates == 0, check_required_cols == 0)
+          
+          sql <- glue::glue_sql("DELETE FROM {`input$vocabularies_table`} WHERE id IN ({ids_to_del*})", .con = m$db)
+          DBI::dbSendStatement(m$db, sql) -> query
+          DBI::dbClearResult(query)
+          
+          data <- r[[input$vocabularies_table]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
+          
+          DBI::dbAppendTable(m$db, input$vocabularies_table, data)
+          
+          show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
         })
         
         # --- --- --- --- --- --- --- --- --- --- --- --
