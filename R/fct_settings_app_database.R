@@ -30,7 +30,7 @@ check_authentification <- function(db){
 #' }
 
 db_create_table <- function(db, table_name = character(), dataframe = tibble::tibble(), dbms = character(), 
-  primary_key_cols = character(), unique_cols = character(), not_null_cols = character(), text_cols = character()){
+  primary_key_col = character(), unique_cols = character(), not_null_cols = character(), text_cols = character()){
   if (table_name %not_in% DBI::dbListTables(db)){
     # DBI::dbWriteTable(db, table_name, dataframe)
     
@@ -48,7 +48,7 @@ db_create_table <- function(db, table_name = character(), dataframe = tibble::ti
         col_type <- switch(col_class, "integer" = "INTEGER", "character" = "TEXT", "logical" = "INTEGER", "numeric" = "DOUBLE PRECISION")
       }
       
-      if (col_name %in% primary_key_cols) primary_key_constraint <- " PRIMARY KEY" else primary_key_constraint <-  ""
+      if (col_name %in% primary_key_col) primary_key_constraint <- " PRIMARY KEY" else primary_key_constraint <-  ""
       if (col_name %in% unique_cols) unique_constraint <- " UNIQUE" else unique_constraint <- ""
       if (col_name %in% not_null_cols) not_null_constraint <- " NOT NULL" else not_null_constraint <- ""
      
@@ -79,178 +79,178 @@ db_create_tables <- function(db, type = character(), dbms = character()){
   
   if (type == "main"){
     # In table users, create an admin user
-    db_create_table(db, "users", primary_key_cols = "id", dbms = dbms,
+    db_create_table(db, "users", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), username = character(), firstname = character(), lastname = character(), password = character(),
         user_access_id = integer(), user_status_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "users_accesses", primary_key_cols = "id", dbms = dbms,
+    db_create_table(db, "users_accesses", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), description = character(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "users_statuses", primary_key_cols = "id", dbms = dbms,
+    db_create_table(db, "users_statuses", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), description = character(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "data_sources", primary_key_cols = "id", dbms = dbms,
+    db_create_table(db, "data_sources", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "datamarts", primary_key_cols = "id", dbms = dbms, text_cols = "description",
+    db_create_table(db, "datamarts", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "studies", primary_key_cols = "id", dbms = dbms, text_cols = "description",
+    db_create_table(db, "studies", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), datamart_id = integer(),
         patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "thesaurus", primary_key_cols = "id", dbms = dbms, text_cols = "description",
+    db_create_table(db, "thesaurus", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = character(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "thesaurus_items", primary_key_cols = "id", dbms = dbms, text_cols = c("name", "display_name"),
+    db_create_table(db, "thesaurus_items", primary_key_col = "id", dbms = dbms, text_cols = c("name", "display_name"),
       tibble::tibble(id = integer(), thesaurus_id = integer(), item_id = integer(),
         name = character(), display_name = character(), unit = character(),
         datetime = character(), deleted = logical()))
         
-    db_create_table(db, "thesaurus_items_users", primary_key_cols = "id", dbms = dbms, text_cols = c("name", "display_name"),
+    db_create_table(db, "thesaurus_items_users", primary_key_col = "id", dbms = dbms, text_cols = c("name", "display_name"),
       tibble::tibble(id = integer(), user_id = integer(), thesaurus_id = integer(), item_id = integer(),
         name = character(), display_name = character(), unit = character(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "thesaurus_items_mapping", primary_key_cols = "id", dbms = dbms,
+    db_create_table(db, "thesaurus_items_mapping", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), category = character(), thesaurus_id_1 = integer(), item_id_1 = integer(), thesaurus_id_2 = integer(), item_id_2 = integer(),
         relation_id = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "thesaurus_items_mapping_evals", primary_key_cols = "id", dbms = dbms,
+    db_create_table(db, "thesaurus_items_mapping_evals", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), mapping_id = integer(), creator_id = integer(), evaluation_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "plugins", primary_key_cols = "id", dbms = dbms, text_cols = "description",
+    db_create_table(db, "plugins", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "scripts", primary_key_cols = "id", dbms = dbms,
+    db_create_table(db, "scripts", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), data_source_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "patient_lvl_modules_families", primary_key_cols = "id", dbms = dbms, text_cols = "description",
+    db_create_table(db, "patient_lvl_modules_families", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
         deleted = logical()))
     
-    db_create_table(db, "patient_lvl_modules", primary_key_cols = "id", dbms = dbms, text_cols = "description",
+    db_create_table(db, "patient_lvl_modules", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "patient_lvl_modules_elements", primary_key_cols = "id", dbms = dbms,
+    db_create_table(db, "patient_lvl_modules_elements", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), module_id = integer(), plugin_id = integer(), 
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "patient_lvl_modules_elements_items", primary_key_cols = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
+    db_create_table(db, "patient_lvl_modules_elements_items", primary_key_col = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
       tibble::tibble(id = integer(), db_item_id = integer(), group_id = integer(),
         thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
         thesaurus_item_colour = character(), mapped_to_item_id = integer(), merge_items = logical(),
         creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "aggregated_modules_families", primary_key_cols = "id", dbms = dbms, text_cols = "description",
+    db_create_table(db, "aggregated_modules_families", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
         deleted = logical()))
     
-    db_create_table(db, "aggregated_modules", primary_key_cols = "id", dbms = dbms, text_cols = "description",
+    db_create_table(db, "aggregated_modules", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "aggregated_modules_elements", primary_key_cols = "id", dbms = dbms,
+    db_create_table(db, "aggregated_modules_elements", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), module_id = integer(), plugin_id = integer(), 
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "aggregated_modules_elements_items", primary_key_cols = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
+    db_create_table(db, "aggregated_modules_elements_items", primary_key_col = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
       tibble::tibble(id = integer(), group_id = integer(),
         thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
         thesaurus_item_colour = character(), mapped_to_item_id = integer(), merge_items = logical(),
         creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "code", primary_key_cols = "id", dbms = dbms, text_cols = "code",
+    db_create_table(db, "code", primary_key_col = "id", dbms = dbms, text_cols = "code",
       tibble::tibble(id = integer(), category = character(), link_id = integer(), code = character(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "options", primary_key_cols = "id", dbms = dbms, text_cols = "value",
+    db_create_table(db, "options", primary_key_col = "id", dbms = dbms, text_cols = "value",
       tibble::tibble(id = integer(), category = character(), link_id = integer(), name = character(), value = character(),
         value_num = numeric(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "messages", primary_key_cols = "id", dbms = dbms, text_cols = c("message", "filepath"),
+    db_create_table(db, "messages", primary_key_col = "id", dbms = dbms, text_cols = c("message", "filepath"),
       tibble::tibble(id = integer(), conversation_id = integer(), study_id = integer(), category = character(), 
         message = character(), filepath = character(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "conversations", primary_key_cols = "id", dbms = dbms, text_cols = "name",
+    db_create_table(db, "conversations", primary_key_col = "id", dbms = dbms, text_cols = "name",
         tibble::tibble(id = integer(), name = character(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "inbox_messages", primary_key_cols = "id", dbms = dbms,
+    db_create_table(db, "inbox_messages", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), message_id = integer(), receiver_id = integer(), read = logical(), 
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "cache", primary_key_cols = "id", dbms = dbms, text_cols = "value",
+    db_create_table(db, "cache", primary_key_col = "id", dbms = dbms, text_cols = "value",
       tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
     
-    db_create_table(db, "log", primary_key_cols = "id", dbms = dbms, text_cols = "value",
+    db_create_table(db, "log", primary_key_col = "id", dbms = dbms, text_cols = "value",
       tibble::tibble(id = integer(), category = character(), name = character(), value = character(), creator_id = integer(), datetime = character()))
     
-    db_create_table(db, "git_sources", primary_key_cols = "id", dbms = dbms, text_cols = c("description", "link"),
+    db_create_table(db, "git_sources", primary_key_col = "id", dbms = dbms, text_cols = c("description", "link"),
       tibble::tibble(id = integer(), name = character(), description = character(), category = character(),
         value = character(), creator_id = integer(), datetime = character(), deleted = logical()))
   }
   
   if (type == "public"){
   
-  db_create_table(db, "patients_options", primary_key_cols = "id", dbms = dbms, text_cols = "value",
+  db_create_table(db, "patients_options", primary_key_col = "id", dbms = dbms, text_cols = "value",
     tibble::tibble(id = integer(), datamart_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
       category = character(), link_id = integer(), name = character(), value = character(), value_num = numeric(), 
       creator_id = integer(), datetime = character(), deleted = logical()))
   
-  db_create_table(db, "modules_elements_options", primary_key_cols = "id", dbms = dbms, text_cols = "value",
+  db_create_table(db, "modules_elements_options", primary_key_col = "id", dbms = dbms, text_cols = "value",
     tibble::tibble(id = integer(), group_id = integer(), study_id = integer(), patient_id = integer(), link_id = integer(),
       category = character(), name = character(), value = character(), value_num = numeric(),
       creator_id = integer(), datetime = character(), deleted = logical()))
   
-  db_create_table(db, "subsets", primary_key_cols = "id", dbms = dbms, text_cols = "description",
+  db_create_table(db, "subsets", primary_key_col = "id", dbms = dbms, text_cols = "description",
     tibble::tibble(id = integer(), name = character(), description = character(), study_id = integer(), creator_id = integer(),
       datetime = character(), deleted = logical()))
   
-  db_create_table(db, "subset_patients", primary_key_cols = "id", dbms = dbms,
+  db_create_table(db, "subset_patients", primary_key_col = "id", dbms = dbms,
     tibble::tibble(id = integer(), subset_id = integer(), patient_id = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
   
-  db_create_table(db, "concept", primary_key_cols = "id", dbms = dbms, 
+  db_create_table(db, "concept", primary_key_col = "id", dbms = dbms, 
     tibble::tibble(id = integer(), concept_id = integer(), concept_name = character(), domain_id = character(), vocabulary_id = character(),
       concept_class_id = character(), standard_concept = character(), concept_code = character(), valid_start_date = character(),
-      valid_end_date = character(), invalid_reason = character(), datetime = character(), deleted = logical()))
+      valid_end_date = character(), invalid_reason = character()))
   
-  db_create_table(db, "vocabulary", primary_key_cols = "id", dbms = dbms,
+  db_create_table(db, "vocabulary", primary_key_col = "id", dbms = dbms,
     tibble::tibble(id = integer(), vocabulary_id = character(), vocabulary_name = character(), 
       vocabulary_reference = character(), vocabulary_version = character(), vocabulary_concept_id = character(), data_source_id = character(), 
       display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
   
-  db_create_table(db, "domain", primary_key_cols = "id", dbms = dbms,
-    tibble::tibble(domain_id = character(), domain_name = character(), domain_concept_id = integer()))
+  db_create_table(db, "domain", primary_key_col = "id", dbms = dbms,
+    tibble::tibble(id = integer(), domain_id = character(), domain_name = character(), domain_concept_id = integer()))
   
-  db_create_table(db, "concept_class", primary_key_cols = "id", dbms = dbms,
-    tibble::tibble(concept_class_id = character(), concept_class_name = character(), concept_class_concept_id = integer()))
+  db_create_table(db, "concept_class", primary_key_col = "id", dbms = dbms,
+    tibble::tibble(id = integer(), concept_class_id = character(), concept_class_name = character(), concept_class_concept_id = integer()))
   
-  db_create_table(db, "concept_relationship", primary_key_cols = "id", dbms = dbms,
+  db_create_table(db, "concept_relationship", primary_key_col = "id", dbms = dbms,
     tibble::tibble(id = integer(), concept_id_1 = integer(), concept_id_2 = integer(), relationship_id = character(),
       valid_start_date = character(), valid_end_date = character(), invalid_reason = character()))
   
-  db_create_table(db, "relationship", primary_key_cols = "id", dbms = dbms,
-    tibble::tibble(relationship_id = character(), relationship_name = character(), is_hierarchical = character(),
+  db_create_table(db, "relationship", primary_key_col = "id", dbms = dbms,
+    tibble::tibble(id = integer(), relationship_id = character(), relationship_name = character(), is_hierarchical = character(),
       defines_ancestry = character(), reverse_relationship_id = character(), relationship_concept_id = integer()))
   
-  db_create_table(db, "concept_synonym", primary_key_cols = "id", dbms = dbms,
-    tibble::tibble(id = integer(), concept_id = integer(), concept_synonym_name = character(), language = character()))
+  db_create_table(db, "concept_synonym", primary_key_col = "id", dbms = dbms,
+    tibble::tibble(id = integer(), concept_id = integer(), concept_synonym_name = character(), language_concept_id = integer()))
   
-  db_create_table(db, "concept_ancestor", primary_key_cols = "id", dbms = dbms,
+  db_create_table(db, "concept_ancestor", primary_key_col = "id", dbms = dbms,
     tibble::tibble(id = integer(), ancestor_concept_id = integer(), descendant_concept_id = integer(),
       min_levels_of_separation = integer(), max_levels_of_separation = integer()))
   
-  db_create_table(db, "drug_strength", primary_key_cols = "id", dbms = dbms,
+  db_create_table(db, "drug_strength", primary_key_col = "id", dbms = dbms,
     tibble::tibble(id = integer(), drug_concept_id = integer(), ingredient_concept_id = integer(), amount_value = numeric(),
       amount_unit_concept_id = integer(), numerator_value = numeric(), numerator_unit_concept_id = integer(),
       denominator_value = numeric(), denominator_unit_concept_id = integer(), box_size = integer(),

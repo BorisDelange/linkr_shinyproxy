@@ -733,7 +733,7 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
       else m[[table]] <- m[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]]) 
     }
     
-    # # Notify user
+    # Notify user
     if (!r_message_bar) show_message_bar(output, delete_message, type ="severeWarning", i18n = i18n, ns = ns)
     if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = delete_message, type = "severeWarning", trigger = Sys.time())
     
@@ -906,7 +906,7 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
     code <- edited_code %>%
       stringr::str_replace_all("%datamart_id%", as.character(isolate(r$datamart_id))) %>%
       stringr::str_replace_all("%subset_id%", as.character(isolate(r$subset_id))) %>%
-      stringr::str_replace_all("%thesaurus_id%", as.character(isolate(r$thesaurus_id)))
+      stringr::str_replace_all("%vocabulary_id%", as.character(isolate(r$vocabulary_id)))
     
     # Change this option to display correctly tibble in textbox
     options('cli.num_colors' = 1)

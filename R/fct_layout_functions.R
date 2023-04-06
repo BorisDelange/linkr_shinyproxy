@@ -308,44 +308,43 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = character
     emptyTable = i18n$t("dt_empty"))
   
   # Which columns are non editable
-  
   cols <- c(1:length(names(data))) - 1
   editable_cols_vec <- integer()
   sapply(editable_cols, function(col){
-    editable_cols_vec <<- c(editable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+    if (col != "") editable_cols_vec <<- c(editable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   non_editable_cols_vec <- cols[!cols %in% editable_cols_vec]
   
   # Which columns are non sortable
   sortable_cols_vec <- integer()
   sapply(sortable_cols, function(col){
-    sortable_cols_vec <<- c(sortable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+    if (col != "") sortable_cols_vec <<- c(sortable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   non_sortable_cols_vec <- cols[!cols %in% sortable_cols_vec]
   
   # Which cols are centered
   centered_cols_vec <- integer()
   sapply(centered_cols, function(col){
-    centered_cols_vec <<- c(centered_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+    if (col != "") centered_cols_vec <<- c(centered_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   
   # Which cols are hidden
   hidden_cols_vec <- integer()
   sapply(hidden_cols, function(col){
-    hidden_cols_vec <<- c(hidden_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+    if (col != "") hidden_cols_vec <<- c(hidden_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   
   # Which cols are searchable
   searchable_cols_vec <- integer()
   sapply(searchable_cols, function(col){
-    searchable_cols_vec <<- c(searchable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+    if (col != "") searchable_cols_vec <<- c(searchable_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   non_searchable_cols_vec <- cols[!cols %in% searchable_cols_vec]
   
   # Which cols are truncated
   truncated_cols_vec <- integer()
   sapply(truncated_cols, function(col){
-    truncated_cols_vec <<- c(truncated_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+    if (col != "") truncated_cols_vec <<- c(truncated_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   
   # If filter is TRUE
@@ -380,7 +379,7 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = character
     "}"), targets = truncated_cols_vec))
   
   # Transform searchable cols to factor
-  sapply(factorize_cols, function(col) data <<- data %>% dplyr::mutate_at(col, as.factor))
+  sapply(factorize_cols, function(col) if (col != "") data <<- data %>% dplyr::mutate_at(col, as.factor))
   
   # Rename cols if lengths correspond
   if (length(col_names) == length(names(data))) names(data) <- col_names
