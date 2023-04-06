@@ -871,7 +871,7 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
 #' }
 execute_settings_code <- function(input, output, session, id = character(), ns = character(), i18n = character(), 
   r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
-  edited_code = character(), code_type = "", data = list()){
+  edited_code = character(), code_type = "", data = list(), col_types = character()){
   
   result <- ""
   

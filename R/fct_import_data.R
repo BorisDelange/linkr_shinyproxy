@@ -303,25 +303,8 @@ import_datamart <- function(output, ns = character(), r = shiny::reactiveValues(
 #' import_thesaurus(output = output, r = r, thesaurus_id = 5, thesaurus = thesaurus, language = language)
 #' }
 import_vocabulary_table <- function(output, ns = character(), i18n = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(),
-  vocabulary_id = integer(), table_name = character(), data = tibble::tibble(), messages_bars = FALSE){
+  table_name = character(), data = tibble::tibble(), messages_bars = FALSE){
  
-  # Check vocabulary_id
-  tryCatch(vocabulary_id <- as.integer(vocabulary_id), 
-    error = function(e){
-      if (nchar(e[1]) > 0 & messages_bars) report_bug(r = r, output = output, error_message = "invalid_vocabulary_id_value", 
-        error_name = paste0("import_vocabulary_concepts - invalid_vocabulary_id_value - id = ", vocabulary_id), category = "Error", error_report = toString(e), i18n = i18n)
-      return(i18n$t("invalid_vocabulary_id_value"))},
-    warning = function(w){
-      if (nchar(w[1]) > 0 & messages_bars) report_bug(r = r, output = output, error_message = "invalid_vocabulary_id_value", 
-        error_name = paste0("import_vocabulary_concepts - invalid_vocabulary_id_value - id = ", vocabulary_id), category = "Error", error_report = toString(w), i18n = i18n)
-      return(i18n$t("invalid_vocabulary_id_value"))}
-  )
-  
-  if (is.na(vocabulary_id) | length(vocabulary_id) == 0){
-    if (messages_bars) show_message_bar(output, "invalid_vocabulary_id_value", "severeWarning", i18n = i18n, ns = ns)
-    return(i18n$t("invalid_vocabulary_id_value"))
-  }
-  
   if (table_name %not_in% c("concept", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")){
     if (messages_bars) show_message_bar(output, "invalid_vocabulary_table", "severeWarning", i18n = i18n, ns = ns)
     return(i18n$t("invalid_vocabulary_table"))
@@ -426,7 +409,7 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
   tryCatch(data <- tibble::as_tibble(data), 
     error = function(e){
       if (nchar(e[1]) > 0 & messages_bars) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = paste0("import_vocabulary_table - error_transforming_tibble - id = ", vocabulary_id), category = "Error", error_report = toString(e), i18n = i18n)
+        error_name = "import_vocabulary_table - error_transforming_tibble", category = "Error", error_report = toString(e), i18n = i18n)
       return(i18n$t("error_transforming_tibble"))}
   )
 
@@ -452,7 +435,7 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
     },
       error = function(e){
         if (nchar(e[1]) > 0 & messages_bars) report_bug(r = r, output = output, error_message = "error_get_actual_primary_keys",
-          error_name = paste0("import_vocabulary_concepts - error_get_actual_primary_keys - id = ", vocabulary_id), category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = "import_vocabulary_concepts - error_get_actual_primary_keys", category = "Error", error_report = toString(e), i18n = i18n)
         return(i18n$t("error_get_actual_primary_keys"))}
     )
 
@@ -485,7 +468,7 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
     },
       error = function(e){
         if (nchar(e[1]) > 0 & messages_bars) report_bug(r = r, output = output, error_message = "error_get_actual_primary_keys",
-          error_name = paste0("import_vocabulary_concepts - error_get_actual_primary_keys - id = ", vocabulary_id), category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = "import_vocabulary_concepts - error_get_actual_primary_keys - id = ", category = "Error", error_report = toString(e), i18n = i18n)
         return(i18n$t("error_get_actual_primary_keys"))}
     )
     
@@ -505,11 +488,15 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
   
   else {
     data_to_insert <- data_to_insert %>% dplyr::mutate(id = 1:dplyr::n() + last_id, .before = 1)
+    
+    # Count rows inserted
+    r$import_vocabulary_count_rows <- r$import_vocabulary_count_rows %>%
+      dplyr::bind_rows(tibble::tibble(table_name = !!table_name, n_rows = nrow(data_to_insert)))
 
     tryCatch(DBI::dbAppendTable(m$db, table_name, data_to_insert),
       error = function(e){
         if (nchar(e[1]) > 0 & messages_bars) report_bug(r = r, output = output, error_message = "vocabulary_error_append_table",
-          error_name = paste0("import_vocabulary_table - vocabulary_error_append_table - id = ", vocabulary_id), category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = "import_vocabulary_table - vocabulary_error_append_table - id = ", category = "Error", error_report = toString(e), i18n = i18n)
         return(i18n$t("vocabulary_error_append_table"))}
     )
   }

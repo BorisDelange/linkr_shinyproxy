@@ -180,7 +180,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
         shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("vocabularies_management")),
         shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_vocabulary_code")),
-        shiny.fluent::PivotItem(id = "vocabularies_tables_datatable_card", itemKey = "vocabularies_tables_datatable_card", headerText = i18n$t("vocabulary_tables")),
+        shiny.fluent::PivotItem(id = "vocabularies_tables_datatable_card", itemKey = "vocabularies_tables_datatable_card", headerText = i18n$t("vocabularies_tables")),
         shiny.fluent::PivotItem(id = "import_vocabulary_card", itemKey = "import_vocabulary_card", headerText = i18n$t("import_vocabulary"))
       ),
       
@@ -261,13 +261,19 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
                 options = list(
                   list(key = "concept", text = "CONCEPT"),
                   list(key = "domain", text = "DOMAIN"),
-                  list(key = "concept_class", text = "CONCEPT CLASS"),
-                  list(key = "concept_relationship", text = "CONCEPT RELATIONSHIP"),
+                  list(key = "concept_class", text = "CONCEPT_CLASS"),
+                  list(key = "concept_relationship", text = "CONCEPT_RELATIONSHIP"),
                   list(key = "relationship", text = "RELATIONSHIP"),
-                  list(key = "concept_synonym", text = "CONCEPT SYNONYM"),
-                  list(key = "concept_ancestor", text = "CONCEPT ANCESTOR"),
-                  list(key = "drug_strength", text = "DRUG STRENGTH")
+                  list(key = "concept_synonym", text = "CONCEPT_SYNONYM"),
+                  list(key = "concept_ancestor", text = "CONCEPT_ANCESTOR"),
+                  list(key = "drug_strength", text = "DRUG_STRENGTH")
                 )),
+              conditionalPanel(condition = "['concept', 'concept_relationship', 'concept_synonym', 'concept_ancestor', 'drug_strength'].includes(input.vocabularies_table)", ns = ns,
+                make_dropdown(i18n = i18n, ns = ns, label = "vocabulary", id = "vocabularies_table_vocabulary", width = "300px"))
+            ),
+            shiny.fluent::Stack(
+              horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_dropdown(i18n = i18n, ns = ns, label = "rows", id = "vocabularies_table_rows", width = "300px"),
               make_dropdown(i18n = i18n, ns = ns, label = "columns", id = "vocabularies_table_cols", width = "300px", multiSelect = TRUE),
               conditionalPanel(condition = "input.vocabularies_table == 'concept'", ns = ns,
                 div(shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
@@ -295,7 +301,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
                 conditionalPanel(condition = "input.vocabularies_table == 'concept'", ns = ns,
                   shiny.fluent::DefaultButton.shinyInput(ns("reload_vocabularies_tables_cache"), i18n$t("reload_cache")))
               ),
-              style = "position:relative; margin-top:-50px;"
+              style = "position:relative; margin-top:-50px; width:500px;"
             ),
             conditionalPanel(condition = "input.vocabularies_datatable_show_mapped_concepts == true && input.vocabularies_table == 'concept'", ns = ns, 
               br(), hr(), br(),
@@ -965,7 +971,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           output$datetime_code_execution <- renderText(format_datetime(Sys.time(), language))
           output$code_result <- renderText(
             execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
-              i18n = i18n, r = r, d = d, m = m, edited_code = edited_code))
+              i18n = i18n, r = r, d = d, m = m, edited_code = edited_code, col_types = col_types))
           
           r[[paste0(id, "_code_datatable_trigger")]] <- Sys.time()
           
@@ -998,14 +1004,25 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # --- --- --- --- --- --- --- --- --- --- -
       # Generate vocabulary tables datatable ----
       # --- --- --- --- --- --- --- --- --- --- -
+      
+      # Col types for csv files
+      col_types <- list()
+      col_types$concept <- "iccccccccc"
+      col_types$domain <- "cci"
+      col_types$concept_class <- "cci"
+      col_types$concept_relationship <- "iicccc"
+      col_types$relationship <- "ccccci"
+      col_types$concept_synonym <- "ici"
+      col_types$concept_ancestor <- "iiii"
+      col_types$drug_strength <- "iinininiiccc"
         
       if (table == "vocabulary"){
-        
+
         # Cols names depending on table
-        
+
         table_cols_options <- list()
         table_cols_options_value <- list()
-        
+
         table_cols_options$concept <- list(
           list(key = 1, text = "concept_id"),
           list(key = 2, text = "concept_name"),
@@ -1018,19 +1035,19 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           list(key = 9, text = "valid_end_date"),
           list(key = 10, text = "invalid_reason"))
         table_cols_options_value$concept <- c(1, 2, 3, 4, 5)
-        
+
         table_cols_options$domain <- list(
           list(key = 1, text = "domain_id"),
           list(key = 2, text = "domain_name"),
           list(key = 3, text = "domain_concept_id"))
         table_cols_options_value$domain <- c(1, 2, 3)
-        
+
         table_cols_options$concept_class <- list(
           list(key = 1, text = "concept_class_id"),
           list(key = 2, text = "concept_class_name"),
           list(key = 3, text = "concept_class_concept_id"))
         table_cols_options_value$concept_class <- c(1, 2, 3)
-        
+
         table_cols_options$concept_relationship <- list(
           list(key = 1, text = "concept_id_1"),
           list(key = 2, text = "concept_id_2"),
@@ -1039,7 +1056,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           list(key = 5, text = "valid_end_date"),
           list(key = 6, text = "invalid_reason"))
         table_cols_options_value$concept_relationship <- c(1, 2, 3)
-        
+
         table_cols_options$relationship <- list(
           list(key = 1, text = "relationship_id"),
           list(key = 2, text = "relationship_name"),
@@ -1048,20 +1065,20 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           list(key = 5, text = "reverse_relationship_id"),
           list(key = 6, text = "relationship_concept_id"))
         table_cols_options_value$relationship <- c(1, 2, 3, 4, 5, 6)
-        
+
         table_cols_options$concept_synonym <- list(
           list(key = 1, text = "concept_id"),
           list(key = 2, text = "concept_synonym"),
           list(key = 3, text = "language_concept_id"))
         table_cols_options_value$concept_synonym <- c(1, 2, 3)
-        
+
         table_cols_options$concept_ancestor <- list(
           list(key = 1, text = "ancestor_concept_id"),
           list(key = 2, text = "descendant_concept_id"),
           list(key = 3, text = "min_levels_of_separation"),
           list(key = 4, text = "max_levels_of_separation"))
         table_cols_options_value$concept_ancestor <- c(1, 2, 3, 4)
-        
+
         table_cols_options$drug_strength <- list(
           list(key = 1, text = "drug_concept_id"),
           list(key = 2, text = "ingredient_concept_id"),
@@ -1076,243 +1093,365 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           list(key = 11, text = "valid_end_date"),
           list(key = 12, text = "invalid_reason"))
         table_cols_options_value$drug_strength <- c(1, 2, 3, 4, 5, 6, 7, 8, 9)
-        
+
+        # Datatable args
+
+        editable_cols_vocab <- list()
+        editable_cols_vocab$concept <- c("concept_id", "concept_name", "domain_id", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code",
+          "valid_start_date", "valid_end_date", "invalid_reason")
+        editable_cols_vocab$domain <- c("domain_id", "domain_name", "domain_concept_id")
+        editable_cols_vocab$concept_class <- c("concept_class_id", "concept_class_name", "concept_class_concept_id")
+        editable_cols_vocab$concept_relationship <- c("concept_id_1", "concept_id_2", "relationship_id", "valid_start_date", "valid_end_date", "invalid_reason")
+        editable_cols_vocab$relationship <- c("relationship_id", "relationship_name", "is_hierarchical", "defines_ancestry", "reverse_relationship_id", "relationship_concept_id")
+        editable_cols_vocab$concept_synonym <- c("concept_id", "concept_synonym", "language_concept_id")
+        editable_cols_vocab$concept_ancestor <- c("ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation")
+        editable_cols_vocab$drug_strength <- c("drug_concept_id", "ingredient_concept_id", "amount_value", "amount_unit_concept_id", "numerator_value", "numerator_unit_concept_id",
+          "denominator_value", "denominator_unit_concept_id", "box_size", "valid_start_date", "valid_end_date", "invalid_reason")
+
+        sortable_cols_vocab <- list()
+        sortable_cols_vocab$concept <- c("concept_id", "concept_name", "domain_id", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code",
+          "valid_start_date", "valid_end_date", "invalid_reason")
+        sortable_cols_vocab$domain <- c("domain_id", "domain_name", "domain_concept_id")
+        sortable_cols_vocab$concept_class <- c("concept_class_id", "concept_class_name", "concept_class_concept_id")
+        sortable_cols_vocab$concept_relationship <- c("concept_id_1", "concept_id_2", "relationship_id", "valid_start_date", "valid_end_date", "invalid_reason")
+        sortable_cols_vocab$relationship <- c("relationship_id", "relationship_name", "is_hierarchical", "defines_ancestry", "reverse_relationship_id", "relationship_concept_id")
+        sortable_cols_vocab$concept_synonym <- c("concept_id", "concept_synonym", "language_concept_id")
+        sortable_cols_vocab$concept_ancestor <- c("ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation")
+        sortable_cols_vocab$drug_strength <- c("drug_concept_id", "ingredient_concept_id", "amount_value", "amount_unit_concept_id", "numerator_value", "numerator_unit_concept_id",
+          "denominator_value", "denominator_unit_concept_id", "box_size", "valid_start_date", "valid_end_date", "invalid_reason")
+
+        centered_cols_vocab <- list()
+        centered_cols_vocab$concept <- c("concept_id", "domain_id", "vocabulary_id", "concept_class_id", "standard_concept",
+            "concept_code", "valid_start_date", "valid_end_date", "invalid_reason")
+        centered_cols_vocab$domain <- "domain_concept_id"
+        centered_cols_vocab$concept_class <- "concept_class_id"
+        centered_cols_vocab$concept_relationship <- c("concept_id_1", "concept_id_2", "relationship_id", "valid_start_date", "valid_end_date", "invalid_reason")
+        centered_cols_vocab$relationship <- c("is_hierarchical", "defines_ancestry", "relationship_concept_id")
+        centered_cols_vocab$concept_synonym <- c("concept_id", "language_concept_id")
+        centered_cols_vocab$concept_ancestor <- c("ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation")
+        centered_cols_vocab$drug_strength <- c("drug_concept_id", "ingredient_concept_id",  "amount_value", "amount_unit_concept_id", "numerator_value", "numerator_unit_concept_id",
+          "denominator_value", "denominator_unit_concept_id", "box_size", "valid_start_date", "valid_end_date", "invalid_reason")
+
+        searchable_cols_vocab <- list()
+        searchable_cols_vocab$concept <- c("concept_id", "concept_name", "domain_id", "vocabulary_id", "concept_class_id")
+        searchable_cols_vocab$domain <- c("domain_id", "domain_name", "domain_concept_id")
+        searchable_cols_vocab$concept_class <- c("concept_class_id", "concept_class_name", "concept_class_concept_id")
+        searchable_cols_vocab$concept_relationship <- c("concept_id_1", "concept_id_2", "relationship_id")
+        searchable_cols_vocab$relationship <- c("relationship_id", "relationship_name", "is_hierarchical", "defines_ancestry", "reverse_relationship_id", "relationship_concept_id")
+        searchable_cols_vocab$concept_synonym <- c("concept_id", "concept_synonym", "language_concept_id")
+        searchable_cols_vocab$concept_ancestor <- c("ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation")
+        searchable_cols_vocab$drug_strength <- c("drug_concept_id", "ingredient_concept_id",  "amount_value", "amount_unit_concept_id", "numerator_value", "numerator_unit_concept_id",
+          "denominator_value", "denominator_unit_concept_id", "box_size")
+
+        factorize_cols_vocab <- list()
+        factorize_cols_vocab$concept <- c("domain_id", "vocabulary_id", "concept_class_id")
+        factorize_cols_vocab$domain <- ""
+        factorize_cols_vocab$concept_class <- ""
+        factorize_cols_vocab$concept_relationship <- "relationship_id"
+        factorize_cols_vocab$relationship <- ""
+        factorize_cols_vocab$concept_synonym <- "language_concept_id"
+        factorize_cols_vocab$concept_ancestor <- ""
+        factorize_cols_vocab$drug_strength <- ""
+
+        # Transform integer cols to character, to be searchable
+        cols_to_char <- list()
+        cols_to_char$concepts = "concept_id"
+        cols_to_char$domain = "domain_concept_id"
+        cols_to_char$concepts_class = "concept_class_concept_id"
+        cols_to_char$concepts_relationship = c("concept_id_1", "concept_id_2")
+        cols_to_char$relationship = "relationship_concept_id"
+        cols_to_char$concepts_synonym = c("concept_id", "language_concept_id")
+        cols_to_char$concepts_ancestor = c("ancestor_concept_id", "descendant_concept_id")
+        cols_to_char$drug_strength = c("drug_concept_id", "ingredient_concept_id", "amount_unit_concept_id", "numerator_unit_concept_id", "denominator_unit_concept_id")
+
         observeEvent(input$vocabularies_table, {
-          
+
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_table"))
-          
+
           # Reset vocabularies_datatable_row_details div
           output$vocabularies_datatable_row_details <- renderUI("")
-          
+
           # Update dropdown with which cols to show
-          
-          shiny.fluent::updateDropdown.shinyInput(session, "vocabularies_table_cols", 
+
+          shiny.fluent::updateDropdown.shinyInput(session, "vocabularies_table_cols",
             options = table_cols_options[[input$vocabularies_table]], value = table_cols_options_value[[input$vocabularies_table]])
           
-          # Load data if not already loaded
-          if (length(r[[input$vocabularies_table]]) == 0){
-            sql <- glue::glue_sql("SELECT * FROM {`input$vocabularies_table`}", .con = m$db)
-            r[[input$vocabularies_table]] <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble() %>% dplyr::mutate(modified = FALSE)
+          step <- 10**5
+          
+          # Update table_rows_dropdown & then render datatable
+          r$vocabularies_table_update_table_rows_dropdown <- Sys.time()
+          
+          sql <- glue::glue_sql("SELECT * FROM {`input$vocabularies_table`} LIMIT {step}", .con = m$db)
+          r[[input$vocabularies_table]] <- DBI::dbGetQuery(m$db, sql) %>% dplyr::mutate(modified = FALSE)
+          
+          # Update dropdown with vocabulary
+          if (length(r$vocabularies_list_loaded) == 0){
+            sql <- glue::glue_sql("SELECT DISTINCT(vocabulary_id) FROM concept", .con = m$db)
+            vocabularies <- DBI::dbGetQuery(m$db, sql) %>% dplyr::arrange(vocabulary_id)
+            
+            dropdown_options <- convert_tibble_to_list(data = vocabularies, key_col = "vocabulary_id", text_col = "vocabulary_id")
+            dropdown_options <- rlist::list.append(dropdown_options, list(key = "all_vocabularies", text = i18n$t("all_vocabularies")))
+            
+            shiny.fluent::updateDropdown.shinyInput(session, "vocabularies_table_vocabulary", options = dropdown_options, value = "all_vocabularies")
+            r$vocabularies_list_loaded <- TRUE
           }
           
           # Render datatable
           r$vocabularies_table_render_datatable <- Sys.time()
         })
-        
-        # Reload datatable when toggle row_details is updated, to change selection (single / multiple)
+
+        # Reload datatable when toggle row_details or mapped_concepts is updated, to change selection (single / multiple)
         observeEvent(input$vocabularies_datatable_show_row_details, {
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_datatable_show_row_details"))
           r$vocabularies_table_render_datatable <- Sys.time()
         })
-        
-        # Render datatable
-        observeEvent(r$vocabularies_table_render_datatable, {
-          
-          if (perf_monitoring) monitor_perf(r = r, action = "start")
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$vocabularies_table_render_datatable"))
-          
-          req(input$vocabularies_table)
-          
-          # Reset vocabularies_datatable_row_details output
-          output$vocabularies_datatable_row_details <- renderUI("")
-          
-          # Datatable args
-          
-          editable_cols <- switch(input$vocabularies_table,
-            "concept" = c("concept_id", "concept_name", "domain_id", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code",
-              "valid_start_date", "valid_end_date", "invalid_reason"),
-            "domain" = c("domain_id", "domain_name", "domain_concept_id"),
-            "concept_class" = c("concept_class_id", "concept_class_name", "concept_class_concept_id"),
-            "concept_relationship" = c("concept_id_1", "concept_id_2", "relationship_id", "valid_start_date", "valid_end_date", "invalid_reason"),
-            "relationship" = c("relationship_id", "relationship_name", "is_hierarchical", "defines_ancestry", "reverse_relationship_id", "relationship_concept_id"),
-            "concept_synonym" = c("concept_id", "concept_synonym", "language_concept_id"),
-            "concept_ancestor" = c("ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation"),
-            "drug_strength" = c("drug_concept_id", "ingredient_concept_id", "amount_value", "amount_unit_concept_id", "numerator_value", "numerator_unit_concept_id",
-              "denominator_value", "denominator_unit_concept_id", "box_size", "valid_start_date", "valid_end_date", "invalid_reason")
-          )
-          sortable_cols <- switch(input$vocabularies_table,
-            "concept" = c("concept_id", "concept_name", "domain_id", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code",
-              "valid_start_date", "valid_end_date", "invalid_reason"),
-            "domain" = c("domain_id", "domain_name", "domain_concept_id"),
-            "concept_class" = c("concept_class_id", "concept_class_name", "concept_class_concept_id"),
-            "concept_relationship" = c("concept_id_1", "concept_id_2", "relationship_id", "valid_start_date", "valid_end_date", "invalid_reason"),
-            "relationship" = c("relationship_id", "relationship_name", "is_hierarchical", "defines_ancestry", "reverse_relationship_id", "relationship_concept_id"),
-            "concept_synonym" = c("concept_id", "concept_synonym", "language_concept_id"),
-            "concept_ancestor" = c("ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation"),
-            "drug_strength" = c("drug_concept_id", "ingredient_concept_id", "amount_value", "amount_unit_concept_id", "numerator_value", "numerator_unit_concept_id",
-              "denominator_value", "denominator_unit_concept_id", "box_size", "valid_start_date", "valid_end_date", "invalid_reason")
-          )
-          centered_cols <- switch(input$vocabularies_table,
-            "concept" = c("concept_id", "domain_id", "vocabulary_id", "concept_class_id", "standard_concept", 
-              "concept_code", "valid_start_date", "valid_end_date", "invalid_reason"),
-            "domain" = "domain_concept_id",
-            "concept_class" = "concept_class_id",
-            "concept_relationship" = c("concept_id_1", "concept_id_2", "relationship_id", "valid_start_date", "valid_end_date", "invalid_reason"),
-            "relationship" = c("is_hierarchical", "defines_ancestry", "relationship_concept_id"),
-            "concept_synonym" = c("concept_id", "language_concept_id"),
-            "concept_ancestor" = c("ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation"),
-            "drug_strength" = c("drug_concept_id", "ingredient_concept_id",  "amount_value", "amount_unit_concept_id", "numerator_value", "numerator_unit_concept_id",
-              "denominator_value", "denominator_unit_concept_id", "box_size", "valid_start_date", "valid_end_date", "invalid_reason")
-          )
-          searchable_cols <- switch(input$vocabularies_table,
-            "concept" = c("concept_id", "concept_name", "domain_id", "vocabulary_id", "concept_class_id"),
-            "domain" = c("domain_id", "domain_name", "domain_concept_id"),
-            "concept_class" = c("concept_class_id", "concept_class_name", "concept_class_concept_id"),
-            "concept_relationship" = c("concept_id_1", "concept_id_2", "relationship_id"),
-            "relationship" = c("relationship_id", "relationship_name", "is_hierarchical", "defines_ancestry", "reverse_relationship_id", "relationship_concept_id"),
-            "concept_synonym" = c("concept_id", "concept_synonym", "language_concept_id"),
-            "concept_ancestor" = c("ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation"),
-            "drug_strength" = c("drug_concept_id", "ingredient_concept_id",  "amount_value", "amount_unit_concept_id", "numerator_value", "numerator_unit_concept_id",
-              "denominator_value", "denominator_unit_concept_id", "box_size")
-          )
-          factorize_cols <- switch(input$vocabularies_table,
-            "concept" = c("domain_id", "vocabulary_id", "concept_class_id"),
-            "domain" = "",
-            "concept_class" = "",
-            "concept_relationship" = "relationship_id",
-            "relationship" = "",
-            "concept_synonym" = "language_concept_id",
-            "concept_ancestor" = "",
-            "drug_strength" = ""
-          )
-          
-          # Transform integer cols to character, to be searchable
-          cols_to_char <- switch(input$vocabularies_table, 
-            "concept" = "concept_id",
-            "domain" = "domain_concept_id",
-            "concept_class" = "concept_class_concept_id",
-            "concept_relationship" = c("concept_id_1", "concept_id_2"),
-            "relationship" = "relationship_concept_id",
-            "concept_synonym" = c("concept_id", "language_concept_id"),
-            "concept_ancestor" = c("ancestor_concept_id", "descendant_concept_id"),
-            "drug_strength" = c("drug_concept_id", "ingredient_concept_id", "amount_unit_concept_id", "numerator_unit_concept_id", "denominator_unit_concept_id")
-          )
-          
-          data <- r[[input$vocabularies_table]] %>% dplyr::mutate_at(cols_to_char, as.character)
-          
-          if (input$vocabularies_datatable_show_row_details) selection <- "single" else selection <- "multiple"
-          
-          render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data,
-            output_name = "vocabularies_tables_datatable", editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols,
-            hidden_cols = c("id", "modified"), searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, selection = selection)
-          
-          # Create a proxy
-          
-          if (length(r$vocabularies_tables_datatable_proxy) == 0) r$vocabularies_tables_datatable_proxy <- 
-              DT::dataTableProxy("vocabularies_tables_datatable", deferUntilFlush = FALSE)
-          
-          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$vocabularies_table_render_datatable"))
+
+        observeEvent(input$vocabularies_datatable_show_mapped_concepts, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_datatable_show_mapped_concepts"))
+          r$vocabularies_table_render_datatable <- Sys.time()
+        })
+
+        # Reload datatable when rows nums selected
+        observeEvent(input$vocabularies_table_rows, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_table_rows"))
+          r$vocabularies_table_render_datatable <- Sys.time()
         })
         
+        # Reload datatable rows dropdown & datatable when a vocabulary is selected
+        observeEvent(input$vocabularies_table_vocabulary, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_table_vocabulary"))
+          r$vocabularies_table_update_table_rows_dropdown <- Sys.time()
+        })
+        
+        # Reload datatable rows dropdown
+        observeEvent(r$vocabularies_table_update_table_rows_dropdown, {
+          
+          req(input$vocabularies_table_vocabulary)
+          
+          # Count rows of current table
+          if (input$vocabularies_table_vocabulary != "all_vocabularies") sql <- glue::glue_sql(paste0("SELECT COUNT(*) FROM {`input$vocabularies_table`} ",
+          "WHERE vocabulary_id = {input$vocabularies_table_vocabulary}"), .con = m$db)
+          else sql <- glue::glue_sql("SELECT COUNT(*) FROM {`input$vocabularies_table`}", .con = m$db)
+          n_rows <- DBI::dbGetQuery(m$db, sql) %>% dplyr::pull()
+          
+          dropdown_options <- list()
+          step <- 10**5
+          for (i in 1:ceiling(n_rows / step)){
+            
+            if (i == 1){
+              if (i == ceiling(n_rows / step)) dropdown_value <- paste0(as.integer((i-1)*step) + 1L, ";", n_rows) 
+              else dropdown_value <- paste0(as.integer((i-1)*step) + 1L, ";", as.integer(i*step)) 
+            }
+            
+            if (i == ceiling(n_rows / step)) dropdown_options <- rlist::list.append(dropdown_options, list(
+              key = paste0(as.integer((i-1)*step) + 1L, ";", n_rows),
+              text = paste0(as.integer((i-1)*step) + 1L, " - ", n_rows)))
+            
+            else dropdown_options <- rlist::list.append(dropdown_options, list(
+              key = paste0(as.integer((i-1)*step) + 1L, ";", as.integer(i*step)),
+              text = paste0(as.integer((i-1)*step) + 1L, " - ", as.integer(i*step))))
+          }
+          
+          shiny.fluent::updateDropdown.shinyInput(session, "vocabularies_table_rows", options = dropdown_options, value = dropdown_value)
+        })
+
+        # Render datatable
+        observeEvent(r$vocabularies_table_render_datatable, {
+
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$vocabularies_table_render_datatable"))
+
+          req(input$vocabularies_table, input$vocabularies_table_rows, input$vocabularies_table_vocabulary)
+
+          # Reset vocabularies_datatable_row_details output
+          output$vocabularies_datatable_row_details <- renderUI("")
+
+          # Reset mapped concepts datatable
+          render_datatable(output = output, r = r, ns = ns, i18n = i18n, output_name = "vocabularies_tables_mapped_concepts_datatable",
+            data = tibble::tibble(concept_id_1 = character(), relationship_id = character(), concept_id_2 = character(), concept_name_2 = character()))
+
+          n_rows <- stringr::str_split_1(input$vocabularies_table_rows, ";")
+          n_rows_start <- as.integer(n_rows[1])
+          n_rows_end <- as.integer(n_rows[2])
+          
+          if (input$vocabularies_table %in% c("concept", "concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength") &
+              input$vocabularies_table_vocabulary != "all_vocabularies"){
+            
+            sql <- glue::glue_sql(paste0("SELECT * FROM {`input$vocabularies_table`} WHERE vocabulary_id IN ({input$vocabularies_table_vocabulary*}) ",
+            "LIMIT {n_rows_end - n_rows_start + 1} OFFSET {n_rows_start - 1}"), .con = m$db)
+            data <- DBI::dbGetQuery(m$db, sql) %>% dplyr::mutate_at(cols_to_char[[input$vocabularies_table]], as.character) %>% dplyr::mutate(modified = FALSE)
+            r[[input$vocabularies_table]] <- data
+          }
+          else {
+            sql <- glue::glue_sql("SELECT * FROM {`input$vocabularies_table`} LIMIT {n_rows_end - n_rows_start + 1} OFFSET {n_rows_start - 1}", .con = m$db)
+            data <- DBI::dbGetQuery(m$db, sql) %>% dplyr::mutate_at(cols_to_char[[input$vocabularies_table]], as.character) %>% dplyr::mutate(modified = FALSE)
+            r[[input$vocabularies_table]] <- data
+          }
+
+          if ((input$vocabularies_table %in% c("concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength") & input$vocabularies_datatable_show_row_details) |
+              (input$vocabularies_table == "concept" & input$vocabularies_datatable_show_mapped_concepts)) selection <- "single" else selection <- "multiple"
+
+          render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data,
+            output_name = "vocabularies_tables_datatable", editable_cols = editable_cols_vocab[[input$vocabularies_table]],
+            sortable_cols = sortable_cols_vocab[[input$vocabularies_table]], centered_cols = centered_cols_vocab[[input$vocabularies_table]],
+            hidden_cols = c("id", "modified"), searchable_cols = searchable_cols_vocab[[input$vocabularies_table]], filter = TRUE,
+            factorize_cols = factorize_cols_vocab[[input$vocabularies_table]], selection = selection)
+
+          # Create a proxy
+
+          if (length(r$vocabularies_tables_datatable_proxy) == 0) r$vocabularies_tables_datatable_proxy <-
+              DT::dataTableProxy("vocabularies_tables_datatable", deferUntilFlush = FALSE)
+
+          # Show & hide cols
+          r$vocabularies_tables_datatable_proxy %>%
+            DT::hideCols(1:length(table_cols_options[[input$vocabularies_table]])) %>%
+            DT::showCols(table_cols_options_value[[input$vocabularies_table]])
+
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$vocabularies_table_render_datatable"))
+        })
+
         # Update which cols are hidden
         observeEvent(input$vocabularies_table_cols, {
-          
+
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_table_cols"))
-          
+
+          req(length(r$vocabularies_tables_datatable_proxy) > 0)
+
           r$vocabularies_tables_datatable_proxy %>%
             DT::showCols(1:length(table_cols_options[[input$vocabularies_table]])) %>%
             DT::hideCols(setdiff(1:(length(table_cols_options[[input$vocabularies_table]])), input$vocabularies_table_cols))
         })
-        
-        # Show row details
+
+        # Show row details or mapped concepts
         observeEvent(input$vocabularies_tables_datatable_rows_selected, {
-          
+
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_tables_datatable_rows_selected"))
-          
-          req(input$vocabularies_table %in% c("concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength"))
-          req(input$vocabularies_datatable_show_row_details)
-          
-          if (length(input$vocabularies_tables_datatable_rows_selected) == 0) output$vocabularies_datatable_row_details <- renderUI("")
-          else if (length(input$vocabularies_tables_datatable_rows_selected) > 1) output$vocabularies_datatable_row_details <- 
-            renderUI(i18n$t("select_only_one_row_for_details"))
-          else if (length(input$vocabularies_tables_datatable_rows_selected) == 1){
-            
-            result <- ""
-            
-            if (length(r$concept) == 0) result <- div(i18n$t("load_concept_data_before"))
-            
-            selected_row <- r[[input$vocabularies_table]][input$vocabularies_tables_datatable_rows_selected, ]
-            
-            if (length(r$concept) > 0){
+
+          # Show row details
+
+          if(input$vocabularies_table %in% c("concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength")){
+            req(input$vocabularies_datatable_show_row_details)
+
+            if (length(input$vocabularies_tables_datatable_rows_selected) == 0) output$vocabularies_datatable_row_details <- renderUI("")
+            else if (length(input$vocabularies_tables_datatable_rows_selected) > 1) output$vocabularies_datatable_row_details <-
+              renderUI(i18n$t("select_only_one_row_for_details"))
+            else if (length(input$vocabularies_tables_datatable_rows_selected) == 1){
+
+              result <- ""
+
+              selected_row <- r[[input$vocabularies_table]][input$vocabularies_tables_datatable_rows_selected, ]
+              
               if (input$vocabularies_table == "concept_relationship"){
+                sql <- glue::glue_sql("SELECT * FROM concept WHERE concept_id IN ({selected_row$concept_id_1, selected_row$concept_id_2*})", .con = m$db)
+                concepts <- DBI::dbGetQuery(m$db, sql)
+                
                 result <- div(
                   strong("concept_id_1"), " : ", selected_row$concept_id_1, br(),
-                  strong("concept_name_1"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$concept_id_1) %>% dplyr::pull(concept_name), br(),
+                  strong("concept_name_1"), " : ", concepts %>% dplyr::filter(concept_id == selected_row$concept_id_1) %>% dplyr::pull(concept_name), br(),
                   strong("relationship_id"), " : ", selected_row$relationship_id, br(),
                   strong("concept_id_2"), " : ", selected_row$concept_id_2, br(),
-                  strong("concept_name_2"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$concept_id_2) %>% dplyr::pull(concept_name), br(),
+                  strong("concept_name_2"), " : ", concepts %>% dplyr::filter(concept_id == selected_row$concept_id_2) %>% dplyr::pull(concept_name), br(),
                 )
               }
-              
+
               else if (input$vocabularies_table == "concept_synonym"){
+                sql <- glue::glue_sql("SELECT * FROM concept WHERE concept_id = {selected_row$concept_id}", .con = m$db)
+                concepts <- DBI::dbGetQuery(m$db, sql)
+                
                 result <- div(
-                  strong("concept_id"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("concept_id"), " : ", concepts %>% dplyr::filter(concept_id == selected_row$concept_id) %>% dplyr::pull(concept_name), br(),
                   strong("concept_synonym_name"), " : ", selected_row$concept_synonym_name, br(),
-                  strong("language_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$language_concept_id) %>% dplyr::pull(concept_name), br()
+                  strong("language_concept_name"), " : ", concepts %>% dplyr::filter(concept_id == selected_row$language_concept_id) %>% dplyr::pull(concept_name), br()
                 )
               }
-              
+
               else if (input$vocabularies_table == "concept_ancestor"){
+                sql <- glue::glue_sql("SELECT * FROM concept WHERE concept_id IN ({selected_row$ancestor_concept_id, selected_row$descendant_concept_id}*)", .con = m$db)
+                concepts <- DBI::dbGetQuery(m$db, sql)
+                
                 result <- div(
-                  strong("ancestor_concept_id"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$ancestor_concept_id) %>% dplyr::pull(concept_name), br(),
-                  strong("descendant_concept_id"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$descendant_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("ancestor_concept_id"), " : ", concepts %>% dplyr::filter(concept_id == selected_row$ancestor_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("descendant_concept_id"), " : ", concepts %>% dplyr::filter(concept_id == selected_row$descendant_concept_id) %>% dplyr::pull(concept_name), br(),
                   strong("min_level_of_separation"), " : ", selected_row$min_level_of_separation, br(),
                   strong("max_level_of_separation"), " : ", selected_row$max_level_of_separation, br()
                 )
               }
-              
+
               else if (input$vocabularies_table == "drug_strength"){
+                sql <- glue::glue_sql(paste0("SELECT * FROM concept WHERE concept_id IN ({selected_row$drug_concept_id, selected_row$ingredient_concept_id,",
+                "selected_row$amount_unit_concept_id, selected_row$numerator_unit_concept_id, selected_row$denominator_unit_concept_id}*)"), .con = m$db)
+                concepts <- DBI::dbGetQuery(m$db, sql)
+                
                 result <- div(
                   strong("drug_concept_id"), " : ", selected_row$drug_concept_id, br(),
-                  strong("drug_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$drug_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("drug_concept_name"), " : ", concepts %>% dplyr::filter(concept_id == selected_row$drug_concept_id) %>% dplyr::pull(concept_name), br(),
                   strong("ingredient_concept_id"), " : ", selected_row$ingredient_concept_id, br(),
-                  strong("ingredient_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$ingredient_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("ingredient_concept_name"), " : ", concepts %>% dplyr::filter(concept_id == selected_row$ingredient_concept_id) %>% dplyr::pull(concept_name), br(),
                   strong("amount_value"), " : ", selected_row$amount_value, br(),
                   strong("amount_unit_concept_id"), " : ", selected_row$amount_unit_concept_id, br(),
-                  strong("amount_unit_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$amount_unit_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("amount_unit_concept_name"), " : ", concepts %>% dplyr::filter(concept_id == selected_row$amount_unit_concept_id) %>% dplyr::pull(concept_name), br(),
                   strong("numerator_value"), " : ", selected_row$numerator_value, br(),
                   strong("numerator_unit_concept_id"), " : ", selected_row$numerator_unit_concept_id, br(),
-                  strong("numerator_unit_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$numerator_unit_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("numerator_unit_concept_name"), " : ", concepts %>% dplyr::filter(concept_id == selected_row$numerator_unit_concept_id) %>% dplyr::pull(concept_name), br(),
                   strong("denominator_value"), " : ", selected_row$denominator_value, br(),
                   strong("denominator_unit_concept_id"), " : ", selected_row$denominator_unit_concept_id, br(),
-                  strong("denominator_unit_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$denominator_unit_concept_id) %>% dplyr::pull(concept_name), br(),
+                  strong("denominator_unit_concept_name"), " : ", concepts %>% dplyr::filter(concept_id == selected_row$denominator_unit_concept_id) %>% dplyr::pull(concept_name), br(),
                   strong("box_size"), " : ", selected_row$box_size, br(),
                 )
               }
+
+              output$vocabularies_datatable_row_details <- renderUI(result)
             }
+          }
+
+          # Show mapped concepts
+
+          if (input$vocabularies_table == "concept"){
+            req(input$vocabularies_datatable_show_mapped_concepts)
+
+            selected_row <- r[[input$vocabularies_table]][input$vocabularies_tables_datatable_rows_selected, ]
+            sql <- glue::glue_sql("SELECT * FROM concept_relationship WHERE concept_id_1 = {selected_row$concept_id}", .con = m$db)
             
-            output$vocabularies_datatable_row_details <- renderUI(result)
+            mapped_concepts <- DBI::dbGetQuery(m$db, sql) %>%
+              dplyr::select(concept_id_1, relationship_id, concept_id_2) %>%
+              dplyr::left_join(r$concept %>% dplyr::select(concept_id_2 = concept_id, concept_name_2 = concept_name), by = "concept_id_2") %>%
+              dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.character)
+
+            render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = mapped_concepts,
+              output_name = "vocabularies_tables_mapped_concepts_datatable", sortable_cols = c("concept_id_1", "concept_id_2", "concept_name_2", "relationship_id"),
+              centered_cols = c("concept_id_1", "concept_id_2", "relationship_id"), searchable_cols = c("concept_id_1", "concept_id_2", "concept_name_2", "relationship_id"),
+              filter = TRUE, factorize_cols = c("concept_id_1", "concept_id_2", "concept_name_2", "relationship_id"))
           }
         })
-        
+
         # --- --- --- --- --- --- --- --- --- -- -
         # Update rows in vocabulary datatable ----
         # --- --- --- --- --- --- --- --- --- -- -
-        
+
         observeEvent(input$vocabularies_tables_datatable_cell_edit, {
-          
+
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_tables_datatable_cell_edit"))
-          
+
           edit_info <- input$vocabularies_tables_datatable_cell_edit
           r[[input$vocabularies_table]] <- DT::editData(r[[input$vocabularies_table]], edit_info, rownames = FALSE)
-          
+
           # Store that this row has been modified
           r[[input$vocabularies_table]][[edit_info$row, "modified"]] <- TRUE
         })
-        
+
         # Save updates
-        
+
         observeEvent(input$vocabularies_tables_datatable_save, {
-          
+
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_tables_datatable_save"))
-          
+
           if (nrow(r[[input$vocabularies_table]] %>% dplyr::filter(modified)) == 0) show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
-          
+
           ids_to_del <- r[[input$vocabularies_table]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
           req(length(ids_to_del) > 0)
-          
+
           # Check if there are duplicates
-          
+
           data_check_duplicates_cols <- switch(input$vocabularies_table,
             "concept" = "concept_id",
             "domain" = "domain_id",
@@ -1324,13 +1463,13 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             "drug_strength" = c("drug_concept_id", "ingredient_concept_id", "amount_value", "amount_unit_concept_id", "numerator_value", "numerator_unit_concept_id",
               "denominator_value", "denominator_unit_concept_id", "box_size")
           )
-          
+
           check_duplicates <- r[[input$vocabularies_table]] %>% dplyr::group_by_at(data_check_duplicates_cols) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
-          
+
           if (check_duplicates > 0) show_message_bar(output, "vocab_tables_duplicates_cols", "severeWarning", i18n, ns = ns)
-          
+
           data_required_cols <- switch(input$vocabularies_table,
-            "concept" = c("concept_id", "concept_name", "domain_id", "vocabulary_id", "concept_class_id", 
+            "concept" = c("concept_id", "concept_name", "domain_id", "vocabulary_id", "concept_class_id",
               "concept_code", "valid_start_date", "valid_end_date"),
             "domain" = c("domain_id", "domain_name", "domain_concept_id"),
             "concept_class" = c("concept_class_id", "concept_class_name", "concept_class_concept_id"),
@@ -1340,48 +1479,48 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             "concept_ancestor" = c("ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation"),
             "drug_strength" = c("drug_concept_id", "ingredient_concept_id", "valid_start_date", "valid_end_date")
           )
-          
+
           check_required_cols <- r[[input$vocabularies_table]] %>% dplyr::filter(dplyr::if_any(dplyr::all_of(data_required_cols), ~ . %in% c("", NA_character_, NA_integer_))) %>% nrow()
-            
+
           if (check_required_cols > 0) show_message_bar(output, "vocab_tables_empty_cols", "severeWarning", i18n, ns = ns)
-          
+
           req(check_duplicates == 0, check_required_cols == 0)
-          
+
           sql <- glue::glue_sql("DELETE FROM {`input$vocabularies_table`} WHERE id IN ({ids_to_del*})", .con = m$db)
           DBI::dbSendStatement(m$db, sql) -> query
           DBI::dbClearResult(query)
-          
+
           data <- r[[input$vocabularies_table]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
-          
+
           DBI::dbAppendTable(m$db, input$vocabularies_table, data)
-          
+
           show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
         })
-        
+
         # --- --- --- --- --- --- --- --- --- --- --- --
         # Delete rows in vocabulary table datatable ----
         # --- --- --- --- --- --- --- --- --- --- --- --
-        
+
         r$vocabularies_table_open_dialog <- FALSE
-        
+
         # IDs of selected rows
-        
+
         observeEvent(input$vocabularies_tables_delete_selection, {
-          
+
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_tables_delete_selection"))
-          
+
           req(length(input$vocabularies_tables_datatable_rows_selected) > 0)
-          
+
           r$delete_vocabularies_table_rows <- r[[input$vocabularies_table]][input$vocabularies_tables_datatable_rows_selected, ] %>% dplyr::pull(id)
           r$vocabularies_table_open_dialog <- TRUE
         })
-        
+
         # React for deletion confirmation
-        
+
         output$vocabularies_table_delete_confirm <- shiny.fluent::renderReact({
-          
+
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - output$vocabularies_table_delete_confirm"))
-          
+
           shiny.fluent::Dialog(
             hidden = !r$vocabularies_table_open_dialog,
             onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('vocabularies_table_hide_dialog', Math.random()); }")),
@@ -1397,358 +1536,37 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             )
           )
         })
-        
+
         # Close dialog box if deletion canceled
         observeEvent(input$vocabularies_table_delete_canceled, r$vocabularies_table_open_dialog <- FALSE)
-        
+
         # When the deletion is confirmed
         observeEvent(input$vocabularies_table_delete_confirmed, {
-          
+
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_table_delete_confirmed"))
-          
+
           # Close dialog box
           r$vocabularies_table_open_dialog <- FALSE
-          
+
           sql <- glue::glue_sql("DELETE FROM {`input$vocabularies_table`} WHERE id IN ({r$delete_vocabularies_table_rows*})" , .con = m$db)
           DBI::dbSendStatement(m$db, sql) -> query
           DBI::dbClearResult(query)
-          
+
           r[[input$vocabularies_table]] <- r[[input$vocabularies_table]] %>% dplyr::filter(id %not_in% r$delete_vocabularies_table_rows)
-          
+
           r$vocabulary_table_reload_datatable <- Sys.time()
-          
+
           show_message_bar(output, "vocabulary_table_rows_deleted", type ="severeWarning", i18n = i18n, ns = ns)
         })
-        
+
         # Reload datatable
-        
+
         observeEvent(r$vocabulary_table_reload_datatable, {
-          
+
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$vocabulary_table_reload_datatable"))
-          
+
           DT::replaceData(r$vocabularies_tables_datatable_proxy, r[[input$vocabularies_table]], resetPaging = FALSE, rownames = FALSE)
         })
-        
-        # observeEvent(r[[plugin_reload_variable]], {
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$reload..plugins"))
-        #   
-        #   # Reload datatable
-        #   r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
-        #   
-        #   # Reload github description if opened
-        #   r$show_plugin_details <- Sys.time()
-        #   
-        #   # Reload export plugin datatable
-        #   
-        #   # Reset "edit plugin code" fields and "plugin options" fields
-        #   
-        #   options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-        #   
-        #   sapply(c("code_chosen_plugin", "thesaurus", "thesaurus_selected_items"), 
-        #     function(name) shiny.fluent::updateComboBox.shinyInput(session, name, options = options, value = NULL))
-        #   shiny.fluent::updateChoiceGroup.shinyInput(session, "edit_code_ui_server", value = "ui")
-        #   shiny.fluent::updateToggle.shinyInput(session, "hide_editor", value = FALSE)
-        #   sapply(c("ace_edit_code_ui", "ace_edit_code_server", "ace_edit_code_translations"),
-        #     function(name) shinyAce::updateAceEditor(session, name, value = ""))
-        #   
-        #   shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = NULL)
-        #   sapply(c("plugin_author", "plugin_version", "plugin_name_fr", "plugin_name_en", "plugin_category_fr", "plugin_category_en"),
-        #     function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
-        #   shiny.fluent::updateChoiceGroup.shinyInput(session, "users_allowed_read_group", value = "everybody")
-        #   shiny.fluent::updateDropdown.shinyInput(session, "plugin_image", options = list(), value = NULL)
-        #   shiny.fluent::updateChoiceGroup.shinyInput(session, "plugin_description_language", value = "fr")
-        #   sapply(c("plugin_description_fr", "plugin_description_en"), function(name) shinyAce::updateAceEditor(session, name, value = ""))
-        #   
-        #   shiny.fluent::updateComboBox.shinyInput(session, "plugins_to_export", value = "")
-        # })
-
-        # observeEvent(input$sub_datatable, {
-        # 
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$sub_datatable"))
-        # 
-        #   # Get link id
-        #   link_id <- as.integer(substr(input$sub_datatable, nchar("sub_datatable_") + 1, nchar(input$sub_datatable)))
-        # 
-        #   options <- convert_tibble_to_list(r$vocabulary %>% dplyr::arrange(vocabulary_id), key_col = "id", text_col = "vocabulary_id")
-        #   value <- list(key = link_id, text = r$vocabulary %>% dplyr::filter(id == link_id) %>% dplyr::pull(vocabulary_id))
-        # 
-        #   shiny.fluent::updateComboBox.shinyInput(session, "vocabulary_tables_selected_vocabulary", options = options, value = value)
-        #   shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options, value = value)
-        # 
-        #   # Set current pivot to edit_code_card
-        #   shinyjs::runjs(glue::glue("$('#{id}-vocabularies_pivot button[name=\"{i18n$t('vocabulary_tables')}\"]').click();"))
-        # })
-
-        # observeEvent(input$vocabulary_tables_selected_vocabulary, {
-        # 
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabulary_tables_selected_vocabulary"))
-        # 
-        #   if (length(input$vocabulary_tables_selected_vocabulary) > 1) link_id <- input$vocabulary_tables_selected_vocabulary$key
-        #   else link_id <- input$vocabulary_tables_selected_vocabulary
-        #   if (length(input$code_selected_datamart_or_vocabulary) > 0){
-        #     if (length(input$code_selected_datamart_or_vocabulary) > 1) code_link_id <- input$code_selected_datamart_or_vocabulary$key
-        #     else code_link_id <- input$code_selected_datamart_or_vocabulary
-        #   }
-        #   else code_link_id <- 0L
-        # 
-        #   if (link_id != code_link_id){
-        #     options <- convert_tibble_to_list(r$vocabulary %>% dplyr::arrange(vocabulary_id), key_col = "id", text_col = "vocabulary_id")
-        #     value <- list(key = link_id, text = r$vocabulary %>% dplyr::filter(id == link_id) %>% dplyr::pull(vocabulary_id))
-        #     shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options, value = value)
-        #   }
-        # 
-        #   # Create a r var to export value to other observers
-        #   r$vocabulary_link_id <- link_id
-        # 
-        #   # Get datamarts linked to this vocabulary
-        #   data_sources <- stringr::str_split(r$vocabulary %>% dplyr::filter(id == link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
-        #   datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
-        # 
-        #   options <- convert_tibble_to_list(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-        #   shiny.fluent::updateComboBox.shinyInput(session, "vocabularies_datamart", options = options, value = NULL)
-        # 
-        #   # Set r$vocabulary_refresh_vocabulary_concepts to "all_items", cause we havn't selected yet the vocabulary or the datamart
-        #   r$vocabulary_refresh_vocabulary_concepts <- paste0(link_id, "reset_all_items")
-        # })
-
-        # observeEvent(input$show_only_used_items, {
-        # 
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$show_only_used_items"))
-        # 
-        #   if (input$show_only_used_items) r$vocabulary_refresh_vocabulary_concepts <- "only_used_items"
-        #   else r$vocabulary_refresh_vocabulary_concepts <- "all_items"
-        # })
-
-        # When value of datamart changes, change value or r$thesaurus_refresh_thesaurus_items, depending on show_only_used_items
-        # Add input$vocabularies_datamart in the value, to refresh even if the value doesn't change
-        # (if I change datamart and keep "all_items"), it won't active observer cause value hasn't changed...
-
-        # observeEvent(input$vocabularies_datamart, {
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_datamart"))
-        #   
-        #   if (input$show_only_used_items) r$thesaurus_refresh_thesaurus_items <- paste0(input$vocabularies_datamart, "only_used_items")
-        #   else r$thesaurus_refresh_thesaurus_items <- r$thesaurus_refresh_thesaurus_items <- paste0(input$vocabularies_datamart, "all_items")
-        # })
-
-        # observeEvent(r$thesaurus_refresh_thesaurus_items, {
-        #   
-        #   if (perf_monitoring) monitor_perf(r = r, action = "start")
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$thesaurus_refresh_thesaurus_items"))
-        # 
-        #   req(r$thesaurus_link_id)
-        # 
-        #   # Get all items from the selected thesaurus
-        # 
-        #   r$thesaurus_items <- create_datatable_cache(output = output, r = r, d = d, i18n = i18n, module_id = id, thesaurus_id = r$thesaurus_link_id, category = "delete")
-        # 
-        #   if (length(input$vocabularies_datamart) > 0 & !grepl("reset", r$thesaurus_refresh_thesaurus_items)){
-        #     if (input$vocabularies_datamart != ""){
-        # 
-        #       count_items_rows <- tibble::tibble()
-        #       count_patients_rows <- tibble::tibble()
-        # 
-        #       # Add count_items_rows in the cache & get it if already in the cache
-        #       tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, d = d, i18n = i18n, thesaurus_id = r$thesaurus_link_id,
-        #         datamart_id = as.integer(input$vocabularies_datamart), category = "count_items_rows"),
-        #         error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart",
-        #           error_name = paste0(id, " - count_items_rows"), category = "Error", error_report = toString(e), i18n = i18n))
-        # 
-        #       # Add count_items_rows in the cache & get it if already in the cache
-        #       tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, d = d, i18n = i18n, thesaurus_id = r$thesaurus_link_id,
-        #         datamart_id = as.integer(input$vocabularies_datamart), category = "count_patients_rows"),
-        #         error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart",
-        #           error_name = paste0(id, " - count_patients_rows"), category = "Error", error_report = toString(e), i18n = i18n))
-        # 
-        #       if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
-        #       req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
-        # 
-        #       # Transform count_rows cols to integer, to be sortable
-        #       r$thesaurus_items <- r$thesaurus_items %>%
-        #         dplyr::left_join(count_items_rows, by = "item_id") %>%
-        #         dplyr::left_join(count_patients_rows, by = "item_id") %>%
-        #         dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
-        #         dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action")
-        # 
-        #       # If r$thesaurus_refresh_thesaurus_items is set to "only_used_items", filter on count_items_rows > 0
-        #       if (grepl("only_used_items", r$thesaurus_refresh_thesaurus_items)) r$thesaurus_items <- r$thesaurus_items %>% dplyr::filter(count_items_rows > 0)
-        # 
-        #       # r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-        #     }
-        #   }
-        # 
-        #   r$thesaurus_items_temp <- r$thesaurus_items %>%
-        #     dplyr::mutate(modified = FALSE) %>%
-        #     dplyr::mutate_at("item_id", as.character) %>%
-        #     dplyr::arrange(name)
-        # 
-        #   action_buttons <- "delete"
-        # 
-        #   editable_cols <- c("name", "display_name", "unit")
-        #   searchable_cols <- c("item_id", "name", "display_name", "unit")
-        #   factorize_cols <- c("unit")
-        #   column_widths <- c("item_id" = "80px", "action" = "80px", "unit" = "100px")
-        # 
-        #   if ("count_patients_rows" %in% names(r$thesaurus_items)){
-        #     sortable_cols <- c("id", "name", "display_name", "category", "count_patients_rows", "count_items_rows")
-        #     centered_cols <- c("id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-        #     col_names <- get_col_names(table_name = "thesaurus_items_with_counts", i18n = i18n)
-        #   }
-        #   else {
-        #     sortable_cols <- c("id", "name", "display_name", "category")
-        #     centered_cols <- c("id", "unit", "datetime", "action")
-        #     col_names <- get_col_names(table_name = "thesaurus_items", i18n = i18n)
-        #   }
-        # 
-        #   hidden_cols <- c("id", "thesaurus_id", "datetime", "deleted", "modified")
-        # 
-        #   # Render datatable
-        #   render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$thesaurus_items_temp,
-        #     output_name = "vocabularies_tables_datatable", col_names =  col_names,
-        #     editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        #     searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols, selection = "multiple")
-        # 
-        #   # Create a proxy for datatatable
-        #   r$sub_thesaurus_datatable_proxy <- DT::dataTableProxy("vocabularies_tables_datatable", deferUntilFlush = FALSE)
-        # 
-        #   # Reload datatable
-        #   observeEvent(r$thesaurus_items_temp, {
-        # 
-        #     # Reload data of datatable
-        #     DT::replaceData(r$sub_thesaurus_datatable_proxy, r$thesaurus_items_temp, resetPaging = FALSE, rownames = FALSE)
-        #   })
-        #   
-        #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$thesaurus_refresh_thesaurus_items"))
-        # 
-        # })
-
-        # Reload cache
-
-        thesaurus_reload_cache_prefix <- "thesaurus_reload_cache"
-        thesaurus_reload_cache_react_variable <- "thesaurus_reload_cache_confirm"
-        thesaurus_reload_cache_variable <- paste0(thesaurus_reload_cache_prefix, "_open_dialog")
-
-        r[[thesaurus_reload_cache_variable]] <- FALSE
-
-        # output[[thesaurus_reload_cache_react_variable]] <- shiny.fluent::renderReact({
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - output$thesaurus_reload_cache_confirm"))
-        # 
-        #   shiny.fluent::Dialog(
-        #     hidden = !r[[thesaurus_reload_cache_variable]],
-        #     onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", thesaurus_reload_cache_prefix, "_hide_dialog', Math.random()); }")),
-        #     dialogContentProps = list(type = 0, title = i18n$t("thesaurus_reload_cache_text"), closeButtonAriaLabel = "Close", subText = tagList(i18n$t("thesaurus_reload_cache_subtext"), br(), br())),
-        #     modalProps = list(),
-        #     shiny.fluent::DialogFooter(
-        #       shiny.fluent::PrimaryButton.shinyInput(ns(paste0(thesaurus_reload_cache_prefix, "_reload_cache_confirmed")), text = i18n$t("yes")),
-        #       shiny.fluent::DefaultButton.shinyInput(ns(paste0(thesaurus_reload_cache_prefix, "_reload_cache_canceled")), text = i18n$t("no"))
-        #     )
-        #   )
-        # })
-
-        # Whether to close or not delete dialog box
-        # observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_hide_dialog")]], {
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_hide_dialog"))
-        #   r[[thesaurus_reload_cache_variable]] <- FALSE
-        # })
-        # observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_canceled")]], {
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_canceled"))
-        #   r[[thesaurus_reload_cache_variable]] <- FALSE
-        # })
-
-        # observeEvent(input$reload_vocabularies_tables_cache, {
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$reload_vocabularies_tables_cache"))
-        # 
-        #   req(length(input$vocabulary_tables_selected_vocabulary) > 1)
-        #   r[[thesaurus_reload_cache_variable]] <- TRUE
-        # })
-
-        # observeEvent(input[[paste0(thesaurus_reload_cache_prefix, "_reload_cache_confirmed")]], {
-        #   
-        #   if (perf_monitoring) monitor_perf(r = r, action = "start")
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_confirmed"))
-        # 
-        #   r[[thesaurus_reload_cache_variable]] <- FALSE
-        # 
-        #   sql <- glue::glue_sql("SELECT id FROM thesaurus_items WHERE thesaurus_id = {r$thesaurus_link_id}", .con = r$db)
-        #   thesaurus_items <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
-        # 
-        #   sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
-        #     "link_id IN ({thesaurus_items*})"), .con = r$db)
-        # 
-        #   # Delete cache
-        #   sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
-        #     "link_id IN ({thesaurus_items*})"), .con = r$db)
-        #   query <- DBI::dbSendStatement(r$db, sql)
-        #   DBI::dbClearResult(query)
-        # 
-        #   sql <- glue::glue_sql(paste0("SELECT * FROM cache WHERE category IN ('count_items_rows', 'count_patients_rows') AND ",
-        #     "link_id IN ({thesaurus_items*})"), .con = r$db)
-        # 
-        #   # Reset datamart dropdown
-        #   data_sources <- stringr::str_split(r$thesaurus %>% dplyr::filter(id == r$thesaurus_link_id) %>% dplyr::pull(data_source_id), ", ") %>% unlist() %>% as.integer()
-        #   datamarts <- r$datamarts %>% dplyr::filter(data_source_id %in% data_sources)
-        # 
-        #   options <- convert_tibble_to_list(datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-        #   shiny.fluent::updateComboBox.shinyInput(session, "vocabularies_datamart", options = options, value = NULL)
-        # 
-        #   # Reload datatable
-        #   r$thesaurus_refresh_thesaurus_items <- paste0(Sys.time(), "reset")
-        #   
-        #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$thesaurus_reload_cache_reload_cache_confirmed"))
-        # })
-
-        # Delete a row or multiple rows in datatable
-
-        thesaurus_items_delete_prefix <- "thesaurus_items"
-        thesaurus_items_delete_variable <- paste0(thesaurus_items_delete_prefix, "_open_dialog")
-        thesaurus_items_dialog_title <- "thesaurus_items_delete"
-        thesaurus_items_dialog_subtext <- "thesaurus_items_delete_subtext"
-        thesaurus_items_react_variable <- "thesaurus_items_delete_confirm"
-        thesaurus_items_table <- "thesaurus_items"
-        thesaurus_items_id_var_sql <- "id"
-        thesaurus_items_id_var_r <- paste0(id, "_delete_thesaurus_items")
-        thesaurus_items_delete_message <- "thesaurus_items_deleted"
-        thesaurus_items_reload_variable <- "reload_thesaurus_items"
-        thesaurus_items_information_variable <- paste0(id, "_thesaurus_items_deleted")
-        thesaurus_items_delete_variable <- paste0(thesaurus_items_delete_prefix, "_open_dialog")
-
-        delete_element(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
-          delete_prefix = thesaurus_items_delete_prefix, dialog_title = thesaurus_items_dialog_title, dialog_subtext = thesaurus_items_dialog_subtext,
-          react_variable = thesaurus_items_react_variable, table = thesaurus_items_table, id_var_sql = thesaurus_items_id_var_sql, id_var_r = thesaurus_items_id_var_r,
-          delete_message = thesaurus_items_delete_message, translation = TRUE, reload_variable = thesaurus_items_reload_variable,
-          information_variable = thesaurus_items_information_variable)
-
-        # Delete one row (with icon on DT)
-
-        # observeEvent(input$thesaurus_items_deleted_pressed, {
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$thesaurus_items_deleted_pressed"))
-        # 
-        #   r[[paste0(id, "_delete_thesaurus_items")]] <- as.integer(substr(input$thesaurus_items_deleted_pressed, nchar("sub_delete_") + 1, 100))
-        #   r[[thesaurus_items_delete_variable]] <- TRUE
-        # })
-
-        # Delete multiple rows (with "Delete selection" button)
-
-        # observeEvent(input$vocabularies_tables_delete_selection, {
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_tables_delete_selection"))
-        # 
-        #   req(length(input$vocabularies_tables_datatable_rows_selected) > 0)
-        # 
-        #   r[[paste0(id, "_delete_thesaurus_items")]] <- r$thesaurus_items_temp[input$vocabularies_tables_datatable_rows_selected, ] %>% dplyr::pull(id)
-        #   r[[thesaurus_items_delete_variable]] <- TRUE
-        # })
-
-        # observeEvent(r[[thesaurus_items_reload_variable]], {
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$reload_thesaurus_items"))
-        # 
-        #   # Reload datatable
-        #   r$thesaurus_items_temp <- r$thesaurus_items %>% dplyr::mutate(modified = FALSE)
-        # })
       }
       
       # --- --- --- --- --- -- -
@@ -1756,7 +1574,80 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # --- --- --- --- --- -- -
       
       if (table == "vocabulary"){
-        
+
+        observeEvent(input$import_vocabulary_browse, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$import_vocabulary_browse"))
+          shinyjs::click("import_vocabulary_upload")
+        })
+
+        output$import_vocabulary_status <- renderUI({
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - output$import_vocabulary_status"))
+
+          tagList(div(
+            span(i18n$t("loaded_file"), " : ", style = "padding-top:5px;"),
+            span(input$import_vocabulary_upload$name, style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;"))
+        })
+
+        # Import button clicked
+        observeEvent(input$import_vocabulary_button, {
+
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$import_vocabulary_button"))
+
+          req(input$import_vocabulary_upload)
+
+          # Reset count_rows vars
+          r$import_vocabulary_count_rows <- tibble::tibble(table_name = character(), n_rows = integer())
+
+          tryCatch({
+
+            # Extract ZIP file
+
+            temp_dir <- paste0(r$app_folder, "/temp_files/", Sys.time() %>% stringr::str_replace_all(":| |-", ""), paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
+            zip::unzip(input$import_vocabulary_upload$datapath, exdir = temp_dir)
+
+            csv_files <- zip::zip_list(input$import_vocabulary_upload$datapath)
+
+            lapply(csv_files$filename, function(file_name){
+
+              if (grepl(".csv$", file_name)){
+
+                # Name of the table
+                table_name <- tolower(substr(file_name, 1, nchar(file_name) - 4))
+
+                if (table_name %in% c("concept", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym",
+                  "concept_ancestor", "drug_strength")){
+
+                  # Load CSV file
+                  data <- vroom::vroom(paste0(temp_dir, "/", file_name), col_types = col_types[[table_name]])
+
+                  if ("valid_start_date" %in% names(data)) data <- data %>%
+                      dplyr::mutate_at(c("valid_start_date", "valid_end_date"), lubridate::ymd) %>%
+                      dplyr::mutate_at(c("valid_start_date", "valid_end_date"), as.character)
+
+                  # Import vocabulary with import_vocabulary_table
+                  import_vocabulary_table(output = output, ns = ns, i18n = i18n, r = r, m = m, table_name = table_name, data = data)
+                }
+              }
+            })
+
+            # Render datatable with rows inserted
+
+            shinyjs::show("imported_vocabularies_div")
+
+            render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$import_vocabulary_count_rows,
+              output_name = "imported_vocabularies", col_names = c(i18n$t("table_name"), i18n$t("row_number")),
+              centered_cols = c("table_name", "n_rows"))
+
+            show_message_bar(output,  "success_importing_plugin", "success", i18n = i18n, time = 15000, ns = ns)
+          },
+            error = function(e) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
+              error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = e, i18n = i18n, ns = ns),
+            warning = function(w) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
+              error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = w, i18n = i18n, ns = ns))
+
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$import_vocabulary_button"))
+        })
       }
   })
 }
