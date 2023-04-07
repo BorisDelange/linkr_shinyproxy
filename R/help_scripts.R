@@ -149,8 +149,8 @@ help_scripts <- function(output, r = shiny::reactiveValues(), id = character(), 
           span("TRUE ~ value_as_number", style = "margin-left:40px;"), br(),
           span(")", style = "margin-left:20px;"), br(),
           span(")"),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
-        ), br(),
+          style = r$code_style
+        ),
         p("Exemple de code pour la ", strong("création d'un concept"), " de diurèse :"),
         div(
           span("# Création d'un item \"Diurèse\" dans le thésaurus MIMIC-IV"), br(),
@@ -172,7 +172,7 @@ help_scripts <- function(output, r = shiny::reactiveValues(), id = character(), 
           span("dplyr::bind_rows(", style = "margin-left:20px;"), br(),
           span("__", style = "margin-left:40px;"), br(),
           span(")", style = "margin-left:20px;"), br(),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+          style = r$code_style
         ),
         br()
       )
@@ -196,8 +196,8 @@ help_scripts <- function(output, r = shiny::reactiveValues(), id = character(), 
           span("TRUE ~ value_as_number", style = "margin-left:40px;"), br(),
           span(")", style = "margin-left:20px;"), br(),
           span(")"),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
-        ), br(),
+          style = r$code_style
+        ),
         p("Example of code for ", strong("creating a new concept"), " of diuresis:"),
         div(
           span("# Creation of a \"Diuresis\" item in the MIMIC-IV thesaurus"), br(),
@@ -219,7 +219,7 @@ help_scripts <- function(output, r = shiny::reactiveValues(), id = character(), 
           span("dplyr::bind_rows(", style = "margin-left:20px;"), br(),
           span("__", style = "margin-left:40px;"), br(),
           span(")", style = "margin-left:20px;"), br(),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+          style = r$code_style
         ),
         br()
       )
@@ -248,7 +248,7 @@ help_scripts <- function(output, r = shiny::reactiveValues(), id = character(), 
           span("- Exclusion des valeurs inférieures à __ cm"), br(),
           span("- Exclusion des valeurs supérieures à __ cm"), br(), br(),
           span("Les poids sont transformés en taille si leur valeur est inférieure à 2.5 et l'âge du patient supérieur à 1 an (inversion des champs poids et taille)."),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+          style = r$code_style
         ),
         br()
       )
@@ -268,7 +268,7 @@ help_scripts <- function(output, r = shiny::reactiveValues(), id = character(), 
           span("- Exclude values below __ cm"), br(),
           span("- Exclude values above __ cm"), br(), br(),
           span("Weights are transformed into height if their value is below 2.5 and the patient's age is over 1 year (swapping weight and height fields)."),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+          style = r$code_style
         ),
         br()
       )

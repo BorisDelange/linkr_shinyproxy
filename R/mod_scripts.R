@@ -66,7 +66,7 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
             div(id = ns("scripts_description_markdown_output"),
               uiOutput(ns("scripts_description_markdown_result")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px; padding-top: 10px;")
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
         ), br()
       )
@@ -499,7 +499,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       else link_id <- input$scripts_description_selected_script
       
       # Get description from database
-      script_description <- r$options %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(value) %>%
+      script_description <- r$options %>% dplyr::filter(category == "script" & name == "markdown_description" & link_id == !!link_id) %>% dplyr::pull(value) %>%
         stringr::str_replace_all("\r", "\n")
       
       tryCatch({
@@ -882,8 +882,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       }
       
       # Get description from database
-      description <- r$options %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(value)
-
+      description <- r$options %>% dplyr::filter(category == "script" & name == "markdown_description" & link_id == !!link_id) %>% dplyr::pull(value)
       shinyAce::updateAceEditor(session, "ace_options_description", value = description)
     })
     
@@ -898,28 +897,23 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       else link_id <- input$options_selected_script
 
       req(!is.null(link_id))
-
       # Update options
-      # DON'T USE glue_sql, it adds some quotes in the code
 
-      option_id <- r$options %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(id)
-
+      option_id <- r$options %>% dplyr::filter(category == "script" & name == "markdown_description" & link_id == !!link_id) %>% dplyr::pull(id)
+      
       new_description <- stringr::str_replace_all(input$ace_options_description, "'", "''")
       sql <- glue::glue_sql("UPDATE options SET value = {new_description} WHERE id = {option_id}", .con = r$db)
       query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
       r$options <- r$options %>% dplyr::mutate(value = dplyr::case_when(id == option_id ~ new_description, TRUE ~ value))
 
-      # Update datetime in plugins table
+      # Update datetime in scripts table
 
       new_datetime <- as.character(Sys.time())
       sql <- glue::glue_sql("UPDATE scripts SET datetime = {new_datetime} WHERE id = {link_id}", .con = r$db)
       query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
       r$scripts <- r$scripts %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ new_datetime, TRUE ~ datetime))
-
-      # update_r(r = r, table = "options")
-      # update_r(r = r, table = "scripts")
 
       # Notify user
       show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)

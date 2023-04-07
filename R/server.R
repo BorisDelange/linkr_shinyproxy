@@ -127,7 +127,6 @@ app_server <- function(router, language = "en", app_folder = character(),
       add_log_entry(r = r, category = trad$session, name = trad$session_starts, value = "")
     })
 
-
     # When r$user_id loaded, load user_accesses
 
     observeEvent(r$user_id, {
@@ -144,6 +143,10 @@ app_server <- function(router, language = "en", app_folder = character(),
       r$username <- r$users %>% dplyr::filter(id == r$user_id)
       r$username <- paste0(r$username$firstname, " ", r$username$lastname)
     })
+    
+    # Code style for help pages
+    r$code_style <- paste0("display:block; padding: 9.5px; margin: 0 10px 10px 0px; font-size:13px; line-height:1.42857143; color: #333; ",
+      "word-break: break-all; word-wrap: break-word; background-color:#f5f5f5; border: 1px solid #ccc; border-radius: 4px;")
 
     # Route pages
     if (debug) print(paste0(Sys.time(), " - server - shiny.router"))

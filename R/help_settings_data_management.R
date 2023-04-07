@@ -159,7 +159,7 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     div_code_1 <- div(
       "## Code ##",
-      style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+      style = r$code_style
     )
     
     if (language == "fr"){

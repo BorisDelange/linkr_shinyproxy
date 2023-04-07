@@ -193,6 +193,33 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
     
     load_help_page(r)
     
+    div_code_1 <- div(
+      span("tagList("), br(),
+      span("shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),", style = "padding-left:20px;"), br(),
+      span("shiny.fluent::TextField.shinyInput(ns(\"text_input_%widget_id%\")),", style = "padding-left:40px;"), br(),
+      span("shiny.fluent::PrimaryButton.shinyInput(ns(\"submit_%widget_id%\"), i18np$t(\"show\"))", style = "padding-left:40px;"), br(),
+      span("),", style = "padding-left:20px;"), br(),
+      span("div(verbatimTextOutput(ns(\"text_output_%widget_id%\")), style = \"border:dashed 1px; margin-top:10px;\")", style = "padding-left:20px;"), br(),
+      span(")"),
+      style = r$code_style
+    )
+    
+    div_code_2 <- div(
+      span("observeEvent(input$submit_%widget_id%, {"), br(),
+      span("req(o[[session_code]] == session_num)", style = "padding-left:20px;"), br(),
+      span("output$text_output_%widget_id% <- renderText(paste0(i18np$t(\"input_text_is\"), \" : \", isolate(input$text_input_%widget_id%)))", style = "padding-left:20px;"), br(),
+      span("})"),
+      style = r$code_style
+    )
+    
+    div_code_3 <- div(
+      span("base,en,fr"), br(),
+      span("my_word,English traduction of my word,Traduction française de mon mot"), br(),
+      span("show,Show,Afficher"), br(),
+      span("input_text_is,Input text is,Le texte entré est"), br(),
+      style = r$code_style
+    )
+    
     r[[paste0("help_plugins_", prefix, "_modal_title")]] <- i18n$t("edit_plugin_code")
     
     if (language == "fr"){
@@ -202,16 +229,7 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
         p(strong("1) UI (user interface) code")),
         p("Vous codez ici ", strong("l'interface utilisateur"), " du plugin."),
         p("Voici un exemple de code :"),
-        div(
-          span("tagList("), br(),
-            span("shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),", style = "padding-left:20px;"), br(),
-              span("shiny.fluent::TextField.shinyInput(ns(\"text_input_%widget_id%\")),", style = "padding-left:40px;"), br(),
-              span("shiny.fluent::PrimaryButton.shinyInput(ns(\"submit_%widget_id%\"), i18np$t(\"show\"))", style = "padding-left:40px;"), br(),
-            span("),", style = "padding-left:20px;"), br(),
-            span("div(verbatimTextOutput(ns(\"text_output_%widget_id%\")), style = \"border:dashed 1px; margin-top:10px;\")", style = "padding-left:20px;"), br(),
-          span(")"),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
-        ),
+        div_code_1,
         p("Le code doit être intégré au sein d'une fonction ", strong("tagList"), " comme c'est le cas ici."),
         p("N'oubliez pas de déclarer les ID des éléments avec le ", strong("namespace"), ", via la fonction ", strong("ns()"), "."),
         p("Remarquez l'utilisation de la balise ", strong("%widget_id%"), ", qui sera remplacée par l'ID du widget une fois le plugin lancé."),
@@ -224,25 +242,13 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
         p("Vous codez ici le partie ", strong("serveur"), " de votre plugin, avec les ", strong("observers"), "."),
         p("Cela fonctionne exactement comme une application Shiny."),
         p("Voici un exemple de code :"),
-        div(
-          span("observeEvent(input$submit_%widget_id%, {"), br(),
-          span("req(o[[session_code]] == session_num)", style = "padding-left:20px;"), br(),
-          span("output$text_output_%widget_id% <- renderText(paste0(i18np$t(\"input_text_is\"), \" : \", isolate(input$text_input_%widget_id%)))", style = "padding-left:20px;"), br(),
-          span("})"),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
-        ),
+        div_code_2,
         p("A chaque début d'observer, vous devez ", strong("insérer ce code"), " : ", tags$em("req(o[[session_code]] == session_num)"), 
           ", permettant d'éviter que le code se lance plusieurs fois pour un même observer en cas de modification d'un widget."),
         p(strong("3) Traductions")),
         p("Vous pouvez ici créer un fichier CSV permettant d'utiliser des traductions au sein du plugin."),
         p("Le fichier doit être sous la forme suivante."),
-        div(
-          span("base,en,fr"), br(),
-          span("my_word,English traduction of my word,Traduction française de mon mot"), br(),
-          span("show,Show,Afficher"), br(),
-          span("input_text_is,Input text is,Le texte entré est"), br(),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
-        ),
+        div_code_3,
         p("Vous pouvez ensuite utiliser la fonction ", strong("i18np$t"), " pour traduire des mots dans le plugin."),
         p(strong("4) Bugs possibles")),
         p("Pour éviter les bugs, les codes UI & server du plugin sont appelés au sein d'une fonction ", strong("tryCatch"), "."),
@@ -265,16 +271,7 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
         p(strong("1) UI (user interface) code")),
         p("Here you code the ", strong("user interface"), " of the plugin."),
         p("Here's an example of code:"),
-        div(
-          span("tagList("), br(),
-          span("shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),", style = "padding-left:20px;"), br(),
-          span("shiny.fluent::TextField.shinyInput(ns(\"text_input_%widget_id%\")),", style = "padding-left:40px;"), br(),
-          span("shiny.fluent::PrimaryButton.shinyInput(ns(\"submit_%widget_id%\"), i18np$t(\"show\"))", style = "padding-left:40px;"), br(),
-          span("),", style = "padding-left:20px;"), br(),
-          span("div(verbatimTextOutput(ns(\"text_output_%widget_id%\")), style = \"border:dashed 1px; margin-top:10px;\")", style = "padding-left:20px;"), br(),
-          span(")"),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
-        ),
+        div_code_1,
         p("The code must be integrated into a function called ", strong("tagList"), ", as is the case here."),
         p("Don't forget to declare the element IDs with the ", strong("namespace"), " using the function ", strong("ns()"), "."),
         p("Notice the use of the ", strong("%widget_id%"), " tag, which will be replaced by the widget's ID once the plugin is launched."),
@@ -287,25 +284,13 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
         p("Here you code the ", strong("server"), " part of your plugin, with the ", strong("observers"), "."),
         p("This works exactly like a Shiny application."),
         p("Here is an example of code:"),
-        div(
-          span("observeEvent(input$submit_%widget_id%, {"), br(),
-          span("req(o[[session_code]] == session_num)", style = "padding-left:20px;"), br(),
-          span("output$text_output_%widget_id% <- renderText(paste0(i18np$t(\"input_text_is\"), \" : \", isolate(input$text_input_%widget_id%)))", style = "padding-left:20px;"), br(),
-          span("})"),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
-        ),
+        div_code_2,
         p("At the beginning of each observer, you must ", strong("insert this code"), ":", tags$em("req(o[[session_code]] == session_num)"), 
           ", which prevents the code from being executed multiple times for the same observer if a widget is modified."),
         p(strong("3) Translations")),
         p("Here you can create a CSV file to use translations within the plugin."),
         p("The file must be in the following format:"),
-        div(
-          span("base,en,fr"), br(),
-          span("my_word,English traduction of my word,Traduction française de mon mot"), br(),
-          span("show,Show,Afficher"), br(),
-          span("input_text_is,Input text is,Le texte entré est"), br(),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
-        ),
+        div_code_3,
         p("You can then use the function ", strong("i18np$t"), " to translate words within the plugin."),
         p(strong("4) Possible bugs")),
         p("To avoid bugs, the plugin's UI & server codes are called within a ", strong("tryCatch"), " function."),
@@ -354,7 +339,7 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
           span("## Utilisation"), br(), br(),
           span("Voici un exemple d'utilisation de ce plugin."), br(), br(),
           span("![Texte si l'image ne s'affiche pas](%plugin_folder%/my_image.jpg)"),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+          style = r$code_style
         ),
         p("Pour ajouter une image, utilisez la balise ", strong("%plugin_folder%"), " qui sera remplacée par le dossier du plugin."),
         br()
@@ -385,7 +370,7 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
           span("## Usage"), br(), br(),
           span("Here is an example of using this plugin."), br(), br(),
           span("Text if the image does not display"),
-          style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+          style = r$code_style
         ),
         p("To add an image, use the tag ", strong("%plugin_folder%"), " which will be replaced by the plugin folder."),
         br()

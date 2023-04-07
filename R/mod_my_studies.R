@@ -10,7 +10,7 @@
 mod_my_studies_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
-  cards <- c("studies_messages_card", "studies_creation_card", "studies_datatable_card", "studies_options_card")
+  cards <- c("studies_messages_card", "studies_description_card", "studies_creation_card", "studies_datatable_card", "studies_options_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
@@ -37,6 +37,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
           id = ns("studies_pivot"),
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "studies_messages_card", itemKey = "studies_messages_card", headerText = i18n$t("messages")),
+          shiny.fluent::PivotItem(id = "studies_description_card", itemKey = "studies_description_card", headerText = i18n$t("study_description")),
           shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = i18n$t("studies_management")),
           shiny.fluent::PivotItem(id = "studies_options_card", itemKey = "studies_options_card", headerText = i18n$t("study_options"))
         )
@@ -117,7 +118,26 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
           )
         ),
         div(
-          id = ns("choose_a_study_card"),
+          id = ns("choose_a_study_card_messages"),
+          make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_a_study_left_side"), messageBarType = 5), style = "margin-top:10px;"))
+        )
+      )
+    ),
+    
+    # --- --- --- --- --- --- ---
+    # Study description card ----
+    # --- --- --- --- --- --- ---
+    
+    shinyjs::hidden(
+      div(
+        id = ns("studies_description_card"),
+        div(id = ns("studies_description_content"),
+          make_card(i18n$t("studies_description_card"),
+            uiOutput(ns("studies_description_markdown_result"))
+          ), br()
+        ),
+        div(
+          id = ns("choose_a_study_card_description"),
           make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_a_study_left_side"), messageBarType = 5), style = "margin-top:10px;"))
         )
       )
@@ -170,7 +190,17 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
                 uiOutput(ns("users_allowed_read_div"))
               )
             ), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("save"))
+            strong(i18n$t("study_description")),
+            div(shinyAce::aceEditor(ns("ace_options_description"), "", mode = "markdown",
+              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("save")),
+              shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("run_code"))
+            ),
+            br(),
+            div(id = ns("description_markdown_output"),
+              uiOutput(ns("description_markdown_result")), 
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
           )
         )
       )
@@ -248,7 +278,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # Show or hide cards ----
     # --- --- --- --- --- ---
     
-    cards <- c("studies_messages_card", "studies_datatable_card", "studies_options_card")
+    cards <- c("studies_messages_card", "studies_description_card", "studies_datatable_card", "studies_options_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
 
     # --- --- --- --- --- -
@@ -309,15 +339,14 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       }
       
       # Hide messages card & reset fields
-      shinyjs::show("choose_a_study_card")
-      shinyjs::hide("study_messages_content")
+      sapply(c("choose_a_study_card_messages", "choose_a_study_card_description"), shinyjs::show)
+      sapply(c("study_messages_content", "conversation_new_message_div", "studies_description_content"), shinyjs::hide)
       shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", value = "")
       shinyAce::updateAceEditor(session, "new_conversation_text", value = "")
       shinyAce::updateAceEditor(session, "new_message_text", value = "")
       output$conversation_object <- renderUI("")
       output$new_conversation_preview <- renderUI("")
       output$selected_conversation <- renderUI("")
-      shinyjs::hide("conversation_new_message_div")
       
       # The dataset is loaded here, and not in sidenav
       # Placed in sidenav, the dataset is loaded multiple times (each time a page loads its own sidenav)
@@ -547,8 +576,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       req(!is.na(m$selected_study))
       # Show first card & hide "choose a dataset" card
-      shinyjs::hide("choose_a_study_card")
-      shinyjs::show("study_messages_content")
+      sapply(c("choose_a_study_card_messages", "choose_a_study_card_description"), shinyjs::hide)
+      sapply(c("study_messages_content", "studies_description_content"), shinyjs::show)
       
       # Reset new conversation fields
       shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", value = "")
@@ -576,6 +605,34 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # Load patients options
       sql <- glue::glue_sql("SELECT * FROM patients_options WHERE study_id = {m$selected_study}", .con = m$db)
       m$patients_options <- DBI::dbGetQuery(m$db, sql)
+      
+      # Load study description
+      
+      # Get description from database
+      study_description <- r$options %>% dplyr::filter(category == "study" & name == "markdown_description" & link_id == m$selected_study) %>% 
+        dplyr::pull(value) %>% stringr::str_replace_all("\r", "\n")
+      
+      tryCatch({
+        
+        # Clear temp dir
+        unlink(paste0(path.expand("~"), "/linkr_temp_files"), recursive = TRUE, force = TRUE)
+        
+        markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
+          path.expand("~"), "/linkr_temp_files')\n",
+          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files/', fig.path = '", path.expand("~"), "/linkr_temp_files/')\n```\n")
+        
+        markdown_file <- paste0(markdown_settings, study_description)
+        
+        # Create temp dir
+        dir <- paste0(path.expand("~"), "/linkr_temp_files")
+        file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
+        if (!dir.exists(dir)) dir.create(dir)
+        
+        # Create the markdown file
+        knitr::knit(text = markdown_file, output = file, quiet = TRUE)
+        
+        output$studies_description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
+      }, error = function(e) "")
     })
     
     # --- --- --- --- --- --- --- --
@@ -1414,6 +1471,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           width = "100%", style = "padding-bottom:10px;")
       })
       
+      # Study description
+      description <- r$options %>% dplyr::filter(category == "study" & name == "markdown_description" & link_id == !!link_id) %>% dplyr::pull(value)
+      shinyAce::updateAceEditor(session, "ace_options_description", value = description)
     })
     
     observeEvent(input$options_save, {
@@ -1425,15 +1485,49 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
       if (length(input$options_selected) > 1) link_id <- input$options_selected$key
       else link_id <- input$options_selected
-
+      
       data <- list()
       data$users_allowed_read <- input$users_allowed_read
       data$users_allowed_read_group <- input$users_allowed_read_group
-
+      data$markdown_description <- input$ace_options_description
       save_settings_options(output = output, r = r, id = id, category = "study", code_id_input = paste0("options_", link_id),
-        i18n = i18n, data = data, page_options = "users_allowed_read")
+        i18n = i18n, data = data, page_options = c("users_allowed_read", "markdown_description"))
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer input$options_save"))
+    })
+    
+    # Render markdown
+    
+    observeEvent(input$execute_options_description, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$execute_options_description"))
+      
+      options_description <- isolate(input$ace_options_description %>% stringr::str_replace_all("\r", "\n"))
+      
+      tryCatch({
+        
+        # Clear temp dir
+        unlink(paste0(path.expand("~"), "/linkr_temp_files"), recursive = TRUE, force = TRUE)
+        
+        markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
+          path.expand("~"), "/linkr_temp_files')\n",
+          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files', fig.path = '", path.expand("~"), "/linkr_temp_files')\n```\n")
+        
+        markdown_file <- paste0(markdown_settings, options_description)
+        
+        # Create temp dir
+        dir <- paste0(path.expand("~"), "/linkr_temp_files")
+        file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
+        if (!dir.exists(dir)) dir.create(dir)
+        
+        # Create the markdown file
+        knitr::knit(text = markdown_file, output = file, quiet = TRUE)
+        
+        output$description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
+      }, error = function(e) "")
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer input$execute_options_description"))
     })
     
     # --- --- --- --- ---

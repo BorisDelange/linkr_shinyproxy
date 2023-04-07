@@ -272,7 +272,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, "study", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row$options + 2, "study", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 3, "study", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$options + 3, "study", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 4, "study", last_row$data + 1, "markdown_description", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add rows in subsets table, for inclusion / exclusion subsets
     # Add also code corresponding to each subset
@@ -1359,9 +1360,16 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
     # Add users in the selected list
     if (length(data$users_allowed_read) != 0){
       data$users_allowed_read <- unique(data$users_allowed_read)
-      last_row <- max(r$options["id"])
+      
+      if (length(data$users_allowed_read) == 1){
+        if (data$users_allowed_read == "everybody") value_num <- NA_real_ 
+        else value_num <- as.numeric(data$users_allowed_read)
+      } 
+      else value_num <- as.numeric(data$users_allowed_read)
+      
+      last_row <- get_last_row(r$db, "options")
       new_data <- tibble::tibble(id = (last_row + (1:length(data$users_allowed_read))), category = category, link_id = link_id,
-        name = "user_allowed_read", value = "", value_num = as.numeric(data$users_allowed_read), creator_id = as.integer(r$user_id),
+        name = "user_allowed_read", value = "", value_num = value_num, creator_id = as.integer(r$user_id),
         datetime = as.character(Sys.time()), deleted = FALSE)
       DBI::dbAppendTable(r$db, "options", new_data)
       r$options <- r$options %>% dplyr::bind_rows(new_data)
@@ -1379,8 +1387,6 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
       r$options <- r$options %>% dplyr::mutate(value = dplyr::case_when(id == option_id ~ new_value, TRUE ~ value))
     }
   }
-  
-  # update_r(r = r, table = "options")
   
   show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
 }

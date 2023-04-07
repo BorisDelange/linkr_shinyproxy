@@ -51,13 +51,13 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
     div_code_1 <- div(
       "r$datasets",
       "DBI::dbGetQuery(r$db, \"SELECT * FROM datasets\")",
-      style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+      style = r$code_style
     )
     
     div_code_2 <- div(
       "m$subsets", br(),
       "DBI::dbGetQuery(m$db, \"SELECT * FROM modules_elements_options\")",
-      style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+      style = r$code_style
     )
     
     r$help_settings_app_database_modal_title <- i18n$t("database_structure")
@@ -111,7 +111,7 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
     
     div_code_3 <- div(
       "linkr(language = \"fr\", app_folder = \"/Users/borisdelange\")",
-      style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+      style = r$code_style
     )
     
     r$help_settings_app_database_modal_title <- i18n$t("db_connection_infos_card")
@@ -336,7 +336,7 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
       "SELECT u.username, u.firstname, u.lastname, ua.name AS user_access_name", br(),
       "FROM users u", br(),
       "LEFT JOIN users_accesses ua ON u.user_access_id = ua.id",
-      style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
+      style = r$code_style
     )
     
     r$help_settings_app_database_modal_title <- i18n$t("db_request_card")

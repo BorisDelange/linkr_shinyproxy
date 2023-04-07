@@ -122,6 +122,7 @@ linkr <- function(
     "studies", c(
       "studies_see_all_data",
       "studies_messages_card",
+      "studies_description_card",
       "studies_datatable_card",
       "studies_options_card"),
     "subsets", c(
