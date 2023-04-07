@@ -16,5 +16,5 @@ Shiny UI elements / HTML code
 Set default UI elements on top of the page : message_bar outputs, react output to confirm delete of a table element
 }
 \examples{
-render_settings_default_elements(ns = NS("settings_datamart"))
+render_settings_default_elements(ns = NS("settings_dataset"))
 }

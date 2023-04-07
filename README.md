@@ -22,7 +22,7 @@ model building tools, using a **Shiny web application**.
 guide](https://borisdelange.github.io/cdwtools/articles/cdwtools.html).
 
 The application contains a **data management section**, which allows the
-import of datamarts & thesaurus, the creation of studies & subsets. You
+import of datasets & thesaurus, the creation of studies & subsets. You
 choose who has access to which part of the app in the **users management
 section**.
 

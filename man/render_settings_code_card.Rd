@@ -36,7 +36,7 @@ Render UI of options card
 }
 \examples{
 \dontrun{
-render_settings_code_card(ns = NS("settings_datamarts"), r = r, id = "settings_datamarts", title = "edit_datamart_code",
+render_settings_code_card(ns = NS("settings_datasets"), r = r, id = "settings_datasets", title = "edit_dataset_code",
   code = "Enter your code here", link_id = 3, language = "EN")
 }
 }

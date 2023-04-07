@@ -42,7 +42,7 @@ options <- list(
   list(key = "my_key1", text = "my_text1"),
   list(key = "my_key2", text = "my_text2")
 )
-make_dropdown(language = "EN", ns = NS("settings_datamarts"), label = "my_dropdown", id = "my_dropdown",
+make_dropdown(language = "EN", ns = NS("settings_datasets"), label = "my_dropdown", id = "my_dropdown",
   options = options, multiSelect = FALSE, value = "my_key1", width = "100\%")
 }
 }

@@ -72,25 +72,25 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
   # My studies ----
   # --- --- --- ---
   
-  if (id == "my_studies") div(class = "sidenav", dropdowns(c("datamart", "study"))) -> result
+  if (id == "my_studies") div(class = "sidenav", dropdowns(c("dataset", "study"))) -> result
   
   # --- --- --- ---
   # My subsets ----
   # --- --- --- ---
   
-  if (id == "my_subsets") div(class = "sidenav", dropdowns(c("datamart", "study"))) -> result
+  if (id == "my_subsets") div(class = "sidenav", dropdowns(c("dataset", "study"))) -> result
   
   # --- --- --- --- -
   # Vocabularies ----
   # --- --- --- --- -
   
-  if (id == "vocabularies") div(class = "sidenav", dropdowns(c("datamart"))) -> result
+  if (id == "vocabularies") div(class = "sidenav", dropdowns(c("dataset"))) -> result
   
   # --- --- -- -
   # Scripts ----
   # --- --- -- -
   
-  if (id == "scripts") div(class = "sidenav", dropdowns(c("datamart"))) -> result
+  if (id == "scripts") div(class = "sidenav", dropdowns(c("dataset"))) -> result
   
   # --- --- --- --- --- ---
   # Patient-level data ----
@@ -105,7 +105,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
           shiny.fluent::DefaultButton.shinyInput(ns("data_page_agg"), i18n$t("aggregated"), style = "width:125px;")
         ), style = "width:250px;"
       ),
-      dropdowns(c("datamart", "study", "subset")),
+      dropdowns(c("dataset", "study", "subset")),
       br(), div(id = ns("hr1"), hr()),
       dropdowns(c("patient", "stay")),
       br(), div(id = ns("hr2"), hr()),
@@ -126,7 +126,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
         shiny.fluent::PrimaryButton.shinyInput(ns("data_page_agg"), i18n$t("aggregated"), style = "width:125px;")
       ), style = "width:250px;"
     ),                               
-    dropdowns(c("datamart", "study", "subset"))
+    dropdowns(c("dataset", "study", "subset"))
   ) -> result
   
   # --- --- --- --- --- --- --
@@ -172,7 +172,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
   if (grepl("^settings", id)){
     
     links_data_management <- list()
-    lapply(c("data_sources", "datamarts", "vocabularies"), function(page){
+    lapply(c("data_sources", "datasets", "vocabularies"), function(page){
       links_data_management <<- rlist::list.append(links_data_management, list(name = i18n$t(page),
         id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
     })
@@ -258,16 +258,16 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
       
       # --- --- --- --- -- -
-      # Chosen datamart ----
+      # Selected dataset ----
       # --- --- --- --- -- -
       
-      observeEvent(r$datamarts, {
+      observeEvent(r$datasets, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer r$datamarts"))
+        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer r$datasets"))
         
         # Update dropdown
-        shiny.fluent::updateComboBox.shinyInput(session, "datamart", 
-          options = convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name"), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "dataset", 
+          options = convert_tibble_to_list(r$datasets %>% dplyr::arrange(name), key_col = "id", text_col = "name"), value = NULL)
         
         sapply(c("study", "subset", "patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
@@ -275,12 +275,12 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         shinyjs::hide("exclusion_reason_div")
       })
       
-      observeEvent(input$datamart, {
+      observeEvent(input$dataset, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer input$datamart"))
+        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer input$dataset"))
         
-        # Save value in r$chosen_dropdown, to update patient-level data dropdowns AND aggregated data dropdowns
-        r$chosen_datamart <- input$datamart$key
+        # Save value in r$selected_dropdown, to update patient-level data dropdowns AND aggregated data dropdowns
+        r$selected_dataset <- input$dataset$key
         
         sapply(c("subset", "patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
@@ -300,17 +300,17 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
       
       # Update the two pages dropdowns (patient-level data page & aggregated data page)
-      observeEvent(r$chosen_datamart, {
+      observeEvent(r$selected_dataset, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer r$chosen_datamart"))
+        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer r$selected_dataset"))
         
-        shiny.fluent::updateComboBox.shinyInput(session, "datamart", options = 
-          convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name"), 
-            value = list(key = r$chosen_datamart))
+        shiny.fluent::updateComboBox.shinyInput(session, "dataset", options = 
+          convert_tibble_to_list(r$datasets %>% dplyr::arrange(name), key_col = "id", text_col = "name"), 
+            value = list(key = r$selected_dataset))
         
-        # Reset m$chosen_study (to reset main display)
-        if (length(m$chosen_study) == 0) m$chosen_study <- NA_integer_
-        if (!is.na(m$chosen_study)) m$chosen_study <- NA_integer_
+        # Reset m$selected_study (to reset main display)
+        if (length(m$selected_study) == 0) m$selected_study <- NA_integer_
+        if (!is.na(m$selected_study)) m$selected_study <- NA_integer_
         
         # Reset of data variables, load of vocabulary code happens in mod_my_studies.R
         # With this solution, code is run only one time
@@ -318,7 +318,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
       
       # --- --- --- --- -
-      # Chosen study ----
+      # Selected study ----
       # --- --- --- --- -
       
       observeEvent(r$studies, {
@@ -339,10 +339,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
 
         req(input$study$key)
         
-        # Prevent multiple changes of m$chosen_study
+        # Prevent multiple changes of m$selected_study
         # We have to keep multiple observers, cause we use input variable
-        if (is.na(m$chosen_study)) m$chosen_study <- input$study$key
-        if (!is.na(m$chosen_study) & m$chosen_study != input$study$key) m$chosen_study <- input$study$key
+        if (is.na(m$selected_study)) m$selected_study <- input$study$key
+        if (!is.na(m$selected_study) & m$selected_study != input$study$key) m$selected_study <- input$study$key
 
         # Reset dropdowns & uiOutput
         shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL)
@@ -360,23 +360,23 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$study"))
       })
       
-      observeEvent(m$chosen_study, {
+      observeEvent(m$selected_study, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer m$chosen_study"))
+        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer m$selected_study"))
         
-        req(input$datamart$key & !is.na(m$chosen_study))
-        studies <- r$studies %>% dplyr::filter(datamart_id == input$datamart$key)
+        req(input$dataset$key & !is.na(m$selected_study))
+        studies <- r$studies %>% dplyr::filter(dataset_id == input$dataset$key)
         
         shiny.fluent::updateComboBox.shinyInput(session, "study", options =
             convert_tibble_to_list(studies %>% dplyr::arrange(name), key_col = "id", text_col = "name"),
-          value = list(key = m$chosen_study))
+          value = list(key = m$selected_study))
         
         # Load of subsets is done in mod_my_studies.R
         # With this solution, code is run only one time
       })
       
       observeEvent(m$subsets, {
-        req(!is.na(m$chosen_study))
+        req(!is.na(m$selected_study))
         
         # Update subset dropdown
         if (nrow(m$subsets) == 0) shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL, errorMessage = i18n$t("no_subset_available"))
@@ -384,7 +384,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
       
       # --- --- --- --- --
-      # Chosen subset ----
+      # Selected subset ----
       # --- --- --- --- --
       
       observeEvent(m$subsets, {
@@ -405,10 +405,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         req(input$subset$key)
         
-        # Prevent multiple changes of m$chosen_study
+        # Prevent multiple changes of m$selected_study
         # We have to keep multiple observers, cause we use input variable
-        if (is.na(m$chosen_subset)) m$chosen_subset <- input$subset$key
-        if (!is.na(m$chosen_subset) & m$chosen_subset != input$subset$key) m$chosen_subset <- input$subset$key
+        if (is.na(m$selected_subset)) m$selected_subset <- input$subset$key
+        if (!is.na(m$selected_subset) & m$selected_subset != input$subset$key) m$selected_subset <- input$subset$key
 
         # Reset dropdown & uiOutput
         shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
@@ -424,13 +424,13 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$subset"))
       })
       
-      observeEvent(m$chosen_subset, {
+      observeEvent(m$selected_subset, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer m$chosen_datamart"))
+        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer m$selected_dataset"))
         
         req(input$study$key)
         shiny.fluent::updateComboBox.shinyInput(session, "subset", options = convert_tibble_to_list(m$subsets, key_col = "id", text_col = "name"),
-          value = list(key = m$chosen_subset))
+          value = list(key = m$selected_subset))
       })
       
       observeEvent(m$subset_patients, {
@@ -444,8 +444,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         }
         
         if (nrow(patients) == 0){
-          # Set chosen_patient to NA, not to display a chart when no patient is chosen
-          m$chosen_patient <- NA_integer_
+          # Set selected_patient to NA, not to display a chart when no patient is selected
+          m$selected_patient <- NA_integer_
           shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = i18n$t("no_patient_in_subset")) 
         }
         
@@ -462,14 +462,14 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
       
       # --- --- --- --- ---
-      # Chosen patient ----
+      # Selected patient ----
       # --- --- --- --- ---
       
       observeEvent(input$patient, {
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$patient"))
         
-        m$chosen_patient <- input$patient$key
+        m$selected_patient <- input$patient$key
         
         if (nrow(d$stays %>% dplyr::filter(patient_id == input$patient$key)) == 0) shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = i18n$t("no_patient_in_subset"))
         if (nrow(d$stays %>% dplyr::filter(patient_id == input$patient$key)) > 0){
@@ -491,8 +491,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         output$patient_info <- renderUI({
           
           tagList(
-            span(i18n$t("patient_id"), style = style), m$chosen_patient, br(),
-            span(i18n$t("gender"), style = style), d$patients %>% dplyr::filter(patient_id == m$chosen_patient) %>% dplyr::pull(gender)
+            span(i18n$t("patient_id"), style = style), m$selected_patient, br(),
+            span(i18n$t("gender"), style = style), d$patients %>% dplyr::filter(patient_id == m$selected_patient) %>% dplyr::pull(gender)
           )
         })
         
@@ -502,7 +502,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
       
       # --- --- --- -- -
-      # Chosen stay ----
+      # Selected stay ----
       # --- --- --- -- -
       
       observeEvent(input$stay, {
@@ -510,33 +510,33 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer input$stay"))
         
-        m$chosen_stay <- input$stay$key
+        m$selected_stay <- input$stay$key
 
         # Update patient informations on sidenav
 
         style <- "display:inline-block; width:100px; font-weight:bold;"
         
-        age <- d$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::pull(age)
+        age <- d$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::pull(age)
         if (age > 2) age_div <- tagList(age, " ", i18n$t("years"))
         else age_div <- tagList(round(age * 12, 0), " ", i18n$t("months"))
         
-        admission_datetime <- d$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::pull(admission_datetime) %>% format_datetime(language)
-        discharge_datetime <- d$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::pull(discharge_datetime) %>% format_datetime(language)
+        admission_datetime <- d$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::pull(admission_datetime) %>% format_datetime(language)
+        discharge_datetime <- d$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::pull(discharge_datetime) %>% format_datetime(language)
         
-        thesaurus_name <- d$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::pull(thesaurus_name)
+        thesaurus_name <- d$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::pull(thesaurus_name)
         thesaurus_id <- r$thesaurus %>% dplyr::filter(name == thesaurus_name) %>% dplyr::pull(id)
         
         sql <- glue::glue_sql("SELECT name, display_name FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} AND 
-          item_id = {d$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::pull(item_id)}", .con = r$db)
+          item_id = {d$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::pull(item_id)}", .con = r$db)
         unit_name <- DBI::dbGetQuery(r$db, sql)
         
         unit_name <- unit_name %>% dplyr::mutate(name = dplyr::case_when(!is.na(display_name) ~ display_name, TRUE ~ name)) %>% dplyr::pull(name)
         
         output$patient_info <- renderUI({
           tagList(
-            span(i18n$t("patient_id"), style = style), m$chosen_patient, br(),
-            span(i18n$t("gender"), style = style), d$patients %>% dplyr::filter(patient_id == m$chosen_patient) %>% dplyr::pull(gender), br(), br(),
-            span(i18n$t("stay_id"), style = style), m$chosen_stay, br(),
+            span(i18n$t("patient_id"), style = style), m$selected_patient, br(),
+            span(i18n$t("gender"), style = style), d$patients %>% dplyr::filter(patient_id == m$selected_patient) %>% dplyr::pull(gender), br(), br(),
+            span(i18n$t("stay_id"), style = style), m$selected_stay, br(),
             span(i18n$t("age"), style = style), age_div, br(),
             span(i18n$t("hosp_unit"), style = style), unit_name, br(),
             span(i18n$t("from"), style = style), admission_datetime, br(),

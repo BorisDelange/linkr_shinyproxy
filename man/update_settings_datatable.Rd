@@ -32,6 +32,6 @@ Update datatable
 }
 \examples{
 \dontrun{
-update_settings_datatable(r = r, ns = ns, table = "datamarts", dropdowns = "data_source", language = "EN")
+update_settings_datatable(r = r, ns = ns, table = "datasets", dropdowns = "data_source", language = "EN")
 }
 }

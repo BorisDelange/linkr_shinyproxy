@@ -78,16 +78,16 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     
     if (language == "en"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Choose a datamart")),
-        p("A datamart contains the data of a ", strong("group of patients"), "."),
-        p("The same datamart can contain ", strong("multiple studies"), "."),
-        p("Choose the datamart from the dropdown menu on the left of the screen."),
+        p(strong("1) Choose a dataset")),
+        p("A dataset contains the data of a ", strong("group of patients"), "."),
+        p("The same dataset can contain ", strong("multiple studies"), "."),
+        p("Choose the dataset from the dropdown menu on the left of the screen."),
         p(strong("2) Choose a study")),
         p("Next, choose a study from the dropdown menu."),
         p("You can create studies from the ", tags$em("My studies"), " tab at the top of the screen."),
         p("The same study can contain ", strong("multiple subsets"), "."),
         p(strong("3) Choose a subset")),
-        p("A subset is a subset of the datamart, containing selected patients."),
+        p("A subset is a subset of the dataset, containing selected patients."),
         p("It is possible to ", strong("create other subsets"), " from the ", tags$em("My subsets"), " tab."),
         p(strong("4) Choose a patient & a stay")),
         p("When loading a subset, the list of patients belonging to that subset is loaded into the ", tags$em("Patient"),
@@ -401,7 +401,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
         p("S'il s'agit d'un widget de données agrégées, cliquez sur Ajouter et c'est terminé."),
         p("S'il s'agit d'un widget de données individuelles, vous devez :"),
         tags$ul(
-          tags$li(strong("Sélectionner un thésaurus"), " : un thésaurus est un dictionnaire de concepts utilisés par un datamart."),
+          tags$li(strong("Sélectionner un thésaurus"), " : un thésaurus est un dictionnaire de concepts utilisés par un dataset."),
           tags$li(strong("Sélectionner les items "), " que vous souhaitez utiliser pour ce widget, avec le plugin sélectionné."),
           tags$li("Vous pouvez choisir des items liés à l'item sélectionné via le menu déroulant ", tags$em("Alignement de concepts"), ".")
         ),
@@ -438,7 +438,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
         p("If it is an aggregate data widget, just click on Add and it's done."),
         p("If it is an individual data widget, you need to:"),
         tags$ul(
-          tags$li("Select a thesaurus : a thesaurus is a dictionary of concepts used by a datamart."),
+          tags$li("Select a thesaurus : a thesaurus is a dictionary of concepts used by a dataset."),
           tags$li("Select the items / concepts you want to use for this widget, with the selected plugin."),
           tags$li("You can choose items related to the selected item via the ", tags$em("Concept Alignment"), " dropdown menu.")
         ),

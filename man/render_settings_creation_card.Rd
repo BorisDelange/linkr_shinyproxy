@@ -39,6 +39,6 @@ Shiny UI elements / HTML code
 Render UI of settings creation card
 }
 \examples{
-render_settings_creation_card(language = "EN", ns = NS("settings_datamart"), title = "create_datamart",
+render_settings_creation_card(language = "EN", ns = NS("settings_dataset"), title = "create_dataset",
 textfields = c("name", "description"), dropdowns = "data_source")
 }

@@ -12,14 +12,11 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
   
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM users")) == 0) {
     DBI::dbAppendTable(r$db, "users", tibble::tribble(~id, ~username, ~firstname, ~lastname, ~password, ~user_access_id, ~user_status_id, ~datetime, ~deleted,
-      1, "admin", "Gandalf", "The Grey", rlang::hash("admin"), 1, 1, as.character(Sys.time()), FALSE,
-      2, "test1", "Bilbo", "Baggins", rlang::hash("test1"), 2, 2, as.character(Sys.time()), FALSE,
-      3, "test2", "Samwise", "Gamgee", rlang::hash("test2"), 2, 2, as.character(Sys.time()), FALSE,
-      4, "test3", "Peregrin", "Took", rlang::hash("test3"), 2, 2, as.character(Sys.time()), FALSE,
-      5, "test4", "Meriadoc", "Brandybuck", rlang::hash("test4"), 2, 3, as.character(Sys.time()), FALSE,
-      6, "test5", "Elrond", "Half-elven", rlang::hash("test5"), 2, 3, as.character(Sys.time()), FALSE,
-      7, "test6", "Aragorn", "Son of Arathorn", rlang::hash("test6"), 2, 3, as.character(Sys.time()), FALSE,
-      8, "test7", "Frodo", "Baggins", rlang::hash("test7"), 2, 3, as.character(Sys.time()), FALSE))
+      1, "admin", "Alan", "Turing", rlang::hash("admin"), 1, 1, as.character(Sys.time()), FALSE,
+      2, "test1", "Ada", "Lovelace", rlang::hash("test1"), 2, 1, as.character(Sys.time()), FALSE,
+      3, "test2", "Yann", "LeCun", rlang::hash("test2"), 2, 1, as.character(Sys.time()), FALSE,
+      4, "test3", "Andrew", "Ng", rlang::hash("test3"), 2, 1, as.character(Sys.time()), FALSE,
+      5, "test4", "Hadley", "Wickham", rlang::hash("test4"), 2, 1, as.character(Sys.time()), FALSE))
   }
   
   # Add default user access
@@ -38,7 +35,7 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
   }
   
   # --- --- --- --- --- --- --- --- --- --- -
-  # Add default data source, datamart... ----
+  # Add default data source, dataset... ----
   # --- --- --- --- --- --- --- --- --- --- -
   
   # Add default data source
@@ -47,16 +44,16 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
       1, "MIMIC-IV", "", 1, as.character(Sys.time()), FALSE))
   }
   
-  # Add default datamart
-  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM datamarts")) == 0){
-    DBI::dbAppendTable(r$db, "datamarts", tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
-      1, "MIMIC-IV", i18n$t("mimic_iv_test_datamart"), 1, 1, as.character(Sys.time()), FALSE))
+  # Add default dataset
+  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM datasets")) == 0){
+    DBI::dbAppendTable(r$db, "datasets", tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
+      1, "MIMIC-IV", i18n$t("mimic_iv_test_dataset"), 1, 1, as.character(Sys.time()), FALSE))
   }
   
   # Add default study
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM studies")) == 0){
     DBI::dbAppendTable(r$db, "studies", tibble::tribble(~id, ~name, ~description,
-      ~datamart_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id, ~creator_id, ~datetime, ~deleted,
+      ~dataset_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id, ~creator_id, ~datetime, ~deleted,
       1, i18n$t("mortality_prediction"), "", 1, 1, 1, 1, as.character(Sys.time()), FALSE))
   }
   
@@ -150,14 +147,14 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
     
     last_row <- get_last_row(r$db, "options")
     
-    # Options for datamart & study
+    # Options for dataset & study
     
     DBI::dbAppendTable(r$db, "options", tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row + 1, "datamart", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
-      last_row + 2, "datamart", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
-      last_row + 3, "datamart", 1, "show_only_aggregated_data", "", 0, 1, as.character(Sys.time()), FALSE,
-      last_row + 4, "datamart", 1, "activate_scripts_cache", "", 1, 1, as.character(Sys.time()), FALSE,
-      last_row + 5, "datamart", 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, 1, as.character(Sys.time()), FALSE,
+      last_row + 1, "dataset", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
+      last_row + 2, "dataset", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
+      last_row + 3, "dataset", 1, "show_only_aggregated_data", "", 0, 1, as.character(Sys.time()), FALSE,
+      last_row + 4, "dataset", 1, "activate_scripts_cache", "", 1, 1, as.character(Sys.time()), FALSE,
+      last_row + 5, "dataset", 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, 1, as.character(Sys.time()), FALSE,
       last_row + 6, "study", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
       last_row + 7, "study", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
       last_row + 8, "study", 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, 1, as.character(Sys.time()), FALSE))
@@ -207,13 +204,13 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
   # Add default code ----
   # --- --- --- --- --- -
   
-    datamart_code <- ""
+    dataset_code <- ""
     thesaurus_code <- ""
   
     if (has_internet){
       
-      # Datamart code
-      tryCatch(datamart_code <- readLines("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/datamarts/mimic_iv_demo_1.0.R", warn = FALSE) %>%
+      # Dataset code
+      tryCatch(dataset_code <- readLines("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/datasets/mimic_iv_demo_1.0.R", warn = FALSE) %>%
         paste(collapse = "\n"), error = function(e) "", warning = function(w) "")
       
       # Thesaurus code
@@ -227,7 +224,7 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
     
     if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM code")) == 0){
       DBI::dbAppendTable(r$db, "code", tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-        1, "datamart", 1, datamart_code, 1, as.character(Sys.time()), FALSE,
+        1, "dataset", 1, dataset_code, 1, as.character(Sys.time()), FALSE,
         2, "thesaurus", 1, thesaurus_code, 1, as.character(Sys.time()), FALSE,
         3, "subset", 1, subset_code, 1, as.character(Sys.time()), FALSE))
     }

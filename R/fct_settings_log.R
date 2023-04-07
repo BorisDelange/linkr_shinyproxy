@@ -2,7 +2,7 @@
 #'
 #' @param r Shiny reactive value r used to communicate between modules
 #' @param category Category of the log entry, eg : "SQL query" (character)
-#' @param name Name of the log entry, eg : "Add a new datamart" (character)
+#' @param name Name of the log entry, eg : "Add a new dataset" (character)
 #' @param value Value of the log entry, eg : "INSERT INTO ..."
 
 add_log_entry <- function(r, category, name, value){
@@ -35,7 +35,7 @@ report_bug <- function(r = shiny::reactiveValues(), output, error_message = char
   # print(error_report)
   
   # Notification to user
-  if (error_message %not_in% c("fail_load_datamart", "fail_load_scripts")){
+  if (error_message %not_in% c("fail_load_dataset", "fail_load_scripts")){
     
     if (length(ns) > 0) show_message_bar(output,  error_message, "severeWarning", i18n = i18n, ns = ns)
     if (length(ns) == 0) show_message_bar(output,  error_message, "severeWarning", i18n = i18n)

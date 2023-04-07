@@ -179,7 +179,7 @@ mod_data_ui <- function(id = character(), i18n = character()){
     ),
     div(
       id = ns("choose_a_study_card"),
-      make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_study_and_datamart_left_side"), messageBarType = 5), style = "margin-top:10px;"))
+      make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_study_and_dataset_left_side"), messageBarType = 5), style = "margin-top:10px;"))
     ),
     shinyjs::hidden(uiOutput(ns("study_menu"))),
     div(id = ns("study_cards")),
@@ -261,7 +261,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     # Show message bar ----
     # --- --- --- --- --- -
     
-    # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
+    # This allows to show message in multiple pages at the same time (eg when loading a dataset in Studies page, render message bar in Subsets page)
     
     observeEvent(r$show_message_bar, show_message_bar(output, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
     if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - show_message_bars"))
@@ -366,9 +366,9 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     
     if (prefix == "patient_lvl"){
       
-      observeEvent(m$chosen_patient, {
+      observeEvent(m$selected_patient, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$chosen_patient"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$selected_patient"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         # Reset variables
@@ -376,31 +376,31 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         sapply(c("stays", "labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_patient[[table]] <- default_data[[table]])
         sapply(c("labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_stay[[table]] <- default_data[[table]])
         
-        if (length(m$chosen_patient) > 0){
-          if (!is.na(m$chosen_patient) & m$chosen_patient != ""){
-            if (nrow(d$stays) > 0) d$data_patient$stays <- d$stays %>% dplyr::filter(patient_id == m$chosen_patient) %>% dplyr::arrange(admission_datetime)
-            if (nrow(d$labs_vitals) > 0) d$data_patient$labs_vitals <- d$labs_vitals %>% dplyr::filter(patient_id == m$chosen_patient)
-            if (nrow(d$text) > 0) d$data_patient$text <- d$text %>% dplyr::filter(patient_id == m$chosen_patient)
-            if (nrow(d$orders) > 0) d$data_patient$orders <- d$orders %>% dplyr::filter(patient_id == m$chosen_patient)
+        if (length(m$selected_patient) > 0){
+          if (!is.na(m$selected_patient) & m$selected_patient != ""){
+            if (nrow(d$stays) > 0) d$data_patient$stays <- d$stays %>% dplyr::filter(patient_id == m$selected_patient) %>% dplyr::arrange(admission_datetime)
+            if (nrow(d$labs_vitals) > 0) d$data_patient$labs_vitals <- d$labs_vitals %>% dplyr::filter(patient_id == m$selected_patient)
+            if (nrow(d$text) > 0) d$data_patient$text <- d$text %>% dplyr::filter(patient_id == m$selected_patient)
+            if (nrow(d$orders) > 0) d$data_patient$orders <- d$orders %>% dplyr::filter(patient_id == m$selected_patient)
           }
         }
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$chosen_patient"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$selected_patient"))
       })
       
-      observeEvent(m$chosen_stay, {
+      observeEvent(m$selected_stay, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$chosen_stay"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$selected_stay"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         req(d$data_patient)
         
         sapply(c("labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_stay[[table]] <- default_data[[table]])
         
-        if (length(m$chosen_stay) > 0){
-          if (!is.na(m$chosen_stay) & m$chosen_stay != ""){
+        if (length(m$selected_stay) > 0){
+          if (!is.na(m$selected_stay) & m$selected_stay != ""){
             
-            d$data_stay$stay <- d$data_patient$stays %>% dplyr::filter(stay_id == m$chosen_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
+            d$data_stay$stay <- d$data_patient$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
             
             if (nrow(d$data_patient$labs_vitals) > 0) d$data_stay$labs_vitals <- d$data_patient$labs_vitals %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
             if (nrow(d$data_patient$text) > 0) d$data_stay$text <- d$data_patient$text %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
@@ -408,7 +408,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           }
         }
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$chosen_stay"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$selected_stay"))
       })
     }
     
@@ -435,11 +435,11 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     # Initiate UI ----
     # --- --- --- -- -
     
-    # When a study is chosen
+    # When a study is selected
     
-    observeEvent(m$chosen_study, {
+    observeEvent(m$selected_study, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$chosen_study"))
+      if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$selected_study"))
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       
       # Hide UI from previous loaded study
@@ -447,7 +447,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       
       sapply(r[[paste0(prefix, "_cards")]], shinyjs::hide)
       
-      req(!is.na(m$chosen_study))
+      req(!is.na(m$selected_study))
       
       # removeUI(selector = paste0("#", ns(r[[paste0(prefix, "_cards")]])), multiple = TRUE)
 
@@ -501,7 +501,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       r[[paste0(prefix, "_reload_thesaurus_dropdown")]] <- Sys.time()
       r[[paste0(prefix, "_reload_plugins_dropdown")]] <- Sys.time()
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$chosen_study"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$selected_study"))
     })
     
     # Reload thesaurus dropdown
@@ -510,7 +510,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..reload_thesaurus_dropdown"))
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       
-      data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id) %>% as.character()
+      data_source <- r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id) %>% as.character()
       thesaurus <- r$thesaurus %>% 
         dplyr::filter(
           grepl(paste0("^", data_source, "$"), data_source_id) | 
@@ -552,11 +552,11 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       
       # Load study informations
       # For one study, you choose ONE patient_lvl or aggregated data module family
-      study_infos <- r$studies %>% dplyr::filter(id == m$chosen_study)
-      # study_infos <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE id = ", m$chosen_study))
+      study_infos <- r$studies %>% dplyr::filter(id == m$selected_study)
+      # study_infos <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE id = ", m$selected_study))
       
       # Check if users has access only to aggregated data
-      r$options %>% dplyr::filter(category == "datamart" & link_id == r$chosen_datamart & name == "show_only_aggregated_data") %>%
+      r$options %>% dplyr::filter(category == "dataset" & link_id == r$selected_dataset & name == "show_only_aggregated_data") %>%
         dplyr::pull(value_num) -> r[[paste0(prefix, "_show_only_aggregated_data")]]
       
       # Load modules belonging to this module family
@@ -590,7 +590,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       display_modules <- display_modules %>% dplyr::arrange(level, display_order)
       
       # Calculate first module shown in the menu
-      if(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(m$chosen_study)){
+      if(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(m$selected_study)){
         
         # First module shown
         first_module_shown <- display_modules %>% dplyr::filter(level == 1) %>% dplyr::slice(1)
@@ -631,7 +631,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # - Change in r[[paste0(prefix, "_load_ui_menu")]]
         # - Change in input$study_current_tab
         
-        req(!is.na(m$chosen_study))
+        req(!is.na(m$selected_study))
         req(r[[paste0(prefix, "_display_modules")]])
         r[[paste0(prefix, "_load_ui_menu")]]
         
@@ -667,7 +667,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           ))
         }
         
-        req(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(isolate(m$chosen_study)))
+        req(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(isolate(m$selected_study)))
         
         # First module shown
         first_module_shown <- isolate(r[[paste0(prefix, "_first_module_shown")]])
@@ -824,7 +824,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         # Don't reload study UI if already loaded
-        req(m$chosen_study %not_in% r[[paste0(prefix, "_loaded_studies")]])
+        req(m$selected_study %not_in% r[[paste0(prefix, "_loaded_studies")]])
         
         distinct_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::pull(id)
 
@@ -921,7 +921,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                   stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
                   stringr::str_replace_all("\r", "\n")
 
-                if (length(m$chosen_study) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%study_id%", as.character(m$chosen_study))
+                if (length(m$selected_study) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
 
                 # Module element card
 
@@ -997,7 +997,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         })
         
         # Indicate that this study has been loaded, so that UI elements aren't loaded twice
-        r[[paste0(prefix, "_loaded_studies")]] <- c(r[[paste0(prefix, "_loaded_studies")]], m$chosen_study)
+        r[[paste0(prefix, "_loaded_studies")]] <- c(r[[paste0(prefix, "_loaded_studies")]], m$selected_study)
 
         # Reload UI menu (problem for displaying cards : blanks if we do not do that)
         # shinyjs::delay(100, r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time())
@@ -1031,11 +1031,11 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..load_server"))
       if (perf_monitoring) monitor_perf(r = r, action = "start")
 
-      req(!is.na(m$chosen_study))
+      req(!is.na(m$selected_study))
 
       # Get modules elements, arrange them by display_order
 
-      module_family <- r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+      module_family <- r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
       modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == module_family) %>% dplyr::select(module_id = id)
       module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::inner_join(modules, by = "module_id") %>% dplyr::rename(group_id = id)
       module_elements_items <- r[[paste0(prefix, "_modules_elements_items")]] %>% dplyr::inner_join(module_elements %>% dplyr::select(group_id), by = "group_id")
@@ -1059,7 +1059,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
 
           # Run plugin server code
           # Only if this code has not been already loaded
-          trace_code <- paste0(prefix, "_", group_id, "_", m$chosen_study)
+          trace_code <- paste0(prefix, "_", group_id, "_", m$selected_study)
           # if (trace_code %in% r$server_modules_groups_loaded) print(trace_code)
           if (trace_code %not_in% r$server_modules_groups_loaded){
 
@@ -1104,8 +1104,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                 stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
                 stringr::str_replace_all("\r", "\n")
 
-              # If it is an aggregated plugin, change %study_id% with current chosen study
-              if (length(m$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$chosen_study))
+              # If it is an aggregated plugin, change %study_id% with current selected study
+              if (length(m$selected_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
             }
             else code_server_card <- ""
             
@@ -1430,8 +1430,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
           stringr::str_replace_all("\r", "\n")
         
-        # If it is an aggregated plugin, change %study_id% with current chosen study
-        if (length(m$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$chosen_study))
+        # If it is an aggregated plugin, change %study_id% with current selected study
+        if (length(m$selected_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
         
         session_code <- paste0("module_", ids$module_id, "_group_", group_id)
         if (length(o[[session_code]]) == 0) session_num <- 1L
@@ -1622,7 +1622,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$add_module_button"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
 
-        study <- r$studies %>% dplyr::filter(id == m$chosen_study)
+        study <- r$studies %>% dplyr::filter(id == m$selected_study)
         module <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_module")]])
 
         new_data <- list()
@@ -1877,13 +1877,13 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         ## Thesaurus datatable ----
         # --- --- --- --- --- --- -
 
-        # Load thesaurus attached to this datamart
-        observeEvent(r$chosen_datamart, {
+        # Load thesaurus attached to this dataset
+        observeEvent(r$selected_dataset, {
           
-          if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$chosen_datamart"))
+          if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$selected_dataset"))
           if (perf_monitoring) monitor_perf(r = r, action = "start")
 
-          req(!is.na(r$chosen_datamart))
+          req(!is.na(r$selected_dataset))
           
           # Reset study menu
           sapply(c("initial_breadcrumb", "choose_a_study_card"), shinyjs::show)
@@ -1903,7 +1903,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             r$module_element_creation_thesaurus_selected_items <- r$module_element_creation_thesaurus_selected_items %>% dplyr::slice(0)
           }
           
-          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$chosen_datamart"))
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$selected_dataset"))
         })
         
         # If r$studies changes, hide study_menu
@@ -1944,17 +1944,17 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
 
           # Add count_items_rows in the cache & get it if already in the cache
           tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
-            datamart_id = r$chosen_datamart, category = "count_items_rows"),
+            dataset_id = r$selected_dataset, category = "count_items_rows"),
               error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
                 error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
-                  " - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+                  " - fail_load_dataset - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
 
           # Add count_items_rows in the cache & get it if already in the cache
           tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
-            datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
+            dataset_id = as.integer(r$selected_dataset), category = "count_patients_rows"),
               error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
                 error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
-                  " - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+                  " - fail_load_dataset - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
 
           if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0){
             show_message_bar(output, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
@@ -2071,10 +2071,10 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                 thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = logical())
             }
   
-            # Get ID of chosen thesaurus item
+            # Get ID of selected thesaurus item
             link_id <- as.integer(substr(input[[input_item_selected]], nchar("select_") + 1, nchar(input[[input_item_selected]])))
   
-            # If this thesaurus item is not already chosen, add it to the "thesaurus selected items" dropdown
+            # If this thesaurus item is not already selected, add it to the "thesaurus selected items" dropdown
   
             # value <- integer(1)
             # if (nrow(r$module_element_thesaurus_selected_items) > 0) value <- r$module_element_thesaurus_selected_items %>%
@@ -2380,7 +2380,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         # Run server code
 
-        trace_code <- paste0(prefix, "_", group_id, "_", m$chosen_study)
+        trace_code <- paste0(prefix, "_", group_id, "_", m$selected_study)
         # if (trace_code %in% r$server_modules_groups_loaded) print(trace_code)
         if (trace_code %not_in% r$server_modules_groups_loaded){
   
@@ -2401,8 +2401,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
               stringr::str_replace_all("\r", "\n")
   
-            # If it is an aggregated plugin, change %study_id% with current chosen study
-            if (length(m$chosen_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$chosen_study))
+            # If it is an aggregated plugin, change %study_id% with current selected study
+            if (length(m$selected_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
           }
           else code_server_card <- ""
           
@@ -2461,7 +2461,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
             stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
             stringr::str_replace_all("\r", "\n") %>%
-            stringr::str_replace_all("%study_id%", as.character(isolate(m$chosen_study)))
+            stringr::str_replace_all("%study_id%", as.character(isolate(m$selected_study)))
           
           element_code <- div(
             make_card("",

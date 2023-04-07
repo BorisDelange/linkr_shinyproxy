@@ -14,10 +14,10 @@
 #' @examples 
 #' \dontrun{
 #' data <- list()
-#' data$name <- "New datamart"
-#' data$description <- "Description of the datamart"
+#' data$name <- "New dataset"
+#' data$description <- "Description of the dataset"
 #' data$data_source <- 5
-#' add_settings_new_data(output = output, r = r, language = language, id = "settings_datamarts", data = data, dropdowns = "data_source")
+#' add_settings_new_data(output = output, r = r, language = language, id = "settings_datasets", data = data, dropdowns = "data_source")
 #' }
 
 add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
@@ -63,7 +63,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
         AND module_family_id = {data$module_family} AND parent_module_id = {data$parent_module}", .con = db)
     }
     else if (table == "studies") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
-      AND datamart_id = {data$datamart}", .con = db)
+      AND dataset_id = {data$dataset}", .con = db)
     else if (table == "subsets") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
       AND study_id = {data$study_id}", .con = db)
     else if (table == "plugins") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
@@ -124,15 +124,15 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   new_data <- list()
   
   # Creation of new_data$data variable for data_management pages
-  if (table %in% c("data_sources", "datamarts", "studies", "subsets")){
+  if (table %in% c("data_sources", "datasets", "studies", "subsets")){
     
     # These columns are found in all of these tables
     new_data$data <- tibble::tribble(~id, ~name, ~description, last_row$data + 1, as.character(data$name), as.character(data$description))
     
-    if (table == "datamarts") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.integer(data$data_source)))
+    if (table == "datasets") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.integer(data$data_source)))
     if (table == "studies") new_data$data <- new_data$data %>% dplyr::bind_cols(
-      tibble::tribble(~datamart_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id,
-        as.integer(data$datamart), as.integer(data$patient_lvl_module_family), as.integer(data$aggregated_module_family)))
+      tibble::tribble(~dataset_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id,
+        as.integer(data$dataset), as.integer(data$patient_lvl_module_family), as.integer(data$aggregated_module_family)))
     if (table == "subsets") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~study_id, as.integer(data$study)))
     if (table == "thesaurus") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, data$data_source))
     
@@ -200,8 +200,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # Add data in code & options tables ----
   # --- --- --- --- --- --- --- --- --- --
   
-  # Add a row in code if table is datamarts, thesaurus
-  if (table %in% c("datamarts", "vocabulary")){
+  # Add a row in code if table is datasets, thesaurus
+  if (table %in% c("datasets", "vocabulary")){
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row$code + 1, get_singular(word = table), last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
@@ -255,15 +255,15 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row$code + 1, "script", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
-  # For datamarts options, need to add 3 rows in options
-  else if (table == "datamarts"){
+  # For datasets options, need to add 3 rows in options
+  else if (table == "datasets"){
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row$options + 1, "datamart", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 2, "datamart", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 3, "datamart", last_row$data + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 4, "datamart", last_row$data + 1, "activate_scripts_cache", "", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 5, "datamart", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$options + 1, "dataset", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 2, "dataset", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 3, "dataset", last_row$data + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 4, "dataset", last_row$data + 1, "activate_scripts_cache", "", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 5, "dataset", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # For studies, need to add one row in options and add rows of code for subsets, with default value
@@ -302,10 +302,10 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
         error_name = paste0("add study - add_patients_to_subsets - id = ", last_row$subsets + 1), category = "Error", error_report = toString(e), i18n = i18n))
     
     # Update sidenav dropdown with the new study
-    r$studies_choices <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE datamart_id = ", data$datamart))
+    r$studies_choices <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE dataset_id = ", data$dataset))
     
     # Select new study as current study
-    m$chosen_study <- last_row$data + 1
+    m$selected_study <- last_row$data + 1
     r$study_page <- Sys.time()
   }
   
@@ -361,15 +361,15 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' @param language Language used (character)
 #' @param module_id ID of current page / module (character)
 #' @param thesaurus_id ID of thesaurus, which thesaurus items depend on (integer)
-#' @param datamart_id ID of datamart to count rows by item of the thesaurus (integer)
+#' @param dataset_id ID of dataset to count rows by item of the thesaurus (integer)
 #' @param category Category of cache, depending of the page of Settings (character)
 
 create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = character(), module_id = character(), 
-  thesaurus_id = integer(), datamart_id = 0, category = character()){
+  thesaurus_id = integer(), dataset_id = 0, category = character()){
   
   # Load join between our data and the cache
   
-  # For action buttons (delete & plus_minus) & colours, don't use datamart_id / link_id_bis
+  # For action buttons (delete & plus_minus) & colours, don't use dataset_id / link_id_bis
   if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") |
       grepl("plus_data_explorer", category) | grepl("colours_module", category) | grepl("plus_module", category)){
     sql <- glue::glue_sql(paste0(
@@ -381,12 +381,12 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     data <- DBI::dbGetQuery(r$db, sql)
   }
   
-  # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
+  # For count_patients_rows & count_items_rows, use dataset_id / link_id_bis (we count row for a specific dataset)
   if (category %in% c("count_patients_rows", "count_items_rows")){
     sql <- glue::glue_sql(paste0(
       "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
       "FROM thesaurus_items t ",
-      "LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = {datamart_id} AND c.category = {category} ",
+      "LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = {dataset_id} AND c.category = {category} ",
       "WHERE t.thesaurus_id = {thesaurus_id} AND t.deleted IS FALSE ",
       "ORDER BY t.id"), .con = r$db)
     data <- DBI::dbGetQuery(r$db, sql)
@@ -434,18 +434,18 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     }
     
     # Make action column, depending on category
-    # If category is count_items_rows, add a count row column with number of rows by item in the datamart
-    # If category is count_patients_rows, add a count row column with number of patients by item in the datamart
+    # If category is count_items_rows, add a count row column with number of rows by item in the dataset
+    # If category is count_patients_rows, add a count row column with number of patients by item in the dataset
     # If category is delete, add a delete button only
     # If category is plus_minus, add plus and minus buttons
     # If category is thumbs_and_delete, add thumbs_up, thumbs_down and delete buttons
     
     if (category == "count_items_rows"){
       
-      # Run datamart code
-      # Reload r$datamarts so that datamart dropdown on sidenav is reset
-      # update_r(r = r, table = "datamarts")
-      run_datamart_code(output = output, r = r, d = d, i18n = i18n, datamart_id = datamart_id)
+      # Run dataset code
+      # Reload r$datasets so that dataset dropdown on sidenav is reset
+      # update_r(r = r, table = "datasets")
+      run_dataset_code(output = output, r = r, d = d, i18n = i18n, dataset_id = dataset_id)
       
       # Initiate variables
       rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
@@ -480,9 +480,9 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     
     if (category == "count_patients_rows"){
       
-      # Reload r$datamarts so that datamart dropdown on sidenav is reset
-      # update_r(r = r, table = "datamarts")
-      run_datamart_code(output = output, r = r, d = d, i18n = i18n, datamart_id = datamart_id)
+      # Reload r$datasets so that dataset dropdown on sidenav is reset
+      # update_r(r = r, table = "datasets")
+      run_dataset_code(output = output, r = r, d = d, i18n = i18n, dataset_id = dataset_id)
       
       # Initiate variables
       rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
@@ -595,11 +595,11 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
       DBI::dbSendStatement(r$db, sql) -> query
     }
     
-    # For count_patients_rows & count_items_rows, use datamart_id / link_id_bis (we count row for a specific datamart)
+    # For count_patients_rows & count_items_rows, use dataset_id / link_id_bis (we count row for a specific dataset)
     if (category %in% c("count_patients_rows", "count_items_rows")){
       sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
         "SELECT c.id FROM cache c ",
-        "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.link_id_bis = {datamart_id} AND c.category = {category} ",
+        "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.link_id_bis = {dataset_id} AND c.category = {category} ",
         "WHERE t.thesaurus_id = {thesaurus_id}",
         ")"), .con = r$db)
       DBI::dbSendStatement(r$db, sql) -> query
@@ -622,7 +622,7 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     } 
     else data <- data_reload
     
-    # DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "' AND link_id_bis = ", datamart_id)) -> query
+    # DBI::dbSendStatement(r$db, paste0("DELETE FROM cache WHERE category = '", category, "' AND link_id_bis = ", dataset_id)) -> query
     DBI::dbClearResult(query)
     
     # Get last row & insert new data
@@ -632,7 +632,7 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
       dplyr::transmute(
         category = !!category,
         link_id = id,
-        link_id_bis = datamart_id,
+        link_id_bis = dataset_id,
         value,
         datetime = as.character(Sys.time()))
     data_insert$id <- seq.int(nrow(data_insert)) + last_row
@@ -756,7 +756,7 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
 #' @param table Name of the table used (character)
 #' @examples 
 #' \dontrun{
-#' delete_settings_datatable_row(output = output, r = r, ns = ns, language = "EN", row_deleted = 13, table = "datamarts")
+#' delete_settings_datatable_row(output = output, r = r, ns = ns, language = "EN", row_deleted = 13, table = "datasets")
 #' }
 delete_settings_datatable_row <- function(output, id = character(), r = shiny::reactiveValues(), ns = character(), i18n = character(),
   link_id = integer(), category = character(), row_deleted = integer(), table = character()){
@@ -774,18 +774,18 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
   if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
   if (grepl("aggregated", table)) prefix <- "aggregated"
   
-  # If we delete a datamart, delete all studies & subsets associated
-  if (table == "datamarts"){
+  # If we delete a dataset, delete all studies & subsets associated
+  if (table == "datasets"){
     
-    studies <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM studies WHERE datamart_id = ", row_deleted))
+    studies <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM studies WHERE dataset_id = ", row_deleted))
     
     if(nrow(studies) > 0){
       studies <- studies %>% dplyr::pull()
       
-      sql <- glue::glue_sql("UPDATE studies SET deleted = TRUE WHERE datamart_id = {row_deleted}", .con = r$db)
+      sql <- glue::glue_sql("UPDATE studies SET deleted = TRUE WHERE dataset_id = {row_deleted}", .con = r$db)
       query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
-      r$studies <- r$studies %>% dplyr::filter(datamart_id != row_deleted)
+      r$studies <- r$studies %>% dplyr::filter(dataset_id != row_deleted)
       
       sql <- glue::glue_sql("UPDATE subsets SET deleted = TRUE WHERE study_id IN ({studies*})", .con = r$db)
       query <- DBI::dbSendStatement(r$db, sql)
@@ -904,7 +904,7 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
     
     # Replace %CODE% from code to real values
     code <- edited_code %>%
-      stringr::str_replace_all("%datamart_id%", as.character(isolate(r$datamart_id))) %>%
+      stringr::str_replace_all("%dataset_id%", as.character(isolate(r$dataset_id))) %>%
       stringr::str_replace_all("%subset_id%", as.character(isolate(r$subset_id))) %>%
       stringr::str_replace_all("%vocabulary_id%", as.character(isolate(r$vocabulary_id)))
     
@@ -1097,7 +1097,7 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = cha
       
       # Get names for other columns if there are not dropdowns
       
-      cols <- c("data_source_id" = "data_sources", "datamart_id" = "datamarts", "study_id" = "studies", "module_type_id" = "module_types")
+      cols <- c("data_source_id" = "data_sources", "dataset_id" = "datasets", "study_id" = "studies", "module_type_id" = "module_types")
       sapply(names(cols), function(name){
         if (name %in% names(data_output) & name %not_in% names(dropdowns)){
           row_id <- data_output[[i, name]]
@@ -1229,7 +1229,7 @@ reload_cache_for_settings <- function(r = shiny::reactiveValues(), table = chara
 #' @param language Language used (character)
 #' @examples 
 #' \dontrun{
-#' render_settings_delete_react(r = r, table = "datamarts")
+#' render_settings_delete_react(r = r, table = "datasets")
 #' }
 render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = character(), table = character(), i18n = character()){
   prefix <- ""
@@ -1259,13 +1259,13 @@ render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = chara
 #' @param output variable from Shiny, used to render messages on the message bar
 #' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
-#' @param category Category column in code table, eg : "datamart", "plugin" (character)
+#' @param category Category column in code table, eg : "dataset", "plugin" (character)
 #' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
 #' @param edited_code New code, after editing it (character)
 #' @param language Language used
 #' @examples
 #' \dontrun{
-#' save_settings_code(output = output, r = r, id = "settings_datamart", category = "datamart", code_id_input = "edit_code_5",
+#' save_settings_code(output = output, r = r, id = "settings_dataset", category = "dataset", code_id_input = "edit_code_5",
 #'   edited_code = "print('test code edition')", language = "EN")
 #' }
 save_settings_code <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
@@ -1299,7 +1299,7 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
 #' @param output variable from Shiny, used to render messages on the message bar
 #' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
-#' @param category Category column in code table, eg : "datamart", "plugin" (character)
+#' @param category Category column in code table, eg : "dataset", "plugin" (character)
 #' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
 #' @param data New data to store in options table (list)
 #' @param language Language used
@@ -1308,7 +1308,7 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
 #' data <- list()
 #' data$show_only_aggregated_data <- TRUE
 #' data$users_allowed_read <- c(1, 3, 4)
-#' save_settings_options(output = output, r = r, id = "settings_datamart", category = "datamart", code_id_input = "edit_code_3",
+#' save_settings_options(output = output, r = r, id = "settings_dataset", category = "dataset", code_id_input = "edit_code_3",
 #'   data = data, language = "EN")
 #' }
 save_settings_options <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
@@ -1395,7 +1395,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
 #' @param language Language used (character)
 #' @examples 
 #' \dontrun{
-#' save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datamarts", language = "EN")
+#' save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datasets", language = "EN")
 #' }
 save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), ns = character(), 
   table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = character(), r_message_bar = FALSE){
@@ -1524,7 +1524,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   # Reload r variable
   if (table %not_in% m_tables | table == "vocabulary") r[[r_table]] <- r[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
   else m[[r_table]] <- m[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
-  # if (table == "thesaurus_items") r$datamart_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
+  # if (table == "thesaurus_items") r$dataset_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
   # else update_r(r = r, table = table, i18n = i18n)
 
   # Notify user
@@ -1558,7 +1558,7 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
 #' @param language Language used (character)
 #' @examples 
 #' \dontrun{
-#' update_settings_datatable(r = r, ns = ns, table = "datamarts", dropdowns = "data_source", language = "EN")
+#' update_settings_datatable(r = r, ns = ns, table = "datasets", dropdowns = "data_source", language = "EN")
 #' }
 update_settings_datatable <- function(input, module_id = character(), r = shiny::reactiveValues(), ns = character(), table = character(), dropdowns = character(), i18n = character()){
   
@@ -1581,7 +1581,7 @@ update_settings_datatable <- function(input, module_id = character(), r = shiny:
           
           # If vocabulary, data_source_id can accept multiple values (converting to string)
           if (table == "vocabulary") new_value <- toString(as.integer(input[[paste0("data_sources", id)]]))
-          if (table %in% c("data_sources", "datamarts", "studies", "subsets", "plugins", "users", "patient_lvl_modules", "aggregated_modules")){
+          if (table %in% c("data_sources", "datasets", "studies", "subsets", "plugins", "users", "patient_lvl_modules", "aggregated_modules")){
             new_value <- coalesce2("int", input[[paste0(get_plural(word = dropdown_input), id)]])
           }
           

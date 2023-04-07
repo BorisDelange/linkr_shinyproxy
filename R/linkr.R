@@ -1,64 +1,42 @@
 #' Run the Shiny Application
 #'
 #' @description 
-#' Runs the cdwtools Shiny Application.\cr
-#' Use language argument to choose language to use ("EN" or "FR" available).\cr
-#' Use options to set options to shiny::shinyApp() function, see documentation of shiny::shinyApp for more informations.\cr\cr
-#' To connect to distant database, use db_info argument. db_info is a list, containing these parameters :\cr
-#' \itemize{
-#' \item{\strong{sql_lib} : SQL library used, "postgres" or "sqlite" available for now}
-#' \item{\strong{dbname} : database name (character)}
-#' \item{\strong{host} : host connection name (character)}
-#' \item{\strong{port} : connection port (integer)}
-#' \item{\strong{user} : user name (character)}
-#' \item{\strong{password} : password in clear (character)}
-#' }
-#' @param options A list of options that could be passed to shiny::shinyApp() function (list)
+#' Runs the LinkR Shiny Application.\cr
+#' Use language argument to choose language to use ("en" or "fr" available).\cr
+#' Use app_folder argument to choose a folder where the files of the application will be saved. By default, 
+#' a folder will be created depending of the value 'path.expand("~")' ('path.expand("~")/linkr').\cr
 #' @param language Default language to use in the App (character)
-#' @param db_info Database connection informations, if it is needed to connect a distant db (list).
-#' @param datamarts_folder Folder where to save datamarts CSV files (character)
-#' @param app_db_folder Folder where to save local database file (character)
-#' @param perf_monitoring Monitore app performances print timestamps step by step (boolean)
-#' @param ... arguments to pass to golem_opts. 
+#' @param app_folder Location of the application folder (character).
+#' @param perf_monitoring Monitor app performances (boolean)
+#' @param debug Debug mode : steps and errors will by displayed in the console (boolean)
+#' @param local Run the app in local mode, do not load files on the internet (boolean)
 #' @examples 
 #' \dontrun{
-#' db_info <- list(
-#'   sql_lib = "postgres",
-#'   dbname = "cdwtools",
-#'   host = "localhost",
-#'   port = 5432,
-#'   user = "admin",
-#'   passord = "admin"
-#' )
-#' datamarts_folder <- "C:/Users/John/My CDW project/data"
-#' app_db_folder <- "C:/Users/John/My CDW project"
-#' cdwtools(language = "EN", db_info = db_info, datamarts_folder = datamarts_folder, app_db_folder = app_db_folder)
+#' linkr(language = "en", perf_monitoring = FALSE, debug = FALSE, local = FALSE)
 #' }
-#' See `?golem::get_golem_options` for more details.
-#'
 #' @export
 #' @importFrom shiny shinyApp
 #' @importFrom golem with_golem_options 
 #' @importFrom magrittr %>%
 
 linkr <- function(
-  language = "EN",
+  language = "en",
   app_folder = character(),
   perf_monitoring = FALSE,
   debug = FALSE,
-  local = FALSE,
-  options = list(),
-  ...
+  local = FALSE
 ) {
   
-  # Maximum size for uploaded data (500 MB)
-  # Used to restore database
+  # Maximum size for uploaded data (4096 MB)
+  # Used to restore database and import vocabularies
   # shiny.launch.browser to automatically open browser
   
   if (debug) print(paste0(Sys.time(), " - linkr - init"))
-  options(shiny.maxRequestSize = 500*1024^2, shiny.launch.browser = TRUE)
+  options(shiny.maxRequestSize = 4096*1024^2, shiny.launch.browser = TRUE)
   
-  suppressMessages(require(shinyTree))
+  # suppressMessages(require(shinyTree))
+  
+  if (!is.logical(perf_monitoring) | !is.logical(debug) | !is.logical(local)) stop("perf_monitoring, debug or local are not logical")
   
   # Create app folder if it doesn't exist
   if (debug) print(paste0(Sys.time(), " - linkr - app_folder"))
@@ -77,19 +55,10 @@ linkr <- function(
   
   # Create app sub-dirs
   if (debug) print(paste0(Sys.time(), " - linkr - app sub-dirs"))
-  sub_dirs <- c("app_database", "datamarts", "messages", "plugins", "studies", "temp_files", "vocabularies", "translations")
+  sub_dirs <- c("app_database", "datasets", "messages", "plugins", "studies", "temp_files", "vocabularies", "translations")
   for (sub_dir in sub_dirs) if (!dir.exists(paste0(app_folder, "/", sub_dir))) dir.create(paste0(app_folder, "/", sub_dir))
   
-  # Initial wd
-  # initial_wd <- getwd()
-  
-  # Set wd to app wd
-  # setwd(find.package("cdwtools"))
-  
   # Load translations
-  # Update : use shiny.i18n instead. When it is done, delete get_translations
-  # Change also tolower...
-  # words <- get_translations()
   if (debug) print(paste0(Sys.time(), " - linkr - translation"))
   i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
   i18n$set_translation_language(tolower(language))
@@ -119,7 +88,7 @@ linkr <- function(
     "settings/users", 
     "settings/dev", 
     "settings/data_sources",
-    "settings/datamarts", 
+    "settings/datasets", 
     "settings/vocabularies",
     "settings/log")
   
@@ -145,11 +114,11 @@ linkr <- function(
       "dev_perf_monitoring_card"),
     "data_sources", c(
       "data_sources_datatable_card"),
-    "datamarts", c(
-      "datamarts_see_all_data",
-      "datamarts_datatable_card",
-      "datamarts_options_card",
-      "datamarts_edit_code_card"),
+    "datasets", c(
+      "datasets_see_all_data",
+      "datasets_datatable_card",
+      "datasets_options_card",
+      "datasets_edit_code_card"),
     "studies", c(
       "studies_see_all_data",
       "studies_messages_card",
@@ -175,7 +144,7 @@ linkr <- function(
       "import_plugin_card",
       "export_plugin_card"),
     "scripts", c(
-      "datamart_scripts_card",
+      "dataset_scripts_card",
       "scripts_descriptions_card",
       "scripts_datatable_card",
       "scripts_edit_code_card",

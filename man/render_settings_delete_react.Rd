@@ -25,6 +25,6 @@ Render delete react
 }
 \examples{
 \dontrun{
-render_settings_delete_react(r = r, table = "datamarts")
+render_settings_delete_react(r = r, table = "datasets")
 }
 }

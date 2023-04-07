@@ -11,7 +11,7 @@ create_datatable_cache(
   i18n = character(),
   module_id = character(),
   thesaurus_id = integer(),
-  datamart_id = 0,
+  dataset_id = 0,
   category = character()
 )
 }
@@ -24,7 +24,7 @@ create_datatable_cache(
 
 \item{thesaurus_id}{ID of thesaurus, which thesaurus items depend on (integer)}
 
-\item{datamart_id}{ID of datamart to count rows by item of the thesaurus (integer)}
+\item{dataset_id}{ID of dataset to count rows by item of the thesaurus (integer)}
 
 \item{category}{Category of cache, depending of the page of Settings (character)}
 

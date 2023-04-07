@@ -116,7 +116,7 @@ mod_settings_sub_users_ui <- function(id = character(), i18n = character(), opti
       div(id = ns("options_card"),
         make_card(i18n$t("accesses_opts"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "user_access", id = "options_chosen",
+            make_combobox(i18n = i18n, ns = ns, label = "user_access", id = "options_selected",
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
             options_toggles_result, br(),
             # uiOutput(ns("options_toggles_result")), br(),
@@ -184,7 +184,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
           
         options <- convert_tibble_to_list(r$users_accesses %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         
-        shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options)
+        shiny.fluent::updateComboBox.shinyInput(session, "options_selected", options = options)
       })
     }
     
@@ -287,7 +287,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         new_data_var <- c("username" = "char", "firstname" = "char", "lastname" = "char", "password" = "char",
           "user_access" = "int", "user_status" = "int", "name" = "char", "description" = "char")
         
-        # Transform values of textfields & dropdowns to chosen variable type
+        # Transform values of textfields & dropdowns to selected variable type
         sapply(names(new_data_var),
           function(input_name){
             new_data[[input_name]] <<- coalesce2(type = new_data_var[[input_name]], x = input[[input_name]])
@@ -493,17 +493,17 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         options <- convert_tibble_to_list(r$users_accesses %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = r$users_statuses_options, text = r$users_accesses %>% dplyr::filter(id == r$users_statuses_options) %>% dplyr::pull(name))
 
-        shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
+        shiny.fluent::updateComboBox.shinyInput(session, "options_selected", options = options, value = value)
       })
 
-      observeEvent(input$options_chosen, {
+      observeEvent(input$options_selected, {
         
         if (perf_monitoring) monitor_perf(r = r, action = "start")
-        if (debug) print(paste0(Sys.time(), " - mod_settings_users - observer input$options_chosen"))
+        if (debug) print(paste0(Sys.time(), " - mod_settings_users - observer input$options_selected"))
 
-        req(input$options_chosen)
-        if (length(input$options_chosen) > 1) link_id <- input$options_chosen$key
-        else link_id <- input$options_chosen
+        req(input$options_selected)
+        if (length(input$options_selected) > 1) link_id <- input$options_selected$key
+        else link_id <- input$options_selected
 
         # Get current data
         current_data <- DBI::dbGetQuery(r$db, paste0("SELECT name, value_num FROM options WHERE category = 'users_accesses' AND ",
@@ -532,7 +532,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         
         shinyjs::runjs(glue::glue("$('#settings_users-users_pivot button[name=\"{i18n$t('users_accesses_options_card')}\"]').click();"))
 
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_users - observer input$options_chosen"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_users - observer input$options_selected"))
       })
 
       # When select all button is clicked, put all toggles to TRUE
@@ -541,7 +541,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_settings_users - observer input$select_all"))
 
-        req(input$options_chosen)
+        req(input$options_selected)
         r$reload_all_users_accesses_toggles <- Sys.time()
         r$reload_all_users_accesses_toggles_value <- TRUE
         
@@ -554,7 +554,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_settings_users - observer input$unselect_all"))
         
-        req(input$options_chosen)
+        req(input$options_selected)
         r$reload_all_users_accesses_toggles <- Sys.time()
         r$reload_all_users_accesses_toggles_value <- FALSE
         
@@ -588,9 +588,9 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_settings_users - observer input$options_save"))
 
-        req(input$options_chosen)
-        if (length(input$options_chosen) > 1) link_id <- input$options_chosen$key
-        else link_id <- input$options_chosen
+        req(input$options_selected)
+        if (length(input$options_selected) > 1) link_id <- input$options_selected$key
+        else link_id <- input$options_selected
 
         # Create a data variable to insert data in database
         data <- tibble::tibble(category = character(), link_id = integer(), name = character(), value = character(),

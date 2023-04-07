@@ -13,8 +13,8 @@ get_page_options(id = character())
 A character vector with options
 }
 \description{
-Get the options of a setting page (as datamarts, studies...)
+Get the options of a setting page (as datasets, studies...)
 }
 \examples{
-get_page_options(id == "settings_datamarts")
+get_page_options(id == "settings_datasets")
 }

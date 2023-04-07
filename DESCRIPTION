@@ -31,7 +31,6 @@ Imports:
     shinyAce (>= 0.4.1),
     shinybusy (>= 0.2.2),
     shinyjs (>= 2.0.0),
-    shinyTree (>= 0.2.7),
     sortable(>= 0.4.5),
     stringr (>= 1.4.0),
     tidyr (>= 1.1.4),

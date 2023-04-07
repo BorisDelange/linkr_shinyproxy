@@ -21,7 +21,7 @@ save_settings_code(
 
 \item{id}{ID of the current page, format = "settings_[PAGE]" (character)}
 
-\item{category}{Category column in code table, eg : "datamart", "plugin" (character)}
+\item{category}{Category column in code table, eg : "dataset", "plugin" (character)}
 
 \item{code_id_input}{Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)}
 
@@ -34,7 +34,7 @@ Save code in code table after editing it
 }
 \examples{
 \dontrun{
-save_settings_code(output = output, r = r, id = "settings_datamart", category = "datamart", code_id_input = "edit_code_5",
+save_settings_code(output = output, r = r, id = "settings_dataset", category = "dataset", code_id_input = "edit_code_5",
   edited_code = "print('test code edition')", language = "EN")
 }
 }

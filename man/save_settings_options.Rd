@@ -22,7 +22,7 @@ save_settings_options(
 
 \item{id}{ID of the current page, format = "settings_[PAGE]" (character)}
 
-\item{category}{Category column in code table, eg : "datamart", "plugin" (character)}
+\item{category}{Category column in code table, eg : "dataset", "plugin" (character)}
 
 \item{code_id_input}{Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)}
 
@@ -38,7 +38,7 @@ Save options
 data <- list()
 data$show_only_aggregated_data <- TRUE
 data$users_allowed_read <- c(1, 3, 4)
-save_settings_options(output = output, r = r, id = "settings_datamart", category = "datamart", code_id_input = "edit_code_3",
+save_settings_options(output = output, r = r, id = "settings_dataset", category = "dataset", code_id_input = "edit_code_3",
   data = data, language = "EN")
 }
 }

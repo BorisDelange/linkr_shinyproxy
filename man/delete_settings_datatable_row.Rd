@@ -34,6 +34,6 @@ Delete a row in datatable
 }
 \examples{
 \dontrun{
-delete_settings_datatable_row(output = output, r = r, ns = ns, language = "EN", row_deleted = 13, table = "datamarts")
+delete_settings_datatable_row(output = output, r = r, ns = ns, language = "EN", row_deleted = 13, table = "datasets")
 }
 }

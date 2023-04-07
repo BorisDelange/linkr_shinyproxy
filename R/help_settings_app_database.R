@@ -49,8 +49,8 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
     load_help_page(r)
     
     div_code_1 <- div(
-      "r$datamarts",
-      "DBI::dbGetQuery(r$db, \"SELECT * FROM datamarts\")",
+      "r$datasets",
+      "DBI::dbGetQuery(r$db, \"SELECT * FROM datasets\")",
       style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
     )
     
@@ -216,7 +216,7 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         p(strong("Gestion des données")),
         tags$ul(
           tags$li(tags$em("data_sources"), " : comprend les différentes sources de données"),
-          tags$li(tags$em("datamarts"), " : les set de données associés aux sources de données"),
+          tags$li(tags$em("datasets"), " : les set de données associés aux sources de données"),
           tags$li(tags$em("studies"), " : les différentes études associées aux sets de données"),
           tags$li(tags$em("thesaurus"), " : comprend les différents thésaurus, associés aux sources de données"),
           tags$li(tags$em("thesaurus_items"), " : les concepts / items des thésaurus sont stockés ici"),
@@ -240,8 +240,8 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         ),
         p(strong("Autres")),
         tags$ul(
-          tags$li(tags$em("code"), " : les codes de différentes tables (datamarts, thésaurus etc) sont stockés ici"),
-          tags$li(tags$em("options"), " : les options de différentes tables (data_sources, datamarts etc) sont stockées ici"),
+          tags$li(tags$em("code"), " : les codes de différentes tables (datasets, thésaurus etc) sont stockés ici"),
+          tags$li(tags$em("options"), " : les options de différentes tables (data_sources, datasets etc) sont stockées ici"),
           tags$li(tags$em("cache"), " : cette table permet de créer un cache pour les opérations prenant du temps ",
           " (création des datatables de thésaurus avec les boutons plus, moins, supprimer...)"),
           tags$li(tags$em("conversations"), " : les conversations que l'on créé au sein d'études sont stockées ici"),
@@ -278,7 +278,7 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         p(strong("Data Management:")),
         tags$ul(
           tags$li(tags$em("data_sources"), " : includes the different data sources"),
-          tags$li(tags$em("datamarts"), " : the datasets associated with the data sources"),
+          tags$li(tags$em("datasets"), " : the datasets associated with the data sources"),
           tags$li(tags$em("studies"), " : the different studies associated with the datasets"),
           tags$li(tags$em("thesaurus"), " : includes the different thesauri associated with the data sources"),
           tags$li(tags$em("thesaurus_items"), " : the concepts/items of the thesauri are stored here"),
@@ -302,8 +302,8 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         ),
         p(strong("Others")),
         tags$ul(
-          tags$li(tags$em("code"), " : the codes of different tables (datamarts, thesaurus, etc.) are stored here"),
-          tags$li(tags$em("options"), " : the options of different tables (data_sources, datamarts, etc.) are stored here"),
+          tags$li(tags$em("code"), " : the codes of different tables (datasets, thesaurus, etc.) are stored here"),
+          tags$li(tags$em("options"), " : the options of different tables (data_sources, datasets, etc.) are stored here"),
           tags$li(tags$em("cache"), " : this table allows creating a cache for operations that take time ",
             " (creating thesaurus datatables with the plus, minus, delete buttons, etc.)"),
           tags$li(tags$em("conversations"), " : the conversations created within studies are stored here"),

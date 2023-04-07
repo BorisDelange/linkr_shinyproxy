@@ -47,7 +47,7 @@ mod_home_ui <- function(id = character(), i18n = character()){
           div(shiny.fluent::MessageBar(
             div(
               strong("A faire"),
-              p("L'idée ici serait de pouvoir charger un fichier Excel, que cela crée un datamart & un thésaurus."),
+              p("L'idée ici serait de pouvoir charger un fichier Excel, que cela crée un dataset & un thésaurus."),
               p("Pour cela, plusieurs problématiques :",
                 tags$ul(
                   tags$li("Un format à respecter : un patient par ligne ?"),

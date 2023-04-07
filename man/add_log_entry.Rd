@@ -11,7 +11,7 @@ add_log_entry(r, category, name, value)
 
 \item{category}{Category of the log entry, eg : "SQL query" (character)}
 
-\item{name}{Name of the log entry, eg : "Add a new datamart" (character)}
+\item{name}{Name of the log entry, eg : "Add a new dataset" (character)}
 
 \item{value}{Value of the log entry, eg : "INSERT INTO ..."}
 }

@@ -67,7 +67,7 @@ mod_page_main_ui <- function(id = character(), language = "en", i18n = character
     if (id == "settings_dev") mod_settings_dev_ui(id = "settings_dev", i18n = i18n) -> result
     
     # Subpages of Settings / data management
-    sapply(c("data_sources", "datamarts", "studies", "subsets", "vocabularies"), function(page_settings){
+    sapply(c("data_sources", "datasets", "studies", "subsets", "vocabularies"), function(page_settings){
       if (id == paste0("settings_", page_settings)) mod_settings_data_management_ui(id = paste0("settings_", page_settings), i18n = i18n) ->> result
     })
     

@@ -10,7 +10,7 @@
 #' }
 update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), table = character(), i18n = character()){
   tables <- c("users", "users_accesses", "users_statuses",
-    "data_sources", "datamarts", "studies", "subsets", "subset_patients", "subsets_patients", "vocabulary", "thesaurus", "thesaurus_items",
+    "data_sources", "datasets", "studies", "subsets", "subset_patients", "subsets_patients", "vocabulary", "thesaurus", "thesaurus_items",
     "plugins", "scripts",
     "patient_lvl_modules_families", "patient_lvl_modules", "patient_lvl_modules_elements", "patient_lvl_modules_elements_items",
     "aggregated_modules_families", "aggregated_modules", "aggregated_modules_elements", "aggregated_modules_elements_items", 
@@ -34,9 +34,9 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
       else {
 
         tables <- tibble::tribble(~name, ~col_name, ~col_value,
-          "subsets", "study_id", m$chosen_study,
-          "subset_patients", "subset_id", m$chosen_subset,
-          "patients_options", "study_id", m$chosen_study)
+          "subsets", "study_id", m$selected_study,
+          "subset_patients", "subset_id", m$selected_subset,
+          "patients_options", "study_id", m$selected_study)
 
         row <- tables %>% dplyr::filter(name == table)
         
@@ -55,7 +55,7 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
   else {
     db <- r$db
     
-    if (table %in% c("datamarts", "plugins", "data_sources", "thesaurus")){
+    if (table %in% c("datasets", "plugins", "data_sources", "thesaurus")){
       
       r[[table]] <- DBI::dbGetQuery(db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
       
@@ -73,7 +73,7 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
     else if (grepl("modules", table)){
       
       if (table == "modules_elements_options"){
-        sql <- glue::glue_sql("SELECT * FROM modules_elements_options WHERE deleted IS FALSE AND study_id = {m$chosen_study}", .con = db)
+        sql <- glue::glue_sql("SELECT * FROM modules_elements_options WHERE deleted IS FALSE AND study_id = {m$selected_study}", .con = db)
         r$modules_elements_options <- DBI::dbGetQuery(db, sql)
       }
       
@@ -81,7 +81,7 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
         if (grepl("patient_lvl", table)) prefix <- "patient_lvl" else prefix <- "aggregated"
         
         if (grepl("families", table)){
-          family_id <- r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+          family_id <- r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
           sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND id = {family_id}", .con = db)
           r[[paste0(prefix, "_modules_families")]] <- DBI::dbGetQuery(db, sql)
         }
@@ -99,7 +99,7 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
         }
         
         else {
-          family_id <- r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+          family_id <- r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
           sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND module_family_id = {family_id}", .con = db)
           r[[paste0(prefix, "_modules")]] <- DBI::dbGetQuery(db, sql)
         }
@@ -110,8 +110,8 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
     else if (table %in% c("studies", "scripts")){
       
       tables <- tibble::tribble(~name, ~col_name, ~col_value,
-        "studies", "datamart_id", r$chosen_datamart,
-        "scripts", "data_source_id", r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id))
+        "studies", "dataset_id", r$selected_dataset,
+        "scripts", "data_source_id", r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id))
       
       row <- tables %>% dplyr::filter(name == table)
       
@@ -137,15 +137,15 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
 
 #' Get options of a page
 #' 
-#' @description Get the options of a setting page (as datamarts, studies...)
+#' @description Get the options of a setting page (as datasets, studies...)
 #' @param id ID of the module / page 
 #' @return A character vector with options
 #' @examples 
-#' get_page_options(id == "settings_datamarts")
+#' get_page_options(id == "settings_datasets")
 get_page_options <- function(id = character()){
   result <- ""
   switch(id,
-    "settings_datamarts" = c("show_only_aggregated_data", "users_allowed_read"),
+    "settings_datasets" = c("show_only_aggregated_data", "users_allowed_read"),
     "settings_studies" = "users_allowed_read",
     "settings_plugins" = c("markdown_description", "users_allowed_read"),
     "settings_users_accesses_options" = "users_accesses_options",
@@ -159,15 +159,15 @@ get_page_options <- function(id = character()){
 #' @param table_name Name of the table (character)
 #' @param language Language used (charater)
 #' @examples 
-#' get_col_names(table_name = "datamarts", language = "EN")
+#' get_col_names(table_name = "datasets", language = "EN")
 get_col_names <- function(table_name = character(), i18n = character()){
   result <- ""
   
-  if (table_name %in% c("data_sources", "datamarts", "studies", "subsets")){
+  if (table_name %in% c("data_sources", "datasets", "studies", "subsets")){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"))
     c(result, switch(table_name,
-      "datamarts" = i18n$t("data_source"),
-      "studies" = c(i18n$t("datamart"), i18n$t("patient_lvl_module_family"),
+      "datasets" = i18n$t("data_source"),
+      "studies" = c(i18n$t("dataset"), i18n$t("patient_lvl_module_family"),
         i18n$t("aggregated_module_family")),
       "subsets" = i18n$t("study"),
       "thesaurus" = i18n$t("data_sources"))) -> result
@@ -181,7 +181,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   
   if (table_name == "studies"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"),
-      i18n$t("datamart"), i18n$t("patient_lvl_module_family"),
+      i18n$t("dataset"), i18n$t("patient_lvl_module_family"),
       i18n$t("aggregated_module_family"), i18n$t("creator"), i18n$t("datetime"),
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
@@ -239,7 +239,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
       i18n$t("action"), i18n$t("modified"))
   }
   
-  if (table_name == "datamart_thesaurus_items_with_counts"){
+  if (table_name == "dataset_thesaurus_items_with_counts"){
     result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("parent_concept_id"), i18n$t("name"), 
       i18n$t("abbreviation"), i18n$t("unit"),
       i18n$t("datetime"), i18n$t("deleted"),
@@ -255,12 +255,12 @@ get_col_names <- function(table_name = character(), i18n = character()){
       i18n$t("action"), i18n$t("modified"))
   }
   
-  if (table_name == "datamart_thesaurus_items_mapping"){
+  if (table_name == "dataset_thesaurus_items_mapping"){
     result <- c(i18n$t("id"), i18n$t("category"), i18n$t("thesaurus1"), i18n$t("concept_id"), i18n$t("relation"), i18n$t("thesaurus2"), i18n$t("concept_id"),
       i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"))
   }
   
-  if (table_name == "datamart_thesaurus_items_mapping_evals"){
+  if (table_name == "dataset_thesaurus_items_mapping_evals"){
     result <- c(i18n$t("id"), i18n$t("thesaurus1"), i18n$t("concept_id"), i18n$t("relation"), i18n$t("thesaurus2"), i18n$t("concept_id"),
       i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("positive_evals_short"), i18n$t("negative_evals_short"), 
       i18n$t("action"), i18n$t("user_evaluation_id"), i18n$t("modified"))

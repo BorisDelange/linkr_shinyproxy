@@ -1,17 +1,17 @@
-#' Import a datamart
+#' Import a dataset
 #' @param output variable from Shiny, used to render messages on the message bar
 #' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
-#' @param datamart_id ID of the datamart, used to create directory in data/ (eg : datamart_3)
+#' @param dataset_id ID of the dataset, used to create directory in data/ (eg : dataset_3)
 #' @param data data variable (data.frame or tibble)
 #' @param type type or name of data to create c("patients", "stays", "labs_vitals", "text", "orders")
 #' @param save_as_csv save or not the data to CSV file (logical, default = TRUE)
 #' @param rewrite if save_as_csv is TRUE, rewrite or not existing CSV file (logical, default = FALSE)
 #' @param language language used for error / warning messages (character, default = "EN")
-#' @description Load +/- save data when a datamart is chosen by the user.
-#' @details The function is used in a datamart code and is launched each time a user selects a datamart. \cr
-#' You can choose to \strong{load data each time} the function is used with save_as_csv set to FALSE (eg when datamart is small and the
+#' @description Load +/- save data when a dataset is selected by the user.
+#' @details The function is used in a dataset code and is launched each time a user selects a dataset. \cr
+#' You can choose to \strong{load data each time} the function is used with save_as_csv set to FALSE (eg when dataset is small and the
 #' connection to source database is good) or you can \strong{save the data in a CSV file} with save_as_csv set to TRUE. \cr
-#' Basically, 5 data variables are created for each datamart (distinct values of 'type' parameter).\cr\cr
+#' Basically, 5 data variables are created for each dataset (distinct values of 'type' parameter).\cr\cr
 #' Columns needed for each data type :\cr\cr
 #' \strong{type = "patients"} :\cr
 #' \itemize{
@@ -73,26 +73,26 @@
 #' patients <- tibble::tribble(~patient_id, ~gender, ~age, ~dod, 44565L, "F", 45, "2021-05-01 00:00:00") %>%
 #'   dplyr::mutate_at("dod", lubridate::ymd_hms)
 #'     
-#' import_datamart(output = output, r = r, datamart_id = 5, data = patients, type = "patients", 
+#' import_dataset(output = output, r = r, dataset_id = 5, data = patients, type = "patients", 
 #'   save_as_csv = FALSE, rewrite = FALSE, language = language)
 #' }
-import_datamart <- function(output, ns = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), data = tibble::tibble(), 
+import_dataset <- function(output, ns = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), dataset_id = integer(), data = tibble::tibble(), 
   type = "patients", save_as_csv = TRUE, rewrite = FALSE, i18n = character(), quiet = TRUE){
   
-  # Check datamart_id
-  tryCatch(as.integer(datamart_id),
+  # Check dataset_id
+  tryCatch(as.integer(dataset_id),
     error = function(e){
-      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_datamart_id_value", 
-        error_name = paste0("import_datamart - invalid_datamart_id_value - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
-      stop(i18n$t("invalid_datamart_id_value"))}
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_dataset_id_value", 
+        error_name = paste0("import_dataset - invalid_dataset_id_value - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("invalid_dataset_id_value"))}
   )
   
   # If try is a success, assign new value to data (problem with assignment inside the tryCatch)
-  datamart_id <- as.integer(datamart_id)
+  dataset_id <- as.integer(dataset_id)
   
-  if (is.na(datamart_id) | length(datamart_id) == 0){
-    show_message_bar(output, "invalid_datamart_id_value", "severeWarning", i18n = i18n, ns = ns)
-    stop(i18n$t("invalid_datamart_id_value"))
+  if (is.na(dataset_id) | length(dataset_id) == 0){
+    show_message_bar(output, "invalid_dataset_id_value", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_dataset_id_value"))
   }
   
   # Type = c("patients", "stays", "labs_vitals", "text", "orders")
@@ -103,9 +103,9 @@ import_datamart <- function(output, ns = character(), r = shiny::reactiveValues(
   }
   id_message_bar <- switch(type, "patients" = 1, "stays" = 2, "labs_vitals" = 3, "text" = 4, "orders" = 5, "diagnoses" = 6)
   
-  # If a datamarts_folder is provided, take this value
+  # If a datasets_folder is provided, take this value
   # Take package working directory else
-  folder <- paste0(r$app_folder, "/datamarts/", datamart_id)
+  folder <- paste0(r$app_folder, "/datasets/", dataset_id)
   path <- paste0(folder, "/", type, ".csv")
   
   # If files already exists and we do not want to rewrite it
@@ -119,17 +119,17 @@ import_datamart <- function(output, ns = character(), r = shiny::reactiveValues(
           "text" = "iciTTcc",
           "orders" = "iciTTcincncncc")
         d[[type]] <- readr::read_csv(path, col_types = col_types, show_col_types = FALSE)
-        if (!quiet & nrow(d[[type]]) > 0) show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", i18n = i18n, ns = ns)
+        if (!quiet & nrow(d[[type]]) > 0) show_message_bar(output, id_message_bar, paste0("import_dataset_success_", type), "success", i18n = i18n, ns = ns)
       })
     }, 
       
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_csv", 
-          error_name = paste0("import_datamart - error_loading_csv - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = paste0("import_dataset - error_loading_csv - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
         stop(i18n$t("error_loading_csv"))},
       warning = function(w){
         if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_csv", 
-          error_name = paste0("import_datamart - error_loading_csv - id = ", datamart_id), category = "Error", error_report = toString(w), i18n = i18n)
+          error_name = paste0("import_dataset - error_loading_csv - id = ", dataset_id), category = "Error", error_report = toString(w), i18n = i18n)
         stop(i18n$t("error_loading_csv"))}
     )
   }
@@ -138,7 +138,7 @@ import_datamart <- function(output, ns = character(), r = shiny::reactiveValues(
   tryCatch(tibble::as_tibble(data), 
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = paste0("import_datamart - error_transforming_tibble - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+        error_name = paste0("import_dataset - error_transforming_tibble - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
       stop(i18n$t("error_transforming_tibble"))}
   )
   
@@ -231,13 +231,13 @@ import_datamart <- function(output, ns = character(), r = shiny::reactiveValues(
     }
   })
   
-  # if  save_as_csv is TRUE, save data in datamart folder
+  # if  save_as_csv is TRUE, save data in dataset folder
   if (save_as_csv){
     if (!file.exists(folder)) dir.create(folder, recursive = TRUE)
     if (!file.exists(path)) tryCatch(readr::write_csv(data, path),
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
-          error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = paste0("import_dataset - error_saving_csv - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
         stop(i18n$t("error_saving_csv"))}
     )
     if (file.exists(path) & rewrite) tryCatch({
@@ -245,7 +245,7 @@ import_datamart <- function(output, ns = character(), r = shiny::reactiveValues(
       readr::write_csv(data, path)}, 
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
-          error_name = paste0("import_datamart - error_saving_csv - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = paste0("import_dataset - error_saving_csv - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
         stop(i18n$t("error_saving_csv"))}
     )
   }
@@ -268,14 +268,14 @@ import_datamart <- function(output, ns = character(), r = shiny::reactiveValues(
     },
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_linking_stays_with_thesaurus", 
-          error_name = paste0("import_datamart - error_linking_stays_with_thesaurus - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = paste0("import_dataset - error_linking_stays_with_thesaurus - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
         stop(i18n$t("error_linking_stays_with_thesaurus"))}
     )
   }
   
   d[[type]] <- data
   
-  if (!quiet) show_message_bar(output, id_message_bar, paste0("import_datamart_success_", type), "success", i18n = i18n, ns = ns)
+  if (!quiet) show_message_bar(output, id_message_bar, paste0("import_dataset_success_", type), "success", i18n = i18n, ns = ns)
 }
 
 #' Import a thesaurus

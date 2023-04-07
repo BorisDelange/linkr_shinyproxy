@@ -6,7 +6,7 @@ help_scripts <- function(output, r = shiny::reactiveValues(), id = character(), 
       headerText = i18n$t("help"),
       isOpen = r$help_scripts_open_panel,
       br(),
-      shiny.fluent::Link(i18n$t("choose_datamart_scripts"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_1', Math.random()); }"))), br(), br(),
+      shiny.fluent::Link(i18n$t("choose_dataset_scripts"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_1', Math.random()); }"))), br(), br(),
       shiny.fluent::Link(i18n$t("scripts_management"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_2', Math.random()); }"))), br(), br(),
       shiny.fluent::Link(i18n$t("edit_script_code"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_3', Math.random()); }"))), br(), br(),
       shiny.fluent::Link(i18n$t("script_options"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_4', Math.random()); }"))), br(), br(),
@@ -41,13 +41,13 @@ help_scripts <- function(output, r = shiny::reactiveValues(), id = character(), 
     r$help_scripts_open_panel_light_dismiss <- FALSE
   }
   
-  # Choose datamart scripts
+  # Choose dataset scripts
   
   observeEvent(r$help_scripts_page_1, {
     
     load_help_page(r)
     
-    r$help_scripts_modal_title <- i18n$t("choose_datamart_scripts")
+    r$help_scripts_modal_title <- i18n$t("choose_dataset_scripts")
     
     if (language == "fr"){
       r$help_scripts_modal_text <- div(
@@ -65,15 +65,15 @@ help_scripts <- function(output, r = shiny::reactiveValues(), id = character(), 
     
     if (language == "en"){
       r$help_scripts_modal_text <- div(
-        p(strong("1) Configure the datamart")),
-        p("The right column lists the ", strong("available"), " scripts for this datamart that are not used."),
-        p("The left column lists the ", strong("used"), " scripts for this datamart."),
-        p("When you load a datamart, all the scripts in the ", tags$em("Selected scripts"), " column will be ", strong("executed at the launch of the datamart"), "."),
+        p(strong("1) Configure the dataset")),
+        p("The right column lists the ", strong("available"), " scripts for this dataset that are not used."),
+        p("The left column lists the ", strong("used"), " scripts for this dataset."),
+        p("When you load a dataset, all the scripts in the ", tags$em("Selected scripts"), " column will be ", strong("executed at the launch of the dataset"), "."),
         p("Click on a script and drag it to the corresponding column."),
         p(strong("2) Cache memory")),
-        p("The execution of some scripts can take time when loading a datamart."),
-        p("Enabling cache memory allows you to ", strong("save"), " the datamarts in CSV format after the ", strong("scripts have been executed"),
-          ", which saves time when loading the datamart.")
+        p("The execution of some scripts can take time when loading a dataset."),
+        p("Enabling cache memory allows you to ", strong("save"), " the datasets in CSV format after the ", strong("scripts have been executed"),
+          ", which saves time when loading the dataset.")
       )
     }
   })
@@ -181,7 +181,7 @@ help_scripts <- function(output, r = shiny::reactiveValues(), id = character(), 
     if (language == "en"){
       r$help_scripts_modal_text <- div(
         p("In this section, you can ", strong("write code"), " for a script and ", strong("test it"), "."),
-        p("The purpose of a script is to perform ", strong("data cleaning"), " on a datamart or to ", strong("create new concepts"), " in a thesaurus."),
+        p("The purpose of a script is to perform ", strong("data cleaning"), " on a dataset or to ", strong("create new concepts"), " in a thesaurus."),
         p("For example:"),
         tags$ul(
           tags$li("Script allowing to ", strong("exclude aberrant weight and height data"), ", for example when the two values are reversed."),

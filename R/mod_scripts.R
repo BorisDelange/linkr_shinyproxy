@@ -10,7 +10,7 @@
 mod_scripts_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
-  cards <- c("scripts_descriptions_card", "datamart_scripts_card", "scripts_datatable_card", 
+  cards <- c("scripts_descriptions_card", "dataset_scripts_card", "scripts_datatable_card", 
     "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card")
   
   forbidden_cards <- tagList()
@@ -37,7 +37,7 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
         shiny.fluent::Pivot(
           id = ns("scripts_pivot"),
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "datamart_scripts_card", itemKey = "datamart_scripts_card", headerText = i18n$t("choose_datamart_scripts")),
+          shiny.fluent::PivotItem(id = "dataset_scripts_card", itemKey = "dataset_scripts_card", headerText = i18n$t("choose_dataset_scripts")),
           shiny.fluent::PivotItem(id = "scripts_descriptions_card", itemKey = "scripts_descriptions_card", headerText = i18n$t("scripts_descriptions_card")),
           shiny.fluent::PivotItem(id = "scripts_datatable_card", itemKey = "scripts_datatable_card", headerText = i18n$t("scripts_management")),
           shiny.fluent::PivotItem(id = "scripts_edit_code_card", itemKey = "scripts_edit_code_card", headerText = i18n$t("edit_script_code")),
@@ -47,7 +47,7 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
     ),
     
     div(
-      id = ns("choose_a_datamart_card"),
+      id = ns("choose_a_dataset_card"),
       make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_a_damatart_left_side"), messageBarType = 5), style = "margin-top:10px;")),
       br()
     ),
@@ -62,7 +62,7 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
         id = ns("scripts_descriptions_card"),
         make_card(i18n$t("scripts_descriptions_card"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "script", id = "scripts_description_chosen_script",
+            make_combobox(i18n = i18n, ns = ns, label = "script", id = "scripts_description_selected_script",
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
             div(id = ns("scripts_description_markdown_output"),
               uiOutput(ns("scripts_description_markdown_result")), 
@@ -73,17 +73,17 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
     ),
     
     # --- --- --- --- --- --- --
-    # Datamart scripts card ----
+    # Dataset scripts card ----
     # --- --- --- --- --- --- --
     
     shinyjs::hidden(
       div(
-        id = ns("datamart_scripts_card"),
+        id = ns("dataset_scripts_card"),
         div(
           class = glue::glue("card ms-depth-8 ms-sm{12} ms-xl{12}"),
-          shiny.fluent::Text(variant = "large", i18n$t("choose_datamart_scripts"), block = TRUE),
-          div(uiOutput(ns("datamart_scripts_bucket_list"))),
-          shiny.fluent::PrimaryButton.shinyInput(ns("save_datamart_scripts"), i18n$t("save"))
+          shiny.fluent::Text(variant = "large", i18n$t("choose_dataset_scripts"), block = TRUE),
+          div(uiOutput(ns("dataset_scripts_bucket_list"))),
+          shiny.fluent::PrimaryButton.shinyInput(ns("save_dataset_scripts"), i18n$t("save"))
         ), 
         make_card(i18n$t("scripts_cache_memory"),
           div(
@@ -137,7 +137,7 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
         id = ns("scripts_edit_code_card"),
         make_card(i18n$t("edit_script_code"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "script", id = "code_chosen_script",
+            make_combobox(i18n = i18n, ns = ns, label = "script", id = "code_selected_script",
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               div(shiny.fluent::Toggle.shinyInput(ns("hide_code_editor"), value = FALSE), style = "margin-top:9px;"),
@@ -176,7 +176,7 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
         id = ns("scripts_options_card"),
         make_card(i18n$t("script_options"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "script", id = "options_chosen_script",
+            make_combobox(i18n = i18n, ns = ns, label = "script", id = "options_selected_script",
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
             strong(i18n$t("script_description")), br(),
             
@@ -213,7 +213,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Show or hide cards ----
     # --- --- --- --- --- ---
     
-    cards <- c("scripts_descriptions_card", "datamart_scripts_card", "scripts_datatable_card",
+    cards <- c("scripts_descriptions_card", "dataset_scripts_card", "scripts_datatable_card",
       "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
@@ -224,7 +224,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Show message bar ----
     # --- --- --- --- --- -
     
-    # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
+    # This allows to show message in multiple pages at the same time (eg when loading a dataset in Studies page, render message bar in Subsets page)
     
     observeEvent(r$show_message_bar, show_message_bar(output, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
     if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - show_message_bars"))
@@ -267,9 +267,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       options <- convert_tibble_to_list(r$scripts%>% dplyr::arrange(name), key_col = "id", text_col = "name")
       
-      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", options = options)
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", options = options)
-      shiny.fluent::updateComboBox.shinyInput(session, "scripts_description_chosen_script", options = options)
+      shiny.fluent::updateComboBox.shinyInput(session, "code_selected_script", options = options)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_script", options = options)
+      shiny.fluent::updateComboBox.shinyInput(session, "scripts_description_selected_script", options = options)
       
     })
     
@@ -281,9 +281,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       if (debug) print(paste0(Sys.time(), " - mod_scripts - function reset_scripts_fields"))
       
-      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", value = NULL)
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", value = NULL)
-      shiny.fluent::updateComboBox.shinyInput(session, "scripts_description_chosen_script", value = NULL)
+      shiny.fluent::updateComboBox.shinyInput(session, "code_selected_script", value = NULL)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_script", value = NULL)
+      shiny.fluent::updateComboBox.shinyInput(session, "scripts_description_selected_script", value = NULL)
       
       output$scripts_description_markdown_result <- renderUI("")
       shinyAce::updateAceEditor(session, "ace_edit_code", value = "")
@@ -299,93 +299,93 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     }
     
     # --- --- --- --- --- --- --- --
-    # When a datamart is chosen ----
+    # When a dataset is selected ----
     # --- --- --- --- --- --- --- --
     
-    observeEvent(r$chosen_datamart, {
+    observeEvent(r$selected_dataset, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$chosen_datamart"))
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$selected_dataset"))
       
       # Reset fields
       reset_scripts_fields(session = session)
       
       # activate_scripts_cache option
       value <- r$options %>% 
-        dplyr::filter(category == "datamart", name == "activate_scripts_cache", link_id == r$chosen_datamart) %>% dplyr::pull(value_num)
+        dplyr::filter(category == "dataset", name == "activate_scripts_cache", link_id == r$selected_dataset) %>% dplyr::pull(value_num)
       shiny.fluent::updateToggle.shinyInput(session, "activate_scripts_cache", value = as.logical(value))
       
-      # Create empty var for r$scripts, if there's an error loading the datamart
+      # Create empty var for r$scripts, if there's an error loading the dataset
       # r$scripts <- tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
       #   datetime = character(), deleted = logical())
       
-      # Load scripts for this datamart
+      # Load scripts for this dataset
       update_r(r = r, table = "scripts")
       
-      # Show first card & hide "choose a datamart" card
-      shinyjs::hide("choose_a_datamart_card")
+      # Show first card & hide "choose a dataset" card
+      shinyjs::hide("choose_a_dataset_card")
       shinyjs::show("menu")
       if (length(input$current_tab) == 0){
-        if ("datamart_scripts_card" %in% r$user_accesses) shinyjs::show("datamart_scripts_card")
-        else shinyjs::show("datamart_scripts_card_forbidden")
+        if ("dataset_scripts_card" %in% r$user_accesses) shinyjs::show("dataset_scripts_card")
+        else shinyjs::show("dataset_scripts_card_forbidden")
       }
-      # Show list of scripts for this datamart
+      # Show list of scripts for this dataset
       
-      output$datamart_scripts_bucket_list <- renderUI({
+      output$dataset_scripts_bucket_list <- renderUI({
         
         all_scripts <- r$scripts
-        chosen_scripts <- r$scripts %>% dplyr::inner_join(
+        selected_scripts <- r$scripts %>% dplyr::inner_join(
           r$options %>%
-          dplyr::filter(category == "datamart_scripts", link_id == r$chosen_datamart) %>%
+          dplyr::filter(category == "dataset_scripts", link_id == r$selected_dataset) %>%
           dplyr::select(id = value_num),
           by = "id"
         )
           
-        available_scripts <- all_scripts %>% dplyr::anti_join(chosen_scripts, by = "id")
+        available_scripts <- all_scripts %>% dplyr::anti_join(selected_scripts, by = "id")
         
         result <- sortable::bucket_list(
           header = NULL,
-          group_name = ns("all_datamart_scripts"),
+          group_name = ns("all_dataset_scripts"),
           orientation = "horizontal",
-          sortable::add_rank_list(text = i18n$t("chosen_scripts"), labels = chosen_scripts$name, input_id = ns("datamart_chosen_scripts")),
-          sortable::add_rank_list(text = i18n$t("available_scripts"), labels = available_scripts$name, input_id = ns("datamart_available_scripts"))
+          sortable::add_rank_list(text = i18n$t("selected_scripts"), labels = selected_scripts$name, input_id = ns("dataset_selected_scripts")),
+          sortable::add_rank_list(text = i18n$t("available_scripts"), labels = available_scripts$name, input_id = ns("dataset_available_scripts"))
         )
         
         result
       })
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$chosen_datamart"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$selected_dataset"))
     })
     
     # --- --- --- --- --- -
-    # Datamart scripts ----
+    # Dataset scripts ----
     # --- --- --- --- --- -
     
-    # Save datamart scripts
+    # Save dataset scripts
     
-    observeEvent(input$save_datamart_scripts, {
+    observeEvent(input$save_dataset_scripts, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_datamart_scripts"))
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_dataset_scripts"))
       
-      # Delete rows in options table concerning the scripts for this datamart
+      # Delete rows in options table concerning the scripts for this dataset
       
-      sql <- glue::glue_sql("DELETE FROM options WHERE category = 'datamart_scripts' AND link_id = {r$chosen_datamart}", .con = r$db)
+      sql <- glue::glue_sql("DELETE FROM options WHERE category = 'dataset_scripts' AND link_id = {r$selected_dataset}", .con = r$db)
       DBI::dbSendStatement(r$db, sql) -> query
       DBI::dbClearResult(query)
-      r$options <- r$options %>% dplyr::filter(category != "datamart_scripts" | (category == "datamart_scripts" & link_id != r$chosen_datamart))
+      r$options <- r$options %>% dplyr::filter(category != "dataset_scripts" | (category == "dataset_scripts" & link_id != r$selected_dataset))
       
-      # Add in options table informations concerning the scripts for this datamart
+      # Add in options table informations concerning the scripts for this dataset
       
-      if(length(input$datamart_chosen_scripts) > 0){
+      if(length(input$dataset_selected_scripts) > 0){
         
         data_insert <- tibble::tibble(category = character(), link_id = integer(), name = character(), value = character(),
           value_num = numeric(), creator_id = integer(), datetime = character(), deleted = logical())
         
-        sapply(input$datamart_chosen_scripts, function(script){
+        sapply(input$dataset_selected_scripts, function(script){
           data_insert <<- data_insert %>%
             dplyr::bind_rows(
-              tibble::tibble(category = "datamart_scripts", link_id = r$chosen_datamart, name = "", value = "",
+              tibble::tibble(category = "dataset_scripts", link_id = r$selected_dataset, name = "", value = "",
                 value_num = r$scripts %>% dplyr::filter(name == script) %>% dplyr::pull(id),
                 creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE)
             )
@@ -402,7 +402,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
         
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input_save_datamart_scripts"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input_save_dataset_scripts"))
     })
     
     # Save cache settings
@@ -413,11 +413,11 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_cache_settings"))
       
       sql <- glue::glue_sql(paste0("UPDATE options SET value_num = {as.integer(input$activate_scripts_cache)} ",
-        "WHERE category = 'datamart' AND name = 'activate_scripts_cache' AND link_id = {r$chosen_datamart} AND deleted IS FALSE"), .con = r$db)
+        "WHERE category = 'dataset' AND name = 'activate_scripts_cache' AND link_id = {r$selected_dataset} AND deleted IS FALSE"), .con = r$db)
       query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
       r$options <- r$options %>% dplyr::mutate(value_num = dplyr::case_when(
-        category == "datamart" & name == "activate_scripts_cache" & link_id == r$chosen_datamart & !deleted ~ as.numeric(input$activate_scripts_cache),
+        category == "dataset" & name == "activate_scripts_cache" & link_id == r$selected_dataset & !deleted ~ as.numeric(input$activate_scripts_cache),
         TRUE ~ value_num
       ))
       
@@ -432,21 +432,21 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$update_scripts_cache_card"))
       
-      loaded_scripts_file_path <- paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/loaded_scripts.csv")
-      if (file.exists(loaded_scripts_file_path)) datamart_loaded_scripts <- readr::read_csv(loaded_scripts_file_path, show_col_types = FALSE)
-      if (!file.exists(loaded_scripts_file_path)) datamart_loaded_scripts <- tibble::tibble()
+      loaded_scripts_file_path <- paste0(r$app_folder, "/datasets/", r$selected_dataset, "/loaded_scripts.csv")
+      if (file.exists(loaded_scripts_file_path)) dataset_loaded_scripts <- readr::read_csv(loaded_scripts_file_path, show_col_types = FALSE)
+      if (!file.exists(loaded_scripts_file_path)) dataset_loaded_scripts <- tibble::tibble()
       
-      if (nrow(datamart_loaded_scripts) > 0){
+      if (nrow(dataset_loaded_scripts) > 0){
         
-        datetime <- datamart_loaded_scripts %>% dplyr::slice(1) %>% dplyr::pull(datetime) %>% format_datetime(language, sec = FALSE)
+        datetime <- dataset_loaded_scripts %>% dplyr::slice(1) %>% dplyr::pull(datetime) %>% format_datetime(language, sec = FALSE)
         
-        datamart_loaded_scripts <- datamart_loaded_scripts %>%
+        dataset_loaded_scripts <- dataset_loaded_scripts %>%
           dplyr::left_join(r$scripts %>% dplyr::select(id, name), by = "id") %>%
           dplyr::mutate(name = dplyr::case_when(is.na(name) ~ i18n$t("deleted_script"), TRUE ~ name))
 
         loaded_scripts <- list()
-        loaded_scripts$success <- datamart_loaded_scripts %>% dplyr::filter(status == "success")
-        loaded_scripts$failure <- datamart_loaded_scripts %>% dplyr::filter(status == "failure")
+        loaded_scripts$success <- dataset_loaded_scripts %>% dplyr::filter(status == "success")
+        loaded_scripts$failure <- dataset_loaded_scripts %>% dplyr::filter(status == "failure")
 
         for (status in c("success", "failure")){
           if (nrow(loaded_scripts[[status]]) == 0) loaded_scripts[[status]] <- "/"
@@ -490,13 +490,13 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Scripts descriptions ----
     # --- --- --- --- --- --- -
     
-    observeEvent(input$scripts_description_chosen_script, {
+    observeEvent(input$scripts_description_selected_script, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$scripts_description_chosen_script"))
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$scripts_description_selected_script"))
       
-      if (length(input$scripts_description_chosen_script) > 1) link_id <- input$scripts_description_chosen_script$key
-      else link_id <- input$scripts_description_chosen_script
+      if (length(input$scripts_description_selected_script) > 1) link_id <- input$scripts_description_selected_script$key
+      else link_id <- input$scripts_description_selected_script
       
       # Get description from database
       script_description <- r$options %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(value) %>%
@@ -524,7 +524,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         output$scripts_description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
       }, error = function(e) "")
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input$scripts_description_chosen_script"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input$scripts_description_selected_script"))
     })
     
     # --- --- --- -- -- --
@@ -538,7 +538,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       new_data <- list()
       new_data$name <- coalesce2(type = "char", x = input$script_name)
       new_data$script_name <- new_data$name
-      new_data$data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)
+      new_data$data_source <- r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id)
       
       add_settings_new_data(session = session, output = output, r = r, m = m, i18n = i18n, id = "scripts",
         data = new_data, table = "scripts", required_textfields = "script_name", req_unique_values = "name")
@@ -570,7 +570,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Reset fields
       
-      data_source_id <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)
+      data_source_id <- r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id)
 
       if(nrow(r$scripts %>% dplyr::filter(data_source_id == !!data_source_id)) == 0){
         render_datatable(output = output, r = r, ns = ns, i18n = i18n,
@@ -696,8 +696,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       options <- convert_tibble_to_list(r$scripts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = r$scripts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       
-      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", options = options, value = value)
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "code_selected_script", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_script", options = options, value = value)
       
       # Set current pivot to edit_plugins_code
       shinyjs::runjs(glue::glue("$('#{id}-scripts_pivot button[name=\"{i18n$t('edit_script_code')}\"]').click();"))
@@ -713,8 +713,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       options <- convert_tibble_to_list(r$scripts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = r$scripts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       
-      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", options = options, value = value)
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "code_selected_script", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_script", options = options, value = value)
       
       # Set current pivot to edit_plugins_code
       shinyjs::runjs(glue::glue("$('#{id}-scripts_pivot button[name=\"{i18n$t('script_options')}\"]').click();"))
@@ -724,22 +724,22 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Edit script code ----
     # --- --- --- --- --- -
     
-    observeEvent(input$code_chosen_script, {
+    observeEvent(input$code_selected_script, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$code_chosen_script"))
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$code_selected_script"))
       
-      if (length(input$code_chosen_script) > 1) link_id <- input$code_chosen_script$key
-      else link_id <- input$code_chosen_script
-      if (length(input$options_chosen_script) > 0){
-        if (length(input$options_chosen_script) > 1) options_link_id <- input$options_chosen_script$key
-        else options_link_id <- input$options_chosen_script
+      if (length(input$code_selected_script) > 1) link_id <- input$code_selected_script$key
+      else link_id <- input$code_selected_script
+      if (length(input$options_selected_script) > 0){
+        if (length(input$options_selected_script) > 1) options_link_id <- input$options_selected_script$key
+        else options_link_id <- input$options_selected_script
       }
       else options_link_id <- 0L
       
       if (link_id != options_link_id){
         options <- convert_tibble_to_list(r$scripts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = link_id, text = r$scripts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-        shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_script", options = options, value = value)
+        shiny.fluent::updateComboBox.shinyInput(session, "options_selected_script", options = options, value = value)
       }
       
       # Get code from database
@@ -765,8 +765,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$script_save_code"))
       
-      if (length(input$code_chosen_script) > 1) link_id <- input$code_chosen_script$key
-      else link_id <- input$code_chosen_script
+      if (length(input$code_selected_script) > 1) link_id <- input$code_selected_script$key
+      else link_id <- input$code_selected_script
       
       req(!is.null(link_id))
       
@@ -820,7 +820,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Create thesaurus for scripts if doesn't exist
       create_scripts_thesaurus(output = output, r = r, 
-        data_source_id = r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id), i18n = i18n, ns = ns)
+        data_source_id = r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id), i18n = i18n, ns = ns)
       
       edited_code <- r$script_code %>% stringr::str_replace_all("\r", "\n")
       
@@ -863,22 +863,22 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Edit script options ----
     # --- --- --- --- -- -- --
     
-    observeEvent(input$options_chosen_script, {
+    observeEvent(input$options_selected_script, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$options_chosen_script"))
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$options_selected_script"))
       
-      if (length(input$options_chosen_script) > 1) link_id <- input$options_chosen_script$key
-      else link_id <- input$options_chosen_script
-      if (length(input$code_chosen_script) > 0){
-        if (length(input$code_chosen_script) > 1) code_link_id <- input$code_chosen_script$key
-        else code_link_id <- input$code_chosen_script
+      if (length(input$options_selected_script) > 1) link_id <- input$options_selected_script$key
+      else link_id <- input$options_selected_script
+      if (length(input$code_selected_script) > 0){
+        if (length(input$code_selected_script) > 1) code_link_id <- input$code_selected_script$key
+        else code_link_id <- input$code_selected_script
       }
       else code_link_id <- 0L
       
       if (link_id != code_link_id){
         options <- convert_tibble_to_list(r$scripts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = link_id, text = r$scripts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-        shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_script", options = options, value = value)
+        shiny.fluent::updateComboBox.shinyInput(session, "code_selected_script", options = options, value = value)
       }
       
       # Get description from database
@@ -894,8 +894,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_options_description"))
       
-      if (length(input$options_chosen_script) > 1) link_id <- input$options_chosen_script$key
-      else link_id <- input$options_chosen_script
+      if (length(input$options_selected_script) > 1) link_id <- input$options_selected_script$key
+      else link_id <- input$options_selected_script
 
       req(!is.null(link_id))
 

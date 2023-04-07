@@ -24,7 +24,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
     shiny.fluent::reactOutput(ns("help_modal")),
     shiny.fluent::reactOutput(ns("study_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "datamart_main", text = i18n$t("my_studies"))
+      list(key = "dataset_main", text = i18n$t("my_studies"))
     ), maxDisplayedItems = 3),
     
     # --- --- -- -- --
@@ -43,7 +43,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
       )
     ),
     div(
-      id = ns("choose_a_datamart_card"),
+      id = ns("choose_a_dataset_card"),
       make_card("", div(shiny.fluent::MessageBar(i18n$t("choose_a_damatart_left_side"), messageBarType = 5), style = "margin-top:10px;"))
     ),
     forbidden_cards,
@@ -159,11 +159,11 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
         id = ns("studies_options_card"),
         make_card(i18n$t("study_options"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "study", id = "options_chosen", width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
+            make_combobox(i18n = i18n, ns = ns, label = "study", id = "options_selected", width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
             div(
               div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
               shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
-                list(key = "everybody", text = i18n$t("everybody_who_has_access_to_datamart")),
+                list(key = "everybody", text = i18n$t("everybody_who_has_access_to_dataset")),
                 list(key = "people_picker", text = i18n$t("choose_users"))
               ), className = "inline_choicegroup"),
               conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
@@ -255,7 +255,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # Show message bar ----
     # --- --- --- --- --- -
     
-    # This allows to show message in multiple pages at the same time (eg when loading a datamart in Studies page, render message bar in Subsets page)
+    # This allows to show message in multiple pages at the same time (eg when loading a dataset in Studies page, render message bar in Subsets page)
     
     observeEvent(r$show_message_bar, show_message_bar(output, r$show_message_bar$message, r$show_message_bar$type, i18n = i18n, ns = ns))
     
@@ -288,16 +288,16 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     help_my_studies(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
     
     # --- --- --- --- --- --- --- --
-    # When a datamart is chosen ----
+    # When a dataset is selected ----
     # --- --- --- --- --- --- --- --
     
-    observeEvent(r$chosen_datamart, {
+    observeEvent(r$selected_dataset, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$chosen_datamart"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$selected_dataset"))
       
-      # Show first card & hide "choose a datamart" card
-      shinyjs::hide("choose_a_datamart_card")
+      # Show first card & hide "choose a dataset" card
+      shinyjs::hide("choose_a_dataset_card")
       shinyjs::show("menu")
       if (length(input$current_tab) == 0){
         if ("studies_messages_card" %in% r$user_accesses) shinyjs::show("studies_messages_card")
@@ -319,8 +319,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       output$selected_conversation <- renderUI("")
       shinyjs::hide("conversation_new_message_div")
       
-      # The datamart is loaded here, and not in sidenav
-      # Placed in sidenav, the datamart is loaded multiple times (each time a page loads its own sidenav)
+      # The dataset is loaded here, and not in sidenav
+      # Placed in sidenav, the dataset is loaded multiple times (each time a page loads its own sidenav)
       
       # Initiate selected_key for study UI
       r$patient_lvl_selected_key <- NA_integer_
@@ -352,31 +352,31 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       })
       sapply(c("labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_stay[[table]] <- default_data[[table]])
       
-      # Reset chosen_study variable
-      m$chosen_study <- NA_integer_
-      m$chosen_patient <- NA_integer_ # To prevent bug when execute plugin code from plugin page
+      # Reset selected_study variable
+      m$selected_study <- NA_integer_
+      m$selected_patient <- NA_integer_ # To prevent bug when execute plugin code from plugin page
       
-      # A r variable to update study dropdown, when the load of datamart is finished
-      r$loaded_datamart <- r$chosen_datamart
+      # A r variable to update study dropdown, when the load of dataset is finished
+      r$loaded_dataset <- r$selected_dataset
       
-      # Load studies & scripts related to this datamart
+      # Load studies & scripts related to this dataset
       update_r(r = r, m = m, table = "studies")
       update_r(r = r, m = m, table = "scripts")
       
       r$force_reload_scripts_cache <- FALSE
       
-      # Try to load datamart
+      # Try to load dataset
       tryCatch({
 
-        capture.output(run_datamart_code(output, r = r, d = d, datamart_id = r$chosen_datamart, i18n = i18n, quiet = TRUE))
+        capture.output(run_dataset_code(output, r = r, d = d, dataset_id = r$selected_dataset, i18n = i18n, quiet = TRUE))
   
-        r$show_message_bar <- tibble::tibble(message = "import_datamart_success", type = "success", trigger = Sys.time())
+        r$show_message_bar <- tibble::tibble(message = "import_dataset_success", type = "success", trigger = Sys.time())
         
         r$load_scripts <- Sys.time()
       },
       error = function(e){
-        r$show_message_bar <- tibble::tibble(message = "fail_load_datamart", type = "severeWarning", trigger = Sys.time())
-        report_bug(r = r, output = output, error_message = "fail_load_datamart",
+        r$show_message_bar <- tibble::tibble(message = "fail_load_dataset", type = "severeWarning", trigger = Sys.time())
+        report_bug(r = r, output = output, error_message = "fail_load_dataset",
           error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)
       })
       
@@ -385,7 +385,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # Load thesaurus associated to data_source
       # If thesaurus contains no data, maybe thesaurus code hasn't been run yet
       
-      data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id)
+      data_source <- r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id)
       selected_thesaurus <- r$thesaurus %>%
         dplyr::filter(
           grepl(paste0("^", data_source, "$"), data_source_id) | 
@@ -403,7 +403,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           row <- selected_thesaurus[i, ]
           thesaurus_code <- r$code %>% dplyr::filter(category == "thesaurus", link_id == row$id) %>% dplyr::pull(code) %>%
             stringr::str_replace_all("\r", "\n") %>%
-            stringr::str_replace_all("%datamart_id%", as.character(r$chosen_datamart)) %>%
+            stringr::str_replace_all("%dataset_id%", as.character(r$selected_dataset)) %>%
             stringr::str_replace_all("%thesaurus_id%", as.character(row$id))
           
           sql <- glue::glue_sql("SELECT COUNT(*) AS count FROM thesaurus_items WHERE thesaurus_id = {row$id} AND deleted IS FALSE", .con = r$db)
@@ -417,7 +417,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         }
       }
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$chosen_datamart"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$selected_dataset"))
     })
     
     # Load scripts
@@ -427,15 +427,15 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$load_scripts"))
       
-      # Try to run the scripts associated with this datamart
+      # Try to run the scripts associated with this dataset
       # Save runned scripts and success status
       
-      r$datamart_loaded_scripts <- tibble::tibble(id = integer(), status = character(), datetime = character())
+      r$dataset_loaded_scripts <- tibble::tibble(id = integer(), status = character(), datetime = character())
       
       if (nrow(r$scripts) > 0){
         
         scripts <- r$scripts %>% dplyr::inner_join(
-          r$options %>% dplyr::filter(category == "datamart_scripts", link_id == r$chosen_datamart) %>% dplyr::select(id = value_num),
+          r$options %>% dplyr::filter(category == "dataset_scripts", link_id == r$selected_dataset) %>% dplyr::select(id = value_num),
           by = "id"
         ) %>%
           dplyr::inner_join(r$code %>% dplyr::filter(category == "script") %>% dplyr::select(id = link_id, code), by = "id")
@@ -445,14 +445,14 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
             
             script <- scripts[i, ]
             
-            r$datamart_loaded_scripts <- r$datamart_loaded_scripts %>% dplyr::bind_rows(
+            r$dataset_loaded_scripts <- r$dataset_loaded_scripts %>% dplyr::bind_rows(
               tibble::tibble(id = script$id, status = "failure", datetime = as.character(Sys.time())))
             
             # Execute script code
             captured_output <- capture.output(
               tryCatch({
                 eval(parse(text = script$code %>% stringr::str_replace_all("\r", "\n")))
-                r$datamart_loaded_scripts <- r$datamart_loaded_scripts %>% dplyr::mutate(status = dplyr::case_when(
+                r$dataset_loaded_scripts <- r$dataset_loaded_scripts %>% dplyr::mutate(status = dplyr::case_when(
                   id == script$id ~ "success", TRUE ~ status
                 ))
               },
@@ -464,7 +464,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           }
         }
         
-        if (nrow(r$datamart_loaded_scripts) > 0) r$reload_scripts_cache <- Sys.time()
+        if (nrow(r$dataset_loaded_scripts) > 0) r$reload_scripts_cache <- Sys.time()
       }
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$load_scripts"))
@@ -477,18 +477,18 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$reload_scripts_cache"))
       
-      req(!is.na(r$chosen_datamart))
+      req(!is.na(r$selected_dataset))
       
       # If activate_scripts_cache option activated and if cache doesn't exists, save data as CSV files
-      if(r$options %>% dplyr::filter(category == "datamart", name == "activate_scripts_cache", link_id == r$chosen_datamart) %>% dplyr::pull(value_num) == 1){
+      if(r$options %>% dplyr::filter(category == "dataset", name == "activate_scripts_cache", link_id == r$selected_dataset) %>% dplyr::pull(value_num) == 1){
         
         tables <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
         
-        datamart_file_path <- paste0(r$app_folder, "/datamarts/", r$chosen_datamart)
-        loaded_scripts_file_path <- paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/loaded_scripts.csv")
+        dataset_file_path <- paste0(r$app_folder, "/datasets/", r$selected_dataset)
+        loaded_scripts_file_path <- paste0(r$app_folder, "/datasets/", r$selected_dataset, "/loaded_scripts.csv")
         
-        # If datamart folder doesn't exist, create it
-        if (!dir.exists(datamart_file_path)) dir.create(datamart_file_path)
+        # If dataset folder doesn't exist, create it
+        if (!dir.exists(dataset_file_path)) dir.create(dataset_file_path)
         
         # If cache doesn't exist, create cache
         if (!file.exists(loaded_scripts_file_path) | r$force_reload_scripts_cache){
@@ -496,25 +496,25 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           # Save data as CSV files
           for (table in tables){
             if (nrow(d[[table]]) > 0){
-              readr::write_csv(d[[table]], paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/", table, "_with_scripts.csv"))
+              readr::write_csv(d[[table]], paste0(r$app_folder, "/datasets/", r$selected_dataset, "/", table, "_with_scripts.csv"))
             }
           }
           
           # Save a CSV file for informations on loaded scripts
-          readr::write_csv(r$datamart_loaded_scripts, paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/loaded_scripts.csv"))
+          readr::write_csv(r$dataset_loaded_scripts, paste0(r$app_folder, "/datasets/", r$selected_dataset, "/loaded_scripts.csv"))
         }
         
         # Load cache if already exists
         
         if (file.exists(loaded_scripts_file_path)){
           for (table in tables){
-            table_file_path <- paste0(r$app_folder, "/datamarts/", r$chosen_datamart, "/", table, "_with_scripts.csv")
+            table_file_path <- paste0(r$app_folder, "/datasets/", r$selected_dataset, "/", table, "_with_scripts.csv")
             if (file.exists(table_file_path)) d[[table]] <- readr::read_csv(table_file_path, show_col_types = FALSE)
           }
         }
       }
       
-      if (nrow(r$datamart_loaded_scripts %>% dplyr::filter(status == "failure")) > 0) r$show_message_bar <- 
+      if (nrow(r$dataset_loaded_scripts %>% dplyr::filter(status == "failure")) > 0) r$show_message_bar <- 
           tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
       else r$show_message_bar <- tibble::tibble(message = "run_scripts_success", type = "success", trigger = Sys.time())
       
@@ -524,29 +524,29 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$reload_scripts_cache"))
     })
     
-    # Once the datamart is loaded, load studies & scripts
-    observeEvent(r$loaded_datamart, {
+    # Once the dataset is loaded, load studies & scripts
+    observeEvent(r$loaded_dataset, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$loaded_datamart"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$loaded_dataset"))
       
       # Load studies datatable
       # r$reload_studies_datatable <- Sys.time()
       
       # Update dropdown for study options
       options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected", options = options)
     })
     
     # --- --- --- --- --- --- --- --
-    # When a study is chosen ----
+    # When a study is selected ----
     # --- --- --- --- --- --- --- --
     
-    observeEvent(m$chosen_study, {
+    observeEvent(m$selected_study, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$chosen_study"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$selected_study"))
       
-      req(!is.na(m$chosen_study))
-      # Show first card & hide "choose a datamart" card
+      req(!is.na(m$selected_study))
+      # Show first card & hide "choose a dataset" card
       shinyjs::hide("choose_a_study_card")
       shinyjs::show("study_messages_content")
       
@@ -561,43 +561,43 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       # Update study options combobox
       options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-      value <- list(key = m$chosen_study, text = r$studies %>% dplyr::filter(id == m$chosen_study) %>% dplyr::pull(name))
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
+      value <- list(key = m$selected_study, text = r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(name))
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected", options = options, value = value)
       
-      # Subsets depending on the chosen study
+      # Subsets depending on the selected study
       update_r(r = r, m = m, table = "subsets")
 
-      # Reset chosen_subset
-      m$chosen_subset <- NA_integer_
+      # Reset selected_subset
+      m$selected_subset <- NA_integer_
       
       # Select patients belonging to subsets of this study
       update_r(r = r, m = m, table = "subsets_patients")
       
       # Load patients options
-      sql <- glue::glue_sql("SELECT * FROM patients_options WHERE study_id = {m$chosen_study}", .con = m$db)
+      sql <- glue::glue_sql("SELECT * FROM patients_options WHERE study_id = {m$selected_study}", .con = m$db)
       m$patients_options <- DBI::dbGetQuery(m$db, sql)
     })
     
     # --- --- --- --- --- --- --- --
-    # When a subset is chosen ----
+    # When a subset is selected ----
     # --- --- --- --- --- --- --- --
     
-    observeEvent(m$chosen_subset, {
-      if (!is.na(m$chosen_subset)){
+    observeEvent(m$selected_subset, {
+      if (!is.na(m$selected_subset)){
         
         # Select patients who belong to this subset
         update_r(r = r, m = m, table = "subset_patients")
         
         # If this subset contains no patient, maybe the code has not been run yet
         if (nrow(m$subset_patients) == 0){
-          subset_code <- r$code %>% dplyr::filter(category == "subset" & link_id == m$chosen_subset) %>% dplyr::pull(code) %>%
-            stringr::str_replace_all("%datamart_id%", as.character(r$chosen_datamart)) %>%
-            stringr::str_replace_all("%subset_id%", as.character(m$chosen_subset)) %>%
+          subset_code <- r$code %>% dplyr::filter(category == "subset" & link_id == m$selected_subset) %>% dplyr::pull(code) %>%
+            stringr::str_replace_all("%dataset_id%", as.character(r$selected_dataset)) %>%
+            stringr::str_replace_all("%subset_id%", as.character(m$selected_subset)) %>%
             stringr::str_replace_all("\r", "\n")
           
           tryCatch(eval(parse(text = subset_code)),
             error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_execute_subset_code", 
-              error_name = paste0("sidenav - execute_subset_code  - id = ", m$chosen_subset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
+              error_name = paste0("sidenav - execute_subset_code  - id = ", m$selected_subset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
           )
           
           update_r(r = r, m = m, table = "subset_patients")
@@ -613,12 +613,12 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       ## All messages ----
       # --- --- --- --- --
 
-      observeEvent(m$chosen_study, {
+      observeEvent(m$selected_study, {
         
         if (perf_monitoring) monitor_perf(r = r, action = "start")
-        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer m$chosen_study"))
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer m$selected_study"))
 
-        req(!is.na(m$chosen_study))
+        req(!is.na(m$selected_study))
         
         # All users of the study have access to the study conversations
 
@@ -627,7 +627,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           "FROM messages m ",
           "INNER JOIN conversations c ON m.conversation_id = c.id AND m.deleted IS FALSE ",
           "LEFT JOIN inbox_messages im ON m.id = im.message_id AND im.receiver_id = {r$user_id} AND im.deleted IS FALSE ",
-          "WHERE category = 'study_message' AND m.study_id = {m$chosen_study} AND m.deleted IS FALSE"), .con = r$db)
+          "WHERE category = 'study_message' AND m.study_id = {m$selected_study} AND m.deleted IS FALSE"), .con = r$db)
 
         r$study_messages <- DBI::dbGetQuery(r$db, sql) %>%
           tibble::as_tibble() %>% dplyr::mutate_at("datetime", as.POSIXct) %>% dplyr::arrange(dplyr::desc(datetime))
@@ -651,7 +651,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         r$study_reload_conversations_datatable_clear_selection <- "all"
         r$study_reload_conversations_datatable <- Sys.time()
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer m$chosen_study"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer m$selected_study"))
       })
     
       study_conversations_searchable_cols <- c("conversation_name", "unread_messages")
@@ -692,14 +692,14 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer to update messages"))
         
         messages_timer()
-        req(!is.na(m$chosen_study))
+        req(!is.na(m$selected_study))
         
         sql <- glue::glue_sql(paste0(
           "SELECT m.id, c.id AS conversation_id, c.name AS conversation_name, m.message, m.filepath, m.creator_id, m.datetime, im.read ",
           "FROM messages m ",
           "INNER JOIN conversations c ON m.conversation_id = c.id AND m.deleted IS FALSE ",
           "LEFT JOIN inbox_messages im ON m.id = im.message_id AND im.receiver_id = {r$user_id} AND im.deleted IS FALSE ",
-          "WHERE category = 'study_message' AND m.study_id = {m$chosen_study} AND m.deleted IS FALSE"), .con = r$db)
+          "WHERE category = 'study_message' AND m.study_id = {m$selected_study} AND m.deleted IS FALSE"), .con = r$db)
         
         study_messages <- DBI::dbGetQuery(r$db, sql) %>%
           tibble::as_tibble() %>% dplyr::mutate_at("datetime", as.POSIXct) %>% dplyr::arrange(dplyr::desc(datetime))
@@ -1068,9 +1068,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
         # Get list of users authorized to see this study
 
-        users_allowed_read_group <- r$options %>% dplyr::filter(category == "study", link_id == m$chosen_study, name == "users_allowed_read_group") %>% dplyr::pull(value)
+        users_allowed_read_group <- r$options %>% dplyr::filter(category == "study", link_id == m$selected_study, name == "users_allowed_read_group") %>% dplyr::pull(value)
         if (users_allowed_read_group == "everybody") receivers_ids <- r$users %>% dplyr::pull(id)
-        if (users_allowed_read_group == "people_picker") receivers_ids <- r$options %>% dplyr::filter(category == "study", link_id == m$chosen_study, name == "user_allowed_read") %>% dplyr::pull(value_num)
+        if (users_allowed_read_group == "people_picker") receivers_ids <- r$options %>% dplyr::filter(category == "study", link_id == m$selected_study, name == "user_allowed_read") %>% dplyr::pull(value_num)
 
         # Add data to database
 
@@ -1096,7 +1096,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         # Messages table
         new_data <- tibble::tribble(
           ~id, ~conversation_id, ~study_id, ~category, ~message, ~filepath, ~creator_id, ~datetime, ~deleted,
-          new_message_id, conversation_id, m$chosen_study, "study_message",
+          new_message_id, conversation_id, m$selected_study, "study_message",
           new_text, new_file, r$user_id, as.character(Sys.time()), FALSE)
         DBI::dbAppendTable(r$db, "messages", new_data)
 
@@ -1173,13 +1173,13 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       new_data$description <- ""
       new_data$patient_lvl_module_family <- get_last_row(r$db, "patient_lvl_modules_families") + 1
       new_data$aggregated_module_family <- get_last_row(r$db, "aggregated_modules_families") + 1
-      new_data$datamart <- r$chosen_datamart
+      new_data$dataset <- r$selected_dataset
       
       add_settings_new_data(session = session, output = output, r = r, d = d, m = m, i18n = i18n, id = "my_studies", 
         data = new_data, table = "studies", required_textfields = "study_name", req_unique_values = "name")
       
       # Reload datatable
-      r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+      r$studies_temp <- r$studies %>% dplyr::filter(dataset_id == r$selected_dataset) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer input$add_study"))
     })
@@ -1192,17 +1192,17 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     action_buttons <- c("options", "delete")
     
     studies_management_editable_cols <- c("name")
-    studies_management_sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
+    studies_management_sortable_cols <- c("id", "name", "description", "dataset_id", "data_source_id", "study_id", "creator_id", "datetime")
     studies_management_column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
     studies_management_centered_cols <- c("id", "creator", "datetime", "action")
-    studies_management_searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
-    studies_management_factorize_cols <- c("datamart_id", "creator_id")
-    studies_management_hidden_cols <- c("id", "description", "datamart_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "deleted", "modified")
+    studies_management_searchable_cols <- c("name", "description", "data_source_id", "dataset_id", "study_id", "creator_id")
+    studies_management_factorize_cols <- c("dataset_id", "creator_id")
+    studies_management_hidden_cols <- c("id", "description", "dataset_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "deleted", "modified")
     studies_management_col_names <- get_col_names("studies", i18n)
     
     # Prepare data for datatable
     # This is on a different observer, because r$studies is loaded just before r$reload_studies_datatable is set to Sys.time()
-    # If we put this code in the observer of r$chosen_datamart, it has no time to execute update_r for studies
+    # If we put this code in the observer of r$selected_dataset, it has no time to execute update_r for studies
     # So r$studies is not updated
     
     observeEvent(r$reload_studies_datatable, {
@@ -1212,7 +1212,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       if (nrow(r$studies) == 0) {
         
-        data <- tibble::tibble(id = integer(), name = character(), description = character(), datamart_id = factor(),
+        data <- tibble::tibble(id = integer(), name = character(), description = character(), dataset_id = factor(),
           patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = factor(), datetime = character(),
           deleted = integer(), modified = logical(), action = character())
       }
@@ -1255,7 +1255,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$studies_temp"))
 
       # Reload datatable_temp variable
-      if (nrow(r$studies_temp) == 0) r$studies_datatable_temp <- tibble::tibble(id = integer(), name = character(), description = character(), datamart_id = factor(),
+      if (nrow(r$studies_temp) == 0) r$studies_datatable_temp <- tibble::tibble(id = integer(), name = character(), description = character(), dataset_id = factor(),
         patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = factor(), datetime = character(),
         deleted = integer(), modified = logical(), action = character())
       
@@ -1284,7 +1284,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$save_studies_management"))
       
-      req(nrow(r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart)) > 0)
+      req(nrow(r$studies %>% dplyr::filter(dataset_id == r$selected_dataset)) > 0)
       
       save_settings_datatable_updates(output = output, r = r, ns = ns, 
         table = "studies", r_table = "studies", i18n = i18n, duplicates_allowed = FALSE)
@@ -1342,10 +1342,10 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$reload_studies"))
       
-      r$studies_temp <- r$studies %>% dplyr::filter(datamart_id == r$chosen_datamart) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+      r$studies_temp <- r$studies %>% dplyr::filter(dataset_id == r$selected_dataset) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
-      # Reset chosen study
-      m$chosen_study <- NA_integer_
+      # Reset selected study
+      m$selected_study <- NA_integer_
     })
     
     # --- --- --- --- --
@@ -1362,7 +1362,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = r$studies %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
 
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected", options = options, value = value)
 
       # Reload datatable (to unselect rows)
       DT::replaceData(r$studies_datatable_proxy, r$studies_datatable_temp, resetPaging = FALSE, rownames = FALSE)
@@ -1372,12 +1372,12 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       shinyjs::runjs(glue::glue("$('#{id}-studies_pivot button[name=\"{button_name}\"]').click();"))
     })
     
-    observeEvent(input$options_chosen, {
+    observeEvent(input$options_selected, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$options_chosen"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$options_selected"))
       
-      if (length(input$options_chosen) > 1) link_id <- input$options_chosen$key
-      else link_id <- input$options_chosen
+      if (length(input$options_selected) > 1) link_id <- input$options_selected$key
+      else link_id <- input$options_selected
       
       options <- r$options %>% dplyr::filter(category == "study", link_id == !!link_id)
       
@@ -1421,10 +1421,10 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$options_save"))
 
-      req(input$options_chosen)
+      req(input$options_selected)
 
-      if (length(input$options_chosen) > 1) link_id <- input$options_chosen$key
-      else link_id <- input$options_chosen
+      if (length(input$options_selected) > 1) link_id <- input$options_selected$key
+      else link_id <- input$options_selected
 
       data <- list()
       data$users_allowed_read <- input$users_allowed_read

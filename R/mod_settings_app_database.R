@@ -241,7 +241,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       "users_accesses", "icccl",
       "users_statuses", "icccl",
       "data_sources", "iccicl",
-      "datamarts", "icciicl",
+      "datasets", "icciicl",
       "studies", "icciiiicl",
       "thesaurus", "icccicl",
       "thesaurus_items", "iiiccccl",
@@ -483,8 +483,8 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       data <- tibble::tibble(name = character(), row_number = integer())
       
       if (input$app_db_tables_connection_type == "local"){
-        if(input$app_db_tables_database == "main_db") chosen_db <- r$local_db
-        if(input$app_db_tables_database == "public_db") chosen_db <- m$local_db
+        if(input$app_db_tables_database == "main_db") selected_db <- r$local_db
+        if(input$app_db_tables_database == "public_db") selected_db <- m$local_db
       }
       
       result <- "failure"
@@ -505,8 +505,8 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           
           result <- get_remote_db(r = r, m = m, output = output, i18n = i18n, ns = ns)
           if (result == "success"){
-            if(input$app_db_tables_database == "main_db") chosen_db <- r$remote_db
-            if(input$app_db_tables_database == "public_db") chosen_db <- m$remote_db
+            if(input$app_db_tables_database == "main_db") selected_db <- r$remote_db
+            if(input$app_db_tables_database == "public_db") selected_db <- m$remote_db
           }
         }
       }
@@ -514,8 +514,8 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       tryCatch(
         if (input$app_db_tables_connection_type == "local" | (input$app_db_tables_connection_type == "remote" & result == "success")){
           data <- tibble::tibble(
-            name = DBI::dbListTables(chosen_db),
-            row_number = sapply(DBI::dbListTables(chosen_db), function(table) DBI::dbGetQuery(chosen_db, paste0("SELECT COUNT(*) FROM ", table)) %>% dplyr::pull() %>% as.integer())
+            name = DBI::dbListTables(selected_db),
+            row_number = sapply(DBI::dbListTables(selected_db), function(table) DBI::dbGetQuery(selected_db, paste0("SELECT COUNT(*) FROM ", table)) %>% dplyr::pull() %>% as.integer())
           ) %>%
           dplyr::arrange(name)
         },

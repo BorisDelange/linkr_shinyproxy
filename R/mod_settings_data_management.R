@@ -14,7 +14,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
   # Dropdowns shown in datatable for each page
   dropdowns <- tibble::tribble(~id, ~dropdowns,
     "settings_data_sources", "",
-    "settings_datamarts", "data_source",
+    "settings_datasets", "data_source",
     "settings_vocabularies", "data_source")
   
   cards <- c("datatable_card", "edit_code_card", "options_card", "vocabularies_tables_datatable_card", "import_vocabulary_card")
@@ -56,16 +56,16 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
     }
   
   # --- --- --- --- ---
-  # Datamarts card ----
+  # Datasets card ----
   # --- --- --- --- ---
   
-  if (id == "settings_datamarts"){
+  if (id == "settings_datasets"){
     div(class = "main",
       render_settings_default_elements(ns = ns),
       shiny.fluent::reactOutput(ns("help_panel")),
       shiny.fluent::reactOutput(ns("help_modal")),
       shiny.fluent::Breadcrumb(items = list(
-        list(key = "datamarts", text = i18n$t("datamarts"))
+        list(key = "datasets", text = i18n$t("datasets"))
       ), maxDisplayedItems = 3),
       
       # --- --- --- --- -
@@ -73,11 +73,11 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       # --- --- --- --- -
       
       shiny.fluent::Pivot(
-        id = ns("datamarts_pivot"),
+        id = ns("datasets_pivot"),
         onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-        shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("datamarts_management")),
-        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_datamart_code")),
-        shiny.fluent::PivotItem(id = "options_card", itemKey = "options_card", headerText = i18n$t("datamart_options"))
+        shiny.fluent::PivotItem(id = "datatable_card", itemKey = "datatable_card", headerText = i18n$t("datasets_management")),
+        shiny.fluent::PivotItem(id = "edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_dataset_code")),
+        shiny.fluent::PivotItem(id = "options_card", itemKey = "options_card", headerText = i18n$t("dataset_options"))
       ),
       
       forbidden_cards,
@@ -86,7 +86,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       # Management card ----
       # --- --- --- --- -- -
       
-      render_settings_datatable_card(i18n = i18n, ns = ns, div_id = "datatable_card", title = "datamarts_management", 
+      render_settings_datatable_card(i18n = i18n, ns = ns, div_id = "datatable_card", title = "datasets_management", 
         inputs = c("name" = "textfield", "data_source" = "dropdown")),
       
       # --- --- --- --- -- -
@@ -94,10 +94,10 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       # --- --- --- --- -- -
       
       div(id = ns("edit_code_card"), 
-        make_card(i18n$t("edit_datamart_code"),
+        make_card(i18n$t("edit_dataset_code"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_combobox(i18n = i18n, ns = ns, label = "datamart", id = "code_selected_datamart_or_vocabulary",
+              make_combobox(i18n = i18n, ns = ns, label = "dataset", id = "code_selected_dataset_or_vocabulary",
                 width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
               div(style = "width:20px;"),
               div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
@@ -131,9 +131,9 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       # --- --- --- --- --- ---
       
       div(id = ns("options_card"),
-        make_card(i18n$t("datamart_options"),
+        make_card(i18n$t("dataset_options"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "datamart", id = "options_selected_datamart_or_vocabulary",
+            make_combobox(i18n = i18n, ns = ns, label = "dataset", id = "options_selected_dataset_or_vocabulary",
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(), br(),
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 10),
@@ -219,7 +219,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
         make_card(i18n$t("edit_vocabulary_code"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "code_selected_datamart_or_vocabulary",
+              make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "code_selected_dataset_or_vocabulary",
                 width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
               div(style = "width:20px;"),
               div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
@@ -285,8 +285,8 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
             # conditionalPanel(condition = "input.vocabularies_table == 'concept'", ns = ns,
             #   shiny.fluent::Stack(
             #     horizontal = TRUE, tokens = list(childrenGap = 50),
-            #     make_dropdown(i18n = i18n, ns = ns, label = "datamart", id = "vocabularies_datamart", width = "300px"),
-            #     conditionalPanel(condition = "input.datamart !== ''", ns = ns,
+            #     make_dropdown(i18n = i18n, ns = ns, label = "dataset", id = "vocabularies_dataset", width = "300px"),
+            #     conditionalPanel(condition = "input.dataset !== ''", ns = ns,
             #       div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
             #         shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
             #   )
@@ -365,7 +365,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Dropdowns in the management datatable, by page
     dropdowns <- tibble::tribble(~id, ~dropdowns,
       "settings_data_sources", "",
-      "settings_datamarts", "data_source",
+      "settings_datasets", "data_source",
       "settings_vocabularies", "data_source")
     
     # Close message bar
@@ -379,14 +379,14 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Update dropdowns ----
     # --- --- --- --- --- -
     
-    if (table %in% c("datamarts", "vocabulary")){
+    if (table %in% c("datasets", "vocabulary")){
       observeEvent(r[[table]], {
         
         if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$", table, " - updateComboBox"))
         
-        if (table == "datamarts"){
+        if (table == "datasets"){
           options <- convert_tibble_to_list(r[[table]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-          shiny.fluent::updateComboBox.shinyInput(session, "options_selected_datamart_or_vocabulary", options = options)
+          shiny.fluent::updateComboBox.shinyInput(session, "options_selected_dataset_or_vocabulary", options = options)
         }
         
         if (table == "vocabulary"){
@@ -394,7 +394,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           shiny.fluent::updateComboBox.shinyInput(session, "vocabulary_tables_selected_vocabulary", options = options)
         }
         
-        shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options)
+        shiny.fluent::updateComboBox.shinyInput(session, "code_selected_dataset_or_vocabulary", options = options)
       })
     }
     
@@ -468,7 +468,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # If page = vocabulary, data_source is character, not integer (multiple choices)
       new_data <- list()
       if (id == "settings_vocabularies") new_data_var <- c("vocabulary_id" = "char", "vocabulary_name" = "char", "data_source" = "char")
-      else new_data_var <- c("name" = "char", "description" = "char", "data_source" = "int", "datamart" = "int", 
+      else new_data_var <- c("name" = "char", "description" = "char", "data_source" = "int", "dataset" = "int", 
         "study" = "int", "patient_lvl_module_family" = "int", "aggregated_module_family" = "int")
       
       sapply(names(new_data_var),
@@ -499,7 +499,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
   
     dropdowns_datatable <- switch(table,
       "data_sources" = "",
-      "datamarts" = "",
+      "datasets" = "",
       "vocabulary" = c("data_source_id" = "data_sources"))
     
     # Dropdowns with multiSelect
@@ -509,7 +509,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     # Action buttons for each module / page
     action_buttons = switch(table,
       "data_sources" = "delete",
-      "datamarts" = c("delete", "edit_code", "options"),
+      "datasets" = c("delete", "edit_code", "options"),
       "vocabulary" = c("delete", "edit_code")
     )
     
@@ -519,7 +519,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
     # Sortable cols
     if (table == "vocabulary") sortable_cols <- c("vocabulary_id", "vocabulary_name", "datetime")
-    else sortable_cols <- c("id", "name", "description", "datamart_id", "data_source_id", "study_id", "creator_id", "datetime")
+    else sortable_cols <- c("id", "name", "description", "dataset_id", "data_source_id", "study_id", "creator_id", "datetime")
     
     # Column widths
     column_widths <- c("datetime" = "130px", "creator_id" = "200px", "action" = "80px")
@@ -529,12 +529,12 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     
     # Searchable_cols
     if (table == "vocabulary") searchable_cols <- c("vocabulary_id", "vocabulary_name")
-    else searchable_cols <- c("name", "description", "data_source_id", "datamart_id", "study_id", "creator_id")
+    else searchable_cols <- c("name", "description", "data_source_id", "dataset_id", "study_id", "creator_id")
     
     # Factorize_cols
     factorize_cols <- switch(table,
       "data_sources" = "creator_id",
-      "datamarts" = c("data_source_id", "creator_id"),
+      "datasets" = c("data_source_id", "creator_id"),
       "vocabulary" = "creator_id")
     
     if (table == "vocabulary") hidden_cols <- c("id", "vocabulary_reference", "vocabulary_version", "vocabulary_concept_id",
@@ -559,7 +559,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         
         if (table == "data_sources") data <- tibble::tibble(id = integer(), name = character(), description = character(),
           creator_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
-        if (table == "datamarts") data <- tibble::tibble(id = integer(), name = character(), description = character(),
+        if (table == "datasets") data <- tibble::tibble(id = integer(), name = character(), description = character(),
           data_source_id = character(), creator_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
         if (table == "vocabulary") data <- tibble::tibble(id = integer(), vocabulary_id = character(), vocabulary_name = character(), 
           vocabulary_reference = character(), vocabulary_version = character(), vocabulary_concept_id = character(), data_source_id = character(), 
@@ -573,7 +573,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           action_buttons = action_buttons, data_input = r[[paste0(table, "_temp")]])
         
         # Replace empty data_source_id by "deleted data source"
-        if (table == "datamarts"){
+        if (table == "datasets"){
           r[[paste0(table, "_datatable_temp")]] <- r[[paste0(table, "_datatable_temp")]] %>%
             dplyr::mutate_at("data_source_id", as.character) %>%
             dplyr::mutate(data_source_id = dplyr::case_when(
@@ -714,7 +714,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Edit options by selecting a row ----
       # --- --- --- --- --- --- --- --- -- -
         
-      if (table == "datamarts"){
+      if (table == "datasets"){
           
         observeEvent(input$options, {
           
@@ -723,11 +723,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # Get link_id variable, to update options div
           link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
           
-          options <- convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-          value <- list(key = link_id, text = r$datamarts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+          options <- convert_tibble_to_list(r$datasets %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+          value <- list(key = link_id, text = r$datasets %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
           
-          shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options, value = value)
-          shiny.fluent::updateComboBox.shinyInput(session, "options_selected_datamart_or_vocabulary", options = options, value = value)
+          shiny.fluent::updateComboBox.shinyInput(session, "code_selected_dataset_or_vocabulary", options = options, value = value)
+          shiny.fluent::updateComboBox.shinyInput(session, "options_selected_dataset_or_vocabulary", options = options, value = value)
           
           # Reload datatable (to unselect rows)
           DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
@@ -736,27 +736,27 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           shinyjs::runjs(glue::glue("$('#{id}-{paste0(get_plural(table), '_pivot')} button[name=\"{i18n$t(paste0(get_singular(table), '_options'))}\"]').click();"))
         })
         
-        observeEvent(input$options_selected_datamart_or_vocabulary, {
+        observeEvent(input$options_selected_dataset_or_vocabulary, {
           
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$options_selected_datamart_or_vocabulary"))
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$options_selected_dataset_or_vocabulary"))
           
-          if (length(input$options_selected_datamart_or_vocabulary) > 1) link_id <- input$options_selected_datamart_or_vocabulary$key
-          else link_id <- input$options_selected_datamart_or_vocabulary
-          if (length(input$code_selected_datamart_or_vocabulary) > 0){
-            if (length(input$code_selected_datamart_or_vocabulary) > 1) code_link_id <- input$code_selected_datamart_or_vocabulary$key
-            else code_link_id <- input$code_selected_datamart_or_vocabulary
+          if (length(input$options_selected_dataset_or_vocabulary) > 1) link_id <- input$options_selected_dataset_or_vocabulary$key
+          else link_id <- input$options_selected_dataset_or_vocabulary
+          if (length(input$code_selected_dataset_or_vocabulary) > 0){
+            if (length(input$code_selected_dataset_or_vocabulary) > 1) code_link_id <- input$code_selected_dataset_or_vocabulary$key
+            else code_link_id <- input$code_selected_dataset_or_vocabulary
           }
           else code_link_id <- 0L
           
           if (link_id != code_link_id){
-            options <- convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-            value <- list(key = link_id, text = r$datamarts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-            shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options, value = value)
+            options <- convert_tibble_to_list(r$datasets %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+            value <- list(key = link_id, text = r$datasets %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+            shiny.fluent::updateComboBox.shinyInput(session, "code_selected_dataset_or_vocabulary", options = options, value = value)
           }
           
           category <- get_singular(word = id)
           
-          options <- r$options %>% dplyr::filter(category == "datamart", link_id == !!link_id)
+          options <- r$options %>% dplyr::filter(category == "dataset", link_id == !!link_id)
           
           picker_options <-
             r$users %>%
@@ -800,10 +800,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (perf_monitoring) monitor_perf(r = r, action = "start")
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$options_save"))
           
-          req(input$options_selected_datamart_or_vocabulary)
+          req(input$options_selected_dataset_or_vocabulary)
           
-          if (length(input$options_selected_datamart_or_vocabulary) > 1) link_id <- input$options_selected_datamart_or_vocabulary$key
-          else link_id <- input$options_selected_datamart_or_vocabulary
+          if (length(input$options_selected_dataset_or_vocabulary) > 1) link_id <- input$options_selected_dataset_or_vocabulary$key
+          else link_id <- input$options_selected_dataset_or_vocabulary
           
           category <- get_singular(id)
           
@@ -823,7 +823,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       # Edit code by selecting a row ----
       # --- --- --- --- --- --- --- -- --
       
-      if (table %in% c("datamarts", "vocabulary")){
+      if (table %in% c("datasets", "vocabulary")){
         
         # Button "Edit code" is clicked on the datatable
         observeEvent(input$edit_code, {
@@ -842,8 +842,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             value <- list(key = link_id, text = r[[table]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
           }
           
-          shiny.fluent::updateComboBox.shinyInput(session, "code_selected_datamart_or_vocabulary", options = options, value = value)
-          if (table == "datamarts") shiny.fluent::updateComboBox.shinyInput(session, "options_selected_datamart_or_vocabulary", options = options, value = value)
+          shiny.fluent::updateComboBox.shinyInput(session, "code_selected_dataset_or_vocabulary", options = options, value = value)
+          if (table == "datasets") shiny.fluent::updateComboBox.shinyInput(session, "options_selected_dataset_or_vocabulary", options = options, value = value)
           if (table == "vocabulary") shiny.fluent::updateComboBox.shinyInput(session, "vocabulary_tables_selected_vocabulary", options = options, value = value)
           
           # Reload datatable (to unselect rows)
@@ -854,24 +854,24 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
         })
         
-        observeEvent(input$code_selected_datamart_or_vocabulary, {
+        observeEvent(input$code_selected_dataset_or_vocabulary, {
           
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$code_selected_datamart_or_vocabulary"))
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$code_selected_dataset_or_vocabulary"))
 
-          if (length(input$code_selected_datamart_or_vocabulary) > 1) link_id <- input$code_selected_datamart_or_vocabulary$key
-          else link_id <- input$code_selected_datamart_or_vocabulary
+          if (length(input$code_selected_dataset_or_vocabulary) > 1) link_id <- input$code_selected_dataset_or_vocabulary$key
+          else link_id <- input$code_selected_dataset_or_vocabulary
           
-          if (table == "datamarts"){
-            if (length(input$options_selected_datamart_or_vocabulary) > 0){
-              if (length(input$options_selected_datamart_or_vocabulary) > 1) options_link_id <- input$options_selected_datamart_or_vocabulary$key
-              else options_link_id <- input$options_selected_datamart_or_vocabulary
+          if (table == "datasets"){
+            if (length(input$options_selected_dataset_or_vocabulary) > 0){
+              if (length(input$options_selected_dataset_or_vocabulary) > 1) options_link_id <- input$options_selected_dataset_or_vocabulary$key
+              else options_link_id <- input$options_selected_dataset_or_vocabulary
             }
             else options_link_id <- 0L
 
             if (link_id != options_link_id){
-              options <- convert_tibble_to_list(r$datamarts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-              value <- list(key = link_id, text = r$datamarts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-              shiny.fluent::updateComboBox.shinyInput(session, "options_selected_datamart_or_vocabulary", options = options, value = value)
+              options <- convert_tibble_to_list(r$datasets %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+              value <- list(key = link_id, text = r$datasets %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
+              shiny.fluent::updateComboBox.shinyInput(session, "options_selected_dataset_or_vocabulary", options = options, value = value)
             }
           }
           
@@ -891,11 +891,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
 
           # Save ID value in r variable, to get this during code execution
           # Before, restart these variables
-          r$datamart_id <- NA_integer_
+          r$dataset_id <- NA_integer_
           r$subset_id <- NA_integer_
           r$vocabulary_id <- NA_integer_
 
-          if (id == "settings_datamarts") r$datamart_id <- link_id
+          if (id == "settings_datasets") r$dataset_id <- link_id
           if (id == "settings_vocabularies") r$vocabulary_id <- link_id
 
           category <- get_singular(id)
@@ -923,10 +923,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (perf_monitoring) monitor_perf(r = r, action = "start")
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$..save"))
           
-          req(input$code_selected_datamart_or_vocabulary)
+          req(input$code_selected_dataset_or_vocabulary)
           
-          if (length(input$code_selected_datamart_or_vocabulary) > 1) link_id <- input$code_selected_datamart_or_vocabulary$key
-          else link_id <- input$code_selected_datamart_or_vocabulary
+          if (length(input$code_selected_dataset_or_vocabulary) > 1) link_id <- input$code_selected_dataset_or_vocabulary$key
+          else link_id <- input$code_selected_dataset_or_vocabulary
           
           save_settings_code(output = output, r = r, id = id, category = get_singular(id),
             code_id_input = paste0("edit_code_", link_id), edited_code = input$ace_edit_code, i18n = i18n)
@@ -961,7 +961,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$..code_trigger"))
           
           # Reset d variable
-          if (table == "datamarts"){
+          if (table == "datasets"){
             vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
             for (var in vars) d[[var]] <- tibble::tibble()
           }

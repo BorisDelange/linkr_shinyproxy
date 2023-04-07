@@ -50,9 +50,9 @@ Add new settings data
 \examples{
 \dontrun{
 data <- list()
-data$name <- "New datamart"
-data$description <- "Description of the datamart"
+data$name <- "New dataset"
+data$description <- "Description of the dataset"
 data$data_source <- 5
-add_settings_new_data(output = output, r = r, language = language, id = "settings_datamarts", data = data, dropdowns = "data_source")
+add_settings_new_data(output = output, r = r, language = language, id = "settings_datasets", data = data, dropdowns = "data_source")
 }
 }

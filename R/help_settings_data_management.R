@@ -8,10 +8,10 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
       br(),
       strong(i18n$t("data_sources")), br(), br(),
       shiny.fluent::Link(i18n$t("data_sources_datatable_card"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_1', Math.random()); }"))), br(), br(),
-      strong(i18n$t("datamarts")), br(), br(),
-      shiny.fluent::Link(i18n$t("datamarts_datatable_card"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_2', Math.random()); }"))), br(), br(),
-      shiny.fluent::Link(i18n$t("edit_datamart_code"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_3', Math.random()); }"))), br(), br(),
-      shiny.fluent::Link(i18n$t("datamart_options"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_4', Math.random()); }"))), br(), br(),
+      strong(i18n$t("datasets")), br(), br(),
+      shiny.fluent::Link(i18n$t("datasets_datatable_card"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_2', Math.random()); }"))), br(), br(),
+      shiny.fluent::Link(i18n$t("edit_dataset_code"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_3', Math.random()); }"))), br(), br(),
+      shiny.fluent::Link(i18n$t("dataset_options"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_4', Math.random()); }"))), br(), br(),
       strong(i18n$t("thesaurus")), br(), br(),
       shiny.fluent::Link(i18n$t("thesaurus_datatable_card"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_5', Math.random()); }"))), br(), br(),
       shiny.fluent::Link(i18n$t("edit_thesaurus_code"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_6', Math.random()); }"))), br(), br(),
@@ -81,12 +81,12 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
         p(strong("1) Add a data source")),
         p("To create a data source, enter a name and click on ", tags$em("Add"), "."),
-        p("A data source includes ", strong("several datamarts"), "."),
-        p("For example, you create a data source named ", tags$em("MIMIC-IV"), ", which will include datamarts created from the MIMIC-IV database."),
-        p("Different datamarts will be created from this source, for example "),
+        p("A data source includes ", strong("several datasets"), "."),
+        p("For example, you create a data source named ", tags$em("MIMIC-IV"), ", which will include datasets created from the MIMIC-IV database."),
+        p("Different datasets will be created from this source, for example "),
         tags$ul(
-          tags$li("a datamart called ", tags$em("Nosocomial Infections"), " which will include patients who had a nosocomial infection during their hospital stay"),
-          tags$li("a datamart called ", tags$em("Hepatitis"), " which will include patients diagnosed with hepatitis")
+          tags$li("a dataset called ", tags$em("Nosocomial Infections"), " which will include patients who had a nosocomial infection during their hospital stay"),
+          tags$li("a dataset called ", tags$em("Hepatitis"), " which will include patients diagnosed with hepatitis")
         ),
         p(strong("2) Manage data sources")),
         p("You can modify the names of data sources by double-clicking on the corresponding row and column in the table."),
@@ -98,13 +98,13 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     }
   })
   
-  # Datamarts management
+  # Datasets management
   
   observeEvent(r[[paste0("help_settings_data_management_", prefix, "_page_2")]], {
     
     load_help_page(r)
     
-    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("datamarts_datatable_card")
+    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("datasets_datatable_card")
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
@@ -129,33 +129,33 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Add a datamart")),
-        p("To create a datamart, enter a name, choose ", strong("which data source"), " the dataset will depend on, and click ", tags$em("Add"), "."),
-        p("A datamart comprises ", strong("multiple studies"), "."),
-        p("For example, you create a datamart named ", tags$em("Nosocomial infections"), " from the data source ", tags$em("MIMIC-IV"),
+        p(strong("1) Add a dataset")),
+        p("To create a dataset, enter a name, choose ", strong("which data source"), " the dataset will depend on, and click ", tags$em("Add"), "."),
+        p("A dataset comprises ", strong("multiple studies"), "."),
+        p("For example, you create a dataset named ", tags$em("Nosocomial infections"), " from the data source ", tags$em("MIMIC-IV"),
           ", which will include all patients who developed a nosocomial infection during a defined period."),
         p("Multiple studies will be created from this dataset, such as "),
         tags$ul(
           tags$li("a study on ", tags$em("Mortality and nosocomial infections")),
           tags$li("a study on ", tags$em("Epidemiology of nosocomial infections"))
         ),
-        p(strong("2) Manage datamarts")),
-        p("You can modify the name of the datamarts by double-clicking on the corresponding row and column in the table."),
+        p(strong("2) Manage datasets")),
+        p("You can modify the name of the datasets by double-clicking on the corresponding row and column in the table."),
         p("Once the information is modified, click ", tags$em("Save"), "."),
-        p("To delete one or more datamarts, select them by clicking on them in the table, then click on ", tags$em("Delete selection"), "."),
-        p("You can also delete a datamart by clicking on the ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " icon."),
+        p("To delete one or more datasets, select them by clicking on them in the table, then click on ", tags$em("Delete selection"), "."),
+        p("You can also delete a dataset by clicking on the ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " icon."),
         br()
       )
     }
   })
   
-  # Edit datamart code
+  # Edit dataset code
   
   observeEvent(r[[paste0("help_settings_data_management_", prefix, "_page_3")]], {
     
     load_help_page(r)
     
-    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("edit_datamart_code")
+    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("edit_dataset_code")
     
     div_code_1 <- div(
       "## Code ##",
@@ -169,18 +169,18 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
         p("Pour charger un set de données, deux étapes sont nécessaires :"),
         tags$ul(
           tags$li(strong("Créez une fonction"), " qui chargera les données une fois éxécutée, variable par variable (", tags$em("person, measurement"), "...)"),
-          tags$li(strong("Importez les données"), " avec la fonction ", tags$em("import_datamart"))
+          tags$li(strong("Importez les données"), " avec la fonction ", tags$em("import_dataset"))
         ),
-        p("La fonction ", tags$em("import_datamart"), " comprend les arguments suivants :"),
+        p("La fonction ", tags$em("import_dataset"), " comprend les arguments suivants :"),
         tags$ul(
           tags$li(tags$em("output, ns, r, d, i18n"), " : qui sont les variables permettant le fonctionnement de l'application"),
-          tags$li(tags$em("datamart_id"), " : où vous indiquez ", strong("l'ID du datamart"), " actuel, via la balise ", tags$em("%datamart_id%")),
+          tags$li(tags$em("dataset_id"), " : où vous indiquez ", strong("l'ID du dataset"), " actuel, via la balise ", tags$em("%dataset_id%")),
           tags$li(tags$em("data"), " : où vous indiquez la ", strong("fonction qui chargera les données"), " pour une variable (exemple : ", tags$em("person"), ")"),
           tags$li(tags$em("type"), " : où vous indiquez la ", strong("variable que vous souhaitez importer"), " (", tags$em("person, measurement"), "...)"),
           tags$li(tags$em("save_as_csv"), " : indiquant si vous souhaitez ", strong("sauvegarder l'import"), " dans un fichier CSV (logical)"),
           tags$li(tags$em("rewrite"), " : indiquant si vous souhaitez écraser l'ancien fichier CSV pour le remplacer par le nouveau (logical)")
         ),
-        p("L'argument ", tags$em("rewrite"), " n'est utile que lorsque vous travaillez sur le code permettant d'importer le datamart. ",
+        p("L'argument ", tags$em("rewrite"), " n'est utile que lorsque vous travaillez sur le code permettant d'importer le dataset. ",
           "En effet, inutile d'enregistrer une copie au format CSV de votre import s'il est écrasé et recréé à chaque fois que vous chargez le set de données."),
         p("Le code que vous créez ici ", strong("s'éxécutera à chaque fois"), " que quelqu'un chargera le set de données,",
           " d'où le fait d'utiliser l'argument ", tags$em("save_as_csv"), " qui permettra d'économiser des ressources."),
@@ -194,25 +194,25 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p("In this section, you can ", strong("write the code"), " that will retrieve the data from the datamart."),
+        p("In this section, you can ", strong("write the code"), " that will retrieve the data from the dataset."),
         p("To help you, refer to the section ", tags$em("Data Model"), ", which details the ", strong("data model"), " used by the application."),
-        p("To load a datamart, two steps are required:"),
+        p("To load a dataset, two steps are required:"),
         tags$ul(
           tags$li(strong("Create a function"), " that will load the data, variable by variable (", tags$em("person, measurement"), "...), when executed."),
-          tags$li(strong("Import the data"), " with the function ", tags$em("import_datamart"))
+          tags$li(strong("Import the data"), " with the function ", tags$em("import_dataset"))
         ),
-        p("The function ", tags$em("import_datamart"), " includes the following arguments:"),
+        p("The function ", tags$em("import_dataset"), " includes the following arguments:"),
         tags$ul(
           tags$li(tags$em("output, ns, r, d, i18n"), " : which are the variables allowing the application to function"),
-          tags$li(tags$em("datamart_id"), " : where you indicate the ", strong("current datamart ID"), ", using the tag ", tags$em("%datamart_id%")),
+          tags$li(tags$em("dataset_id"), " : where you indicate the ", strong("current dataset ID"), ", using the tag ", tags$em("%dataset_id%")),
           tags$li(tags$em("data"), " : where you specify the ", strong("function that will load the data"), " for a variable (e.g. ", tags$em("person"), ")"),
           tags$li(tags$em("type"), " : where you indicate the ", strong("variable you wish to import"), " (", tags$em("person, measurement"), "...)"),
           tags$li(tags$em("save_as_csv"), " : indicating whether you want to ", strong("save the import"), " to a CSV file (logical)"),
           tags$li(tags$em("rewrite"), " : indicating whether you want to overwrite the old CSV file to replace it with the new one (logical)")
         ),
-        p("The ", tags$em("rewrite"), " argument is only useful when working on the code that imports the datamart. ",
-          "Indeed, there's no need to save a copy in CSV format of your import if it's overwritten and recreated every time you load the datamart."),
-        p("The code you create here will be ", strong("executed every time"), " someone loads the datamart,",
+        p("The ", tags$em("rewrite"), " argument is only useful when working on the code that imports the dataset. ",
+          "Indeed, there's no need to save a copy in CSV format of your import if it's overwritten and recreated every time you load the dataset."),
+        p("The code you create here will be ", strong("executed every time"), " someone loads the dataset,",
           " which is why you should use the ", tags$em("save_as_csv"), " argument to save resources."),
         p("Here's an example of code:"),
         div_code_1,
@@ -223,13 +223,13 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     }
   })
   
-  # Datamart options
+  # Dataset options
   
   observeEvent(r[[paste0("help_settings_data_management_", prefix, "_page_4")]], {
     
     load_help_page(r)
     
-    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("datamart_options")
+    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("dataset_options")
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
@@ -246,9 +246,9 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
         p(strong("1) Access to aggregated data only")),
         p("You can choose to give access only to the ", strong("Aggregated data"), " of a dataset."),
-        p("This way, users will ", strong("not have access to individual data"), " of this datamart, from the ", tags$em("Data"), " page."),
+        p("This way, users will ", strong("not have access to individual data"), " of this dataset, from the ", tags$em("Data"), " page."),
         p(strong("2) Access to data")),
-        p("Choose who has access to this datamart."),
+        p("Choose who has access to this dataset."),
         br()
       )
     }
@@ -281,7 +281,7 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
         p(strong("1) Add a thesaurus")),
         p("To create a thesaurus, enter a name, choose which ", strong("data source"), " the thesaurus will depend on, then click ", tags$em("Add"), "."),
-        p("When you access the datamarts, you will only have access to the ", strong("thesauri belonging to the same data source"), " as the datamart."),
+        p("When you access the datasets, you will only have access to the ", strong("thesauri belonging to the same data source"), " as the dataset."),
         p(strong("2) Manage thesauri")),
         p("You can edit the name of thesauri by double-clicking on the corresponding row and column in the table."),
         p("You can change the ", strong("data sources associated with thesauri"), " by clicking on the dropdown menus in the ", tags$em("Data sources"), " column."),

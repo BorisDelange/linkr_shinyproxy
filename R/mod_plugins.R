@@ -155,7 +155,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
         id = ns("plugins_edit_code_card"),
         make_card(i18n$t("edit_plugin_code"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "code_chosen_plugin",
+            make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "code_selected_plugin",
               width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
             
             thesaurus_items_div, br(),
@@ -231,7 +231,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
         make_card(i18n$t("plugin_options"),
           div(
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "options_chosen_plugin",
+              make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "options_selected_plugin",
                 width = "320px", allowFreeform = FALSE, multiSelect = FALSE),
               make_textfield(i18n = i18n, ns = ns, label = "author", id = "plugin_author", width = "320px"),
               make_textfield(i18n = i18n, ns = ns, label = "version", id = "plugin_version", width = "60px")
@@ -412,8 +412,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       
-      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options)
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options)
+      shiny.fluent::updateComboBox.shinyInput(session, "code_selected_plugin", options = options)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_plugin", options = options)
     })
     
     # --- --- --- --- --- ---
@@ -1002,15 +1002,15 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Update dropdowns
       options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-      if (length(input$options_chosen_plugin) == 0) link_id <- NULL
-      else if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
-      else link_id <- input$options_chosen_plugin
+      if (length(input$options_selected_plugin) == 0) link_id <- NULL
+      else if (length(input$options_selected_plugin) > 1) link_id <- input$options_selected_plugin$key
+      else link_id <- input$options_selected_plugin
       
       if (is.null(link_id)) value <- NULL
       if (!is.null(link_id)) value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       
-      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = value)
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "code_selected_plugin", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_plugin", options = options, value = value)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer r$..plugins_reload_datatables"))
     })
@@ -1134,14 +1134,14 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
 
-      sapply(c("code_chosen_plugin", "thesaurus", "thesaurus_selected_items"), 
+      sapply(c("code_selected_plugin", "thesaurus", "thesaurus_selected_items"), 
         function(name) shiny.fluent::updateComboBox.shinyInput(session, name, options = options, value = NULL))
       shiny.fluent::updateChoiceGroup.shinyInput(session, "edit_code_ui_server", value = "ui")
       shiny.fluent::updateToggle.shinyInput(session, "hide_editor", value = FALSE)
       sapply(c("ace_edit_code_ui", "ace_edit_code_server", "ace_edit_code_translations"),
         function(name) shinyAce::updateAceEditor(session, name, value = ""))
 
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = NULL)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_plugin", options = options, value = NULL)
       sapply(c("plugin_author", "plugin_version", "plugin_name_fr", "plugin_name_en", "plugin_category_fr", "plugin_category_en"),
         function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
       shiny.fluent::updateChoiceGroup.shinyInput(session, "users_allowed_read_group", value = "everybody")
@@ -1161,8 +1161,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       
-      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = value)
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "code_selected_plugin", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_plugin", options = options, value = value)
       
       # Set current pivot to edit_plugins_code
       shinyjs::runjs(glue::glue("$('#{id}-plugins_pivot button[name=\"{i18n$t('edit_plugin_code')}\"]').click();"))
@@ -1178,8 +1178,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       
-      shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = value)
-      shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "code_selected_plugin", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_plugin", options = options, value = value)
       
       # Set current pivot to edit_plugins_code
       shinyjs::runjs(glue::glue("$('#{id}-plugins_pivot button[name=\"{i18n$t('plugin_options')}\"]').click();"))
@@ -1189,23 +1189,23 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Plugin options ----
     # --- --- --- -- -- -
     
-    observeEvent(input$options_chosen_plugin, {
+    observeEvent(input$options_selected_plugin, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$options_chosen_plugin"))
+      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$options_selected_plugin"))
 
-      if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
-      else link_id <- input$options_chosen_plugin
-      if (length(input$code_chosen_plugin) > 0){
-        if (length(input$code_chosen_plugin) > 1) code_link_id <- input$code_chosen_plugin$key
-        else code_link_id <- input$code_chosen_plugin
+      if (length(input$options_selected_plugin) > 1) link_id <- input$options_selected_plugin$key
+      else link_id <- input$options_selected_plugin
+      if (length(input$code_selected_plugin) > 0){
+        if (length(input$code_selected_plugin) > 1) code_link_id <- input$code_selected_plugin$key
+        else code_link_id <- input$code_selected_plugin
       }
       else code_link_id <- 0L
       
       if (link_id != code_link_id){
         options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-        shiny.fluent::updateComboBox.shinyInput(session, "code_chosen_plugin", options = options, value = value)
+        shiny.fluent::updateComboBox.shinyInput(session, "code_selected_plugin", options = options, value = value)
       }
       
       # Plugin options
@@ -1264,10 +1264,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # shiny.fluent::updateTextField.shinyInput(session, paste0("plugin_name_", language),
       #   value = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$options_chosen_plugin"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$options_selected_plugin"))
     })
     
-    # Render chosen image
+    # Render selected image
     
     output$render_image <- renderImage({
       
@@ -1276,7 +1276,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       req(length(input$plugin_image) > 0)
       req(input$plugin_image != "")
       
-      link_id <- input$options_chosen_plugin$key
+      link_id <- input$options_selected_plugin$key
       options <- r$options %>% dplyr::filter(category == "plugin", link_id == !!link_id)
       plugin_folder <- paste0(app_folder, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
       
@@ -1312,9 +1312,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (!is.na(plugin_name) | plugin_name != "") shiny.fluent::updateTextField.shinyInput(session, 
         paste0("plugin_name_", language), errorMessage = NULL)
       
-      req(length(input$options_chosen_plugin) > 0)
-      if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
-      else link_id <- input$code_chosen_plugin
+      req(length(input$options_selected_plugin) > 0)
+      if (length(input$options_selected_plugin) > 1) link_id <- input$options_selected_plugin$key
+      else link_id <- input$code_selected_plugin
       
       data <- list()
       data$users_allowed_read <- unique(input$users_allowed_read)
@@ -1384,7 +1384,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       req(input$plugin_image != "")
       tryCatch({
-        link_id <- input$options_chosen_plugin$key
+        link_id <- input$options_selected_plugin$key
         
         plugin <- r$plugins %>% dplyr::filter(id == link_id) %>%
           dplyr::left_join(
@@ -1422,9 +1422,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       tryCatch({
         
-        # if (length(input$options_chosen_plugin) > 1) link_id <- input$options_chosen_plugin$key
-        # else link_id <- input$code_chosen_plugin
-        link_id <- input$options_chosen_plugin$key
+        # if (length(input$options_selected_plugin) > 1) link_id <- input$options_selected_plugin$key
+        # else link_id <- input$code_selected_plugin
+        link_id <- input$options_selected_plugin$key
         
         plugin <- r$plugins %>%
           dplyr::filter(id == link_id) %>%
@@ -1459,23 +1459,23 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Edit plugin code ----
     # --- --- --- --- --- -
     
-    observeEvent(input$code_chosen_plugin, {
+    observeEvent(input$code_selected_plugin, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$code_chosen_plugin"))
+      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$code_selected_plugin"))
       
-      if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
-      else link_id <- input$code_chosen_plugin
-      if (length(input$options_chosen_plugin) > 0){
-        if (length(input$options_chosen_plugin) > 1) options_link_id <- input$options_chosen_plugin$key
-        else options_link_id <- input$options_chosen_plugin
+      if (length(input$code_selected_plugin) > 1) link_id <- input$code_selected_plugin$key
+      else link_id <- input$code_selected_plugin
+      if (length(input$options_selected_plugin) > 0){
+        if (length(input$options_selected_plugin) > 1) options_link_id <- input$options_selected_plugin$key
+        else options_link_id <- input$options_selected_plugin
       }
       else options_link_id <- 0L
       
       if (link_id != options_link_id){
         options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-        shiny.fluent::updateComboBox.shinyInput(session, "options_chosen_plugin", options = options, value = value)
+        shiny.fluent::updateComboBox.shinyInput(session, "options_selected_plugin", options = options, value = value)
       }
 
       # Get code from database
@@ -1501,7 +1501,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       output$code_result_ui <- renderUI("")
       output$code_result_server <- renderText("")
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$code_chosen_plugin"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$code_selected_plugin"))
     })
     
     # Load thesaurus items
@@ -1512,14 +1512,14 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       ## Thesaurus datatable ----
       # --- --- --- --- --- --- -
       
-      # Load thesaurus attached to this datamart
-      observeEvent(r$chosen_datamart, {
+      # Load thesaurus attached to this dataset
+      observeEvent(r$selected_dataset, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$chosen_datamart"))
+        if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$selected_dataset"))
         
-        req(!is.na(r$chosen_datamart))
+        req(!is.na(r$selected_dataset))
         
-        data_source <- r$datamarts %>% dplyr::filter(id == r$chosen_datamart) %>% dplyr::pull(data_source_id) %>% as.character()
+        data_source <- r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id) %>% as.character()
         
         # Multiple cases
         # Only one ID, so it's the beginning and the end
@@ -1555,17 +1555,17 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         # Add count_items_rows in the cache & get it if already in the cache
         tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
-          datamart_id = r$chosen_datamart, category = "count_items_rows"),
-          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("plugins - create_datatable_cache - count_items_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+          dataset_id = r$selected_dataset, category = "count_items_rows"),
+          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_dataset", 
+            error_name = paste0("plugins - create_datatable_cache - count_items_rows - fail_load_dataset - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
         
         # Add count_items_rows in the cache & get it if already in the cache
         tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = input$thesaurus$key,
-          datamart_id = as.integer(r$chosen_datamart), category = "count_patients_rows"),
-          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_datamart", 
-            error_name = paste0("plugins - create_datatable_cache - count_patients_rows - fail_load_datamart - id = ", r$chosen_datamart), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+          dataset_id = as.integer(r$selected_dataset), category = "count_patients_rows"),
+          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_dataset", 
+            error_name = paste0("plugins - create_datatable_cache - count_patients_rows - fail_load_dataset - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
         
-        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, "fail_load_datamart", "severeWarning", i18n = i18n, ns = ns)
+        if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0) show_message_bar(output, "fail_load_dataset", "severeWarning", i18n = i18n, ns = ns)
         req(nrow(count_items_rows) != 0, nrow(count_patients_rows) != 0)
         
         # Transform count_rows cols to integer, to be sortable
@@ -1645,10 +1645,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = logical())
         }
         
-        # Get ID of chosen thesaurus item
+        # Get ID of selected thesaurus item
         link_id <- as.integer(substr(input$item_selected, nchar("select_") + 1, nchar(input$item_selected)))
         
-        # If this thesaurus item is not already chosen, add it to the "thesaurus selected items" dropdown
+        # If this thesaurus item is not already selected, add it to the "thesaurus selected items" dropdown
         
         # value <- integer(1)
         if (nrow(r$plugin_thesaurus_selected_items) > 0) value <- r$plugin_thesaurus_selected_items %>% 
@@ -1846,10 +1846,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$..trigger_code"))
         
         var_check <- TRUE
-        if (length(r$chosen_datamart) == 0) var_check <- FALSE
-        if (length(r$chosen_datamart) > 0){
-          if (is.na(r$chosen_datamart) | is.na(m$chosen_study)) var_check <- FALSE
-          if (prefix == "patient_lvl" & is.na(m$chosen_patient)) var_check <- FALSE
+        if (length(r$selected_dataset) == 0) var_check <- FALSE
+        if (length(r$selected_dataset) > 0){
+          if (is.na(r$selected_dataset) | is.na(m$selected_study)) var_check <- FALSE
+          if (prefix == "patient_lvl" & is.na(m$selected_patient)) var_check <- FALSE
         }
 
         if (!var_check) show_message_bar(output, message = "load_some_patient_data_plugin", i18n = i18n, ns = ns)
@@ -1873,8 +1873,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           }
         }
         
-        if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
-        else link_id <- input$code_chosen_plugin
+        if (length(input$code_selected_plugin) > 1) link_id <- input$code_selected_plugin$key
+        else link_id <- input$code_selected_plugin
       
         ui_code <- r[[paste0(id, "_ui_code")]]
         server_code <- r[[paste0(id, "_server_code")]]
@@ -1897,19 +1897,19 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           stringr::str_replace_all("%module_id%", "1") %>%
           stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
           stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
-          stringr::str_replace_all("%study_id%", as.character(m$chosen_study)) %>%
+          stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
           stringr::str_replace_all("\r", "\n")
         
-        if (prefix == "patient_lvl") ui_code <- ui_code %>% stringr::str_replace_all("%patient_id%", as.character(m$chosen_patient))
+        if (prefix == "patient_lvl") ui_code <- ui_code %>% stringr::str_replace_all("%patient_id%", as.character(m$selected_patient))
         
         server_code <- server_code %>% 
           stringr::str_replace_all("%module_id%", "1") %>%
           stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
           stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
-          stringr::str_replace_all("%study_id%", as.character(m$chosen_study)) %>%
+          stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
           stringr::str_replace_all("\r", "\n")
         
-        if (prefix == "patient_lvl") server_code <- server_code %>% stringr::str_replace_all("%patient_id%", as.character(m$chosen_patient))
+        if (prefix == "patient_lvl") server_code <- server_code %>% stringr::str_replace_all("%patient_id%", as.character(m$selected_patient))
         
         output$code_result_ui <- renderUI(make_card("", tryCatch(result <- eval(parse(text = ui_code)), error = function(e) stop(e), warning = function(w) stop(w))))
         
@@ -1990,8 +1990,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$..save_code"))
         
-        if (length(input$code_chosen_plugin) > 1) link_id <- input$code_chosen_plugin$key
-        else link_id <- input$code_chosen_plugin
+        if (length(input$code_selected_plugin) > 1) link_id <- input$code_selected_plugin$key
+        else link_id <- input$code_selected_plugin
       
         req(!is.null(link_id))
         
@@ -2224,10 +2224,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$add_item"))
       
-      # Get ID of chosen plugin
+      # Get ID of selected plugin
       link_id <- as.integer(substr(input$add_item, nchar("add_item_") + 1, nchar(input$add_item)))
 
-      # If this plugin is not already chosen, add it to the selected items dropdown
+      # If this plugin is not already selected, add it to the selected items dropdown
       
       value <- integer(1)
       if (nrow(r[[paste0(prefix, "_export_plugins_selected")]]) > 0) value <- r[[paste0(prefix, "_export_plugins_selected")]] %>% dplyr::pull(id)

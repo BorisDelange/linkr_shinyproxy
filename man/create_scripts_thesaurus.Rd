@@ -27,7 +27,7 @@ create_scripts_thesaurus(
 Create a thesaurus for the items created in the scripts
 }
 \details{
-A script is a code executed each time we load a datamart.
+A script is a code executed each time we load a dataset.
 In some scripts, we create new thesaurus items.
 The scripts are attached to data sources. 
 This function creates a new thesaurus, for a data source, named [data_source_name - scripts], which will include

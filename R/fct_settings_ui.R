@@ -5,7 +5,7 @@
 #' @param ns Shiny namespace
 #' @return Shiny UI elements / HTML code
 #' @examples
-#' render_settings_default_elements(ns = NS("settings_datamart"))
+#' render_settings_default_elements(ns = NS("settings_dataset"))
 
 render_settings_default_elements <- function(ns = character()){
   
@@ -30,7 +30,7 @@ render_settings_default_elements <- function(ns = character()){
 #' @param dropdowns_width Width of the dropdowns, CSS code, so it could be "100\%", "200px" etc (character)
 #' @return Shiny UI elements / HTML code
 #' @examples 
-#' render_settings_creation_card(language = "EN", ns = NS("settings_datamart"), title = "create_datamart",
+#' render_settings_creation_card(language = "EN", ns = NS("settings_dataset"), title = "create_dataset",
 #' textfields = c("name", "description"), dropdowns = "data_source")
 
 render_settings_creation_card <- function(i18n = character(), ns = character(), id = character(), title = character(), 
@@ -73,7 +73,7 @@ render_settings_creation_card <- function(i18n = character(), ns = character(), 
 #' @param title Title used to create the card, it will be translated with translate function (character)
 #' @examples 
 #' \dontrun{
-#' render_settings_datatable_card(language = "EN", ns = ns, output_id = "management_datatable", title = "datamarts_management")
+#' render_settings_datatable_card(language = "EN", ns = ns, output_id = "management_datatable", title = "datasets_management")
 #' }
 render_settings_datatable_card <- function(i18n = character(), ns = character(), div_id = "datatable_card",
   output_id = "management_datatable", title = character(), inputs = character(), dropdown_multiselect = FALSE){
@@ -122,7 +122,7 @@ render_settings_datatable_card <- function(i18n = character(), ns = character(),
 #' @param language Language used (character)
 #' @examples 
 #' \dontrun{
-#' render_settings_code_card(ns = NS("settings_datamarts"), r = r, id = "settings_datamarts", title = "edit_datamart_code",
+#' render_settings_code_card(ns = NS("settings_datasets"), r = r, id = "settings_datasets", title = "edit_dataset_code",
 #'   code = "Enter your code here", link_id = 3, language = "EN")
 #' }
 render_settings_code_card <- function(ns = character(), r = shiny::reactiveValues(), id = character(), title = character(), code = list(), 
@@ -142,7 +142,7 @@ render_settings_code_card <- function(ns = character(), r = shiny::reactiveValue
   
   # For plugin page : 
   # - choose between UI code or Server code
-  # - choose a datamart, a study & a subset (for aggregated data plugin) & a patient / a stay (for patient-lvl data)
+  # - choose a dataset, a study & a subset (for aggregated data plugin) & a patient / a stay (for patient-lvl data)
   # - two ace editors, one for UI & one for server
   
   if (id == "settings_plugins"){
@@ -160,13 +160,13 @@ render_settings_code_card <- function(ns = character(), r = shiny::reactiveValue
       list(id = "#FFD92F", color = "#FFD92F"),
       list(id = "#000000", color = "#000000"))
     
-    # Dropdowns for choice of datamart etc
+    # Dropdowns for choice of dataset etc
     # Depending if module_type is patient_lvl_data or aggregated_data
     if (module_type_id == 1){
       tagList(
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
-          make_dropdown(i18 = i18, ns = ns, label = "datamart", width = "300px",
-            options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")),
+          make_dropdown(i18 = i18, ns = ns, label = "dataset", width = "300px",
+            options = convert_tibble_to_list(data = r$datasets, key_col = "id", text_col = "name")),
           make_dropdown(i18 = i18, ns = ns, label = "study", width = "300px"),
           make_dropdown(i18 = i18, ns = ns, label = "patient", width = "300px"),
           make_dropdown(i18 = i18, ns = ns, label = "stay", width = "300px")),
@@ -188,8 +188,8 @@ render_settings_code_card <- function(ns = character(), r = shiny::reactiveValue
     if (module_type_id == 2){
       tagList(shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 50),
-        make_dropdown(i18 = i18, ns = ns, label = "datamart", width = "300px",
-          options = convert_tibble_to_list(data = r$datamarts, key_col = "id", text_col = "name")),
+        make_dropdown(i18 = i18, ns = ns, label = "dataset", width = "300px",
+          options = convert_tibble_to_list(data = r$datasets, key_col = "id", text_col = "name")),
         make_dropdown(i18 = i18, ns = ns, label = "study", width = "300px"),
         make_dropdown(i18 = i18, ns = ns, label = "subset", width = "300px")
       )) -> choice_data

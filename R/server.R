@@ -17,7 +17,7 @@ app_server <- function(router, language = "en", app_folder = character(),
     # Create r reactive value, for the application processings
     r <- reactiveValues()
     
-    # Create d reactive value, for datamart data
+    # Create d reactive value, for dataset data
     d <- reactiveValues()
     vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
     for (var in vars) d[[var]] <- tibble::tibble()
@@ -163,7 +163,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       # Get authorized data ----
       # --- --- --- --- --- -- -
       
-      sapply(c("datamarts", "plugins"), function(table){
+      sapply(c("datasets", "plugins"), function(table){
         if (paste0(table, "_see_all_data") %not_in% r$user_accesses){
           if (nrow(r[[table]] > 0)){
             r[[table]] <- get_authorized_data(r = r, table = table)
@@ -250,9 +250,9 @@ app_server <- function(router, language = "en", app_folder = character(),
       mod_page_sidenav_server("settings_dev", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_dev", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_dev")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - data_sources / datamarts / vocabularies"))
+      if (debug) print(paste0(Sys.time(), " - server - load server modules - data_sources / datasets / vocabularies"))
     
-      sapply(c("data_sources", "datamarts", "vocabularies"), function(page){
+      sapply(c("data_sources", "datasets", "vocabularies"), function(page){
         mod_settings_data_management_server(paste0("settings_", page), r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_sidenav_server(paste0("settings_", page), r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(paste0("settings_", page), r, language, i18n)

@@ -30,6 +30,6 @@ Render UI of settings datatable card
 }
 \examples{
 \dontrun{
-render_settings_datatable_card(language = "EN", ns = ns, output_id = "management_datatable", title = "datamarts_management")
+render_settings_datatable_card(language = "EN", ns = ns, output_id = "management_datatable", title = "datasets_management")
 }
 }

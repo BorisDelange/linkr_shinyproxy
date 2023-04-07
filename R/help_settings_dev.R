@@ -46,7 +46,7 @@ help_settings_dev <- function(output, r = shiny::reactiveValues(), id = characte
     load_help_page(r)
     
     div_code_1 <- div(
-      "r$datamarts %>% dplyr::filter(id == 1)",
+      "r$datasets %>% dplyr::filter(id == 1)",
       style = "padding:5px; font-size:90%; font-family:monospace; color: #c7254e; background-color: #f9f2f4; border-radius:5px;"
     )
     

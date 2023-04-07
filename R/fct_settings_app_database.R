@@ -32,7 +32,6 @@ check_authentification <- function(db){
 db_create_table <- function(db, table_name = character(), dataframe = tibble::tibble(), dbms = character(), 
   primary_key_col = character(), unique_cols = character(), not_null_cols = character(), text_cols = character()){
   if (table_name %not_in% DBI::dbListTables(db)){
-    # DBI::dbWriteTable(db, table_name, dataframe)
     
     sql <- ""
     
@@ -95,12 +94,12 @@ db_create_tables <- function(db, type = character(), dbms = character()){
       tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "datamarts", primary_key_col = "id", dbms = dbms, text_cols = "description",
+    db_create_table(db, "datasets", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
     db_create_table(db, "studies", primary_key_col = "id", dbms = dbms, text_cols = "description",
-      tibble::tibble(id = integer(), name = character(), description = character(), datamart_id = integer(),
+      tibble::tibble(id = integer(), name = character(), description = character(), dataset_id = integer(),
         patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
@@ -203,7 +202,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
   if (type == "public"){
   
   db_create_table(db, "patients_options", primary_key_col = "id", dbms = dbms, text_cols = "value",
-    tibble::tibble(id = integer(), datamart_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
+    tibble::tibble(id = integer(), dataset_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
       category = character(), link_id = integer(), name = character(), value = character(), value_num = numeric(), 
       creator_id = integer(), datetime = character(), deleted = logical()))
   
@@ -449,7 +448,7 @@ get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues
 load_database <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character()){
   
   # Database tables to load
-  r_tables <- c("users", "users_accesses", "users_statuses", "data_sources", "datamarts", "thesaurus",
+  r_tables <- c("users", "users_accesses", "users_statuses", "data_sources", "datasets", "thesaurus",
     "plugins", "code", "options")
   
   m_tables <- c("vocabulary")

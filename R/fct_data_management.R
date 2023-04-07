@@ -1,32 +1,30 @@
-#' Run datamart code 
+#' Run dataset code 
 #'
-#' @description Runs datamart code
-#' @details The code to load the datamart is loaded from the application database, in code table, from datamart_id.
+#' @description Runs dataset code
+#' @details The code to load the dataset is loaded from the application database, in code table, from dataset_id.
 #' @param output Output variable from Shiny, used to render messages on message bars
 #' @param r A shiny::reactiValues object, used to communicate between modules
-#' @param d A shiny::reactiValues object, used to communicate between modules. Contains data loaded from datamart code (d$patients, d$labs_vitals...).
-#' @param datamart_id ID of datamart containing the code (integer)
+#' @param d A shiny::reactiValues object, used to communicate between modules. Contains data loaded from dataset code (d$patients, d$labs_vitals...).
+#' @param dataset_id ID of dataset containing the code (integer)
 #' @param i18n shiny.i18n object for translations
 #' @examples 
 #' \dontrun{
-#' run_datamart_code(output = output, r = r, d = d, i18n = i18n, datamart_id = 3)
+#' run_dataset_code(output = output, r = r, d = d, i18n = i18n, dataset_id = 3)
 #' }
-run_datamart_code <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), datamart_id = integer(), i18n = character(), quiet = TRUE){
+run_dataset_code <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), dataset_id = integer(), i18n = character(), quiet = TRUE){
   
-  if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-  
-  # Get code from datamart
-  tryCatch(r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code),
+  # Get code from dataset
+  tryCatch(r$code %>% dplyr::filter(category == "dataset" & link_id == dataset_id) %>% dplyr::pull(code),
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_code", 
-        error_name = paste0("run_datamart_code - load_code - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+        error_name = paste0("run_dataset_code - load_code - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
       stop(i18n$t("fail_load_code"))}
   )
-  code <- r$code %>% dplyr::filter(category == "datamart" & link_id == datamart_id) %>% dplyr::pull(code)
+  code <- r$code %>% dplyr::filter(category == "dataset" & link_id == dataset_id) %>% dplyr::pull(code)
   
-  # Replace %datamart_id% with real datamart_id
+  # Replace %dataset_id% with real dataset_id
   code <- code %>% 
-    stringr::str_replace_all("%datamart_id%", as.character(datamart_id)) %>%
+    stringr::str_replace_all("%dataset_id%", as.character(dataset_id)) %>%
     stringr::str_replace_all("\r", "\n")
   
   # Reset d variables
@@ -50,11 +48,9 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), d = shiny::re
   tryCatch(eval(parse(text = code)),
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_execute_code", 
-        error_name = paste0("run_datamart_code - execute_code - id = ", datamart_id), category = "Error", error_report = toString(e), i18n = i18n)
+        error_name = paste0("run_dataset_code - execute_code - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
       stop(i18n$t("fail_execute_code"))}
   )
-  
-  if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_run_datamart_code"))
 }
 
 #' Add patients to a subset
@@ -74,8 +70,6 @@ run_datamart_code <- function(output, r = shiny::reactiveValues(), d = shiny::re
 #' }
 add_patients_to_subset <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), patients = tibble::tibble(),
   subset_id = integer(), i18n = character(), ns = character()){
-  
-  if (length(r$perf_monitoring) > 0) if (r$perf_monitoring) monitor_perf(r = r, action = "start")
   
   # Check subset_id
   
@@ -149,8 +143,6 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), m = shin
   }
   
   show_message_bar(output, "add_patients_subset_success", "success", i18n = i18n, ns = ns)
-  
-  if (length(r$perf_monitoring) > 0) if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_add_patients_to_subset"))
 }
 
 #' Remove patients from a subset
@@ -170,8 +162,6 @@ add_patients_to_subset <- function(output, r = shiny::reactiveValues(), m = shin
 #' }
 remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), patients = tibble::tibble(), 
   subset_id = integer(), i18n = character(), ns = character()){
-  
-  if (length(r$perf_monitoring) > 0) if (r$perf_monitoring) monitor_perf(r = r, action = "start")
   
   # Check subset_id
   
@@ -244,8 +234,6 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), m =
   )
   
   show_message_bar(output, "remove_patients_subset_success", "success", i18n = i18n, ns = ns)
-  
-  if (length(r$perf_monitoring) > 0) if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_add_patients_to_subset"))
 }
 
 #' Get thesaurus items levels
@@ -254,9 +242,6 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), m =
 #' @param data datatable containing thesaurus items
 #' @param r A shiny::reactiValues object, used to communicate between modules
 # get_thesaurus_items_levels <- function(data = tibble::tibble(), r = shiny::reactiveValues()){
-#   
-#   if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-#   if (r$debug) print(paste0(Sys.time(), " - fct_get_thesaurus_items_levels"))
 #   
 #   data_with_levels <- tibble::tibble()
 #   
@@ -298,9 +283,7 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), m =
 #     dplyr::ungroup() %>%
 #     dplyr::mutate(has_children = dplyr::case_when(is.na(n_children) ~ FALSE, TRUE ~ TRUE)) %>%
 #     dplyr::select(-n_children)
-#   
-#   if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_get_thesaurus_items_levels"))
-#   
+#
 #   data_with_levels
 # }
 
@@ -310,9 +293,6 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), m =
 #' @param data datatable containing thesaurus items
 #' @param r A shiny::reactiValues object, used to communicate between modules
 # get_thesaurus_items_paths <- function(data = tibble::tibble(), r = shiny::reactiveValues()){
-#   
-#   if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-#   if (r$debug) print(paste0(Sys.time(), " - fct_get_thesaurus_items_paths"))
 #   
 #   data_with_paths <- data %>% dplyr::mutate(path = "")
 #   
@@ -345,9 +325,7 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), m =
 #       }
 #     }
 #   }
-#   
-#   if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_get_thesaurus_items_paths"))
-#   
+#
 #   data_with_paths
 # }
 
@@ -358,15 +336,11 @@ remove_patients_from_subset <- function(output, r = shiny::reactiveValues(), m =
 #' @param thesaurus_id ID of the thesaurus (integer)
 get_thesaurus_name <- function(r = shiny::reactiveValues(), thesaurus_id = integer()){
   
-  if (r$perf_monitoring) monitor_perf(r = r, action = "start")
-  
   result <- NA_character_
   
   if (length(thesaurus_id) > 0){
     result <- r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% dplyr::pull(name)
   }
-  
-  if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_get_thesaurus_name"))
   
   result
 }
@@ -396,8 +370,6 @@ get_thesaurus_name <- function(r = shiny::reactiveValues(), thesaurus_id = integ
 get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_name = character(), 
   item_name = character(), item_id = integer(), method = character(), create = FALSE, item_unit = NA_character_, 
   i18n = character(), ns = character()){
-  
-  if (r$perf_monitoring) monitor_perf(r = r, action = "start")
   
   stop_fct <- FALSE
   
@@ -459,8 +431,6 @@ get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
     result <- DBI::dbGetQuery(r$db, sql)
   }
   
-  if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_get_thesaurus_item"))
-  
   if (nrow(result) == 0 & create){
     add_thesaurus_item(output = output, r = r, thesaurus_name = thesaurus_name, item_name = item_name, item_unit = item_unit, i18n = i18n, ns = ns)
   }
@@ -487,8 +457,6 @@ get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
 #' }
 add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_name = character(), item_name = character(), 
   item_unit = NA_character_, i18n = character(), ns = character()){
-  
-  if (r$perf_monitoring) monitor_perf(r = r, action = "start")
   
   stop_fct <- FALSE
   
@@ -546,14 +514,12 @@ add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
   }
   
   show_message_bar(output, "thesaurus_item_added", "success", i18n = i18n, ns = ns)
-  
-  if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_add_thesaurus_item"))
 }
 
 #' Create scripts thesaurus
 #'
 #' @description Create a thesaurus for the items created in the scripts
-#' @details A script is a code executed each time we load a datamart.
+#' @details A script is a code executed each time we load a dataset.
 #' In some scripts, we create new thesaurus items.
 #' The scripts are attached to data sources. 
 #' This function creates a new thesaurus, for a data source, named [data_source_name - scripts], which will include
@@ -571,8 +537,6 @@ add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
 #' }
 create_scripts_thesaurus <- function(output, r = shiny::reactiveValues(), data_source_id = integer(), 
   i18n = character(), ns = character()){
-  
-  if (r$perf_monitoring) monitor_perf(r = r, action = "start")
   
   # Check if thesaurus exists
   data_source_name <- r$data_sources %>% dplyr::filter(id == data_source_id) %>% dplyr::pull(name)
@@ -597,6 +561,4 @@ create_scripts_thesaurus <- function(output, r = shiny::reactiveValues(), data_s
     
     show_message_bar(output, "thesaurus_added", "success", i18n = i18n, ns = ns)
   }
-  
-  if (r$perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("fct_create_scripts_thesaurus"))
 }

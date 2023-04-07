@@ -25,7 +25,7 @@ linkr(
 
 \item{db_info}{Database connection informations, if it is needed to connect a distant db (list).}
 
-\item{datamarts_folder}{Folder where to save datamarts CSV files (character)}
+\item{datasets_folder}{Folder where to save datasets CSV files (character)}
 
 \item{app_db_folder}{Folder where to save local database file (character)}
 }
@@ -53,9 +53,9 @@ db_info <- list(
   user = "admin",
   passord = "admin"
 )
-datamarts_folder <- "C:/Users/John/My CDW project/data"
+datasets_folder <- "C:/Users/John/My CDW project/data"
 app_db_folder <- "C:/Users/John/My CDW project"
-cdwtools(language = "EN", db_info = db_info, datamarts_folder = datamarts_folder, app_db_folder = app_db_folder)
+cdwtools(language = "EN", db_info = db_info, datasets_folder = datasets_folder, app_db_folder = app_db_folder)
 }
 See `?golem::get_golem_options` for more details.
 
