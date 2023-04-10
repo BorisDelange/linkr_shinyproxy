@@ -450,7 +450,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       tryCatch({
         xml2::download_xml("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/plugins/plugins.xml", plugins_file)
         error_loading_github <- FALSE
-      }, error = function(e) "")
+      }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_plugins_xml_file", 
+        error_name = "plugins_catalog load plugins.xml", category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
     }
     
     # Github plugins
