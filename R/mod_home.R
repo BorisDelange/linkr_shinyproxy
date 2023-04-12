@@ -87,7 +87,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
       "home", "pivot_item", "news", "news", "News", "", 2L, "2023-04-10 08:00:00",
       "home", "pivot_item", "versions", "versions", "Versions", "", 3L, "2023-04-10 08:00:00",
       
-      "home", "card", "overview", "div1", "LinkR", "2023-04-10_overview.Md", 1L, "2023-04-10 08:00:00",
+      "home", "card", "overview", "div1", "LinkR", "2023-04-10_overview.Rmd", 1L, "2023-04-10 08:00:00",
 
       "home", "card", "news", "news1", "News 1", "", 1L, "2023-04-10 08:00:00",
       "home", "card", "news", "news2", "News 2", "", 2L, "2023-04-10 08:00:00",
@@ -267,7 +267,8 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
             make_card(
               row$title,
               uiOutput(ns(paste0(row$key, "_markdown")))
-            )
+            ),
+            style = "a:visited { color: black; text-decoration: none; }"
           )
           
           if (row$category == categories[1] & row$display_order == 1) ui_result <- tagList(ui_result, div_result)
