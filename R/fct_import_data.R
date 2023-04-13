@@ -76,8 +76,15 @@
 #' import_dataset(output = output, r = r, dataset_id = 5, data = patients, type = "patients", 
 #'   save_as_csv = FALSE, rewrite = FALSE, language = language)
 #' }
-import_dataset <- function(output, ns = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), dataset_id = integer(), data = tibble::tibble(), 
-  type = "patients", save_as_csv = TRUE, rewrite = FALSE, i18n = character(), quiet = TRUE){
+import_dataset <- function(output, ns = character(), i18n = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), dataset_id = integer(), data = tibble::tibble(), 
+  type = "", omop_version = "6.0", save_as_csv = TRUE, rewrite = FALSE, quiet = TRUE){
+  
+  # Check omop_version
+  if (omop_version %not_in% c("5.3", "5.4", "6.0")){
+    report_bug(r = r, output = output, error_message = "invalid_omop_version", 
+      error_name = paste0("import_dataset - invalid_omop_version - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
+    stop(i18n$t("invalid_omop_version"))
+  }
   
   # Check dataset_id
   tryCatch(as.integer(dataset_id),
@@ -95,14 +102,16 @@ import_dataset <- function(output, ns = character(), r = shiny::reactiveValues()
     stop(i18n$t("invalid_dataset_id_value"))
   }
   
-  # Type = c("patients", "stays", "labs_vitals", "text", "orders")
   # Check if type is valid
-  if (type %not_in% c("patients", "stays", "labs_vitals", "text", "orders")){
+  if (is.na(type) | type %not_in% c("person", "observation_period", "visit_occurrence", "visit_detail",
+    "condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure",
+    "measurement", "observation", "note", "note_nlp", "specimen", "fact_relationship", "location",
+    "location_history", "care_site", "provider", "payer_plan_period", "cost", "drug_era",
+    "dose_era", "condition_era") | (type == "death" & omop_version %not_in% c("5.3", "5.4"))){
     show_message_bar(output, "var_type_not_valid", "severeWarning", i18n = i18n, ns = ns) 
     stop(i18n$t("var_type_not_valid"))
   }
-  id_message_bar <- switch(type, "patients" = 1, "stays" = 2, "labs_vitals" = 3, "text" = 4, "orders" = 5, "diagnoses" = 6)
-  
+ 
   # If a datasets_folder is provided, take this value
   # Take package working directory else
   folder <- paste0(r$app_folder, "/datasets/", dataset_id)
@@ -113,15 +122,37 @@ import_dataset <- function(output, ns = character(), r = shiny::reactiveValues()
     tryCatch({
       return({
         col_types <- switch(type, 
-          "patients" = "icT",
-          "stays" = "iinciTT",
-          "labs_vitals" = "iciTTcncc",
-          "text" = "iciTTcc",
-          "orders" = "iciTTcincncncc")
-        d[[type]] <- readr::read_csv(path, col_types = col_types, show_col_types = FALSE)
-        if (!quiet & nrow(d[[type]]) > 0) show_message_bar(output, id_message_bar, paste0("import_dataset_success_", type), "success", i18n = i18n, ns = ns)
+          "person" = "iiiiiTTiiiiiccicici",
+          "observation_period" = "iiDDi",
+          "visit_occurrence" = "iiiDTDTiiiciicici",
+          "visit_deTail" = "iiiDTDTiiiciciciiii",
+          "condition_occurrence" = "iiiDTDTiiciiicic",
+          "drug_exposure" = "iiiDTDTDiciniciciiicicc",
+          "procedure_occurrence" = "iiiDTiiiiiicic",
+          "device_exposure" = "iiiDTDTiciiiici",
+          "measurement" = "iiiDTciiniinniiicicc",
+          "observation" = "iiiDTinciiiiiicicciiT",
+          "death" = "iDTiici",
+          "note" = "iiiiDTiicciiiiic",
+          "note_nlp" = "iiiccciicDTccc",
+          "specimen" = "iiiiDTniiiccccc",
+          "fact_relationship" = "iiiii",
+          "location" = "icccccccnn",
+          "location_hisTory" = "iiciDD",
+          "care_site" = "iciicc",
+          "provider" = "iccciiiiccici",
+          "payer_plan_period" = "iiiDDiciiciiciicicici",
+          "cost" = "iiiiiiicinDDDiicci",
+          "drug_era" = "iiiTTii",
+          "dose_era" = "iiiinTT",
+          "condition_era" = "iiiTTi"
+        )
+        if (type == "person" & omop_version %in% c("5.3", "5.4")) col_types <- "iiiiiTiiiiiccicici"
+          
+        d[[type]] <- readr::read_csv(path, col_types = col_types)
+        if (!quiet & nrow(d[[type]]) > 0) show_message_bar(output, 1, "import_dataset_success", "success", i18n = i18n, ns = ns)
       })
-    }, 
+    },
       
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_csv", 
@@ -145,307 +176,480 @@ import_dataset <- function(output, ns = character(), r = shiny::reactiveValues()
   data <- tibble::as_tibble(data)
   
   # Data cols
-  tibble::tribble(
-    ~var, ~cols,
-    "person", tibble::tribble(
-      ~name, ~type,
-      "person_id", "integer",
-      "gender_concept_id", "integer",
-      "year_of_birth", "integer",
-      "month_of_birth", "integer",
-      "day_of_birth", "integer",
-      "birth_datetime", "datetime",
-      "death_datetime", "datetime",
-      "race_concept_id", "integer",
-      "ethnicity_concept_id", "integer",
-      "location_id", "integer",
-      "provider_Id", "integer",
-      "care_site_id", "integer",
-      "person_source_value", "character",
-      "gender_source_value", "character",
-      "gender_source_concept_id", "integer",
-      "race_source_value", "character",
-      "race_source_concept_id", "integer",
-      "ethnicity_source_value", "character",
-      "ethnicity_source_concept_id", "integer"
-    ),
-    "observation_period", tibble::tribble(
-      ~name, ~type,
-      "observation_period_id", "integer",
-      "person_id", "integer",
-      "observation_period_start_date", "date",
-      "observation_period_end_date", "date",
-      "period_type_concept_id", "integer"
-    ),
-    "visit_occurrence", tibble::tribble(
-      ~name, ~type,
-      "visit_occurrence_id", "integer",
-      "person_id", "integer",
-      "visit_concept_id", "integer",
-      "visit_start_date", "date",
-      "visit_start_datetime", "datetime",
-      "visit_end_date", "date",
-      "visit_end_datetime", "datetime",
-      "visit_type_concept_id", "integer",
-      "provider_id", "integer",
-      "care_site_id", "integer",
-      "visit_source_value", "character",
-      "visit_source_concept_id", "integer",
-      "admitted_from_source_value", "character",
-      "admitted_from_concept_id", "integer",
-      "discharge_to_concept_id", "integer",
-      "discharge_to_source_value", "character",
-      "preceding_visit_occurrence_id", "integer"
-    ),
-    "visit_detail", tibble::tribble(
-      ~name, ~type,
-      "visit_detail_id", "integer",
-      "person_id", "integer",
-      "visit_detail_concept_id", "integer",
-      "visit_detail_start_date", "date",
-      "visit_detail_start_datetime", "datetime",
-      "visit_detail_end_date", "date",
-      "visit_detail_end_datetime", "datetime",
-      "visit_detail_type_concept_id", "integer",
-      "provider_id", "integer",
-      "care_site_id", "integer",
-      "visit_detail_source_value", "character",
-      "visit_detail_source_concept_id", "integer",
-      "admitted_from_source_value", "character",
-      "admitted_from_concept_id", "integer",
-      "discharge_to_source_value", "character",
-      "discharge_to_concept_id", "integer",
-      "preceding_visit_detail_id", "integer",
-      "visit_detail_parent_id", "integer",
-      "visit_occurrence_id", "integer"
-    ),
-    "condition_occurrence", tibble::tribble(
-      ~name, ~type,
-      "condition_occurrence_id", "integer",
-      "person_id", "integer",
-      "condition_concept_id", "integer",
-      "condition_start_date", "date",
-      "condition_start_datetime", "datetime",
-      "condition_end_date", "date",
-      "condition_end_datetime", "datetime",
-      "condition_type_concept_id", "integer",
-      "condition_status_concept_id", "integer",
-      "stop_reason", "character",
-      "provider_id", "integer",
-      "visit_occurrence_id", "integer",
-      "visit_detail_id", "integer",
-      "condition_source_value", "character",
-      "condition_source_concept_id", "integer",
-      "condition_status_source_value", "character"
-    ),
-    "drug_exposure", tibble::tribble(
-      ~name, ~type,
-      "drug_exposure_id", "integer",
-      "person_id", "drug_concept_id",
-      "drug_concept_id", "integer",
-      "drug_exposure_start_date", "date",
-      "drug_exposure_start_datetime", "datetime",
-      "drug_exposure_end_date", "date",
-      "drug_exposure_end_datetime", "datetime",
-      "verbatim_end_date", "date",
-      "drug_type_concept_id", "integer",
-      "stop_reason", "character",
-      "refills", "integer",
-      "quantity", "numeric",
-      "days_supply", "integer",
-      "sig", "character",
-      "route_concept_id", "integer",
-      "lot_number", "character",
-      "provider_id", "integer",
-      "visit_occurrence_id", "integer",
-      "visit_detail_id", "integer",
-      "drug_source_value", "character",
-      "drug_source_concept_id", "integer",
-      "route_source_value", "character",
-      "dose_unit_source_value", "character"
-    ),
-    "procedure_occurrence", tibble::tribble(
-      ~name, ~type,
-      "procedure_occurrence_id", "integer",
-      "person_id", "integer",
-      "procedure_concept_id", "integer",
-      "procedure_date", "date",
-      "procedure_datetime", "datetime",
-      "procedure_type_concept_id", "integer",
-      "modifier_concept_id", "integer",
-      "quantity", "integer",
-      "provider_id", "integer",
-      "visit_occurrence_id", "integer",
-      "visit_detail_id", "integer",
-      "procedure_source_value", "character",
-      "procedure_source_concept_id", "integer",
-      "modifier_source_value", "character"
-    ),
-    "device_exposure", tibble::tribble(
-      ~name, ~type,
-      "device_exposure_id", "integer",
-      "person_id", "integer",
-      "device_concept_id", "integer",
-      "device_exposure_start_date", "date",
-      "device_exposure_start_datetime", "datetime",
-      "device_exposure_end_date", "date",
-      "device_exposure_end_datetime", "datetime",
-      "device_type_concept_id", "integer",
-      "unique_device_id", "integer",
-      "quantity", "integer",
-      "provider_id", "integer",
-      "visit_occurrence_id", "integer",
-      "visit_detail_id", "integer",
-      "device_source_value", "character",
-      "device_source_concept_id", "integer"
-    ),
-    "measurement", tibble::tribble(
-      ~name, ~type,
-      "measurement_id", "integer",
-      "person_id", "integer",
-      "measurement_concept_id", "integer",
-      "measurement_date", "date",
-      "measurement_datetime", "datetime",
-      "measurement_time", "time",
-      "measurement_type_concept_id", "integer",
-      "operator_concept_id", "integer",
-      "value_as_number", "numeric",
-      "value_as_concept_id", "integer",
-      "unit_concept_id", "integer",
-      "range_low", "numeric",
-      "range_high", "numeric",
-      "provider_id", "integer",
-      "visit_occurrence_id", "integer",
-      "visit_detail_id", "integer",
-      "measurement_source_value", "character",
-      "measurement_source_concept_id", "integer",
-      "unit_source_value", "character",
-      "value_source_value", "character"
-    ),
-    "observation", tibble::tribble(
-      ~name, ~type,
-      "observation_id", "integer",
-      "person_id", "integer",
-      "observation_concept_id", "integer",
-      "observation_date", "date",
-      "observation_datetime", "datetime",
-      "observation_type_concept_id", "integer",
-      "value_as_number", "numeric",
-      "value_as_string", "character",
-      "value_as_concept_id", "integer",
-      "qualifier_concept_id", "integer",
-      "unit_concept_id", "integer",
-      "provider_id", "integer",
-      "visit_occurrence_id", "integer",
-      "visit_detail_id", "integer",
-      "observation_source_value", "character",
-      "observation_source_concept_id", "integer",
-      "unit_source_value", "character",
-      "qualifier_source_value", "character",
-      "observation_event_id", "integer",
-      "obs_event_field_concept_id", "integer",
-      "value_as_datetime", "datetime"
-    ),
-    "note", tibble::tribble(
-      ~name, ~type,
-      "note_id", "integer",
-      "person_id", "integer",
-      "note_event_id", "integer",
-      "note_event_field_concept_id", "integer",
-      "note_date", "date",
-      "note_datetime", "datetime",
-      "note_type_concept_id", "integer",
-      "note_class_concept_id", "integer",
-      "note_title", "character",
-      "note_text", "character",
-      "encoding_concept_id", "integer",
-      "language_concept_id", "integer",
-      "provider_id", "integer",
-      "visit_occurrence_id", "integer",
-      "visit_detail_id", "integer",
-      "note_source_value", "character"
-    ),
-    "note_nlp", tibble::tribble(
-      ~name, ~type,
-      "note_nlp_id", "integer",
-      "note_id", "integer",
-      "section_concept_id", "integer",
-      "snippet", "character",
-      "offset", "character",
-      "lexical_variant", "character",
-      "note_nlp_concept_id", "integer",
-      "note_nlp_source_concept_id", "integer",
-      "nlp_system", "character",
-      "nlp_date", "date",
-      "nlp_datetime", "datetime",
-      "term_exists", "character",
-      "term_temporal", "character",
-      "term_modifiers", "character"
-    ),
-    "specimen", tibble::tribble(
-      ~name, ~type,
-    ),
-    "fact_relationship", tibble::tribble(
-      ~name, ~type,
-    ),
-    "survey_conduct", tibble::tribble(
-      ~name, ~type,
-    ),
-    "location", tibble::tribble(
-      ~name, ~type,
-    ),
-    "location_history", tibble::tribble(
-      ~name, ~type,
-    ),
-    "care_site", tibble::tribble(
-      ~name, ~type,
-    ),
-    "provider", tibble::tribble(
-      ~name, ~type,
-    ),
-    "payer_plan_period", tibble::tribble(
-      ~name, ~type,
-    ),
-    "cost", tibble::tribble(
-      ~name, ~type,
-    ),
-    "drug_era", tibble::tribble(
-      ~name, ~type,
-      "drug_era_id", "integer",
-      "person_id", "integer",
-      "drug_concept_id", "integer",
-      "drug_era_start_datetime", "datetime",
-      "drug_era_end_datetime", "datetime",
-      "drug_exposure_count", "integer",
-      "gap_days", "integer"
-    ),
-    "dose_era", tibble::tribble(
-      ~name, ~type,
-      "dose_era_id", "integer",
-      "person_id", "integer",
-      "drug_concept_id", "integer",
-      "unit_concept_id", "integer",
-      "dose_value", "numeric",
-      "dose_era_start_datetime", "datetime",
-      "dose_era_end_datetime", "datetime"
-    ),
-    "condition_era", tibble::tribble(
-      ~name, ~type,
-      "condition_era_id", "integer",
-      "person_id", "integer",
-      "condition_concept_id", "integer",
-      "condition_era_start_datetime", "datetime",
-      "condition_era_end_datetime", "datetime",
-      "condition_occurrence_count", "integer"
-    )
   
-    # "patients", tibble::tribble(
-    #   ~name, ~type,
-    #   "patient_id", "integer",
-    #   "gender", "character",
-    #   "dod", "datetime"),
+  if (omop_version %in% c("5.3", "5.4")){
     
-  ) -> data_cols
+    data_cols <- tibble::tribble(
+      ~var, ~cols,
+      "person", tibble::tribble(
+        ~name, ~type,
+        "person_id", "integer",
+        "gender_concept_id", "integer",
+        "year_of_birth", "integer",
+        "month_of_birth", "integer",
+        "day_of_birth", "integer",
+        "birth_datetime", "datetime",
+        "race_concept_id", "integer",
+        "ethnicity_concept_id", "integer",
+        "location_id", "integer",
+        "provider_id", "integer",
+        "care_site_id", "integer",
+        "person_source_value", "character",
+        "gender_source_value", "character",
+        "gender_source_concept_id", "integer",
+        "race_source_value", "character",
+        "race_source_concept_id", "integer",
+        "ethnicity_source_value", "character",
+        "ethnicity_source_concept_id", "integer"
+      ),
+      "death", tibble::tribble(
+        ~name, ~type,
+        "person_id", "integer",
+        "death_date", "date",
+        "death_datetime", "datetime",
+        "death_type_concept_id", "integer",
+        "cause_concept_id", "integer",
+        "cause_source_value", "character",
+        "cause_source_concept_id", "integer"
+      )
+    )
+    
+    admission_concept_id_word <- "admitting_source_concept_id"
+    admission_value_word <- "admitting_source_value"
+  }
+  else if (omop_version == "6.0"){
+    data_cols <- tibble::tribble(
+      ~var, ~cols,
+      "person", tibble::tribble(
+        ~name, ~type,
+        "person_id", "integer",
+        "gender_concept_id", "integer",
+        "year_of_birth", "integer",
+        "month_of_birth", "integer",
+        "day_of_birth", "integer",
+        "birth_datetime", "datetime",
+        "death_datetime", "datetime",
+        "race_concept_id", "integer",
+        "ethnicity_concept_id", "integer",
+        "location_id", "integer",
+        "provider_Id", "integer",
+        "care_site_id", "integer",
+        "person_source_value", "character",
+        "gender_source_value", "character",
+        "gender_source_concept_id", "integer",
+        "race_source_value", "character",
+        "race_source_concept_id", "integer",
+        "ethnicity_source_value", "character",
+        "ethnicity_source_concept_id", "integer"
+      )
+    )
+    
+    admission_concept_id_word <- "admitted_from_concept_id"
+    admission_value_word <- "admitted_from_source_value"
+  }
+  
+  data_cols <- data_cols %>% dplyr::bind_rows(
+    tibble::tribble(
+      ~var, ~cols,
+      "observation_period", tibble::tribble(
+        ~name, ~type,
+        "observation_period_id", "integer",
+        "person_id", "integer",
+        "observation_period_start_date", "date",
+        "observation_period_end_date", "date",
+        "period_type_concept_id", "integer"
+      ),
+      "visit_occurrence", tibble::tribble(
+        ~name, ~type,
+        "visit_occurrence_id", "integer",
+        "person_id", "integer",
+        "visit_concept_id", "integer",
+        "visit_start_date", "date",
+        "visit_start_datetime", "datetime",
+        "visit_end_date", "date",
+        "visit_end_datetime", "datetime",
+        "visit_type_concept_id", "integer",
+        "provider_id", "integer",
+        "care_site_id", "integer",
+        "visit_source_value", "character",
+        "visit_source_concept_id", "integer",
+        admission_concept_id_word, "integer",
+        admission_value_word, "character",
+        "discharge_to_concept_id", "integer",
+        "discharge_to_source_value", "character",
+        "preceding_visit_occurrence_id", "integer"
+      ),
+      "visit_detail", tibble::tribble(
+        ~name, ~type,
+        "visit_detail_id", "integer",
+        "person_id", "integer",
+        "visit_detail_concept_id", "integer",
+        "visit_detail_start_date", "date",
+        "visit_detail_start_datetime", "datetime",
+        "visit_detail_end_date", "date",
+        "visit_detail_end_datetime", "datetime",
+        "visit_detail_type_concept_id", "integer",
+        "provider_id", "integer",
+        "care_site_id", "integer",
+        "visit_detail_source_value", "character",
+        "visit_detail_source_concept_id", "integer",
+        admission_concept_id_word, "integer",
+        admission_value_word, "character",
+        "discharge_to_source_value", "character",
+        "discharge_to_concept_id", "integer",
+        "preceding_visit_detail_id", "integer",
+        "visit_detail_parent_id", "integer",
+        "visit_occurrence_id", "integer"
+      ),
+      "condition_occurrence", tibble::tribble(
+        ~name, ~type,
+        "condition_occurrence_id", "integer",
+        "person_id", "integer",
+        "condition_concept_id", "integer",
+        "condition_start_date", "date",
+        "condition_start_datetime", "datetime",
+        "condition_end_date", "date",
+        "condition_end_datetime", "datetime",
+        "condition_type_concept_id", "integer",
+        "condition_status_concept_id", "integer",
+        "stop_reason", "character",
+        "provider_id", "integer",
+        "visit_occurrence_id", "integer",
+        "visit_detail_id", "integer",
+        "condition_source_value", "character",
+        "condition_source_concept_id", "integer",
+        "condition_status_source_value", "character"
+      ),
+      "drug_exposure", tibble::tribble(
+        ~name, ~type,
+        "drug_exposure_id", "integer",
+        "person_id", "drug_concept_id",
+        "drug_concept_id", "integer",
+        "drug_exposure_start_date", "date",
+        "drug_exposure_start_datetime", "datetime",
+        "drug_exposure_end_date", "date",
+        "drug_exposure_end_datetime", "datetime",
+        "verbatim_end_date", "date",
+        "drug_type_concept_id", "integer",
+        "stop_reason", "character",
+        "refills", "integer",
+        "quantity", "numeric",
+        "days_supply", "integer",
+        "sig", "character",
+        "route_concept_id", "integer",
+        "lot_number", "character",
+        "provider_id", "integer",
+        "visit_occurrence_id", "integer",
+        "visit_detail_id", "integer",
+        "drug_source_value", "character",
+        "drug_source_concept_id", "integer",
+        "route_source_value", "character",
+        "dose_unit_source_value", "character"
+      ),
+      "procedure_occurrence", tibble::tribble(
+        ~name, ~type,
+        "procedure_occurrence_id", "integer",
+        "person_id", "integer",
+        "procedure_concept_id", "integer",
+        "procedure_date", "date",
+        "procedure_datetime", "datetime",
+        "procedure_type_concept_id", "integer",
+        "modifier_concept_id", "integer",
+        "quantity", "integer",
+        "provider_id", "integer",
+        "visit_occurrence_id", "integer",
+        "visit_detail_id", "integer",
+        "procedure_source_value", "character",
+        "procedure_source_concept_id", "integer",
+        "modifier_source_value", "character"
+      ),
+      "device_exposure", tibble::tribble(
+        ~name, ~type,
+        "device_exposure_id", "integer",
+        "person_id", "integer",
+        "device_concept_id", "integer",
+        "device_exposure_start_date", "date",
+        "device_exposure_start_datetime", "datetime",
+        "device_exposure_end_date", "date",
+        "device_exposure_end_datetime", "datetime",
+        "device_type_concept_id", "integer",
+        "unique_device_id", "integer",
+        "quantity", "integer",
+        "provider_id", "integer",
+        "visit_occurrence_id", "integer",
+        "visit_detail_id", "integer",
+        "device_source_value", "character",
+        "device_source_concept_id", "integer"
+      ),
+      "measurement", tibble::tribble(
+        ~name, ~type,
+        "measurement_id", "integer",
+        "person_id", "integer",
+        "measurement_concept_id", "integer",
+        "measurement_date", "date",
+        "measurement_datetime", "datetime",
+        "measurement_time", "time",
+        "measurement_type_concept_id", "integer",
+        "operator_concept_id", "integer",
+        "value_as_number", "numeric",
+        "value_as_concept_id", "integer",
+        "unit_concept_id", "integer",
+        "range_low", "numeric",
+        "range_high", "numeric",
+        "provider_id", "integer",
+        "visit_occurrence_id", "integer",
+        "visit_detail_id", "integer",
+        "measurement_source_value", "character",
+        "measurement_source_concept_id", "integer",
+        "unit_source_value", "character",
+        "value_source_value", "character"
+      ),
+      "observation", tibble::tribble(
+        ~name, ~type,
+        "observation_id", "integer",
+        "person_id", "integer",
+        "observation_concept_id", "integer",
+        "observation_date", "date",
+        "observation_datetime", "datetime",
+        "observation_type_concept_id", "integer",
+        "value_as_number", "numeric",
+        "value_as_string", "character",
+        "value_as_concept_id", "integer",
+        "qualifier_concept_id", "integer",
+        "unit_concept_id", "integer",
+        "provider_id", "integer",
+        "visit_occurrence_id", "integer",
+        "visit_detail_id", "integer",
+        "observation_source_value", "character",
+        "observation_source_concept_id", "integer",
+        "unit_source_value", "character",
+        "qualifier_source_value", "character",
+        "observation_event_id", "integer",
+        "obs_event_field_concept_id", "integer",
+        "value_as_datetime", "datetime"
+      ),
+      "death", tibble::tribble(
+        ~name, ~type,
+        "person_id", "integer",
+        "death_date", "date",
+        "death_datetime", "datetime",
+        "death_type_concept_id", "integer",
+        "cause_concept_id", "integer",
+        "cause_source_value", "character",
+        "cause_source_concept_id", "integer"
+      ),
+      "note", tibble::tribble(
+        ~name, ~type,
+        "note_id", "integer",
+        "person_id", "integer",
+        "note_event_id", "integer",
+        "note_event_field_concept_id", "integer",
+        "note_date", "date",
+        "note_datetime", "datetime",
+        "note_type_concept_id", "integer",
+        "note_class_concept_id", "integer",
+        "note_title", "character",
+        "note_text", "character",
+        "encoding_concept_id", "integer",
+        "language_concept_id", "integer",
+        "provider_id", "integer",
+        "visit_occurrence_id", "integer",
+        "visit_detail_id", "integer",
+        "note_source_value", "character"
+      ),
+      "note_nlp", tibble::tribble(
+        ~name, ~type,
+        "note_nlp_id", "integer",
+        "note_id", "integer",
+        "section_concept_id", "integer",
+        "snippet", "character",
+        "offset", "character",
+        "lexical_variant", "character",
+        "note_nlp_concept_id", "integer",
+        "note_nlp_source_concept_id", "integer",
+        "nlp_system", "character",
+        "nlp_date", "date",
+        "nlp_datetime", "datetime",
+        "term_exists", "character",
+        "term_temporal", "character",
+        "term_modifiers", "character"
+      ),
+      "specimen", tibble::tribble(
+        ~name, ~type,
+        "specimen_id", "integer",
+        "person_id", "integer",
+        "specimen_concept_id", "integer",
+        "specimen_type_concept_id", "integer",
+        "specimen_date", "date",
+        "specimen_datetime", "datetime",
+        "quantity", "numeric",
+        "unit_concept_id", "integer",
+        "anatomic_site_concept_id", "integer",
+        "disease_status_concept_id", "integer",
+        "specimen_source_id", "character",
+        "specimen_source_value", "character",
+        "unit_source_value", "character",
+        "anatomic_site_source_value", "character",
+        "disease_status_source_value", "character"
+      ),
+      "fact_relationship", tibble::tribble(
+        ~name, ~type,
+        "domain_concept_id_1", "integer",
+        "fact_id_1", "integer",
+        "domain_concept_id_2", "integer",
+        "fact_id_2", "integer",
+        "relationship_concept_id", "integer"
+      ),
+      "survey_conduct", tibble::tribble(
+        ~name, ~type,
+        "survey_conduct_id", "integer",
+        "person_id", "integer",
+        "survey_concept_id", "integer",
+        "survey_start_date", "date",
+        "survey_start_datetime", "datetime",
+        "survey_end_date", "date",
+        "survey_end_datetime", "datetime",
+        "provider_id", "integer",
+        "assisted_concept_id", "integer",
+        "respondent_type_concept_id", "integer",
+        "timing_concept_id", "integer",
+        "collection_method_concept_id", "integer",
+        "assisted_source_value", "character",
+        "respondent_type_source_value", "character",
+        "timing_source_value", "character",
+        "collection_method_source_value", "chracter",
+        "survey_source_value", "character",
+        "survey_source_concept_id", "integer",
+        "survey_source_identifier", "character",
+        "validated_survey_concept_id" , "integer",
+        "validated_survey_source_value", "integer",
+        "survey_version_number", "character",
+        "visit_occurrence_id", "integer",
+        "response_visit_occurrence_id", "integer"
+      ),
+      "location", tibble::tribble(
+        ~name, ~type,
+        "location_id", "integer",
+        "address_1", "character",
+        "address_2", "character",
+        "city", "character",
+        "state", "character",
+        "zip", "character",
+        "county", "character",
+        "location_source_value", "character",
+        "latitude", "numeric",
+        "longitude", "numeric"
+      ),
+      "location_history", tibble::tribble(
+        ~name, ~type,
+        "location_id", "integer",
+        "relationship_type_concept_id", "integer",
+        "domain_id", "character",
+        "entity_id", "integer",
+        "start_date", "date",
+        "end_date", "date"
+      ),
+      "care_site", tibble::tribble(
+        ~name, ~type,
+        "care_site_id" ,"integer",
+        "care_site_name", "character",
+        "place_of_service_concept_id", "integer",
+        "location_id", "integer",
+        "care_site_source_value", "character",
+        "place_of_service_source_value", "character"
+      ),
+      "provider", tibble::tribble(
+        ~name, ~type,
+        "provider_id", "integer",
+        "provider_name", "character",
+        "npi", "character",
+        "dea", "character",
+        "specialty_concept_id", "integer",
+        "care_site_id", "integer",
+        "year_of_birth", "integer",
+        "gender_concept_id", "integer",
+        "provider_source_value", "character",
+        "specialty_source_value", "character",
+        "specialty_source_concept_id", "integer",
+        "gender_source_value", "character",
+        "gender_source_concept_id", "integer"
+      ),
+      "payer_plan_period", tibble::tribble(
+        ~name, ~type,
+        "payer_plan_period_it", "integer",
+        "person_id", "integer",
+        "contract_person_id", "integer",
+        "payer_plan_period_start_date", "date",
+        "payer_plan_period_end_date", "date",
+        "payer_concept_id", "integer",
+        "payer_source_value", "character",
+        "payer_source_concept_id", "integer",
+        "plan_concept_id", "integer",
+        "plan_source_value", "character",
+        "plan_source_concept_id", "integer",
+        "contract_concept_id", "integer",
+        "contract_source_value", "character",
+        "contract_source_concept_id", "integer",
+        "sponsor_concept_id", "integer",
+        "sponsor_source_value", "character",
+        "sponsor_source_concept_id", "integer",
+        "family_source_value", "character",
+        "stop_reason_concept_id", "integer",
+        "stop_reason_source_value", "character",
+        "stop_reason_source_concept_id", "integer"
+      ),
+      "cost", tibble::tribble(
+        ~name, ~type,
+        "cost_id", "integer",
+        "person_id", "integer",
+        "cost_event_id", "integer",
+        "cost_event_field_concept_id", "integer",
+        "cost_concept_id", "integer",
+        "cost_type_concept_id", "integer",
+        "cost_source_concept_id", "integer",
+        "cost_source_value", "character",
+        "currency_concept_id", "integer",
+        "cost", "numeric",
+        "incurred_date", "date",
+        "billed_date", "date",
+        "paid_date", "date",
+        "revenue_code_concept_id", "integer",
+        "drg_concept_id", "integer",
+        "revenue_code_source_value", "character",
+        "drg_source_value", "character",
+        "payer_plan_period_id", "integer"
+      ),
+      "drug_era", tibble::tribble(
+        ~name, ~type,
+        "drug_era_id", "integer",
+        "person_id", "integer",
+        "drug_concept_id", "integer",
+        "drug_era_start_datetime", "datetime",
+        "drug_era_end_datetime", "datetime",
+        "drug_exposure_count", "integer",
+        "gap_days", "integer"
+      ),
+      "dose_era", tibble::tribble(
+        ~name, ~type,
+        "dose_era_id", "integer",
+        "person_id", "integer",
+        "drug_concept_id", "integer",
+        "unit_concept_id", "integer",
+        "dose_value", "numeric",
+        "dose_era_start_datetime", "datetime",
+        "dose_era_end_datetime", "datetime"
+      ),
+      "condition_era", tibble::tribble(
+        ~name, ~type,
+        "condition_era_id", "integer",
+        "person_id", "integer",
+        "condition_concept_id", "integer",
+        "condition_era_start_datetime", "datetime",
+        "condition_era_end_datetime", "datetime",
+        "condition_occurrence_count", "integer"
+      )
+    )
+  )
   
   # Check columns var types
   var_cols <- data_cols %>% dplyr::filter(var == type) %>% dplyr::pull(cols)
@@ -457,17 +661,21 @@ import_dataset <- function(output, ns = character(), r = shiny::reactiveValues()
       show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
     } 
-    if (var_cols[[i, "type"]] == "character" & !is.character(data[[var_name]])){
+    else if (var_cols[[i, "type"]] == "character" & !is.character(data[[var_name]])){
       show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_character"))) 
     }
-    if (var_cols[[i, "type"]] == "numeric" & !is.numeric(data[[var_name]])){
+    else if (var_cols[[i, "type"]] == "numeric" & !is.numeric(data[[var_name]])){
       show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t( "column"), " ", var_name, " ", i18n$t("type_must_be_numeric")))
     } 
-    if (var_cols[[i, "type"]] == "datetime" & !lubridate::is.POSIXct(data[[var_name]])){
+    else if (var_cols[[i, "type"]] == "datetime" & !lubridate::is.POSIXct(data[[var_name]])){
       show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_datetime")))
+    }
+    else if (var_cols[[i, "type"]] == "date" & !lubridate::is.Date(data[[var_name]])){
+      show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_date")))
     }
   })
   
@@ -490,32 +698,9 @@ import_dataset <- function(output, ns = character(), r = shiny::reactiveValues()
     )
   }
   
-  # If type is stays, link with thesaurus
-  if (type == "stays"){
-    tryCatch({
-      data <- data %>%
-        dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
-      
-      # For each thesaurus, left join with corresponding unit name
-      for (thesaurus_id in data %>% dplyr::distinct(thesaurus_id) %>% dplyr::pull()){
-        sql <- glue::glue_sql("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id}", .con = r$db)
-        thesaurus_items <- DBI::dbGetQuery(r$db, sql)
-        data <- data %>%
-          dplyr::left_join(thesaurus_items %>% dplyr::select(thesaurus_id, item_id, name, display_name), by = c("thesaurus_id", "item_id")) %>%
-          dplyr::mutate(unit_name = ifelse((is.na(display_name) | display_name == ""), name, display_name)) %>%
-          dplyr::select(-name, -display_name)
-      }
-    },
-      error = function(e){
-        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_linking_stays_with_thesaurus", 
-          error_name = paste0("import_dataset - error_linking_stays_with_thesaurus - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
-        stop(i18n$t("error_linking_stays_with_thesaurus"))}
-    )
-  }
-  
   d[[type]] <- data
   
-  if (!quiet) show_message_bar(output, id_message_bar, paste0("import_dataset_success_", type), "success", i18n = i18n, ns = ns)
+  if (!quiet) show_message_bar(output, 1, paste0("import_dataset_success_", type), "success", i18n = i18n, ns = ns)
 }
 
 #' Import a thesaurus

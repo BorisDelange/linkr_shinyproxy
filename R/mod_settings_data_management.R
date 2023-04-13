@@ -985,17 +985,19 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           data <- tibble::tibble(name = character(), rows = integer())
           
-          vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
+          vars <- c("person", "observation_period", "visit_occurrence", "visit_detail", "condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure",
+            "measurement", "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "location", "location_history", "care_site", "provider", 
+            "payer_plan_period", "cost", "drug_era", "dose_era", "condition_era")
           
           for (var in vars){
-            data <- data %>% dplyr::bind_rows(
-              tibble::tibble(name = var, rows = nrow(d[[var]]))
-            )
+            if (length(d[[var]]) == 0) n_rows <- 0L
+            else n_rows <- nrow(d[[var]])
+            data <- data %>% dplyr::bind_rows(tibble::tibble(name = var, rows = n_rows))
           }
           
           render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data,
             output_name = "code_datatable", col_names = c(i18n$t("table_name"), i18n$t("rows")),
-            column_widths = c("rows" = "150px"), datatable_dom = "")
+            column_widths = c("rows" = "150px"), datatable_dom = "", page_length = 30)
           
           if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$..code_datatable_trigger"))
         })
