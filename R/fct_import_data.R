@@ -213,11 +213,117 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
         "cause_source_concept_id", "integer"
       )
     )
-    
-    admission_concept_id_word <- "admitting_source_concept_id"
-    admission_value_word <- "admitting_source_value"
   }
-  else if (omop_version == "6.0"){
+  
+  if (omop_version == "5.3"){
+    data_cols <- data_cols %>% dplyr::bind_rows(
+      tibble::tribble(
+        ~var, ~cols,
+        "visit_occurrence", tibble::tribble(
+          ~name, ~type,
+          "visit_occurrence_id", "integer",
+          "person_id", "integer",
+          "visit_concept_id", "integer",
+          "visit_start_date", "date",
+          "visit_start_datetime", "datetime",
+          "visit_end_date", "date",
+          "visit_end_datetime", "datetime",
+          "visit_type_concept_id", "integer",
+          "provider_id", "integer",
+          "care_site_id", "integer",
+          "visit_source_value", "character",
+          "visit_source_concept_id", "integer",
+          "admitting_source_concept_id", "integer",
+          "admitting_source_value", "character",
+          "discharge_to_concept_id", "integer",
+          "discharge_to_source_value", "character",
+          "preceding_visit_occurrence_id", "integer"
+        ),
+        "visit_detail", tibble::tribble(
+          ~name, ~type,
+          "visit_detail_id", "integer",
+          "person_id", "integer",
+          "visit_detail_concept_id", "integer",
+          "visit_detail_start_date", "date",
+          "visit_detail_start_datetime", "datetime",
+          "visit_detail_end_date", "date",
+          "visit_detail_end_datetime", "datetime",
+          "visit_detail_type_concept_id", "integer",
+          "provider_id", "integer",
+          "care_site_id", "integer",
+          "visit_detail_source_value", "character",
+          "visit_detail_source_concept_id", "integer",
+          "admitting_source_value", "character",
+          "admitting_source_concept_id", "integer",
+          "discharge_to_source_value", "character",
+          "discharge_to_concept_id", "integer",
+          "preceding_visit_detail_id", "integer",
+          "visit_detail_parent_id", "integer",
+          "visit_occurrence_id", "integer"
+        )
+      )
+    )
+  }
+  
+  if (omop_version == "5.4"){
+    data_cols <- data_cols %>% dplyr::bind_rows(
+      tibble::tribble(
+        ~var, ~cols,
+        "visit_detail", tibble::tribble(
+          ~name, ~type,
+          "visit_detail_id", "integer",
+          "person_id", "integer",
+          "visit_detail_concept_id", "integer",
+          "visit_detail_start_date", "date",
+          "visit_detail_start_datetime", "datetime",
+          "visit_detail_end_date", "date",
+          "visit_detail_end_datetime", "datetime",
+          "visit_detail_type_concept_id", "integer",
+          "provider_id", "integer",
+          "care_site_id", "integer",
+          "visit_detail_source_value", "character",
+          "visit_detail_source_concept_id", "integer",
+          "admitted_from_concept_id", "integer",
+          "admitted_from_source_value", "character",
+          "discharge_to_source_value", "character",
+          "discharge_to_concept_id", "integer",
+          "preceding_visit_detail_id", "integer",
+          "parent_visit_detail_id", "integer",
+          "visit_occurrence_id", "integer"
+        )
+      )
+    )
+  }
+  
+  if (omop_version %in% c("5.4", "6.0")){
+    data_cols <- data_cols %>% dplyr::bind_rows(
+      tibble::tribble(
+        ~var, ~cols,
+        "visit_occurrence", tibble::tribble(
+          ~name, ~type,
+          "visit_occurrence_id", "integer",
+          "person_id", "integer",
+          "visit_concept_id", "integer",
+          "visit_start_date", "date",
+          "visit_start_datetime", "datetime",
+          "visit_end_date", "date",
+          "visit_end_datetime", "datetime",
+          "visit_type_concept_id", "integer",
+          "provider_id", "integer",
+          "care_site_id", "integer",
+          "visit_source_value", "character",
+          "visit_source_concept_id", "integer",
+          "admitted_from_concept_id", "integer",
+          "admitted_from_source_value", "character",
+          "discharge_to_concept_id", "integer",
+          "discharge_to_source_value", "character",
+          "preceding_visit_occurrence_id", "integer"
+        )
+      )
+    )
+  }
+  
+  if (omop_version == "6.0"){
     data_cols <- tibble::tribble(
       ~var, ~cols,
       "person", tibble::tribble(
@@ -241,43 +347,6 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
         "race_source_concept_id", "integer",
         "ethnicity_source_value", "character",
         "ethnicity_source_concept_id", "integer"
-      )
-    )
-    
-    admission_concept_id_word <- "admitted_from_concept_id"
-    admission_value_word <- "admitted_from_source_value"
-  }
-  
-  data_cols <- data_cols %>% dplyr::bind_rows(
-    tibble::tribble(
-      ~var, ~cols,
-      "observation_period", tibble::tribble(
-        ~name, ~type,
-        "observation_period_id", "integer",
-        "person_id", "integer",
-        "observation_period_start_date", "date",
-        "observation_period_end_date", "date",
-        "period_type_concept_id", "integer"
-      ),
-      "visit_occurrence", tibble::tribble(
-        ~name, ~type,
-        "visit_occurrence_id", "integer",
-        "person_id", "integer",
-        "visit_concept_id", "integer",
-        "visit_start_date", "date",
-        "visit_start_datetime", "datetime",
-        "visit_end_date", "date",
-        "visit_end_datetime", "datetime",
-        "visit_type_concept_id", "integer",
-        "provider_id", "integer",
-        "care_site_id", "integer",
-        "visit_source_value", "character",
-        "visit_source_concept_id", "integer",
-        admission_concept_id_word, "integer",
-        admission_value_word, "character",
-        "discharge_to_concept_id", "integer",
-        "discharge_to_source_value", "character",
-        "preceding_visit_occurrence_id", "integer"
       ),
       "visit_detail", tibble::tribble(
         ~name, ~type,
@@ -293,13 +362,27 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
         "care_site_id", "integer",
         "visit_detail_source_value", "character",
         "visit_detail_source_concept_id", "integer",
-        admission_concept_id_word, "integer",
-        admission_value_word, "character",
+        "admitted_from_concept_id", "integer",
+        "admitted_from_source_value", "character",
         "discharge_to_source_value", "character",
         "discharge_to_concept_id", "integer",
         "preceding_visit_detail_id", "integer",
         "visit_detail_parent_id", "integer",
         "visit_occurrence_id", "integer"
+      )
+    )
+  }
+  
+  data_cols <- data_cols %>% dplyr::bind_rows(
+    tibble::tribble(
+      ~var, ~cols,
+      "observation_period", tibble::tribble(
+        ~name, ~type,
+        "observation_period_id", "integer",
+        "person_id", "integer",
+        "observation_period_start_date", "date",
+        "observation_period_end_date", "date",
+        "period_type_concept_id", "integer"
       ),
       "condition_occurrence", tibble::tribble(
         ~name, ~type,
