@@ -149,7 +149,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
         )
         if (type == "person" & omop_version %in% c("5.3", "5.4")) col_types <- "iiiiiTiiiiiccicici"
           
-        d[[type]] <- readr::read_csv(path, col_types = col_types)
+        d[[type]] <- readr::read_csv(path, col_types = col_types, progress = FALSE)
         if (!quiet & nrow(d[[type]]) > 0) show_message_bar(output, 1, "import_dataset_success", "success", i18n = i18n, ns = ns)
       })
     },
@@ -260,6 +260,27 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
           "preceding_visit_detail_id", "integer",
           "visit_detail_parent_id", "integer",
           "visit_occurrence_id", "integer"
+        ),
+        "observation", tibble::tribble(
+          ~name, ~type,
+          "observation_id", "integer",
+          "person_id", "integer",
+          "observation_concept_id", "integer",
+          "observation_date", "date",
+          "observation_datetime", "datetime",
+          "observation_type_concept_id", "integer",
+          "value_as_number", "numeric",
+          "value_as_string", "character",
+          "value_as_concept_id", "integer",
+          "qualifier_concept_id", "integer",
+          "unit_concept_id", "integer",
+          "provider_id", "integer",
+          "visit_occurrence_id", "integer",
+          "visit_detail_id", "integer",
+          "observation_source_value", "character",
+          "observation_source_concept_id", "integer",
+          "unit_source_value", "character",
+          "qualifier_source_value", "character"
         )
       )
     )
@@ -290,6 +311,30 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
           "preceding_visit_detail_id", "integer",
           "parent_visit_detail_id", "integer",
           "visit_occurrence_id", "integer"
+        ),
+        "observation", tibble::tribble(
+          ~name, ~type,
+          "observation_id", "integer",
+          "person_id", "integer",
+          "observation_concept_id", "integer",
+          "observation_date", "date",
+          "observation_datetime", "datetime",
+          "observation_type_concept_id", "integer",
+          "value_as_number", "numeric",
+          "value_as_string", "character",
+          "value_as_concept_id", "integer",
+          "qualifier_concept_id", "integer",
+          "unit_concept_id", "integer",
+          "provider_id", "integer",
+          "visit_occurrence_id", "integer",
+          "visit_detail_id", "integer",
+          "observation_source_value", "character",
+          "observation_source_concept_id", "integer",
+          "unit_source_value", "character",
+          "qualifier_source_value", "character",
+          "value_source_value", "character",
+          "observation_event_id", "integer",
+          "obs_event_field_concept_id", "integer"
         )
       )
     )
