@@ -209,7 +209,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # For options of plugins, add one row for long description (Markdown) & 2 rows for users allowed to use this plugin
   # The value is the default syntax of a plugin description
   # For code of plugins, add two rows, one for UI code & one for server code
-  else if (grepl("plugins", id)){
+  if (grepl("plugins", id)){
     
     # Add options rows
     # value <- paste0("- **Version** : 0.0.1\n- **Libraries** : *put libraries needed here*\n- **Data allowed** : *put data allowed here*\n",
@@ -238,7 +238,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
 
   # For options of scripts, add one row for long description (Markdown)
-  else if (table == "scripts"){
+  if (table == "scripts"){
     
     # Add options rows
     
@@ -256,18 +256,19 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
   
   # For datasets options, need to add 3 rows in options
-  else if (table == "datasets"){
+  if (table == "datasets"){
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, "dataset", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row$options + 2, "dataset", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row$options + 3, "dataset", last_row$data + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row$options + 4, "dataset", last_row$data + 1, "activate_scripts_cache", "", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 5, "dataset", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$options + 5, "dataset", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
+      last_row$options + 6, "dataset", last_row$data + 1, "omop_version", "6.0", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # For studies, need to add one row in options and add rows of code for subsets, with default value
-  else if (table == "studies"){
+  if (table == "studies"){
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, "study", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
@@ -311,13 +312,13 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   }
   
   # For subsets, need to add one row in code
-  else if (table == "subsets"){
+  if (table == "subsets"){
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row$code + 1, "subset", last_row$subsets + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # For options of patient_lvl & aggregated modules families, need to add two rows, for users accesses
-  else if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
+  if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, get_singular(word = table), last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row$options + 2, get_singular(word = table), last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
@@ -1377,7 +1378,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   }
   
   for (field in c("markdown_description", "version", "author", "image", "description_fr", "description_en",
-    "name_fr", "name_en", "category_fr", "category_en")){
+    "name_fr", "name_en", "category_fr", "category_en", "omop_version")){
     if (field %in% page_options){
       option_id <- options %>% dplyr::filter(name == field) %>% dplyr::pull(id)
       new_value <- stringr::str_replace_all(data[[field]], "'", "''")

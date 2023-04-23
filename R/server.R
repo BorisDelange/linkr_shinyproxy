@@ -19,8 +19,12 @@ app_server <- function(router, language = "en", app_folder = character(),
     
     # Create d reactive value, for dataset data
     d <- reactiveValues()
-    vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
-    for (var in vars) d[[var]] <- tibble::tibble()
+    main_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+      "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
+      "drug_era", "dose_era", "condition_era", 
+      "person", "observation_period", "visit_occurrence", "visit_detail",
+      "location", "care_site", "provider")
+    sapply(main_tables, function(table) d[[table]] <- tibble::tibble())
     
     # Create m reactive value, for plugins & modules data
     m <- reactiveValues()

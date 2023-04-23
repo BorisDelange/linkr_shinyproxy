@@ -28,20 +28,12 @@ run_dataset_code <- function(output, r = shiny::reactiveValues(), d = shiny::rea
     stringr::str_replace_all("\r", "\n")
   
   # Reset d variables
-  d$patients <- tibble::tibble(patient_id = integer(), gender = character(), dod = lubridate::ymd_hms())
-  d$stays <- tibble::tibble(patient_id = integer(), stay_id = integer(), age = numeric(), thesaurus_name = character(),
-    item_id = integer(), admission_datetime = lubridate::ymd_hms(), discharge_datetime = lubridate::ymd_hms())
-  d$labs_vitals <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-    datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(),
-    value_num = numeric(), unit = character(), comments = character())
-  d$text <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-    datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(), comments = character())
-  d$orders <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-    datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), route = character(),
-    continuous = integer(), amount = numeric(), amount_unit = character(), rate = numeric(), rate_unit = character(),
-    concentration = numeric(), concentration_unit = character(), comments = character())
-  d$diagnoses <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-    datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), comments = character())
+  main_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+    "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
+    "drug_era", "dose_era", "condition_era", 
+    "person", "observation_period", "visit_occurrence", "visit_detail",
+    "location", "care_site", "provider")
+  sapply(main_tables, function(table) d[[table]] <- tibble::tibble())
   
   # Run code
 

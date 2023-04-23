@@ -133,8 +133,13 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       div(id = ns("options_card"),
         make_card(i18n$t("dataset_options"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "dataset", id = "options_selected_dataset_or_vocabulary",
-              width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(), br(),
+            make_combobox(i18n = i18n, ns = ns, label = "dataset", id = "options_selected_dataset_or_vocabulary", width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
+            make_dropdown(i18n = i18n, ns = ns, label = "omop_version", width = "300px", 
+              options = list(
+                list(key = "5.3", text = "5.3"),
+                list(key = "5.4", text = "5.4"),
+                list(key = "6.0", text = "6.0")
+              )), br(), br(),
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 10),
               make_toggle(i18n = i18n, ns = ns, label = "show_only_aggregated_data", inline = TRUE)
@@ -778,15 +783,16 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             ) %>%
             dplyr::pull(key)
           
-          # Users allowed read group
-          value_group <- options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value)
-          
           selected_items <- picker_options %>% dplyr::filter(key %in% value)
           
-          shiny.fluent::updateToggle.shinyInput(session, "show_only_aggregated_data",
-            value = options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(value_num) %>% as.logical)
-          shiny.fluent::updateChoiceGroup.shinyInput(session, "users_allowed_read_group",
-            value = options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value))
+          shiny.fluent::updateToggle.shinyInput(session, "show_only_aggregated_data", value = options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(value_num) %>% as.logical)
+          shiny.fluent::updateChoiceGroup.shinyInput(session, "users_allowed_read_group", value = options %>% dplyr::filter(name == "users_allowed_read_group") %>% dplyr::pull(value))
+          shiny.fluent::updateDropdown.shinyInput(session, "omop_version", options = list(
+            list(key = "5.3", text = "5.3"),
+            list(key = "5.4", text = "5.4"),
+            list(key = "6.0", text = "6.0")
+          ),
+            value = options %>% dplyr::filter(name == "omop_version") %>% dplyr::pull(value))
           output$users_allowed_read_div <- renderUI({
             make_people_picker(
               i18n = i18n, ns = ns, id = "users_allowed_read", label = "users", options = picker_options, value = value,
@@ -811,9 +817,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           data$show_only_aggregated_data <- as.integer(input$show_only_aggregated_data)
           data$users_allowed_read <- input$users_allowed_read
           data$users_allowed_read_group <- input$users_allowed_read_group
+          data$omop_version <- input$omop_version
   
           save_settings_options(output = output, r = r, id = id, category = category, code_id_input = paste0("options_", link_id), 
-            i18n = i18n, data = data, page_options = c("show_only_aggregated_data", "users_allowed_read"))
+            i18n = i18n, data = data, page_options = c("show_only_aggregated_data", "users_allowed_read", "omop_version"))
           
           if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$options_save"))
         })
@@ -893,10 +900,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           # Before, restart these variables
           r$dataset_id <- NA_integer_
           r$subset_id <- NA_integer_
-          r$vocabulary_id <- NA_integer_
+          r$vocabulary_id <- NA_character_
 
           if (id == "settings_datasets") r$dataset_id <- link_id
-          if (id == "settings_vocabularies") r$vocabulary_id <- link_id
+          if (id == "settings_vocabularies") r$vocabulary_id <- r$vocabulary %>% dplyr::filter(id == link_id) %>% dplyr::pull(vocabulary_id)
 
           category <- get_singular(id)
 
@@ -962,8 +969,11 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           # Reset d variable
           if (table == "datasets"){
-            vars <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
-            for (var in vars) d[[var]] <- tibble::tibble()
+            main_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+              "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
+              "drug_era", "dose_era", "condition_era",
+              "person", "observation_period", "visit_occurrence", "visit_detail", "location", "care_site", "provider")
+            sapply(main_tables, function(table) d[[table]] <- tibble::tibble())
           }
           
           edited_code <- r[[paste0(id, "_code")]] %>% stringr::str_replace_all("\r", "\n")

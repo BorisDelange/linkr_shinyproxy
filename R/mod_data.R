@@ -296,23 +296,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     # Initiate var for list of cards
     r[[paste0(prefix, "_cards")]] <- character()
     
-    # Default data
-    default_data <- list()
-    default_data$patients <- tibble::tibble(patient_id = integer(), gender = character(), dod = lubridate::ymd_hms())
-    default_data$stays <- tibble::tibble(patient_id = integer(), stay_id = integer(), age = numeric(), thesaurus_name = character(),
-      item_id = integer(), admission_datetime = lubridate::ymd_hms(), discharge_datetime = lubridate::ymd_hms())
-    default_data$labs_vitals <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-      datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(),
-      value_num = numeric(), unit = character(), comments = character())
-    default_data$text <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-      datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(), comments = character())
-    default_data$orders <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-      datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), route = character(),
-      continuous = integer(), amount = numeric(), amount_unit = character(), rate = numeric(), rate_unit = character(),
-      concentration = numeric(), concentration_unit = character(), comments = character())
-    default_data$diagnoses <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-      datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), comments = character())
-    
     # Load page from header
     
     observeEvent(shiny.router::get_page(), {
@@ -329,14 +312,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       shinyjs::hide("study_cards")
       shinyjs::show("study_cards")
     })
-    
-    # # Refresh reactivity
-    # observe({
-    #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer shiny.router::get_query_param"))
-    #   shiny.router::get_query_param()
-    #   shinyjs::hide("study_cards")
-    #   shinyjs::show("study_cards")
-    # })
     
     if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - initiate vars"))
     
@@ -373,8 +348,13 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         # Reset variables
         
-        sapply(c("stays", "labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_patient[[table]] <- default_data[[table]])
-        sapply(c("labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_stay[[table]] <- default_data[[table]])
+        stay_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+          "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
+          "drug_era", "dose_era", "condition_era")
+        patient_tables <- c(stay_tables)
+        
+        sapply(stay_tables, function(table) d$data_stay[[table]] <- tibble::tibble())
+        sapply(patient_tables, function(table) d$data_patient[[table]] <- tibble::tibble())
         
         if (length(m$selected_patient) > 0){
           if (!is.na(m$selected_patient) & m$selected_patient != ""){
@@ -395,7 +375,10 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         req(d$data_patient)
         
-        sapply(c("labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_stay[[table]] <- default_data[[table]])
+        stay_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+          "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
+          "drug_era", "dose_era", "condition_era")
+        sapply(stay_tables, function(table) d$data_stay[[table]] <- tibble::tibble())
         
         if (length(m$selected_stay) > 0){
           if (!is.na(m$selected_stay) & m$selected_stay != ""){
@@ -420,8 +403,11 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         # Reset variables
-        vars <- c("patients", "stays", "labs_vitals", "text", "orders", "diagnoses")
-        sapply(vars, function(table) d$data_subset[[table]] <- default_data[[table]])
+        
+        subset_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+          "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
+          "drug_era", "dose_era", "condition_era", "person", "observation_period", "visit_occurrence", "visit_detail")
+        sapply(subset_tables, function(table) d$data_subset[[table]] <- tibble::tibble())
         
         if (nrow(m$subset_patients) > 0){
           lapply(vars, function(var) if (nrow(d[[var]]) > 0) d$data_subset[[var]] <- d[[var]] %>% dplyr::inner_join(m$subset_patients %>% dplyr::select(patient_id), by = "patient_id"))

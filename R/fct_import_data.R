@@ -105,7 +105,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
   # Check if type is valid
   if (is.na(type) | type %not_in% c("person", "observation_period", "visit_occurrence", "visit_detail",
     "condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure",
-    "measurement", "observation", "note", "note_nlp", "specimen", "fact_relationship", "location",
+    "measurement", "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "location",
     "location_history", "care_site", "provider", "payer_plan_period", "cost", "drug_era",
     "dose_era", "condition_era") | (type == "death" & omop_version %not_in% c("5.3", "5.4"))){
     show_message_bar(output, "var_type_not_valid", "severeWarning", i18n = i18n, ns = ns) 
@@ -125,7 +125,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
           "person" = "iiiiiTTiiiiiccicici",
           "observation_period" = "iiDDi",
           "visit_occurrence" = "iiiDTDTiiiciicici",
-          "visit_deTail" = "iiiDTDTiiiciciciiii",
+          "visit_detail" = "iiiDTDTiiiciciciiii",
           "condition_occurrence" = "iiiDTDTiiciiicic",
           "drug_exposure" = "iiiDTDTDiciniciciiicicc",
           "procedure_occurrence" = "iiiDTiiiiiicic",
@@ -148,9 +148,16 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
           "condition_era" = "iiiTTi"
         )
         if (type == "person" & omop_version %in% c("5.3", "5.4")) col_types <- "iiiiiTiiiiiccicici"
+        if (type == "observation" & omop_version == "5.3") col_types <-  "iiiDTinciiiiiicicc"
+        if (type == "observation" & omop_version == "5.4") col_types <-  "iiiDTinciiiiiicicccii"
+        if (type == "location" & omop_version == "5.3") col_types <-  "iccccccc"
+        if (type == "drug_era" & omop_version %in% c("5.3", "5.4")) col_types <- "iiiDDii"
+        if (type == "dose_era" & omop_version %in% c("5.3", "5.4")) col_types <- "iiiinDD"
+        if (type == "condition_era" & omop_version %in% c("5.3", "5.4")) col_types <- "iiiDDi"
           
         d[[type]] <- readr::read_csv(path, col_types = col_types, progress = FALSE)
-        if (!quiet & nrow(d[[type]]) > 0) show_message_bar(output, 1, "import_dataset_success", "success", i18n = i18n, ns = ns)
+        cat(i18n$t(paste0("import_dataset_success_", type)))
+        if (!quiet) show_message_bar(output, 1, paste0("import_dataset_success_", type), "success", i18n = i18n, ns = ns)
       })
     },
       
@@ -211,6 +218,35 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
         "cause_concept_id", "integer",
         "cause_source_value", "character",
         "cause_source_concept_id", "integer"
+      ),
+      "drug_era", tibble::tribble(
+        ~name, ~type,
+        "drug_era_id", "integer",
+        "person_id", "integer",
+        "drug_concept_id", "integer",
+        "drug_era_start_date", "date",
+        "drug_era_end_date", "date",
+        "drug_exposure_count", "integer",
+        "gap_days", "integer"
+      ),
+      "dose_era", tibble::tribble(
+        ~name, ~type,
+        "dose_era_id", "integer",
+        "person_id", "integer",
+        "drug_concept_id", "integer",
+        "unit_concept_id", "integer",
+        "dose_value", "numeric",
+        "dose_era_start_date", "date",
+        "dose_era_end_date", "date"
+      ),
+      "condition_era", tibble::tribble(
+        ~name, ~type,
+        "condition_era_id", "integer",
+        "person_id", "integer",
+        "condition_concept_id", "integer",
+        "condition_era_start_date", "date",
+        "condition_era_end_date", "date",
+        "condition_occurrence_count", "integer"
       )
     )
   }
@@ -281,6 +317,17 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
           "observation_source_concept_id", "integer",
           "unit_source_value", "character",
           "qualifier_source_value", "character"
+        ),
+        "location", tibble::tribble(
+          ~name, ~type,
+          "location_id", "integer",
+          "address_1", "character",
+          "address_2", "character",
+          "city", "character",
+          "state", "character",
+          "zip", "character",
+          "county", "character",
+          "location_source_value", "character"
         )
       )
     )
@@ -363,6 +410,19 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
           "discharge_to_concept_id", "integer",
           "discharge_to_source_value", "character",
           "preceding_visit_occurrence_id", "integer"
+        ),
+        "location", tibble::tribble(
+          ~name, ~type,
+          "location_id", "integer",
+          "address_1", "character",
+          "address_2", "character",
+          "city", "character",
+          "state", "character",
+          "zip", "character",
+          "county", "character",
+          "location_source_value", "character",
+          "latitude", "numeric",
+          "longitude", "numeric"
         )
       )
     )
@@ -414,6 +474,35 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
         "preceding_visit_detail_id", "integer",
         "visit_detail_parent_id", "integer",
         "visit_occurrence_id", "integer"
+      ),
+      "drug_era", tibble::tribble(
+        ~name, ~type,
+        "drug_era_id", "integer",
+        "person_id", "integer",
+        "drug_concept_id", "integer",
+        "drug_era_start_datetime", "datetime",
+        "drug_era_end_datetime", "datetime",
+        "drug_exposure_count", "integer",
+        "gap_days", "integer"
+      ),
+      "dose_era", tibble::tribble(
+        ~name, ~type,
+        "dose_era_id", "integer",
+        "person_id", "integer",
+        "drug_concept_id", "integer",
+        "unit_concept_id", "integer",
+        "dose_value", "numeric",
+        "dose_era_start_datetime", "datetime",
+        "dose_era_end_datetime", "datetime"
+      ),
+      "condition_era", tibble::tribble(
+        ~name, ~type,
+        "condition_era_id", "integer",
+        "person_id", "integer",
+        "condition_concept_id", "integer",
+        "condition_era_start_datetime", "datetime",
+        "condition_era_end_datetime", "datetime",
+        "condition_occurrence_count", "integer"
       )
     )
   }
@@ -655,19 +744,6 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
         "visit_occurrence_id", "integer",
         "response_visit_occurrence_id", "integer"
       ),
-      "location", tibble::tribble(
-        ~name, ~type,
-        "location_id", "integer",
-        "address_1", "character",
-        "address_2", "character",
-        "city", "character",
-        "state", "character",
-        "zip", "character",
-        "county", "character",
-        "location_source_value", "character",
-        "latitude", "numeric",
-        "longitude", "numeric"
-      ),
       "location_history", tibble::tribble(
         ~name, ~type,
         "location_id", "integer",
@@ -746,44 +822,17 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
         "revenue_code_source_value", "character",
         "drg_source_value", "character",
         "payer_plan_period_id", "integer"
-      ),
-      "drug_era", tibble::tribble(
-        ~name, ~type,
-        "drug_era_id", "integer",
-        "person_id", "integer",
-        "drug_concept_id", "integer",
-        "drug_era_start_datetime", "datetime",
-        "drug_era_end_datetime", "datetime",
-        "drug_exposure_count", "integer",
-        "gap_days", "integer"
-      ),
-      "dose_era", tibble::tribble(
-        ~name, ~type,
-        "dose_era_id", "integer",
-        "person_id", "integer",
-        "drug_concept_id", "integer",
-        "unit_concept_id", "integer",
-        "dose_value", "numeric",
-        "dose_era_start_datetime", "datetime",
-        "dose_era_end_datetime", "datetime"
-      ),
-      "condition_era", tibble::tribble(
-        ~name, ~type,
-        "condition_era_id", "integer",
-        "person_id", "integer",
-        "condition_concept_id", "integer",
-        "condition_era_start_datetime", "datetime",
-        "condition_era_end_datetime", "datetime",
-        "condition_occurrence_count", "integer"
       )
     )
   )
   
-  # Check columns var types
+  # Check columns var types & names
   var_cols <- data_cols %>% dplyr::filter(var == type) %>% dplyr::pull(cols)
   var_cols <- var_cols[[1]]
+  
   if (!identical(names(data), var_cols %>% dplyr::pull(name))) stop(paste0(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name))))
-  sapply(1:nrow(var_cols), function(i){
+  
+  for (i in 1:nrow(var_cols)){
     var_name <- var_cols[[i, "name"]]
     if (var_cols[[i, "type"]] == "integer" & !is.integer(data[[var_name]])){
       show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
@@ -805,12 +854,15 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
       show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_date")))
     }
-  })
+    
+    # Transform date cols to character
+    if (var_cols[[i, "type"]] %in% c("date", "datetime")) data <- data %>% dplyr::mutate_at(var_name, as.character)
+  }
   
   # if  save_as_csv is TRUE, save data in dataset folder
   if (save_as_csv){
     if (!file.exists(folder)) dir.create(folder, recursive = TRUE)
-    if (!file.exists(path)) tryCatch(readr::write_csv(data, path),
+    if (!file.exists(path)) tryCatch(readr::write_csv(data, path, progress = FALSE),
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
           error_name = paste0("import_dataset - error_saving_csv - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
@@ -818,7 +870,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
     )
     if (file.exists(path) & rewrite) tryCatch({
       # file.remove(path)
-      readr::write_csv(data, path)}, 
+      readr::write_csv(data, path, progress = FALSE)}, 
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
           error_name = paste0("import_dataset - error_saving_csv - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
@@ -828,6 +880,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
   
   d[[type]] <- data
   
+  cat(i18n$t(paste0("import_dataset_success_", type)))
   if (!quiet) show_message_bar(output, 1, paste0("import_dataset_success_", type), "success", i18n = i18n, ns = ns)
 }
 
@@ -856,7 +909,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
 #' import_thesaurus(output = output, r = r, thesaurus_id = 5, thesaurus = thesaurus, language = language)
 #' }
 import_vocabulary_table <- function(output, ns = character(), i18n = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(),
-  table_name = character(), data = tibble::tibble(), messages_bars = FALSE){
+  table_name = character(), data = tibble::tibble(), vocabulary_id = character(), messages_bars = FALSE){
  
   if (table_name %not_in% c("concept", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")){
     if (messages_bars) show_message_bar(output, "invalid_vocabulary_table", "severeWarning", i18n = i18n, ns = ns)
@@ -872,8 +925,8 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
     "concept_class_id", "character",
     "standard_concept", "character",
     "concept_code", "character",
-    "valid_start_date", "character",
-    "valid_end_date", "character",
+    "valid_start_date", "date",
+    "valid_end_date", "date",
     "invalid_reason", "character")
   
   else if (table_name == "domain") var_cols <- tibble::tribble(
@@ -893,8 +946,8 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
     "concept_id_1", "integer",
     "concept_id_2", "integer",
     "relationship_id", "character",
-    "valid_start_date", "character",
-    "valid_end_date", "character",
+    "valid_start_date", "date",
+    "valid_end_date", "date",
     "invalid_reason", "character")
   
   else if (table_name == "relationship") var_cols <- tibble::tribble(
@@ -930,19 +983,19 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
     "denominator_value", "numeric",
     "denominator_unit_concept_id", "integer",
     "box_size", "integer",
-    "valid_start_date", "character",
-    "valid_end_date", "character",
+    "valid_start_date", "date",
+    "valid_end_date", "date",
     "invalid_reason", "character")
 
-  # Check col names
+  # Check columns var types & names
   
   if (!identical(names(data), var_cols$name)){
     if (messages_bars) show_message_bar(output, "invalid_col_names", "severeWarning", i18n = i18n, ns = ns)
-    return(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
+    return(paste0(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name))))
   }
   
   # Check col types
-  sapply(1:nrow(var_cols), function(i){
+  for (i in 1:nrow(var_cols)){
     var_name <- var_cols[[i, "name"]]
     if (var_cols[[i, "type"]] == "integer" & !is.integer(data[[var_name]])){
       if (messages_bars) show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
@@ -956,7 +1009,14 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
       if (messages_bars) show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
       return(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_numeric")))
     }
-  })
+    else if (var_cols[[i, "type"]] == "date" & !lubridate::is.Date(data[[var_name]])){
+      show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_date")))
+    }
+    
+    # Transform date cols to character
+    if (var_cols[[i, "type"]] == "date") data <- data %>% dplyr::mutate_at(var_name, as.character)
+  }
 
   # Transform as tibble
   tryCatch(data <- tibble::as_tibble(data), 
@@ -965,6 +1025,9 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
         error_name = "import_vocabulary_table - error_transforming_tibble", category = "Error", error_report = toString(e), i18n = i18n)
       return(i18n$t("error_transforming_tibble"))}
   )
+  
+  # Change vocabulary_id col if value is not null
+  if (table_name == "concept" & length(vocabulary_id) > 0) data <- data %>% dplyr::mutate(vocabulary_id = !!vocabulary_id)
 
   # Add data to database
   
@@ -1042,10 +1105,6 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
   else {
     data_to_insert <- data_to_insert %>% dplyr::mutate(id = 1:dplyr::n() + last_id, .before = 1)
     
-    # Count rows inserted
-    r$import_vocabulary_count_rows <- r$import_vocabulary_count_rows %>%
-      dplyr::bind_rows(tibble::tibble(table_name = !!table_name, n_rows = nrow(data_to_insert)))
-
     tryCatch(DBI::dbAppendTable(m$db, table_name, data_to_insert),
       error = function(e){
         if (nchar(e[1]) > 0 & messages_bars) report_bug(r = r, output = output, error_message = "vocabulary_error_append_table",
@@ -1055,5 +1114,5 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
   }
   
   if (messages_bars) show_message_bar(output, "import_vocabulary_table_success", "success", i18n, ns = ns)
-  return(i18n$t("import_vocabulary_table_success"))
+  return(paste0(i18n$t("import_vocabulary_table_success"), ". ", nrow(data_to_insert), " ", tolower(i18n$t("rows_inserted")), "."))
 }

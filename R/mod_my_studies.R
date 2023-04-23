@@ -356,30 +356,18 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       r$aggregated_selected_key <- NA_integer_
       
       # Reset d variables
-      # Reset data variables
       
-      default_data <- list()
-      default_data$patients <- tibble::tibble(patient_id = integer(), gender = character(), dod = lubridate::ymd_hms())
-      default_data$stays <- tibble::tibble(patient_id = integer(), stay_id = integer(), age = numeric(), thesaurus_name = character(),
-        item_id = integer(), admission_datetime = lubridate::ymd_hms(), discharge_datetime = lubridate::ymd_hms())
-      default_data$labs_vitals <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-        datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(),
-        value_num = numeric(), unit = character(), comments = character())
-      default_data$text <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-        datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), value = character(), comments = character())
-      default_data$orders <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-        datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), route = character(),
-        continuous = integer(), amount = numeric(), amount_unit = character(), rate = numeric(), rate_unit = character(),
-        concentration = numeric(), concentration_unit = character(), comments = character())
-      default_data$diagnoses <- tibble::tibble(patient_id = integer(), thesaurus_name = character(), item_id = integer(),
-        datetime_start = lubridate::ymd_hms(), datetime_stop = lubridate::ymd_hms(), comments = character())
+      stay_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+        "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
+        "drug_era", "dose_era", "condition_era")
+      patient_tables <- c(stay_tables)
+      subset_tables <- c(patient_tables, "person", "observation_period", "visit_occurrence", "visit_detail")
+      main_tables <- c(subset_tables, "location", "care_site", "provider")
       
-    sapply(c("patients", "stays", "labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_subset[[table]] <- default_data[[table]])
-      sapply(c("stays", "labs_vitals", "text", "orders", "diagnoses"), function(table){
-        d$data_patient[[table]] <- default_data[[table]]
-        d[[table]] <- default_data[[table]]
-      })
-      sapply(c("labs_vitals", "text", "orders", "diagnoses"), function(table) d$data_stay[[table]] <- default_data[[table]])
+      sapply(stay_tables, function(table) d$data_stay[[table]] <- tibble::tibble())
+      sapply(patient_tables, function(table) d$data_patient[[table]] <- tibble::tibble())
+      sapply(subset_tables, function(table) d$data_subset[[table]] <- tibble::tibble())
+      sapply(main_tables, function(table) d[[table]] <- tibble::tibble())
       
       # Reset selected_study variable
       m$selected_study <- NA_integer_
@@ -511,7 +499,10 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # If activate_scripts_cache option activated and if cache doesn't exists, save data as CSV files
       if(r$options %>% dplyr::filter(category == "dataset", name == "activate_scripts_cache", link_id == r$selected_dataset) %>% dplyr::pull(value_num) == 1){
         
-        tables <- c("patients", "stays", "labs_vitals", "orders", "text", "diagnoses")
+        tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+          "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
+          "drug_era", "dose_era", "condition_era", "person", "observation_period", "visit_occurrence", "visit_detail",
+          "location", "care_site", "provider")
         
         dataset_file_path <- paste0(r$app_folder, "/datasets/", r$selected_dataset)
         loaded_scripts_file_path <- paste0(r$app_folder, "/datasets/", r$selected_dataset, "/loaded_scripts.csv")
@@ -538,7 +529,47 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if (file.exists(loaded_scripts_file_path)){
           for (table in tables){
             table_file_path <- paste0(r$app_folder, "/datasets/", r$selected_dataset, "/", table, "_with_scripts.csv")
-            if (file.exists(table_file_path)) d[[table]] <- readr::read_csv(table_file_path, show_col_types = FALSE)
+            
+            if (file.exists(table_file_path)){
+              
+              omop_version <- r$options %>% dplyr::filter(category == "dataset" & link_id == r$selected_dataset & name == "omop_version") %>% dplyr::pull(value)
+              
+              col_types <- switch(table, 
+                "person" = "iiiiiTTiiiiiccicici",
+                "observation_period" = "iiDDi",
+                "visit_occurrence" = "iiiDTDTiiiciicici",
+                "visit_detail" = "iiiDTDTiiiciciciiii",
+                "condition_occurrence" = "iiiDTDTiiciiicic",
+                "drug_exposure" = "iiiDTDTDiciniciciiicicc",
+                "procedure_occurrence" = "iiiDTiiiiiicic",
+                "device_exposure" = "iiiDTDTiciiiici",
+                "measurement" = "iiiDTciiniinniiicicc",
+                "observation" = "iiiDTinciiiiiicicciiT",
+                "death" = "iDTiici",
+                "note" = "iiiiDTiicciiiiic",
+                "note_nlp" = "iiiccciicDTccc",
+                "specimen" = "iiiiDTniiiccccc",
+                "fact_relationship" = "iiiii",
+                "location" = "icccccccnn",
+                "location_hisTory" = "iiciDD",
+                "care_site" = "iciicc",
+                "provider" = "iccciiiiccici",
+                "payer_plan_period" = "iiiDDiciiciiciicicici",
+                "cost" = "iiiiiiicinDDDiicci",
+                "drug_era" = "iiiTTii",
+                "dose_era" = "iiiinTT",
+                "condition_era" = "iiiTTi"
+              )
+              if (table == "person" & omop_version %in% c("5.3", "5.4")) col_types <- "iiiiiTiiiiiccicici"
+              if (table == "observation" & omop_version == "5.3") col_types <-  "iiiDTinciiiiiicicc"
+              if (table == "observation" & omop_version == "5.4") col_types <-  "iiiDTinciiiiiicicccii"
+              if (table == "location" & omop_version == "5.3") col_types <-  "iccccccc"
+              if (table == "drug_era" & omop_version %in% c("5.3", "5.4")) col_types <- "iiiDDii"
+              if (table == "dose_era" & omop_version %in% c("5.3", "5.4")) col_types <- "iiiinDD"
+              if (table == "condition_era" & omop_version %in% c("5.3", "5.4")) col_types <- "iiiDDi"
+              
+              d[[table]] <- readr::read_csv(table_file_path, col_types = col_types)
+            }
           }
         }
       }
