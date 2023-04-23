@@ -7,10 +7,10 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_thesaurus_ui <- function(id = character(), i18n = character()){
+mod_vocabularies_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
-  cards <- c("thesaurus_items_card", "thesaurus_categories_card", "thesaurus_conversions_card", "thesaurus_mapping_card")
+  cards <- c("vocabularies_items_card", "vocabularies_mapping_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
@@ -23,7 +23,7 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
     shiny.fluent::reactOutput(ns("help_panel")),
     shiny.fluent::reactOutput(ns("help_modal")),
     shiny.fluent::Breadcrumb(items = list(
-      list(key = "thesaurus_main", text = i18n$t("thesaurus"))
+      list(key = "vocabularies_main", text = i18n$t("vocabularies"))
     ), maxDisplayedItems = 3),
     
     # --- --- -- -- --
@@ -34,8 +34,8 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
       div(id = ns("menu"),
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
-          shiny.fluent::PivotItem(id = "thesaurus_items_card", itemKey = "thesaurus_items_card", headerText = i18n$t("concepts")),
-          shiny.fluent::PivotItem(id = "thesaurus_mapping_card", itemKey = "thesaurus_mapping_card", headerText = i18n$t("concepts_mapping"))
+          shiny.fluent::PivotItem(id = "vocabularies_items_card", itemKey = "vocabularies_items_card", headerText = i18n$t("concepts")),
+          shiny.fluent::PivotItem(id = "vocabularies_mapping_card", itemKey = "vocabularies_mapping_card", headerText = i18n$t("concepts_mapping"))
         )
       )
     ),
@@ -52,26 +52,13 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
     
     shinyjs::hidden(
       div(
-        id = ns("thesaurus_items_card"),
+        id = ns("vocabularies_items_card"),
         make_card(i18n$t("concepts"),
           div(
-            # shiny.fluent::Pivot(
-            #   onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-thesaurus_items_pivot', item.props.id)")),
-            #   shiny.fluent::PivotItem(id = "thesaurus_items_table_view", itemKey = "thesaurus_items_table_view", headerText = i18n$t("datatable_view")),
-            #   shiny.fluent::PivotItem(id = "thesaurus_items_tree_view", itemKey = "thesaurus_items_tree_view", headerText = i18n$t("tree_view"))
-            # ),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_combobox(i18n = i18n, ns = ns, label = "thesaurus", id = "thesaurus", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-              # conditionalPanel(
-                # condition = "input.thesaurus != null", ns = ns,
+              make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "vocabulary", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
                 div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
                   shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"),
-                # conditionalPanel(
-                #   condition = "input.thesaurus_items_pivot == 'thesaurus_items_tree_view'", ns = ns,
-                #   div(strong(i18n$t("unroll_tree"), style = "display:block; padding-bottom:12px;"),
-                #     shiny.fluent::Toggle.shinyInput(ns("unroll_tree"), value = TRUE), style = "margin-top:15px;")
-                # )
-              # ),
               style = "position:relative; z-index:1; width:800px;"
             ),
             conditionalPanel(
@@ -81,83 +68,13 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
               conditionalPanel(
                 condition = "input.thesaurus != null", ns = ns,
                 shiny.fluent::PrimaryButton.shinyInput(ns("save_thesaurus_items"), i18n$t("save")),
-                uiOutput(ns("thesaurus_datatable_selected_item"))
+                uiOutput(ns("vocabulary_datatable_selected_item"))
               )
-            )#,
-            # conditionalPanel(
-            #   condition = "input.thesaurus_items_pivot == 'thesaurus_items_tree_view'", ns = ns, br(),
-            #   div(
-            #     div(
-            #       shinyTree::shinyTree(
-            #         ns("thesaurus_items_tree"),
-            #         search = FALSE,
-            #         checkbox = FALSE,
-            #         dragAndDrop = FALSE,
-            #         theme = "proton",
-            #         themeIcons = FALSE,
-            #         wholerow = FALSE,
-            #         stripes = FALSE,
-            #         animation = 100,
-            #         contextmenu = FALSE,
-            #         unique = FALSE,
-            #         types =
-            #           "{
-            #             '#': { 'max_children' : 2, 'max_depth' : 6, 'valid_children' : ['root'] },
-            #             'root' : { 'valid_children' : ['file'] },
-            #             'default' : { 'valid_children' : ['default','file'] },
-            #             'file' : { 'icon' : 'fa fa-file', 'valid_children' : [] }
-            #           }"
-            #       ),
-            #       style = "width:45%; float:left;"
-            #     ),
-            #     div(uiOutput(ns("thesaurus_tree_selected_item")), style = "width:50%; float:right;")
-            #   )
-            # )
+            )
           )
-        ), br(),
-        #shinyjs::hidden(
-          div(shinyTree::shinyTree(ns("tree")))
-        #)
+        ), br()
       )
     ),
-    
-    # --- --- --- --- -- -
-    # Categories card ----
-    # --- --- --- --- -- -
-    
-    # shinyjs::hidden(
-    #   div(
-    #     id = ns("thesaurus_categories_card"),
-    #     make_card(i18n$t("categories"),
-    #       div(
-    #         
-    #       )
-    #     ), br()
-    #   )
-    # ),
-    
-    # --- --- --- --- --- -
-    # Conversions card ----
-    # --- --- --- --- --- -
-    
-    # shinyjs::hidden(
-    #   div(
-    #     id = ns("thesaurus_conversions_card"),
-    #     make_card(i18n$t("conversions"),
-    #       div(
-    #         div(shiny.fluent::MessageBar(i18n$t("in_progress"), messageBarType = 5)), br(),
-    #         div(shiny.fluent::MessageBar(
-    #           div(
-    #             strong("A faire"),
-    #             p("Il sera possible de convertir les variables dans différentes unités"),
-    #             p("Faut-il laisser possible le changement de l'unité, en changeant le texte, dans \"Tous les items\" ?")
-    #           ),
-    #           messageBarType = 0)
-    #         )
-    #       )
-    #     ), br()
-    #   )
-    # ),
     
     # --- --- --- -- --
     # Mapping card ----
@@ -165,34 +82,34 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
     
     shinyjs::hidden(
       div(
-        id = ns("thesaurus_mapping_card"),
+        id = ns("vocabularies_mapping_card"),
         make_card(i18n$t("concepts_mapping"),
           div(
             shiny.fluent::reactOutput(ns("mappings_delete_confirm")),
             div(
               shiny.fluent::Pivot(
                 onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-mapping_current_tab', item.props.id)")),
-                shiny.fluent::PivotItem(id = "thesaurus_mapping_add", itemKey = "thesaurus_mapping_add", headerText = i18n$t("add")),
-                shiny.fluent::PivotItem(id = "thesaurus_mapping_management", itemKey = "thesaurus_mapping_management", headerText = i18n$t("evaluate_and_edit"))
+                shiny.fluent::PivotItem(id = "vocabularies_mapping_add", itemKey = "vocabularies_mapping_add", headerText = i18n$t("add")),
+                shiny.fluent::PivotItem(id = "vocabularies_mapping_management", itemKey = "vocabularies_mapping_management", headerText = i18n$t("evaluate_and_edit"))
               )
             ),
-            conditionalPanel(condition = "input.mapping_current_tab == null || input.mapping_current_tab == 'thesaurus_mapping_add'", ns = ns,
+            conditionalPanel(condition = "input.mapping_current_tab == null || input.mapping_current_tab == 'vocabularies_mapping_add'", ns = ns,
               div(
                 div(
                   div(
-                    make_combobox(i18n = i18n, ns = ns, label = "thesaurus1", id = "thesaurus_mapping1", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-                    DT::DTOutput(ns("thesaurus_mapping1_dt"))
+                    make_combobox(i18n = i18n, ns = ns, label = "vocabulary1", id = "vocabulary_mapping1", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+                    DT::DTOutput(ns("vocabulary_mapping1_dt"))
                   ),
                   div(
-                    make_combobox(i18n = i18n, ns = ns, label = "thesaurus2", id = "thesaurus_mapping2", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-                    DT::DTOutput(ns("thesaurus_mapping2_dt"))
+                    make_combobox(i18n = i18n, ns = ns, label = "vocabulary2", id = "vocabulary_mapping2", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+                    DT::DTOutput(ns("vocabulary_mapping2_dt"))
                   ),
                   style = "width:100%; display:grid; grid-template-columns:1fr 1fr; grid-gap:20px;"
                 ), br(),
-                conditionalPanel(condition = "input.thesaurus_mapping1 != null && input.thesaurus_mapping2 != null", ns = ns, 
+                conditionalPanel(condition = "input.vocabulary_mapping1 != null && input.vocabulary_mapping2 != null", ns = ns, 
                   br(),
                   div(
-                    div(uiOutput(ns("thesaurus_selected_item_mapping1")), style = "border:dashed 1px; padding:10px;"),
+                    div(uiOutput(ns("vocabulary_selected_item_mapping1")), style = "border:dashed 1px; padding:10px;"),
                     div(
                       make_dropdown(i18n = i18n, ns = ns, label = "item1_is", id = "mapping_type", width = "300px", multiSelect = FALSE,
                         options = list(
@@ -231,13 +148,13 @@ mod_thesaurus_ui <- function(id = character(), i18n = character()){
 #' thesaurus Server Functions
 #'
 #' @noRd 
-mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), 
+mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), 
   i18n = character(), language = "en", perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     if (perf_monitoring) monitor_perf(r = r, action = "start")
-    if (debug) print(paste0(Sys.time(), " - mod_thesaurus - start"))
+    if (debug) print(paste0(Sys.time(), " - mod_vocabularies - start"))
     
     # Close message bar
     sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
@@ -246,7 +163,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     # Show or hide cards ----
     # --- --- --- --- --- ---
     
-    cards <- c("thesaurus_items_card", "thesaurus_categories_card", "thesaurus_conversions_card", "thesaurus_mapping_card")
+    cards <- c("vocabularies_items_card", "vocabularies_mapping_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     # --- --- --- --- --- -
@@ -261,45 +178,38 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     # Help for this page ----
     # --- --- --- --- --- ---
     
-    observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r$help_thesaurus_open_panel <- TRUE)
-    observeEvent(input$hide_panel, r$help_thesaurus_open_panel <- FALSE)
+    observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r$help_vocabularies_open_panel <- TRUE)
+    observeEvent(input$hide_panel, r$help_vocabularies_open_panel <- FALSE)
     
-    r$help_thesaurus_open_panel_light_dismiss <- TRUE
-    observeEvent(input$show_modal, r$help_thesaurus_open_modal <- TRUE)
+    r$help_vocabularies_open_panel_light_dismiss <- TRUE
+    observeEvent(input$show_modal, r$help_vocabularies_open_modal <- TRUE)
     observeEvent(input$hide_modal, {
-      r$help_thesaurus_open_modal <- FALSE
-      r$help_thesaurus_open_panel_light_dismiss <- TRUE
+      r$help_vocabularies_open_modal <- FALSE
+      r$help_vocabularies_open_panel_light_dismiss <- TRUE
     })
     
     observeEvent(shiny.router::get_page(), {
       if (debug) print(paste0(Sys.time(), " - mod_scripts - ", id, " - observer shiny_router::change_page"))
       
       # Close help pages when page changes
-      r$help_thesaurus_open_panel <- FALSE
-      r$help_thesaurus_open_modal <- FALSE
+      r$help_vocabularies_open_panel <- FALSE
+      r$help_vocabularies_open_modal <- FALSE
     })
     
     sapply(1:10, function(i){
-      observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_thesaurus_page_", i)]] <- Sys.time())
+      observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_vocabularies_page_", i)]] <- Sys.time())
     })
     
-    help_thesaurus(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
+    help_vocabularies(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
     
     # --- --- --- --- --- -- -
     # Thesaurus items ----
     # --- --- --- --- --- -- -
     
-    # Delete when "thesaurus_items_card" will be added in r$user_accesses
-    
-    # observeEvent(input$current_tab, {
-    #   sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
-    #   shinyjs::show(input$current_tab)
-    # })
-    
     observeEvent(r$selected_dataset, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$selected_dataset 2"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$selected_dataset 2"))
       
       # Show first card & hide "choose a dataset" card
       shinyjs::hide("choose_a_dataset_card")
@@ -315,39 +225,40 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # Only one ID, so it's the beginning and the end
       # Last ID, so it's the end
       # ID between begin and last, so separated by commas
-      thesaurus <- r$thesaurus %>% 
+      vocabularies <- r$vocabulary %>% 
         dplyr::filter(
           grepl(paste0("^", data_source, "$"), data_source_id) | 
             grepl(paste0(", ", data_source, "$"), data_source_id) | 
             grepl(paste0("^", data_source, ","), data_source_id) |
             grepl(paste0(", ", data_source, ","), data_source_id)
-        ) %>% dplyr::arrange(name)
-      thesaurus_options <- convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", i18n = i18n)
-      for (var in c("thesaurus", "thesaurus_mapping1", "thesaurus_mapping2")) shiny.fluent::updateComboBox.shinyInput(session, var, options = thesaurus_options, value = NULL)
+        ) %>% dplyr::arrange(vocabulary_name)
+      vocabulary_options <- convert_tibble_to_list(data = vocabularies, key_col = "id", text_col = "vocabulary_name", i18n = i18n)
+      print(vocabulary_options)
+      for (var in c("vocabulary", "vocabulary_mapping1", "vocabulary_mapping2")) shiny.fluent::updateComboBox.shinyInput(session, var, options = vocabulary_options, value = NULL)
       
-      if (length(r$dataset_thesaurus_items_temp) > 0) r$dataset_thesaurus_items_temp <- r$dataset_thesaurus_items_temp %>% dplyr::slice(0)
+      if (length(r$dataset_vocabulary_items_temp) > 0) r$dataset_vocabulary_items_temp <- r$dataset_vocabulary_items_temp %>% dplyr::slice(0)
       
       # Reset UI of selected item
-      output$thesaurus_datatable_selected_item <- renderUI("")
+      output$vocabulary_datatable_selected_item <- renderUI("")
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$selected_dataset 2"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$selected_dataset 2"))
     })
     
     observeEvent(input$show_only_used_items, {
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$show_only_used_items"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$show_only_used_items"))
       r$reload_thesaurus_datatable <- Sys.time()
     })
-    observeEvent(input$thesaurus, {
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus"))
-      r$reload_thesaurus_data <- Sys.time()
+    observeEvent(input$vocabulary, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary"))
+      r$reload_vocabulary_data <- Sys.time()
     })
     
-    observeEvent(r$reload_thesaurus_data, {
+    observeEvent(r$reload_vocabulary_data, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$reload_thesaurus_data"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$reload_vocabulary_data"))
       
-      req(length(input$thesaurus$key) > 0)
+      req(length(input$vocabulary$key) > 0)
       
       sql <- glue::glue_sql(paste0(
         "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted ",
@@ -472,21 +383,21 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       r$reload_thesaurus_datatable <- Sys.time()
       # r$reload_thesaurus_tree <- Sys.time()
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$reload_thesaurus_data"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$reload_thesaurus_data"))
     })
     
     observeEvent(r$reload_thesaurus_datatable, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$reload_thesaurus_datatable"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$reload_thesaurus_datatable"))
       
       req(nrow(r$dataset_thesaurus_items) > 0)
       
-      r$dataset_thesaurus_items_temp <- r$dataset_thesaurus_items %>%
+      r$dataset_vocabulary_items_temp <- r$dataset_thesaurus_items %>%
         dplyr::mutate(modified = FALSE) %>%
         dplyr::mutate_at("item_id", as.character)
       
-      if (input$show_only_used_items) r$dataset_thesaurus_items_temp <- r$dataset_thesaurus_items %>%
+      if (input$show_only_used_items) r$dataset_vocabulary_items_temp <- r$dataset_thesaurus_items %>%
         dplyr::filter(count_items_rows > 0) %>%
         dplyr::mutate(modified = FALSE) %>%
         dplyr::mutate_at("item_id", as.character)
@@ -501,7 +412,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       hidden_cols <- c("id", "thesaurus_id", "item_id", "datetime", "deleted", "modified", "action", "parent_item_id")
       
       # Render datatable
-      render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$dataset_thesaurus_items_temp,
+      render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$dataset_vocabulary_items_temp,
         output_name = "thesaurus_items", col_names = col_names,
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
         searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
@@ -509,14 +420,14 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # Create a proxy for datatatable
       r$dataset_thesaurus_items_datatable_proxy <- DT::dataTableProxy("thesaurus_items", deferUntilFlush = FALSE)
  
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$reload_thesaurus_datatable"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$reload_thesaurus_datatable"))
     })
     
     # Render shinyTree
     # output$thesaurus_items_tree <- shinyTree::renderTree({
     #   
     #   if (perf_monitoring) monitor_perf(r = r, action = "start")
-    #   if (debug) print(paste0(Sys.time(), " - mod_thesaurus - output$thesaurus_items_tree"))
+    #   if (debug) print(paste0(Sys.time(), " - mod_vocabularies - output$thesaurus_items_tree"))
     #   
     #   r$reload_thesaurus_tree
     #   
@@ -524,42 +435,42 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     #   if (input$show_only_used_items) r$dataset_thesaurus_items_tree_filtered
     #   else r$dataset_thesaurus_items_tree_not_filtered
     #   
-    #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - output$thesauurs_items_tree"))
+    #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - output$thesauurs_items_tree"))
     # })
     
     # Updates on datatable data
     observeEvent(input$thesaurus_items_cell_edit, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_items_cell_edit"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$thesaurus_items_cell_edit"))
       
       edit_info <- input$thesaurus_items_cell_edit
-      r$dataset_thesaurus_items_temp <- DT::editData(r$dataset_thesaurus_items_temp, edit_info, rownames = FALSE)
+      r$dataset_vocabulary_items_temp <- DT::editData(r$dataset_vocabulary_items_temp, edit_info, rownames = FALSE)
       
       # Store that this row has been modified
-      r$dataset_thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
+      r$dataset_vocabulary_items_temp[[edit_info$row, "modified"]] <- TRUE
     })
     
     # Save updates
     observeEvent(input$save_thesaurus_items, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$save_thesaurus_items"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$save_thesaurus_items"))
       
       req(input$thesaurus)
       
       # Reset dataset_thesaurus_user_items variable, with updates
       r$dataset_thesaurus_user_items <- r$dataset_thesaurus_items %>% dplyr::mutate(user_id = r$user_id, .after = id) %>% dplyr::select(-parent_item_id)
-      r$dataset_thesaurus_user_items_temp <- r$dataset_thesaurus_items_temp %>% dplyr::mutate(user_id = r$user_id, .after = id) %>% dplyr::select(-parent_item_id)
+      r$dataset_thesaurus_user_items_temp <- r$dataset_vocabulary_items_temp %>% dplyr::mutate(user_id = r$user_id, .after = id) %>% dplyr::select(-parent_item_id)
       
       save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items_users", r_table = "dataset_thesaurus_user_items", duplicates_allowed = TRUE, i18n = i18n)
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer input$save_thesaurus_items"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer input$save_thesaurus_items"))
     })
     
     # When a tree element is selected
     observeEvent(input$thesaurus_items_tree, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_items_tree"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$thesaurus_items_tree"))
       
       r$thesaurus_items_selected_item_id <- get_selected(input$thesaurus_items_tree, format = "classid") %>%
         lapply(attr, "stid") %>% unlist()
@@ -569,16 +480,16 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     # When a row is selected
     observeEvent(input$thesaurus_items_rows_selected, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_items_rows_selected"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$thesaurus_items_rows_selected"))
       
-      r$thesaurus_items_selected_item_id <- r$dataset_thesaurus_items_temp[input$thesaurus_items_rows_selected, ] %>% dplyr::pull(item_id)
+      r$thesaurus_items_selected_item_id <- r$dataset_vocabulary_items_temp[input$thesaurus_items_rows_selected, ] %>% dplyr::pull(item_id)
       r$thesaurus_items_selected_item_trigger <- Sys.time()
     })
     
     observeEvent(r$thesaurus_items_selected_item_trigger, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$thesaurus_items_selected_item_trigger"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$thesaurus_items_selected_item_trigger"))
       
       style <- "display:inline-block; width:200px; font-weight:bold;"
       
@@ -589,7 +500,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       if (length(r$thesaurus_items_selected_item_id) == 0) output[[paste0("thesaurus_", prefix, "_selected_item")]] <- renderUI("") 
       req(length(r$thesaurus_items_selected_item_id) > 0)
 
-      if (prefix == "datatable") thesaurus_item <- r$dataset_thesaurus_items_temp %>% dplyr::filter(item_id == r$thesaurus_items_selected_item_id)
+      if (prefix == "datatable") thesaurus_item <- r$dataset_vocabulary_items_temp %>% dplyr::filter(item_id == r$thesaurus_items_selected_item_id)
       if (prefix == "tree") thesaurus_item <- r$dataset_thesaurus_items %>% dplyr::filter(item_id == r$thesaurus_items_selected_item_id)
 
       if (nrow(thesaurus_item) == 0) output[[paste0("thesaurus_", prefix, "_selected_item")]] <- renderUI("")    
@@ -721,13 +632,13 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         style = "border:dashed 1px; padding:10px;"
       )))
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$thesaurus_items_seeclted_item_trigger"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$thesaurus_items_seeclted_item_trigger"))
     })
     
     observeEvent(input$datatable_show_plots, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$datatable_show_plots"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$datatable_show_plots"))
       
       if (is.null(input$thesaurus_items_pivot)) prefix <- "datatable"
       else if (input$thesaurus_items_pivot == "thesaurus_items_table_view") prefix <- "datatable"
@@ -735,7 +646,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       thesaurus_item <- r$dataset_thesaurus_items %>% dplyr::filter(item_id == r$thesaurus_items_selected_item_id)
       
-      # thesaurus_item <- r$dataset_thesaurus_items_temp[input$thesaurus_items_rows_selected, ] %>% dplyr::mutate_at("item_id", as.integer)
+      # thesaurus_item <- r$dataset_vocabulary_items_temp[input$thesaurus_items_rows_selected, ] %>% dplyr::mutate_at("item_id", as.integer)
       thesaurus_name <- r$thesaurus %>% dplyr::filter(id == thesaurus_item$thesaurus_id) %>% dplyr::pull(name)
       
       all_values <- d$labs_vitals %>% dplyr::filter(thesaurus_name == !!thesaurus_name) %>%
@@ -778,7 +689,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       #   }
       # }
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer input$datatable_show_plots"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer input$datatable_show_plots"))
     })
     
     # --- --- --- --- --
@@ -790,18 +701,18 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # --- --- --- --- --- --
       
       observeEvent(input$thesaurus_mapping1, {
-        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_mapping1"))
+        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$thesaurus_mapping1"))
         r$thesaurus_mapping_reload <- paste0(Sys.time(), "_mapping1")
       })
       observeEvent(input$thesaurus_mapping2, {
-        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_mapping2"))
+        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$thesaurus_mapping2"))
         r$thesaurus_mapping_reload <- paste0(Sys.time(), "_mapping2")
       })
       
       observeEvent(r$thesaurus_mapping_reload, {
         
         if (perf_monitoring) monitor_perf(r = r, action = "start")
-        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$thesaurus_mapping_reload"))
+        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$thesaurus_mapping_reload"))
         
         if (grepl("mapping1", r$thesaurus_mapping_reload)) mapping <- "mapping1"
         else if (grepl("mapping2", r$thesaurus_mapping_reload)) mapping <- "mapping2"
@@ -880,23 +791,23 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
           searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$thesaurus_mapping_reload"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$thesaurus_mapping_reload"))
       })
       
       # When a row is selected
       observeEvent(input$thesaurus_mapping1_dt_rows_selected, {
-        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_mapping1_dt_rows_selected"))
+        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$thesaurus_mapping1_dt_rows_selected"))
         r$thesaurus_mapping_item_info <- paste0(Sys.time(), "_mapping1")
       })
       observeEvent(input$thesaurus_mapping2_dt_rows_selected, {
-        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$thesaurus_mapping2_dt_rows_selected"))
+        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$thesaurus_mapping2_dt_rows_selected"))
         r$thesaurus_mapping_item_info <- paste0(Sys.time(), "_mapping2")
       })
       
       observeEvent(r$thesaurus_mapping_item_info, {
         
         if (perf_monitoring) monitor_perf(r = r, action = "start")
-        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$thesaurus_mapping_item_info"))
+        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$thesaurus_mapping_item_info"))
         
         if (grepl("mapping1", r$thesaurus_mapping_item_info)) mapping <- "mapping1"
         else if (grepl("mapping2", r$thesaurus_mapping_item_info)) mapping <- "mapping2"
@@ -1019,7 +930,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
           values_text
         )))
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$thesaurus_mapping_item_info"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$thesaurus_mapping_item_info"))
       })
       
       # When a mapping id added
@@ -1027,7 +938,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       observeEvent(input$add_mapping, {
         
         if (perf_monitoring) monitor_perf(r = r, action = "start")
-        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$add_mapping"))
+        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$add_mapping"))
         
         req(length(input$thesaurus_mapping1_dt_rows_selected) > 0)
         req(length(input$thesaurus_mapping2_dt_rows_selected) > 0)
@@ -1109,7 +1020,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
 
         DT::replaceData(r$dataset_thesaurus_items_evaluate_mappings_datatable_proxy, r$dataset_thesaurus_items_evaluate_mappings, resetPaging = FALSE, rownames = FALSE)
 
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer input$add_mapping"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer input$add_mapping"))
       })
       
       # Table to summarize added mappings
@@ -1117,7 +1028,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       observeEvent(r$selected_dataset, {
         
         if (perf_monitoring) monitor_perf(r = r, action = "start")
-        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$selected_dataset 1"))
+        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$selected_dataset 1"))
         
         r$thesaurus_added_mappings <- tibble::tibble(id = integer(), category = character(), thesaurus_id_1 = integer(), item_id_1 = integer(), 
           thesaurus_id_2 = integer(), item_id_2 = integer(), relation_id = integer(), creator_id = integer(), datetime = character(), deleted = logical())
@@ -1131,13 +1042,13 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         r$reload_thesaurus_added_mappings_datatable <- Sys.time()
         r$reload_thesaurus_evaluate_mappings_datatable <- Sys.time()
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$selected_dataset 1"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$selected_dataset 1"))
       })
       
       observeEvent(r$reload_thesaurus_added_mappings_datatable, {
         
         if (perf_monitoring) monitor_perf(r = r, action = "start")
-        if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$reload_thesaurus_added_mappings_datatable"))
+        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$reload_thesaurus_added_mappings_datatable"))
         
         r$thesaurus_added_mappings_temp <- r$thesaurus_added_mappings %>%
           dplyr::mutate_at(c("item_id_1", "item_id_2"), as.character) %>%
@@ -1161,7 +1072,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
         # Create a proxy for datatatable
         r$thesaurus_added_mappings_datatable_proxy <- DT::dataTableProxy("thesaurus_added_mappings", deferUntilFlush = FALSE)
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$reload_thesaurus_added_mappings_datatable"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$reload_thesaurus_added_mappings_datatable"))
       })
       
     # --- --- --- --- - --
@@ -1173,7 +1084,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     observeEvent(r$reload_thesaurus_evaluate_mappings_datatable, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$reload_thesaurus_evaluate_mappings_datatable"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$reload_thesaurus_evaluate_mappings_datatable"))
       
       # Get all items mappings
       
@@ -1300,19 +1211,19 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # Create a proxy for datatatable
       r$dataset_thesaurus_items_evaluate_mappings_datatable_proxy <- DT::dataTableProxy("thesaurus_evaluate_mappings", deferUntilFlush = FALSE)
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$reload_thesaurus_evaluate_mappings_datatable"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$reload_thesaurus_evaluate_mappings_datatable"))
     })
       
     # When an evaluation button is clicked
       
     observeEvent(input$item_mapping_evaluated_positive, {
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$item_mapping_evaluated_positive"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$item_mapping_evaluated_positive"))
       r$item_mapping_evaluation_type <- "positive"
       r$item_mapping_evaluation_update <- Sys.time()
     })
     
     observeEvent(input$item_mapping_evaluated_negative, {
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$item_mapping_evaluated_positive"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$item_mapping_evaluated_positive"))
       r$item_mapping_evaluation_type <- "negative"
       r$item_mapping_evaluation_update <- Sys.time()
     })
@@ -1320,7 +1231,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     observeEvent(r$item_mapping_evaluation_update, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$item_mapping_evaluation_update"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$item_mapping_evaluation_update"))
       
       prefix <- r$item_mapping_evaluation_type
       new_evaluation_id <- switch(r$item_mapping_evaluation_type, "positive" = 1L, "negative" = 2L)
@@ -1392,7 +1303,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       # Reload datatable
       DT::replaceData(r$dataset_thesaurus_items_evaluate_mappings_datatable_proxy, r$dataset_thesaurus_items_evaluate_mappings, resetPaging = FALSE, rownames = FALSE)
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer r$item_mapping_evaluation_update"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$item_mapping_evaluation_update"))
     })
     
     # Delete a row or multiple rows in datatable
@@ -1420,7 +1331,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     
     observeEvent(input$item_mapping_deleted_pressed, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$item_mapping_deleted_pressed"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$item_mapping_deleted_pressed"))
 
       r$delete_mappings <- as.integer(substr(input$item_mapping_deleted_pressed, nchar("delete_") + 1, 100))
       r[[mappings_delete_variable]] <- TRUE
@@ -1433,7 +1344,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     
     observeEvent(input$mapping_delete_selection, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$mapping_delete_selection"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$mapping_delete_selection"))
 
       req(length(input$thesaurus_evaluate_mappings_rows_selected) > 0)
 
@@ -1445,7 +1356,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     
     observeEvent(r[[mappings_reload_variable]], {
       
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer r$reload_mappings_evals"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$reload_mappings_evals"))
 
       # Reload datatable
       DT::replaceData(r$dataset_thesaurus_items_evaluate_mappings_datatable_proxy, r$dataset_thesaurus_items_evaluate_mappings, resetPaging = FALSE, rownames = FALSE)
@@ -1456,7 +1367,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
     observeEvent(input$save_mappings_evaluation, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_thesaurus - observer input$save_mappings_evaluation"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$save_mappings_evaluation"))
       
       # Update database
       
@@ -1482,7 +1393,7 @@ mod_thesaurus_server <- function(id = character(), r = shiny::reactiveValues(), 
       
       show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_thesaurus - observer input$save_mappings_evaluation"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer input$save_mappings_evaluation"))
     })
     
     # When a row is selected

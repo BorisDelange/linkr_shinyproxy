@@ -33,7 +33,7 @@ mod_page_main_ui <- function(id = character(), language = "en", i18n = character
   # Vocabularies ----
   # --- --- --- --- -
   
-  if (id == "vocabularies") mod_thesaurus_ui(id = "vocabularies", i18n = i18n) -> result
+  if (id == "vocabularies") mod_vocabularies_ui(id = "vocabularies", i18n = i18n) -> result
  
   # --- --- -- -
   # Scripts ----

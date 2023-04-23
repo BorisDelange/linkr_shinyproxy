@@ -100,7 +100,7 @@ app_server <- function(router, language = "en", app_folder = character(),
     
     # Add default values in database if database is empty
     # Load all data from database
-    # Don't load thesaurus_items, load it only when a thesaurus is selected
+    # Don't load concept, load it only when a vocabulary is selected
     # Don't load cache table neither
     
     observeEvent(r$db, {
@@ -208,8 +208,8 @@ app_server <- function(router, language = "en", app_folder = character(),
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_studies")
       mod_my_subsets_server("my_subsets", r, d, m, i18n, language, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_subsets")
-      mod_thesaurus_server("thesaurus", r, d, i18n, language, perf_monitoring, debug)
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - thesaurus")
+      mod_vocabularies_server("vocabularies", r, d, i18n, language, perf_monitoring, debug)
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - vocabularies")
       mod_scripts_server("scripts", r, d, m, language, i18n, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - scripts")
       

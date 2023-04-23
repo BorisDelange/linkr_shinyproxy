@@ -1,19 +1,19 @@
-help_thesaurus <- function(output, r = shiny::reactiveValues(), id = character(), language = "en", i18n = character(), ns = character()){
+help_vocabularies <- function(output, r = shiny::reactiveValues(), id = character(), language = "en", i18n = character(), ns = character()){
   
   output$help_panel <- shiny.fluent::renderReact({
     
     shiny.fluent::Panel(
       headerText = i18n$t("help"),
-      isOpen = r$help_thesaurus_open_panel,
+      isOpen = r$help_vocabularies_open_panel,
       br(),
-      strong(i18n$t("thesaurus_and_concepts")), br(), br(),
-      shiny.fluent::Link(i18n$t("whats_a_thesaurus"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_1', Math.random()); }"))), br(), br(),
-      shiny.fluent::Link(i18n$t("thesaurus_concepts"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_2', Math.random()); }"))), br(), br(),
-      strong(i18n$t("thesaurus_concepts_mapping")), br(), br(),
+      strong(i18n$t("vocabularies_and_concepts")), br(), br(),
+      shiny.fluent::Link(i18n$t("whats_a_vocabulary"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_1', Math.random()); }"))), br(), br(),
+      shiny.fluent::Link(i18n$t("vocabularies_concepts"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_2', Math.random()); }"))), br(), br(),
+      strong(i18n$t("vocabularies_concepts_mapping")), br(), br(),
       shiny.fluent::Link(i18n$t("whats_a_concept_mapping"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_3', Math.random()); }"))), br(), br(),
       shiny.fluent::Link(i18n$t("add_and_evaluate_concept_mapping"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_4', Math.random()); }"))), br(), br(),
-      isLightDismiss = r$help_thesaurus_open_panel_light_dismiss,
-      isBlocking = r$help_thesaurus_open_panel_light_dismiss,
+      isLightDismiss = r$help_vocabularies_open_panel_light_dismiss,
+      isBlocking = r$help_vocabularies_open_panel_light_dismiss,
       onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_panel', Math.random()); }")),
       onLightDismissClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_panel', Math.random()); }"))
     )
@@ -22,37 +22,37 @@ help_thesaurus <- function(output, r = shiny::reactiveValues(), id = character()
   output$help_modal <- shiny.fluent::renderReact({
     
     shiny.fluent::Modal(
-      isOpen = r$help_thesaurus_open_modal, dragOptions = TRUE, isModeless = TRUE, topOffsetFixed = TRUE,
+      isOpen = r$help_vocabularies_open_modal, dragOptions = TRUE, isModeless = TRUE, topOffsetFixed = TRUE,
       onLightDismissClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_modal_2', Math.random()); }")),
       div(
         style = "width: 1000px; padding: 15px 10px 0px 15px;",
         shiny.fluent::Stack(tokens = list(childrenGap = "10px"),
           div(style = list(display = "flex"),
-            shiny.fluent::Text(r$help_thesaurus_modal_title, variant = "large"),
+            shiny.fluent::Text(r$help_vocabularies_modal_title, variant = "large"),
             div(style = list(flexGrow = 1)),
             shiny.fluent::IconButton.shinyInput(ns("hide_modal"), iconProps = list(iconName = "Cancel")),
           ),
-          r$help_thesaurus_modal_text
+          r$help_vocabularies_modal_text
         )
       )
     )
   })
   
   load_help_page <- function(r){
-    r$help_thesaurus_open_modal <- TRUE
-    r$help_thesaurus_open_panel_light_dismiss <- FALSE
+    r$help_vocabularies_open_modal <- TRUE
+    r$help_vocabularies_open_panel_light_dismiss <- FALSE
   }
   
-  # What's a thesaurus ?
+  # What's a vocabulary ?
   
-  observeEvent(r$help_thesaurus_page_1, {
+  observeEvent(r$help_vocabularies_page_1, {
     
     load_help_page(r)
     
-    r$help_thesaurus_modal_title <- i18n$t("whats_a_thesaurus")
+    r$help_vocabularies_modal_title <- i18n$t("whats_a_vocabulary")
     
     if (language == "fr"){
-      r$help_thesaurus_modal_text <- div(
+      r$help_vocabularies_modal_text <- div(
         p(strong("1) Thésaurus")),
         p("Un ", strong("thésaurus"), " est un ", strong("dictionnaire de concepts"), ", associant des ", strong("codes"), " à des ", strong("noms"), "."),
         p("Quelques exemples de concepts issus d'un thésaurus :"),
@@ -85,10 +85,10 @@ help_thesaurus <- function(output, r = shiny::reactiveValues(), id = character()
     }
     
     if (language == "en"){
-      r$help_thesaurus_modal_text <- div(
-        p(strong("1) Thesaurus")),
-        p("A ", strong("thesaurus"), " is a ", strong("dictionary of concepts"), ", associating ", strong("codes"), " with ", strong("names"), "."),
-        p("Some examples of concepts from a thesaurus :"),
+      r$help_vocabularies_modal_text <- div(
+        p(strong("1) Vocabularies")),
+        p("A ", strong("vocabulary"), " is a ", strong("dictionary of concepts"), ", associating ", strong("codes"), " with ", strong("names"), "."),
+        p("Some examples of concepts from a vocabulary :"),
         tags$ul(
           tags$li("42503 - Heart rate : here, the concept with code 42503 is associated with the name Heart rate."),
           tags$li("800902 - Norepinephrine : here, the concept with code 800902 is associated with the name Norepinephrine.")
@@ -101,8 +101,8 @@ help_thesaurus <- function(output, r = shiny::reactiveValues(), id = character()
           tags$li("patient 311 - datetime 12-02-2022 09:41:33 - concept 800902 - value 1.25"),
           tags$li("Here, the concept with code 800902 (Norepinephrine) is associated with the value 1.25 for patient 311 on the indicated date.", style = "margin-left:20px;")
         ),
-        p(strong("2) Standardized thesaurus")),
-        p("Medical software typically use a thesaurus specific to them."),
+        p(strong("2) Standardized vocabularies")),
+        p("Medical software typically use a vocabulary specific to them."),
         p("Standardized ", strong("thesauri"), " have been created to allow for ", strong("homogenizing"), " data warehouses",
           " and enabling their ", strong("interoperability"), "."),
         p("Some examples of standardized thesauri:"),
@@ -118,16 +118,16 @@ help_thesaurus <- function(output, r = shiny::reactiveValues(), id = character()
     }
   })
   
-  # Thesaurus concepts
+  # Vocabulary concepts
   
-  observeEvent(r$help_thesaurus_page_2, {
+  observeEvent(r$help_vocabularies_page_2, {
     
     load_help_page(r)
     
-    r$help_thesaurus_modal_title <- i18n$t("thesaurus_concepts")
+    r$help_vocabularies_modal_title <- i18n$t("vocabulary_concepts")
     
     if (language == "fr"){
-      r$help_thesaurus_modal_text <- div(
+      r$help_vocabularies_modal_text <- div(
         p(strong("1) Choisir un thésaurus")),
         p("Depuis l'onglet ", tags$em("Concepts"), ", choisissez un thésaurus dans le menu déroulant."),
         p("L'ensemble des concepts de ce thésaurus est affiché dans le tableau."),
@@ -144,10 +144,10 @@ help_thesaurus <- function(output, r = shiny::reactiveValues(), id = character()
     }
     
     if (language == "en"){
-      r$help_thesaurus_modal_text <- div(
-        p(strong("1) Choosing a thesaurus")),
-        p("From the ", tags$em("Concepts"), " tab, choose a thesaurus from the dropdown menu."),
-        p("All concepts from this thesaurus are displayed in the table."),
+      r$help_vocabularies_modal_text <- div(
+        p(strong("1) Choosing a vocabulary")),
+        p("From the ", tags$em("Concepts"), " tab, choose a vocabulary from the dropdown menu."),
+        p("All concepts from this vocabulary are displayed in the table."),
         p(strong("2) Filtering used concepts")),
         p("You can filter the concepts used in the current dataset by checking the box ", tags$em("Only show concepts used in this dataset"), "."),
         p("The ", tags$em("Patients"), " column indicates the number of patients who have had this concept at least once."),
@@ -163,14 +163,14 @@ help_thesaurus <- function(output, r = shiny::reactiveValues(), id = character()
   
   # What's a concept mapping ?
   
-  observeEvent(r$help_thesaurus_page_3, {
+  observeEvent(r$help_vocabularies_page_3, {
     
     load_help_page(r)
     
-    r$help_thesaurus_modal_title <- i18n$t("whats_a_concept_mapping")
+    r$help_vocabularies_modal_title <- i18n$t("whats_a_concept_mapping")
     
     if (language == "fr"){
-      r$help_thesaurus_modal_text <- div(
+      r$help_vocabularies_modal_text <- div(
         p("Il est fréquent que les différents thésaurus comportent des ", strong("concepts similaires"), "."),
         p("Pour faire en sorte de ", strong("faciliter les requêtes"), " sur les bases de données, nous procédons à un ", strong("alignement de concepts"), "."),
         p("Il s'agit d'indiquer que tel concept de tel thésaurus est lié à tel autre concept de tel autre thésaurus."),
@@ -192,21 +192,21 @@ help_thesaurus <- function(output, r = shiny::reactiveValues(), id = character()
     }
     
     if (language == "en"){
-      r$help_thesaurus_modal_text <- div(
+      r$help_vocabularies_modal_text <- div(
         p("It is common for different thesauri to contain ", strong("similar concepts"), "."),
         p("To facilitate queries on databases, we perform a ", strong("concept alignment"), "."),
-        p("This involves indicating that a concept from one thesaurus is linked to another concept from another thesaurus."),
+        p("This involves indicating that a concept from one vocabulary is linked to another concept from another vocabulary"),
         p("For example:"),
         tags$ul(
-          tags$li("MIMIC-IV Thesaurus, Concept 220045 - Heart rate"),
-          tags$li("LOINC Thesaurus, Concept 8867-4 - Heart rate")
+          tags$li("MIMIC-IV vocabulary, Concept 220045 - Heart rate"),
+          tags$li("LOINC vocabulary, Concept 8867-4 - Heart rate")
         ),
         p("We can ", strong("link"), " these two items with a code indicating that they are ", strong("similar"), "."),
         p("It is also possible to indicate ", strong("hierarchical relationships"), "."),
         p("For example:"),
         tags$ul(
-          tags$li("SNOMED Thesaurus, Concept 102594003 - Electrocardiogram anomaly"),
-          tags$li("SNOMED Thesaurus, Concept 164893009 - Ventricular arrhythmia")
+          tags$li("SNOMED vocabulary, Concept 102594003 - Electrocardiogram anomaly"),
+          tags$li("SNOMED vocabulary, Concept 164893009 - Ventricular arrhythmia")
         ),
         p("We can ", strong("link"), " these two items with a code indicating that the second item is ", strong("included"), " in the first item."),
         br()
@@ -214,16 +214,16 @@ help_thesaurus <- function(output, r = shiny::reactiveValues(), id = character()
     }
   })
   
-  # Add and evaluate a thesaurus concept mapping
+  # Add and evaluate a vocabulary concept mapping
   
-  observeEvent(r$help_thesaurus_page_4, {
+  observeEvent(r$help_vocabularies_page_4, {
     
     load_help_page(r)
     
-    r$help_thesaurus_modal_title <- i18n$t("add_and_evaluate_concept_mapping")
+    r$help_vocabularies_modal_title <- i18n$t("add_and_evaluate_concept_mapping")
     
     if (language == "fr"){
-      r$help_thesaurus_modal_text <- div(
+      r$help_vocabularies_modal_text <- div(
         p(strong("1) Ajouter un alignement de concepts")),
         p("Pour ajouter un alignement de concepts, ", strong("sélectionnez"), " dans les menus déroulants les ", strong("deux thésaurus"), "."),
         p("Vous pouvez filtrer les concepts en faisant une recherche sur le nom."),
@@ -243,12 +243,12 @@ help_thesaurus <- function(output, r = shiny::reactiveValues(), id = character()
     }
     
     if (language == "en"){
-      r$help_thesaurus_modal_text <- div(
+      r$help_vocabularies_modal_text <- div(
         p(strong("1) Add a concept alignment")),
         p("To add a concept alignment, ", strong("select"), " the ", strong("two thesauri"), " in the dropdown menus."),
         p("You can filter concepts by searching for their name."),
         p("Click on the concepts in the table to select them."),
-        p("Once a ", strong("concept from each thesaurus has been selected"), ", choose the ", strong("relation"), " joining the two concepts, then click on ", tags$em("Add"), "."),
+        p("Once a ", strong("concept from each vocabulary has been selected"), ", choose the ", strong("relation"), " joining the two concepts, then click on ", tags$em("Add"), "."),
         p(strong("2) Evaluate a concept alignment")),
         p("To evaluate a concept alignment, go to the ", tags$em("Evaluate & Edit"), " tab."),
         p("Click on:"),
