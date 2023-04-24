@@ -134,7 +134,7 @@ linkr <- function(
       "subsets_edit_code_card",
       "subsets_patients_card"),
     "vocabularies", c(
-      "vocabularies_items_card",
+      "vocabularies_concepts_card",
       "vocabularies_mapping_card",
       "vocabularies_datatable_card",
       "vocabularies_vocabularies_tables_datatable_card",

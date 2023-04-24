@@ -366,8 +366,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' @param dataset_id ID of dataset to count rows by item of the thesaurus (integer)
 #' @param category Category of cache, depending of the page of Settings (character)
 
-create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), i18n = character(), module_id = character(), 
-  thesaurus_id = integer(), dataset_id = 0, category = character()){
+create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character(), module_id = character(), 
+  vocabulary_id = integer(), dataset_id = 0, category = character()){
   
   # Load join between our data and the cache
   
@@ -375,23 +375,23 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
   if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") |
       grepl("plus_data_explorer", category) | grepl("colours_module", category) | grepl("plus_module", category)){
     sql <- glue::glue_sql(paste0(
-      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
+      "SELECT t.id, t.vocabulary_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
       "FROM thesaurus_items t ",
       "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ", 
-      "WHERE t.thesaurus_id = {thesaurus_id} AND t.deleted IS FALSE ",
-      "ORDER BY t.id"), .con = r$db)
-    data <- DBI::dbGetQuery(r$db, sql)
+      "WHERE t.vocabulary_id = {vocabulary_id} AND t.deleted IS FALSE ",
+      "ORDER BY t.id"), .con = m$db)
+    data <- DBI::dbGetQuery(m$db, sql)
   }
   
-  # For count_patients_rows & count_items_rows, use dataset_id / link_id_bis (we count row for a specific dataset)
-  if (category %in% c("count_patients_rows", "count_items_rows")){
+  # For count_patients_rows & count_concepts_rows, use dataset_id / link_id_bis (we count row for a specific dataset)
+  if (category %in% c("count_patients_rows", "count_concepts_rows")){
     sql <- glue::glue_sql(paste0(
-      "SELECT t.id, t.thesaurus_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
-      "FROM thesaurus_items t ",
-      "LEFT JOIN cache c ON c.link_id = t.id AND c.link_id_bis = {dataset_id} AND c.category = {category} ",
-      "WHERE t.thesaurus_id = {thesaurus_id} AND t.deleted IS FALSE ",
-      "ORDER BY t.id"), .con = r$db)
-    data <- DBI::dbGetQuery(r$db, sql)
+      "SELECT c.*, ca.value ",
+      "FROM concept c ",
+      "LEFT JOIN cache ca ON ca.link_id = c.id AND ca.link_id_bis = {dataset_id} AND ca.category = {category} ",
+      "WHERE c.vocabulary_id = {vocabulary_id} ",
+      "ORDER BY c.concept_id"), .con = m$db)
+    data <- DBI::dbGetQuery(m$db, sql)
   }
   
   # For thumbs_and_delete, search in thesaurus_items_mapping table
@@ -399,10 +399,10 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     sql <- glue::glue_sql(paste0("SELECT t.id, t.deleted, c.value ",
       "FROM thesaurus_items_mapping t ",
       "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ",
-      "WHERE (t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
+      "WHERE (t.vocabulary_id_1 IN ({vocabulary_id*}) OR t.vocabulary_id_2 IN ({vocabulary_id*})) ",
       "AND t.category = 'user_added_mapping' AND t.deleted IS FALSE ",
-      "ORDER BY t.id"), .con = r$db)
-    data <- DBI::dbGetQuery(r$db, sql)
+      "ORDER BY t.id"), .con = m$db)
+    data <- DBI::dbGetQuery(m$db, sql)
   }
   
   # If there are missing data in the cache, reload cache 
@@ -417,105 +417,90 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
   if (data %>% dplyr::filter(is.na(data$value) | data$value == "") %>% nrow() > 0){
     
     # Reload data
-    if (category %in% c("count_items_rows", "count_patients_rows")){
-      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} ",
-        " AND deleted IS FALSE ORDER BY id"), .con = r$db)
+    if (category %in% c("count_concepts_rows", "count_patients_rows")){
+      sql <- glue::glue_sql(paste0("SELECT * FROM concept WHERE vocabulary_id = {vocabulary_id} ORDER BY id"), .con = r$db)
       data_reload <- DBI::dbGetQuery(r$db, sql)
     }
     else if (category == "thumbs_and_delete"){
       sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping t WHERE ",
-        "(t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
+        "(t.vocabulary_id_1 IN ({vocabulary_id*}) OR t.vocabulary_id_2 IN ({vocabulary_id*})) ",
         "AND t.id NOT IN ({ids_to_keep*}) AND t.category = 'user_added_mapping' AND deleted IS FALSE ",
         "ORDER BY id"), .con = r$db)
       data_reload <- DBI::dbGetQuery(r$db, sql)
     }
     else {
-      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} ",
+      sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE vocabulary_id = {vocabulary_id} ",
         "AND id NOT IN ({ids_to_keep*}) AND deleted IS FALSE ORDER BY id"), .con = r$db)
       data_reload <- DBI::dbGetQuery(r$db, sql)
     }
     
     # Make action column, depending on category
-    # If category is count_items_rows, add a count row column with number of rows by item in the dataset
+    # If category is count_concepts_rows, add a count row column with number of rows by item in the dataset
     # If category is count_patients_rows, add a count row column with number of patients by item in the dataset
     # If category is delete, add a delete button only
     # If category is plus_minus, add plus and minus buttons
     # If category is thumbs_and_delete, add thumbs_up, thumbs_down and delete buttons
     
-    if (category == "count_items_rows"){
+    if (category == "count_concepts_rows"){
       
       # Run dataset code
-      # Reload r$datasets so that dataset dropdown on sidenav is reset
-      # update_r(r = r, table = "datasets")
       run_dataset_code(output = output, r = r, d = d, i18n = i18n, dataset_id = dataset_id)
       
       # Initiate variables
-      rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
-      rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
-      rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_items_rows = integer())
+      rows <- tibble::tibble(concept_id = integer(), count_concepts_rows = integer())
       
-      if (nrow(d$labs_vitals) != 0) rows_labs_vitals <- d$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
-      if (nrow(d$text) != 0) rows_text <- d$text %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
-      if (nrow(d$orders) != 0) rows_orders <- d$orders %>% dplyr::group_by(thesaurus_name, item_id) %>% dplyr::summarize(count_items_rows = dplyr::n()) %>% dplyr::ungroup()
-      
-      # Merge rows count vars
-      count_items_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
-      
-      # Check if argument thesaurus_id corresponds to thesaurus_name in the data
-      # Select thesaurus from r$thesaurus with thesaurus_id
-      # Inner join with correspondance between thesaurus_name
-      
-      count_items_rows <- count_items_rows %>% 
-        dplyr::inner_join(r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% 
-            dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
-      
-      if (nrow(count_items_rows) != 0){
-        count_items_rows <- count_items_rows %>% dplyr::select(-thesaurus_name, -thesaurus_id)
-        data_reload <- data_reload %>% dplyr::left_join(count_items_rows, by = "item_id") %>% dplyr::rename(value = count_items_rows)
+      for(var_name in c("drug_exposure", "measurement")){
+        if (nrow(d[[var_name]]) > 0) rows <- rows %>% dplyr::bind_rows(
+          d[[var_name]] %>% dplyr::group_by(paste0(var_name, "_id")) %>%
+            dplyr::summarize(count_concepts_rows = dplyr::n()) %>% dplyr::ungroup() %>%
+            dplyr::rename(concept_id = paste0(var_name, "_id"))
+        )
       }
-      if (nrow(count_items_rows) == 0) data_reload <- data_reload %>% dplyr::mutate(value = 0)
+      
+      if (nrow(count_concepts_rows) != 0) data_reload <- data_reload %>% dplyr::left_join(count_concepts_rows, by = "concept_id") %>% dplyr::rename(value = count_concepts_rows)
+      if (nrow(count_concepts_rows) == 0) data_reload <- data_reload %>% dplyr::mutate(value = 0)
       
       # Set 0 when value is na
       # Convert value to character
       data_reload <- data_reload %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
     }
     
-    if (category == "count_patients_rows"){
-      
-      # Reload r$datasets so that dataset dropdown on sidenav is reset
-      # update_r(r = r, table = "datasets")
-      run_dataset_code(output = output, r = r, d = d, i18n = i18n, dataset_id = dataset_id)
-      
-      # Initiate variables
-      rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
-      rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
-      rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
-      
-      if (nrow(d$labs_vitals) != 0) rows_labs_vitals <- d$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% 
-        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
-      if (nrow(d$text) != 0) rows_text <- d$text %>% dplyr::group_by(thesaurus_name, item_id) %>% 
-        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
-      if (nrow(d$orders) != 0) rows_orders <- d$orders %>% dplyr::group_by(thesaurus_name, item_id) %>%
-        dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
-      
-      count_patients_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
-      
-      count_patients_rows <- count_patients_rows %>% 
-        dplyr::inner_join(r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% 
-            dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name")
-      
-      if (nrow(count_patients_rows) != 0){
-        count_patients_rows <- count_patients_rows %>% dplyr::select(-thesaurus_name, -thesaurus_id)
-        data_reload <- data_reload %>% dplyr::left_join(count_patients_rows, by = "item_id") %>% dplyr::rename(value = count_patients_rows)
-      }
-      
-      if (nrow(count_patients_rows) == 0) data_reload <- data_reload %>% dplyr::mutate(value = 0)
-      
-      # Set 0 when value is na
-      # Convert value to character
-      data_reload <- data_reload %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
-      
-    }
+    # if (category == "count_patients_rows"){
+    #   
+    #   # Reload r$datasets so that dataset dropdown on sidenav is reset
+    #   # update_r(r = r, table = "datasets")
+    #   run_dataset_code(output = output, r = r, d = d, i18n = i18n, dataset_id = dataset_id)
+    #   
+    #   # Initiate variables
+    #   rows_labs_vitals <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
+    #   rows_text <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
+    #   rows_orders <- tibble::tibble(thesaurus_name = character(), item_id = integer(), count_patients_rows = integer())
+    #   
+    #   if (nrow(d$labs_vitals) != 0) rows_labs_vitals <- d$labs_vitals %>% dplyr::group_by(thesaurus_name, item_id) %>% 
+    #     dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
+    #   if (nrow(d$text) != 0) rows_text <- d$text %>% dplyr::group_by(thesaurus_name, item_id) %>% 
+    #     dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
+    #   if (nrow(d$orders) != 0) rows_orders <- d$orders %>% dplyr::group_by(thesaurus_name, item_id) %>%
+    #     dplyr::summarize(count_patients_rows = dplyr::n_distinct(patient_id)) %>% dplyr::ungroup()
+    #   
+    #   count_patients_rows <- rows_labs_vitals %>% dplyr::bind_rows(rows_text) %>% dplyr::bind_rows(rows_orders)
+    #   
+    #   count_patients_rows <- count_patients_rows %>% 
+    #     dplyr::inner_join(r$thesaurus %>% dplyr::filter(id == vocabulary_id) %>% 
+    #         dplyr::select(vocabulary_id = id, thesaurus_name = name), by = "thesaurus_name")
+    #   
+    #   if (nrow(count_patients_rows) != 0){
+    #     count_patients_rows <- count_patients_rows %>% dplyr::select(-thesaurus_name, -vocabulary_id)
+    #     data_reload <- data_reload %>% dplyr::left_join(count_patients_rows, by = "item_id") %>% dplyr::rename(value = count_patients_rows)
+    #   }
+    #   
+    #   if (nrow(count_patients_rows) == 0) data_reload <- data_reload %>% dplyr::mutate(value = 0)
+    #   
+    #   # Set 0 when value is na
+    #   # Convert value to character
+    #   data_reload <- data_reload %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
+    #   
+    # }
     
     if (category == "delete"){
       data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
@@ -592,17 +577,17 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
       sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
         "SELECT c.id FROM cache c ",
         "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
-        "WHERE t.thesaurus_id = {thesaurus_id}", 
+        "WHERE t.vocabulary_id = {vocabulary_id}", 
         ")"), .con = r$db)
       DBI::dbSendStatement(r$db, sql) -> query
     }
     
-    # For count_patients_rows & count_items_rows, use dataset_id / link_id_bis (we count row for a specific dataset)
-    if (category %in% c("count_patients_rows", "count_items_rows")){
+    # For count_patients_rows & count_concepts_rows, use dataset_id / link_id_bis (we count row for a specific dataset)
+    if (category %in% c("count_patients_rows", "count_concepts_rows")){
       sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
         "SELECT c.id FROM cache c ",
         "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.link_id_bis = {dataset_id} AND c.category = {category} ",
-        "WHERE t.thesaurus_id = {thesaurus_id}",
+        "WHERE t.vocabulary_id = {vocabulary_id}",
         ")"), .con = r$db)
       DBI::dbSendStatement(r$db, sql) -> query
     }
@@ -612,13 +597,13 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
       sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
         "SELECT c.id FROM cache c ",
         "INNER JOIN thesaurus_items_mapping t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
-        "AND (t.thesaurus_id_1 IN ({thesaurus_id*}) OR t.thesaurus_id_2 IN ({thesaurus_id*})) ",
+        "AND (t.vocabulary_id_1 IN ({vocabulary_id*}) OR t.vocabulary_id_2 IN ({vocabulary_id*})) ",
         ")"), .con = r$db)
       query <- DBI::dbSendStatement(r$db, sql)
     }
     
     # Merge new data & old data
-    if (category %not_in% c("count_items_rows", "count_patients_rows")){
+    if (category %not_in% c("count_concepts_rows", "count_patients_rows")){
       if (nrow(data) > 0) data <- data %>% dplyr::filter(!is.na(data$value) & data$value != "") %>% dplyr::bind_rows(data_reload)
       else data <- data_reload
     } 
@@ -647,7 +632,7 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
   if (category %in% c("delete", "plus_plugin", "plus_minus", "thumbs_and_delete") | 
       grepl("plus_data_explorer", category) | grepl("plus_module", category)) data <- data %>% dplyr::rename(action = value)
   if (category == "colours_plugin" | grepl("colours_module", category)) data <- data %>% dplyr::rename(colour = value)
-  if (category %in% c("count_patients_rows", "count_items_rows")) data <- data %>% dplyr::rename(!!category := value) %>% dplyr::select(item_id, !!category)
+  if (category %in% c("count_patients_rows", "count_concepts_rows")) data <- data %>% dplyr::rename(!!category := value) %>% dplyr::select(item_id, !!category)
   
   data
 }
@@ -1178,7 +1163,7 @@ prepare_data_shiny_tree <- function(data = tibble::tibble(), stopened = FALSE){
             
             row <- same_path_categories[k, ]
             new_list_child <- list(structure("", stid = row$item_id, sttype = "default", stopened = stopened))
-            names(new_list_child) <- paste0(row$name, " (", row$count_patients_rows, " | ", row$count_items_rows, ")")
+            names(new_list_child) <- paste0(row$name, " (", row$count_patients_rows, " | ", row$count_concepts_rows, ")")
             
             new_list <- new_list %>% append(new_list_child)
           }
@@ -1519,12 +1504,12 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   DBI::dbClearResult(query)
 
   # If action in columns, remove before insert into database (for thesaurus_items with cache system)
-  # Same with count_items_rows (and count_patients_rows, always with count_items_rows)
+  # Same with count_concepts_rows (and count_patients_rows, always with count_concepts_rows)
   if (table %not_in% m_tables | table == "vocabulary") data <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
   else data <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
   
   if ("action" %in% names(data)) data <- data %>% dplyr::select(-action)
-  if ("count_items_rows" %in% names(data)) data <- data %>% dplyr::select(-count_items_rows, -count_patients_rows)
+  if ("count_concepts_rows" %in% names(data)) data <- data %>% dplyr::select(-count_concepts_rows, -count_patients_rows)
   
   DBI::dbAppendTable(db, table, data)
 

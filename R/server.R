@@ -208,7 +208,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_studies")
       mod_my_subsets_server("my_subsets", r, d, m, i18n, language, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_subsets")
-      mod_vocabularies_server("vocabularies", r, d, i18n, language, perf_monitoring, debug)
+      mod_vocabularies_server("vocabularies", r, d, m, i18n, language, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - vocabularies")
       mod_scripts_server("scripts", r, d, m, language, i18n, perf_monitoring, debug)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - scripts")

@@ -223,6 +223,10 @@ db_create_tables <- function(db, type = character(), dbms = character()){
       concept_class_id = character(), standard_concept = character(), concept_code = character(), valid_start_date = character(),
       valid_end_date = character(), invalid_reason = character()))
   
+  db_create_table(db, "concept_user", primary_key_col = "id", dbms = dbms, text_cols = c("name", "display_name"),
+    tibble::tibble(id = integer(), user_id = integer(), concept_id = integer(),
+      concept_name = character(), concept_display_name = character()))
+  
   db_create_table(db, "vocabulary", primary_key_col = "id", dbms = dbms,
     tibble::tibble(id = integer(), vocabulary_id = character(), vocabulary_name = character(), 
       vocabulary_reference = character(), vocabulary_version = character(), vocabulary_concept_id = character(), data_source_id = character(), 
@@ -254,6 +258,9 @@ db_create_tables <- function(db, type = character(), dbms = character()){
       amount_unit_concept_id = integer(), numerator_value = numeric(), numerator_unit_concept_id = integer(),
       denominator_value = numeric(), denominator_unit_concept_id = integer(), box_size = integer(),
       valid_start_date = character(), valid_end_date = character(), invalid_reason = character()))
+  
+  db_create_table(db, "cache", primary_key_col = "id", dbms = dbms, text_cols = "value",
+    tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
   }
 }
 
