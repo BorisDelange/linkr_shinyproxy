@@ -8,7 +8,7 @@ help_vocabularies <- function(output, r = shiny::reactiveValues(), id = characte
       br(),
       strong(i18n$t("vocabularies_and_concepts")), br(), br(),
       shiny.fluent::Link(i18n$t("whats_a_vocabulary"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_1', Math.random()); }"))), br(), br(),
-      shiny.fluent::Link(i18n$t("vocabularies_concepts"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_2', Math.random()); }"))), br(), br(),
+      shiny.fluent::Link(i18n$t("vocabulary_concepts"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_2', Math.random()); }"))), br(), br(),
       strong(i18n$t("vocabularies_concepts_mapping")), br(), br(),
       shiny.fluent::Link(i18n$t("whats_a_concept_mapping"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_3', Math.random()); }"))), br(), br(),
       shiny.fluent::Link(i18n$t("add_and_evaluate_concept_mapping"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_4', Math.random()); }"))), br(), br(),

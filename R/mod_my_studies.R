@@ -385,7 +385,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # Try to load dataset
       tryCatch({
 
-        capture.output(run_dataset_code(output, r = r, d = d, dataset_id = r$selected_dataset, i18n = i18n, quiet = TRUE))
+        capture.output(run_dataset_code(output, r = r, d = d, dataset_id = r$selected_dataset, i18n = i18n))
   
         r$show_message_bar <- tibble::tibble(message = "import_dataset_success", type = "success", trigger = Sys.time())
         

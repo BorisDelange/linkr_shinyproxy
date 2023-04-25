@@ -11,7 +11,7 @@
 #' \dontrun{
 #' run_dataset_code(output = output, r = r, d = d, i18n = i18n, dataset_id = 3)
 #' }
-run_dataset_code <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), dataset_id = integer(), i18n = character(), quiet = TRUE){
+run_dataset_code <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), dataset_id = integer(), i18n = character()){
   
   # Get code from dataset
   tryCatch(r$code %>% dplyr::filter(category == "dataset" & link_id == dataset_id) %>% dplyr::pull(code),

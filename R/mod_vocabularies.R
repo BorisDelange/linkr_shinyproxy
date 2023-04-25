@@ -263,7 +263,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       vocabulary_id <- r$vocabulary %>% dplyr::filter(id == input$vocabulary$key) %>% dplyr::pull(vocabulary_id)
       
       sql <- glue::glue_sql(paste0(
-        "SELECT concept_id, concept_name, domain_id, concept_class_id ",
+        "SELECT * ",
         "FROM concept ",
         "WHERE vocabulary_id = {vocabulary_id} ",
         "ORDER BY concept_id"), .con = m$db)
@@ -309,19 +309,19 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       count_concepts_rows <- tibble::tibble()
       count_persons_rows <- tibble::tibble()
       
+      vocabulary_id <- r$vocabulary %>% dplyr::filter(id == input$vocabulary$key) %>% dplyr::pull(vocabulary_id)
+      
       # Add count_concepts_rows in the cache & get it if already in the cache
-      tryCatch(count_concepts_rows <- create_datatable_cache(output = output, r = r, m = m, i18n = i18n, vocabulary_id = input$vocabulary$key,
+      tryCatch(count_concepts_rows <- create_datatable_cache(output = output, r = r, m = m, i18n = i18n, vocabulary_id = vocabulary_id,
         dataset_id = r$selected_dataset, category = "count_concepts_rows"),
-        error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_vocabulary", 
+        error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_vocabulary",
           error_name = paste0("vocabulary - create_datatable_cache - count_concepts_rows - fail_load_vocabulary - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
-      
-      print(count_concepts_rows)
-      
+
       # Add count_concepts_rows in the cache & get it if already in the cache
-      # tryCatch(count_persons_rows <- create_datatable_cache(output = output, r = r, m = m, i18n = i18n, vocabulary_id = input$vocabulary$key,
-      #   dataset_id = as.integer(r$selected_dataset), category = "count_persons_rows"),
-      #   error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_vocabulary", 
-      #     error_name = paste0("vocabulary - create_datatable_cache - count_persons_rows - fail_load_vocabulary - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+      tryCatch(count_persons_rows <- create_datatable_cache(output = output, r = r, m = m, i18n = i18n, vocabulary_id = vocabulary_id,
+        dataset_id = as.integer(r$selected_dataset), category = "count_persons_rows"),
+        error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_vocabulary",
+          error_name = paste0("vocabulary - create_datatable_cache - count_persons_rows - fail_load_vocabulary - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       
       if (nrow(count_concepts_rows) == 0 | nrow(count_persons_rows) == 0) show_message_bar(output, "fail_load_vocabulary", "severeWarning", i18n = i18n, ns = ns)
       req(nrow(count_concepts_rows) != 0, nrow(count_persons_rows) != 0)
@@ -356,10 +356,11 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       editable_cols <- c("concept_name", "concept_display_name")
       searchable_cols <- c("concept_id", "concept_name", "concept_display_name")
       column_widths <- c("count_persons_rows" = "80px", "count_concepts_rows" = "80px")
-      sortable_cols <- c("concept_id", "concept_name", "concept_display_name", "count_persons_rows", "count_concepts_rows")
+      sortable_cols <- c("concept_id", "concept_name", "concept_display_name", "domain_id", "count_persons_rows", "count_concepts_rows")
       centered_cols <- c("concept_id", "count_persons_rows", "count_concepts_rows")
       col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_with_counts", i18n = i18n)
-      hidden_cols <- c("modified")
+      hidden_cols <- c("id", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code", 
+        "valid_start_date", "valid_end_date", "invalid_reason", "modified")
       
       # Render datatable
       render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$dataset_vocabulary_concepts_temp,
@@ -415,16 +416,6 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       save_settings_datatable_updates(output = output, r = r, ns = ns, table = "vocabulary_concepts_users", r_table = "dataset_vocabulary_user_concepts", duplicates_allowed = TRUE, i18n = i18n)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer input$save_vocabulary_concepts"))
-    })
-    
-    # When a tree element is selected
-    observeEvent(input$vocabulary_concepts_tree, {
-      
-      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_concepts_tree"))
-      
-      r$vocabulary_concepts_selected_concept_id <- get_selected(input$vocabulary_concepts_tree, format = "classid") %>%
-        lapply(attr, "stid") %>% unlist()
-      r$vocabulary_concepts_selected_item_trigger <- Sys.time()
     })
     
     # When a row is selected
