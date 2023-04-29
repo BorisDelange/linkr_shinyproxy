@@ -588,7 +588,7 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     if (category %not_in% c("count_concepts_rows", "count_persons_rows")){
       if (nrow(data) > 0) data <- data %>% dplyr::filter(!is.na(data$value) & data$value != "") %>% dplyr::bind_rows(data_reload)
       else data <- data_reload
-    } 
+    }
     else data <- data_reload
     
     

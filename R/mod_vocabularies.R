@@ -55,24 +55,19 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
         id = ns("vocabularies_concepts_card"),
         make_card(i18n$t("concepts"),
           div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-              make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "vocabulary", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-                div(strong(i18n$t("show_only_used_concepts"), style = "display:block; padding-bottom:12px;"),
-                  shiny.fluent::Toggle.shinyInput(ns("show_only_used_concepts"), value = TRUE), style = "margin-top:15px;"),
-              style = "position:relative; z-index:1; width:800px;"
-            ),
+            make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "vocabulary", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
             conditionalPanel(
               condition = "input.vocabulary_concepts_pivot == null | input.vocabulary_concepts_pivot == 'vocabulary_concepts_table_view'", ns = ns,
-              div(DT::DTOutput(ns("vocabulary_concepts")), style = "margin-top:-30px; z-index:2"),
-              conditionalPanel("input.thesaurus == null", ns = ns, br(), br()),
+              DT::DTOutput(ns("vocabulary_concepts")),
+              conditionalPanel("input.vocabulary == null", ns = ns, br()),
               conditionalPanel(
-                condition = "input.thesaurus != null", ns = ns,
+                condition = "input.vocabulary != null", ns = ns,
                 shiny.fluent::PrimaryButton.shinyInput(ns("save_vocabulary_concepts"), i18n$t("save")),
                 uiOutput(ns("vocabulary_datatable_selected_item"))
               )
             )
           )
-        ), br()
+        )
       )
     ),
     
@@ -139,9 +134,9 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
               div(verbatimTextOutput(ns("thesaurus_mapping_details")), style = "border:dashed 1px; padding:10px;"), br(),
             )
           )
-        ), br()
+        )
       )
-    )
+    ), br()
   )
 }
     
@@ -244,10 +239,6 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$selected_dataset 2"))
     })
     
-    observeEvent(input$show_only_used_concepts, {
-      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$show_only_used_concepts"))
-      r$reload_vocabulary_datatable <- Sys.time()
-    })
     observeEvent(input$vocabulary, {
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary"))
       r$reload_vocabulary_data <- Sys.time()
@@ -268,7 +259,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         "WHERE vocabulary_id = {vocabulary_id} ",
         "ORDER BY concept_id"), .con = m$db)
       
-      r$dataset_vocabulary_concepts <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble()
+      r$dataset_vocabulary_concepts <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble() %>% dplyr::mutate(concept_display_name = NA_character_, .after = "concept_name")
       
       # Get user's modifications on items names & concept_display_names
       
@@ -295,7 +286,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           concept_name = dplyr::case_when(!is.na(new_concept_name) ~ new_concept_name, TRUE ~ concept_name),
           concept_display_name = dplyr::case_when(!is.na(new_concept_display_name) ~ new_concept_display_name, TRUE ~ concept_display_name)
         ) %>%
-        dplyr::select(-new_conceot_name, -new_concept_display_name)
+        dplyr::select(-new_concept_name, -new_concept_display_name)
       
       # if (nrow(vocabulary_concepts_mapping) > 0) r$dataset_vocabulary_concepts <- r$dataset_vocabulary_concepts %>%
       #   dplyr::left_join(
@@ -330,7 +321,60 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       r$dataset_vocabulary_concepts <- r$dataset_vocabulary_concepts %>%
         dplyr::left_join(count_concepts_rows, by = "concept_id") %>%
         dplyr::left_join(count_persons_rows, by = "concept_id") %>%
-        dplyr::mutate_at(c("count_concepts_rows", "count_persons_rows"), as.integer)
+        dplyr::mutate_at(c("count_concepts_rows", "count_persons_rows"), as.integer) %>%
+        dplyr::filter(count_concepts_rows > 0) %>%
+        dplyr::rename(concept_id_1 = concept_id, concept_name_1 = concept_name, concept_display_name_1 = concept_display_name) %>%
+        dplyr::mutate(relationship_id = NA_character_, concept_id_2 = NA_integer_, concept_name_2 = NA_character_, .after = "concept_display_name_1")
+      
+      # Load r$concept & r$concept_relationship if not already loaded from mod_settings_data_management.R
+      # Convert cols to char and arrange cols as done in mod_settings_data_management.R
+      
+      tables <- c("concept", "concept_relationship")
+      
+      cols_to_char <- list()
+      cols_to_char$concept = "concept_id"
+      cols_to_char$relationship = "relationship_concept_id"
+      
+      cols_order <- list()
+      cols_order$concept <- "concept_id"
+      cols_order$concept_relationship <- "concept_id_1"
+      
+      for (table in tables){
+        if (length(r$table) == 0){
+          sql <- glue::glue_sql("SELECT * FROM {`table`}", .con = m$db)
+          r[[table]] <- DBI::dbGetQuery(m$db, sql) %>%
+            dplyr::arrange(cols_order[[table]]) %>%
+            dplyr::mutate_at(cols_to_char[[table]], as.character) %>%
+            dplyr::mutate(modified = FALSE)
+        }
+      }
+      
+      # Merge mapped concepts
+      
+      if (nrow(r$concept_relationship) > 0 & nrow(r$concept) > 0){
+        
+        r$dataset_vocabulary_concepts <- r$dataset_vocabulary_concepts %>%
+          dplyr::bind_rows(
+            r$dataset_vocabulary_concepts %>%
+            dplyr::select(-relationship_id, -concept_id_2, -concept_name_2, -concept_display_name_1) %>%
+            dplyr::rename(concept_id_2 = concept_id_1, concept_name_2 = concept_name_1) %>%
+            dplyr::left_join(
+              r$concept_relationship %>% 
+                dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.integer) %>%
+                dplyr::select(concept_id_1, concept_id_2, relationship_id),
+              by = "concept_id_2"
+            ) %>%
+            dplyr::filter(concept_id_1 != concept_id_2) %>%
+            dplyr::left_join(
+              r$concept %>%
+                dplyr::mutate_at("concept_id", as.integer) %>%
+                dplyr::select(concept_id_1 = concept_id, concept_name_1 = concept_name),
+              by = "concept_id_1"
+            ) %>% 
+            dplyr::arrange(dplyr::desc(count_concepts_rows)) %>%
+            dplyr::mutate(concept_display_name_1 = NA_character_, .after = "concept_name_1")
+          )
+      }
       
       r$reload_vocabulary_datatable <- Sys.time()
       
@@ -346,27 +390,23 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       r$dataset_vocabulary_concepts_temp <- r$dataset_vocabulary_concepts %>%
         dplyr::mutate(modified = FALSE) %>%
-        dplyr::mutate_at("concept_id", as.character)
+        dplyr::mutate_at("concept_id_1", as.character)
       
-      if (input$show_only_used_concepts) r$dataset_vocabulary_concepts_temp <- r$dataset_vocabulary_concepts %>%
-        dplyr::filter(count_concepts_rows > 0) %>%
-        dplyr::mutate(modified = FALSE) %>%
-        dplyr::mutate_at("concept_id", as.character)
-      
-      editable_cols <- c("concept_name", "concept_display_name")
-      searchable_cols <- c("concept_id", "concept_name", "concept_display_name")
+      editable_cols <- c("concept_display_name_1")
+      searchable_cols <- c("concept_id_1", "concept_name_1", "relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_1", "domain_id")
       column_widths <- c("count_persons_rows" = "80px", "count_concepts_rows" = "80px")
-      sortable_cols <- c("concept_id", "concept_name", "concept_display_name", "domain_id", "count_persons_rows", "count_concepts_rows")
-      centered_cols <- c("concept_id", "count_persons_rows", "count_concepts_rows")
+      sortable_cols <- c("concept_id_1", "concept_name_1", "relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_1", "domain_id", "count_persons_rows", "count_concepts_rows")
+      factorize_cols <- c("relationship_id")
+      centered_cols <- c("concept_id_1", "relationship_id", "concept_id_2", "domain_id", "count_persons_rows", "count_concepts_rows")
       col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_with_counts", i18n = i18n)
-      hidden_cols <- c("id", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code", 
+      hidden_cols <- c("id", "concept_id_2", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code", 
         "valid_start_date", "valid_end_date", "invalid_reason", "modified")
       
       # Render datatable
       render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$dataset_vocabulary_concepts_temp,
         output_name = "vocabulary_concepts", col_names = col_names,
         editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
+        searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols, factorize_cols = factorize_cols)
       
       # Create a proxy for datatatable
       r$dataset_vocabulary_concepts_datatable_proxy <- DT::dataTableProxy("vocabulary_concepts", deferUntilFlush = FALSE)
@@ -565,7 +605,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         span(i18n$t("thesaurus_name"), style = style), thesaurus_name, br(),
         span(i18n$t("concept_id"), style = style), thesaurus_item$concept_id, br(),
         span(i18n$t("name"), style = style), thesaurus_item$name, br(),
-        span(i18n$t("concept_display_name"), style = style), thesaurus_item$display_name, br(),
+        span(i18n$t("concept_display_name_1"), style = style), thesaurus_item$display_name, br(),
         span(i18n$t("unit"), style = style), ifelse(is.na(thesaurus_item$unit), "", thesaurus_item$unit), br(),
         values_text, br(),
         shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "_show_plots")), i18n$t("show_plots")),

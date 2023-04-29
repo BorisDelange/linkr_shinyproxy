@@ -170,7 +170,6 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       render_settings_default_elements(ns = ns),
       shiny.fluent::reactOutput(ns("help_panel")),
       shiny.fluent::reactOutput(ns("help_modal")),
-      shiny.fluent::reactOutput(ns("vocabularies_table_reload_cache_confirm")),
       shiny.fluent::reactOutput(ns("vocabularies_table_delete_confirm")),
       shiny.fluent::Breadcrumb(items = list(
         list(key = "vocabularies", text = i18n$t("vocabularies"))
@@ -302,9 +301,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
               shiny.fluent::Stack(
                 horizontal = TRUE, tokens = list(childrenGap = 10),
                 shiny.fluent::PrimaryButton.shinyInput(ns("vocabularies_tables_datatable_save"), i18n$t("save")),
-                shiny.fluent::DefaultButton.shinyInput(ns("vocabularies_tables_delete_selection"), i18n$t("delete_selection")),
-                conditionalPanel(condition = "input.vocabularies_table == 'concept'", ns = ns,
-                  shiny.fluent::DefaultButton.shinyInput(ns("reload_vocabularies_tables_cache"), i18n$t("reload_cache")))
+                shiny.fluent::DefaultButton.shinyInput(ns("vocabularies_tables_delete_selection"), i18n$t("delete_selection"))
               ),
               style = "position:relative; margin-top:-50px; width:500px;"
             ),
