@@ -1373,7 +1373,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = character(), r_message_bar = FALSE){
   
   m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients",
-    "concept", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
+    "concept", "concept_user", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
 
   if (table %in% m_tables) db <- m$db
   else db <- r$db
@@ -1457,6 +1457,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   names_empty <- 0
   if (table == "users") names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(username == "") %>% nrow()
   else if (table == "vocabulary") names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(vocabulary_id == "") %>% nrow()
+  else if (table == "concept_user") names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(concept_name == "") %>% nrow()
   else if (table %in% m_tables) names_empty <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(name == "") %>% nrow()
   else names_empty <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(name == "") %>% nrow()
 
@@ -1468,16 +1469,21 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   req(names_empty == 0)
   
   # Save changes in database
-
   if (table %not_in% m_tables | table == "vocabulary") ids_to_del <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+  else if (table == "concept_user"){
+    
+    concept_ids <- r$dataset_vocabulary_concept_user_temp %>% dplyr::pull(concept_id) %>% as.integer()
+    sql <- glue::glue_sql("SELECT * FROM concept_user WHERE concept_id IN ({concept_ids*}) AND user_id = {r$user_id}", .con = db)
+    ids_to_del <- DBI::dbGetQuery(db, sql) %>% dplyr::pull(id)
+  }
   else ids_to_del <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
 
-  if (length(ids_to_del) == 0){
+  if (length(ids_to_del) == 0 & table != "concept_user"){
     if (!r_message_bar) show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
     if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_saved", type = "success", trigger = Sys.time())
   }
 
-  req(length(ids_to_del) > 0)
+  req(length(ids_to_del) > 0 | table == "concept_user")
 
   sql <- glue::glue_sql("DELETE FROM {`table`} WHERE id IN ({ids_to_del*})", .con = db)
   DBI::dbSendStatement(db, sql) -> query
@@ -1485,7 +1491,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
 
   # If action in columns, remove before insert into database (for thesaurus_items with cache system)
   # Same with count_concepts_rows (and count_persons_rows, always with count_concepts_rows)
-  if (table %not_in% m_tables | table == "vocabulary") data <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
+  if (table %not_in% m_tables | table %in% c("vocabulary", "concept_user")) data <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
   else data <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
   
   if ("action" %in% names(data)) data <- data %>% dplyr::select(-action)
@@ -1494,10 +1500,8 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   DBI::dbAppendTable(db, table, data)
 
   # Reload r variable
-  if (table %not_in% m_tables | table == "vocabulary") r[[r_table]] <- r[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
+  if (table %not_in% m_tables | table %in% c("vocabulary", "concept_user")) r[[r_table]] <- r[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
   else m[[r_table]] <- m[[paste0(r_table, "_temp")]] %>% dplyr::select(-modified)
-  # if (table == "thesaurus_items") r$dataset_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_update")
-  # else update_r(r = r, table = table, i18n = i18n)
 
   # Notify user
   if (!r_message_bar) show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
