@@ -10,7 +10,7 @@
 mod_my_subsets_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
-  cards <- c("subsets_datatable_card", "subsets_patients_card", "subsets_edit_code_card")
+  cards <- c("subsets_datatable_card", "subsets_persons_card", "subsets_edit_code_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
@@ -22,7 +22,7 @@ mod_my_subsets_ui <- function(id = character(), i18n = character()){
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("help_panel")),
     shiny.fluent::reactOutput(ns("help_modal")),
-    shiny.fluent::reactOutput(ns("subset_patients_delete_confirm")),
+    shiny.fluent::reactOutput(ns("subset_persons_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "subset_main", text = i18n$t("my_subsets"))
     ), maxDisplayedItems = 3),
@@ -33,7 +33,7 @@ mod_my_subsets_ui <- function(id = character(), i18n = character()){
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "subsets_datatable_card", itemKey = "datatable_card", headerText = i18n$t("subsets_management")),
           shiny.fluent::PivotItem(id = "subsets_edit_code_card", itemKey = "edit_code_card", headerText = i18n$t("edit_subset_code")),
-          shiny.fluent::PivotItem(id = "subsets_patients_card", itemKey = "subsets_patients_card", headerText = i18n$t("subset_patients"))
+          shiny.fluent::PivotItem(id = "subsets_persons_card", itemKey = "subsets_persons_card", headerText = i18n$t("subset_persons"))
         )
       )
     ),
@@ -70,36 +70,36 @@ mod_my_subsets_ui <- function(id = character(), i18n = character()){
       )
     ),
     
-    # --- --- --- --- --- -- --
-    # Subset patients card ----
-    # --- --- --- --- --- -- --
+    # --- --- --- --- --- -- -
+    # Subset persons card ----
+    # --- --- --- --- --- -- -
     
     shinyjs::hidden(
       div(
-        id = ns("subsets_patients_card"),
-        make_card(i18n$t("subset_patients"),
+        id = ns("subsets_persons_card"),
+        make_card(i18n$t("subset_persons"),
           div(
             div(
-              make_combobox(i18n = i18n, ns = ns, label = "subset", id = "patients_selected_subset", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+              make_combobox(i18n = i18n, ns = ns, label = "subset", id = "persons_selected_subset", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
               style = "position:relative; z-index:1; width:500px;"
             ),
-            div(DT::DTOutput(ns("subset_patients_datatable")), style = "margin-top:-30px; z-index:2"),
+            div(DT::DTOutput(ns("subset_persons_datatable")), style = "margin-top:-30px; z-index:2"),
             shinyjs::hidden(
               div(
-                id = ns("subset_patients_buttons"),
-                shiny.fluent::DefaultButton.shinyInput(ns("delete_selected_patients"), i18n$t("delete_selection")),
+                id = ns("subset_persons_buttons"),
+                shiny.fluent::DefaultButton.shinyInput(ns("delete_selected_persons"), i18n$t("delete_selection")),
                 style = "position:relative; z-index:1; margin-top:-30px; width:500px;"
               )
             ), br()
           )
         ),
-        make_card(i18n$t("add_patients_to_subset"),
+        make_card(i18n$t("add_persons_to_subset"),
           div(
-            div(DT::DTOutput(ns("subset_add_patients_datatable")), style = "margin-top:-30px; z-index:2"),
+            div(DT::DTOutput(ns("subset_add_persons_datatable")), style = "margin-top:-30px; z-index:2"),
             shinyjs::hidden(
               div(
-                id = ns("subset_add_patients_buttons"),
-                shiny.fluent::PrimaryButton.shinyInput(ns("subset_add_patients"), i18n$t("add")),
+                id = ns("subset_add_persons_buttons"),
+                shiny.fluent::PrimaryButton.shinyInput(ns("subset_add_persons"), i18n$t("add")),
                 style = "position:relative; z-index:1; margin-top:-30px; width:500px;"
               )
             ), br()
@@ -165,7 +165,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     # Show or hide cards ----
     # --- --- --- --- --- ---
     
-    cards <- c("subsets_datatable_card", "subsets_patients_card", "subsets_edit_code_card")
+    cards <- c("subsets_datatable_card", "subsets_persons_card", "subsets_edit_code_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     # --- --- --- --- --- -
@@ -213,12 +213,12 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       if (debug) print(paste0(Sys.time(), " - mod_subsets - observer r$selected_dataset"))
       
       shinyjs::show("choose_a_study_card")
-      sapply(c("subsets_datatable_card", "subsets_datatable_card_forbidden", "subsets_patients_card", "subsets_patients_card_forbidden",
+      sapply(c("subsets_datatable_card", "subsets_datatable_card_forbidden", "subsets_persons_card", "subsets_persons_card_forbidden",
         "subsets_edit_code_card", "subsets_edit_code_card_forbidden", "menu"), shinyjs::hide)
       
       # Reset fields
       shiny.fluent::updateComboBox.shinyInput(session, "code_selected_subset", options = list(), value = NULL)
-      shiny.fluent::updateComboBox.shinyInput(session, "patients_selected_subset", options = list(), value = NULL)
+      shiny.fluent::updateComboBox.shinyInput(session, "persons_selected_subset", options = list(), value = NULL)
       shinyAce::updateAceEditor(session, "ace_edit_code", value = "")
     })
     
@@ -247,15 +247,16 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       
       # Reset fields
       shiny.fluent::updateComboBox.shinyInput(session, "code_selected_subset", options = list(), value = NULL)
-      shiny.fluent::updateComboBox.shinyInput(session, "patients_selected_subset", options = list(), value = NULL)
+      shiny.fluent::updateComboBox.shinyInput(session, "persons_selected_subset", options = list(), value = NULL)
       shinyAce::updateAceEditor(session, "ace_edit_code", value = "")
       
-      if (length(r$subset_patients_datatable_proxy) > 0){
-        DT::replaceData(r$subset_patients_datatable_proxy,
-          tibble::tibble(id = integer(), subset_id = integer(), patient_id = integer(),
+      if (length(r$subset_persons_datatable_proxy) > 0){
+        DT::replaceData(r$subset_persons_datatable_proxy,
+          tibble::tibble(id = integer(), subset_id = integer(), person_id = integer(),
             creator_id = factor(), datetime = character(), deleted = integer(), modified = logical()), 
           resetPaging = FALSE, rownames = FALSE)
       }
+      if (length(r$subset_add_persons_datatable_proxy) > 0) DT::replaceData(r$subset_add_persons_datatable_proxy, tibble::tibble(person_id = integer()), resetPaging = FALSE, rownames = FALSE)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_subsets - observer m$selected_study"))
     })
@@ -270,7 +271,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       
       options <- convert_tibble_to_list(m$subsets %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       shiny.fluent::updateComboBox.shinyInput(session, "code_selected_subset", options = options)
-      shiny.fluent::updateComboBox.shinyInput(session, "patients_selected_subset", options = options)
+      shiny.fluent::updateComboBox.shinyInput(session, "persons_selected_subset", options = options)
     })
     
     # --- --- --- --- -- -
@@ -455,7 +456,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       options <- convert_tibble_to_list(m$subsets %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = m$subsets %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       shiny.fluent::updateComboBox.shinyInput(session, "code_selected_subset", options = options, value = value)
-      shiny.fluent::updateComboBox.shinyInput(session, "patients_selected_subset", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "persons_selected_subset", options = options, value = value)
       
       # Reload datatable (to unselect rows)
       DT::replaceData(m$subsets_datatable_proxy, m$subsets_datatable_temp, resetPaging = FALSE, rownames = FALSE)
@@ -472,16 +473,16 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       if (length(input$code_selected_subset) > 1) link_id <- input$code_selected_subset$key
       else link_id <- input$code_selected_subset
       
-      if (length(input$patients_selected_subset) > 0){
-        if (length(input$patients_selected_subset) > 1) subset_patients_link_id <- input$patients_selected_subset$key
-        else subset_patients_link_id <- input$patients_selected_subset
+      if (length(input$persons_selected_subset) > 0){
+        if (length(input$persons_selected_subset) > 1) subset_persons_link_id <- input$persons_selected_subset$key
+        else subset_persons_link_id <- input$persons_selected_subset
       }
-      else subset_patients_link_id <- 0L
+      else subset_persons_link_id <- 0L
 
-      if (link_id != subset_patients_link_id){
+      if (link_id != subset_persons_link_id){
         options <- convert_tibble_to_list(m$subsets %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = link_id, text = m$subsets %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-        shiny.fluent::updateComboBox.shinyInput(session, "patients_selected_subset", options = options, value = value)
+        shiny.fluent::updateComboBox.shinyInput(session, "persons_selected_subset", options = options, value = value)
       }
       
       # Get code from database
@@ -594,9 +595,9 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_subsets - observer r$subset_execute_code"))
     })
     
-    # --- --- --- --- --- --- ---
-    # Manage subset patients ----
-    # --- --- --- --- --- --- ---
+    # --- --- --- --- --- --- --
+    # Manage subset persons ----
+    # --- --- --- --- --- --- --
     
     # Button "sub_datatable" is clicked on the datatable
     observeEvent(input$sub_datatable, {
@@ -609,22 +610,22 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       options <- convert_tibble_to_list(m$subsets %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = m$subsets %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       shiny.fluent::updateComboBox.shinyInput(session, "code_selected_subset", options = options, value = value)
-      shiny.fluent::updateComboBox.shinyInput(session, "patients_selected_subset", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "persons_selected_subset", options = options, value = value)
       
       # Reload datatable (to unselect rows)
       DT::replaceData(m$subsets_datatable_proxy, m$subsets_datatable_temp, resetPaging = FALSE, rownames = FALSE)
       
-      # Set current pivot to subsets_patients_card
-      shinyjs::runjs(glue::glue("$('#{id}-subsets_pivot button[name=\"{i18n$t('subset_patients')}\"]').click();"))
+      # Set current pivot to subsets_persons_card
+      shinyjs::runjs(glue::glue("$('#{id}-subsets_pivot button[name=\"{i18n$t('subset_persons')}\"]').click();"))
     })
     
-    observeEvent(input$patients_selected_subset, {
+    observeEvent(input$persons_selected_subset, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer input$patients_selected_subset"))
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer input$persons_selected_subset"))
       
-      if (length(input$patients_selected_subset) > 1) link_id <- input$patients_selected_subset$key
-      else link_id <- input$patients_selected_subset
+      if (length(input$persons_selected_subset) > 1) link_id <- input$persons_selected_subset$key
+      else link_id <- input$persons_selected_subset
       
       if (length(input$code_selected_subset) > 0){
         if (length(input$code_selected_subset) > 1) subset_code_link_id <- input$code_selected_subset$key
@@ -638,218 +639,219 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
         shiny.fluent::updateComboBox.shinyInput(session, "code_selected_subset", options = options, value = value)
       }
       
-      # Get patients for this subset
+      # Get persons for this subset
       
-      sql <- glue::glue_sql("SELECT * FROM subset_patients WHERE deleted IS FALSE AND subset_id = {link_id}", .con = db)
+      sql <- glue::glue_sql("SELECT * FROM subset_persons WHERE deleted IS FALSE AND subset_id = {link_id}", .con = db)
       data <- DBI::dbGetQuery(m$db, sql)
-      r$subset_patients <- data
+      r$subset_persons <- data
       
       # Load data for datatable
       if (nrow(data) == 0) {
         
-        r$subset_patients_temp <- tibble::tibble(id = integer(), subset_id = integer(), patient_id = character(),
+        r$subset_persons_temp <- tibble::tibble(id = integer(), subset_id = integer(), person_id = character(),
           creator_id = factor(), datetime = character(), deleted = integer(), modified = logical())
       }
       
       if (nrow(data) > 0){
         
-        r$subset_patients_temp <- data %>% 
-          dplyr::arrange(patient_id) %>%
-          dplyr::mutate(modified = FALSE) %>% dplyr::arrange(patient_id) %>%
-          dplyr::mutate_at("patient_id", as.character) %>%
+        r$subset_persons_temp <- data %>% 
+          dplyr::arrange(person_id) %>%
+          dplyr::mutate(modified = FALSE) %>% dplyr::arrange(person_id) %>%
+          dplyr::mutate_at("person_id", as.character) %>%
           dplyr::mutate_at("creator_id", as.factor)
       }
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_subsets - observer input$patients_selected_subset"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_subsets - observer input$persons_selected_subset"))
     })
     
-    subset_patients_sortable_cols <- c("patient_id", "creator_id", "datetime")
-    subset_patients_column_widths <- c("datetime" = "130px", "creator_id" = "200px")
-    subset_patients_centered_cols <- c("creator", "datetime")
-    subset_patients_searchable_cols <- c("patient_id", "creator_id")
-    subset_patients_factorize_cols <- c("creator_id")
-    subset_patients_hidden_cols <- c("id", "subset_id", "deleted", "creator_id", "modified")
-    subset_patients_col_names <- get_col_names("subset_patients", i18n)
+    subset_persons_sortable_cols <- c("person_id", "creator_id", "datetime")
+    subset_persons_column_widths <- c("datetime" = "130px", "creator_id" = "200px")
+    subset_persons_centered_cols <- c("creator", "datetime")
+    subset_persons_searchable_cols <- c("person_id", "creator_id")
+    subset_persons_factorize_cols <- c("creator_id")
+    subset_persons_hidden_cols <- c("id", "subset_id", "deleted", "creator_id", "modified")
+    subset_persons_col_names <- get_col_names("subset_persons", i18n)
     
-    # Prepare data for subset_patients_datatable
+    # Prepare data for subset_persons_datatable
     
-    observeEvent(r$subset_patients_temp, {
+    observeEvent(r$subset_persons_temp, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer r$subset_patients_temp"))
+      if (debug) print(paste0(Sys.time(), " - mod_subsets - observer r$subset_persons_temp"))
       
-      # Subset patients datatable
+      # Subset persons datatable
 
-      if (length(r$subset_patients_datatable_proxy) == 0){
+      if (length(r$subset_persons_datatable_proxy) == 0){
 
         # Render datatable
 
-        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$subset_patients_temp,
-          output_name = "subset_patients_datatable", col_names = get_col_names("subset_patients", i18n),
-          sortable_cols = subset_patients_sortable_cols, centered_cols = subset_patients_centered_cols,
-          column_widths = subset_patients_column_widths, searchable_cols = subset_patients_searchable_cols,
-          filter = TRUE, factorize_cols = subset_patients_factorize_cols, hidden_cols = subset_patients_hidden_cols,
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$subset_persons_temp,
+          output_name = "subset_persons_datatable", col_names = get_col_names("subset_persons", i18n),
+          sortable_cols = subset_persons_sortable_cols, centered_cols = subset_persons_centered_cols,
+          column_widths = subset_persons_column_widths, searchable_cols = subset_persons_searchable_cols,
+          filter = TRUE, factorize_cols = subset_persons_factorize_cols, hidden_cols = subset_persons_hidden_cols,
           selection = "multiple")
 
         # Create a proxy for datatable
 
-        r$subset_patients_datatable_proxy <- DT::dataTableProxy("subset_patients_datatable", deferUntilFlush = FALSE)
+        r$subset_persons_datatable_proxy <- DT::dataTableProxy("subset_persons_datatable", deferUntilFlush = FALSE)
         
         # Hide no data div
         
-        shinyjs::show("subset_patients_buttons")
+        shinyjs::show("subset_persons_buttons")
       }
 
-      if (length(r$subset_patients_datatable_proxy) > 0) DT::replaceData(r$subset_patients_datatable_proxy, r$subset_patients_temp, 
+      if (length(r$subset_persons_datatable_proxy) > 0) DT::replaceData(r$subset_persons_datatable_proxy, r$subset_persons_temp, 
         resetPaging = FALSE, rownames = FALSE)
       
-      # Update patients not already added in subset
+      # Update persons not already added in subset
       
-      r$subset_add_patients <-
-        d$patients %>%
-        dplyr::select(patient_id) %>%
-        dplyr::anti_join(r$subset_patients_temp %>% dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer), by = "patient_id") %>%
-        dplyr::mutate_at("patient_id", as.character)
+      r$subset_add_persons <-
+        d$person %>%
+        dplyr::select(person_id) %>%
+        dplyr::anti_join(r$subset_persons_temp %>% dplyr::select(person_id) %>% dplyr::mutate_at("person_id", as.integer), by = "person_id") %>%
+        dplyr::mutate_at("person_id", as.character)
     })
     
-    # Prepare data for subset_add_patients_datatable
+    # Prepare data for subset_add_persons_datatable
     
-    observeEvent(r$subset_add_patients, {
+    observeEvent(r$subset_add_persons, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer r$subset_add_patients"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer r$subset_add_persons"))
       
-      # Subset patients datatable
+      # Subset persons datatable
       
-      if (length(r$subset_add_patients_datatable_proxy) == 0){
+      if (length(r$subset_add_persons_datatable_proxy) == 0){
         
         # Render datatable
         
-        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$subset_add_patients,
-          output_name = "subset_add_patients_datatable", col_names = get_col_names("subset_add_patients", i18n),
-          filter = TRUE, sortable_cols = "patient_id", searchable_cols = "patient_id", selection = "multiple")
+        print(r$subset_add_persons)
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$subset_add_persons,
+          output_name = "subset_add_persons_datatable", col_names = get_col_names("subset_add_persons", i18n),
+          filter = TRUE, sortable_cols = "person_id", searchable_cols = "person_id", selection = "multiple")
         
         # Create a proxy for datatable
         
-        r$subset_add_patients_datatable_proxy <- DT::dataTableProxy("subset_add_patients_datatable", deferUntilFlush = FALSE)
+        r$subset_add_persons_datatable_proxy <- DT::dataTableProxy("subset_add_persons_datatable", deferUntilFlush = FALSE)
         
         # Hide no data div
         
-        shinyjs::show("subset_add_patients_buttons")
+        shinyjs::show("subset_add_persons_buttons")
       }
       
-      if (length(r$subset_add_patients_datatable_proxy) > 0) DT::replaceData(r$subset_add_patients_datatable_proxy, r$subset_add_patients, 
+      if (length(r$subset_add_persons_datatable_proxy) > 0) DT::replaceData(r$subset_add_persons_datatable_proxy, r$subset_add_persons, 
         resetPaging = FALSE, rownames = FALSE)
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_subsets - observer r$subset_add_patients"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_subsets - observer r$subset_add_persons"))
     })
 
     # Delete rows in datatable
 
-    r$subset_patients_open_dialog <- FALSE
+    r$subset_persons_open_dialog <- FALSE
     
-    output$subset_patients_delete_confirm <- shiny.fluent::renderReact({
+    output$subset_persons_delete_confirm <- shiny.fluent::renderReact({
       
-      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - output$subset_patients_delete_confirm"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - output$subset_persons_delete_confirm"))
       
       shiny.fluent::Dialog(
-        hidden = !r$subset_patients_open_dialog,
-        onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('subset_patients_hide_dialog', Math.random()); }")),
+        hidden = !r$subset_persons_open_dialog,
+        onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('subset_persons_hide_dialog', Math.random()); }")),
         dialogContentProps = list(
           type = 0,
-          title = i18n$t("subset_patients_delete"),
+          title = i18n$t("subset_persons_delete"),
           closeButtonAriaLabel = "Close",
-          subText = tagList(i18n$t("subset_patients_delete_subtext"), br(), br())
+          subText = tagList(i18n$t("subset_persons_delete_subtext"), br(), br())
         ),
         modalProps = list(),
         shiny.fluent::DialogFooter(
-          shiny.fluent::PrimaryButton.shinyInput(ns("subset_patients_delete_confirmed"), text = i18n$t("delete")),
-          shiny.fluent::DefaultButton.shinyInput(ns("subset_patients_delete_canceled"), text = i18n$t("dont_delete"))
+          shiny.fluent::PrimaryButton.shinyInput(ns("subset_persons_delete_confirmed"), text = i18n$t("delete")),
+          shiny.fluent::DefaultButton.shinyInput(ns("subset_persons_delete_canceled"), text = i18n$t("dont_delete"))
         )
       )
     })
     
     # Whether to close or not delete dialog box
-    observeEvent(input$subset_patients_hide_dialog, {
-      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_patients_hide_dialog"))
-      r$subset_patients_open_dialog <- FALSE 
+    observeEvent(input$subset_persons_hide_dialog, {
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_persons_hide_dialog"))
+      r$subset_persons_open_dialog <- FALSE 
     })
-    observeEvent(input$subset_patients_delete_canceled, {
-      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_patients_delete_canceled"))
-      r$subset_patients_open_dialog <- FALSE
+    observeEvent(input$subset_persons_delete_canceled, {
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_persons_delete_canceled"))
+      r$subset_persons_open_dialog <- FALSE
     })
     
     # When the deletion is confirmed
     
-    observeEvent(input$subset_patients_delete_confirmed, {
+    observeEvent(input$subset_persons_delete_confirmed, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_patients_delete_confirmed"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_persons_delete_confirmed"))
       
-      if (length(input$patients_selected_subset) > 1) link_id <- input$patients_selected_subset$key
-      else link_id <- input$patients_selected_subset
+      if (length(input$persons_selected_subset) > 1) link_id <- input$persons_selected_subset$key
+      else link_id <- input$persons_selected_subset
       
-      remove_patients_from_subset(output = output, r = r, m = m, patients = r$delete_subset_patients, subset_id = link_id, i18n = i18n, ns = ns)
+      remove_persons_from_subset(output = output, r = r, m = m, persons = r$delete_subset_persons, subset_id = link_id, i18n = i18n, ns = ns)
       
-      r$subset_patients <- r$subset_patients %>% dplyr::anti_join(r$delete_subset_patients %>% dplyr::select(patient_id), by = "patient_id")
+      r$subset_persons <- r$subset_persons %>% dplyr::anti_join(r$delete_subset_persons %>% dplyr::select(person_id), by = "person_id")
       
-      r$subset_patients_open_dialog <- FALSE
+      r$subset_persons_open_dialog <- FALSE
       
-      r$reload_subset_patients <- Sys.time()
+      r$reload_subset_persons <- Sys.time()
     })
 
     # Delete multiple rows (with "Delete selection" button)
 
-    observeEvent(input$delete_selected_patients, {
+    observeEvent(input$delete_selected_persons, {
 
-      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$delete_selected_patients"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$delete_selected_persons"))
 
-      req(length(input$subset_patients_datatable_rows_selected) > 0)
+      req(length(input$subset_persons_datatable_rows_selected) > 0)
 
-      r$delete_subset_patients <- r$subset_patients_temp[input$subset_patients_datatable_rows_selected, ] %>% 
-        dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)
-      r$subset_patients_open_dialog <- TRUE
+      r$delete_subset_persons <- r$subset_persons_temp[input$subset_persons_datatable_rows_selected, ] %>% 
+        dplyr::select(person_id) %>% dplyr::mutate_at("person_id", as.integer)
+      r$subset_persons_open_dialog <- TRUE
     })
 
-    observeEvent(r$reload_subset_patients, {
+    observeEvent(r$reload_subset_persons, {
 
-      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer r$reload_subset_patients"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer r$reload_subset_persons"))
 
-      r$subset_patients_temp <- r$subset_patients %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(patient_id)
+      r$subset_persons_temp <- r$subset_persons %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(person_id)
     })
     
-    # Add patients to subset
+    # Add persons to subset
     
-    observeEvent(input$subset_add_patients, {
+    observeEvent(input$subset_add_persons, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_add_patients"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$subset_add_persons"))
       
-      if (length(input$patients_selected_subset) > 1) link_id <- input$patients_selected_subset$key
-      else link_id <- input$patients_selected_subset
+      if (length(input$persons_selected_subset) > 1) link_id <- input$persons_selected_subset$key
+      else link_id <- input$persons_selected_subset
       
-      # Selected patients
-      patients <- r$subset_add_patients[input$subset_add_patients_datatable_rows_selected, ] %>% 
-        dplyr::select(patient_id) %>% dplyr::mutate_at("patient_id", as.integer)
+      # Selected persons
+      persons <- r$subset_add_persons[input$subset_add_persons_datatable_rows_selected, ] %>% 
+        dplyr::select(person_id) %>% dplyr::mutate_at("person_id", as.integer)
       
-      # Add patients to subset
-      add_patients_to_subset(output = output, r = r, m = m, patients = patients, subset_id = link_id, i18n = i18n, ns = ns)
+      # Add persons to subset
+      add_persons_to_subset(output = output, r = r, m = m, persons = persons, subset_id = link_id, i18n = i18n, ns = ns)
       
-      # Reload r$subset_patients
-      r$reload_subset_add_patients <- Sys.time()
+      # Reload r$subset_persons
+      r$reload_subset_add_persons <- Sys.time()
     })
     
-    observeEvent(r$reload_subset_add_patients, {
+    observeEvent(r$reload_subset_add_persons, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer r$reload_subset_add_patients"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer r$reload_subset_add_persons"))
       
-      if (length(input$patients_selected_subset) > 1) link_id <- input$patients_selected_subset$key
-      else link_id <- input$patients_selected_subset
+      if (length(input$persons_selected_subset) > 1) link_id <- input$persons_selected_subset$key
+      else link_id <- input$persons_selected_subset
       
-      sql <- glue::glue_sql("SELECT * FROM subset_patients WHERE deleted IS FALSE AND subset_id = {link_id}", .con = db)
-      r$subset_patients <- DBI::dbGetQuery(m$db, sql)
+      sql <- glue::glue_sql("SELECT * FROM subset_persons WHERE deleted IS FALSE AND subset_id = {link_id}", .con = db)
+      r$subset_persons <- DBI::dbGetQuery(m$db, sql)
       
-      r$subset_patients_temp <- r$subset_patients %>% 
+      r$subset_persons_temp <- r$subset_persons %>% 
         dplyr::mutate(modified = FALSE) %>%
-        dplyr::arrange(patient_id) %>%
-        dplyr::mutate_at("patient_id", as.character) %>%
+        dplyr::arrange(person_id) %>%
+        dplyr::mutate_at("person_id", as.character) %>%
         dplyr::mutate_at("creator_id", as.factor)
     })
     

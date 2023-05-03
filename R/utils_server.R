@@ -10,7 +10,7 @@
 #' }
 update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), table = character(), i18n = character()){
   tables <- c("users", "users_accesses", "users_statuses",
-    "data_sources", "datasets", "studies", "subsets", "subset_patients", "subsets_patients", "vocabulary", "thesaurus", "thesaurus_items",
+    "data_sources", "datasets", "studies", "subsets", "subset_persons", "subsets_persons", "vocabulary", "thesaurus", "thesaurus_items",
     "plugins", "scripts",
     "patient_lvl_modules_families", "patient_lvl_modules", "patient_lvl_modules_elements", "patient_lvl_modules_elements_items",
     "aggregated_modules_families", "aggregated_modules", "aggregated_modules_elements", "aggregated_modules_elements_items", 
@@ -20,22 +20,22 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
   
   if (table %not_in% tables) stop(paste0(i18n$t("invalid_table_name"), ". ", i18n$t("tables_allowed"), " : ", toString(tables)))
   
-  if (table %in% c("patients_options", "modules_elements_options", "subsets", "subset_patients", "subsets_patients")){
+  if (table %in% c("patients_options", "modules_elements_options", "subsets", "subset_persons", "subsets_persons")){
     db <- m$db
     
-    if (table %in% c("subsets", "subset_patients", "subsets_patients", "patients_options")){
+    if (table %in% c("subsets", "subset_persons", "subsets_persons", "patients_options")){
       
-      if (table == "subsets_patients"){
+      if (table == "subsets_persons"){
         
-        sql <- glue::glue_sql("SELECT * FROM subset_patients WHERE deleted IS FALSE AND subset_id IN ({m$subsets %>% dplyr::pull(id)*})", .con = db)
-        m$subsets_patients <- DBI::dbGetQuery(db, sql)
+        sql <- glue::glue_sql("SELECT * FROM subset_persons WHERE deleted IS FALSE AND subset_id IN ({m$subsets %>% dplyr::pull(id)*})", .con = db)
+        m$subsets_persons <- DBI::dbGetQuery(db, sql)
       }
       
       else {
 
         tables <- tibble::tribble(~name, ~col_name, ~col_value,
           "subsets", "study_id", m$selected_study,
-          "subset_patients", "subset_id", m$selected_subset,
+          "subset_persons", "subset_id", m$selected_subset,
           "patients_options", "study_id", m$selected_study)
 
         row <- tables %>% dplyr::filter(name == table)
@@ -201,7 +201,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name == "subset_patients"){
+  if (table_name == "subset_persons"){
     result <- c(i18n$t("id"), i18n$t("subset"), i18n$t("patient"),
       i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"))
   }

@@ -219,8 +219,7 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
     }
     
     # Subset code
-    subset_code <- paste0("patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at(\"patient_id\", as.integer)\n\n",
-      "add_patients_to_subset(output = output, m = m, patients = patients, subset_id = %subset_id%, i18n = i18n, ns = ns)")
+    subset_code <- paste0("add_persons_to_subset(output = output, m = m, persons = persons, subset_id = %subset_id%, i18n = i18n, ns = ns)")
     
     if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM code")) == 0){
       DBI::dbAppendTable(r$db, "code", tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,

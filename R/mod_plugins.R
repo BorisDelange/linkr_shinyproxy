@@ -1850,7 +1850,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (length(r$selected_dataset) == 0) var_check <- FALSE
         if (length(r$selected_dataset) > 0){
           if (is.na(r$selected_dataset) | is.na(m$selected_study)) var_check <- FALSE
-          if (prefix == "patient_lvl" & is.na(m$selected_patient)) var_check <- FALSE
+          if (prefix == "patient_lvl" & is.na(m$selected_person)) var_check <- FALSE
         }
 
         if (!var_check) show_message_bar(output, message = "load_some_patient_data_plugin", i18n = i18n, ns = ns)
@@ -1901,7 +1901,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
           stringr::str_replace_all("\r", "\n")
         
-        if (prefix == "patient_lvl") ui_code <- ui_code %>% stringr::str_replace_all("%patient_id%", as.character(m$selected_patient))
+        if (prefix == "patient_lvl") ui_code <- ui_code %>% stringr::str_replace_all("%patient_id%", as.character(m$selected_person))
         
         server_code <- server_code %>% 
           stringr::str_replace_all("%module_id%", "1") %>%
@@ -1910,7 +1910,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
           stringr::str_replace_all("\r", "\n")
         
-        if (prefix == "patient_lvl") server_code <- server_code %>% stringr::str_replace_all("%patient_id%", as.character(m$selected_patient))
+        if (prefix == "patient_lvl") server_code <- server_code %>% stringr::str_replace_all("%patient_id%", as.character(m$selected_person))
         
         output$code_result_ui <- renderUI(make_card("", tryCatch(result <- eval(parse(text = ui_code)), error = function(e) stop(e), warning = function(w) stop(w))))
         

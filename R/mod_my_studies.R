@@ -371,7 +371,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       # Reset selected_study variable
       m$selected_study <- NA_integer_
-      m$selected_patient <- NA_integer_ # To prevent bug when execute plugin code from plugin page
+      m$selected_person <- NA_integer_ # To prevent bug when execute plugin code from plugin page
       
       # A r variable to update study dropdown, when the load of dataset is finished
       r$loaded_dataset <- r$selected_dataset
@@ -631,7 +631,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       m$selected_subset <- NA_integer_
       
       # Select patients belonging to subsets of this study
-      update_r(r = r, m = m, table = "subsets_patients")
+      update_r(r = r, m = m, table = "subsets_persons")
       
       # Load patients options
       sql <- glue::glue_sql("SELECT * FROM patients_options WHERE study_id = {m$selected_study}", .con = m$db)
@@ -674,10 +674,10 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       if (!is.na(m$selected_subset)){
         
         # Select patients who belong to this subset
-        update_r(r = r, m = m, table = "subset_patients")
+        update_r(r = r, m = m, table = "subset_persons")
         
         # If this subset contains no patient, maybe the code has not been run yet
-        if (nrow(m$subset_patients) == 0){
+        if (nrow(m$subset_persons) == 0){
           subset_code <- r$code %>% dplyr::filter(category == "subset" & link_id == m$selected_subset) %>% dplyr::pull(code) %>%
             stringr::str_replace_all("%dataset_id%", as.character(r$selected_dataset)) %>%
             stringr::str_replace_all("%subset_id%", as.character(m$selected_subset)) %>%
@@ -688,7 +688,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
               error_name = paste0("sidenav - execute_subset_code  - id = ", m$selected_subset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
           )
           
-          update_r(r = r, m = m, table = "subset_patients")
+          update_r(r = r, m = m, table = "subset_persons")
         }
       }
     })

@@ -341,9 +341,9 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     
     if (prefix == "patient_lvl"){
       
-      observeEvent(m$selected_patient, {
+      observeEvent(m$selected_person, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$selected_patient"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$selected_person"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         # Reset variables
@@ -351,21 +351,21 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         stay_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
           "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
           "drug_era", "dose_era", "condition_era")
-        patient_tables <- c(stay_tables)
+        person_tables <- c(stay_tables)
         
         sapply(stay_tables, function(table) d$data_stay[[table]] <- tibble::tibble())
-        sapply(patient_tables, function(table) d$data_patient[[table]] <- tibble::tibble())
+        sapply(person_tables, function(table) d$data_person[[table]] <- tibble::tibble())
         
-        if (length(m$selected_patient) > 0){
-          if (!is.na(m$selected_patient) & m$selected_patient != ""){
-            if (nrow(d$stays) > 0) d$data_patient$stays <- d$stays %>% dplyr::filter(patient_id == m$selected_patient) %>% dplyr::arrange(admission_datetime)
-            if (nrow(d$labs_vitals) > 0) d$data_patient$labs_vitals <- d$labs_vitals %>% dplyr::filter(patient_id == m$selected_patient)
-            if (nrow(d$text) > 0) d$data_patient$text <- d$text %>% dplyr::filter(patient_id == m$selected_patient)
-            if (nrow(d$orders) > 0) d$data_patient$orders <- d$orders %>% dplyr::filter(patient_id == m$selected_patient)
+        if (length(m$selected_person) > 0){
+          if (!is.na(m$selected_person) & m$selected_person != ""){
+            if (nrow(d$stays) > 0) d$data_person$stays <- d$stays %>% dplyr::filter(person_id == m$selected_person) %>% dplyr::arrange(admission_datetime)
+            if (nrow(d$labs_vitals) > 0) d$data_person$labs_vitals <- d$labs_vitals %>% dplyr::filter(person_id == m$selected_person)
+            if (nrow(d$text) > 0) d$data_person$text <- d$text %>% dplyr::filter(person_id == m$selected_person)
+            if (nrow(d$orders) > 0) d$data_person$orders <- d$orders %>% dplyr::filter(person_id == m$selected_person)
           }
         }
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$selected_patient"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$selected_person"))
       })
       
       observeEvent(m$selected_stay, {
@@ -373,7 +373,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$selected_stay"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
-        req(d$data_patient)
+        req(d$data_person)
         
         stay_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
           "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
@@ -383,11 +383,11 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (length(m$selected_stay) > 0){
           if (!is.na(m$selected_stay) & m$selected_stay != ""){
             
-            d$data_stay$stay <- d$data_patient$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
+            d$data_stay$stay <- d$data_person$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
             
-            if (nrow(d$data_patient$labs_vitals) > 0) d$data_stay$labs_vitals <- d$data_patient$labs_vitals %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
-            if (nrow(d$data_patient$text) > 0) d$data_stay$text <- d$data_patient$text %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
-            if (nrow(d$data_patient$orders) > 0) d$data_stay$orders <- d$data_patient$orders %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
+            if (nrow(d$data_person$labs_vitals) > 0) d$data_stay$labs_vitals <- d$data_person$labs_vitals %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
+            if (nrow(d$data_person$text) > 0) d$data_stay$text <- d$data_person$text %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
+            if (nrow(d$data_person$orders) > 0) d$data_stay$orders <- d$data_person$orders %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
           }
         }
         
@@ -397,9 +397,9 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     
     if (prefix == "aggregated"){
       
-      observeEvent(m$subset_patients, {
+      observeEvent(m$subset_persons, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$subset_patients"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$subset_persons"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         # Reset variables
@@ -407,13 +407,12 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         subset_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
           "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
           "drug_era", "dose_era", "condition_era", "person", "observation_period", "visit_occurrence", "visit_detail")
-        sapply(subset_tables, function(table) d$data_subset[[table]] <- tibble::tibble())
+        for(table in subset_tables) d$data_subset[[table]] <- tibble::tibble()
         
-        if (nrow(m$subset_patients) > 0){
-          lapply(vars, function(var) if (nrow(d[[var]]) > 0) d$data_subset[[var]] <- d[[var]] %>% dplyr::inner_join(m$subset_patients %>% dplyr::select(patient_id), by = "patient_id"))
-        }
+        if (nrow(m$subset_persons) > 0) for(table in subset_tables) if (nrow(d[[table]]) > 0) d$data_subset[[table]] <- 
+          d[[table]] %>% dplyr::inner_join(m$subset_persons %>% dplyr::select(person_id), by = "person_id")
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$subset_patients"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$subset_persons"))
       })
     }
     
@@ -1911,82 +1910,82 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           # r[[paste0(prefix, "_load_thesaurus_type")]] <- "module_element_creation"
         })
         
-        observeEvent(r[[paste0(prefix, "_load_thesaurus_trigger")]], {
-          
-          if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..load_thesaurus_trigger"))
-          if (perf_monitoring) monitor_perf(r = r, action = "start")
-          
-          r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_items")
-          thesaurus_id <- input[[paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus")]]$key
-          
-          r[[r_var]] <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_id, category = paste0("plus_", r[[paste0(prefix, "_module_element_card_selected_type")]]))
-          colour_col <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_id, category = paste0("colours_", r[[paste0(prefix, "_module_element_card_selected_type")]]))
-
-          if (nrow(colour_col) > 0) r[[r_var]] <- r[[r_var]] %>%
-            dplyr::left_join(colour_col %>% dplyr::select(id, colour), by = "id") %>% dplyr::relocate(colour, .before = "datetime")
-
-          count_items_rows <- tibble::tibble()
-          count_patients_rows <- tibble::tibble()
-
-          # Add count_items_rows in the cache & get it if already in the cache
-          tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
-            dataset_id = r$selected_dataset, category = "count_items_rows"),
-              error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
-                error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
-                  " - fail_load_dataset - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
-
-          # Add count_items_rows in the cache & get it if already in the cache
-          tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
-            dataset_id = as.integer(r$selected_dataset), category = "count_patients_rows"),
-              error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
-                error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
-                  " - fail_load_dataset - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
-
-          if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0){
-            show_message_bar(output, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
-            r[[r_var]] <- r[[r_var]] %>% dplyr::slice(0)
-            r[[paste0(r_var, "_temp")]] <- r[[r_var]] %>% dplyr::mutate(modified = FALSE)
-          }
-          
-          if(nrow(count_items_rows) != 0 & nrow(count_patients_rows) != 0){
-  
-            # Transform count_rows cols to integer, to be sortable
-            r[[r_var]] <- r[[r_var]] %>%
-              dplyr::mutate(display_name = ifelse((display_name != "" & !is.na(display_name)), display_name, name)) %>%
-              dplyr::left_join(count_items_rows, by = "item_id") %>%
-              dplyr::left_join(count_patients_rows, by = "item_id") %>%
-              dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
-              dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action") %>%
-              dplyr::arrange(dplyr::desc(count_items_rows))
-  
-            # Filter on count_items_rows > 0
-            r[[r_var]] <- r[[r_var]] %>% dplyr::filter(count_items_rows > 0)
-  
-            r[[paste0(r_var, "_temp")]] <- r[[r_var]] %>%
-              dplyr::mutate(modified = FALSE) %>%
-              dplyr::mutate_at("item_id", as.character)
-          }
-
-          editable_cols <- c("display_name", "unit")
-          searchable_cols <- c("item_id", "name", "display_name", "unit")
-          factorize_cols <- c("unit")
-          column_widths <- c("id" = "80px", "action" = "80px", "display_name" = "300px", "unit" = "100px")
-          sortable_cols <- c("id", "item_id", "name", "display_name", "count_patients_rows", "count_items_rows")
-          centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-          col_names <- get_col_names(table_name = "modules_thesaurus_items_with_counts", i18n = i18n)
-          hidden_cols <- c("id", "name", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
-
-          # Render datatable
-          render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0(r_var, "_temp")]],
-            output_name = r_var, col_names =  col_names,
-            editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-            searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
-
-          # Create a proxy for datatatable
-          r[[paste0(r_var, "_proxy")]] <- DT::dataTableProxy(r_var, deferUntilFlush = FALSE)
-
-          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..load_thesaurus_trigger"))
-        })
+        # observeEvent(r[[paste0(prefix, "_load_thesaurus_trigger")]], {
+        #   
+        #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..load_thesaurus_trigger"))
+        #   if (perf_monitoring) monitor_perf(r = r, action = "start")
+        #   
+        #   r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_items")
+        #   thesaurus_id <- input[[paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus")]]$key
+        #   
+        #   r[[r_var]] <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_id, category = paste0("plus_", r[[paste0(prefix, "_module_element_card_selected_type")]]))
+        #   colour_col <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_id, category = paste0("colours_", r[[paste0(prefix, "_module_element_card_selected_type")]]))
+        # 
+        #   if (nrow(colour_col) > 0) r[[r_var]] <- r[[r_var]] %>%
+        #     dplyr::left_join(colour_col %>% dplyr::select(id, colour), by = "id") %>% dplyr::relocate(colour, .before = "datetime")
+        # 
+        #   count_items_rows <- tibble::tibble()
+        #   count_patients_rows <- tibble::tibble()
+        # 
+        #   # Add count_items_rows in the cache & get it if already in the cache
+        #   tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
+        #     dataset_id = r$selected_dataset, category = "count_items_rows"),
+        #       error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
+        #         error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
+        #           " - fail_load_dataset - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+        # 
+        #   # Add count_items_rows in the cache & get it if already in the cache
+        #   tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
+        #     dataset_id = as.integer(r$selected_dataset), category = "count_patients_rows"),
+        #       error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
+        #         error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
+        #           " - fail_load_dataset - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+        # 
+        #   if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0){
+        #     show_message_bar(output, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
+        #     r[[r_var]] <- r[[r_var]] %>% dplyr::slice(0)
+        #     r[[paste0(r_var, "_temp")]] <- r[[r_var]] %>% dplyr::mutate(modified = FALSE)
+        #   }
+        #   
+        #   if(nrow(count_items_rows) != 0 & nrow(count_patients_rows) != 0){
+        # 
+        #     # Transform count_rows cols to integer, to be sortable
+        #     r[[r_var]] <- r[[r_var]] %>%
+        #       dplyr::mutate(display_name = ifelse((display_name != "" & !is.na(display_name)), display_name, name)) %>%
+        #       dplyr::left_join(count_items_rows, by = "item_id") %>%
+        #       dplyr::left_join(count_patients_rows, by = "item_id") %>%
+        #       dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
+        #       dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action") %>%
+        #       dplyr::arrange(dplyr::desc(count_items_rows))
+        # 
+        #     # Filter on count_items_rows > 0
+        #     r[[r_var]] <- r[[r_var]] %>% dplyr::filter(count_items_rows > 0)
+        # 
+        #     r[[paste0(r_var, "_temp")]] <- r[[r_var]] %>%
+        #       dplyr::mutate(modified = FALSE) %>%
+        #       dplyr::mutate_at("item_id", as.character)
+        #   }
+        # 
+        #   editable_cols <- c("display_name", "unit")
+        #   searchable_cols <- c("item_id", "name", "display_name", "unit")
+        #   factorize_cols <- c("unit")
+        #   column_widths <- c("id" = "80px", "action" = "80px", "display_name" = "300px", "unit" = "100px")
+        #   sortable_cols <- c("id", "item_id", "name", "display_name", "count_patients_rows", "count_items_rows")
+        #   centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
+        #   col_names <- get_col_names(table_name = "modules_thesaurus_items_with_counts", i18n = i18n)
+        #   hidden_cols <- c("id", "name", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
+        # 
+        #   # Render datatable
+        #   render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0(r_var, "_temp")]],
+        #     output_name = r_var, col_names =  col_names,
+        #     editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+        #     searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+        # 
+        #   # Create a proxy for datatatable
+        #   r[[paste0(r_var, "_proxy")]] <- DT::dataTableProxy(r_var, deferUntilFlush = FALSE)
+        # 
+        #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..load_thesaurus_trigger"))
+        # })
 
         # Reload datatable
         observeEvent(r$module_element_creation_thesaurus_items_temp, {

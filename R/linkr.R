@@ -132,7 +132,7 @@ linkr <- function(
     "subsets", c(
       "subsets_datatable_card",
       "subsets_edit_code_card",
-      "subsets_patients_card"),
+      "subsets_persons_card"),
     "vocabularies", c(
       "vocabularies_concepts_card",
       "vocabularies_mapping_card",

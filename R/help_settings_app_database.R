@@ -254,7 +254,7 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         p(strong("2) BDD publique")),
         tags$ul(
           tags$li(tags$em("subsets"), " : les différents subsets associés aux études"),
-          tags$li(tags$em("subset_patients"), " : les patients de tel ou tel subset"),
+          tags$li(tags$em("subset_persons"), " : les patients de tel ou tel subset"),
           tags$li(tags$em("modules_elements_options"), " : cette table comporte les options associés aux widgets, ce qui permet",
             " aux plugins utilisés au sein de widgets d'être configurés par les utilisateurs"),
           tags$li(tags$em("patients_options"), " : cette table peut être utilisée pour stocker des informations sur les patients, dans une étude")
@@ -316,7 +316,7 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         p(strong("2) Public database")),
         tags$ul(
           tags$li(tags$em("subsets"), " : the different subsets associated with the studies"),
-          tags$li(tags$em("subset_patients"), " : the patients in a given subset"),
+          tags$li(tags$em("subset_persons"), " : the patients in a given subset"),
           tags$li(tags$em("modules_elements_options"), " : this table contains the options associated with widgets, allowing",
             " plugins used within widgets to be configured by users"),
           tags$li(tags$em("patients_options"), " : this table can be used to store information about patients, in a study")

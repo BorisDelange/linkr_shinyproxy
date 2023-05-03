@@ -268,7 +268,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       "patients_options", "iiiiiiciccnicl",
       "modules_elements_options", "iiiiicccnicl",
       "subsets", "icciicl",
-      "subset_patients", "iiiicl"
+      "subset_persons", "iiiicl"
     )
     
     # --- --- --- --- --- ---
@@ -804,7 +804,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
  
             if (table != "log" | (table == "log" & input$db_import_log)){
             
-              if (table %in% c("modules_elements_options", "patients_options", "subset_patients", "subsets")) db <- m$db
+              if (table %in% c("modules_elements_options", "patients_options", "subset_persons", "subsets")) db <- m$db
               else db <- r$db
               
               # Load CSV file

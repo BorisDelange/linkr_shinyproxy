@@ -419,6 +419,40 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       # Update datatable columns dropdown
       shiny.fluent::updateDropdown.shinyInput(session, "vocabulary_table_cols", value = c(1, 2, 3, 4, 5, 15, 16))
         
+      # Join d$person, d$visit_occurrence & d$visit_detail with r$dataset_all_concepts
+      
+      omop_version <- r$options %>% dplyr::filter(category == "dataset" & link_id == r$selected_dataset & name == "omop_version") %>% dplyr::pull(value)
+      
+      person_cols <- c("gender", "race", "ethnicity")
+      
+      for (col in person_cols) d$person <- d$person %>% 
+        dplyr::left_join(
+          r$dataset_all_concepts %>% 
+            dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
+        ) %>%
+        dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
+      
+      if (omop_version == "5.3") visit_cols <- c("admitting_source", "discharge_to")
+      else if (omop_version %in% c("5.4", "6.0")) visit_cols <- c("admitted_from", "discharge_to")
+      
+      for (table in c("visit_occurrence", "visit_detail")){
+        
+        if (table == "visit_occurrence") sub_cols <- c("visit", "visit_type")
+        else sub_cols <- c("visit_detail", "visit_detail_type")
+        
+        for (col in sub_cols) d[[table]] <- d[[table]] %>% 
+          dplyr::left_join(
+            r$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
+          ) %>%
+          dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
+        
+        for (col in visit_cols) d[[table]] <- d[[table]] %>% 
+          dplyr::left_join(
+            r$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
+          ) %>%
+          dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
+      }
+      
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$load_dataset_all_concepts"))
     })
     

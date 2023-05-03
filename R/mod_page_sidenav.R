@@ -107,9 +107,9 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
       ),
       dropdowns(c("dataset", "study", "subset")),
       br(), div(id = ns("hr1"), hr()),
-      dropdowns(c("patient", "stay")),
+      dropdowns(c("person", "stay")),
       br(), div(id = ns("hr2"), hr()),
-      uiOutput(ns("patient_info"))
+      uiOutput(ns("person_info"))
     ) -> result
   }
   
@@ -269,7 +269,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         shiny.fluent::updateComboBox.shinyInput(session, "dataset", 
           options = convert_tibble_to_list(r$datasets %>% dplyr::arrange(name), key_col = "id", text_col = "name"), value = NULL)
         
-        sapply(c("study", "subset", "patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
+        sapply(c("study", "subset", "person", "stay", "person_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
         shinyjs::hide("exclusion_reason_div")
@@ -282,7 +282,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         # Save value in r$selected_dropdown, to update patient-level data dropdowns AND aggregated data dropdowns
         r$selected_dataset <- input$dataset$key
         
-        sapply(c("subset", "patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
+        sapply(c("subset", "person", "stay", "person_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
         sapply(c("study"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
@@ -291,12 +291,12 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         # Hide exclusion_reason dropdown
         
         shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL)
-        shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "person", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
-        shiny.fluent::updateComboBox.shinyInput(session, "patient_status", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "person_status", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
         shinyjs::hide("exclusion_reason_div")
-        output$patient_info <- renderUI("")
+        output$person_info <- renderUI("")
       })
       
       # Update the two pages dropdowns (patient-level data page & aggregated data page)
@@ -345,17 +345,17 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (!is.na(m$selected_study) & m$selected_study != input$study$key) m$selected_study <- input$study$key
 
         # Reset dropdowns & uiOutput
-        shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "person", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
-        shiny.fluent::updateComboBox.shinyInput(session, "patient_status", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "person_status", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
         
-        sapply(c("patient", "stay", "patient_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
+        sapply(c("person", "stay", "person_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
         sapply(c("subset"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         shinyjs::hide("exclusion_reason_div")
-        output$patient_info <- renderUI("")
+        output$person_info <- renderUI("")
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$study"))
       })
@@ -412,14 +412,14 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
 
         # Reset dropdown & uiOutput
         shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
-        shiny.fluent::updateComboBox.shinyInput(session, "patient_status", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "person_status", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
-        sapply(c("stay", "patient_status", "hr2", "exclusion_reason_div"), function(element){
+        sapply(c("stay", "person_status", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
-        sapply(c("patient", "hr1"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
+        sapply(c("person", "hr1"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         shinyjs::hide("exclusion_reason_div")
-        output$patient_info <- renderUI("")
+        output$person_info <- renderUI("")
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$subset"))
       })
@@ -433,72 +433,79 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           value = list(key = m$selected_subset))
       })
       
-      observeEvent(m$subset_patients, {
+      observeEvent(m$subset_persons, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer m$subset_patients"))
+        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer m$subset_persons"))
         
-        patients <- tibble::tibble()
+        persons <- tibble::tibble()
         
-        if (nrow(m$subset_patients) > 0 & nrow(d$patients) > 0){
-          patients <- d$patients %>% dplyr::inner_join(m$subset_patients %>% dplyr::select(patient_id), by = "patient_id")
+        if (nrow(m$subset_persons) > 0 & nrow(d$person) > 0){
+          persons <- d$person %>% dplyr::inner_join(m$subset_persons %>% dplyr::select(person_id), by = "person_id")
         }
         
-        if (nrow(patients) == 0){
-          # Set selected_patient to NA, not to display a chart when no patient is selected
-          m$selected_patient <- NA_integer_
-          shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = i18n$t("no_patient_in_subset")) 
+        if (nrow(persons) == 0){
+          # Set selected_person to NA, not to display a chart when no person is selected
+          m$selected_person <- NA_integer_
+          shiny.fluent::updateComboBox.shinyInput(session, "person", options = list(), value = NULL, errorMessage = i18n$t("no_person_in_subset")) 
         }
         
-        if (nrow(patients) > 0){
-          # Order patients by patient_id
-          patients <- patients %>% dplyr::arrange(patient_id)
+        if (nrow(persons) > 0){
+          # Order persons by person_id
+          persons <- persons %>% dplyr::arrange(person_id)
           
-          # Update patients dropdown
-          shiny.fluent::updateComboBox.shinyInput(session, "patient", 
-            options = convert_tibble_to_list(data = patients %>% dplyr::mutate(name_display = paste0(patient_id, " - ", gender)),
-              key_col = "patient_id", text_col = "name_display"))
+          # Update persons dropdown
+          shiny.fluent::updateComboBox.shinyInput(session, "person", 
+            options = convert_tibble_to_list(data = persons %>% dplyr::mutate(name_display = paste0(person_id, " - ", gender)),
+              key_col = "person_id", text_col = "name_display"))
         }
         
       })
       
-      # --- --- --- --- ---
-      # Selected patient ----
-      # --- --- --- --- ---
+      # --- --- --- --- -- -
+      # Selected person ----
+      # --- --- --- --- -- -
       
-      observeEvent(input$patient, {
+      observeEvent(input$person, {
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$patient"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$person"))
         
-        m$selected_patient <- input$patient$key
+        m$selected_person <- input$person$key
         
-        if (nrow(d$stays %>% dplyr::filter(patient_id == input$patient$key)) == 0) shiny.fluent::updateComboBox.shinyInput(session, "patient", options = list(), value = NULL, errorMessage = i18n$t("no_patient_in_subset"))
-        if (nrow(d$stays %>% dplyr::filter(patient_id == input$patient$key)) > 0){
+        if (nrow(d$stays %>% dplyr::filter(person_id == input$person$key)) == 0) shiny.fluent::updateComboBox.shinyInput(session, "person", options = list(), value = NULL, errorMessage = i18n$t("no_person_in_subset"))
+        if (nrow(d$stays %>% dplyr::filter(person_id == input$person$key)) > 0){
           
-          if (tolower(language) == "fr") stays <- convert_tibble_to_list(data = d$stays %>% dplyr::filter(patient_id == input$patient$key) %>% dplyr::mutate(name_display = paste0("Unit...", " - ", #paste0(unit_name, " - ", 
+          if (tolower(language) == "fr") stays <- convert_tibble_to_list(data = d$stays %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0("Unit...", " - ", #paste0(unit_name, " - ", 
               format(as.POSIXct(admission_datetime), format = "%d-%m-%Y"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(discharge_datetime), format = "%d-%m-%Y"))),
               key_col = "stay_id", text_col = "name_display")
-          else stays <- convert_tibble_to_list(data = d$stays %>% dplyr::filter(patient_id == input$patient$key) %>% dplyr::mutate(name_display = paste0("Unit...", " - ", #paste0(unit_name, " - ", 
+          else stays <- convert_tibble_to_list(data = d$stays %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0("Unit...", " - ", #paste0(unit_name, " - ", 
             format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
             key_col = "stay_id", text_col = "name_display")
           
-          # Load stays of the patient & update dropdown
+          # Load stays of the person & update dropdown
           shiny.fluent::updateComboBox.shinyInput(session, "stay", options = stays, value = NULL)
         }
         
-        # Update patient informations on sidenav
+        # Update person informations on sidenav
         
-        style <- "display:inline-block; width:100px; font-weight:bold;"
-        output$patient_info <- renderUI({
-          
-          tagList(
-            span(i18n$t("patient_id"), style = style), m$selected_patient, br(),
-            span(i18n$t("gender"), style = style), d$patients %>% dplyr::filter(patient_id == m$selected_patient) %>% dplyr::pull(gender)
-          )
-        })
+        # gender_concept_ids <- d$person %>% dplyr::distinct(gender_concept_id) %>% dplyr::pull(gender_concept_id) %>% as.character()
+        # sql <- glue::glue_sql("SELECT * FROM concept WHERE concept_id IN ({gender_concept_ids*})", .con = m$db)
+        # 
+        # 
+        # gender <- d$person %>% dplyr::filter(person_id == m$selected_person) %>% dplyr::pull(gender_concept_id) %>% as.character() %>%
+        #   switch("8507" = i18n$t("male"), "8532" = i18n$t("female"), "8521" = i18n$t("other"), "8551" = i18n$t("unknown"), "8570" = i18n$t("ambiguous"))
+        # 
+        # style <- "display:inline-block; width:100px; font-weight:bold;"
+        # output$person_info <- renderUI({
+        #   
+        #   tagList(
+        #     span(i18n$t("person_id"), style = style), m$selected_person, br(),
+        #     span(i18n$t("gender"), style = style), gender
+        #   )
+        # })
         
         sapply(c("stay", "hr2"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$patient"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$person"))
       })
       
       # --- --- --- -- -
@@ -512,7 +519,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         m$selected_stay <- input$stay$key
 
-        # Update patient informations on sidenav
+        # Update person informations on sidenav
 
         style <- "display:inline-block; width:100px; font-weight:bold;"
         
@@ -532,10 +539,13 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         unit_name <- unit_name %>% dplyr::mutate(name = dplyr::case_when(!is.na(display_name) ~ display_name, TRUE ~ name)) %>% dplyr::pull(name)
         
-        output$patient_info <- renderUI({
+        gender <- d$person %>% dplyr::filter(person_id == m$selected_person) %>% dplyr::pull(gender_concept_id) %>% as.character() %>%
+          switch("8507" = i18n$t("male"), "8532" = i18n$t("female"), "8521" = i18n$t("other"), "8551" = i18n$t("unknown"), "8570" = i18n$t("ambiguous"))
+        
+        output$person_info <- renderUI({
           tagList(
-            span(i18n$t("patient_id"), style = style), m$selected_patient, br(),
-            span(i18n$t("gender"), style = style), d$patients %>% dplyr::filter(patient_id == m$selected_patient) %>% dplyr::pull(gender), br(), br(),
+            span(i18n$t("person_id"), style = style), m$selected_person, br(),
+            span(i18n$t("gender"), style = style), gender, br(), br(),
             span(i18n$t("stay_id"), style = style), m$selected_stay, br(),
             span(i18n$t("age"), style = style), age_div, br(),
             span(i18n$t("hosp_unit"), style = style), unit_name, br(),

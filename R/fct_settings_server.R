@@ -27,7 +27,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   ns <- shiny::NS(id)
   
   # db variable depending on table
-  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients",
+  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_persons",
     "concept", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
   if (table %in% m_tables) db <- m$db
   else db <- r$db
@@ -282,8 +282,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row$subsets + 1, i18n$t("subset_all_patients"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add code for creating subset with all patients
-    code <- paste0("patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at(\"patient_id\", as.integer)\n\n",
-      "add_patients_to_subset(output = output, m = m, patients = patients, subset_id = %subset_id%, i18n = i18n, ns = ns)")
+    code <- paste0("add_persons_to_subset(output = output, m = m, persons = d$person %>% dplyr::select(person_id), subset_id = %subset_id%, i18n = i18n, ns = ns)")
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row$code + 1, "subset", last_row$subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
@@ -295,13 +294,13 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     new_data$aggregated_modules_families <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
       get_last_row(r$db, "aggregated_modules_families") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
-    # Add patients to subset
+    # Add persons to subset
     tryCatch({
-      patients <- d$patients %>% dplyr::select(patient_id) %>% dplyr::mutate_at('patient_id', as.integer)
-      add_patients_to_subset(output = output, r = r, m = m, patients = patients, subset_id = last_row$subsets + 1, i18n = i18n, ns = ns)
+      persons <- d$person %>% dplyr::select(person_id) %>% dplyr::mutate_at("person_id", as.integer)
+      add_persons_to_subset(output = output, r = r, m = m, persons = persons, subset_id = last_row$subsets + 1, i18n = i18n, ns = ns)
     }, 
       error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_adding_patients_to_subset", 
-        error_name = paste0("add study - add_patients_to_subsets - id = ", last_row$subsets + 1), category = "Error", error_report = toString(e), i18n = i18n))
+        error_name = paste0("add study - add_persons_to_subsets - id = ", last_row$subsets + 1), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
     
     # Update sidenav dropdown with the new study
     r$studies_choices <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE dataset_id = ", data$dataset))
@@ -662,7 +661,7 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
   # When the deletion is confirmed
   observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
     
-    m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients",
+    m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_persons",
       "concept", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
     
     if (table %in% m_tables) db <- m$db
@@ -1372,7 +1371,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
 save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), ns = character(), 
   table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = character(), r_message_bar = FALSE){
   
-  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_patients",
+  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_persons",
     "concept", "concept_user", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
 
   if (table %in% m_tables) db <- m$db
