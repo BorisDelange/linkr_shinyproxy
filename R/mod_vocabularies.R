@@ -421,39 +421,56 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         
       # Join d$person, d$visit_occurrence & d$visit_detail with r$dataset_all_concepts
       
-      omop_version <- r$options %>% dplyr::filter(category == "dataset" & link_id == r$selected_dataset & name == "omop_version") %>% dplyr::pull(value)
-      
-      person_cols <- c("gender", "race", "ethnicity")
-      
-      for (col in person_cols) d$person <- d$person %>% 
-        dplyr::left_join(
-          r$dataset_all_concepts %>% 
-            dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
-        ) %>%
-        dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
-      
-      if (omop_version == "5.3") visit_cols <- c("admitting_source", "discharge_to")
-      else if (omop_version %in% c("5.4", "6.0")) visit_cols <- c("admitted_from", "discharge_to")
-      
-      for (table in c("visit_occurrence", "visit_detail")){
-        
-        if (table == "visit_occurrence") sub_cols <- c("visit", "visit_type")
-        else sub_cols <- c("visit_detail", "visit_detail_type")
-        
-        for (col in sub_cols) d[[table]] <- d[[table]] %>% 
-          dplyr::left_join(
-            r$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
-          ) %>%
-          dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
-        
-        for (col in visit_cols) d[[table]] <- d[[table]] %>% 
-          dplyr::left_join(
-            r$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
-          ) %>%
-          dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
-      }
+      r$merge_concepts_and_d_vars <- Sys.time()
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$load_dataset_all_concepts"))
+    })
+    
+    # Join d$person, d$visit_occurrence & d$visit_detail with r$dataset_all_concepts
+    
+    observeEvent(r$merge_concepts_and_d_vars, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$merge_concepts_and_d_vars"))
+      
+      omop_version <- r$options %>% dplyr::filter(category == "dataset" & link_id == r$selected_dataset & name == "omop_version") %>% dplyr::pull(value)
+
+      # Don't reload if already done
+      
+      if ("gender_concept_name" %not_in% colnames(d$person)){
+      
+        person_cols <- c("gender", "race", "ethnicity")
+  
+        for (col in person_cols) d$person <- d$person %>%
+          dplyr::left_join(
+            r$dataset_all_concepts %>%
+              dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
+          ) %>%
+          dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
+  
+        if (omop_version == "5.3") visit_cols <- c("admitting_source", "discharge_to")
+        else if (omop_version %in% c("5.4", "6.0")) visit_cols <- c("admitted_from", "discharge_to")
+  
+        for (table in c("visit_occurrence", "visit_detail")){
+  
+          if (table == "visit_occurrence") sub_cols <- c("visit", "visit_type")
+          else sub_cols <- c("visit_detail", "visit_detail_type")
+  
+          for (col in sub_cols) d[[table]] <- d[[table]] %>%
+            dplyr::left_join(
+              r$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
+            ) %>%
+            dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
+  
+          for (col in visit_cols) d[[table]] <- d[[table]] %>%
+            dplyr::left_join(
+              r$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
+            ) %>%
+            dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
+        }
+      }
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$merge_concepts_and_d_vars"))
     })
     
     observeEvent(input$vocabulary, {

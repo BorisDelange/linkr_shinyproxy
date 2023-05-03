@@ -484,6 +484,10 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if (nrow(r$dataset_loaded_scripts) > 0) r$reload_scripts_cache <- Sys.time()
       }
       
+      # Join d$person, d$visit_occurrence & d$visit_detail with r$dataset_all_concepts
+      
+      # r$merge_concepts_and_d_vars <- Sys.time()
+      
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$load_scripts"))
     })
     
@@ -580,6 +584,10 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       r$force_reload_scripts_cache <- FALSE
       r$update_scripts_cache_card <- Sys.time()
+      
+      # Join d$person, d$visit_occurrence & d$visit_detail with r$dataset_all_concepts
+      
+      r$merge_concepts_and_d_vars <- Sys.time()
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$reload_scripts_cache"))
     })
