@@ -619,7 +619,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # - Change in r[[paste0(prefix, "_display_tabs")]]
         # - Change in r[[paste0(prefix, "_load_ui_menu")]]
         # - Change in input$study_current_tab
-        
+
         req(!is.na(m$selected_study))
         req(r[[paste0(prefix, "_display_tabs")]])
         r[[paste0(prefix, "_load_ui_menu")]]
@@ -655,7 +655,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             )
           ))
         }
-        
+
         req(nrow(display_tabs) > 0 & "level" %in% names(display_tabs) & !is.na(isolate(m$selected_study)))
         
         # First tab shown
@@ -674,16 +674,16 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           if (nrow(shown_tabs_temp) > 0) shown_tabs <- shown_tabs_temp
           if (nrow(shown_tabs_temp) == 0) shown_tabs <- first_tab_shown
         }
-        
+
         if (length(input$study_current_tab) > 0){
-          
+
           # If value = 0, go back to first level
           if (input$study_current_tab == 0){
             shown_tabs <- display_tabs %>% dplyr::filter(level == 1)
             r[[paste0(prefix, "_selected_tab")]] <- first_tab_shown$id
           } 
           else {
-            
+
             if (grepl("show_tab", isolate(r[[paste0(prefix, "_selected_tab")]]))){
               study_current_tab <- as.integer(substr(isolate(r[[paste0(prefix, "_selected_tab")]]), nchar("show_tab_") + 1, 100))
               shown_tabs_temp <- display_tabs %>% dplyr::filter(parent_tab_id == study_current_tab)
@@ -696,7 +696,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               study_current_tab <- input$study_current_tab
               shown_tabs_temp <- display_tabs %>% dplyr::filter(parent_tab_id == study_current_tab)
             }
-            
+
             # If current tab has children
             if (nrow(shown_tabs_temp) > 0) shown_tabs <- shown_tabs_temp
             
@@ -704,7 +704,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             if (nrow(shown_tabs_temp) == 0){
               current_tab <- display_tabs %>% dplyr::filter(id == study_current_tab)
               if (nrow(current_tab) > 0) shown_tabs <- display_tabs %>% dplyr::filter(parent_tab_id == current_tab$parent_tab_id & level == current_tab$level)
-              else show_tabs <- tibble::tibble()
+              else shown_tabs <- tibble::tibble()
               
               # If not any "brother", we are at level one
               if (nrow(shown_tabs) == 0){
@@ -715,7 +715,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         }
         
         # Currently selected tab
-        
+
         # We have just deleted a tab
         if (grepl("show_tab", isolate(r[[paste0(prefix, "_selected_tab")]]))){
           r[[paste0(prefix, "_selected_tab")]] <- 
@@ -736,7 +736,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           # Take the input as current tab
           else if (!grepl("add_tab", input$study_current_tab) & input$study_current_tab != 0) r[[paste0(prefix, "_selected_tab")]] <- input$study_current_tab
         }
-        
+
         nb_levels <- max(shown_tabs$level)
         
         # First level
@@ -771,19 +771,19 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             ))
           })
         }
-        
-        shown_tabs <- tagList()
+
+        shown_tabs_final <- tagList()
         
         sapply(1:nrow(shown_tabs), function(i){
-          shown_tabs <<- tagList(shown_tabs, shiny.fluent::PivotItem(id = shown_tabs[[i, "id"]], itemKey = shown_tabs[[i, "id"]], headerText = shown_tabs[[i, "name"]]))
+          shown_tabs_final <<- tagList(shown_tabs_final, shiny.fluent::PivotItem(id = shown_tabs[[i, "id"]], itemKey = shown_tabs[[i, "id"]], headerText = shown_tabs[[i, "name"]]))
         })
         
         # Add an add button, to add a new tab
-        shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0(prefix, "_add_tab_", isolate(r[[paste0(prefix, "_selected_tab")]])), headerText = span(i18n$t("add_tab"), style = "padding-left:5px;"), itemIcon = "Add"))
+        shown_tabs_final <- tagList(shown_tabs_final, shiny.fluent::PivotItem(id = paste0(prefix, "_add_tab_", itemKet = isolate(r[[paste0(prefix, "_selected_tab")]])), headerText = span(i18n$t("add_tab"), style = "padding-left:5px;"), itemIcon = "Add"))
         
         r[[paste0(prefix, "_load_ui_stage")]] <- "end_loading_tabs_menu"
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - output$study_menu"))
-        
+
         tagList(
           shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
           shiny.fluent::Pivot(
@@ -794,7 +794,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               "}"
             )),
             selectedKey = isolate(r[[paste0(prefix, "_selected_tab")]]),
-            shown_tabs
+            shown_tabs_final
           ),
           # A script to use sortable with PivotItems
           tags$script(paste0('$("#', prefix, '_study_pivot").children().first().attr("id", "', prefix, '_pivot_tabs");')),
@@ -1583,7 +1583,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       observeEvent(input$study_current_tab_trigger, {
         
         if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..study_current_tab_trigger"))
-        
+
         req(grepl("add_tab", input$study_current_tab))
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
         shinyjs::hide(paste0(prefix, "_add_widget"))
@@ -1843,9 +1843,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # Reload UI menu
         r[[paste0(prefix, "_load_display_tabs")]] <- Sys.time()
         
-        # Remove toggles UI of this tab
-        # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", deleted_tab_id))))
-        
         # Check if parent tab still have children and reload toggles div if not
         sql <- glue::glue_sql("SELECT parent_tab_id FROM {`paste0(prefix, '_tabs')`} WHERE id = {deleted_tab_id}", .con = r$db)
         parent_tab_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(parent_tab_id)
@@ -1854,7 +1851,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           has_children <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(parent_tab_id == !!parent_tab_id) %>% nrow()
           if(has_children == 0){
             
-            # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", parent_tab_id))))
             shinyjs::hide(paste0(prefix, "_toggles_", parent_tab_id))
             
             parent_toggles_div <- div(
@@ -1862,7 +1858,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                   shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_widget_", parent_tab_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
                     onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_widget_trigger', Math.random())"))),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_tab_", tab_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_tab_", parent_tab_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
                     onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_tab_trigger', Math.random())"))),
                   div(style = "width:20px;")
                 )
@@ -1873,6 +1869,9 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             output[[paste0(prefix, "_toggles_", parent_tab_id)]] <- renderUI(parent_toggles_div)
           }
         }
+        
+        # Hide edit_tab div
+        shinyjs::hide(paste0(prefix, "_edit_tab"))
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..tab_deleted"))
       })

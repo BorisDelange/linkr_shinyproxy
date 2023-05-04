@@ -341,14 +341,16 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         }
         
         # Merge count_rows, transform count_rows cols to integer, to be sortable
-        if (nrow(count_rows) != 0) r$dataset_all_concepts <- r$dataset_all_concepts %>% 
+        if (nrow(count_rows) > 0) r$dataset_all_concepts <- r$dataset_all_concepts %>% 
           dplyr::left_join(count_rows, by = "concept_id") %>%
           dplyr::mutate_at(c("count_concepts_rows", "count_persons_rows"), as.integer) %>%
-          dplyr::filter(count_concepts_rows > 0) %>%
-          dplyr::rename(concept_id_1 = concept_id, concept_name_1 = concept_name, concept_display_name_1 = concept_display_name) %>%
-          dplyr::mutate(relationship_id = NA_character_, concept_id_2 = NA_integer_, concept_name_2 = NA_character_, .after = "concept_display_name_1")
+          dplyr::filter(count_concepts_rows > 0)
         
         if (nrow(count_rows) == 0) r$dataset_all_concepts <- r$dataset_all_concepts %>% dplyr::slice(0)
+        
+        r$dataset_all_concepts <- r$dataset_all_concepts %>%
+          dplyr::rename(concept_id_1 = concept_id, concept_name_1 = concept_name, concept_display_name_1 = concept_display_name) %>%
+          dplyr::mutate(relationship_id = NA_character_, concept_id_2 = NA_integer_, concept_name_2 = NA_character_, .after = "concept_display_name_1")
         
         # Load r$concept & r$concept_relationship if not already loaded from mod_settings_data_management.R
         # Convert cols to char and arrange cols as done in mod_settings_data_management.R
@@ -374,9 +376,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         }
         
         # Merge mapped concepts
-        
+
         if (nrow(r$concept_relationship) > 0 & nrow(r$concept) > 0 & nrow(r$dataset_all_concepts) > 0){
-          
           r$dataset_all_concepts <- r$dataset_all_concepts %>%
             dplyr::bind_rows(
               r$dataset_all_concepts %>%
@@ -401,13 +402,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           
           readr::write_csv(r$dataset_all_concepts, dataset_all_concepts_filename, progress = FALSE)
         }
-        
-        else r$dataset_all_concepts <- r$dataset_all_concepts %>% 
-          dplyr::rename(concept_id_1 = concept_id, concept_name_1 = concept_name, concept_display_name_1 = concept_display_name) %>%
-          dplyr::mutate(relationship_id = NA_integer_, concept_id_2 = NA_integer_, concept_name_2 = NA_character_, 
-            count_concepts_rows = NA_integer_, count_persons_rows = NA_integer_, .after = "concept_display_name_1")
       }
-      
+
       # Reload datatable
       if (length(r$dataset_vocabulary_concepts_datatable_proxy) > 0) DT::replaceData(r$dataset_vocabulary_concepts_datatable_proxy,
         r$dataset_vocabulary_concepts %>% dplyr::slice(0), resetPaging = FALSE, rownames = FALSE)
