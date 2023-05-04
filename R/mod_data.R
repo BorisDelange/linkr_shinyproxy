@@ -716,6 +716,10 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         # Currently selected tab
 
+        print(isolate(r[[paste0(prefix, "_selected_tab")]]))
+        print(isolate(r[[paste0(prefix, "_tabs")]]))
+        print(shown_tabs)
+        
         # We have just deleted a tab
         if (grepl("show_tab", isolate(r[[paste0(prefix, "_selected_tab")]]))){
           r[[paste0(prefix, "_selected_tab")]] <- 
@@ -723,7 +727,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         }
         
         # First existing tab or load another study
-        else if (length(input$study_current_tab) == 0 | grepl("first_time", isolate(r[[paste0(prefix, "_load_ui_stage")]]))){
+        else if (length(input$study_current_tab) == 0 | grepl("first_time", isolate(r[[paste0(prefix, "_load_ui_stage")]])) |
+            isolate(r[[paste0(prefix, "_selected_tab")]]) %not_in% isolate(r[[paste0(prefix, "_tabs")]] %>% dplyr::pull(id))){
           r[[paste0(prefix, "_selected_tab")]] <- shown_tabs %>% dplyr::slice(1) %>% dplyr::pull(id)
         }
         
