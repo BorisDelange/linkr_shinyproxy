@@ -9,7 +9,7 @@ create_datatable_cache(
   r = shiny::reactiveValues(),
   d = shiny::reactiveValues(),
   i18n = character(),
-  module_id = character(),
+  tab_id = character(),
   thesaurus_id = integer(),
   dataset_id = 0,
   category = character()
@@ -18,9 +18,9 @@ create_datatable_cache(
 \arguments{
 \item{output}{Shiny output value, to show message bars}
 
-\item{r}{Shiny r reactive value, to communicate between modules}
+\item{r}{Shiny r reactive value, to communicate between tabs}
 
-\item{module_id}{ID of current page / module (character)}
+\item{tab_id}{ID of current page / tab (character)}
 
 \item{thesaurus_id}{ID of thesaurus, which thesaurus items depend on (integer)}
 

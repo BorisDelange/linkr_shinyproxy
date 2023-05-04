@@ -17,7 +17,7 @@ render_settings_code_card(
 \arguments{
 \item{ns}{Shiny namespace}
 
-\item{r}{r Shiny reactive value to communicate between modules}
+\item{r}{r Shiny reactive value to communicate between tabs}
 
 \item{id}{ID of the current page, format = "settings_[PAGE]" (character)}
 

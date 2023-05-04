@@ -202,7 +202,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
         p("Vous pouvez choisir dans le menu à gauche de charger les données individuelles ou agrégées."),
         p(strong("1) Modules & plugins différents")),
-        p("Selon que vous choisissez les données individuelles ou agrégées, les modules & widgets chargés diffèrent."),
+        p("Selon que vous choisissez les données individuelles ou agrégées, les tabs & widgets chargés diffèrent."),
         p("Lorsque vous chargez une étude, vous chargez :"),
         tags$ul(
           tags$li("D'un côté les onglets & widgets de données individuelles, permettant de ", strong("visualiser les données patient par patient"), "."),
@@ -391,7 +391,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
         p("Pour ajouter un widget, il faut ", strong("avoir chargé une étude "), " dans le menu déroulant à gauche de l'écran puis ",
         strong("avoir sélectionné un onglet"), "."),
         p("Il faut ensuite cliquer sur :"),
-          div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_help")),
+          div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_widget_help")),
             i18n$t("add_a_widget"), iconProps = list(iconName = "Add"))),
         p("Ensuite, :"),
         tags$ul(
@@ -428,7 +428,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
         p("To add a widget, you need to ", strong("load a study "), "from the dropdown menu on the left side of the screen, and then ",
           strong("select a tab"), "."),
         p("Then, click on:"),
-        div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_help")),
+        div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_widget_help")),
           i18n$t("add_a_widget"), iconProps = list(iconName = "Add"))),
         p("Next, you need to:"),
         tags$ul(

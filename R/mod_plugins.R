@@ -363,11 +363,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Prefix depending on page id
     if (id == "plugins_patient_lvl"){
       prefix <- "patient_lvl"
-      module_type_id <- 1 
+      tab_type_id <- 1 
     }
     if (id == "plugins_aggregated"){
       prefix <- "aggregated"
-      module_type_id <- 2
+      tab_type_id <- 2
     }
     
     # r[[paste0(prefix, "_plugins_datatable_loaded")]] <- FALSE
@@ -410,7 +410,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$plugins"))
       
-      options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      options <- convert_tibble_to_list(r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       
       shiny.fluent::updateComboBox.shinyInput(session, "code_selected_plugin", options = options)
       shiny.fluent::updateComboBox.shinyInput(session, "options_selected_plugin", options = options)
@@ -480,8 +480,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$reload_plugins_document_cards"))
       
       plugins <- list()
-      plugins$github <- r$github_plugins %>% dplyr::filter(type == module_type_id) %>% dplyr::mutate(id = unique_id)
-      plugins$local <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id, !deleted)
+      plugins$github <- r$github_plugins %>% dplyr::filter(type == tab_type_id) %>% dplyr::mutate(id = unique_id)
+      plugins$local <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id, !deleted)
       r$plugins_images <- tibble::tibble(type = character(), id = character(), image_url = character())
       
       sapply(c("github", "local"), function(type){
@@ -684,7 +684,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         plugins <- 
           r$plugins %>%
-          dplyr::filter(!deleted, module_type_id == !!module_type_id) %>%
+          dplyr::filter(!deleted, tab_type_id == !!tab_type_id) %>%
           dplyr::left_join(
             r$options %>% dplyr::filter(category == "plugin", name == "unique_id") %>% dplyr::select(id = link_id, unique_id = value),
             by = "id"
@@ -804,8 +804,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Plugin table
         
         new_data <- tibble::tribble(
-          ~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
-          new_row, as.character(plugin[[paste0("name_", language)]]), "", as.integer(module_type_id), as.character(Sys.time()), FALSE)
+          ~id, ~name, ~description, ~tab_type_id, ~datetime, ~deleted,
+          new_row, as.character(plugin[[paste0("name_", language)]]), "", as.integer(tab_type_id), as.character(Sys.time()), FALSE)
         print(new_data)
         DBI::dbAppendTable(r$db, "plugins", new_data)
         add_log_entry(r = r, category = paste0("plugins - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
@@ -867,7 +867,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # r[[paste0("reload_", prefix, "_plugin")]] <- Sys.time()
         
         # Reload datatable
-        r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+        r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
         
         show_message_bar(output,  "success_installing_github_plugin", "success", i18n = i18n, ns = ns)
         
@@ -891,13 +891,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         new_data <- list()
         new_data$name <- coalesce2(type = "char", x = input$plugin_name)
         new_data$plugin_name <- new_data$name
-        new_data$module_type <- module_type_id
+        new_data$tab_type <- tab_type_id
         
         add_settings_new_data(session = session, output = output, r = r, m = m, i18n = i18n, id = id, 
           data = new_data, table = "plugins", required_textfields = "plugin_name", req_unique_values = "name")
         
         # Reload datatable
-        r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+        r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       }
       
       else show_message_bar(output,  "unauthorized_action", "severeWarning", i18n = i18n, ns = ns)
@@ -909,7 +909,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Plugins management ----
     # --- --- --- --- --- ---
     
-    # Action buttons for each module / page
+    # Action buttons for each tab / page
     action_buttons_plugins_management <- c("delete", "edit_code", "options")
     action_buttons_export_plugins <- "add"
     
@@ -918,7 +918,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
     centered_cols <- c("id", "datetime", "action")
     searchable_cols <- c("name")
-    hidden_cols <- c("id", "description", "module_type_id", "deleted", "modified")
+    hidden_cols <- c("id", "description", "tab_type_id", "deleted", "modified")
     col_names <- get_col_names("plugins", i18n)
     
     # Prepare data for datatable
@@ -927,9 +927,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       if (nrow(r$plugins) == 0){
         r[[paste0(prefix, "_plugins_temp")]] <- tibble::tibble(id = integer(), name = character(), description = character(),
-          module_type_id = integer(), datetime = character(), deleted = integer(), modified = logical())
+          tab_type_id = integer(), datetime = character(), deleted = integer(), modified = logical())
       }
-      else r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>%
+      else r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>%
         dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
     }, once = TRUE)
@@ -957,7 +957,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Default data for datatable
         
         data_plugins_datatable <- tibble::tibble(id = integer(), name = character(), description = character(),
-          module_type_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
+          tab_type_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
         data_export_plugins_datatable <- data_plugins_datatable
         
       }
@@ -1024,7 +1024,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Reload datatable_temp variable
       if (nrow(r[[paste0(prefix, "_export_plugins_temp")]] == 0)){
         data <- tibble::tibble(id = integer(), name = character(), description = character(),
-          module_type_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
+          tab_type_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
       }
       if (nrow(r[[paste0(prefix, "_export_plugins_temp")]]) > 0){
         r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
@@ -1124,7 +1124,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$reload..plugins"))
       
       # Reload datatable
-      r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+      r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       # Reload github description if opened
       r$show_plugin_details <- Sys.time()
@@ -1133,7 +1133,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Reset "edit plugin code" fields and "plugin options" fields
       
-      options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
 
       sapply(c("code_selected_plugin", "thesaurus", "thesaurus_selected_items"), 
         function(name) shiny.fluent::updateComboBox.shinyInput(session, name, options = options, value = NULL))
@@ -1159,7 +1159,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       link_id <- as.integer(substr(input$edit_code, nchar("edit_code_") + 1, nchar(input$edit_code)))
       
-      options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       
       shiny.fluent::updateComboBox.shinyInput(session, "code_selected_plugin", options = options, value = value)
@@ -1176,7 +1176,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Get link_id variable, to update options div
       link_id <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
       
-      options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+      options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
       
       shiny.fluent::updateComboBox.shinyInput(session, "code_selected_plugin", options = options, value = value)
@@ -1204,7 +1204,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       else code_link_id <- 0L
       
       if (link_id != code_link_id){
-        options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+        options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
         shiny.fluent::updateComboBox.shinyInput(session, "code_selected_plugin", options = options, value = value)
       }
@@ -1333,7 +1333,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       DBI::dbClearResult(query)
       
       r$plugins <- r$plugins %>% dplyr::mutate(name = dplyr::case_when(id == link_id ~ plugin_name, TRUE ~ name))
-      r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>%
+      r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>%
         dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       r$show_plugin_details <- Sys.time()
@@ -1474,7 +1474,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       else options_link_id <- 0L
       
       if (link_id != options_link_id){
-        options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
+        options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
         value <- list(key = link_id, text = r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
         shiny.fluent::updateComboBox.shinyInput(session, "options_selected_plugin", options = options, value = value)
       }
@@ -1544,9 +1544,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$thesaurus"))
         
-        r$plugin_thesaurus_items <- create_datatable_cache(output = output, r = r, i18 = i18, module_id = id, thesaurus_id = input$thesaurus$key, category = "plus_plugin")
+        r$plugin_thesaurus_items <- create_datatable_cache(output = output, r = r, i18 = i18, tab_id = id, thesaurus_id = input$thesaurus$key, category = "plus_plugin")
         
-        colour_col <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = input$thesaurus$key, category = "colours_plugin")
+        colour_col <- create_datatable_cache(output = output, r = r, i18n = i18n, tab_id = id, thesaurus_id = input$thesaurus$key, category = "colours_plugin")
         
         if (nrow(colour_col) > 0) r$plugin_thesaurus_items <- r$plugin_thesaurus_items %>%
           dplyr::left_join(colour_col %>% dplyr::select(id, colour), by = "id") %>% dplyr::relocate(colour, .before = "datetime")
@@ -1590,7 +1590,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         column_widths <- c("id" = "80px", "action" = "80px", "display_name" = "300px", "unit" = "100px")
         sortable_cols <- c("id", "item_id", "name", "display_name", "count_patients_rows", "count_items_rows")
         centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-        col_names <- get_col_names(table_name = "modules_thesaurus_items_with_counts", i18n = i18n)
+        col_names <- get_col_names(table_name = "tabs_thesaurus_items_with_counts", i18n = i18n)
         hidden_cols <- c("id", "name", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
         
         # Render datatable
@@ -1730,7 +1730,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         # Add item to selected items
         add_thesaurus_items <-
-          # r$module_element_thesaurus_selected_items %>%
+          # r$widget_thesaurus_selected_items %>%
           # dplyr::bind_rows(
           tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name,
             ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text, ~mapped_to_item_id, ~merge_items,
@@ -1882,7 +1882,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         # Replace %group_id% in ui_code with 1 for our example
         
-        group_id <- get_last_row(r$db, paste0(prefix, "_modules_elements")) + 10^6 %>% as.integer()
+        group_id <- get_last_row(r$db, paste0(prefix, "_widgets")) + 10^6 %>% as.integer()
         
         # Create a session number, to inactivate older observers
         # Reset all older observers
@@ -1895,7 +1895,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # NB : req(o[[session_code]] == session_num) must be put at the beginning of each observeEvent in plugins code
         
         ui_code <- ui_code %>% 
-          stringr::str_replace_all("%module_id%", "1") %>%
+          stringr::str_replace_all("%tab_id%", "1") %>%
           stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
           stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
           stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
@@ -1904,7 +1904,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (prefix == "patient_lvl") ui_code <- ui_code %>% stringr::str_replace_all("%patient_id%", as.character(m$selected_person))
         
         server_code <- server_code %>% 
-          stringr::str_replace_all("%module_id%", "1") %>%
+          stringr::str_replace_all("%tab_id%", "1") %>%
           stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
           stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
           stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
@@ -2074,7 +2074,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           tibble::as_tibble() %>%
           dplyr::left_join(
             r$plugins %>%
-              dplyr::filter(module_type_id == !!module_type_id, !deleted) %>%
+              dplyr::filter(tab_type_id == !!tab_type_id, !deleted) %>%
               dplyr::inner_join(
                 r$options %>% dplyr::filter(category == "plugin", name == "unique_id", !deleted) %>% dplyr::select(id = link_id, unique_id = value),
                 by = "id"
@@ -2122,8 +2122,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             new_row <- get_last_row(r$db, "plugins") + 1
   
             new_data <- tibble::tribble(
-              ~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
-              new_row, as.character(plugin[[paste0("name_", language)]]), "", as.integer(module_type_id), as.character(Sys.time()), FALSE)
+              ~id, ~name, ~description, ~tab_type_id, ~datetime, ~deleted,
+              new_row, as.character(plugin[[paste0("name_", language)]]), "", as.integer(tab_type_id), as.character(Sys.time()), FALSE)
   
             DBI::dbAppendTable(r$db, "plugins", new_data)
             r$plugins <- r$plugins %>% dplyr::bind_rows(new_data)
@@ -2186,7 +2186,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             r$show_plugin_details <- Sys.time()
             
             # Reload datatable
-            r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+            r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
           }
         }
         
@@ -2307,7 +2307,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           plugins_node <- XML::newXMLNode("plugins", doc = xml)
           plugin_node <- XML::newXMLNode("plugin", parent = plugins_node, doc = xml)
           XML::newXMLNode("app_version", r$app_version, parent = plugin_node)
-          XML::newXMLNode("type", module_type_id, parent = plugin_node)
+          XML::newXMLNode("type", tab_type_id, parent = plugin_node)
           sapply(c("version", "unique_id", "author", "image", "description_fr", "description_en",
             "name_fr", "name_en", "category_fr", "category_en"), function(name){
             XML::newXMLNode(name, options %>% dplyr::filter(name == !!name) %>% dplyr::pull(value), parent = plugin_node)

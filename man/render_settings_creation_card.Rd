@@ -18,7 +18,7 @@ render_settings_creation_card(
 \arguments{
 \item{ns}{Shiny namespace}
 
-\item{id}{ID of current module / page (character)}
+\item{id}{ID of current tab / page (character)}
 
 \item{title}{Title used to create the card, it will be translated with translate function (character)}
 

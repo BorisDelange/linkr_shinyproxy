@@ -277,7 +277,7 @@ make_choicegroup <- function(language = "EN", ns = character(), label = characte
 #' @description Renders a datatable (from library DT)
 #' 
 #' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
 #' @param ns Shiny namespace
 #' @param language Language used (charater)
 #' @param data data used in the datatable (tibble or dataframe)

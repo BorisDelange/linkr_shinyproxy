@@ -14,7 +14,7 @@ insert_default_data(
 )
 }
 \arguments{
-\item{r}{shiny reactive value, used to communicate between modules}
+\item{r}{shiny reactive value, used to communicate between tabs}
 }
 \description{
 Insert default values in database

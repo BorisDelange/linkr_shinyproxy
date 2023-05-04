@@ -7,7 +7,7 @@
 load_database(r = shiny::reactiveValues(), i18n = character())
 }
 \arguments{
-\item{r}{Shiny r reactive value, used to communicate between modules}
+\item{r}{Shiny r reactive value, used to communicate between tabs}
 }
 \description{
 Load database

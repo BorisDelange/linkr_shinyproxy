@@ -1252,7 +1252,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
     #         dplyr::select(id = mapping_id, user_evaluation_id = evaluation_id), by = "id")
     #   
     #   # Create or get cache for action column
-    #   tryCatch(action_col <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_ids, category = "thumbs_and_delete"))
+    #   tryCatch(action_col <- create_datatable_cache(output = output, r = r, i18n = i18n, tab_id = id, thesaurus_id = thesaurus_ids, category = "thumbs_and_delete"))
     #   
     #   r$dataset_vocabulary_concepts_evaluate_mappings <- r$dataset_vocabulary_concepts_evaluate_mappings %>%
     #     dplyr::left_join(action_col %>% dplyr::select(id, action), by = "id") %>%

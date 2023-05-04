@@ -65,7 +65,7 @@ help_settings_dev <- function(output, r = shiny::reactiveValues(), id = characte
         p("Il faut donc faire attention à donner un ", strong("accès restreint"), " à cette console."),
         p("Exemple de code :"),
         div_code_1,
-        p("Les différentes ", tags$em("reactiveValues"), " (variables accessibles depuis les différents modules de l'application Shiny) ",
+        p("Les différentes ", tags$em("reactiveValues"), " (variables accessibles depuis les différents tabs de l'application Shiny) ",
           "accessibles depuis cette console sont :"),
         tags$ul(
           tags$li(tags$em("r"), " : comporte l'ensemble des variables faisant fonctionner l'application, dont les tables de la base de données principale"),
@@ -86,7 +86,7 @@ help_settings_dev <- function(output, r = shiny::reactiveValues(), id = characte
         p("Therefore, it is important to provide ", strong("restricted access"), " to this console."),
         p("Example of code:"),
         div_code_1,
-        p("The different ", tags$em("reactiveValues"), " (variables accessible from the different modules of the Shiny application) ",
+        p("The different ", tags$em("reactiveValues"), " (variables accessible from the different tabs of the Shiny application) ",
           "that can be accessed from this console are:"),
         tags$ul(
           tags$li(tags$em("r"), " : contains all the variables that make the application work, including tables from the main database"),

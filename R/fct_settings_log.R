@@ -1,6 +1,6 @@
 #' Add a log entry
 #'
-#' @param r Shiny reactive value r used to communicate between modules
+#' @param r Shiny reactive value r used to communicate between tabs
 #' @param category Category of the log entry, eg : "SQL query" (character)
 #' @param name Name of the log entry, eg : "Add a new dataset" (character)
 #' @param value Value of the log entry, eg : "INSERT INTO ..."
@@ -22,7 +22,7 @@ add_log_entry <- function(r, category, name, value){
 
 #' Add log entry - report bug
 #' 
-#' @param r Shiny r reactive value, used to communicate between modules
+#' @param r Shiny r reactive value, used to communicate between tabs
 #' @param output Shiny output variable
 #' @param error_message Error message that will be displayed to user, after translation (character())
 #' @param error_name Name of the error, to add an entry in the log table (character)

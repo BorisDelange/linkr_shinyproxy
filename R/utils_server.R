@@ -1,7 +1,7 @@
 #' Update r variable
 #' 
 #' @description Update r value, requesting the corresponding table in the database
-#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
 #' @param table Database table name (character)
 #' @param language language used for the translation (character)
 #' @examples
@@ -12,15 +12,15 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
   tables <- c("users", "users_accesses", "users_statuses",
     "data_sources", "datasets", "studies", "subsets", "subset_persons", "subsets_persons", "vocabulary", "thesaurus", "thesaurus_items",
     "plugins", "scripts",
-    "patient_lvl_modules_families", "patient_lvl_modules", "patient_lvl_modules_elements", "patient_lvl_modules_elements_items",
-    "aggregated_modules_families", "aggregated_modules", "aggregated_modules_elements", "aggregated_modules_elements_items", 
+    "patient_lvl_tabs_groups", "patient_lvl_tabs", "patient_lvl_widgets", "patient_lvl_widgets_items",
+    "aggregated_tabs_groups", "aggregated_tabs", "aggregated_widgets", "aggregated_widgets_items", 
     "code", 
     "options",
-    "modules_elements_options", "patients_options")
+    "widgets_options", "patients_options")
   
   if (table %not_in% tables) stop(paste0(i18n$t("invalid_table_name"), ". ", i18n$t("tables_allowed"), " : ", toString(tables)))
   
-  if (table %in% c("patients_options", "modules_elements_options", "subsets", "subset_persons", "subsets_persons")){
+  if (table %in% c("patients_options", "widgets_options", "subsets", "subset_persons", "subsets_persons")){
     db <- m$db
     
     if (table %in% c("subsets", "subset_persons", "subsets_persons", "patients_options")){
@@ -70,38 +70,38 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
       }
     }
     
-    else if (grepl("modules", table)){
+    else if (grepl("tabs", table)){
       
-      if (table == "modules_elements_options"){
-        sql <- glue::glue_sql("SELECT * FROM modules_elements_options WHERE deleted IS FALSE AND study_id = {m$selected_study}", .con = db)
-        r$modules_elements_options <- DBI::dbGetQuery(db, sql)
+      if (table == "widgets_options"){
+        sql <- glue::glue_sql("SELECT * FROM widgets_options WHERE deleted IS FALSE AND study_id = {m$selected_study}", .con = db)
+        r$widgets_options <- DBI::dbGetQuery(db, sql)
       }
       
       else {
         if (grepl("patient_lvl", table)) prefix <- "patient_lvl" else prefix <- "aggregated"
         
         if (grepl("families", table)){
-          family_id <- r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+          family_id <- r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(paste0(prefix, "_tab_group_id"))
           sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND id = {family_id}", .con = db)
-          r[[paste0(prefix, "_modules_families")]] <- DBI::dbGetQuery(db, sql)
+          r[[paste0(prefix, "_tabs_groups")]] <- DBI::dbGetQuery(db, sql)
         }
         
         else if (grepl("elements_items", table)){
-          group_ids <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::pull(id)
+          group_ids <- r[[paste0(prefix, "_widgets")]] %>% dplyr::pull(id)
           sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND group_id IN ({group_ids*})", .con = db)
-          r[[paste0(prefix, "_modules_elements_items")]] <- DBI::dbGetQuery(db, sql)
+          r[[paste0(prefix, "_widgets_items")]] <- DBI::dbGetQuery(db, sql)
         }
         
         else if (grepl("elements", table)){
-          modules_ids <- r[[paste0(prefix, "_modules")]] %>% dplyr::pull(id)
-          sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND module_id IN ({modules_ids*})", .con = db)
-          r[[paste0(prefix, "_modules_elements")]] <- DBI::dbGetQuery(db, sql)
+          tabs_ids <- r[[paste0(prefix, "_tabs")]] %>% dplyr::pull(id)
+          sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND tab_id IN ({tabs_ids*})", .con = db)
+          r[[paste0(prefix, "_widgets")]] <- DBI::dbGetQuery(db, sql)
         }
         
         else {
-          family_id <- r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
-          sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND module_family_id = {family_id}", .con = db)
-          r[[paste0(prefix, "_modules")]] <- DBI::dbGetQuery(db, sql)
+          family_id <- r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(paste0(prefix, "_tab_group_id"))
+          sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND tab_group_id = {family_id}", .con = db)
+          r[[paste0(prefix, "_tabs")]] <- DBI::dbGetQuery(db, sql)
         }
         
       }
@@ -138,7 +138,7 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
 #' Get options of a page
 #' 
 #' @description Get the options of a setting page (as datasets, studies...)
-#' @param id ID of the module / page 
+#' @param id ID of the tab / page 
 #' @return A character vector with options
 #' @examples 
 #' get_page_options(id == "settings_datasets")
@@ -149,8 +149,8 @@ get_page_options <- function(id = character()){
     "settings_studies" = "users_allowed_read",
     "settings_plugins" = c("markdown_description", "users_allowed_read"),
     "settings_users_accesses_options" = "users_accesses_options",
-    "settings_modules_patient_lvl_modules_families_options" = "users_allowed_read",
-    "settings_modules_aggregated_modules_families_options" = "users_allowed_read") -> result
+    "settings_tabs_patient_lvl_tabs_groups_options" = "users_allowed_read",
+    "settings_tabs_aggregated_tabs_groups_options" = "users_allowed_read") -> result
   result
 }
 
@@ -167,8 +167,8 @@ get_col_names <- function(table_name = character(), i18n = character()){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"))
     c(result, switch(table_name,
       "datasets" = i18n$t("data_source"),
-      "studies" = c(i18n$t("dataset"), i18n$t("patient_lvl_module_family"),
-        i18n$t("aggregated_module_family")),
+      "studies" = c(i18n$t("dataset"), i18n$t("patient_lvl_tab_group"),
+        i18n$t("aggregated_tab_group")),
       "subsets" = i18n$t("study"),
       "thesaurus" = i18n$t("data_sources"))) -> result
     result <- c(result, i18n$t("creator"), i18n$t("datetime"),
@@ -181,8 +181,8 @@ get_col_names <- function(table_name = character(), i18n = character()){
   
   if (table_name == "studies"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"),
-      i18n$t("dataset"), i18n$t("patient_lvl_module_family"),
-      i18n$t("aggregated_module_family"), i18n$t("creator"), i18n$t("datetime"),
+      i18n$t("dataset"), i18n$t("patient_lvl_tab_group"),
+      i18n$t("aggregated_tab_group"), i18n$t("creator"), i18n$t("datetime"),
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
@@ -216,7 +216,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
       i18n$t("datetime"), i18n$t("deleted"), i18n$t("action"), i18n$t("modified"))
   }
   
-  if (table_name == "modules_thesaurus_items"){
+  if (table_name == "tabs_thesaurus_items"){
     result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("name"), 
       i18n$t("abbreviation"), i18n$t("unit"),
       i18n$t("colour"), i18n$t("datetime"), i18n$t("deleted"),
@@ -231,7 +231,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
       i18n$t("num_rows"), i18n$t("num_patients"), i18n$t("modified"))
   }
   
-  if (table_name == "modules_thesaurus_items_with_counts"){
+  if (table_name == "tabs_thesaurus_items_with_counts"){
     result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("name"), 
       i18n$t("name_abbreviation"), i18n$t("unit"),
       i18n$t("item_colour"), i18n$t("datetime"), i18n$t("deleted"),
@@ -267,7 +267,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   if (table_name == "plugins"){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("module_type"), 
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("tab_type"), 
       i18n$t("updated_on"),  i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
@@ -282,30 +282,30 @@ get_col_names <- function(table_name = character(), i18n = character()){
       i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name %in% c("patient_lvl_modules", "aggregated_modules")){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("module_family"),
-      i18n$t("parent_module"), i18n$t("display_order"), i18n$t("creator"), i18n$t("datetime"), 
+  if (table_name %in% c("patient_lvl_tabs", "aggregated_tabs")){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("tab_group"),
+      i18n$t("parent_tab"), i18n$t("display_order"), i18n$t("creator"), i18n$t("datetime"), 
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
+  if (table_name %in% c("patient_lvl_tabs_groups", "aggregated_tabs_groups")){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"),
       i18n$t("creator"), i18n$t("datetime"), 
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name == "patient_lvl_modules_elements"){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("module_family"), 
-      i18n$t("group"), i18n$t("module"), i18n$t("plugin"), 
+  if (table_name == "patient_lvl_widgets"){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("tab_group"), 
+      i18n$t("group"), i18n$t("tab"), i18n$t("plugin"), 
       i18n$t("thesaurus"), i18n$t("thesaurus_item"), i18n$t("abbreviation"),
       i18n$t("unit"), i18n$t("colour"), i18n$t("display_order"),
       i18n$t("creator"), i18n$t("datetime"),
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name == "aggregated_modules_elements"){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("module_family"),
-      i18n$t("group"), i18n$t("module"), 
+  if (table_name == "aggregated_widgets"){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("tab_group"),
+      i18n$t("group"), i18n$t("tab"), 
       i18n$t("plugin"), i18n$t("display_order"), i18n$t("creator"),
       i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }

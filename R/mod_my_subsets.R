@@ -302,7 +302,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     # Subsets management ----
     # --- --- --- --- --- ---
     
-    # Action buttons for each module / page
+    # Action buttons for each tab / page
     action_buttons <- c("sub_datatable", "edit_code", "delete")
     
     subsets_management_editable_cols <- c("name")

@@ -15,7 +15,7 @@ mod_settings_users_ui <- function(id = character(), i18n = character(), options_
   
   cards <- tagList()
   
-  # We create one module by "sub page"
+  # We create one tab by "sub page"
   
   cards_names <- c(
     "users_creation_card", "users_management_card", 
@@ -319,11 +319,11 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
     # Only for data management subpages
     if (grepl("management", id)){
       
-      # Dropdowns for each module / page
+      # Dropdowns for each tab / page
       dropdowns_datatable <- switch(table, "users" = c("user_access_id" = "users_accesses", "user_status_id" = "users_statuses"),
         "users_accesses" = "", "users_statuses" = "")
       
-      # Action buttons for each module / page
+      # Action buttons for each tab / page
       if ("users_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
       action_buttons = switch(table, "users" = action_buttons, "users_accesses" = c("options", action_buttons), "users_statuses" = action_buttons)
       sortable_cols <- c("id", "name", "description", "username", "firstname", "lastname", "datetime")
@@ -397,7 +397,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
           if (perf_monitoring) monitor_perf(r = r, action = "start")
           if (debug) print(paste0(Sys.time(), " - mod_settings_users - observer r$users"))
           
-          update_settings_datatable(input = input, module_id = id, r = r, ns = ns, table = table, dropdowns = dropdowns, i18n = i18n)
+          update_settings_datatable(input = input, tab_id = id, r = r, ns = ns, table = table, dropdowns = dropdowns, i18n = i18n)
           
           if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_users - observer r$users"))
         })
@@ -471,7 +471,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
     # --- --- --- --- --- --- --- --- -- -
 
     # Only for accesses sub-page
-    # We have to use same module than management, to get input from datatable
+    # We have to use same tab than management, to get input from datatable
     if (page == "users_accesses_management"){
     
       observeEvent(input$options, {

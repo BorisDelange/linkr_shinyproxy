@@ -71,7 +71,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
   # Create tables if doest not exist
   
   # Type = main for main database
-  # Type = public for plugins / modules database
+  # Type = public for plugins / tabs database
   
   # Don't forget to add table characteristics in mod_settings_app_database when you add a new table
   # (for import database)
@@ -100,7 +100,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
     
     db_create_table(db, "studies", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), dataset_id = integer(),
-        patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = integer(),
+        patient_lvl_tab_group_id = integer(), aggregated_tab_group_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
     db_create_table(db, "thesaurus", primary_key_col = "id", dbms = dbms, text_cols = "description",
@@ -126,44 +126,44 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         datetime = character(), deleted = logical()))
     
     db_create_table(db, "plugins", primary_key_col = "id", dbms = dbms, text_cols = "description",
-      tibble::tibble(id = integer(), name = character(), description = character(), module_type_id = integer(), 
+      tibble::tibble(id = integer(), name = character(), description = character(), tab_type_id = integer(), 
         datetime = character(), deleted = logical()))
     
     db_create_table(db, "scripts", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), data_source_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "patient_lvl_modules_families", primary_key_col = "id", dbms = dbms, text_cols = "description",
+    db_create_table(db, "patient_lvl_tabs_groups", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
         deleted = logical()))
     
-    db_create_table(db, "patient_lvl_modules", primary_key_col = "id", dbms = dbms, text_cols = "description",
-      tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
+    db_create_table(db, "patient_lvl_tabs", primary_key_col = "id", dbms = dbms, text_cols = "description",
+      tibble::tibble(id = integer(), name = character(), description = character(), tab_group_id = integer(), parent_tab_id = integer(),
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "patient_lvl_modules_elements", primary_key_col = "id", dbms = dbms,
-      tibble::tibble(id = integer(), name = character(), module_id = integer(), plugin_id = integer(), 
+    db_create_table(db, "patient_lvl_widgets", primary_key_col = "id", dbms = dbms,
+      tibble::tibble(id = integer(), name = character(), tab_id = integer(), plugin_id = integer(), 
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "patient_lvl_modules_elements_items", primary_key_col = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
+    db_create_table(db, "patient_lvl_widgets_items", primary_key_col = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
       tibble::tibble(id = integer(), db_item_id = integer(), group_id = integer(),
         thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
         thesaurus_item_colour = character(), mapped_to_item_id = integer(), merge_items = logical(),
         creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "aggregated_modules_families", primary_key_col = "id", dbms = dbms, text_cols = "description",
+    db_create_table(db, "aggregated_tabs_groups", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
         deleted = logical()))
     
-    db_create_table(db, "aggregated_modules", primary_key_col = "id", dbms = dbms, text_cols = "description",
-      tibble::tibble(id = integer(), name = character(), description = character(), module_family_id = integer(), parent_module_id = integer(),
+    db_create_table(db, "aggregated_tabs", primary_key_col = "id", dbms = dbms, text_cols = "description",
+      tibble::tibble(id = integer(), name = character(), description = character(), tab_group_id = integer(), parent_tab_id = integer(),
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "aggregated_modules_elements", primary_key_col = "id", dbms = dbms,
-      tibble::tibble(id = integer(), name = character(), module_id = integer(), plugin_id = integer(), 
+    db_create_table(db, "aggregated_widgets", primary_key_col = "id", dbms = dbms,
+      tibble::tibble(id = integer(), name = character(), tab_id = integer(), plugin_id = integer(), 
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "aggregated_modules_elements_items", primary_key_col = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
+    db_create_table(db, "aggregated_widgets_items", primary_key_col = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
       tibble::tibble(id = integer(), group_id = integer(),
         thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
         thesaurus_item_colour = character(), mapped_to_item_id = integer(), merge_items = logical(),
@@ -206,7 +206,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         category = character(), link_id = integer(), name = character(), value = character(), value_num = numeric(), 
         creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "modules_elements_options", primary_key_col = "id", dbms = dbms, text_cols = "value",
+    db_create_table(db, "widgets_options", primary_key_col = "id", dbms = dbms, text_cols = "value",
       tibble::tibble(id = integer(), group_id = integer(), study_id = integer(), patient_id = integer(), link_id = integer(),
         category = character(), name = character(), value = character(), value_num = numeric(),
         creator_id = integer(), datetime = character(), deleted = logical()))
@@ -266,7 +266,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
 
 #' Get authorized data for a user
 #'
-#' @param r Shiny r reactive value, used to communicate between modules
+#' @param r Shiny r reactive value, used to communicate between tabs
 #' @param table Name of the table the data comes from (character)
 #' @param data If data is not r[[table]] (tibble / dataframe)
 
@@ -451,7 +451,7 @@ get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues
 
 #' Load database
 #' 
-#' @param r Shiny r reactive value, used to communicate between modules
+#' @param r Shiny r reactive value, used to communicate between tabs
 load_database <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character()){
   
   # Database tables to load
@@ -471,6 +471,6 @@ load_database <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues
     r[[paste0(table, "_temp")]] <- r[[table]] %>% dplyr::mutate(modified = FALSE)
   })
   
-  # Add a module_types variable, for settings/plugins dropdown
-  r$module_types <- tibble::tribble(~id, ~name, 1, i18n$t("patient_level_data"), 2, i18n$t("aggregated_data"))
+  # Add a tab_types variable, for settings/plugins dropdown
+  r$tab_types <- tibble::tribble(~id, ~name, 1, i18n$t("patient_level_data"), 2, i18n$t("aggregated_data"))
 }

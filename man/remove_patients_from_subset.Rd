@@ -16,7 +16,7 @@ remove_patients_from_subset(
 \arguments{
 \item{output}{Output variable from Shiny, used to render messages on message bars}
 
-\item{r}{A shiny::reactiValues object, used to communicate between modules}
+\item{r}{A shiny::reactiValues object, used to communicate between tabs}
 
 \item{patients}{data variable containing patients (data.frame / tibble)}
 

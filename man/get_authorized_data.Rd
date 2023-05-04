@@ -7,7 +7,7 @@
 get_authorized_data(r, table, data = tibble::tibble())
 }
 \arguments{
-\item{r}{Shiny r reactive value, used to communicate between modules}
+\item{r}{Shiny r reactive value, used to communicate between tabs}
 
 \item{table}{Name of the table the data comes from (character)}
 

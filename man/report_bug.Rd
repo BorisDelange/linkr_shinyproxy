@@ -16,7 +16,7 @@ report_bug(
 )
 }
 \arguments{
-\item{r}{Shiny r reactive value, used to communicate between modules}
+\item{r}{Shiny r reactive value, used to communicate between tabs}
 
 \item{output}{Shiny output variable}
 

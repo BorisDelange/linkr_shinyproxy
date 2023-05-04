@@ -2,9 +2,9 @@
 #' 
 #' @param session Shiny session variable
 #' @param output Shiny output variable
-#' @param r Shiny r reactive value, to communicate between modules (reactiveValue)
+#' @param r Shiny r reactive value, to communicate between tabs (reactiveValue)
 #' @param language Language used (character)
-#' @param id ID of current module / page (character)
+#' @param id ID of current tab / page (character)
 #' @param data A list with data to add (list)
 #' @param table Name of the corresponding table in database (character)
 #' @param required_textfields Which textfields are required (not empty) before inserting data in database ? (character)
@@ -27,7 +27,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   ns <- shiny::NS(id)
   
   # db variable depending on table
-  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_persons",
+  m_tables <- c("patients_options", "widgets_options", "subsets" , "subset_persons",
     "concept", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
   if (table %in% m_tables) db <- m$db
   else db <- r$db
@@ -55,19 +55,19 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # Check if values required to be unique are unique
   sapply(req_unique_values, function(field){
     
-    # If it is a new module, group by module family, so a name musn't be unique in distinct modules families
-    if (table %in% c("patient_lvl_modules", "aggregated_modules")){
-      if (is.na(data$parent_module)) sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE 
-        AND module_family_id = {data$module_family} AND parent_module_id IS NULL", .con = db)
-      if (!is.na(data$parent_module)) sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
-        AND module_family_id = {data$module_family} AND parent_module_id = {data$parent_module}", .con = db)
+    # If it is a new tab, group by tab family, so a name musn't be unique in distinct tabs families
+    if (table %in% c("patient_lvl_tabs", "aggregated_tabs")){
+      if (is.na(data$parent_tab)) sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE 
+        AND tab_group_id = {data$tab_group} AND parent_tab_id IS NULL", .con = db)
+      if (!is.na(data$parent_tab)) sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
+        AND tab_group_id = {data$tab_group} AND parent_tab_id = {data$parent_tab}", .con = db)
     }
     else if (table == "studies") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
       AND dataset_id = {data$dataset}", .con = db)
     else if (table == "subsets") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
       AND study_id = {data$study_id}", .con = db)
     else if (table == "plugins") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
-      AND module_type_id = {data$module_type}", .con = db)
+      AND tab_type_id = {data$tab_type}", .con = db)
     else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = db)
     
     distinct_values <- DBI::dbGetQuery(db, sql) %>% dplyr::pull() %>% tolower()
@@ -131,8 +131,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     
     if (table == "datasets") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.integer(data$data_source)))
     if (table == "studies") new_data$data <- new_data$data %>% dplyr::bind_cols(
-      tibble::tribble(~dataset_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id,
-        as.integer(data$dataset), as.integer(data$patient_lvl_module_family), as.integer(data$aggregated_module_family)))
+      tibble::tribble(~dataset_id, ~patient_lvl_tab_group_id, ~aggregated_tab_group_id,
+        as.integer(data$dataset), as.integer(data$patient_lvl_tab_group), as.integer(data$aggregated_tab_group)))
     if (table == "subsets") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~study_id, as.integer(data$study)))
     if (table == "thesaurus") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, data$data_source))
     
@@ -151,8 +151,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   
   # Creation of new_data$data variable for plugins page
   else if (table == "plugins"){
-    new_data$data <- tibble::tribble(~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
-      last_row$data + 1, as.character(data$name), "", as.integer(data$module_type), as.character(Sys.time()), FALSE)
+    new_data$data <- tibble::tribble(~id, ~name, ~description, ~tab_type_id, ~datetime, ~deleted,
+      last_row$data + 1, as.character(data$name), "", as.integer(data$tab_type), as.character(Sys.time()), FALSE)
   }
   
   # Creation of new_data$data variable for scripts page
@@ -174,13 +174,13 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row$data + 1, as.character(data$name), as.character(data$description), as.character(Sys.time()), FALSE)
   }
   
-  else if (table %in% c("patient_lvl_modules", "aggregated_modules")){
-    new_data$data <- tibble::tribble(~id, ~name,  ~description, ~module_family_id, ~parent_module_id,  ~display_order, ~creator_id, ~datetime, ~deleted,
-      last_row$data + 1, as.character(data$name), as.character(data$description), as.integer(data$module_family), as.integer(data$parent_module),
+  else if (table %in% c("patient_lvl_tabs", "aggregated_tabs")){
+    new_data$data <- tibble::tribble(~id, ~name,  ~description, ~tab_group_id, ~parent_tab_id,  ~display_order, ~creator_id, ~datetime, ~deleted,
+      last_row$data + 1, as.character(data$name), as.character(data$description), as.integer(data$tab_group), as.integer(data$parent_tab),
       as.integer(data$display_order), r$user_id, as.character(Sys.time()), FALSE)
   }
   
-  else if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
+  else if (table %in% c("patient_lvl_tabs_groups", "aggregated_tabs_groups")){
     new_data$data <- tibble::tribble(~id, ~name,  ~description, ~creator_id, ~datetime, ~deleted,
       last_row$data + 1, as.character(data$name), as.character(data$description), r$user_id, as.character(Sys.time()), FALSE)
   }
@@ -193,7 +193,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data$data))
   
   # Empty new variables
-  new_data_vars <- c("options", "subsets", "code", "patient_lvl_modules_families", "aggregated_modules_families")
+  new_data_vars <- c("options", "subsets", "code", "patient_lvl_tabs_groups", "aggregated_tabs_groups")
   for(var in new_data_vars) new_data[[var]] <- tibble::tibble()
 
   # --- --- --- --- --- --- --- --- --- --
@@ -286,13 +286,13 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row$code + 1, "subset", last_row$subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
-    # Add patient_lvl & aggregated modules families
+    # Add patient_lvl & aggregated tabs families
     
-    new_data$patient_lvl_modules_families <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
-      get_last_row(r$db, "patient_lvl_modules_families") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+    new_data$patient_lvl_tabs_groups <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+      get_last_row(r$db, "patient_lvl_tabs_groups") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
-    new_data$aggregated_modules_families <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
-      get_last_row(r$db, "aggregated_modules_families") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+    new_data$aggregated_tabs_groups <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+      get_last_row(r$db, "aggregated_tabs_groups") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
     
     # Add persons to subset
     tryCatch({
@@ -316,16 +316,16 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row$code + 1, "subset", last_row$subsets + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
-  # For options of patient_lvl & aggregated modules families, need to add two rows, for users accesses
-  if (table %in% c("patient_lvl_modules_families", "aggregated_modules_families")){
+  # For options of patient_lvl & aggregated tabs families, need to add two rows, for users accesses
+  if (table %in% c("patient_lvl_tabs_groups", "aggregated_tabs_groups")){
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, get_singular(word = table), last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
       last_row$options + 2, get_singular(word = table), last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
   }
   
   # Hide creation card & options card, show management card
-  # Except for modules (we usually add several modules)
-  if (table %not_in% c("patient_lvl_modules", "aggregated_modules")){
+  # Except for tabs (we usually add several tabs)
+  if (table %not_in% c("patient_lvl_tabs", "aggregated_tabs")){
     shiny.fluent::updateToggle.shinyInput(session, "options_card_toggle", value = FALSE)
     shiny.fluent::updateToggle.shinyInput(session, "creation_card_toggle", value = FALSE)
     shiny.fluent::updateToggle.shinyInput(session, "datatable_card_toggle", value = TRUE)
@@ -358,21 +358,21 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' Create cache for datatable data
 #' 
 #' @param output Shiny output value, to show message bars
-#' @param r Shiny r reactive value, to communicate between modules
+#' @param r Shiny r reactive value, to communicate between tabs
 #' @param language Language used (character)
-#' @param module_id ID of current page / module (character)
+#' @param tab_id ID of current page / tab (character)
 #' @param thesaurus_id ID of thesaurus, which thesaurus items depend on (integer)
 #' @param dataset_id ID of dataset to count rows by item of the thesaurus (integer)
 #' @param category Category of cache, depending of the page of Settings (character)
 
-create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character(), module_id = character(), 
+create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character(), tab_id = character(), 
   vocabulary_id = integer(), dataset_id = 0, category = character()){
   
   # Load join between our data and the cache
   
   # For action buttons (delete & plus_minus) & colours, don't use dataset_id / link_id_bis
   # if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") |
-  #     grepl("plus_data_explorer", category) | grepl("colours_module", category) | grepl("plus_module", category)){
+  #     grepl("plus_data_explorer", category) | grepl("colours_tab", category) | grepl("plus_tab", category)){
   #   sql <- glue::glue_sql(paste0(
   #     "SELECT t.id, t.vocabulary_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
   #     "FROM thesaurus_items t ",
@@ -485,36 +485,36 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
     #     tagList(
     #       shiny::actionButton(paste0("sub_delete_", id), "", icon = icon("trash-alt"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-thesaurus_items_deleted_pressed', this.id, {priority: 'event'})")))))
+    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-thesaurus_items_deleted_pressed', this.id, {priority: 'event'})")))))
     # }
     # if (category == "plus_minus"){
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
     #     tagList(
     #       shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")),
+    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-item_selected', this.id, {priority: 'event'})")),
     #       shiny::actionButton(paste0("remove_", id), "", icon = icon("minus"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-item_removed', this.id, {priority: 'event'})")))))
+    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-item_removed', this.id, {priority: 'event'})")))))
     # }
-    # if (category == "plus_plugin" | grepl("plus_module", category)){
+    # if (category == "plus_plugin" | grepl("plus_tab", category)){
     #   if (category == "plus_plugin") input_name <- "item_selected"
-    #   else if (category == "plus_module_element_creation") input_name <- "module_element_creation_item_selected"
-    #   else if (category == "plus_module_element_settings") input_name <- "module_element_settings_item_selected"
+    #   else if (category == "plus_widget_creation") input_name <- "widget_creation_item_selected"
+    #   else if (category == "plus_widget_settings") input_name <- "widget_settings_item_selected"
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
     #     tagList(
     #       shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-", input_name, "', this.id, {priority: 'event'})")))))
+    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-", input_name, "', this.id, {priority: 'event'})")))))
     # }
     # if (category == "thumbs_and_delete"){
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
     #     tagList(
     #       shiny::actionButton(paste0("positive_eval_", id), "", icon = icon("thumbs-up"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
+    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
     #         style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
     #       shiny::actionButton(paste0("negative_eval_", id), "", icon = icon("thumbs-down"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})"),
+    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})"),
     #         style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
     #       shiny::actionButton(paste0("remove_", id), "", icon = icon("trash-alt"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"),
+    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"),
     #         style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
     #     )))
     # }
@@ -522,13 +522,13 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
     #     tagList(
     #       shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-data_explorer_item_selected', this.id, {priority: 'event'})")))))
+    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-data_explorer_item_selected', this.id, {priority: 'event'})")))))
     # }
-    # if (category == "colours_plugin" | grepl("colours_module", category)){
+    # if (category == "colours_plugin" | grepl("colours_tab", category)){
     #   
     #   if (category == "colours_plugin") input_name <- "colours"
-    #   else if (category == "colours_module_element_creation") input_name <- "module_element_creation_colour"
-    #   else if (category == "colours_module_element_settings") input_name <- "module_element_settings_colour"
+    #   else if (category == "colours_widget_creation") input_name <- "widget_creation_colour"
+    #   else if (category == "colours_widget_settings") input_name <- "widget_settings_colour"
     #   
     #   colorCells <- list(
     #     list(id = "#EF3B2C", color = "#EF3B2C"),
@@ -539,7 +539,7 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     #     list(id = "#FFD92F", color = "#FFD92F"),
     #     list(id = "#000000", color = "#000000"))
     #   
-    #   ns <- NS(module_id)
+    #   ns <- NS(tab_id)
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
     #     div(shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0(input_name, "_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells), 
     #       cellHeight = 15, cellWidth = 15#, cellMargin = 10
@@ -552,7 +552,7 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     # Delete old cache
     
     # if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") | 
-    #     grepl("plus_data_explorer", category) | grepl("plus_module", category) | grepl("colours_module", category)){
+    #     grepl("plus_data_explorer", category) | grepl("plus_tab", category) | grepl("colours_tab", category)){
     #   sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
     #     "SELECT c.id FROM cache c ",
     #     "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
@@ -609,8 +609,8 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
   }
   # 
   # if (category %in% c("delete", "plus_plugin", "plus_minus", "thumbs_and_delete") | 
-  #     grepl("plus_data_explorer", category) | grepl("plus_module", category)) data <- data %>% dplyr::rename(action = value)
-  # if (category == "colours_plugin" | grepl("colours_module", category)) data <- data %>% dplyr::rename(colour = value)
+  #     grepl("plus_data_explorer", category) | grepl("plus_tab", category)) data <- data %>% dplyr::rename(action = value)
+  # if (category == "colours_plugin" | grepl("colours_tab", category)) data <- data %>% dplyr::rename(colour = value)
   if (category %in% c("count_persons_rows", "count_concepts_rows")) data <- data %>% dplyr::rename(!!category := value) %>% dplyr::select(concept_id, !!category)
 
   data
@@ -661,7 +661,7 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
   # When the deletion is confirmed
   observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
     
-    m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_persons",
+    m_tables <- c("patients_options", "widgets_options", "subsets" , "subset_persons",
       "concept", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
     
     if (table %in% m_tables) db <- m$db
@@ -715,7 +715,7 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
 #' Delete a row in datatable
 #' 
 #' @param output Shiny output variable
-#' @param r r Shiny reactive value used to communicate between modules
+#' @param r r Shiny reactive value used to communicate between tabs
 #' @param ns Shiny namespace
 #' @param language Language used (character)
 #' @param row_deleted ID of row to delete (integer) 
@@ -774,40 +774,40 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
     # update_r(r = r, table = "subsets")
   }
   
-  # If we delete a module family, delete all modules & modules elements associated
-  if (table == paste0(prefix, "_modules_families")){
+  # If we delete a tab family, delete all tabs & tabs elements associated
+  if (table == paste0(prefix, "_tabs_groups")){
     
-    modules <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM ", prefix, "_modules WHERE module_family_id = ", row_deleted)) %>% dplyr::pull()
+    tabs <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM ", prefix, "_tabs WHERE tab_group_id = ", row_deleted)) %>% dplyr::pull()
     
-    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_modules'`} SET deleted = TRUE WHERE module_family_id = {row_deleted}", .con = r$db)
+    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_tabs'`} SET deleted = TRUE WHERE tab_group_id = {row_deleted}", .con = r$db)
     query <- DBI::dbSendStatement(r$db, sql)
     DBI::dbClearResult(query)
-    r[[paste0(prefix, "_modules")]] <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id != row_deleted)
+    r[[paste0(prefix, "_tabs")]] <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(tab_group_id != row_deleted)
     
-    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_modules_elements'`} SET deleted = TRUE WHERE module_id IN ({modules*})", .con = r$db)
+    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_widgets'`} SET deleted = TRUE WHERE tab_id IN ({tabs*})", .con = r$db)
     query <- DBI::dbSendStatement(r$db, sql)
     DBI::dbClearResult(query)
-    r[[paste0(prefix, "_modules_elements")]] <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id %not_in% modules)
+    r[[paste0(prefix, "_widgets")]] <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(tab_id %not_in% tabs)
     
-    # update_r(r = r, table = paste0(prefix, "_modules"))
-    # update_r(r = r, table = paste0(prefix, "_modules_elements"))
+    # update_r(r = r, table = paste0(prefix, "_tabs"))
+    # update_r(r = r, table = paste0(prefix, "_widgets"))
   }
   
-  # If we delete a module, delete all modules elements associated
-  if (table == paste0(prefix, "_modules")){
+  # If we delete a tab, delete all tabs elements associated
+  if (table == paste0(prefix, "_tabs")){
     
-    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_modules_elements')`} SET deleted = TRUE WHERE module_id = {row_deleted}", .con = r$db)
+    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_widgets')`} SET deleted = TRUE WHERE tab_id = {row_deleted}", .con = r$db)
     query <- DBI::dbSendStatement(r$db, sql)
     DBI::dbClearResult(query)
-    r[[paste0(prefix, "_modules_elements")]] <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id != row_deleted)
+    r[[paste0(prefix, "_widgets")]] <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(tab_id != row_deleted)
     
-    # update_r(r = r, table = paste0(prefix, "_modules_elements"))
+    # update_r(r = r, table = paste0(prefix, "_widgets"))
   }
   
   # Update r vars
   # For thesaurus_items : the r variable is r$sub_thesaurus_items (from page settings / data management / thesaurus)
   # This page is the only place from where we can delete a thesaurus item
-  # Distinct r$ names are to avoid conflict with other pages (settings / plugins & settings / modules)
+  # Distinct r$ names are to avoid conflict with other pages (settings / plugins & settings / tabs)
   
   if (table == "thesaurus_items") r$thesaurus_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_delete")
   
@@ -824,10 +824,10 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
 #' @param input variable from Shiny, used to execute UI & server code (plugins page)
 #' @param output variable from Shiny, used to render messages on the message bar
 #' @param session variable from Shiny, used to execute UI & server code (plugins page)
-#' @param id ID of the current page / module
+#' @param id ID of the current page / tab
 #' @param ns Shiny namespace
 #' @param language language used (character)
-#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
 #' @param edited_code New code, after editing it (character)
 #' @param code_type For plugins page, code_type could be UI or server (character)
 #' @param data A list containing dataframes / tibbles, if data need to be used in the evaluated code (list)
@@ -917,12 +917,12 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = cha
   # Initiate data_output, starting from data_input
   data_output <- data_input
   
-  # Add module family column for modules elements
-  if (grepl("modules_elements", table)){
+  # Add tab family column for tabs elements
+  if (grepl("widgets", table)){
     if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
     if (grepl("aggregated", table)) prefix <- "aggregated"
-    data_output <- data_output %>% dplyr::left_join(r[[paste0(prefix, "_modules")]] %>%
-        dplyr::select(module_id = id, module_family_id), by = "module_id") %>% dplyr::relocate(module_family_id, .after = name)
+    data_output <- data_output %>% dplyr::left_join(r[[paste0(prefix, "_tabs")]] %>%
+        dplyr::select(tab_id = id, tab_group_id), by = "tab_id") %>% dplyr::relocate(tab_group_id, .after = name)
   }
   
   # Add a column action in the DataTable
@@ -976,10 +976,10 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = cha
           
           options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]], key_col = "id", text_col = "name", null_value = null_value, i18n = i18n) 
           
-          # For dropdown parent_module in patient_lvl & aggregated_modules, need to select only modules depending on the same module family
+          # For dropdown parent_tab in patient_lvl & aggregated_tabs, need to select only tabs depending on the same tab family
           
-          if (dropdowns[[name]] %in% c("patient_lvl_modules", "aggregated_modules")){
-            options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]] %>% dplyr::filter(module_family_id == data_output[[i, "module_family_id"]]),
+          if (dropdowns[[name]] %in% c("patient_lvl_tabs", "aggregated_tabs")){
+            options <- convert_tibble_to_list(data = r[[dropdowns[[name]]]] %>% dplyr::filter(tab_group_id == data_output[[i, "tab_group_id"]]),
               key_col = "id", text_col = "name", null_value = null_value)
           }
           
@@ -1063,7 +1063,7 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = cha
       
       # Get names for other columns if there are not dropdowns
       
-      cols <- c("data_source_id" = "data_sources", "dataset_id" = "datasets", "study_id" = "studies", "module_type_id" = "module_types")
+      cols <- c("data_source_id" = "data_sources", "dataset_id" = "datasets", "study_id" = "studies", "tab_type_id" = "tab_types")
       sapply(names(cols), function(name){
         if (name %in% names(data_output) & name %not_in% names(dropdowns)){
           row_id <- data_output[[i, name]]
@@ -1073,7 +1073,7 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = cha
         }
       })
       
-      cols <- c("module_family_id" = "modules_families", "module_id" = "modules", "plugin_id" = "plugins")
+      cols <- c("tab_group_id" = "tabs_groups", "tab_id" = "tabs", "plugin_id" = "plugins")
       sapply(names(cols), function(name){
         if (name %in% names(data_output) & name %not_in% names(dropdowns)){
           if (grepl("patient_lvl", table)) prefix <- "patient_lvl_"
@@ -1189,7 +1189,7 @@ reload_cache_for_settings <- function(r = shiny::reactiveValues(), table = chara
 
 #' Render delete react
 #' 
-#' @param r Shiny r reactive value to communicate between modules
+#' @param r Shiny r reactive value to communicate between tabs
 #' @param ns Shiny namespace
 #' @param table Name of the table used (character)
 #' @param language Language used (character)
@@ -1223,7 +1223,7 @@ render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = chara
 #' 
 #' @description Save code in code table after editing it
 #' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
 #' @param category Category column in code table, eg : "dataset", "plugin" (character)
 #' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
@@ -1263,7 +1263,7 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
 #' Save options
 #' 
 #' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
 #' @param category Category column in code table, eg : "dataset", "plugin" (character)
 #' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
@@ -1312,7 +1312,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
     DBI::dbClearResult(query)
     r$options <- r$options %>% dplyr::mutate(value = dplyr::case_when(id == option_id ~ data$users_allowed_read_group, TRUE ~ value))
     
-    # The idea is to delete every rows of options for this module, and then reinsert one row per user
+    # The idea is to delete every rows of options for this tab, and then reinsert one row per user
     # Get unique ID (peoplePicker can select twice a user, if he's already checked at the initiation of the input)
     
     # Delete all users allowed in the options table
@@ -1359,7 +1359,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
 #' Save changes in datatable
 #' 
 #' @param output Shiny output variable
-#' @param r Shiny r reactive value to communicate between modules
+#' @param r Shiny r reactive value to communicate between tabs
 #' @param ns Shiny namespace
 #' @param table Name of the table used (character)
 #' @param duplicates_allowed Are duplicates in the name column allowed (logical)
@@ -1371,7 +1371,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
 save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), ns = character(), 
   table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = character(), r_message_bar = FALSE){
   
-  m_tables <- c("patients_options", "modules_elements_options", "subsets" , "subset_persons",
+  m_tables <- c("patients_options", "widgets_options", "subsets" , "subset_persons",
     "concept", "concept_user", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
 
   if (table %in% m_tables) db <- m$db
@@ -1386,36 +1386,36 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
 
     duplicates_name <- 0
     duplicates_display_order <- 0
-    module_is_its_own_parent <- 0
-    loop_over_modules <- 0
+    tab_is_its_own_parent <- 0
+    loop_over_tabs <- 0
     
-    # For modules tables (patient_lvl & aggregated, modules / modules_families / modules_elements)
-    # Duplicates names are grouped (by family for modules, by module for modules elements)
+    # For tabs tables (patient_lvl & aggregated, tabs / tabs_groups / widgets)
+    # Duplicates names are grouped (by family for tabs, by tab for tabs elements)
     # It's the same with the display order
 
-    if (grepl("modules", table)){
-      if (table %in% c("patient_lvl_modules", "aggregated_modules")){
+    if (grepl("tabs", table)){
+      if (table %in% c("patient_lvl_tabs", "aggregated_tabs")){
         
         duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
-          dplyr::group_by(module_family_id, name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+          dplyr::group_by(tab_group_id, name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
         
         duplicates_display_order <- r[[paste0(table, "_temp")]] %>%
-          dplyr::group_by(module_family_id, parent_module_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+          dplyr::group_by(tab_group_id, parent_tab_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
         
-        # A module cannot be its own parent (infinite loop...)
-        module_is_its_own_parent <- r[[paste0(table, "_temp")]] %>% dplyr::filter(id == parent_module_id) %>% nrow()
+        # A tab cannot be its own parent (infinite loop...)
+        tab_is_its_own_parent <- r[[paste0(table, "_temp")]] %>% dplyr::filter(id == parent_tab_id) %>% nrow()
         
-        if (module_is_its_own_parent == 0) loop_over_modules <- r[[paste0(table, "_temp")]] %>% dplyr::filter(!is.na(parent_module_id)) %>%
-          dplyr::left_join(r[[paste0(table, "_temp")]] %>% dplyr::select(parent_module_id = id, parent_module_id_bis = parent_module_id), by = "parent_module_id") %>%
-          dplyr::filter(id == parent_module_id_bis) %>% nrow()
+        if (tab_is_its_own_parent == 0) loop_over_tabs <- r[[paste0(table, "_temp")]] %>% dplyr::filter(!is.na(parent_tab_id)) %>%
+          dplyr::left_join(r[[paste0(table, "_temp")]] %>% dplyr::select(parent_tab_id = id, parent_tab_id_bis = parent_tab_id), by = "parent_tab_id") %>%
+          dplyr::filter(id == parent_tab_id_bis) %>% nrow()
       }
       
-      if (table == "aggregated_modules_elements"){
+      if (table == "aggregated_widgets"){
         duplicates_name <- r[[paste0(table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
-          dplyr::group_by(module_id, name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+          dplyr::group_by(tab_id, name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
         
         duplicates_display_order <- r[[paste0(table, "_temp")]] %>%
-          dplyr::group_by(module_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+          dplyr::group_by(tab_id, display_order) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
       }
       
     }
@@ -1437,20 +1437,20 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
       if (!r_message_bar) show_message_bar(output, "modif_display_order_duplicates", "severeWarning", i18n, ns = ns)
       if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_display_order_duplicates", type = "severeWarning", trigger = Sys.time())
     } 
-    if (module_is_its_own_parent > 0){
-      if (!r_message_bar) show_message_bar(output, "module_cannot_be_its_own_parent", "severeWarning", i18n, ns = ns)
-      if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "module_cannot_be_its_own_parent", type = "severeWarning", trigger = Sys.time())
+    if (tab_is_its_own_parent > 0){
+      if (!r_message_bar) show_message_bar(output, "tab_cannot_be_its_own_parent", "severeWarning", i18n, ns = ns)
+      if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "tab_cannot_be_its_own_parent", type = "severeWarning", trigger = Sys.time())
     }
-    if (loop_over_modules > 0){
-      if (!r_message_bar) show_message_bar(output, "module_loop_between_modules", "severeWarning", i18n, ns = ns)
-      if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "module_loop_between_modules", type = "severeWarning", trigger = Sys.time())
+    if (loop_over_tabs > 0){
+      if (!r_message_bar) show_message_bar(output, "tab_loop_between_tabs", "severeWarning", i18n, ns = ns)
+      if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "tab_loop_between_tabs", type = "severeWarning", trigger = Sys.time())
     }
     if (duplicates_name > 0){
       if (!r_message_bar) show_message_bar(output, "modif_names_duplicates", "severeWarning", i18n, ns = ns)
       if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_names_duplicates", type = "severeWarning", trigger = Sys.time())
     }
     
-    req(duplicates_name == 0, duplicates_display_order == 0, module_is_its_own_parent == 0, loop_over_modules == 0)
+    req(duplicates_name == 0, duplicates_display_order == 0, tab_is_its_own_parent == 0, loop_over_tabs == 0)
   }
   
   names_empty <- 0
@@ -1526,7 +1526,7 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
 #' Update datatable
 #' 
 #' @param input Shiny input variable
-#' @param r Shiny r reactive value to communicate between modules
+#' @param r Shiny r reactive value to communicate between tabs
 #' @param ns Shiny namespace
 #' @param table Name of the table used (character)
 #' @param dropdowns Dropdowns shown on datatable (character)
@@ -1535,7 +1535,7 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
 #' \dontrun{
 #' update_settings_datatable(r = r, ns = ns, table = "datasets", dropdowns = "data_source", language = "EN")
 #' }
-update_settings_datatable <- function(input, module_id = character(), r = shiny::reactiveValues(), ns = character(), table = character(), dropdowns = character(), i18n = character()){
+update_settings_datatable <- function(input, tab_id = character(), r = shiny::reactiveValues(), ns = character(), table = character(), dropdowns = character(), i18n = character()){
   
   sapply(r[[table]] %>% dplyr::pull(id), function(id){
     sapply(dropdowns, function(dropdown){
@@ -1543,7 +1543,7 @@ update_settings_datatable <- function(input, module_id = character(), r = shiny:
       observer_name <- paste0(get_plural(word = dropdown), id)
       
       # Load the observer only once
-      if (paste0(module_id, "-", observer_name) %not_in% r$loaded_observers){
+      if (paste0(tab_id, "-", observer_name) %not_in% r$loaded_observers){
         observeEvent(input[[observer_name]], {
           
           dropdown_table <- dropdown
@@ -1556,7 +1556,7 @@ update_settings_datatable <- function(input, module_id = character(), r = shiny:
           
           # If vocabulary, data_source_id can accept multiple values (converting to string)
           if (table == "vocabulary") new_value <- toString(as.integer(input[[paste0("data_sources", id)]]))
-          if (table %in% c("data_sources", "datasets", "studies", "subsets", "plugins", "users", "patient_lvl_modules", "aggregated_modules")){
+          if (table %in% c("data_sources", "datasets", "studies", "subsets", "plugins", "users", "patient_lvl_tabs", "aggregated_tabs")){
             new_value <- coalesce2("int", input[[paste0(get_plural(word = dropdown_input), id)]])
           }
           
@@ -1573,7 +1573,7 @@ update_settings_datatable <- function(input, module_id = character(), r = shiny:
         }, ignoreInit = TRUE)
         
         # Keep trace that this observer has been loaded
-        r$loaded_observers <- c(r$loaded_observers, paste0(module_id, "-", observer_name))
+        r$loaded_observers <- c(r$loaded_observers, paste0(tab_id, "-", observer_name))
       }
     })
   })

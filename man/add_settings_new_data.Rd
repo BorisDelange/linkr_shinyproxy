@@ -26,9 +26,9 @@ add_settings_new_data(
 
 \item{output}{Shiny output variable}
 
-\item{r}{Shiny r reactive value, to communicate between modules (reactiveValue)}
+\item{r}{Shiny r reactive value, to communicate between tabs (reactiveValue)}
 
-\item{id}{ID of current module / page (character)}
+\item{id}{ID of current tab / page (character)}
 
 \item{data}{A list with data to add (list)}
 

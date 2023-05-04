@@ -19,7 +19,7 @@ delete_settings_datatable_row(
 \arguments{
 \item{output}{Shiny output variable}
 
-\item{r}{r Shiny reactive value used to communicate between modules}
+\item{r}{r Shiny reactive value used to communicate between tabs}
 
 \item{ns}{Shiny namespace}
 

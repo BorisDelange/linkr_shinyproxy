@@ -235,7 +235,7 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
         p("Remarquez l'utilisation de la balise ", strong("%widget_id%"), ", qui sera remplacée par l'ID du widget une fois le plugin lancé."),
         p("Voici les autres balises que vous pouvez utiliser :"),
         tags$ul(
-          tags$li(strong("%module_id%"), " : sera remplacé par l'ID du module dans lequel sont contenus le widget et le plugin."),
+          tags$li(strong("%tab_id%"), " : sera remplacé par l'ID du tab dans lequel sont contenus le widget et le plugin."),
           tags$li(strong("%study_id%"), " : sera remplacé par l'ID de l'étude en cours.")
         ),
         p(strong("2) Server code")),
@@ -277,7 +277,7 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
         p("Notice the use of the ", strong("%widget_id%"), " tag, which will be replaced by the widget's ID once the plugin is launched."),
         p("Here are the other tags you can use:"),
         tags$ul(
-          tags$li(strong("%module_id%"), " : will be replaced by the ID of the module in which the widget and the plugin are located."),
+          tags$li(strong("%tab_id%"), " : will be replaced by the ID of the tab in which the widget and the plugin are located."),
           tags$li(strong("%study_id%"), " : will be replaced by the ID of the current study.")
         ),
         p(strong("2) Server code")),

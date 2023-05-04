@@ -1,7 +1,7 @@
 
 #' Insert default values in database
 #'
-#' @param r shiny reactive value, used to communicate between modules
+#' @param r shiny reactive value, used to communicate between tabs
 
 insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), 
   i18n = character(), has_internet = FALSE, options_toggles = tibble::tibble()){
@@ -53,7 +53,7 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
   # Add default study
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM studies")) == 0){
     DBI::dbAppendTable(r$db, "studies", tibble::tribble(~id, ~name, ~description,
-      ~dataset_id, ~patient_lvl_module_family_id, ~aggregated_module_family_id, ~creator_id, ~datetime, ~deleted,
+      ~dataset_id, ~patient_lvl_tab_group_id, ~aggregated_tab_group_id, ~creator_id, ~datetime, ~deleted,
       1, i18n$t("mortality_prediction"), "", 1, 1, 1, 1, as.character(Sys.time()), FALSE))
   }
   
@@ -70,29 +70,29 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
   }
   
   # --- --- --- --- --- -- -
-  # Add default modules ----
+  # Add default tabs ----
   # --- --- --- --- --- -- -
   
-  # Add default patient_lvl_modules_families
-  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_modules_families")) == 0){
-  #   DBI::dbAppendTable(r$db, "patient_lvl_modules_families", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
-  #     1, "Default patient-lvl module family", "", 1, as.character(Sys.time()), FALSE))
+  # Add default patient_lvl_tabs_groups
+  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_tabs_groups")) == 0){
+  #   DBI::dbAppendTable(r$db, "patient_lvl_tabs_groups", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+  #     1, "Default patient-lvl tab family", "", 1, as.character(Sys.time()), FALSE))
   # }
   
-  # Add default patient_lvl_modules
-  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_modules")) == 0){
-  #   DBI::dbAppendTable(r$db, "patient_lvl_modules", tibble::tribble(~id, ~name, ~description, ~module_family_id, ~parent_module_id, ~display_order, 
+  # Add default patient_lvl_tabs
+  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_tabs")) == 0){
+  #   DBI::dbAppendTable(r$db, "patient_lvl_tabs", tibble::tribble(~id, ~name, ~description, ~tab_group_id, ~parent_tab_id, ~display_order, 
   #     ~creator_id, ~datetime, ~deleted,
-  #     1, "Haemodynamics", "A module containing haemodynamics data", 1, NA_integer_, 1, 1, as.character(Sys.time()), FALSE,
-  #     2, "Respiratory", "A module containing respiratory data", 1, NA_integer_, 2, 1, as.character(Sys.time()), FALSE,
-  #     3, "Clinical notes", "A module containing clinical notes", 1, NA_integer_, 3, 1, as.character(Sys.time()), FALSE,
-  #     4, "Admission notes", "A sub-module containing admission clinical notes", 1, 3, 1, 1, as.character(Sys.time()), FALSE,
-  #     5, "Daily notes", "A sub-module containing daily clinical notes", 1, 3, 2, 1, as.character(Sys.time()), FALSE))
+  #     1, "Haemodynamics", "A tab containing haemodynamics data", 1, NA_integer_, 1, 1, as.character(Sys.time()), FALSE,
+  #     2, "Respiratory", "A tab containing respiratory data", 1, NA_integer_, 2, 1, as.character(Sys.time()), FALSE,
+  #     3, "Clinical notes", "A tab containing clinical notes", 1, NA_integer_, 3, 1, as.character(Sys.time()), FALSE,
+  #     4, "Admission notes", "A sub-tab containing admission clinical notes", 1, 3, 1, 1, as.character(Sys.time()), FALSE,
+  #     5, "Daily notes", "A sub-tab containing daily clinical notes", 1, 3, 2, 1, as.character(Sys.time()), FALSE))
   # }
   
-  # Add default patient_lvl_modules_elements
-  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_modules_elements")) == 0){
-  #   DBI::dbAppendTable(r$db, "patient_lvl_modules_elements", tibble::tribble(~id, ~name, ~group_id, ~module_id, ~plugin_id, 
+  # Add default patient_lvl_widgets
+  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_widgets")) == 0){
+  #   DBI::dbAppendTable(r$db, "patient_lvl_widgets", tibble::tribble(~id, ~name, ~group_id, ~tab_id, ~plugin_id, 
   #     ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~display_order, ~creator_id, ~datetime, ~deleted,
   #     1, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 11, "HR", "bpm", "#5AAE61", 1, 1, as.character(Sys.time()), FALSE,
   #     2, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 12, "SBP", "bpm", "#CB181D", 1, 1, as.character(Sys.time()), FALSE,
@@ -113,20 +113,20 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
   #     17, "Daily notes", 6, 5, 3, "My datawarehouse thesaurus", 20, "Daily clinical note", "", "#000000", 1, 1, as.character(Sys.time()), FALSE))
   # }
   
-  # Add default aggregated_modules_families
-  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM aggregated_modules_families")) == 0){
-  #   DBI::dbAppendTable(r$db, "aggregated_modules_families", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
-  #     1, "Default aggregated module family", "", 1, as.character(Sys.time()), FALSE))
+  # Add default aggregated_tabs_groups
+  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM aggregated_tabs_groups")) == 0){
+  #   DBI::dbAppendTable(r$db, "aggregated_tabs_groups", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
+  #     1, "Default aggregated tab family", "", 1, as.character(Sys.time()), FALSE))
   # }
   
-  # Add default aggregated_modules
-  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM aggregated_modules")) == 0){
-  #   DBI::dbAppendTable(r$db, "aggregated_modules", tibble::tribble(~id, ~name, ~description, ~module_family_id, ~parent_module_id, ~display_order,
+  # Add default aggregated_tabs
+  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM aggregated_tabs")) == 0){
+  #   DBI::dbAppendTable(r$db, "aggregated_tabs", tibble::tribble(~id, ~name, ~description, ~tab_group_id, ~parent_tab_id, ~display_order,
   #     ~creator_id, ~datetime, ~deleted,
-  #     1, "Study patients management", "A module made to manage patients status for the study", 1, NA_integer_, 1, 1, as.character(Sys.time()), FALSE,
-  #     2, "Inclusion / exclusion", "A module made to manage inclusion & exclusion criteria", 1, 1, 1, 1, as.character(Sys.time()), FALSE,
-  #     3, "Flowchart", "A module made to create the flowchart", 1, 1, 2, 1, as.character(Sys.time()), FALSE,
-  #     4, "Guidelines", "A module made to show EQUATOR guidelines", 1, NA_integer_, 2, 1, as.character(Sys.time()), FALSE))
+  #     1, "Study patients management", "A tab made to manage patients status for the study", 1, NA_integer_, 1, 1, as.character(Sys.time()), FALSE,
+  #     2, "Inclusion / exclusion", "A tab made to manage inclusion & exclusion criteria", 1, 1, 1, 1, as.character(Sys.time()), FALSE,
+  #     3, "Flowchart", "A tab made to create the flowchart", 1, 1, 2, 1, as.character(Sys.time()), FALSE,
+  #     4, "Guidelines", "A tab made to show EQUATOR guidelines", 1, NA_integer_, 2, 1, as.character(Sys.time()), FALSE))
   # }
   
   # --- --- --- --- --- -- -
@@ -189,9 +189,9 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
     test_user_rights <- c("general_settings", "change_password_card",
       "studies", "studies_edit_data", "studies_creation_card", "studies_datatable_card", "studies_options_card",
       "thesaurus", "thesaurus_see_all_data", "thesaurus_datatable_card", "thesaurus_sub_datatable_card",
-      "patient_lvl_modules", "patient_lvl_modules_edit_data", "patient_lvl_modules_delete_data", "patient_lvl_modules_creation_card", "patient_lvl_modules_management_card", "patient_lvl_modules_options_card",
+      "patient_lvl_tabs", "patient_lvl_tabs_edit_data", "patient_lvl_tabs_delete_data", "patient_lvl_tabs_creation_card", "patient_lvl_tabs_management_card", "patient_lvl_tabs_options_card",
       "plugins", "plugins_description_card",
-      "aggregated_modules",  "aggregated_modules_edit_data", "aggregated_modules_delete_data", "aggregated_modules_creation_card", "aggregated_modules_management_card", "aggregated_modules_options_card"
+      "aggregated_tabs",  "aggregated_tabs_edit_data", "aggregated_tabs_delete_data", "aggregated_tabs_creation_card", "aggregated_tabs_management_card", "aggregated_tabs_options_card"
     )
     
     data <- data %>% dplyr::mutate(value_num = dplyr::case_when((link_id == 2 & name %in% test_user_rights) ~ 1, TRUE ~ value_num))
@@ -232,7 +232,7 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
   # --- --- --- -- -
   
   # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM plugins")) == 0){
-  #   DBI::dbAppendTable(r$db, "plugins", tibble::tribble(~id, ~name, ~description, ~module_type_id, ~datetime, ~deleted,
+  #   DBI::dbAppendTable(r$db, "plugins", tibble::tribble(~id, ~name, ~description, ~tab_type_id, ~datetime, ~deleted,
   #     1, "Dygraph", "", 1, as.character(Sys.time()), FALSE,
   #     2, "Datatable", "", 1, as.character(Sys.time()), FALSE,
   #     3, "Text", "", 1, as.character(Sys.time()), FALSE))

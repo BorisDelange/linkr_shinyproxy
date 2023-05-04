@@ -16,7 +16,7 @@ add_patients_to_subset(
 \arguments{
 \item{output}{Output variable from Shiny, used to render messages on message bars}
 
-\item{m}{A shiny::reactiValues object, used to communicate between modules}
+\item{m}{A shiny::reactiValues object, used to communicate between tabs}
 
 \item{patients}{data variable containing patients (data.frame / tibble)}
 

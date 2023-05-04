@@ -7,7 +7,7 @@
 get_thesaurus_name(r = shiny::reactiveValues(), thesaurus_id = integer())
 }
 \arguments{
-\item{r}{A shiny::reactiValues object, used to communicate between modules}
+\item{r}{A shiny::reactiValues object, used to communicate between tabs}
 
 \item{thesaurus_id}{ID of the thesaurus (integer)}
 

@@ -56,7 +56,7 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
     
     div_code_2 <- div(
       "m$subsets", br(),
-      "DBI::dbGetQuery(m$db, \"SELECT * FROM modules_elements_options\")",
+      "DBI::dbGetQuery(m$db, \"SELECT * FROM widgets_options\")",
       style = r$code_style
     )
     
@@ -226,15 +226,15 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         ),
         p(strong("Modules, plugins et scripts")),
         tags$ul(
-          tags$li(tags$em("patient_lvl_modules_families"), " : les modules sont regroupés au sein de familles de modules, ce qui permettra dans une ",
-            "version future de l'application de copier des modules d'une étude à l'autre"),
-          tags$li(tags$em("patient_lvl_modules"), " : comprend les modules de type ", tags$em("Données individuelles")),
-          tags$li(tags$em("patient_lvl_modules_elements"), " : comprend les widgets"),
-          tags$li(tags$em("patient_lvl_modules_elements_items"), " : comprend les concepts / items du thésaurus sélectionnés pour tel ou tel widget"),
-          tags$li(tags$em("aggregated_modules_families"), " : ces tables sont l'équivalent de celles de ", tags$em("patient_lvl"), ", pour les données agrégées"),
-          tags$li(tags$em("aggregated_modules")),
-          tags$li(tags$em("aggregated_modules_elements")),
-          tags$li(tags$em("aggregated_modules_elements_items")),
+          tags$li(tags$em("patient_lvl_tabs_groups"), " : les tabs sont regroupés au sein de familles de tabs, ce qui permettra dans une ",
+            "version future de l'application de copier des tabs d'une étude à l'autre"),
+          tags$li(tags$em("patient_lvl_tabs"), " : comprend les tabs de type ", tags$em("Données individuelles")),
+          tags$li(tags$em("patient_lvl_widgets"), " : comprend les widgets"),
+          tags$li(tags$em("patient_lvl_widgets_items"), " : comprend les concepts / items du thésaurus sélectionnés pour tel ou tel widget"),
+          tags$li(tags$em("aggregated_tabs_groups"), " : ces tables sont l'équivalent de celles de ", tags$em("patient_lvl"), ", pour les données agrégées"),
+          tags$li(tags$em("aggregated_tabs")),
+          tags$li(tags$em("aggregated_widgets")),
+          tags$li(tags$em("aggregated_widgets_items")),
           tags$li(tags$em("plugins"), " : liste les différents plugins locaux"),
           tags$li(tags$em("scripts"), " : comprend les différents scripts"),
         ),
@@ -255,7 +255,7 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         tags$ul(
           tags$li(tags$em("subsets"), " : les différents subsets associés aux études"),
           tags$li(tags$em("subset_persons"), " : les patients de tel ou tel subset"),
-          tags$li(tags$em("modules_elements_options"), " : cette table comporte les options associés aux widgets, ce qui permet",
+          tags$li(tags$em("widgets_options"), " : cette table comporte les options associés aux widgets, ce qui permet",
             " aux plugins utilisés au sein de widgets d'être configurés par les utilisateurs"),
           tags$li(tags$em("patients_options"), " : cette table peut être utilisée pour stocker des informations sur les patients, dans une étude")
         ),
@@ -288,15 +288,15 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         ),
         p(strong("Modules, Plugins, and Scripts:")),
         tags$ul(
-          tags$li(tags$em("patient_lvl_modules_families"), " : modules are grouped within families of modules, which will allow in a ",
-            "future version of the application to copy the modules from one study to another"),
-          tags$li(tags$em("patient_lvl_modules"), " : includes the modules of type ", tags$em("Patient-level Data")),
-          tags$li(tags$em("patient_lvl_modules_elements"), " : includes the widgets"),
-          tags$li(tags$em("patient_lvl_modules_elements_items"), " : includes the thesaurus concepts/items selected for a given widget"),
-          tags$li(tags$em("aggregated_modules_families"), " : these tables are the equivalent of those of ", tags$em("patient_lvl"), ", for aggregated data"),
-          tags$li(tags$em("aggregated_modules")),
-          tags$li(tags$em("aggregated_modules_elements")),
-          tags$li(tags$em("aggregated_modules_elements_items")),
+          tags$li(tags$em("patient_lvl_tabs_groups"), " : tabs are grouped within families of tabs, which will allow in a ",
+            "future version of the application to copy the tabs from one study to another"),
+          tags$li(tags$em("patient_lvl_tabs"), " : includes the tabs of type ", tags$em("Patient-level Data")),
+          tags$li(tags$em("patient_lvl_widgets"), " : includes the widgets"),
+          tags$li(tags$em("patient_lvl_widgets_items"), " : includes the thesaurus concepts/items selected for a given widget"),
+          tags$li(tags$em("aggregated_tabs_groups"), " : these tables are the equivalent of those of ", tags$em("patient_lvl"), ", for aggregated data"),
+          tags$li(tags$em("aggregated_tabs")),
+          tags$li(tags$em("aggregated_widgets")),
+          tags$li(tags$em("aggregated_widgets_items")),
           tags$li(tags$em("plugins"), " : lists the different local plugins"),
           tags$li(tags$em("scripts"), " : includes the different scripts"),
         ),
@@ -317,7 +317,7 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         tags$ul(
           tags$li(tags$em("subsets"), " : the different subsets associated with the studies"),
           tags$li(tags$em("subset_persons"), " : the patients in a given subset"),
-          tags$li(tags$em("modules_elements_options"), " : this table contains the options associated with widgets, allowing",
+          tags$li(tags$em("widgets_options"), " : this table contains the options associated with widgets, allowing",
             " plugins used within widgets to be configured by users"),
           tags$li(tags$em("patients_options"), " : this table can be used to store information about patients, in a study")
         ),

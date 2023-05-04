@@ -19,7 +19,7 @@ save_settings_datatable_updates(
 \arguments{
 \item{output}{Shiny output variable}
 
-\item{r}{Shiny r reactive value to communicate between modules}
+\item{r}{Shiny r reactive value to communicate between tabs}
 
 \item{ns}{Shiny namespace}
 

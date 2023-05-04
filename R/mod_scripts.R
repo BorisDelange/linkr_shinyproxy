@@ -549,7 +549,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Scripts management ----
     # --- --- --- --- --- ---
     
-    # Action buttons for each module / page
+    # Action buttons for each tab / page
     action_buttons <- c("delete", "edit_code", "options")
     
     editable_cols <- c("name")

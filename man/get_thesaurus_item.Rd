@@ -20,7 +20,7 @@ get_thesaurus_item(
 \arguments{
 \item{output}{Output variable from Shiny, used to render messages on message bars}
 
-\item{r}{A shiny::reactiValues object, used to communicate between modules}
+\item{r}{A shiny::reactiValues object, used to communicate between tabs}
 
 \item{thesaurus_name}{Name of the thesaurus (character)}
 

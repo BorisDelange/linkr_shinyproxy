@@ -222,7 +222,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
                 p("Importer une étude nécessite d'importer :",
                   tags$ul(
                     tags$li("Importer l'étude en elle-même (table études de la BDD)"),
-                    tags$li("Importer les données relatives à l'étude (modules, données modifiées sur patients et sur modules)"),
+                    tags$li("Importer les données relatives à l'étude (tabs, données modifiées sur patients et sur tabs)"),
                     tags$li("S'assurer que les plugins sont tous installés et à la bonne version")
                   )
                 ),
@@ -1287,8 +1287,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       new_data$name <- coalesce2(type = "char", x = input$study_name)
       new_data$study_name <- new_data$name
       new_data$description <- ""
-      new_data$patient_lvl_module_family <- get_last_row(r$db, "patient_lvl_modules_families") + 1
-      new_data$aggregated_module_family <- get_last_row(r$db, "aggregated_modules_families") + 1
+      new_data$patient_lvl_tab_group <- get_last_row(r$db, "patient_lvl_tabs_groups") + 1
+      new_data$aggregated_tab_group <- get_last_row(r$db, "aggregated_tabs_groups") + 1
       new_data$dataset <- r$selected_dataset
       
       add_settings_new_data(session = session, output = output, r = r, d = d, m = m, i18n = i18n, id = "my_studies", 
@@ -1304,7 +1304,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # Studies management ----
     # --- --- --- --- --- ---
     
-    # Action buttons for each module / page
+    # Action buttons for each tab / page
     action_buttons <- c("options", "delete")
     
     studies_management_editable_cols <- c("name")
@@ -1313,7 +1313,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     studies_management_centered_cols <- c("id", "creator", "datetime", "action")
     studies_management_searchable_cols <- c("name", "description", "data_source_id", "dataset_id", "study_id", "creator_id")
     studies_management_factorize_cols <- c("dataset_id", "creator_id")
-    studies_management_hidden_cols <- c("id", "description", "dataset_id", "patient_lvl_module_family_id", "aggregated_module_family_id", "deleted", "modified")
+    studies_management_hidden_cols <- c("id", "description", "dataset_id", "patient_lvl_tab_group_id", "aggregated_tab_group_id", "deleted", "modified")
     studies_management_col_names <- get_col_names("studies", i18n)
     
     # Prepare data for datatable
@@ -1329,7 +1329,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       if (nrow(r$studies) == 0) {
         
         data <- tibble::tibble(id = integer(), name = character(), description = character(), dataset_id = factor(),
-          patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = factor(), datetime = character(),
+          patient_lvl_tab_group_id = integer(), aggregated_tab_group_id = integer(), creator_id = factor(), datetime = character(),
           deleted = integer(), modified = logical(), action = character())
       }
       
@@ -1372,7 +1372,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
       # Reload datatable_temp variable
       if (nrow(r$studies_temp) == 0) r$studies_datatable_temp <- tibble::tibble(id = integer(), name = character(), description = character(), dataset_id = factor(),
-        patient_lvl_module_family_id = integer(), aggregated_module_family_id = integer(), creator_id = factor(), datetime = character(),
+        patient_lvl_tab_group_id = integer(), aggregated_tab_group_id = integer(), creator_id = factor(), datetime = character(),
         deleted = integer(), modified = logical(), action = character())
       
       if (nrow(r$studies_temp) > 0) r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,

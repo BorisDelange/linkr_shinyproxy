@@ -23,117 +23,113 @@ mod_data_ui <- function(id = character(), i18n = character()){
     page_name <- "aggregated_data"
   }
   
-  # --- --- --- --- --- --- -
-  # Module creation card ----
-  # --- --- --- --- --- --- -
+  # --- --- --- --- --- --
+  # Tab creation card ----
+  # --- --- --- --- --- --
   
-  module_creation_options <- list(
+  tab_creation_options <- list(
     list(key = "same_level", text = i18n$t("same_level_current_tab")),
     list(key = "level_under", text = i18n$t("level_under"))
   )
   
-  module_creation_card <- make_card(
-    title = i18n$t("add_module"),
+  tab_creation_card <- make_card(
+    title = i18n$t("add_tab"),
     content = div(
-      actionButton(ns(paste0(prefix, "_close_add_module")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
+      actionButton(ns(paste0(prefix, "_close_add_tab")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
       shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-        make_textfield(ns = ns, label = "name", id = "module_name", width = "300px", i18n = i18n),
-        div(shiny.fluent::ChoiceGroup.shinyInput(ns("add_module_type"), value = "same_level", 
-          options = module_creation_options, className = "inline_choicegroup"), style = "padding-top:35px;")
+        make_textfield(ns = ns, label = "name", id = "tab_name", width = "300px", i18n = i18n),
+        div(shiny.fluent::ChoiceGroup.shinyInput(ns("add_tab_type"), value = "same_level", 
+          options = tab_creation_options, className = "inline_choicegroup"), style = "padding-top:35px;")
       ), br(),
-      shiny.fluent::PrimaryButton.shinyInput(ns("add_module_button"), i18n$t("add")), br()
+      shiny.fluent::PrimaryButton.shinyInput(ns("add_tab_button"), i18n$t("add")), br()
     )
   )
   
-  # --- --- --- --- --- -- -
-  # Module edition card ----
-  # --- --- --- --- --- -- -
+  # --- --- --- --- --- -
+  # Tab edition card ----
+  # --- --- --- --- --- -
   
-  module_edition_card <- make_card(
-    title = i18n$t("edit_module"),
+  tab_edition_card <- make_card(
+    title = i18n$t("edit_tab"),
     content = div(
-      actionButton(ns(paste0(prefix, "_close_edit_module")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
-      make_textfield(ns = ns, label = "name", id = "edit_module_name", width = "300px", i18n = i18n), br(),
+      actionButton(ns(paste0(prefix, "_close_edit_tab")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
+      make_textfield(ns = ns, label = "name", id = "edit_tab_name", width = "300px", i18n = i18n), br(),
       shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-        shiny.fluent::PrimaryButton.shinyInput(ns("edit_module_button"), i18n$t("save")),
-        shiny.fluent::DefaultButton.shinyInput(ns("remove_module"), i18n$t("delete_tab"))
+        shiny.fluent::PrimaryButton.shinyInput(ns("edit_tab_button"), i18n$t("save")),
+        shiny.fluent::DefaultButton.shinyInput(ns("remove_tab"), i18n$t("delete_tab"))
       ), 
       br()
     )
   )
   
-  # --- --- --- --- --- --- --- --- -
-  # Module element creation card ----
-  # --- --- --- --- --- --- --- --- -
+  # --- --- --- --- --- --- -
+  # Widget creation card ----
+  # --- --- --- --- --- --- -
   
   if (prefix == "patient_lvl"){
-    module_element_creation_card <- make_card(
-      title = i18n$t("add_module_element"),
+    widget_creation_card <- make_card(
+      title = i18n$t("add_a_widget"),
       content = div(
-        actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
+        actionButton(ns(paste0(prefix, "_close_add_widget")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_textfield(i18n = i18n, ns = ns, label = "name", id = "module_element_creation_name", width = "300px"),
-          make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "module_element_creation_plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px")
+          make_textfield(i18n = i18n, ns = ns, label = "name", id = "widget_creation_name", width = "300px"),
+          make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "widget_creation_plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px")
         ),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_combobox(i18n = i18n, ns = ns, label = "thesaurus", id = "module_element_creation_thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
-          make_dropdown(i18n = i18n, ns = ns, label = "items_mapping", id = "module_element_creation_thesaurus_mapping", multiSelect = TRUE, width = "300px",
+          make_combobox(i18n = i18n, ns = ns, label = "thesaurus", id = "widget_creation_thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
+          make_dropdown(i18n = i18n, ns = ns, label = "items_mapping", id = "widget_creation_thesaurus_mapping", multiSelect = TRUE, width = "300px",
             options = list(
               list(key = 1, text = i18n$t("equivalent_to")),
               list(key = 2, text = i18n$t("included_in")),
               list(key = 3, text = i18n$t("include"))
             )
           ),
-          conditionalPanel(condition = "input.module_element_creation_thesaurus_mapping != null & input.module_element_creation_thesaurus_mapping != ''", ns = ns, 
+          conditionalPanel(condition = "input.widget_creation_thesaurus_mapping != null & input.widget_creation_thesaurus_mapping != ''", ns = ns, 
             div(
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                div(shiny.fluent::Toggle.shinyInput(ns(paste0(prefix, "_module_element_creation_merge_mapped_items")), value = TRUE), style = "margin-top:45px;"),
+                div(shiny.fluent::Toggle.shinyInput(ns(paste0(prefix, "_widget_creation_merge_mapped_items")), value = TRUE), style = "margin-top:45px;"),
                 div(i18n$t("merge_mapped_items"), style = "font-weight:bold; margin-top:45px;")
               ),
               style = "margin-left:-28px;"
             )
           )
-          # make_toggle(i18n = i18n, ns = ns, id = paste0(prefix, "_merge_mapped_items"), label = "merge_mapped_items", inline = TRUE)
         ),
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 20),
-          # make_dropdown(i18n = i18n, ns = ns, label = "thesaurus_selected_items", id = "thesaurus_selected_items", multiSelect = TRUE, width = "650px"),
-          
           div(
-            div(id = ns("module_element_creation_thesaurus_selected_items_title"), class = "input_title", i18n$t("thesaurus_selected_items")),
-            div(shiny.fluent::Dropdown.shinyInput(ns("module_element_creation_thesaurus_selected_items"), value = NULL, options = list(), multiSelect = TRUE,
-              onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-module_element_creation_thesaurus_selected_items_trigger', Math.random())"))), style = "width:650px;")
+            div(id = ns("widget_creation_thesaurus_selected_items_title"), class = "input_title", i18n$t("thesaurus_selected_items")),
+            div(shiny.fluent::Dropdown.shinyInput(ns("widget_creation_thesaurus_selected_items"), value = NULL, options = list(), multiSelect = TRUE,
+              onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-widget_creation_thesaurus_selected_items_trigger', Math.random())"))), style = "width:650px;")
           ),
           
-          div(shiny.fluent::DefaultButton.shinyInput(ns("module_element_creation_reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
+          div(shiny.fluent::DefaultButton.shinyInput(ns("widget_creation_reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
         ),
-        div(DT::DTOutput(ns("module_element_creation_thesaurus_items")), class = "thesaurus_table"), br(),
-        div(shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), i18n$t("add_widget")))#, br(),
-        # DT::DTOutput(ns("thesaurus_items"))
+        div(DT::DTOutput(ns("widget_creation_thesaurus_items")), class = "thesaurus_table"), br(),
+        div(shiny.fluent::PrimaryButton.shinyInput(ns("add_widget_button"), i18n$t("add_widget")))
       )
     )
     
-    module_element_settings_card <- make_card(
-      title = i18n$t("module_element_settings"),
+    widget_settings_card <- make_card(
+      title = i18n$t("widget_settings"),
       content = div(
-        actionButton(ns(paste0(prefix, "_close_module_element_settings")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
+        actionButton(ns(paste0(prefix, "_close_widget_settings")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_textfield(i18n = i18n, ns = ns, label = "name", id = "module_element_settings_name", width = "300px"),
-          make_textfield(i18n = i18n, ns = ns, label = "plugin", id = "module_element_settings_plugin", width = "300px", disabled = TRUE)
+          make_textfield(i18n = i18n, ns = ns, label = "name", id = "widget_settings_name", width = "300px"),
+          make_textfield(i18n = i18n, ns = ns, label = "plugin", id = "widget_settings_plugin", width = "300px", disabled = TRUE)
         ),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_combobox(i18n = i18n, ns = ns, label = "thesaurus", id = "module_element_settings_thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
-          make_dropdown(i18n = i18n, ns = ns, label = "items_mapping", id = "module_element_settings_thesaurus_mapping", multiSelect = TRUE, width = "300px",
+          make_combobox(i18n = i18n, ns = ns, label = "thesaurus", id = "widget_settings_thesaurus", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
+          make_dropdown(i18n = i18n, ns = ns, label = "items_mapping", id = "widget_settings_thesaurus_mapping", multiSelect = TRUE, width = "300px",
             options = list(
               list(key = 1, text = i18n$t("equivalent_to")),
               list(key = 2, text = i18n$t("included_in")),
               list(key = 3, text = i18n$t("include"))
             )
           ),
-          conditionalPanel(condition = "input.module_element_settings_thesaurus_mapping != null & input.module_element_settings_thesaurus_mapping != ''", ns = ns, 
+          conditionalPanel(condition = "input.widget_settings_thesaurus_mapping != null & input.widget_settings_thesaurus_mapping != ''", ns = ns, 
             div(
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                div(shiny.fluent::Toggle.shinyInput(ns(paste0(prefix, "_module_element_settings_merge_mapped_items")), value = TRUE), style = "margin-top:45px;"),
+                div(shiny.fluent::Toggle.shinyInput(ns(paste0(prefix, "_widget_settings_merge_mapped_items")), value = TRUE), style = "margin-top:45px;"),
                 div(i18n$t("merge_mapped_items"), style = "font-weight:bold; margin-top:45px;")
               ),
               style = "margin-left:-28px;"
@@ -143,42 +139,42 @@ mod_data_ui <- function(id = character(), i18n = character()){
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 20),
           div(
-            div(id = ns("module_element_settings_thesaurus_selected_items_title"), class = "input_title", i18n$t("thesaurus_selected_items")),
-            div(shiny.fluent::Dropdown.shinyInput(ns("module_element_settings_thesaurus_selected_items"), value = NULL, options = list(), multiSelect = TRUE,
-              onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-module_element_settings_thesaurus_selected_items_trigger', Math.random())"))), style = "width:650px;")
+            div(id = ns("widget_settings_thesaurus_selected_items_title"), class = "input_title", i18n$t("thesaurus_selected_items")),
+            div(shiny.fluent::Dropdown.shinyInput(ns("widget_settings_thesaurus_selected_items"), value = NULL, options = list(), multiSelect = TRUE,
+              onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-widget_settings_thesaurus_selected_items_trigger', Math.random())"))), style = "width:650px;")
           ),
           
-          div(shiny.fluent::DefaultButton.shinyInput(ns("module_element_settings_reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
+          div(shiny.fluent::DefaultButton.shinyInput(ns("widget_settings_reset_thesaurus_items"), i18n$t("reset")), style = "margin-top:38px;")
         ),
-        div(DT::DTOutput(ns("module_element_settings_thesaurus_items")), class = "thesaurus_table"), br(),
-        div(shiny.fluent::PrimaryButton.shinyInput(ns("edit_module_element_button"), i18n$t("save")))
+        div(DT::DTOutput(ns("widget_settings_thesaurus_items")), class = "thesaurus_table"), br(),
+        div(shiny.fluent::PrimaryButton.shinyInput(ns("edit_widget_button"), i18n$t("save")))
       )
     )
     
   }
   
   if (prefix == "aggregated"){
-    module_element_creation_card <- make_card(
-      title = i18n$t("add_module_element"),
+    widget_creation_card <- make_card(
+      title = i18n$t("add_a_widget"),
       content = div(
-        actionButton(ns(paste0(prefix, "_close_add_module_element")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
+        actionButton(ns(paste0(prefix, "_close_add_widget")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_textfield(i18n = i18n, ns = ns, label = "name", id = "module_element_creation_name", width = "300px"),
-          make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "module_element_creation_plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px")
+          make_textfield(i18n = i18n, ns = ns, label = "name", id = "widget_creation_name", width = "300px"),
+          make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "widget_creation_plugin", allowFreeform = FALSE, multiSelect = FALSE, width = "300px")
         ), br(),
-        div(shiny.fluent::PrimaryButton.shinyInput(ns("add_module_element_button"), i18n$t("add_widget")))
+        div(shiny.fluent::PrimaryButton.shinyInput(ns("add_widget_button"), i18n$t("add_widget")))
       )
     )
     
-    module_element_settings_card <- make_card(
-      title = i18n$t("module_element_settings"),
+    widget_settings_card <- make_card(
+      title = i18n$t("widget_settings"),
       content = div(
-        actionButton(ns(paste0(prefix, "_close_module_element_settings")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
+        actionButton(ns(paste0(prefix, "_close_widget_settings")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
-          make_textfield(i18n = i18n, ns = ns, label = "name", id = "module_element_settings_name", width = "300px"),
-          make_textfield(i18n = i18n, ns = ns, label = "plugin", id = "module_element_settings_plugin", width = "300px", disabled = TRUE)
+          make_textfield(i18n = i18n, ns = ns, label = "name", id = "widget_settings_name", width = "300px"),
+          make_textfield(i18n = i18n, ns = ns, label = "plugin", id = "widget_settings_plugin", width = "300px", disabled = TRUE)
         ), br(),
-        div(shiny.fluent::PrimaryButton.shinyInput(ns("edit_module_element_button"), i18n$t("save")))
+        div(shiny.fluent::PrimaryButton.shinyInput(ns("edit_widget_button"), i18n$t("save")))
       )
     )
   }
@@ -188,7 +184,7 @@ mod_data_ui <- function(id = character(), i18n = character()){
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("help_panel")),
     shiny.fluent::reactOutput(ns("help_modal")),
-    shiny.fluent::reactOutput(ns("module_delete_confirm")), shiny.fluent::reactOutput(ns("module_element_delete_confirm")),
+    shiny.fluent::reactOutput(ns("tab_delete_confirm")), shiny.fluent::reactOutput(ns("widget_delete_confirm")),
     div(id = ns("initial_breadcrumb"),
       shiny.fluent::Breadcrumb(items = list(
         list(key = "main", text = i18n$t(paste0(prefix, "_data")), href = paste0("#!/", page_name), isCurrentItem = TRUE)),
@@ -202,29 +198,29 @@ mod_data_ui <- function(id = character(), i18n = character()){
     div(id = ns("study_cards")),
     shinyjs::hidden(
       div(
-        id = ns(paste0(prefix, "_add_module_element")),
-        module_element_creation_card,
+        id = ns(paste0(prefix, "_add_widget")),
+        widget_creation_card,
         style = "position:relative;"
       )
     ),
     shinyjs::hidden(
       div(
-        id = ns(paste0(prefix, "_module_element_settings")),
-        module_element_settings_card,
+        id = ns(paste0(prefix, "_widget_settings")),
+        widget_settings_card,
         style = "position:relative;"
       )
     ),
     shinyjs::hidden(
       div(
-        id = ns(paste0(prefix, "_add_module")),
-        module_creation_card,
+        id = ns(paste0(prefix, "_add_tab")),
+        tab_creation_card,
         style = "position:relative;"
       )
     ), 
     shinyjs::hidden(
       div(
-        id = ns(paste0(prefix, "_edit_module")),
-        module_edition_card,
+        id = ns(paste0(prefix, "_edit_tab")),
+        tab_edition_card,
         style = "position:relative;"
       )
     ),
@@ -269,17 +265,17 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     # - LOAD DATA
     # - INITIATE UI
     # - LOAD UI
-    # --- LOAD UI MODULES
-    # --- RENDER MODULES MENU
-    # --- RENDER MODULES ELEMENTS
+    # --- LOAD UI TABS
+    # --- RENDER TABS MENU
+    # --- RENDER WIDGETS
     # - LOAD SERVER
     # - OTHER SERVER REACTIVITY
     # --- SORTABLE / CHANGE PIVOTITEMS ORDER
     # --- SHOW / HIDE DIV WHEN PIVOT ITEM SELECTED
-    # --- ADD A MODULE
-    # --- DELETE A MODULE
-    # --- ADD A MODULE ELEMENT
-    # --- DELETE A MODULE ELEMENT
+    # --- ADD A TAB
+    # --- DELETE A TAB
+    # --- ADD A WIDGET
+    # --- DELETE A WIDGET
     
     # --- --- --- --- --- -
     # Show message bar ----
@@ -453,42 +449,42 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       shinyjs::show("study_menu")
 
       # Reset selected key
-      r[[paste0(prefix, "_selected_module")]] <- NA_integer_
+      r[[paste0(prefix, "_selected_tab")]] <- NA_integer_
       
-      # Reset shown modules
+      # Reset shown tabs
       r[[paste0(prefix, "_opened_cards")]] <- ""
 
-      # Hide Add module element card & Add module
-      shinyjs::hide("add_module_element")
-      shinyjs::hide("add_module")
+      # Hide Add widget card & Add tab
+      shinyjs::hide("add_widget")
+      shinyjs::hide("add_tab")
 
-      r[[paste0(prefix, "_load_display_modules")]] <- paste0("first_load_ui_", Sys.time())
+      r[[paste0(prefix, "_load_display_tabs")]] <- paste0("first_load_ui_", Sys.time())
 
       # Run observers
       r[[paste0(prefix, "_load_server")]] <- Sys.time()
       
       r[[paste0(prefix, "_load_ui_stage")]] <- "first_time"
 
-      # Load modules variables for this study
-      update_r(r = r, m = m, table = paste0(prefix, "_modules_families"))
-      update_r(r = r, m = m, table = paste0(prefix, "_modules"))
-      update_r(r = r, m = m, table = paste0(prefix, "_modules_elements"))
-      update_r(r = r, m = m, table = paste0(prefix, "_modules_elements_items"))
+      # Load tabs variables for this study
+      update_r(r = r, m = m, table = paste0(prefix, "_tabs_groups"))
+      update_r(r = r, m = m, table = paste0(prefix, "_tabs"))
+      update_r(r = r, m = m, table = paste0(prefix, "_widgets"))
+      update_r(r = r, m = m, table = paste0(prefix, "_widgets_items"))
       
-      # Reload create module element fields
+      # Reload create widget fields
       
       ## Reload thesaurus datatable & selected_items
-      if (length(r$module_element_creation_thesaurus_items) > 0){
-        r$module_element_creation_thesaurus_items <- r$module_element_creation_thesaurus_items %>% dplyr::slice(0)
-        r$module_element_creation_thesaurus_items_temp <- r$module_element_creation_thesaurus_items %>% dplyr::mutate(modified = FALSE)
+      if (length(r$widget_creation_thesaurus_items) > 0){
+        r$widget_creation_thesaurus_items <- r$widget_creation_thesaurus_items %>% dplyr::slice(0)
+        r$widget_creation_thesaurus_items_temp <- r$widget_creation_thesaurus_items %>% dplyr::mutate(modified = FALSE)
       }
-      if (length(r$module_element_creation_thesaurus_selected_items) > 0) r$module_element_creation_thesaurus_selected_items <-
-        r$module_element_creation_thesaurus_selected_items %>% dplyr::slice(0)
-      shiny.fluent::updateDropdown.shinyInput(session, "module_element_creation_thesaurus_selected_items", options = list(), value = NULL)
+      if (length(r$widget_creation_thesaurus_selected_items) > 0) r$widget_creation_thesaurus_selected_items <-
+        r$widget_creation_thesaurus_selected_items %>% dplyr::slice(0)
+      shiny.fluent::updateDropdown.shinyInput(session, "widget_creation_thesaurus_selected_items", options = list(), value = NULL)
       
       ## Reload other fields
-      shiny.fluent::updateTextField.shinyInput(session, "module_element_creation_name", value = "")
-      shiny.fluent::updateDropdown.shinyInput(session, "module_element_creation_thesaurus_mapping", 
+      shiny.fluent::updateTextField.shinyInput(session, "widget_creation_name", value = "")
+      shiny.fluent::updateDropdown.shinyInput(session, "widget_creation_thesaurus_mapping", 
         options = list(list(key = 1, text = i18n$t("equivalent_to")), list(key = 2, text = i18n$t("included_in")), list(key = 3, text = i18n$t("include"))),
         value = NULL)
       r[[paste0(prefix, "_reload_thesaurus_dropdown")]] <- Sys.time()
@@ -512,7 +508,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             grepl(paste0(", ", data_source, ","), data_source_id)
         ) %>% dplyr::arrange(name)
       
-      sapply(c("module_element_creation_thesaurus", "module_element_settings_thesaurus"), function(name) shiny.fluent::updateComboBox.shinyInput(session, name, 
+      sapply(c("widget_creation_thesaurus", "widget_settings_thesaurus"), function(name) shiny.fluent::updateComboBox.shinyInput(session, name, 
         options = convert_tibble_to_list(data = thesaurus, key_col = "id", text_col = "name", i18n = i18n), value = NULL))
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..reload_thesaurus_dropdown"))
@@ -528,23 +524,23 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     observeEvent(r[[paste0(prefix, "_reload_plugins_dropdown")]], {
       if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..reload_plugins_dropdown"))
 
-      module_type_id <- switch(prefix, "patient_lvl" = 1, "aggregated" = 2)
+      tab_type_id <- switch(prefix, "patient_lvl" = 1, "aggregated" = 2)
       
-      plugins <- r$plugins %>% dplyr::filter(module_type_id == !!module_type_id)
+      plugins <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id)
       
       options <- convert_tibble_to_list(data = plugins %>% dplyr::arrange(name), key_col = "id", text_col = "name", i18n = i18n)
-      shiny.fluent::updateComboBox.shinyInput(session, "module_element_creation_plugin", options = options, value = NULL)
+      shiny.fluent::updateComboBox.shinyInput(session, "widget_creation_plugin", options = options, value = NULL)
     })
     
-    # Load study display modules
+    # Load study display tabs
     
-    observeEvent(r[[paste0(prefix, "_load_display_modules")]], {
+    observeEvent(r[[paste0(prefix, "_load_display_tabs")]], {
       
-      if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..load_display_modules"))
+      if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..load_display_tabs"))
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       
       # Load study informations
-      # For one study, you choose ONE patient_lvl or aggregated data module family
+      # For one study, you choose ONE patient_lvl or aggregated data tab family
       study_infos <- r$studies %>% dplyr::filter(id == m$selected_study)
       # study_infos <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM studies WHERE id = ", m$selected_study))
       
@@ -552,57 +548,57 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       r$options %>% dplyr::filter(category == "dataset" & link_id == r$selected_dataset & name == "show_only_aggregated_data") %>%
         dplyr::pull(value_num) -> r[[paste0(prefix, "_show_only_aggregated_data")]]
       
-      # Load modules belonging to this module family
-      # display_modules <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, "_modules WHERE module_family_id = ",
-      #   study_infos[[paste0(prefix, "_module_family_id")]], " AND deleted IS FALSE"))
-      display_modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == study_infos[[paste0(prefix, "_module_family_id")]]) 
+      # Load tabs belonging to this tab family
+      # display_tabs <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM ", prefix, "_tabs WHERE tab_group_id = ",
+      #   study_infos[[paste0(prefix, "_tab_group_id")]], " AND deleted IS FALSE"))
+      display_tabs <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(tab_group_id == study_infos[[paste0(prefix, "_tab_group_id")]]) 
       
-      # Modules without parent are set to level 1
-      display_modules <- display_modules %>% 
-        dplyr::mutate(level = dplyr::case_when(is.na(parent_module_id) ~ 1L, TRUE ~ NA_integer_))
+      # Tabs without parent are set to level 1
+      display_tabs <- display_tabs %>% 
+        dplyr::mutate(level = dplyr::case_when(is.na(parent_tab_id) ~ 1L, TRUE ~ NA_integer_))
       
       # Prevent infinite loop, max loops = 7
       i <- 1
       
-      # Creating levels for distinct modules
-      while(nrow(display_modules %>% dplyr::filter(is.na(level))) > 0 & i <= 7){
-        display_modules <-
-          display_modules %>%
-          dplyr::left_join(display_modules %>%
+      # Creating levels for distinct tabs
+      while(nrow(display_tabs %>% dplyr::filter(is.na(level))) > 0 & i <= 7){
+        display_tabs <-
+          display_tabs %>%
+          dplyr::left_join(display_tabs %>%
             dplyr::filter(!is.na(level)) %>%
-            dplyr::transmute(parent_module_id = id, parent_level = level), by = "parent_module_id") %>%
+            dplyr::transmute(parent_tab_id = id, parent_level = level), by = "parent_tab_id") %>%
           dplyr::mutate(level = dplyr::case_when(!is.na(parent_level) ~ parent_level + 1L, TRUE ~ level)) %>%
           dplyr::select(-parent_level)
         i <- i + 1
       }
       
-      # Exclude modules without level
-      display_modules <- display_modules %>% dplyr::filter(!is.na(level))
+      # Exclude tabs without level
+      display_tabs <- display_tabs %>% dplyr::filter(!is.na(level))
       
       # Order by display order
-      display_modules <- display_modules %>% dplyr::arrange(level, display_order)
+      display_tabs <- display_tabs %>% dplyr::arrange(level, display_order)
       
-      # Calculate first module shown in the menu
-      if(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(m$selected_study)){
+      # Calculate first tab shown in the menu
+      if(nrow(display_tabs) > 0 & "level" %in% names(display_tabs) & !is.na(m$selected_study)){
         
-        # First module shown
-        first_module_shown <- display_modules %>% dplyr::filter(level == 1) %>% dplyr::slice(1)
-        if (max(display_modules$level) >= 2){
-          sapply(2:max(display_modules$level), function(current_level){
-            children <- display_modules %>% dplyr::filter(level == current_level, parent_module_id == first_module_shown$id) %>% dplyr::slice(1)
-            if (nrow(children) > 0) first_module_shown <<- children
+        # First tab shown
+        first_tab_shown <- display_tabs %>% dplyr::filter(level == 1) %>% dplyr::slice(1)
+        if (max(display_tabs$level) >= 2){
+          sapply(2:max(display_tabs$level), function(current_level){
+            children <- display_tabs %>% dplyr::filter(level == current_level, parent_tab_id == first_tab_shown$id) %>% dplyr::slice(1)
+            if (nrow(children) > 0) first_tab_shown <<- children
           })
         }
         
-        r[[paste0(prefix, "_first_module_shown")]] <- first_module_shown
+        r[[paste0(prefix, "_first_tab_shown")]] <- first_tab_shown
       }
       
-      r[[paste0(prefix, "_display_modules")]] <- display_modules
+      r[[paste0(prefix, "_display_tabs")]] <- display_tabs
       
       # Load UI cards
-      if (grepl("first_load_ui", r[[paste0(prefix, "_load_display_modules")]])) r[[paste0(prefix, "_load_ui_cards")]] <- Sys.time()
+      if (grepl("first_load_ui", r[[paste0(prefix, "_load_display_tabs")]])) r[[paste0(prefix, "_load_ui_cards")]] <- Sys.time()
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..load_display_modules"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..load_display_tabs"))
     })
     
     # --- --- -- -
@@ -620,12 +616,12 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         # The output is reloaded in these conditions :
-        # - Change in r[[paste0(prefix, "_display_modules")]]
+        # - Change in r[[paste0(prefix, "_display_tabs")]]
         # - Change in r[[paste0(prefix, "_load_ui_menu")]]
         # - Change in input$study_current_tab
         
         req(!is.na(m$selected_study))
-        req(r[[paste0(prefix, "_display_modules")]])
+        req(r[[paste0(prefix, "_display_tabs")]])
         r[[paste0(prefix, "_load_ui_menu")]]
         
         # Hide initial breadcrumb
@@ -635,13 +631,13 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) == 1) show_message_bar(output, "only_aggregated_data_authorized", "severeWarning", i18n = i18n, ns = ns)
         req((prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) != 1) | prefix == "aggregated")
         
-        display_modules <- isolate(r[[paste0(prefix, "_display_modules")]])
+        display_tabs <- isolate(r[[paste0(prefix, "_display_tabs")]])
         
-        # If no module to show, notify user
-        if (nrow(display_modules) == 0 | "level" %not_in% names(display_modules)){
+        # If no tab to show, notify user
+        if (nrow(display_tabs) == 0 | "level" %not_in% names(display_tabs)){
           
           # selected_key <- 0L
-          # if (!is.na(isolate(r[[paste0(prefix, "_selected_module")]]))) selected_key <- isolate(r[[paste0(prefix, "_selected_module")]])
+          # if (!is.na(isolate(r[[paste0(prefix, "_selected_tab")]]))) selected_key <- isolate(r[[paste0(prefix, "_selected_tab")]])
           
           return(tagList(
             shiny.fluent::Breadcrumb(items = list(
@@ -655,64 +651,64 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                 "}"
                 )),
               selectedKey = NULL,
-              shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", 0), headerText = span(i18n$t("add_module"), style = "padding-left:5px;"), itemIcon = "Add")
+              shiny.fluent::PivotItem(id = paste0(prefix, "_add_tab_", 0), headerText = span(i18n$t("add_tab"), style = "padding-left:5px;"), itemIcon = "Add")
             )
           ))
         }
         
-        req(nrow(display_modules) > 0 & "level" %in% names(display_modules) & !is.na(isolate(m$selected_study)))
+        req(nrow(display_tabs) > 0 & "level" %in% names(display_tabs) & !is.na(isolate(m$selected_study)))
         
-        # First module shown
-        first_module_shown <- isolate(r[[paste0(prefix, "_first_module_shown")]])
+        # First tab shown
+        first_tab_shown <- isolate(r[[paste0(prefix, "_first_tab_shown")]])
         
-        shown_modules_temp <- tibble::tibble()
+        shown_tabs_temp <- tibble::tibble()
         
         # If we are at level one, show all levels one
-        if (first_module_shown$level == 1){
-          shown_modules <- display_modules %>% dplyr::filter(level == 1)
+        if (first_tab_shown$level == 1){
+          shown_tabs <- display_tabs %>% dplyr::filter(level == 1)
         }
         
         # Else, show only current & those who has same level & same parent
-        if (first_module_shown$level > 1){
-          shown_modules_temp <- display_modules %>% dplyr::filter(level == first_module_shown$level & parent_module_id == first_module_shown$parent_module_id)
-          if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
-          if (nrow(shown_modules_temp) == 0) shown_modules <- first_module_shown
+        if (first_tab_shown$level > 1){
+          shown_tabs_temp <- display_tabs %>% dplyr::filter(level == first_tab_shown$level & parent_tab_id == first_tab_shown$parent_tab_id)
+          if (nrow(shown_tabs_temp) > 0) shown_tabs <- shown_tabs_temp
+          if (nrow(shown_tabs_temp) == 0) shown_tabs <- first_tab_shown
         }
         
         if (length(input$study_current_tab) > 0){
           
           # If value = 0, go back to first level
           if (input$study_current_tab == 0){
-            shown_modules <- display_modules %>% dplyr::filter(level == 1)
-            r[[paste0(prefix, "_selected_module")]] <- first_module_shown$id
+            shown_tabs <- display_tabs %>% dplyr::filter(level == 1)
+            r[[paste0(prefix, "_selected_tab")]] <- first_tab_shown$id
           } 
           else {
             
-            if (grepl("show_module", isolate(r[[paste0(prefix, "_selected_module")]]))){
-              study_current_tab <- as.integer(substr(isolate(r[[paste0(prefix, "_selected_module")]]), nchar("show_module_") + 1, 100))
-              shown_modules_temp <- display_modules %>% dplyr::filter(parent_module_id == study_current_tab)
+            if (grepl("show_tab", isolate(r[[paste0(prefix, "_selected_tab")]]))){
+              study_current_tab <- as.integer(substr(isolate(r[[paste0(prefix, "_selected_tab")]]), nchar("show_tab_") + 1, 100))
+              shown_tabs_temp <- display_tabs %>% dplyr::filter(parent_tab_id == study_current_tab)
             }
-            else if (grepl("add_module", input$study_current_tab)){
-              shown_modules_temp <- tibble::tibble()
-              study_current_tab <- isolate(r[[paste0(prefix, "_selected_module")]])
+            else if (grepl("add_tab", input$study_current_tab)){
+              shown_tabs_temp <- tibble::tibble()
+              study_current_tab <- isolate(r[[paste0(prefix, "_selected_tab")]])
             }
             else {
               study_current_tab <- input$study_current_tab
-              shown_modules_temp <- display_modules %>% dplyr::filter(parent_module_id == study_current_tab)
+              shown_tabs_temp <- display_tabs %>% dplyr::filter(parent_tab_id == study_current_tab)
             }
             
             # If current tab has children
-            if (nrow(shown_modules_temp) > 0) shown_modules <- shown_modules_temp
+            if (nrow(shown_tabs_temp) > 0) shown_tabs <- shown_tabs_temp
             
             # If current tab has no children
-            if (nrow(shown_modules_temp) == 0){
-              current_module <- display_modules %>% dplyr::filter(id == study_current_tab)
-              if (nrow(current_module) > 0) shown_modules <- display_modules %>% dplyr::filter(parent_module_id == current_module$parent_module_id & level == current_module$level)
-              else show_modules <- tibble::tibble()
+            if (nrow(shown_tabs_temp) == 0){
+              current_tab <- display_tabs %>% dplyr::filter(id == study_current_tab)
+              if (nrow(current_tab) > 0) shown_tabs <- display_tabs %>% dplyr::filter(parent_tab_id == current_tab$parent_tab_id & level == current_tab$level)
+              else show_tabs <- tibble::tibble()
               
               # If not any "brother", we are at level one
-              if (nrow(shown_modules) == 0){
-                shown_modules <- display_modules %>% dplyr::filter(level == 1)
+              if (nrow(shown_tabs) == 0){
+                shown_tabs <- display_tabs %>% dplyr::filter(level == 1)
               }
             }
           }
@@ -720,28 +716,28 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         # Currently selected tab
         
-        # We have just deleted a module
-        if (grepl("show_module", isolate(r[[paste0(prefix, "_selected_module")]]))){
-          r[[paste0(prefix, "_selected_module")]] <- 
-            as.integer(substr(isolate(r[[paste0(prefix, "_selected_module")]]), nchar("show_module_") + 1, 100))
+        # We have just deleted a tab
+        if (grepl("show_tab", isolate(r[[paste0(prefix, "_selected_tab")]]))){
+          r[[paste0(prefix, "_selected_tab")]] <- 
+            as.integer(substr(isolate(r[[paste0(prefix, "_selected_tab")]]), nchar("show_tab_") + 1, 100))
         }
         
-        # First existing module or load another study
+        # First existing tab or load another study
         else if (length(input$study_current_tab) == 0 | grepl("first_time", isolate(r[[paste0(prefix, "_load_ui_stage")]]))){
-          r[[paste0(prefix, "_selected_module")]] <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
+          r[[paste0(prefix, "_selected_tab")]] <- shown_tabs %>% dplyr::slice(1) %>% dplyr::pull(id)
         }
         
         # We have clicked on a tab
         else if (length(input$study_current_tab) > 0){
           
-          # Current module has children, take the first of this level of modules
-          if (nrow(shown_modules_temp) > 0) r[[paste0(prefix, "_selected_module")]] <- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(id)
+          # Current tab has children, take the first of this level of tabs
+          if (nrow(shown_tabs_temp) > 0) r[[paste0(prefix, "_selected_tab")]] <- shown_tabs %>% dplyr::slice(1) %>% dplyr::pull(id)
           
-          # Take the input as current module
-          else if (!grepl("add_module", input$study_current_tab) & input$study_current_tab != 0) r[[paste0(prefix, "_selected_module")]] <- input$study_current_tab
+          # Take the input as current tab
+          else if (!grepl("add_tab", input$study_current_tab) & input$study_current_tab != 0) r[[paste0(prefix, "_selected_tab")]] <- input$study_current_tab
         }
         
-        nb_levels <- max(shown_modules$level)
+        nb_levels <- max(shown_tabs$level)
         
         # First level
         is_current_item <- FALSE
@@ -755,35 +751,35 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (nb_levels >= 2){
           
           # Remove last level
-          modules_tree <- display_modules %>% dplyr::filter(level < nb_levels)
+          tabs_tree <- display_tabs %>% dplyr::filter(level < nb_levels)
           
           current_parent <- NA_integer_
           sapply(nb_levels:1, function(current_level){
             if (!is.na(current_parent)){
-              modules_tree <<- modules_tree %>% dplyr::filter(level != current_level | id == current_parent)
-              current_parent <<- display_modules %>% dplyr::filter(id == current_parent) %>% dplyr::pull(parent_module_id)
+              tabs_tree <<- tabs_tree %>% dplyr::filter(level != current_level | id == current_parent)
+              current_parent <<- display_tabs %>% dplyr::filter(id == current_parent) %>% dplyr::pull(parent_tab_id)
             }
-            if (is.na(current_parent)) current_parent <<- shown_modules %>% dplyr::slice(1) %>% dplyr::pull(parent_module_id)
+            if (is.na(current_parent)) current_parent <<- shown_tabs %>% dplyr::slice(1) %>% dplyr::pull(parent_tab_id)
           })
-          modules_tree <- modules_tree %>% dplyr::arrange(level)
-          sapply(1:nrow(modules_tree), function(i){
+          tabs_tree <- tabs_tree %>% dplyr::arrange(level)
+          sapply(1:nrow(tabs_tree), function(i){
             is_current_item <- FALSE
-            if (modules_tree[[i, "level"]] == nb_levels) is_current_item <- TRUE
+            if (tabs_tree[[i, "level"]] == nb_levels) is_current_item <- TRUE
             items <<- rlist::list.append(items, list(
-              key = modules_tree[[i, "name"]], text = modules_tree[[i, "name"]], href = paste0("#!/", page_name), isCurrentItem = is_current_item,
-              onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', ", modules_tree[[i, "id"]], ")"))
+              key = tabs_tree[[i, "name"]], text = tabs_tree[[i, "name"]], href = paste0("#!/", page_name), isCurrentItem = is_current_item,
+              onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', ", tabs_tree[[i, "id"]], ")"))
             ))
           })
         }
         
         shown_tabs <- tagList()
         
-        sapply(1:nrow(shown_modules), function(i){
-          shown_tabs <<- tagList(shown_tabs, shiny.fluent::PivotItem(id = shown_modules[[i, "id"]], itemKey = shown_modules[[i, "id"]], headerText = shown_modules[[i, "name"]]))
+        sapply(1:nrow(shown_tabs), function(i){
+          shown_tabs <<- tagList(shown_tabs, shiny.fluent::PivotItem(id = shown_tabs[[i, "id"]], itemKey = shown_tabs[[i, "id"]], headerText = shown_tabs[[i, "name"]]))
         })
         
-        # Add an add button, to add a new module
-        shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0(prefix, "_add_module_", isolate(r[[paste0(prefix, "_selected_module")]])), headerText = span(i18n$t("add_module"), style = "padding-left:5px;"), itemIcon = "Add"))
+        # Add an add button, to add a new tab
+        shown_tabs <- tagList(shown_tabs, shiny.fluent::PivotItem(id = paste0(prefix, "_add_tab_", isolate(r[[paste0(prefix, "_selected_tab")]])), headerText = span(i18n$t("add_tab"), style = "padding-left:5px;"), itemIcon = "Add"))
         
         r[[paste0(prefix, "_load_ui_stage")]] <- "end_loading_tabs_menu"
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - output$study_menu"))
@@ -797,7 +793,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               "Shiny.setInputValue('", id, "-study_current_tab_trigger', Math.random());",
               "}"
             )),
-            selectedKey = isolate(r[[paste0(prefix, "_selected_module")]]),
+            selectedKey = isolate(r[[paste0(prefix, "_selected_tab")]]),
             shown_tabs
           ),
           # A script to use sortable with PivotItems
@@ -819,38 +815,38 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # Don't reload study UI if already loaded
         req(m$selected_study %not_in% r[[paste0(prefix, "_loaded_studies")]])
         
-        distinct_modules <- r[[paste0(prefix, "_display_modules")]] %>% dplyr::pull(id)
+        distinct_tabs <- r[[paste0(prefix, "_display_tabs")]] %>% dplyr::pull(id)
 
         code_ui <- tagList("")
 
         all_groups <- NA_integer_
 
-        # Loop over distinct modules, for this study
+        # Loop over distinct tabs, for this study
 
-        selected_module <- r[[paste0(prefix, "_selected_module")]]
+        selected_tab <- r[[paste0(prefix, "_selected_tab")]]
 
-        if (grepl("show_module", selected_module)) selected_module <- as.integer(substr(selected_module, nchar("show_module_") + 1, 100))
+        if (grepl("show_tab", selected_tab)) selected_tab <- as.integer(substr(selected_tab, nchar("show_tab_") + 1, 100))
 
-        sapply(distinct_modules, function(module_id){
+        sapply(distinct_tabs, function(tab_id){
 
           toggles <- tagList()
 
-          module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == !!module_id) %>% 
+          widgets <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(tab_id == !!tab_id) %>% 
             dplyr::rename(group_id = id) %>% dplyr::arrange(display_order)
 
-          if (nrow(module_elements) > 0){
+          if (nrow(widgets) > 0){
 
-            # Get module element group_id
-            distinct_groups <- unique(module_elements$group_id)
+            # Get widget group_id
+            distinct_groups <- unique(widgets$group_id)
 
-            # Loop over distinct cards (modules elements), for this module
+            # Loop over distinct cards (tabs elements), for this tab
 
             sapply(distinct_groups, function(group_id){
 
-              # if (module_id != r[[paste0(prefix, "_first_module_shown")]]$id) all_groups <- c(all_groups, group_id)
+              # if (tab_id != r[[paste0(prefix, "_first_tab_shown")]]$id) all_groups <- c(all_groups, group_id)
 
-              # Load UI code for this module element
-              plugin_id <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
+              # Load UI code for this widget
+              plugin_id <- widgets %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(plugin_id)
               # if (length(plugin_id) != 0) code_ui_card <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_ui") %>% dplyr::pull(code)
 
               # Check if plugin has been deleted
@@ -858,12 +854,12 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               check_deleted_plugin <- r$plugins %>% dplyr::filter(id == plugin_id)
               if (nrow(check_deleted_plugin) == 0){
                 code_ui_card <- paste0("div(shiny.fluent::MessageBar('", i18n$t("plugin_deleted"), "', messageBarType = 3), style = 'margin-top:10px;')")
-                settings_module_element_button <- ""
+                settings_widget_button <- ""
               }
               if (nrow(check_deleted_plugin) > 0){
                 
                 code_ui_card <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_ui") %>% dplyr::pull(code)
-                settings_module_element_button <- actionButton(ns(paste0(prefix, "_settings_module_element_", group_id)), "", icon = icon("cog"))
+                settings_widget_button <- actionButton(ns(paste0(prefix, "_settings_widget_", group_id)), "", icon = icon("cog"))
                 
                 # Create translations file & var
                 
@@ -895,38 +891,38 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                 }
               }
 
-              # Get name of module element
-              module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
+              # Get name of widget
+              widget_name <- widgets %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
 
               # Append a toggle to our cards list
               r[[paste0(prefix, "_cards")]] <- c(r[[paste0(prefix, "_cards")]], paste0(prefix, "_group_", group_id))
 
               toggles <<- tagList(toggles,
                 shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_group_", group_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
-                div(class = "toggle_title", module_element_name, style = "padding-top:10px;"))
+                div(class = "toggle_title", widget_name, style = "padding-top:10px;"))
 
               # Try to run plugin UI code
               # ID of UI element is in the following format : "group_[ID]"
               tryCatch({
                 code_ui_card <- code_ui_card %>%
-                  stringr::str_replace_all("%module_id%", as.character(module_id)) %>%
+                  stringr::str_replace_all("%tab_id%", as.character(tab_id)) %>%
                   stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
                   stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
                   stringr::str_replace_all("\r", "\n")
 
                 if (length(m$selected_study) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
 
-                # Module element card
+                # Widget card
 
                 element_code <- div(
                   make_card("",
                     div(
-                      div(id = ns(paste0(prefix, "_module_element_plugin_ui_", group_id)), eval(parse(text = code_ui_card))),
+                      div(id = ns(paste0(prefix, "_widget_plugin_ui_", group_id)), eval(parse(text = code_ui_card))),
                       div(
-                        id = ns(paste0(prefix, "_module_element_settings_remove_buttons_", group_id)),
+                        id = ns(paste0(prefix, "_widget_settings_remove_buttons_", group_id)),
                         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 2),
-                          settings_module_element_button,
-                          actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"))
+                          settings_widget_button,
+                          actionButton(ns(paste0(prefix, "_remove_widget_", group_id)), "", icon = icon("trash-alt"))
                         ),
                         style = "position:absolute; top:8px; right: 10px;"
                       )
@@ -937,7 +933,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
 
                 ui_output <- uiOutput(ns(paste0(prefix, "_group_", group_id)))
                 hide_div <- TRUE
-                if (!is.na(selected_module)) if (module_id == selected_module) hide_div <- FALSE
+                if (!is.na(selected_tab)) if (tab_id == selected_tab) hide_div <- FALSE
                 if (hide_div) ui_output <- shinyjs::hidden(ui_output)
 
                 insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = ui_output)
@@ -952,14 +948,14 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
 
           # Put all div together
 
-          r[[paste0(prefix, "_cards")]] <- c(r[[paste0(prefix, "_cards")]], paste0(prefix, "_toggles_", module_id))
+          r[[paste0(prefix, "_cards")]] <- c(r[[paste0(prefix, "_cards")]], paste0(prefix, "_toggles_", tab_id))
 
-          # Does this module have sub-modules ?
-          if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
+          # Does this tab have sub-tabs ?
+          if (r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(parent_tab_id == tab_id) %>% nrow() > 0) toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
-                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_tab_", tab_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_tab_trigger', Math.random())"))),
                 div(shiny.fluent::MessageBar(i18n$t("tab_contains_sub_tabs"), messageBarType = 5), style = "margin-top:4px;")
               )
             )
@@ -968,23 +964,23 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           else toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
-                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
-                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_widget_", tab_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
+                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_widget_trigger', Math.random())"))),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_tab_", tab_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_tab_trigger', Math.random())"))),
                 div(style = "width:20px;"),
                 toggles
               )
             )
           )
 
-          ui_output <- uiOutput(ns(paste0(prefix, "_toggles_", module_id)))
+          ui_output <- uiOutput(ns(paste0(prefix, "_toggles_", tab_id)))
           hide_div <- TRUE
-          if (!is.na(selected_module)) if (module_id == selected_module) hide_div <- FALSE
+          if (!is.na(selected_tab)) if (tab_id == selected_tab) hide_div <- FALSE
           if (hide_div) ui_output <- shinyjs::hidden(ui_output)
 
           insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = ui_output)
-          output[[paste0(prefix, "_toggles_", module_id)]] <- renderUI(toggles_div)
+          output[[paste0(prefix, "_toggles_", tab_id)]] <- renderUI(toggles_div)
 
         })
         
@@ -1002,15 +998,15 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     # Close creation div ----
     # --- --- --- --- --- ---
     
-    observeEvent(input[[paste0(prefix, "_close_add_module_element")]], {
+    observeEvent(input[[paste0(prefix, "_close_add_widget")]], {
       
-      if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..close_add_module_element"))
+      if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..close_add_widget"))
 
-      # Show opened cards before opening Add module element div
+      # Show opened cards before opening Add widget div
       sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
 
-      # Hide Add module element div
-      shinyjs::hide(paste0(prefix, "_add_module_element"))
+      # Hide Add widget div
+      shinyjs::hide(paste0(prefix, "_add_widget"))
     })
     
     # --- --- --- -- -
@@ -1024,24 +1020,24 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
 
       req(!is.na(m$selected_study))
 
-      # Get modules elements, arrange them by display_order
+      # Get tabs elements, arrange them by display_order
 
-      module_family <- r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(paste0(prefix, "_module_family_id"))
-      modules <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(module_family_id == module_family) %>% dplyr::select(module_id = id)
-      module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::inner_join(modules, by = "module_id") %>% dplyr::rename(group_id = id)
-      module_elements_items <- r[[paste0(prefix, "_modules_elements_items")]] %>% dplyr::inner_join(module_elements %>% dplyr::select(group_id), by = "group_id")
+      tab_group <- r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(paste0(prefix, "_tab_group_id"))
+      tabs <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(tab_group_id == tab_group) %>% dplyr::select(tab_id = id)
+      widgets <- r[[paste0(prefix, "_widgets")]] %>% dplyr::inner_join(tabs, by = "tab_id") %>% dplyr::rename(group_id = id)
+      widgets_items <- r[[paste0(prefix, "_widgets_items")]] %>% dplyr::inner_join(widgets %>% dplyr::select(group_id), by = "group_id")
 
       # --- --- --- --- --- --- --- ---
       ## Run server code for cards ----
       # --- --- --- --- --- --- --- ---
 
-      # If no thesaurus elements to show in this module, notify the user
-      # if (nrow(module_elements) == 0) show_message_bar(output, message = "no_module_element_to_show", type = "severeWarning", language = language)
+      # If no thesaurus elements to show in this tab, notify the user
+      # if (nrow(widgets) == 0) show_message_bar(output, message = "no_widget_to_show", type = "severeWarning", language = language)
 
-      if (nrow(module_elements) > 0){
+      if (nrow(widgets) > 0){
 
-        # Get module element group_id
-        distinct_groups <- unique(module_elements$group_id)
+        # Get widget group_id
+        distinct_groups <- unique(widgets$group_id)
 
         toggles <- c()
 
@@ -1051,21 +1047,21 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           # Run plugin server code
           # Only if this code has not been already loaded
           trace_code <- paste0(prefix, "_", group_id, "_", m$selected_study)
-          # if (trace_code %in% r$server_modules_groups_loaded) print(trace_code)
-          if (trace_code %not_in% r$server_modules_groups_loaded){
+          # if (trace_code %in% r$server_tabs_groups_loaded) print(trace_code)
+          if (trace_code %not_in% r$server_tabs_groups_loaded){
 
             # Add the trace_code to loaded plugins list
-            r$server_modules_groups_loaded <- c(r$server_modules_groups_loaded, trace_code)
+            r$server_tabs_groups_loaded <- c(r$server_tabs_groups_loaded, trace_code)
 
             # Server code for toggles reactivity
             toggle <- paste0(prefix, "_group_", group_id)
             observeEvent(input[[paste0(toggle, "_toggle")]], {
-              req(r[[paste0(prefix, "_selected_module")]] == module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::distinct(module_id) %>% dplyr::pull())
+              req(r[[paste0(prefix, "_selected_tab")]] == widgets %>% dplyr::filter(group_id == !!group_id) %>% dplyr::distinct(tab_id) %>% dplyr::pull())
               if (input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle)
             })
 
-            # Get name of module element
-            # module_element_name_escaping <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>%
+            # Get name of widget
+            # widget_name_escaping <- widgets %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>%
             # dplyr::pull(name) %>% stringr::str_replace_all(c("-" = "_", "/" = "_", "\\(" = "_", "\\)" = "_"))
 
             # toggles <<- c(toggles, paste0(prefix, "_group_", group_id))
@@ -1074,14 +1070,14 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             
             if (prefix == "patient_lvl"){
               
-              thesaurus_selected_items <- module_elements_items %>% dplyr::filter(group_id == !!group_id) %>%
+              thesaurus_selected_items <- widgets_items %>% dplyr::filter(group_id == !!group_id) %>%
                 dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
                   thesaurus_item_unit, colour = thesaurus_item_colour, mapped_to_item_id, merge_items)
             }
 
             # Get plugin code
 
-            ids <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::select(plugin_id, module_id)
+            ids <- widgets %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::select(plugin_id, tab_id)
 
             # Check if plugin has been deleted
             check_deleted_plugin <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM plugins WHERE id = ", ids$plugin_id)) %>% dplyr::pull(deleted)
@@ -1090,7 +1086,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               code_server_card <- r$code %>%
                 dplyr::filter(link_id == ids$plugin_id, category == "plugin_server") %>%
                 dplyr::pull(code) %>%
-                stringr::str_replace_all("%module_id%", as.character(ids$module_id)) %>%
+                stringr::str_replace_all("%tab_id%", as.character(ids$tab_id)) %>%
                 stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
                 stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
                 stringr::str_replace_all("\r", "\n")
@@ -1136,7 +1132,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             # Create a session number, to inactivate older observers
             # Reset all older observers for this group_id
             
-            session_code <- paste0("module_", ids$module_id, "_group_", group_id)
+            session_code <- paste0("tab_", ids$tab_id, "_group_", group_id)
             if (length(o[[session_code]]) == 0) session_num <- 1L
             if (length(o[[session_code]]) > 0) session_num <- o[[session_code]] + 1
             o[[session_code]] <- session_num
@@ -1154,18 +1150,18 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             #### Delete a widget ----
             # --- --- --- --- --- ---
 
-            observeEvent(input[[paste0(prefix, "_remove_module_element_", group_id)]], {
-              r[[paste0(prefix, "_selected_module_element")]] <- group_id
-              r[[module_element_delete_variable]] <- TRUE
+            observeEvent(input[[paste0(prefix, "_remove_widget_", group_id)]], {
+              r[[paste0(prefix, "_selected_widget")]] <- group_id
+              r[[widget_delete_variable]] <- TRUE
             })
             
             # --- --- --- --- --- ---
             #### Widget settings ----
             # --- --- --- --- --- ---
 
-            observeEvent(input[[paste0(prefix, "_settings_module_element_", group_id)]], {
-              r[[paste0(prefix, "_settings_module_element_trigger")]] <- Sys.time()
-              r[[paste0(prefix, "_settings_module_element")]] <- group_id
+            observeEvent(input[[paste0(prefix, "_settings_widget_", group_id)]], {
+              r[[paste0(prefix, "_settings_widget_trigger")]] <- Sys.time()
+              r[[paste0(prefix, "_settings_widget")]] <- group_id
             })
           }
         })
@@ -1182,30 +1178,30 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       ## Widget settings ----
       # --- --- --- --- -- -
     
-      observeEvent(r[[paste0(prefix, "_settings_module_element_trigger")]], {
+      observeEvent(r[[paste0(prefix, "_settings_widget_trigger")]], {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..settings_module_element_trigger"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..settings_widget_trigger"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
-        shinyjs::show(paste0(prefix, "_module_element_settings"))
-        r[[paste0(prefix, "_module_element_card_selected_type")]] <- "module_element_settings"
+        shinyjs::show(paste0(prefix, "_widget_settings"))
+        r[[paste0(prefix, "_widget_card_selected_type")]] <- "widget_settings"
         
-        module_element_infos <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(id == r[[paste0(prefix, "_settings_module_element")]])
-        req(nrow(module_element_infos) > 0)
+        widget_infos <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(id == r[[paste0(prefix, "_settings_widget")]])
+        req(nrow(widget_infos) > 0)
         
         # Update thesaurus combobox
         r[[paste0(prefix, "_reload_thesaurus_dropdown")]] <- Sys.time()
         
         # Update name & plugin textfields
         
-        module_element_plugin_infos <- r$plugins %>% dplyr::filter(id == module_element_infos$plugin_id)
+        widget_plugin_infos <- r$plugins %>% dplyr::filter(id == widget_infos$plugin_id)
         
-        shiny.fluent::updateTextField.shinyInput(session = session, "module_element_settings_name", value = module_element_infos$name)
-        shiny.fluent::updateTextField.shinyInput(session = session, "module_element_settings_plugin", value = module_element_plugin_infos$name)
+        shiny.fluent::updateTextField.shinyInput(session = session, "widget_settings_name", value = widget_infos$name)
+        shiny.fluent::updateTextField.shinyInput(session = session, "widget_settings_plugin", value = widget_plugin_infos$name)
         
         # Reset datatable
-        r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_items")
+        r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_items")
         if (length(r[[r_var]]) > 0){
           r[[r_var]] <- r[[r_var]] %>% dplyr::slice(0)
           r[[paste0(r_var, "_temp")]] <- r[[paste0(r_var, "_temp")]] %>% dplyr::slice(0)
@@ -1213,16 +1209,16 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         # Get selected_items for this widget
         
-        if (nrow(r[[paste0(prefix, "_modules_elements_items")]] %>%
-            dplyr::filter(group_id == r[[paste0(prefix, "_settings_module_element")]])) > 0){
+        if (nrow(r[[paste0(prefix, "_widgets_items")]] %>%
+            dplyr::filter(group_id == r[[paste0(prefix, "_settings_widget")]])) > 0){
           
-          r$module_element_settings_thesaurus_selected_items <- r[[paste0(prefix, "_modules_elements_items")]] %>%
-            dplyr::filter(group_id == r[[paste0(prefix, "_settings_module_element")]]) %>%
+          r$widget_settings_thesaurus_selected_items <- r[[paste0(prefix, "_widgets_items")]] %>%
+            dplyr::filter(group_id == r[[paste0(prefix, "_settings_widget")]]) %>%
             dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_name") %>%
             dplyr::select(id = db_item_id, thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit,
               thesaurus_item_colour, mapped_to_item_id, merge_items) %>%
             dplyr::left_join(
-              r[[paste0(prefix, "_modules_elements_items")]] %>% dplyr::select(mapped_to_item_id = id, new_mapped_to_item_id = db_item_id),
+              r[[paste0(prefix, "_widgets_items")]] %>% dplyr::select(mapped_to_item_id = id, new_mapped_to_item_id = db_item_id),
               by = "mapped_to_item_id"
             ) %>%
             dplyr::relocate(new_mapped_to_item_id, .after = "mapped_to_item_id") %>%
@@ -1237,87 +1233,87 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           
           # Manque id que l'on doit récupérer dans thesaurus_items
           
-          options <- convert_tibble_to_list(r$module_element_settings_thesaurus_selected_items, key_col = "id", text_col = "input_text", i18n = i18n)
-          value <- r$module_element_settings_thesaurus_selected_items %>% dplyr::pull(id)
-          shiny.fluent::updateDropdown.shinyInput(session, "module_element_settings_thesaurus_selected_items",
+          options <- convert_tibble_to_list(r$widget_settings_thesaurus_selected_items, key_col = "id", text_col = "input_text", i18n = i18n)
+          value <- r$widget_settings_thesaurus_selected_items %>% dplyr::pull(id)
+          shiny.fluent::updateDropdown.shinyInput(session, "widget_settings_thesaurus_selected_items",
             options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
         }
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..settings_module_element_trigger"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..settings_widget_trigger"))
       })
     
-      observeEvent(input$module_element_settings_thesaurus, {
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$module_element_settings_thesaurus"))
+      observeEvent(input$widget_settings_thesaurus, {
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_settings_thesaurus"))
         r[[paste0(prefix, "_load_thesaurus_trigger")]] <- Sys.time()
       })
       
       # When an item is selected
-      observeEvent(input$module_element_settings_item_selected, {
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$module_element_settings_item_selected"))
+      observeEvent(input$widget_settings_item_selected, {
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_settings_item_selected"))
         r[[paste0(prefix, "_item_selected_trigger")]] <- Sys.time()
       })
       
       # When reset button is clicked
-      observeEvent(input$module_element_settings_reset_thesaurus_items, {
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$module_element_settings_reset_thesaurus_items"))
+      observeEvent(input$widget_settings_reset_thesaurus_items, {
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_settings_reset_thesaurus_items"))
         r[[paste0(prefix, "_reset_thesaurus_items_trigger")]] <- Sys.time()
       })
       
       # When dropdown is modified
-      observeEvent(input$module_element_settings_thesaurus_selected_items_trigger, {
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$module_element_settings_thesaurus_selected_items_trigger"))
+      observeEvent(input$widget_settings_thesaurus_selected_items_trigger, {
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_settings_thesaurus_selected_items_trigger"))
         r[[paste0(prefix, "_thesaurus_selected_items_trigger")]] <- Sys.time()
       })
       
       # Reload datatable
-      observeEvent(r$module_element_settings_thesaurus_items_temp, {
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$module_element_settings_thesaurus_items_temp"))
+      observeEvent(r$widget_settings_thesaurus_items_temp, {
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$widget_settings_thesaurus_items_temp"))
         r[[paste0(prefix, "_reload_datatable_trigger")]] <- Sys.time()
       })
       
       # Updates in datatable
       
-      observeEvent(input$module_element_settings_thesaurus_items_cell_edit, {
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$module_element_settings_thesaurus_items_cell_edit"))
+      observeEvent(input$widget_settings_thesaurus_items_cell_edit, {
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_settings_thesaurus_items_cell_edit"))
         r[[paste0(prefix, "_edit_datatable_trigger")]] <- Sys.time()
       })
       
       # Close button clicked
-      observeEvent(input[[paste0(prefix, "_close_module_element_settings")]], {
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..close_module_element_settings"))
-        shinyjs::hide(paste0(prefix, "_module_element_settings"))
+      observeEvent(input[[paste0(prefix, "_close_widget_settings")]], {
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..close_widget_settings"))
+        shinyjs::hide(paste0(prefix, "_widget_settings"))
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
       })
       
       # Save updates
-      observeEvent(input$edit_module_element_button, {
+      observeEvent(input$edit_widget_button, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..edit_module_element_button"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..edit_widget_button"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         new_data <- list()
         
-        new_data$name <- coalesce2(type = "char", x = input$module_element_settings_name)
+        new_data$name <- coalesce2(type = "char", x = input$widget_settings_name)
         
-        group_id <- r[[paste0(prefix, "_settings_module_element")]]
-        ids <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(id == group_id) %>% dplyr::slice(1) %>% dplyr::select(plugin_id, module_id)
+        group_id <- r[[paste0(prefix, "_settings_widget")]]
+        ids <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(id == group_id) %>% dplyr::slice(1) %>% dplyr::select(plugin_id, tab_id)
         
         # Check if name is not empty
-        if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_element_settings_name", errorMessage = i18n$t("provide_valid_name"))
-        else shiny.fluent::updateTextField.shinyInput(session, "module_element_settings_name", errorMessage = NULL)
+        if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "widget_settings_name", errorMessage = i18n$t("provide_valid_name"))
+        else shiny.fluent::updateTextField.shinyInput(session, "widget_settings_name", errorMessage = NULL)
         req(!is.na(new_data$name))
         
         # Check if values required to be unique are unique
         
-        table <- paste0(prefix, "_modules_elements")
+        table <- paste0(prefix, "_widgets")
         
-        sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {ids$module_id} AND id != {group_id}", .con = r$db)
+        sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND tab_id = {ids$tab_id} AND id != {group_id}", .con = r$db)
         distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
         if (new_data$name %in% distinct_values) show_message_bar(output,  "name_already_used", "severeWarning", i18n = i18n, ns = ns)
         req(new_data$name %not_in% distinct_values)
         
         # Update name in database & r var
-        r[[paste0(prefix, "_modules_elements")]] <- r[[paste0(prefix, "_modules_elements")]] %>%
+        r[[paste0(prefix, "_widgets")]] <- r[[paste0(prefix, "_widgets")]] %>%
           dplyr::mutate(name = dplyr::case_when(
             id == group_id ~ new_data$name,
             TRUE ~ name
@@ -1327,22 +1323,22 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         DBI::dbClearResult(query)
         
         # Get last_row nb
-        last_row_modules_elements_items <- get_last_row(r$db, paste0(prefix, "_modules_elements_items"))
+        last_row_widgets_items <- get_last_row(r$db, paste0(prefix, "_widgets_items"))
         
         has_thesaurus_items <- TRUE
         thesaurus_selected_items <- tibble::tibble()
         
         if (prefix == "patient_lvl"){
           
-          if (length(r$module_element_settings_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
-          if (length(r$module_element_settings_thesaurus_selected_items) > 0) if (nrow(r$module_element_settings_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
+          if (length(r$widget_settings_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
+          if (length(r$widget_settings_thesaurus_selected_items) > 0) if (nrow(r$widget_settings_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
           
           if (has_thesaurus_items){
             
             new_data <-
-              r$module_element_settings_thesaurus_selected_items %>%
+              r$widget_settings_thesaurus_selected_items %>%
               dplyr::transmute(
-                id_temp = 1:dplyr::n() + last_row_modules_elements_items + 1,
+                id_temp = 1:dplyr::n() + last_row_widgets_items + 1,
                 db_item_id = id,
                 group_id = !!group_id,
                 thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour,
@@ -1362,17 +1358,17 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               dplyr::select(-new_mapped_to_item_id)
             
             # Remove old data
-            table <- paste0(prefix, "_modules_elements_items")
+            table <- paste0(prefix, "_widgets_items")
             sql <- glue::glue_sql("UPDATE {`table`} SET deleted = TRUE WHERE group_id = {group_id}", .con = r$db)
             query <- DBI::dbSendStatement(r$db, sql)
             DBI::dbClearResult(query)
-            r[[paste0(prefix, "_modules_elements_items")]] <- r[[paste0(prefix, "_modules_elements_items")]] %>%
+            r[[paste0(prefix, "_widgets_items")]] <- r[[paste0(prefix, "_widgets_items")]] %>%
               dplyr::filter(group_id != !!group_id)
             
             # Add new data
             
-            DBI::dbAppendTable(r$db, paste0(prefix, "_modules_elements_items"), new_data)
-            r[[paste0(prefix, "_modules_elements_items")]] <- r[[paste0(prefix, "_modules_elements_items")]] %>% dplyr::bind_rows(new_data)
+            DBI::dbAppendTable(r$db, paste0(prefix, "_widgets_items"), new_data)
+            r[[paste0(prefix, "_widgets_items")]] <- r[[paste0(prefix, "_widgets_items")]] %>% dplyr::bind_rows(new_data)
             
             # Save thesaurus items for server code
             thesaurus_selected_items <- new_data %>%
@@ -1416,7 +1412,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         code_server_card <- r$code %>%
           dplyr::filter(link_id == ids$plugin_id, category == "plugin_server") %>%
           dplyr::pull(code) %>%
-          stringr::str_replace_all("%module_id%", as.character(ids$module_id)) %>%
+          stringr::str_replace_all("%tab_id%", as.character(ids$tab_id)) %>%
           stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
           stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
           stringr::str_replace_all("\r", "\n")
@@ -1424,7 +1420,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # If it is an aggregated plugin, change %study_id% with current selected study
         if (length(m$selected_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
         
-        session_code <- paste0("module_", ids$module_id, "_group_", group_id)
+        session_code <- paste0("tab_", ids$tab_id, "_group_", group_id)
         if (length(o[[session_code]]) == 0) session_num <- 1L
         if (length(o[[session_code]]) > 0) session_num <- o[[session_code]] + 1
         o[[session_code]] <- session_num
@@ -1439,23 +1435,23 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         # Update toggles
         
-        module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == ids$module_id) %>% 
+        widgets <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(tab_id == ids$tab_id) %>% 
           dplyr::rename(group_id = id) %>% dplyr::arrange(display_order)
         
-        # Get module element group_id
-        distinct_groups <- unique(module_elements$group_id)
+        # Get widget group_id
+        distinct_groups <- unique(widgets$group_id)
         
         toggles <- tagList()
         
-        # Loop over distinct cards (modules elements), for this module
+        # Loop over distinct cards (tabs elements), for this tab
         sapply(distinct_groups, function(group_id){
 
-          # Get name of module element
-          module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
+          # Get name of widget
+          widget_name <- widgets %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
 
           toggles <<- tagList(toggles,
             shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_group_", group_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
-            div(class = "toggle_title", module_element_name, style = "padding-top:10px;"))
+            div(class = "toggle_title", widget_name, style = "padding-top:10px;"))
 
           # Add to the list of opened cards
           r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_group_", group_id))
@@ -1464,30 +1460,30 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", ids$module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_widget_", ids$tab_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_widget_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_tab_", tab_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_tab_trigger', Math.random())"))),
               div(style = "width:20px;"),
               toggles
             )
           )
         )
 
-        # r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_toggles_", module_id))
+        # r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_toggles_", tab_id))
         # 
         # # Show opened cards
         # 
         # sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
-        # # Add module toggles UI
-        # # insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = uiOutput(ns(paste0(prefix, "_toggles_", module_id))))
-        output[[paste0(prefix, "_toggles_", ids$module_id)]] <- renderUI(toggles_div)
+        # # Add tab toggles UI
+        # # insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = uiOutput(ns(paste0(prefix, "_toggles_", tab_id))))
+        output[[paste0(prefix, "_toggles_", ids$tab_id)]] <- renderUI(toggles_div)
         
         # Hide settings card and show opened cards
-        shinyjs::hide(paste0(prefix, "_module_element_settings"))
+        shinyjs::hide(paste0(prefix, "_widget_settings"))
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer input$..edit_module_element_button"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer input$..edit_widget_button"))
       })
     
       # --- --- --- --- --- --- --- --- --- -- -
@@ -1502,29 +1498,29 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         new_pivot_order <- tibble::tibble(name = stringr::str_split(input$study_pivot_order, "\n") %>% unlist()) %>%
           dplyr::mutate(display_order = 1:dplyr::n())
         
-        table <- paste0(prefix, "_modules")
-        module_family_id <- r[[table]] %>% dplyr::filter(id == r[[paste0(prefix, '_selected_module')]]) %>% dplyr::pull(module_family_id)
+        table <- paste0(prefix, "_tabs")
+        tab_group_id <- r[[table]] %>% dplyr::filter(id == r[[paste0(prefix, '_selected_tab')]]) %>% dplyr::pull(tab_group_id)
         
-        if (is.na(module_family_id)) all_modules <- r[[table]] %>% dplyr::filter(is.na(module_family_id))
-        else all_modules <- r[[table]] %>% dplyr::filter(module_family_id == !!module_family_id)
+        if (is.na(tab_group_id)) all_tabs <- r[[table]] %>% dplyr::filter(is.na(tab_group_id))
+        else all_tabs <- r[[table]] %>% dplyr::filter(tab_group_id == !!tab_group_id)
         
-        all_modules <- all_modules %>%
+        all_tabs <- all_tabs %>%
           dplyr::select(-display_order) %>%
           dplyr::inner_join(new_pivot_order, by = "name") %>%
-          dplyr::relocate(display_order, .after = "parent_module_id")
+          dplyr::relocate(display_order, .after = "parent_tab_id")
         
-        sql <- glue::glue_sql("DELETE FROM {`table`} WHERE id IN ({all_modules %>% dplyr::pull(id)*})", .con = r$db)
+        sql <- glue::glue_sql("DELETE FROM {`table`} WHERE id IN ({all_tabs %>% dplyr::pull(id)*})", .con = r$db)
         query <- DBI::dbSendStatement(r$db, sql)
         DBI::dbClearResult(query)
         
-        DBI::dbAppendTable(r$db, table, all_modules)
+        DBI::dbAppendTable(r$db, table, all_tabs)
         
         r[[table]] <- r[[table]] %>% 
-          dplyr::anti_join(all_modules %>% dplyr::select(id), by = "id") %>%
-          dplyr::bind_rows(all_modules) %>%
+          dplyr::anti_join(all_tabs %>% dplyr::select(id), by = "id") %>%
+          dplyr::bind_rows(all_tabs) %>%
           dplyr::arrange(id)
         
-        r[[paste0(prefix, "_load_display_modules")]] <- Sys.time()
+        r[[paste0(prefix, "_load_display_tabs")]] <- Sys.time()
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer input$study_pivot_oder"))
       })
@@ -1533,28 +1529,28 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       ## Show / hide div when pivot item selected ----
       # --- --- --- --- --- --- --- --- --- --- --- -
 
-      observeEvent(r[[paste0(prefix, "_selected_module")]], {
+      observeEvent(r[[paste0(prefix, "_selected_tab")]], {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..selected_module"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..selected_tab"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
-        req(!grepl("show_module", r[[paste0(prefix, "_selected_module")]]))
+        req(!grepl("show_tab", r[[paste0(prefix, "_selected_tab")]]))
 
         # Hide all cards
         sapply(r[[paste0(prefix, "_cards")]], shinyjs::hide)
 
-        # Hide Add module element card & Add module card
-        sapply(c(paste0(prefix, "_add_module"), paste0(prefix, "_add_module_element"), paste0(prefix, "_module_element_settings")), shinyjs::hide)
+        # Hide Add widget card & Add tab card
+        sapply(c(paste0(prefix, "_add_tab"), paste0(prefix, "_add_widget"), paste0(prefix, "_widget_settings")), shinyjs::hide)
 
-        # Show toggles for this module
-        shinyjs::show(paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_module")]]))
+        # Show toggles for this tab
+        shinyjs::show(paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_tab")]]))
 
         # Add to the list of open cards and reset the list
-        r[[paste0(prefix, "_opened_cards")]] <- paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_module")]])
+        r[[paste0(prefix, "_opened_cards")]] <- paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_tab")]])
 
-        module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_module")]]) %>% 
+        widgets <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(tab_id == r[[paste0(prefix, "_selected_tab")]]) %>% 
           dplyr::rename(group_id = id)
-        distinct_groups <- unique(module_elements$group_id)
+        distinct_groups <- unique(widgets$group_id)
 
         sapply(distinct_groups, function(group_id){
 
@@ -1577,7 +1573,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
 
         })
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..selected_module"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..selected_tab"))
       })
     
       # --- --- --- - -
@@ -1588,37 +1584,37 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..study_current_tab_trigger"))
         
-        req(grepl("add_module", input$study_current_tab))
+        req(grepl("add_tab", input$study_current_tab))
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
-        shinyjs::hide(paste0(prefix, "_add_module_element"))
-        shinyjs::hide(paste0(prefix, "_edit_module"))
-        shinyjs::hide(paste0(prefix, "_module_element_settings"))
-        shinyjs::show(paste0(prefix, "_add_module"))
+        shinyjs::hide(paste0(prefix, "_add_widget"))
+        shinyjs::hide(paste0(prefix, "_edit_tab"))
+        shinyjs::hide(paste0(prefix, "_widget_settings"))
+        shinyjs::show(paste0(prefix, "_add_tab"))
       })
 
       # Close creation div
-      observeEvent(input[[paste0(prefix, "_close_add_module")]], {
+      observeEvent(input[[paste0(prefix, "_close_add_tab")]], {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..close_add_module"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..close_add_tab"))
 
-        # Show opened cards before opening Add module element div
+        # Show opened cards before opening Add widget div
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
 
-        # Hide Add module element div
-        shinyjs::hide(paste0(prefix, "_add_module"))
+        # Hide Add widget div
+        shinyjs::hide(paste0(prefix, "_add_tab"))
       })
 
       # Add button clicked
-      observeEvent(input$add_module_button, {
+      observeEvent(input$add_tab_button, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$add_module_button"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$add_tab_button"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
 
         study <- r$studies %>% dplyr::filter(id == m$selected_study)
-        module <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_module")]])
+        tab <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_tab")]])
 
         new_data <- list()
-        new_data$name <- coalesce2(type = "char", x = input$module_name)
+        new_data$name <- coalesce2(type = "char", x = input$tab_name)
         new_data$description <- ""
 
         # Required textfields
@@ -1627,98 +1623,98 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # Fields requiring unique value
         req_unique_values <- "name"
 
-        # Get module_family_id
-        new_data$module_family <- study %>% dplyr::pull(paste0(prefix, "_module_family_id"))
+        # Get tab_group_id
+        new_data$tab_group <- study %>% dplyr::pull(paste0(prefix, "_tab_group_id"))
 
-        # If it is the first module to be created
-        if (nrow(module) == 0){
-          new_data$parent_module <- NA_integer_
+        # If it is the first tab to be created
+        if (nrow(tab) == 0){
+          new_data$parent_tab <- NA_integer_
           new_data$display_order <- 1
         }
 
-        # If already existing modules
-        if (nrow(module) > 0){
+        # If already existing tabs
+        if (nrow(tab) > 0){
 
-          # If module is at the same level of current module, get common parent_module_id
+          # If tab is at the same level of current tab, get common parent_tab_id
           # Calculate display order
 
-          if (input$add_module_type == "same_level") new_data$parent_module <- module %>% dplyr::pull(parent_module_id)
-          if (input$add_module_type == "level_under") new_data$parent_module <- module %>% dplyr::pull(id)
+          if (input$add_tab_type == "same_level") new_data$parent_tab <- tab %>% dplyr::pull(parent_tab_id)
+          if (input$add_tab_type == "level_under") new_data$parent_tab <- tab %>% dplyr::pull(id)
 
           # Calculate display order
-          if (!is.na(new_data$parent_module)) sql <- glue::glue_sql("SELECT COALESCE(MAX(display_order), 0) FROM {`paste0(prefix, '_modules')`}
-            WHERE module_family_id = {new_data$module_family} AND parent_module_id = {new_data$parent_module}", .con = r$db)
-          if (is.na(new_data$parent_module)) sql <- glue::glue_sql("SELECT COALESCE(MAX(display_order), 0) FROM {`paste0(prefix, '_modules')`}
-            WHERE module_family_id = {new_data$module_family} AND parent_module_id IS NULL", .con = r$db)
+          if (!is.na(new_data$parent_tab)) sql <- glue::glue_sql("SELECT COALESCE(MAX(display_order), 0) FROM {`paste0(prefix, '_tabs')`}
+            WHERE tab_group_id = {new_data$tab_group} AND parent_tab_id = {new_data$parent_tab}", .con = r$db)
+          if (is.na(new_data$parent_tab)) sql <- glue::glue_sql("SELECT COALESCE(MAX(display_order), 0) FROM {`paste0(prefix, '_tabs')`}
+            WHERE tab_group_id = {new_data$tab_group} AND parent_tab_id IS NULL", .con = r$db)
 
           new_data$display_order <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull() + 1
 
-          # Can't add a module at the level under if there are modules elements attached to current module
-          if (input$add_module_type == "level_under"){
-            modules_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == r[[paste0(prefix, "_selected_module")]], !deleted) %>%
+          # Can't add a tab at the level under if there are tabs elements attached to current tab
+          if (input$add_tab_type == "level_under"){
+            widgets <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(tab_id == r[[paste0(prefix, "_selected_tab")]], !deleted) %>%
               dplyr::rename(group_id = id)
-            if (nrow(modules_elements) > 0) show_message_bar(output, message = "add_module_has_modules_elements", i18n = i18n)
-            req(nrow(modules_elements) == 0)
+            if (nrow(widgets) > 0) show_message_bar(output, message = "add_tab_has_widgets", i18n = i18n)
+            req(nrow(widgets) == 0)
           }
         }
 
-        if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_name", errorMessage = i18n$t("provide_valid_name"))
+        if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "tab_name", errorMessage = i18n$t("provide_valid_name"))
         req(!is.na(new_data$name))
 
         add_settings_new_data(session = session, output = output, r = r, m = m, i18n = i18n, id = id,
-          data = new_data, table = paste0(prefix, "_modules"), required_textfields = required_textfields, req_unique_values = req_unique_values)
+          data = new_data, table = paste0(prefix, "_tabs"), required_textfields = required_textfields, req_unique_values = req_unique_values)
 
         # Reset fields
 
-        shiny.fluent::updateTextField.shinyInput(session, "module_name", value = "")
-        shiny.fluent::updateChoiceGroup.shinyInput(session, "add_module_type", value = "same_level")
+        shiny.fluent::updateTextField.shinyInput(session, "tab_name", value = "")
+        shiny.fluent::updateChoiceGroup.shinyInput(session, "add_tab_type", value = "same_level")
 
-        # Reload UI, with new module opened
+        # Reload UI, with new tab opened
 
-        module_id <- get_last_row(r$db, paste0(prefix, "_modules"))
-        r[[paste0(prefix, "_selected_module")]] <- module_id
-        r[[paste0(prefix, "_load_display_modules")]] <- Sys.time()
+        tab_id <- get_last_row(r$db, paste0(prefix, "_tabs"))
+        r[[paste0(prefix, "_selected_tab")]] <- tab_id
+        r[[paste0(prefix, "_load_display_tabs")]] <- Sys.time()
         
         # Add Toggles div
         
         toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_widget_", tab_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_widget_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_tab_", tab_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_tab_trigger', Math.random())"))),
               div(style = "width:20px;")
             )
           )
         )
       
-        insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = uiOutput(ns(paste0(prefix, "_toggles_", module_id))))
-        output[[paste0(prefix, "_toggles_", module_id)]] <- renderUI(toggles_div)
+        insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = uiOutput(ns(paste0(prefix, "_toggles_", tab_id))))
+        output[[paste0(prefix, "_toggles_", tab_id)]] <- renderUI(toggles_div)
         
-        # If this is a sub-module, change toggles div of parent module also
-        parent_module_id <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == module_id) %>% dplyr::pull(parent_module_id)
-        if(!is.na(parent_module_id)){
+        # If this is a sub-tab, change toggles div of parent tab also
+        parent_tab_id <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(id == tab_id) %>% dplyr::pull(parent_tab_id)
+        if(!is.na(parent_tab_id)){
           
-          #removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", parent_module_id))))
-          shinyjs::hide(paste0(prefix, "_toggles_", parent_module_id))
+          #removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", parent_tab_id))))
+          shinyjs::hide(paste0(prefix, "_toggles_", parent_tab_id))
           
           parent_toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
-                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_tab_", tab_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_tab_trigger', Math.random())"))),
                 div(shiny.fluent::MessageBar(i18n$t("tab_contains_sub_tabs"), messageBarType = 5), style = "margin-top:4px;")
               )
             )
           )
           
-          insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = shinyjs::hidden(uiOutput(ns(paste0(prefix, "_toggles_", parent_module_id)))))
-          output[[paste0(prefix, "_toggles_", parent_module_id)]] <- renderUI(parent_toggles_div)
+          insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = shinyjs::hidden(uiOutput(ns(paste0(prefix, "_toggles_", parent_tab_id)))))
+          output[[paste0(prefix, "_toggles_", parent_tab_id)]] <- renderUI(parent_toggles_div)
         }
         
         # Add toggles div to vector of cards
-        r[[paste0(prefix, "_cards")]] <- c(isolate(r[[paste0(prefix, "_cards")]]), paste0(prefix, "_toggles_", module_id))
+        r[[paste0(prefix, "_cards")]] <- c(isolate(r[[paste0(prefix, "_cards")]]), paste0(prefix, "_toggles_", tab_id))
         
         # Reload UI menu (problem for displaying cards : blanks if we do not do that)
         # shinyjs::delay(100, r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time())
@@ -1727,158 +1723,158 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # Hide currently opened cards
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer input$add_module_button"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer input$add_tab_button"))
       })
       
       # --- --- --- -- -
       ## Edit a tab ----
       # --- --- --- -- -
       
-      observeEvent(input$edit_module_trigger, {
+      observeEvent(input$edit_tab_trigger, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$edit_module_trigger"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$edit_tab_trigger"))
         
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
-        shinyjs::hide(paste0(prefix, "_add_module_element"))
-        shinyjs::hide(paste0(prefix, "_module_element_settings"))
-        shinyjs::show(paste0(prefix, "_edit_module"))
+        shinyjs::hide(paste0(prefix, "_add_widget"))
+        shinyjs::hide(paste0(prefix, "_widget_settings"))
+        shinyjs::show(paste0(prefix, "_edit_tab"))
       })
       
       # Close edition div
-      observeEvent(input[[paste0(prefix, "_close_edit_module")]], {
+      observeEvent(input[[paste0(prefix, "_close_edit_tab")]], {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..close_edit_module"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..close_edit_tab"))
         
-        # Show opened cards before opening Add module element div
+        # Show opened cards before opening Add widget div
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
         
-        # Hide Edit module element div
-        shinyjs::hide(paste0(prefix, "_edit_module"))
+        # Hide Edit widget div
+        shinyjs::hide(paste0(prefix, "_edit_tab"))
       })
       
       # --- --- --- --- --- --- --- --- --- --
       ## Show / hide widget creation card ----
       # --- --- --- --- --- --- --- --- --- --
       
-      # Code to make Add module element button work
-      observeEvent(input[[paste0(prefix, "_add_module_element_trigger")]], {
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..add_module_element_trigger"))
+      # Code to make Add widget button work
+      observeEvent(input[[paste0(prefix, "_add_widget_trigger")]], {
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..add_widget_trigger"))
         
         # Hide opened cards
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
         
-        # Show Add module element div
-        shinyjs::show(paste0(prefix, "_add_module_element"))
+        # Show Add widget div
+        shinyjs::show(paste0(prefix, "_add_widget"))
         
-        r[[paste0(prefix, "_module_element_card_selected_type")]] <- "module_element_creation"
+        r[[paste0(prefix, "_widget_card_selected_type")]] <- "widget_creation"
       })
       
       # --- --- --- --- --
       ## Delete a tab ----
       # --- --- --- --- --
       
-      # Code to make Remove module button work
-      # observeEvent(input[[paste0(prefix, "_remove_module_", r[[paste0(prefix, "_selected_module")]])]], r[[module_delete_variable]] <- TRUE)
-      observeEvent(input$remove_module, {
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$remove_module"))
-        r[[module_delete_variable]] <- TRUE
+      # Code to make Remove tab button work
+      # observeEvent(input[[paste0(prefix, "_remove_tab_", r[[paste0(prefix, "_selected_tab")]])]], r[[tab_delete_variable]] <- TRUE)
+      observeEvent(input$remove_tab, {
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$remove_tab"))
+        r[[tab_delete_variable]] <- TRUE
       })
       
-      module_delete_prefix <- paste0(prefix, "_module")
-      module_dialog_title <- paste0(prefix, "_modules_delete")
-      module_dialog_subtext <- paste0(prefix, "_modules_delete_subtext")
-      module_react_variable <- "module_delete_confirm"
-      module_table <- paste0(prefix, "_modules")
-      module_id_var_sql <- "id"
-      module_id_var_r <- paste0(prefix, "_selected_module")
-      module_delete_message <- paste0(prefix, "_module_deleted")
-      module_reload_variable <- paste0(prefix, "_load_ui")
-      module_information_variable <- paste0(prefix, "_module_deleted")
-      module_delete_variable <- paste0(module_delete_prefix, "_open_dialog")
+      tab_delete_prefix <- paste0(prefix, "_tab")
+      tab_dialog_title <- paste0(prefix, "_tabs_delete")
+      tab_dialog_subtext <- paste0(prefix, "_tabs_delete_subtext")
+      tab_react_variable <- "tab_delete_confirm"
+      tab_table <- paste0(prefix, "_tabs")
+      tab_id_var_sql <- "id"
+      tab_id_var_r <- paste0(prefix, "_selected_tab")
+      tab_delete_message <- paste0(prefix, "_tab_deleted")
+      tab_reload_variable <- paste0(prefix, "_load_ui")
+      tab_information_variable <- paste0(prefix, "_tab_deleted")
+      tab_delete_variable <- paste0(tab_delete_prefix, "_open_dialog")
 
       delete_element(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
-        delete_prefix = module_delete_prefix, dialog_title = module_dialog_title, dialog_subtext = module_dialog_subtext,
-        react_variable = module_react_variable, table = module_table, id_var_sql = module_id_var_sql, id_var_r = module_id_var_r,
-        delete_message = module_delete_message, translation = TRUE, reload_variable = module_reload_variable,
-        information_variable = module_information_variable)
+        delete_prefix = tab_delete_prefix, dialog_title = tab_dialog_title, dialog_subtext = tab_dialog_subtext,
+        react_variable = tab_react_variable, table = tab_table, id_var_sql = tab_id_var_sql, id_var_r = tab_id_var_r,
+        delete_message = tab_delete_message, translation = TRUE, reload_variable = tab_reload_variable,
+        information_variable = tab_information_variable)
 
-      # When a module is deleted, change current module variable
+      # When a tab is deleted, change current tab variable
       # Reload toggles if necessary
-      # Delete sub-modules either
+      # Delete sub-tabs either
 
-      observeEvent(r[[module_information_variable]], {
+      observeEvent(r[[tab_information_variable]], {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..module_deleted"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..tab_deleted"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
 
-        table <- paste0(prefix, "_modules")
-        deleted_module_id <- r[[paste0(prefix, "_module_deleted")]]
-        sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE id = {deleted_module_id}", .con = r$db)
-        module_deleted <- DBI::dbGetQuery(r$db, sql)
+        table <- paste0(prefix, "_tabs")
+        deleted_tab_id <- r[[paste0(prefix, "_tab_deleted")]]
+        sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE id = {deleted_tab_id}", .con = r$db)
+        tab_deleted <- DBI::dbGetQuery(r$db, sql)
 
-        # If we are at level one, take first module of level one
-        if (is.na(module_deleted$parent_module_id)){
-          show_module_id <- r[[table]] %>%
-            dplyr::filter(module_family_id == module_deleted$module_family_id & is.na(parent_module_id) & id != module_deleted$id) %>%
+        # If we are at level one, take first tab of level one
+        if (is.na(tab_deleted$parent_tab_id)){
+          show_tab_id <- r[[table]] %>%
+            dplyr::filter(tab_group_id == tab_deleted$tab_group_id & is.na(parent_tab_id) & id != tab_deleted$id) %>%
             dplyr::arrange(display_order) %>%
             dplyr::slice(1) %>%
             dplyr::pull(id)
         }
 
-        # Else, take first module of the same level
-        if (!is.na(module_deleted$parent_module_id)){
-          show_module <- r[[table]] %>%
-            dplyr::filter(parent_module_id == module_deleted$parent_module_id & id != module_deleted$id)
+        # Else, take first tab of the same level
+        if (!is.na(tab_deleted$parent_tab_id)){
+          show_tab <- r[[table]] %>%
+            dplyr::filter(parent_tab_id == tab_deleted$parent_tab_id & id != tab_deleted$id)
 
-          # If not any module in this level, take lower level
-          if (nrow(show_module) == 0) show_module <- r[[table]] %>%
-              dplyr::filter(id == module_deleted$parent_module_id)
+          # If not any tab in this level, take lower level
+          if (nrow(show_tab) == 0) show_tab <- r[[table]] %>%
+              dplyr::filter(id == tab_deleted$parent_tab_id)
 
-          show_module_id <- show_module %>%
+          show_tab_id <- show_tab %>%
             dplyr::arrange(display_order) %>%
             dplyr::slice(1) %>%
             dplyr::pull(id)
         }
 
-        r[[paste0(prefix, "_selected_module")]] <- paste0("show_module_", show_module_id)
+        r[[paste0(prefix, "_selected_tab")]] <- paste0("show_tab_", show_tab_id)
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
-        shinyjs::show(paste0(prefix, "_toggles_", show_module_id))
+        shinyjs::show(paste0(prefix, "_toggles_", show_tab_id))
 
         # Reload UI menu
-        r[[paste0(prefix, "_load_display_modules")]] <- Sys.time()
+        r[[paste0(prefix, "_load_display_tabs")]] <- Sys.time()
         
-        # Remove toggles UI of this module
-        # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", deleted_module_id))))
+        # Remove toggles UI of this tab
+        # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", deleted_tab_id))))
         
-        # Check if parent module still have children and reload toggles div if not
-        sql <- glue::glue_sql("SELECT parent_module_id FROM {`paste0(prefix, '_modules')`} WHERE id = {deleted_module_id}", .con = r$db)
-        parent_module_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(parent_module_id)
-        if (!is.na(parent_module_id)){
+        # Check if parent tab still have children and reload toggles div if not
+        sql <- glue::glue_sql("SELECT parent_tab_id FROM {`paste0(prefix, '_tabs')`} WHERE id = {deleted_tab_id}", .con = r$db)
+        parent_tab_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(parent_tab_id)
+        if (!is.na(parent_tab_id)){
           
-          has_children <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == !!parent_module_id) %>% nrow()
+          has_children <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(parent_tab_id == !!parent_tab_id) %>% nrow()
           if(has_children == 0){
             
-            # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", parent_module_id))))
-            shinyjs::hide(paste0(prefix, "_toggles_", parent_module_id))
+            # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", parent_tab_id))))
+            shinyjs::hide(paste0(prefix, "_toggles_", parent_tab_id))
             
             parent_toggles_div <- div(
               make_card("",
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", parent_module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
-                    onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
-                    onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_widget_", parent_tab_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
+                    onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_widget_trigger', Math.random())"))),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_tab_", tab_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                    onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_tab_trigger', Math.random())"))),
                   div(style = "width:20px;")
                 )
               )
             )
             
-            insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = uiOutput(ns(paste0(prefix, "_toggles_", parent_module_id))))
-            output[[paste0(prefix, "_toggles_", parent_module_id)]] <- renderUI(parent_toggles_div)
+            insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = uiOutput(ns(paste0(prefix, "_toggles_", parent_tab_id))))
+            output[[paste0(prefix, "_toggles_", parent_tab_id)]] <- renderUI(parent_toggles_div)
           }
         }
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..module_deleted"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..tab_deleted"))
       })
 
       # --- --- --- --- --
@@ -1903,20 +1899,20 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           
           # Reset study menu
           sapply(c("initial_breadcrumb", "choose_a_study_card"), shinyjs::show)
-          sapply(c("study_menu", paste0(prefix, "_add_module_element"), paste0(prefix, "_module_element_settings")), shinyjs::hide)
+          sapply(c("study_menu", paste0(prefix, "_add_widget"), paste0(prefix, "_widget_settings")), shinyjs::hide)
 
           r[[paste0(prefix, "_reload_thesaurus_dropdown")]] <- Sys.time()
           
           # Reset datatable
-          if (length(r$module_element_creation_thesaurus_items) > 0){
-            r$module_element_creation_thesaurus_items <- r$module_element_creation_thesaurus_items %>% dplyr::slice(0)
-            r$module_element_creation_thesaurus_items_temp <- r$module_element_creation_thesaurus_items_temp %>% dplyr::slice(0)
+          if (length(r$widget_creation_thesaurus_items) > 0){
+            r$widget_creation_thesaurus_items <- r$widget_creation_thesaurus_items %>% dplyr::slice(0)
+            r$widget_creation_thesaurus_items_temp <- r$widget_creation_thesaurus_items_temp %>% dplyr::slice(0)
           }
           
           # Reset selected_items combobox
-          shiny.fluent::updateDropdown.shinyInput(session, "module_element_creation_thesaurus_selected_items", options = list(), value = NULL)
-          if (length(r$module_element_creation_thesaurus_selected_items) > 0){
-            r$module_element_creation_thesaurus_selected_items <- r$module_element_creation_thesaurus_selected_items %>% dplyr::slice(0)
+          shiny.fluent::updateDropdown.shinyInput(session, "widget_creation_thesaurus_selected_items", options = list(), value = NULL)
+          if (length(r$widget_creation_thesaurus_selected_items) > 0){
+            r$widget_creation_thesaurus_selected_items <- r$widget_creation_thesaurus_selected_items %>% dplyr::slice(0)
           }
           
           if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$selected_dataset"))
@@ -1935,10 +1931,10 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
 
         # Load thesaurus items
         
-        observeEvent(input$module_element_creation_thesaurus, {
-          if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$module_element_creation_thesaurus"))
+        observeEvent(input$widget_creation_thesaurus, {
+          if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_creation_thesaurus"))
           r[[paste0(prefix, "_load_thesaurus_trigger")]] <- Sys.time()
-          # r[[paste0(prefix, "_load_thesaurus_type")]] <- "module_element_creation"
+          # r[[paste0(prefix, "_load_thesaurus_type")]] <- "widget_creation"
         })
         
         # observeEvent(r[[paste0(prefix, "_load_thesaurus_trigger")]], {
@@ -1946,11 +1942,11 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..load_thesaurus_trigger"))
         #   if (perf_monitoring) monitor_perf(r = r, action = "start")
         #   
-        #   r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_items")
-        #   thesaurus_id <- input[[paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus")]]$key
+        #   r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_items")
+        #   thesaurus_id <- input[[paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus")]]$key
         #   
-        #   r[[r_var]] <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_id, category = paste0("plus_", r[[paste0(prefix, "_module_element_card_selected_type")]]))
-        #   colour_col <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, thesaurus_id = thesaurus_id, category = paste0("colours_", r[[paste0(prefix, "_module_element_card_selected_type")]]))
+        #   r[[r_var]] <- create_datatable_cache(output = output, r = r, i18n = i18n, tab_id = id, thesaurus_id = thesaurus_id, category = paste0("plus_", r[[paste0(prefix, "_widget_card_selected_type")]]))
+        #   colour_col <- create_datatable_cache(output = output, r = r, i18n = i18n, tab_id = id, thesaurus_id = thesaurus_id, category = paste0("colours_", r[[paste0(prefix, "_widget_card_selected_type")]]))
         # 
         #   if (nrow(colour_col) > 0) r[[r_var]] <- r[[r_var]] %>%
         #     dplyr::left_join(colour_col %>% dplyr::select(id, colour), by = "id") %>% dplyr::relocate(colour, .before = "datetime")
@@ -2003,7 +1999,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         #   column_widths <- c("id" = "80px", "action" = "80px", "display_name" = "300px", "unit" = "100px")
         #   sortable_cols <- c("id", "item_id", "name", "display_name", "count_patients_rows", "count_items_rows")
         #   centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-        #   col_names <- get_col_names(table_name = "modules_thesaurus_items_with_counts", i18n = i18n)
+        #   col_names <- get_col_names(table_name = "tabs_thesaurus_items_with_counts", i18n = i18n)
         #   hidden_cols <- c("id", "name", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
         # 
         #   # Render datatable
@@ -2019,8 +2015,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # })
 
         # Reload datatable
-        observeEvent(r$module_element_creation_thesaurus_items_temp, {
-          if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$module_element_creation_thesaurus_items_temp"))
+        observeEvent(r$widget_creation_thesaurus_items_temp, {
+          if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$widget_creation_thesaurus_items_temp"))
           r[[paste0(prefix, "_reload_datatable_trigger")]] <- Sys.time()
         })
 
@@ -2028,7 +2024,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           
           if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..reload_datatable_trigger"))
 
-          r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_items")
+          r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_items")
 
           # Reload data of datatable
           DT::replaceData(r[[paste0(r_var, "_proxy")]], r[[paste0(r_var, "_temp")]], resetPaging = FALSE, rownames = FALSE)
@@ -2036,8 +2032,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
 
         # Updates in datatable
 
-        observeEvent(input$module_element_creation_thesaurus_items_cell_edit, {
-          if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$module_element_creation_thesaurus_items_cell_edit"))
+        observeEvent(input$widget_creation_thesaurus_items_cell_edit, {
+          if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_creation_thesaurus_items_cell_edit"))
           r[[paste0(prefix, "_edit_datatable_trigger")]] <- Sys.time()
         })
 
@@ -2045,7 +2041,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           
           if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..edit_datatable_trigger"))
 
-          r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_items")
+          r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_items")
           input_edit_info <- paste0(r_var, "_cell_edit")
 
           edit_info <- input[[input_edit_info]]
@@ -2062,8 +2058,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           ### Thesaurus Item added ----
           # --- --- --- --- --- --- ---
           
-          observeEvent(input$module_element_creation_item_selected, {
-            if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$module_element_creation_item_selected"))
+          observeEvent(input$widget_creation_item_selected, {
+            if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_creation_item_selected"))
             r[[paste0(prefix, "_item_selected_trigger")]] <- Sys.time()
           })
           
@@ -2072,13 +2068,13 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..item_selected_trigger"))
             if (perf_monitoring) monitor_perf(r = r, action = "start")
             
-            r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_selected_items")
-            thesaurus_id <- input[[paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus")]]$key
-            thesaurus_mapping_input <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_mapping")
-            merge_mapped_items_input <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_merge_mapped_items")
-            thesaurus_selected_items_input <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_selected_items")
-            input_item_selected <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_item_selected")
-            input_colour <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_colour")
+            r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_selected_items")
+            thesaurus_id <- input[[paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus")]]$key
+            thesaurus_mapping_input <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_mapping")
+            merge_mapped_items_input <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_merge_mapped_items")
+            thesaurus_selected_items_input <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_selected_items")
+            input_item_selected <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_item_selected")
+            input_colour <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_colour")
             
             # Initiate r variable if doesn't exist
             if (length(r[[r_var]]) == 0){
@@ -2093,7 +2089,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             # If this thesaurus item is not already selected, add it to the "thesaurus selected items" dropdown
   
             # value <- integer(1)
-            # if (nrow(r$module_element_thesaurus_selected_items) > 0) value <- r$module_element_thesaurus_selected_items %>%
+            # if (nrow(r$widget_thesaurus_selected_items) > 0) value <- r$widget_thesaurus_selected_items %>%
             #   dplyr::filter(thesaurus_id == input$thesaurus$key) %>% dplyr::pull(id)
   
             # if (link_id %not_in% value){
@@ -2104,7 +2100,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             # Get item informations from datatable
             # NB : the thesaurus_item_id saved in the database is the thesaurus ITEM_ID, no its ID in the database (in case thesaurus is deleted or re-uploaded)
   
-            item <- r[[paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_items_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", display_name))
+            item <- r[[paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_items_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", display_name))
   
             # display_name <- ifelse((item$display_name == "" | is.na(item$display_name)), item$name, item$display_name)
   
@@ -2172,7 +2168,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
   
             # Add item to selected items
             add_thesaurus_items <-
-              # r$module_element_thesaurus_selected_items %>%
+              # r$widget_thesaurus_selected_items %>%
               # dplyr::bind_rows(
                 tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name,
                   ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text, ~mapped_to_item_id, ~merge_items,
@@ -2200,16 +2196,16 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           })
   
           # When reset button is clicked
-          observeEvent(input$module_element_creation_reset_thesaurus_items, {
-            if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$module_element_creation_reset_thesaurus_items"))
+          observeEvent(input$widget_creation_reset_thesaurus_items, {
+            if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_creation_reset_thesaurus_items"))
             r[[paste0(prefix, "_reset_thesaurus_items_trigger")]] <- Sys.time()
           })
           
           observeEvent(r[[paste0(prefix, "_reset_thesaurus_items_trigger")]], {
             if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..reset_thesaurus_items_trigger"))
             
-            r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_selected_items")
-            input_thesaurus_selected_items <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_selected_items")
+            r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_selected_items")
+            input_thesaurus_selected_items <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_selected_items")
             
             r[[r_var]] <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
               thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
@@ -2223,8 +2219,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           # --- --- --- --- --- -
   
           # When dropdown is modified
-          observeEvent(input$module_element_creation_thesaurus_selected_items_trigger, {
-            if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$module_element_creation_thesaurus_selected_items_trigger"))
+          observeEvent(input$widget_creation_thesaurus_selected_items_trigger, {
+            if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_creation_thesaurus_selected_items_trigger"))
             r[[paste0(prefix, "_thesaurus_selected_items_trigger")]] <- Sys.time()
           })
           
@@ -2232,8 +2228,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             
             if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..thesaurus_selected_items_trigger"))
             
-            r_var <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_selected_items")
-            input_thesaurus_selected_items <- paste0(r[[paste0(prefix, "_module_element_card_selected_type")]], "_thesaurus_selected_items")
+            r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_selected_items")
+            input_thesaurus_selected_items <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_selected_items")
   
             if (length(input[[input_thesaurus_selected_items]]) == 0) r[[r_var]] <- r[[r_var]] %>% dplyr::slice(0)
             if (length(input[[input_thesaurus_selected_items]]) > 0) {
@@ -2257,28 +2253,28 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       ## Widget add button clicked ----
       # --- --- --- --- --- --- --- ---
       
-      observeEvent(input$add_module_element_button, {
+      observeEvent(input$add_widget_button, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$add_module_element_button"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$add_widget_button"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
 
         new_data <- list()
 
-        new_data$name <- coalesce2(type = "char", x = input$module_element_creation_name)
-        new_data$module_family <- r[[paste0(prefix, "_modules")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_module")]]) %>% dplyr::pull(module_family_id)
-        new_data$module_new_element <- r[[paste0(prefix, "_selected_module")]]
-        new_data$plugin <- input$module_element_creation_plugin$key
+        new_data$name <- coalesce2(type = "char", x = input$widget_creation_name)
+        new_data$tab_group <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_tab")]]) %>% dplyr::pull(tab_group_id)
+        new_data$tab_new_element <- r[[paste0(prefix, "_selected_tab")]]
+        new_data$plugin <- input$widget_creation_plugin$key
 
         # Check if name is not empty
-        if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "module_element_creation_name", errorMessage = i18n$t("provide_valid_name"))
-        else shiny.fluent::updateTextField.shinyInput(session, "module_element_creation_name", errorMessage = NULL)
+        if (is.na(new_data$name)) shiny.fluent::updateTextField.shinyInput(session, "widget_creation_name", errorMessage = i18n$t("provide_valid_name"))
+        else shiny.fluent::updateTextField.shinyInput(session, "widget_creation_name", errorMessage = NULL)
         req(!is.na(new_data$name))
 
         # Check if values required to be unique are unique
 
-        table <- paste0(prefix, "_modules_elements")
+        table <- paste0(prefix, "_widgets")
 
-        sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND module_id = {new_data$module_new_element}", .con = r$db)
+        sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND tab_id = {new_data$tab_new_element}", .con = r$db)
         distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
         if (new_data$name %in% distinct_values) show_message_bar(output,  "name_already_used", "severeWarning", i18n = i18n, ns = ns)
         req(new_data$name %not_in% distinct_values)
@@ -2297,34 +2293,34 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         req(dropdowns_check)
 
         # Get last_row nb
-        # last_row_modules_elements <- get_last_row(r$db, paste0(prefix, "_modules_elements"))
-        group_id <- get_last_row(r$db, paste0(prefix, "_modules_elements")) + 1
-        last_row_modules_elements_items <- get_last_row(r$db, paste0(prefix, "_modules_elements_items"))
+        # last_row_widgets <- get_last_row(r$db, paste0(prefix, "_widgets"))
+        group_id <- get_last_row(r$db, paste0(prefix, "_widgets")) + 1
+        last_row_widgets_items <- get_last_row(r$db, paste0(prefix, "_widgets_items"))
         # group_id <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table)) %>% dplyr::pull() %>% as.integer() + 1
-        last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM ", paste0(prefix, "_modules_elements"), " WHERE module_id = ", new_data$module_new_element)) %>% dplyr::pull() %>% as.integer()
+        last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM ", paste0(prefix, "_widgets"), " WHERE tab_id = ", new_data$tab_new_element)) %>% dplyr::pull() %>% as.integer()
 
-        new_data <- tibble::tribble(~id, ~name, ~module_id, ~plugin_id, ~display_order, ~creator_id, ~datetime, ~deleted,
-          group_id, as.character(new_data$name), as.integer(new_data$module_new_element),
+        new_data <- tibble::tribble(~id, ~name, ~tab_id, ~plugin_id, ~display_order, ~creator_id, ~datetime, ~deleted,
+          group_id, as.character(new_data$name), as.integer(new_data$tab_new_element),
           as.integer(new_data$plugin), last_display_order + 1, r$user_id, as.character(Sys.time()), FALSE)
         
-        DBI::dbAppendTable(r$db, paste0(prefix, "_modules_elements"), new_data)
+        DBI::dbAppendTable(r$db, paste0(prefix, "_widgets"), new_data)
         add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
-        r[[paste0(prefix, "_modules_elements")]] <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::bind_rows(new_data)
+        r[[paste0(prefix, "_widgets")]] <- r[[paste0(prefix, "_widgets")]] %>% dplyr::bind_rows(new_data)
         
         has_thesaurus_items <- TRUE
         thesaurus_selected_items <- tibble::tibble()
 
         if (prefix == "patient_lvl"){
 
-          if (length(r$module_element_creation_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
-          if (length(r$module_element_creation_thesaurus_selected_items) > 0) if (nrow(r$module_element_creation_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
+          if (length(r$widget_creation_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
+          if (length(r$widget_creation_thesaurus_selected_items) > 0) if (nrow(r$widget_creation_thesaurus_selected_items) == 0) has_thesaurus_items <- FALSE
 
           if (has_thesaurus_items){
             
             new_data <-
-              r$module_element_creation_thesaurus_selected_items %>%
+              r$widget_creation_thesaurus_selected_items %>%
               dplyr::transmute(
-                id_temp = 1:dplyr::n() + last_row_modules_elements_items + 1,
+                id_temp = 1:dplyr::n() + last_row_widgets_items + 1,
                 db_item_id = id,
                 group_id = !!group_id,
                 thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour,
@@ -2343,31 +2339,31 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               dplyr::mutate(mapped_to_item_id = new_mapped_to_item_id) %>%
               dplyr::select(-new_mapped_to_item_id)
             
-            DBI::dbAppendTable(r$db, paste0(prefix, "_modules_elements_items"), new_data)
+            DBI::dbAppendTable(r$db, paste0(prefix, "_widgets_items"), new_data)
             add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
-            r[[paste0(prefix, "_modules_elements_items")]] <- r[[paste0(prefix, "_modules_elements_items")]] %>% dplyr::bind_rows(new_data)
+            r[[paste0(prefix, "_widgets_items")]] <- r[[paste0(prefix, "_widgets_items")]] %>% dplyr::bind_rows(new_data)
             
             # Save thesaurus items for server code
             thesaurus_selected_items <- new_data %>%
               dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
                 thesaurus_item_unit, colour = thesaurus_item_colour, mapped_to_item_id, merge_items)
             
-            # Reset r$module_element_thesaurus_selected_items & dropdown
-            r$module_element_creation_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
+            # Reset r$widget_thesaurus_selected_items & dropdown
+            r$widget_creation_thesaurus_selected_items <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
               thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
               thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = logical())
-            shiny.fluent::updateDropdown.shinyInput(session, "module_element_creation_thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
+            shiny.fluent::updateDropdown.shinyInput(session, "widget_creation_thesaurus_selected_items", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
           }
         }
         
-        show_message_bar(output, message = paste0(get_singular(paste0(prefix, "_modules_elements")), "_added"), type = "success", i18n = i18n, ns = ns)
+        show_message_bar(output, message = paste0(get_singular(paste0(prefix, "_widgets")), "_added"), type = "success", i18n = i18n, ns = ns)
 
         # Reset name textfield & dropdowns
-        shiny.fluent::updateTextField.shinyInput(session, "module_element_creation_name", value = "")
+        shiny.fluent::updateTextField.shinyInput(session, "widget_creation_name", value = "")
 
         # Load translations file
         
-        plugin_id <- input$module_element_creation_plugin$key
+        plugin_id <- input$widget_creation_plugin$key
         i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
         plugin_translations <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_translations") %>% dplyr::pull(code)
         
@@ -2397,22 +2393,22 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # Run server code
 
         trace_code <- paste0(prefix, "_", group_id, "_", m$selected_study)
-        # if (trace_code %in% r$server_modules_groups_loaded) print(trace_code)
-        if (trace_code %not_in% r$server_modules_groups_loaded){
+        # if (trace_code %in% r$server_tabs_groups_loaded) print(trace_code)
+        if (trace_code %not_in% r$server_tabs_groups_loaded){
   
           # Add the trace_code to loaded plugins list
-          r$server_modules_groups_loaded <- c(r$server_modules_groups_loaded, trace_code)
+          r$server_tabs_groups_loaded <- c(r$server_tabs_groups_loaded, trace_code)
   
           # Get plugin code
   
           # Check if plugin has been deleted
-          check_deleted_plugin <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM plugins WHERE id = ", input$module_element_creation_plugin$key)) %>% dplyr::pull(deleted)
+          check_deleted_plugin <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM plugins WHERE id = ", input$widget_creation_plugin$key)) %>% dplyr::pull(deleted)
           if (!check_deleted_plugin){
   
             code_server_card <- r$code %>%
-              dplyr::filter(link_id == input$module_element_creation_plugin$key, category == "plugin_server") %>%
+              dplyr::filter(link_id == input$widget_creation_plugin$key, category == "plugin_server") %>%
               dplyr::pull(code) %>%
-              stringr::str_replace_all("%module_id%", as.character(r[[paste0(prefix, "_selected_module")]])) %>%
+              stringr::str_replace_all("%tab_id%", as.character(r[[paste0(prefix, "_selected_tab")]])) %>%
               stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
               stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
               stringr::str_replace_all("\r", "\n")
@@ -2425,7 +2421,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           # Create a session number, to inactivate older observers
           # Reset all older observers for this group_id
           
-          session_code <- paste0("module_", r[[paste0(prefix, "_selected_module")]], "_group_", group_id)
+          session_code <- paste0("tab_", r[[paste0(prefix, "_selected_tab")]], "_group_", group_id)
           if (length(o[[session_code]]) == 0) session_num <- 1L
           if (length(o[[session_code]]) > 0) session_num <- o[[session_code]] + 1
           o[[session_code]] <- session_num
@@ -2448,32 +2444,32 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             else shinyjs::hide(toggle)
           })
   
-          # Code for removing module element
+          # Code for removing widget
   
-          observeEvent(input[[paste0(prefix, "_remove_module_element_", group_id)]], {
-            r[[paste0(prefix, "_selected_module_element")]] <- group_id
-            r[[module_element_delete_variable]] <- TRUE
+          observeEvent(input[[paste0(prefix, "_remove_widget_", group_id)]], {
+            r[[paste0(prefix, "_selected_widget")]] <- group_id
+            r[[widget_delete_variable]] <- TRUE
           })
 
-          # Code for module element settings
+          # Code for widget settings
           
-          observeEvent(input[[paste0(prefix, "_settings_module_element_", group_id)]], {
-            r[[paste0(prefix, "_settings_module_element_trigger")]] <- Sys.time()
-            r[[paste0(prefix, "_settings_module_element")]] <- group_id
+          observeEvent(input[[paste0(prefix, "_settings_widget_", group_id)]], {
+            r[[paste0(prefix, "_settings_widget_trigger")]] <- Sys.time()
+            r[[paste0(prefix, "_settings_widget")]] <- group_id
           })
           
         }
 
-        # Prepare module element UI code
-        module_id <- r[[paste0(prefix, "_selected_module")]]
+        # Prepare widget UI code
+        tab_id <- r[[paste0(prefix, "_selected_tab")]]
         
-        code_ui_card <- isolate(r$code) %>% dplyr::filter(link_id == input$module_element_creation_plugin$key, category == "plugin_ui") %>% dplyr::pull(code)
+        code_ui_card <- isolate(r$code) %>% dplyr::filter(link_id == input$widget_creation_plugin$key, category == "plugin_ui") %>% dplyr::pull(code)
         element_code <- div()
-        module_element_name <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
+        widget_name <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
         
         tryCatch({
           code_ui_card <- code_ui_card %>%
-            stringr::str_replace_all("%module_id%", as.character(module_id)) %>%
+            stringr::str_replace_all("%tab_id%", as.character(tab_id)) %>%
             stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
             stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
             stringr::str_replace_all("\r", "\n") %>%
@@ -2482,12 +2478,12 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           element_code <- div(
             make_card("",
               div(
-                div(id = ns(paste0(prefix, "_module_element_plugin_ui_", group_id)), eval(parse(text = code_ui_card))),
+                div(id = ns(paste0(prefix, "_widget_plugin_ui_", group_id)), eval(parse(text = code_ui_card))),
                 div(
-                  id = ns(paste0(prefix, "_module_element_settings_remove_buttons_", group_id)),
+                  id = ns(paste0(prefix, "_widget_settings_remove_buttons_", group_id)),
                   shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 2),
-                    actionButton(ns(paste0(prefix, "_settings_module_element_", group_id)), "", icon = icon("cog")),
-                    actionButton(ns(paste0(prefix, "_remove_module_element_", group_id)), "", icon = icon("trash-alt"))
+                    actionButton(ns(paste0(prefix, "_settings_widget_", group_id)), "", icon = icon("cog")),
+                    actionButton(ns(paste0(prefix, "_remove_widget_", group_id)), "", icon = icon("trash-alt"))
                   ),
                   style = "position:absolute; top:8px; right: 10px;"
                 )
@@ -2500,33 +2496,33 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
             error_name = paste0(id, " - run ui code - ", group_id), category = "Error", error_report = e, i18n = i18n, ns = ns)}
         )
-        # Remove toggles UI for this module
-        # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", module_id))))
-        shinyjs::hide(paste0(prefix, "_toggles_", module_id))
+        # Remove toggles UI for this tab
+        # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", tab_id))))
+        shinyjs::hide(paste0(prefix, "_toggles_", tab_id))
         
-        # Add the new toggles UI for this module
+        # Add the new toggles UI for this tab
         
         toggles <- tagList()
-        # update_r(r = r, table = paste0(prefix, "_modules_elements"))
-        module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == !!module_id) %>%
+        # update_r(r = r, table = paste0(prefix, "_widgets"))
+        widgets <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(tab_id == !!tab_id) %>%
           dplyr::rename(group_id = id) %>% dplyr::arrange(display_order)
      
-        # Get module element group_id
-        distinct_groups <- unique(module_elements$group_id)
+        # Get widget group_id
+        distinct_groups <- unique(widgets$group_id)
         
         # Reset opened cards
         r[[paste0(prefix, "_opened_cards")]] <- ""
 
-        # Loop over distinct cards (modules elements), for this module
+        # Loop over distinct cards (tabs elements), for this tab
         
         sapply(distinct_groups, function(group_id){
           
-          # Get name of module element
-          module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
+          # Get name of widget
+          widget_name <- widgets %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
           
           toggles <<- tagList(toggles,
             shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_group_", group_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
-            div(class = "toggle_title", module_element_name, style = "padding-top:10px;"))
+            div(class = "toggle_title", widget_name, style = "padding-top:10px;"))
           
           # Add to the list of opened cards
           r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_group_", group_id))
@@ -2535,124 +2531,124 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_widget_", tab_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_widget_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_tab_", tab_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_tab_trigger', Math.random())"))),
               div(style = "width:20px;"),
               toggles
             )
           )
         )
         
-        r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_toggles_", module_id))
+        r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_toggles_", tab_id))
         
         # Show opened cards
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
         
-        # Add module toggles UI
-        # insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = uiOutput(ns(paste0(prefix, "_toggles_", module_id))))
-        output[[paste0(prefix, "_toggles_", module_id)]] <- renderUI(toggles_div)
+        # Add tab toggles UI
+        # insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = uiOutput(ns(paste0(prefix, "_toggles_", tab_id))))
+        output[[paste0(prefix, "_toggles_", tab_id)]] <- renderUI(toggles_div)
 
-        # Add module element UI
+        # Add widget UI
         insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = uiOutput(ns(paste0(prefix, "_group_", group_id))))
         output[[paste0(prefix, "_group_", group_id)]] <- renderUI(element_code)
         
-        # Hide Add module element div
-        shinyjs::hide(paste0(prefix, "_add_module_element"))
+        # Hide Add widget div
+        shinyjs::hide(paste0(prefix, "_add_widget"))
         
         # Add this div to vector of cards
         r[[paste0(prefix, "_cards")]] <- c(isolate(r[[paste0(prefix, "_cards")]]), paste0(prefix, "_group_", group_id))
         
         # Reload UI menu
-        r[[paste0(prefix, "_load_display_modules")]] <- Sys.time()
+        r[[paste0(prefix, "_load_display_tabs")]] <- Sys.time()
         
         # Reload UI menu (problem for displaying cards : blanks if we do not do that)
         # shinyjs::delay(300, r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time())
         r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time()
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer input$add_module_element_button"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer input$add_widget_button"))
       })
       
       # --- --- --- --- --- -
       ## Delete a widget ----
       # --- --- --- --- --- -
       
-      module_element_delete_prefix <- paste0(prefix, "_module_element")
-      module_element_dialog_title <- paste0(prefix, "_modules_elements_delete")
-      module_element_dialog_subtext <- paste0(prefix, "_modules_elements_delete_subtext")
-      module_element_react_variable <- "module_element_delete_confirm"
-      module_element_table <- paste0(prefix, "_modules_elements")
-      module_element_id_var_sql <- "id"
-      module_element_id_var_r <- paste0(prefix, "_selected_module_element")
-      module_element_delete_message <- paste0(prefix, "_module_element_deleted")
-      module_element_reload_variable <- paste0(prefix, "_load_ui")
-      module_element_delete_variable <- paste0(module_element_delete_prefix, "_open_dialog")
-      module_element_information_variable <- paste0(prefix, "_module_element_deleted")
+      widget_delete_prefix <- paste0(prefix, "_widget")
+      widget_dialog_title <- paste0(prefix, "_widgets_delete")
+      widget_dialog_subtext <- paste0(prefix, "_widgets_delete_subtext")
+      widget_react_variable <- "widget_delete_confirm"
+      widget_table <- paste0(prefix, "_widgets")
+      widget_id_var_sql <- "id"
+      widget_id_var_r <- paste0(prefix, "_selected_widget")
+      widget_delete_message <- paste0(prefix, "_widget_deleted")
+      widget_reload_variable <- paste0(prefix, "_load_ui")
+      widget_delete_variable <- paste0(widget_delete_prefix, "_open_dialog")
+      widget_information_variable <- paste0(prefix, "_widget_deleted")
 
       delete_element(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
-        delete_prefix = module_element_delete_prefix, dialog_title = module_element_dialog_title, dialog_subtext = module_element_dialog_subtext,
-        react_variable = module_element_react_variable, table = module_element_table, id_var_sql = module_element_id_var_sql, id_var_r = module_element_id_var_r,
-        delete_message = module_element_delete_message, translation = TRUE, reload_variable = module_element_reload_variable,
-        information_variable = module_element_information_variable)
+        delete_prefix = widget_delete_prefix, dialog_title = widget_dialog_title, dialog_subtext = widget_dialog_subtext,
+        react_variable = widget_react_variable, table = widget_table, id_var_sql = widget_id_var_sql, id_var_r = widget_id_var_r,
+        delete_message = widget_delete_message, translation = TRUE, reload_variable = widget_reload_variable,
+        information_variable = widget_information_variable)
       
-      # When a module is element deleted, remove UI and reload toggles UI
-      observeEvent(r[[module_element_information_variable]], {
+      # When a tab is element deleted, remove UI and reload toggles UI
+      observeEvent(r[[widget_information_variable]], {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..module_element_deleted"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..widget_deleted"))
         
-        # table <- paste0(prefix, "_modules")
-        # deleted_module_id <- r[[paste0(prefix, "_module_element_group_deleted")]]
-        # sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE id = {deleted_module_id}", .con = r$db)
-        # module_deleted <- DBI::dbGetQuery(r$db, sql)
+        # table <- paste0(prefix, "_tabs")
+        # deleted_tab_id <- r[[paste0(prefix, "_widget_group_deleted")]]
+        # sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE id = {deleted_tab_id}", .con = r$db)
+        # tab_deleted <- DBI::dbGetQuery(r$db, sql)
         
-        group_id <- r[[paste0(prefix, "_module_element_deleted")]]
+        group_id <- r[[paste0(prefix, "_widget_deleted")]]
         # Remove UI card
-        removeUI(selector = paste0("#", ns(paste0(prefix, "_group_", r[[paste0(prefix, "_module_element_deleted")]]))))
+        removeUI(selector = paste0("#", ns(paste0(prefix, "_group_", r[[paste0(prefix, "_widget_deleted")]]))))
         
-        sql <- glue::glue_sql("SELECT DISTINCT(module_id) FROM {`paste0(prefix, '_modules_elements')`} WHERE id = {group_id}", .con = r$db)
-        module_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
+        sql <- glue::glue_sql("SELECT DISTINCT(tab_id) FROM {`paste0(prefix, '_widgets')`} WHERE id = {group_id}", .con = r$db)
+        tab_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
 
-        # Remove toggles UI for this module
-        # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", module_id))))
-        shinyjs::hide(paste0(prefix, "_toggles_", module_id))
+        # Remove toggles UI for this tab
+        # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", tab_id))))
+        shinyjs::hide(paste0(prefix, "_toggles_", tab_id))
 
-        # Add the new toggles UI for this module
+        # Add the new toggles UI for this tab
 
         toggles <- tagList()
-        r[[paste0(prefix, "_modules_elements")]] <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(id != group_id)
-        r[[paste0(prefix, "_modules_elements_items")]] <- r[[paste0(prefix, "_modules_elements_items")]] %>% dplyr::filter(group_id != !!group_id)
+        r[[paste0(prefix, "_widgets")]] <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(id != group_id)
+        r[[paste0(prefix, "_widgets_items")]] <- r[[paste0(prefix, "_widgets_items")]] %>% dplyr::filter(group_id != !!group_id)
         
-        # update_r(r = r, table = paste0(prefix, "_modules_elements"))
-        module_elements <- r[[paste0(prefix, "_modules_elements")]] %>% dplyr::filter(module_id == !!module_id) %>% 
+        # update_r(r = r, table = paste0(prefix, "_widgets"))
+        widgets <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(tab_id == !!tab_id) %>% 
           dplyr::rename(group_id = id) %>% dplyr::arrange(display_order)
 
-        # Get module element group_id
-        distinct_groups <- unique(module_elements$group_id)
+        # Get widget group_id
+        distinct_groups <- unique(widgets$group_id)
 
         # Reset opened cards
         r[[paste0(prefix, "_opened_cards")]] <- ""
 
-        # Loop over distinct cards (modules elements), for this module
+        # Loop over distinct cards (tabs elements), for this tab
         sapply(distinct_groups, function(group_id){
           
-          # Get name of module element
-          module_element_name <- module_elements %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
+          # Get name of widget
+          widget_name <- widgets %>% dplyr::filter(group_id == !!group_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
 
           toggles <<- tagList(toggles,
             shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_group_", group_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
-            div(class = "toggle_title", module_element_name, style = "padding-top:10px;"))
+            div(class = "toggle_title", widget_name, style = "padding-top:10px;"))
 
           # Add to the list of opened cards
           r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_group_", group_id))
         })
         
-        # Does this module have sub-modules ?
-        if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
+        # Does this tab have sub-tabs ?
+        if (r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(parent_tab_id == tab_id) %>% nrow() > 0) toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_tab_", tab_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_tab_trigger', Math.random())"))),
               div(shiny.fluent::MessageBar(i18n$t("tab_contains_sub_tabs"), messageBarType = 5), style = "margin-top:4px;")
             )
           )
@@ -2661,26 +2657,26 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         else toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_widget_", tab_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_widget_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_tab_", tab_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_tab_trigger', Math.random())"))),
               div(style = "width:20px;"),
               toggles
             )
           )
         )
 
-        r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_toggles_", module_id))
+        r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_toggles_", tab_id))
 
         # Show opened cards
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
         
         # Hide edit tab card
-        shinyjs::hide(paste0(prefix, "_edit_module"))
+        shinyjs::hide(paste0(prefix, "_edit_tab"))
         
-        # Add module toggles UI
-        output[[paste0(prefix, "_toggles_", module_id)]] <- renderUI(toggles_div)
+        # Add tab toggles UI
+        output[[paste0(prefix, "_toggles_", tab_id)]] <- renderUI(toggles_div)
       })
       
       # --- --- --- --- --- --- --
@@ -2694,12 +2690,12 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       #   print("cards = ")
       #   print(r[[paste0(prefix, "_cards")]])
       #   print(paste0("opened cards = ", r[[paste0(prefix, "_opened_cards")]]))
-      #   print(paste0("selected module = ", r[[paste0(prefix, "_selected_module")]]))
-      #   print(paste0("load_display_modules = ", r[[paste0(prefix, "_load_display_modules")]]))
-      #   print(paste0("first module shown = ", r[[paste0(prefix, "_first_module_shown")]] %>% dplyr::pull(id)))
-      #   print("display modules")
+      #   print(paste0("selected tab = ", r[[paste0(prefix, "_selected_tab")]]))
+      #   print(paste0("load_display_tabs = ", r[[paste0(prefix, "_load_display_tabs")]]))
+      #   print(paste0("first tab shown = ", r[[paste0(prefix, "_first_tab_shown")]] %>% dplyr::pull(id)))
+      #   print("display tabs")
       #   print("")
-      #   print(r[[paste0(prefix, "_display_modules")]])
+      #   print(r[[paste0(prefix, "_display_tabs")]])
       #   print(paste0("load ui cards = ", r[[paste0(prefix, "_load_ui_cards")]]))
       #   print(paste0("stage = ", r[[paste0(prefix, "_load_ui_stage")]]))
       #   print("loaded studies")

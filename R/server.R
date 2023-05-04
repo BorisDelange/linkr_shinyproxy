@@ -26,7 +26,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       "location", "care_site", "provider")
     sapply(main_tables, function(table) d[[table]] <- tibble::tibble())
     
-    # Create m reactive value, for plugins & modules data
+    # Create m reactive value, for plugins & tabs data
     m <- reactiveValues()
     
     # Create o reactive values, for observers inactivation
@@ -51,9 +51,9 @@ app_server <- function(router, language = "en", app_folder = character(),
     datetime_start <- Sys.time()
     datetime_stop <- Sys.time()
     
-    # Create r$server_modules_groups_loaded & r$ui_modules_groups_loaded
-    r$server_modules_groups_loaded <- ""
-    r$ui_modules_groups_loaded <- ""
+    # Create r$server_tabs_groups_loaded & r$ui_tabs_groups_loaded
+    r$server_tabs_groups_loaded <- ""
+    r$ui_tabs_groups_loaded <- ""
     
     # App folder
     if (debug) print(paste0(Sys.time(), " - server - app_folder"))
@@ -159,8 +159,8 @@ app_server <- function(router, language = "en", app_folder = character(),
     # Keep trace of loaded observers (not to have multiple identical observers)
     r$loaded_observers <- ""
 
-    # Load modules
-    # Don't load modules user has no access to
+    # Load tabs
+    # Don't load tabs user has no access to
     
     observeEvent(r$user_accesses, {
       
@@ -180,20 +180,20 @@ app_server <- function(router, language = "en", app_folder = character(),
       })
 
       # --- --- --- --- --- -- -
-      # Load server modules ----
+      # Load server tabs ----
       # --- --- --- --- --- -- -
     
-      if (debug) print(paste0(Sys.time(), " - server - load server modules"))
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs"))
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - home"))
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - home"))
       sapply(c("home", "home_get_started", "home_tutorials", "home_resources", "home_dev"), function(page){
         mod_home_server(page, r, language, i18n, perf_monitoring, debug)
         mod_page_header_server(page, r, language, i18n)
       })
      
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - home")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - mod_data"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - home")
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - mod_data"))
       
       sapply(c("patient_level_data", "aggregated_data"), function(page){
         mod_data_server(page, r, d, m, o, language, i18n, perf_monitoring, debug)
@@ -201,45 +201,45 @@ app_server <- function(router, language = "en", app_folder = character(),
         mod_page_header_server(page, r, language, i18n)
       })
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - mod_data")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - my_studies / my_subsets / vocabularies / scripts"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - mod_data")
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - my_studies / my_subsets / vocabularies / scripts"))
       
       mod_my_studies_server("my_studies", r, d, m, i18n, language, perf_monitoring, debug)
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_studies")
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - my_studies")
       mod_my_subsets_server("my_subsets", r, d, m, i18n, language, perf_monitoring, debug)
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_subsets")
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - my_subsets")
       mod_vocabularies_server("vocabularies", r, d, m, i18n, language, perf_monitoring, debug)
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - vocabularies")
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - vocabularies")
       mod_scripts_server("scripts", r, d, m, language, i18n, perf_monitoring, debug)
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - scripts")
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - scripts")
       
       sapply(c("my_studies", "my_subsets", "vocabularies", "scripts"), function(page){
         mod_page_sidenav_server(page, r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(page, r, language, i18n)
       })
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - my_studies / my_subsets / vocabularies / scripts - sidenav")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - plugins"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - my_studies / my_subsets / vocabularies / scripts - sidenav")
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - plugins"))
       
       sapply(c("plugins_patient_lvl", "plugins_aggregated"), function(page){
         mod_plugins_server(page, r, d, m, o, language, i18n, app_folder, perf_monitoring, debug)
         mod_page_sidenav_server(page, r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(page, r, language, i18n)
       })
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - plugins")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - general_settings"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - plugins")
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - general_settings"))
     
       mod_settings_general_server("settings_general_settings", r, i18n, perf_monitoring, debug)
       mod_page_sidenav_server("settings_general_settings", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_general_settings", r, language, i18n)
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - general_settings")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_app_db"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - general_settings")
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - settings_app_db"))
     
       mod_settings_app_database_server("settings_app_db", r, m, i18n, language, app_folder, perf_monitoring, debug)
       mod_page_sidenav_server("settings_app_db", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_app_db", r, language, i18n)
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_app_db")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_users"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - settings_app_db")
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - settings_users"))
     
       mod_settings_users_server("settings_users", r, m, i18n, language, perf_monitoring, debug, options_toggles)
       mod_page_sidenav_server("settings_users", r, d, m, i18n, language, perf_monitoring, debug)
@@ -250,30 +250,30 @@ app_server <- function(router, language = "en", app_folder = character(),
         mod_settings_users_server(paste0("settings_users_", page, "_management"), r, m, i18n, language, perf_monitoring, debug, options_toggles)
         mod_settings_users_server(paste0("settings_users_", page, "_options"), r, m, i18n, language, perf_monitoring, debug, options_toggles)
       })
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_users")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_dev"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - settings_users")
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - settings_dev"))
     
       mod_settings_dev_server("settings_dev", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_sidenav_server("settings_dev", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_dev", r, language, i18n)
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_dev")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - data_sources / datasets / vocabularies"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - settings_dev")
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - data_sources / datasets / vocabularies"))
     
       sapply(c("data_sources", "datasets", "vocabularies"), function(page){
         mod_settings_data_management_server(paste0("settings_", page), r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_sidenav_server(paste0("settings_", page), r, d, m, i18n, language, perf_monitoring, debug)
         mod_page_header_server(paste0("settings_", page), r, language, i18n)
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("server - load server modules - ", page))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("server - load server tabs - ", page))
       })
     
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - settings_log"))
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - settings_log"))
       mod_settings_log_server("settings_log", r, i18n, language, perf_monitoring, debug)
       mod_page_sidenav_server("settings_log", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_log", r, language, i18n)
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server modules - settings_log")
-      if (debug) print(paste0(Sys.time(), " - server - load server modules - end"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - settings_log")
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - end"))
       
-      r$end_load_modules <- TRUE
+      r$end_load_tabs <- TRUE
       
       # r$perf_monitoring_table <-
       #   r$perf_monitoring_table %>%

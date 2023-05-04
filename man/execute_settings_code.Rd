@@ -26,11 +26,11 @@ execute_settings_code(
 
 \item{session}{variable from Shiny, used to execute UI & server code (plugins page)}
 
-\item{id}{ID of the current page / module}
+\item{id}{ID of the current page / tab}
 
 \item{ns}{Shiny namespace}
 
-\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
+\item{r}{The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)}
 
 \item{edited_code}{New code, after editing it (character)}
 

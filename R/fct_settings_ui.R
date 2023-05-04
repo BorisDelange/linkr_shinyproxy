@@ -22,7 +22,7 @@ render_settings_default_elements <- function(ns = character()){
 #' 
 #' @param language Language used (character)
 #' @param ns Shiny namespace
-#' @param id ID of current module / page (character)
+#' @param id ID of current tab / page (character)
 #' @param title Title used to create the card, it will be translated with translate function (character)
 #' @param textfields A character vector containing distinct textfields to render in the card (character)
 #' @param textfields_width Width of the textfields, CSS code, so it could be "100\%", "200px" etc (character)
@@ -69,7 +69,7 @@ render_settings_creation_card <- function(i18n = character(), ns = character(), 
 #' @param language Language used (character)
 #' @param ns Shiny namespace
 #' @param div_id ID of the div, to show or hide with toggles, default = "datatable_card" (character)
-#' @param output_id ID of div & DTOutput, allows to have multiple management_datatable in one module, default = "management_datatable" (character)
+#' @param output_id ID of div & DTOutput, allows to have multiple management_datatable in one tab, default = "management_datatable" (character)
 #' @param title Title used to create the card, it will be translated with translate function (character)
 #' @examples 
 #' \dontrun{
@@ -114,7 +114,7 @@ render_settings_datatable_card <- function(i18n = character(), ns = character(),
 #' Render UI of edit_code card
 #' 
 #' @param ns Shiny namespace
-#' @param r r Shiny reactive value to communicate between modules
+#' @param r r Shiny reactive value to communicate between tabs
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
 #' @param title Title of the card (character)
 #' @param code Code to show in ShinyAce editor (list)
@@ -147,8 +147,8 @@ render_settings_code_card <- function(ns = character(), r = shiny::reactiveValue
   
   if (id == "settings_plugins"){
     
-    # Get module_type_id of current plugin
-    module_type_id <- r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(module_type_id)
+    # Get tab_type_id of current plugin
+    tab_type_id <- r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(tab_type_id)
     
     # Colours choices
     colorCells <- list(
@@ -161,8 +161,8 @@ render_settings_code_card <- function(ns = character(), r = shiny::reactiveValue
       list(id = "#000000", color = "#000000"))
     
     # Dropdowns for choice of dataset etc
-    # Depending if module_type is patient_lvl_data or aggregated_data
-    if (module_type_id == 1){
+    # Depending if tab_type is patient_lvl_data or aggregated_data
+    if (tab_type_id == 1){
       tagList(
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
           make_dropdown(i18 = i18, ns = ns, label = "dataset", width = "300px",
@@ -185,7 +185,7 @@ render_settings_code_card <- function(ns = character(), r = shiny::reactiveValue
           div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), i18$t("reset")), style = "margin-top:38px;")), br(),
         uiOutput(ns("thesaurus_selected_items"))) -> choice_data
     }
-    if (module_type_id == 2){
+    if (tab_type_id == 2){
       tagList(shiny.fluent::Stack(
         horizontal = TRUE, tokens = list(childrenGap = 50),
         make_dropdown(i18 = i18, ns = ns, label = "dataset", width = "300px",

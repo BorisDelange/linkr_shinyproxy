@@ -12,7 +12,7 @@ update_r(
 )
 }
 \arguments{
-\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
+\item{r}{The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)}
 
 \item{table}{Database table name (character)}
 

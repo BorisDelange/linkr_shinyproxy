@@ -19,7 +19,7 @@ render_settings_datatable_card(
 
 \item{div_id}{ID of the div, to show or hide with toggles, default = "datatable_card" (character)}
 
-\item{output_id}{ID of div & DTOutput, allows to have multiple management_datatable in one module, default = "management_datatable" (character)}
+\item{output_id}{ID of div & DTOutput, allows to have multiple management_datatable in one tab, default = "management_datatable" (character)}
 
 \item{title}{Title used to create the card, it will be translated with translate function (character)}
 

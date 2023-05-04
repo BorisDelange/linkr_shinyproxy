@@ -34,7 +34,7 @@ The application contains a **data management section**, which allows the import 
 
 The core principle of the app is the **modularity** : each user chooses : 
 
-- which pages to display, called **modules** in the app, *Haemodynamics* or *Respiratory* modules in the above screenshot
+- which pages to display, called **tabs** in the app, *Haemodynamics* or *Respiratory* tabs in the above screenshot
 - which **figures** to display in each page : a timeline ? a text area ?
 - which **thesaurus items** each figure uses
 

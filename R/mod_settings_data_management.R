@@ -1,8 +1,8 @@
 #' settings_data_management UI Function
 #'
-#' @description Shiny module of settings / data management
+#' @description Shiny tab of settings / data management
 #'
-#' @param id ID of the module (character)
+#' @param id ID of the tab (character)
 #' @param language Language used (character)
 #' @noRd 
 #' @importFrom shiny NS tagList 
@@ -350,7 +350,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
     
 #' settings_data_management Server Functions
 #'
-#' @param id ID of the module (character)
+#' @param id ID of the tab (character)
 #' @param r Shiny reactive value
 #' @param language Language used (character)
 #' @noRd 
@@ -471,7 +471,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       new_data <- list()
       if (id == "settings_vocabularies") new_data_var <- c("vocabulary_id" = "char", "vocabulary_name" = "char", "data_source" = "char")
       else new_data_var <- c("name" = "char", "description" = "char", "data_source" = "int", "dataset" = "int", 
-        "study" = "int", "patient_lvl_module_family" = "int", "aggregated_module_family" = "int")
+        "study" = "int", "patient_lvl_tab_group" = "int", "aggregated_tab_group" = "int")
       
       sapply(names(new_data_var),
         function(input_name){
@@ -508,7 +508,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     dropdowns_multiselect <- ""
     if (table == "vocabulary") dropdowns_multiselect <- "data_source_id"
     
-    # Action buttons for each module / page
+    # Action buttons for each tab / page
     action_buttons = switch(table,
       "data_sources" = "delete",
       "datasets" = c("delete", "edit_code", "options"),
@@ -633,7 +633,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$", table, " - update dropdowns"))
         
-        update_settings_datatable(input = input, module_id = id, r = r, ns = ns, table = table, 
+        update_settings_datatable(input = input, tab_id = id, r = r, ns = ns, table = table, 
           dropdowns = dropdowns %>% dplyr::filter(id == id) %>% dplyr::pull(dropdowns) %>% unlist(), i18n = i18n)
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$", table, " - update dropdowns"))

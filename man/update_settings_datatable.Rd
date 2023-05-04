@@ -6,7 +6,7 @@
 \usage{
 update_settings_datatable(
   input,
-  module_id = character(),
+  tab_id = character(),
   r = shiny::reactiveValues(),
   ns = character(),
   table = character(),
@@ -17,7 +17,7 @@ update_settings_datatable(
 \arguments{
 \item{input}{Shiny input variable}
 
-\item{r}{Shiny r reactive value to communicate between modules}
+\item{r}{Shiny r reactive value to communicate between tabs}
 
 \item{ns}{Shiny namespace}
 

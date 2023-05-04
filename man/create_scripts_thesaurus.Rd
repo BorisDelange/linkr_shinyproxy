@@ -15,7 +15,7 @@ create_scripts_thesaurus(
 \arguments{
 \item{output}{Output variable from Shiny, used to render messages on message bars}
 
-\item{r}{A shiny::reactiValues object, used to communicate between modules}
+\item{r}{A shiny::reactiValues object, used to communicate between tabs}
 
 \item{data_source_id}{ID of the data source where the script is recorded}
 

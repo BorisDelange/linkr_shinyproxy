@@ -250,14 +250,14 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       "thesaurus_items_mapping_evals", "iiiicl",
       "plugins", "iccicl",
       "scripts", "iciicl",
-      "patient_lvl_modules_families", "iccicl",
-      "aggregated_modules_families", "iccicl",
-      "patient_lvl_modules", "icciiiicl",
-      "aggregated_modules", "icciiiicl",
-      "patient_lvl_modules_elements", "iciiiciccciicl",
-      "aggregated_modules_elements", "iciiiiicl",
-      "patient_lvl_modules_elements_items", "iiicicccilicl",
-      "aggregated_modules_elements_items", "iicicccilicl",
+      "patient_lvl_tabs_groups", "iccicl",
+      "aggregated_tabs_groups", "iccicl",
+      "patient_lvl_tabs", "icciiiicl",
+      "aggregated_tabs", "icciiiicl",
+      "patient_lvl_widgets", "iciiiciccciicl",
+      "aggregated_widgets", "iciiiiicl",
+      "patient_lvl_widgets_items", "iiicicccilicl",
+      "aggregated_widgets_items", "iicicccilicl",
       "code", "icicicl",
       "options", "iciccnicl",
       "messages", "iiicccicl",
@@ -266,7 +266,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       "log", "icccic",
       "git_sources", "iccccicl",
       "patients_options", "iiiiiiciccnicl",
-      "modules_elements_options", "iiiiicccnicl",
+      "widgets_options", "iiiiicccnicl",
       "subsets", "icciicl",
       "subset_persons", "iiiicl"
     )
@@ -804,7 +804,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
  
             if (table != "log" | (table == "log" & input$db_import_log)){
             
-              if (table %in% c("modules_elements_options", "patients_options", "subset_persons", "subsets")) db <- m$db
+              if (table %in% c("widgets_options", "patients_options", "subset_persons", "subsets")) db <- m$db
               else db <- r$db
               
               # Load CSV file

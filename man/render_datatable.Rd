@@ -31,7 +31,7 @@ render_datatable(
 \arguments{
 \item{output}{variable from Shiny, used to render messages on the message bar}
 
-\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
+\item{r}{The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)}
 
 \item{ns}{Shiny namespace}
 

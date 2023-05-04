@@ -16,9 +16,9 @@ run_dataset_code(
 \arguments{
 \item{output}{Output variable from Shiny, used to render messages on message bars}
 
-\item{r}{A shiny::reactiValues object, used to communicate between modules}
+\item{r}{A shiny::reactiValues object, used to communicate between tabs}
 
-\item{d}{A shiny::reactiValues object, used to communicate between modules. Contains data loaded from dataset code (d$patients, d$labs_vitals...).}
+\item{d}{A shiny::reactiValues object, used to communicate between tabs. Contains data loaded from dataset code (d$patients, d$labs_vitals...).}
 
 \item{dataset_id}{ID of dataset containing the code (integer)}
 
