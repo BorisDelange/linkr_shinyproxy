@@ -41,7 +41,24 @@ mod_data_ui <- function(id = character(), i18n = character()){
         div(shiny.fluent::ChoiceGroup.shinyInput(ns("add_module_type"), value = "same_level", 
           options = module_creation_options, className = "inline_choicegroup"), style = "padding-top:35px;")
       ), br(),
-      shiny.fluent::PrimaryButton.shinyInput(ns("add_module_button"), i18n$t("add")), br(),
+      shiny.fluent::PrimaryButton.shinyInput(ns("add_module_button"), i18n$t("add")), br()
+    )
+  )
+  
+  # --- --- --- --- --- -- -
+  # Module edition card ----
+  # --- --- --- --- --- -- -
+  
+  module_edition_card <- make_card(
+    title = i18n$t("edit_module"),
+    content = div(
+      actionButton(ns(paste0(prefix, "_close_edit_module")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
+      make_textfield(ns = ns, label = "name", id = "edit_module_name", width = "300px", i18n = i18n), br(),
+      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+        shiny.fluent::PrimaryButton.shinyInput(ns("edit_module_button"), i18n$t("save")),
+        shiny.fluent::DefaultButton.shinyInput(ns("remove_module"), i18n$t("delete_tab"))
+      ), 
+      br()
     )
   )
   
@@ -204,6 +221,13 @@ mod_data_ui <- function(id = character(), i18n = character()){
         style = "position:relative;"
       )
     ), 
+    shinyjs::hidden(
+      div(
+        id = ns(paste0(prefix, "_edit_module")),
+        module_edition_card,
+        style = "position:relative;"
+      )
+    ),
     # div(shinyAce::aceEditor(
     #   ns("ace_edit_code"), "", mode = "r",
     #   code_hotkeys = list(
@@ -934,8 +958,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
-                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
                 div(shiny.fluent::MessageBar(i18n$t("tab_contains_sub_tabs"), messageBarType = 5), style = "margin-top:4px;")
               )
             )
@@ -946,9 +970,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                 shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
                   onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
-                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
-                #paste0("module_id = ", module_id),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
                 div(style = "width:20px;"),
                 toggles
               )
@@ -989,7 +1012,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       # Hide Add module element div
       shinyjs::hide(paste0(prefix, "_add_module_element"))
     })
-
     
     # --- --- --- -- -
     # Load server ----
@@ -1444,8 +1466,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", ids$module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", ids$module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
               div(style = "width:20px;"),
               toggles
             )
@@ -1569,6 +1591,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         req(grepl("add_module", input$study_current_tab))
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
         shinyjs::hide(paste0(prefix, "_add_module_element"))
+        shinyjs::hide(paste0(prefix, "_edit_module"))
         shinyjs::hide(paste0(prefix, "_module_element_settings"))
         shinyjs::show(paste0(prefix, "_add_module"))
       })
@@ -1663,9 +1686,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
-              #paste0("module_id = ", module_id),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
               div(style = "width:20px;")
             )
           )
@@ -1684,8 +1706,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           parent_toggles_div <- div(
             make_card("",
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
-                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
+                shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                  onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
                 div(shiny.fluent::MessageBar(i18n$t("tab_contains_sub_tabs"), messageBarType = 5), style = "margin-top:4px;")
               )
             )
@@ -1706,6 +1728,32 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer input$add_module_button"))
+      })
+      
+      # --- --- --- -- -
+      ## Edit a tab ----
+      # --- --- --- -- -
+      
+      observeEvent(input$edit_module_trigger, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$edit_module_trigger"))
+        
+        sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::hide)
+        shinyjs::hide(paste0(prefix, "_add_module_element"))
+        shinyjs::hide(paste0(prefix, "_module_element_settings"))
+        shinyjs::show(paste0(prefix, "_edit_module"))
+      })
+      
+      # Close edition div
+      observeEvent(input[[paste0(prefix, "_close_edit_module")]], {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..close_edit_module"))
+        
+        # Show opened cards before opening Add module element div
+        sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
+        
+        # Hide Edit module element div
+        shinyjs::hide(paste0(prefix, "_edit_module"))
       })
       
       # --- --- --- --- --- --- --- --- --- --
@@ -1731,8 +1779,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       
       # Code to make Remove module button work
       # observeEvent(input[[paste0(prefix, "_remove_module_", r[[paste0(prefix, "_selected_module")]])]], r[[module_delete_variable]] <- TRUE)
-      observeEvent(input[[paste0(prefix, "_remove_module_trigger")]], {
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..remove_module_trigger"))
+      observeEvent(input$remove_module, {
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$remove_module"))
         r[[module_delete_variable]] <- TRUE
       })
       
@@ -1818,9 +1866,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                   shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", parent_module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
                     onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", parent_module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
-                    onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
-                  #paste0("module_id = ", module_id),
+                  shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                    onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
                   div(style = "width:20px;")
                 )
               )
@@ -2490,9 +2537,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
-              #paste0("module_id = ", module_id),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
               div(style = "width:20px;"),
               toggles
             )
@@ -2605,8 +2651,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (r[[paste0(prefix, "_modules")]] %>% dplyr::filter(parent_module_id == module_id) %>% nrow() > 0) toggles_div <- div(
           make_card("",
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
               div(shiny.fluent::MessageBar(i18n$t("tab_contains_sub_tabs"), messageBarType = 5), style = "margin-top:4px;")
             )
           )
@@ -2617,9 +2663,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_module_element_", module_id)), i18n$t("new_widget"), iconProps = list(iconName = "Add"),
                 onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_add_module_element_trigger', Math.random())"))),
-              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_remove_module_", module_id)), i18n$t("remove_tab"), iconProps = list(iconName = "Delete"),
-                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", prefix, "_remove_module_trigger', Math.random())"))),
-              #paste0("module_id = ", module_id),
+              shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_edit_module_", module_id)), i18n$t("edit_tab"), iconProps = list(iconName = "Edit"),
+                onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-edit_module_trigger', Math.random())"))),
               div(style = "width:20px;"),
               toggles
             )
@@ -2629,10 +2674,12 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_toggles_", module_id))
 
         # Show opened cards
-        
         sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
+        
+        # Hide edit tab card
+        shinyjs::hide(paste0(prefix, "_edit_module"))
+        
         # Add module toggles UI
-        # insertUI(selector = paste0("#", ns("study_cards")), where = "afterBegin", ui = uiOutput(ns(paste0(prefix, "_toggles_", module_id))))
         output[[paste0(prefix, "_toggles_", module_id)]] <- renderUI(toggles_div)
       })
       
@@ -2640,40 +2687,40 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       ## Debug - Execute code ----
       # --- --- --- --- --- --- --
       
-      observeEvent(input$execute_code, {
-        
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$execute_code"))
-        
-        # print("cards = ")
-        # print(r[[paste0(prefix, "_cards")]])
-        # print(paste0("opened cards = ", r[[paste0(prefix, "_opened_cards")]]))
-        # print(paste0("selected module = ", r[[paste0(prefix, "_selected_module")]]))
-        # print(paste0("load_display_modules = ", r[[paste0(prefix, "_load_display_modules")]]))
-        # print(paste0("first module shown = ", r[[paste0(prefix, "_first_module_shown")]] %>% dplyr::pull(id)))
-        # print("display modules")
-        # print("")
-        # print(r[[paste0(prefix, "_display_modules")]])
-        # print(paste0("load ui cards = ", r[[paste0(prefix, "_load_ui_cards")]]))
-        # print(paste0("stage = ", r[[paste0(prefix, "_load_ui_stage")]]))
-        # print("loaded studies")
-        # print(r[[paste0(prefix, "_loaded_studies")]])
-        
-        code <- input$ace_edit_code %>% stringr::str_replace_all("\r", "\n")
-        
-        output$code_result <- renderText({
-          
-          options('cli.num_colors' = 1)
-          
-          # Capture console output of our code
-          captured_output <- capture.output(
-            tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
-          
-          # Restore normal value
-          options('cli.num_colors' = NULL)
-          
-          # Display result
-          paste(strwrap(captured_output), collapse = "\n")
-        })
-      })
+      # observeEvent(input$execute_code, {
+      #   
+      #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$execute_code"))
+      #   
+      #   print("cards = ")
+      #   print(r[[paste0(prefix, "_cards")]])
+      #   print(paste0("opened cards = ", r[[paste0(prefix, "_opened_cards")]]))
+      #   print(paste0("selected module = ", r[[paste0(prefix, "_selected_module")]]))
+      #   print(paste0("load_display_modules = ", r[[paste0(prefix, "_load_display_modules")]]))
+      #   print(paste0("first module shown = ", r[[paste0(prefix, "_first_module_shown")]] %>% dplyr::pull(id)))
+      #   print("display modules")
+      #   print("")
+      #   print(r[[paste0(prefix, "_display_modules")]])
+      #   print(paste0("load ui cards = ", r[[paste0(prefix, "_load_ui_cards")]]))
+      #   print(paste0("stage = ", r[[paste0(prefix, "_load_ui_stage")]]))
+      #   print("loaded studies")
+      #   print(r[[paste0(prefix, "_loaded_studies")]])
+      #   
+      #   code <- input$ace_edit_code %>% stringr::str_replace_all("\r", "\n")
+      #   
+      #   output$code_result <- renderText({
+      #     
+      #     options('cli.num_colors' = 1)
+      #     
+      #     # Capture console output of our code
+      #     captured_output <- capture.output(
+      #       tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
+      #     
+      #     # Restore normal value
+      #     options('cli.num_colors' = NULL)
+      #     
+      #     # Display result
+      #     paste(strwrap(captured_output), collapse = "\n")
+      #   })
+      # })
   })
 }
