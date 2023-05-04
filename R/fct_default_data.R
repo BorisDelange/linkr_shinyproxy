@@ -158,7 +158,8 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
       last_row + 6, "dataset", 1, "omop_version", "5.3", NA_integer_, 1, as.character(Sys.time()), FALSE,
       last_row + 7, "study", 1, "users_allowed_read_group", "everybody", 1, 1, as.character(Sys.time()), FALSE,
       last_row + 8, "study", 1, "user_allowed_read", "", 1, 1, as.character(Sys.time()), FALSE,
-      last_row + 9, "study", 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, 1, as.character(Sys.time()), FALSE))
+      last_row + 9, "study", 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, 1, as.character(Sys.time()), FALSE,
+      last_row + 10, "study", 1, "markdown_description", "", NA_integer_, 1, as.character(Sys.time()), FALSE))
     
     # Users accesses
     data <- tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted)

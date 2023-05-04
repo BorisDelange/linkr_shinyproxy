@@ -55,7 +55,7 @@ mod_data_ui <- function(id = character(), i18n = character()){
       actionButton(ns(paste0(prefix, "_close_edit_tab")), "", icon = icon("times"), style = "position:absolute; top:10px; right:10px;"),
       make_textfield(ns = ns, label = "name", id = "edit_tab_name", width = "300px", i18n = i18n), br(),
       shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-        shiny.fluent::PrimaryButton.shinyInput(ns("edit_tab_button"), i18n$t("save")),
+        shiny.fluent::PrimaryButton.shinyInput(ns("edit_tab_save"), i18n$t("save")),
         shiny.fluent::DefaultButton.shinyInput(ns("remove_tab"), i18n$t("delete_tab"))
       ), 
       br()
@@ -1540,7 +1540,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         sapply(r[[paste0(prefix, "_cards")]], shinyjs::hide)
 
         # Hide Add widget card & Add tab card
-        sapply(c(paste0(prefix, "_add_tab"), paste0(prefix, "_add_widget"), paste0(prefix, "_widget_settings")), shinyjs::hide)
+        sapply(c(paste0(prefix, "_add_tab"), paste0(prefix, "_edit_tab"), paste0(prefix, "_add_widget"), paste0(prefix, "_widget_settings")), shinyjs::hide)
 
         # Show toggles for this tab
         shinyjs::show(paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_tab")]]))
@@ -1738,6 +1738,50 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         shinyjs::hide(paste0(prefix, "_add_widget"))
         shinyjs::hide(paste0(prefix, "_widget_settings"))
         shinyjs::show(paste0(prefix, "_edit_tab"))
+        
+        # Update textfield with current tab name
+        shiny.fluent::updateTextField.shinyInput(session, "edit_tab_name", 
+          value = r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_tab")]]) %>% dplyr::pull(name))
+      })
+      
+      # Save updates
+      observeEvent(input$edit_tab_save, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$edit_tab_save"))
+        
+        # Check if the name is not empty
+        if (input$edit_tab_name == "") shiny.fluent::updateTextField.shinyInput(session, "edit_tab_name", errorMessage = i18n$t("provide_valid_name"))
+        
+        req(input$edit_tab_name != "")
+        
+        # Check if the name is already used
+        tab <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_tab")]])
+        
+        if (!is.na(tab$parent_tab_id)) same_level_tabs <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(id != tab$id, parent_tab_id == tab$parent_tab_id)
+        if (is.na(tab$parent_tab_id)) same_level_tabs <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(id != tab$id, is.na(parent_tab_id))
+        
+        if (input$edit_tab_name %in% same_level_tabs$name) show_message_bar(output, "name_already_used", "severeWarning", i18n = i18n, ns = ns)
+        
+        req(input$edit_tab_name %not_in% same_level_tabs$name)
+        
+        # Update database
+        
+        sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_tabs')`} SET name = {input$edit_tab_name} WHERE id = {r[[paste0(prefix, '_selected_tab')]]}", .con = r$db)
+        query <- DBI::dbSendStatement(r$db, sql)
+        DBI::dbClearResult(query)
+        
+        # Update r vars
+        r[[paste0(prefix, "_tabs")]] <- r[[paste0(prefix, "_tabs")]] %>% dplyr::mutate(name = dplyr::case_when(
+          id == r[[paste0(prefix, "_selected_tab")]] ~ input$edit_tab_name, TRUE ~ name))
+        
+        r[[paste0(prefix, "_display_tabs")]] <- r[[paste0(prefix, "_display_tabs")]] %>% dplyr::mutate(name = dplyr::case_when(
+          id == r[[paste0(prefix, "_selected_tab")]] ~ input$edit_tab_name, TRUE ~ name))
+        
+        # Notify user
+        show_message_bar(output, message = "modif_saved", type = "success", i18n = i18n, ns = ns)
+        
+        # Reload output
+        r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time()
       })
       
       # Close edition div
@@ -1774,7 +1818,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       # --- --- --- --- --
       
       # Code to make Remove tab button work
-      # observeEvent(input[[paste0(prefix, "_remove_tab_", r[[paste0(prefix, "_selected_tab")]])]], r[[tab_delete_variable]] <- TRUE)
       observeEvent(input$remove_tab, {
         if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$remove_tab"))
         r[[tab_delete_variable]] <- TRUE
@@ -2275,7 +2318,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
 
         sql <- glue::glue_sql("SELECT DISTINCT(name) FROM {`table`} WHERE deleted IS FALSE AND tab_id = {new_data$tab_new_element}", .con = r$db)
         distinct_values <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull()
-        if (new_data$name %in% distinct_values) show_message_bar(output,  "name_already_used", "severeWarning", i18n = i18n, ns = ns)
+        if (new_data$name %in% distinct_values) show_message_bar(output, "name_already_used", "severeWarning", i18n = i18n, ns = ns)
         req(new_data$name %not_in% distinct_values)
 
         # Check if dropdowns are not empty (if all are required)
@@ -2288,7 +2331,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           else if (is.na(new_data[[dropdown]])) dropdowns_check <- FALSE
         }
 
-        if (!dropdowns_check) show_message_bar(output,  "dropdown_empty", "severeWarning", i18n = i18n, ns = ns)
+        if (!dropdowns_check) show_message_bar(output, "dropdown_empty", "severeWarning", i18n = i18n, ns = ns)
         req(dropdowns_check)
 
         # Get last_row nb
