@@ -1113,6 +1113,10 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
     )
   }
   
+  # Add nrow to r$import_vocabulary_count_rows
+  if (length(r$import_vocabulary_count_rows) > 0) r$import_vocabulary_count_rows <- r$import_vocabulary_count_rows %>%
+    dplyr::bind_rows(tibble::tibble(table_name = table_name, n_rows = as.integer(nrow(data_to_insert))))
+  
   if (messages_bars) show_message_bar(output, "import_vocabulary_table_success", "success", i18n, ns = ns)
   return(paste0(i18n$t("import_vocabulary_table_success"), ". ", nrow(data_to_insert), " ", tolower(i18n$t("rows_inserted")), "."))
 }

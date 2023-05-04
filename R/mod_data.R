@@ -1785,6 +1785,12 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # Notify user
         show_message_bar(output, message = "modif_saved", type = "success", i18n = i18n, ns = ns)
         
+        # Show opened cards before opening Add widget div
+        sapply(r[[paste0(prefix, "_opened_cards")]], shinyjs::show)
+        
+        # Hide Edit widget div
+        shinyjs::hide(paste0(prefix, "_edit_tab"))
+        
         # Reload output
         r[[paste0(prefix, "_load_ui_menu")]] <- Sys.time()
       })

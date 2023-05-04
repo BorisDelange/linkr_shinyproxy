@@ -328,8 +328,11 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
           div(
             br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::DefaultButton.shinyInput(ns("import_vocabulary_browse"), i18n$t("choose_zip_file")),
-              uiOutput(ns("import_vocabulary_status"))), br(),
+              shiny.fluent::DefaultButton.shinyInput(ns("import_vocabulary_browse_zip"), i18n$t("choose_zip_file")),
+              uiOutput(ns("import_vocabulary_zip_status"))), br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::DefaultButton.shinyInput(ns("import_vocabulary_browse_csv"), i18n$t("choose_csv_files")),
+              uiOutput(ns("import_vocabulary_csv_status"))), br(),
             shiny.fluent::PrimaryButton.shinyInput(ns("import_vocabulary_button"), i18n$t("import_vocabulary"), iconProps = list(iconName = "Download")), br(),
             shinyjs::hidden(
               div(
@@ -338,7 +341,8 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
                 div(DT::DTOutput(ns("imported_vocabularies")))
               )
             ),
-            div(style = "display:none;", fileInput(ns("import_vocabulary_upload"), label = "", multiple = FALSE, accept = ".zip"))
+            div(style = "display:none;", fileInput(ns("import_vocabulary_upload_zip"), label = "", multiple = FALSE, accept = ".zip")),
+            div(style = "display:none;", fileInput(ns("import_vocabulary_upload_csv"), label = "", multiple = TRUE, accept = ".csv"))
           )
         )
       )
@@ -1633,17 +1637,32 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
       
       if (table == "vocabulary"){
 
-        observeEvent(input$import_vocabulary_browse, {
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$import_vocabulary_browse"))
-          shinyjs::click("import_vocabulary_upload")
+        # Import a zip file
+        observeEvent(input$import_vocabulary_browse_zip, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$import_vocabulary_browse_zip"))
+          shinyjs::click("import_vocabulary_upload_zip")
         })
 
-        output$import_vocabulary_status <- renderUI({
-          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - output$import_vocabulary_status"))
+        output$import_vocabulary_zip_status <- renderUI({
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - output$import_vocabulary_zip_status"))
 
           tagList(div(
             span(i18n$t("loaded_file"), " : ", style = "padding-top:5px;"),
-            span(input$import_vocabulary_upload$name, style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;"))
+            span(input$import_vocabulary_upload_zip$name, style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;"))
+        })
+        
+        # Import CSV files
+        observeEvent(input$import_vocabulary_browse_csv, {
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$import_vocabulary_browse_csv"))
+          shinyjs::click("import_vocabulary_upload_csv")
+        })
+        
+        output$import_vocabulary_csv_status <- renderUI({
+          if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - output$import_vocabulary_csv_status"))
+          
+          tagList(div(
+            span(i18n$t("loaded_files"), " : ", style = "padding-top:5px;"),
+            span(toString(input$import_vocabulary_upload_csv$name), style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;"))
         })
 
         # Import button clicked
@@ -1652,57 +1671,105 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (perf_monitoring) monitor_perf(r = r, action = "start")
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$import_vocabulary_button"))
 
-          req(input$import_vocabulary_upload)
-
           # Reset count_rows vars
           r$import_vocabulary_count_rows <- tibble::tibble(table_name = character(), n_rows = integer())
 
-          tryCatch({
-
-            # Extract ZIP file
-
-            temp_dir <- paste0(r$app_folder, "/temp_files/", Sys.time() %>% stringr::str_replace_all(":| |-", ""), paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
-            zip::unzip(input$import_vocabulary_upload$datapath, exdir = temp_dir)
-
-            csv_files <- zip::zip_list(input$import_vocabulary_upload$datapath)
-
-            lapply(csv_files$filename, function(file_name){
-
-              if (grepl(".csv$", file_name)){
-
-                # Name of the table
-                table_name <- tolower(substr(file_name, 1, nchar(file_name) - 4))
-
-                if (table_name %in% c("concept", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym",
-                  "concept_ancestor", "drug_strength")){
-
-                  # Load CSV file
-                  data <- vroom::vroom(paste0(temp_dir, "/", file_name), col_types = col_types[[table_name]])
-
-                  if ("valid_start_date" %in% names(data)) data <- data %>%
-                      dplyr::mutate_at(c("valid_start_date", "valid_end_date"), lubridate::ymd) %>%
-                      dplyr::mutate_at(c("valid_start_date", "valid_end_date"), as.character)
-
-                  # Import vocabulary with import_vocabulary_table
-                  import_vocabulary_table(output = output, ns = ns, i18n = i18n, r = r, m = m, table_name = table_name, data = data)
+          if(length(input$import_vocabulary_upload_zip) > 0){
+            tryCatch({
+              
+              # Extract ZIP file
+              
+              temp_dir <- paste0(r$app_folder, "/temp_files/", Sys.time() %>% stringr::str_replace_all(":| |-", ""), paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
+              zip::unzip(input$import_vocabulary_upload_zip$datapath, exdir = temp_dir)
+              
+              csv_files <- zip::zip_list(input$import_vocabulary_upload_zip$datapath)
+              
+              lapply(csv_files$filename, function(file_name){
+                
+                if (grepl(".csv$", file_name)){
+                  
+                  # Name of the table
+                  table_name <- tolower(substr(file_name, 1, nchar(file_name) - 4))
+                  
+                  if (table_name %in% c("concept", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym",
+                    "concept_ancestor", "drug_strength")){
+                    
+                    # Load CSV file
+                    data <- vroom::vroom(paste0(temp_dir, "/", file_name), col_types = col_types[[table_name]])
+                    
+                    if ("valid_start_date" %in% names(data)) data <- data %>%
+                        dplyr::mutate_at(c("valid_start_date", "valid_end_date"), lubridate::ymd) %>%
+                        dplyr::mutate_at(c("valid_start_date", "valid_end_date"), as.character)
+                    
+                    # Import vocabulary with import_vocabulary_table
+                    import_vocabulary_table(output = output, ns = ns, i18n = i18n, r = r, m = m, table_name = table_name, data = data)
+                  }
                 }
-              }
-            })
-
-            # Render datatable with rows inserted
-
-            shinyjs::show("imported_vocabularies_div")
-
-            render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$import_vocabulary_count_rows,
-              output_name = "imported_vocabularies", col_names = c(i18n$t("table_name"), i18n$t("row_number")),
-              centered_cols = c("table_name", "n_rows"))
-
-            show_message_bar(output,  "success_importing_vocabulary", "success", i18n = i18n, time = 15000, ns = ns)
-          },
-            error = function(e) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
-              error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = e, i18n = i18n, ns = ns),
-            warning = function(w) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
-              error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = w, i18n = i18n, ns = ns))
+              })
+              
+              # Render datatable with rows inserted
+              
+              shinyjs::show("imported_vocabularies_div")
+              
+              render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$import_vocabulary_count_rows,
+                output_name = "imported_vocabularies", col_names = c(i18n$t("table_name"), i18n$t("row_number")),
+                centered_cols = c("table_name", "n_rows"))
+              
+              show_message_bar(output,  "success_importing_vocabulary", "success", i18n = i18n, time = 15000, ns = ns)
+            },
+              error = function(e) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
+                error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = e, i18n = i18n, ns = ns),
+              warning = function(w) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
+                error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = w, i18n = i18n, ns = ns))
+          }
+          
+          else if (length(input$import_vocabulary_upload_csv) > 0){
+            
+            if (nrow(input$import_vocabulary_upload_csv) > 0){
+              tryCatch({
+                
+                tables_names <- c("concept", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym",
+                  "concept_ancestor", "drug_strength")
+                
+                for (i in 1:nrow(input$import_vocabulary_upload_csv)){
+                  row <- input$import_vocabulary_upload_csv[i, ]
+                  
+                  table_name <- substr(row$name, 1, nchar(row$name) - 4) %>% tolower()
+                  
+                  print(table_name)
+                  
+                  if (table_name %in% tables_names){
+                    
+                    # Load CSV file
+                    data <- vroom::vroom(row$datapath, col_types = col_types[[table_name]])
+                    
+                    print(data)
+                    
+                    if ("valid_start_date" %in% names(data)) data <- data %>%
+                        dplyr::mutate_at(c("valid_start_date", "valid_end_date"), lubridate::ymd) %>%
+                        dplyr::mutate_at(c("valid_start_date", "valid_end_date"), as.character)
+                    
+                    # Import vocabulary with import_vocabulary_table
+                    import_vocabulary_table(output = output, ns = ns, i18n = i18n, r = r, m = m, table_name = table_name, data = data)
+                  }
+                }
+                
+                # Render datatable with rows inserted
+                
+                shinyjs::show("imported_vocabularies_div")
+                
+                render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$import_vocabulary_count_rows,
+                  output_name = "imported_vocabularies", col_names = c(i18n$t("table_name"), i18n$t("row_number")),
+                  centered_cols = c("table_name", "n_rows"))
+                
+                show_message_bar(output,  "success_importing_vocabulary", "success", i18n = i18n, time = 15000, ns = ns)
+              },
+                error = function(e) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
+                  error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = e, i18n = i18n, ns = ns),
+                warning = function(w) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
+                  error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = w, i18n = i18n, ns = ns))
+            }
+          }
 
           if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$import_vocabulary_button"))
         })
