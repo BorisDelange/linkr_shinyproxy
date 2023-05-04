@@ -357,18 +357,17 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       # Reset d variables
       
-      stay_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
-        "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
-        "drug_era", "dose_era", "condition_era")
-      patient_tables <- c(stay_tables)
-      subset_tables <- c(patient_tables, "person", "observation_period", "visit_occurrence", "visit_detail")
+      visit_detail_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+        "observation", "note", "note_nlp", "fact_relationship", "payer_plan_period", "cost")
+      person_tables <- c(visit_detail_tables, "specimen", "death", "drug_era", "dose_era", "condition_era")
+      subset_tables <- c(person_tables, "person", "observation_period", "visit_occurrence", "visit_detail")
       main_tables <- c(subset_tables, "location", "care_site", "provider")
       
-      sapply(stay_tables, function(table) d$data_stay[[table]] <- tibble::tibble())
-      sapply(patient_tables, function(table) d$data_patient[[table]] <- tibble::tibble())
-      sapply(subset_tables, function(table) d$data_subset[[table]] <- tibble::tibble())
       sapply(main_tables, function(table) d[[table]] <- tibble::tibble())
-      
+      sapply(subset_tables, function(table) d$data_subset[[table]] <- tibble::tibble())
+      sapply(person_tables, function(table) d$data_person[[table]] <- tibble::tibble())
+      sapply(visit_detail_tables, function(table) d$data_visit_detail[[table]] <- tibble::tibble())
+
       # Reset selected_study variable
       m$selected_study <- NA_integer_
       m$selected_person <- NA_integer_ # To prevent bug when execute plugin code from plugin page
@@ -618,6 +617,18 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       sapply(c("choose_a_study_card_messages", "choose_a_study_card_description"), shinyjs::hide)
       sapply(c("study_messages_content", "studies_description_content"), shinyjs::show)
       
+      # Reset d variables
+      
+      visit_detail_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+        "observation", "note", "note_nlp", "fact_relationship", "payer_plan_period", "cost")
+      person_tables <- c(visit_detail_tables, "specimen", "death", "drug_era", "dose_era", "condition_era")
+      subset_tables <- c(person_tables, "person", "observation_period", "visit_occurrence", "visit_detail")
+      main_tables <- c(subset_tables, "location", "care_site", "provider")
+      
+      sapply(subset_tables, function(table) d$data_subset[[table]] <- tibble::tibble())
+      sapply(person_tables, function(table) d$data_person[[table]] <- tibble::tibble())
+      sapply(visit_detail_tables, function(table) d$data_visit_detail[[table]] <- tibble::tibble())
+      
       # Reset new conversation fields
       shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", value = "")
       shinyAce::updateAceEditor(session, "new_conversation_text", value = "")
@@ -642,8 +653,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       update_r(r = r, m = m, table = "subsets_persons")
       
       # Load patients options
-      sql <- glue::glue_sql("SELECT * FROM patients_options WHERE study_id = {m$selected_study}", .con = m$db)
-      m$patients_options <- DBI::dbGetQuery(m$db, sql)
+      sql <- glue::glue_sql("SELECT * FROM persons_options WHERE study_id = {m$selected_study}", .con = m$db)
+      m$persons_options <- DBI::dbGetQuery(m$db, sql)
       
       # Load study description
       
@@ -680,6 +691,15 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     observeEvent(m$selected_subset, {
       if (!is.na(m$selected_subset)){
+        
+        # Reset d variables
+
+        visit_detail_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+          "observation", "note", "note_nlp", "fact_relationship", "payer_plan_period", "cost")
+        person_tables <- c(visit_detail_tables, "specimen", "death", "drug_era", "dose_era", "condition_era")
+
+        sapply(person_tables, function(table) d$data_person[[table]] <- tibble::tibble())
+        sapply(visit_detail_tables, function(table) d$data_visit_detail[[table]] <- tibble::tibble())
         
         # Select patients who belong to this subset
         update_r(r = r, m = m, table = "subset_persons")

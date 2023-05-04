@@ -201,8 +201,8 @@ db_create_tables <- function(db, type = character(), dbms = character()){
   
   if (type == "public"){
     
-    db_create_table(db, "patients_options", primary_key_col = "id", dbms = dbms, text_cols = "value",
-      tibble::tibble(id = integer(), dataset_id = integer(), study_id = integer(), subset_id = integer(), patient_id = integer(), stay_id = integer(),
+    db_create_table(db, "persons_options", primary_key_col = "id", dbms = dbms, text_cols = "value",
+      tibble::tibble(id = integer(), dataset_id = integer(), study_id = integer(), subset_id = integer(), person_id = integer(), visit_detail_id = integer(),
         category = character(), link_id = integer(), name = character(), value = character(), value_num = numeric(), 
         creator_id = integer(), datetime = character(), deleted = logical()))
     

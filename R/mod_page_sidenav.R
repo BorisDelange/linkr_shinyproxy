@@ -107,7 +107,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
       ),
       dropdowns(c("dataset", "study", "subset")),
       br(), div(id = ns("hr1"), hr()),
-      dropdowns(c("person", "stay")),
+      dropdowns(c("person", "visit_detail")),
       br(), div(id = ns("hr2"), hr()),
       uiOutput(ns("person_info"))
     ) -> result
@@ -269,7 +269,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         shiny.fluent::updateComboBox.shinyInput(session, "dataset", 
           options = convert_tibble_to_list(r$datasets %>% dplyr::arrange(name), key_col = "id", text_col = "name"), value = NULL)
         
-        sapply(c("study", "subset", "person", "stay", "person_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
+        sapply(c("study", "subset", "person", "visit_detail", "person_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
         shinyjs::hide("exclusion_reason_div")
@@ -282,7 +282,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         # Save value in r$selected_dropdown, to update patient-level data dropdowns AND aggregated data dropdowns
         r$selected_dataset <- input$dataset$key
         
-        sapply(c("subset", "person", "stay", "person_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
+        sapply(c("subset", "person", "visit_detail", "person_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
         sapply(c("study"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
@@ -292,7 +292,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         shiny.fluent::updateComboBox.shinyInput(session, "subset", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "person", options = list(), value = NULL)
-        shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "visit_detail", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "person_status", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
         shinyjs::hide("exclusion_reason_div")
@@ -346,11 +346,11 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
 
         # Reset dropdowns & uiOutput
         shiny.fluent::updateComboBox.shinyInput(session, "person", options = list(), value = NULL)
-        shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "visit_detail", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "person_status", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
         
-        sapply(c("person", "stay", "person_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
+        sapply(c("person", "visit_detail", "person_status", "hr1", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
         sapply(c("subset"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
@@ -411,10 +411,10 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (!is.na(m$selected_subset) & m$selected_subset != input$subset$key) m$selected_subset <- input$subset$key
 
         # Reset dropdown & uiOutput
-        shiny.fluent::updateComboBox.shinyInput(session, "stay", options = list(), value = NULL)
+        shiny.fluent::updateComboBox.shinyInput(session, "visit_detail", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "person_status", options = list(), value = NULL)
         shiny.fluent::updateComboBox.shinyInput(session, "exclusion_reason", options = list(), value = NULL)
-        sapply(c("stay", "person_status", "hr2", "exclusion_reason_div"), function(element){
+        sapply(c("visit_detail", "person_status", "hr2", "exclusion_reason_div"), function(element){
           sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::hide)
         })
         sapply(c("person", "hr1"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
@@ -455,8 +455,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
           
           # Update persons dropdown
           shiny.fluent::updateComboBox.shinyInput(session, "person", 
-            options = convert_tibble_to_list(data = persons %>% dplyr::mutate(name_display = paste0(person_id, " - ", gender)),
-              key_col = "person_id", text_col = "name_display"))
+            options = convert_tibble_to_list(data = persons %>% dplyr::mutate(name_display = paste0(person_id, " - ", gender_concept_name)),
+              key_col = "person_id", text_col = "name_display"), value = NULL)
         }
         
       })
@@ -471,89 +471,79 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         
         m$selected_person <- input$person$key
         
-        if (nrow(d$stays %>% dplyr::filter(person_id == input$person$key)) == 0) shiny.fluent::updateComboBox.shinyInput(session, "person", options = list(), value = NULL, errorMessage = i18n$t("no_person_in_subset"))
-        if (nrow(d$stays %>% dplyr::filter(person_id == input$person$key)) > 0){
+        if (nrow(d$visit_detail %>% dplyr::filter(person_id == input$person$key)) == 0) shiny.fluent::updateComboBox.shinyInput(session, "person", options = list(), value = NULL, errorMessage = i18n$t("no_person_in_subset"))
+        if (nrow(d$visit_detail %>% dplyr::filter(person_id == input$person$key)) > 0){
           
-          if (tolower(language) == "fr") stays <- convert_tibble_to_list(data = d$stays %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0("Unit...", " - ", #paste0(unit_name, " - ", 
-              format(as.POSIXct(admission_datetime), format = "%d-%m-%Y"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(discharge_datetime), format = "%d-%m-%Y"))),
-              key_col = "stay_id", text_col = "name_display")
-          else stays <- convert_tibble_to_list(data = d$stays %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0("Unit...", " - ", #paste0(unit_name, " - ", 
-            format(as.POSIXct(admission_datetime), format = "%Y-%m-%d"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(discharge_datetime), format = "%Y-%m-%d"))),
-            key_col = "stay_id", text_col = "name_display")
+          if (tolower(language) == "fr") visit_details <- convert_tibble_to_list(data = d$visit_detail %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0(visit_detail_concept_name, " - ",
+              format(as.POSIXct(visit_detail_start_datetime), format = "%d-%m-%Y"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(visit_detail_end_datetime), format = "%d-%m-%Y"))),
+              key_col = "visit_detail_id", text_col = "name_display")
+          else visit_details <- convert_tibble_to_list(data = d$visit_detail %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0(visit_detail_concept_name, " - ",
+            format(as.POSIXct(visit_detail_start_datetime), format = "%Y-%m-%d"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(visit_detail_end_datetime), format = "%Y-%m-%d"))),
+            key_col = "visit_detail_id", text_col = "name_display")
           
-          # Load stays of the person & update dropdown
-          shiny.fluent::updateComboBox.shinyInput(session, "stay", options = stays, value = NULL)
+          # Load visit_details of the person & update dropdown
+          shiny.fluent::updateComboBox.shinyInput(session, "visit_detail", options = visit_details, value = NULL)
         }
         
         # Update person informations on sidenav
         
-        # gender_concept_ids <- d$person %>% dplyr::distinct(gender_concept_id) %>% dplyr::pull(gender_concept_id) %>% as.character()
-        # sql <- glue::glue_sql("SELECT * FROM concept WHERE concept_id IN ({gender_concept_ids*})", .con = m$db)
-        # 
-        # 
-        # gender <- d$person %>% dplyr::filter(person_id == m$selected_person) %>% dplyr::pull(gender_concept_id) %>% as.character() %>%
-        #   switch("8507" = i18n$t("male"), "8532" = i18n$t("female"), "8521" = i18n$t("other"), "8551" = i18n$t("unknown"), "8570" = i18n$t("ambiguous"))
-        # 
-        # style <- "display:inline-block; width:100px; font-weight:bold;"
-        # output$person_info <- renderUI({
-        #   
-        #   tagList(
-        #     span(i18n$t("person_id"), style = style), m$selected_person, br(),
-        #     span(i18n$t("gender"), style = style), gender
-        #   )
-        # })
+        style <- "display:inline-block; width:100px; font-weight:bold;"
+        output$person_info <- renderUI({
+          tagList(
+            span(i18n$t("person_id"), style = style), m$selected_person, br(),
+            span(i18n$t("gender"), style = style), d$person %>% dplyr::filter(person_id == m$selected_person) %>% dplyr::pull(gender_concept_name)
+          )
+        })
         
-        sapply(c("stay", "hr2"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
+        sapply(c("visit_detail", "hr2"), function(element) sapply(c(element, paste0(element, "_title"), paste0(element, "_page")), shinyjs::show))
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$person"))
       })
       
-      # --- --- --- -- -
-      # Selected stay ----
-      # --- --- --- -- -
+      # --- --- --- --- --- --- --
+      # Selected visit_detail ----
+      # --- --- --- --- --- --- --
       
-      observeEvent(input$stay, {
+      observeEvent(input$visit_detail, {
         
         if (perf_monitoring) monitor_perf(r = r, action = "start")
-        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer input$stay"))
+        if (debug) print(paste0(Sys.time(), " - mod_page_sidenav - observer input$visit_detail"))
         
-        m$selected_stay <- input$stay$key
+        m$selected_visit_detail <- input$visit_detail$key
 
         # Update person informations on sidenav
 
         style <- "display:inline-block; width:100px; font-weight:bold;"
         
-        age <- d$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::pull(age)
-        if (age > 2) age_div <- tagList(age, " ", i18n$t("years"))
-        else age_div <- tagList(round(age * 12, 0), " ", i18n$t("months"))
+        gender <- d$person %>% dplyr::filter(person_id == m$selected_person) %>% dplyr::pull(gender_concept_name)
         
-        admission_datetime <- d$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::pull(admission_datetime) %>% format_datetime(language)
-        discharge_datetime <- d$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::pull(discharge_datetime) %>% format_datetime(language)
+        birth_datetime <- d$person %>% dplyr::filter(person_id == m$selected_person) %>% dplyr::pull(birth_datetime)
+        year_of_birth <- d$person %>% dplyr::filter(person_id == m$selected_person) %>% dplyr::pull(year_of_birth)
+        visit_detail_start_datetime <- d$visit_detail %>% dplyr::filter(visit_detail_id == input$visit_detail$key) %>% dplyr::pull(visit_detail_start_datetime)
         
-        thesaurus_name <- d$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::pull(thesaurus_name)
-        thesaurus_id <- r$thesaurus %>% dplyr::filter(name == thesaurus_name) %>% dplyr::pull(id)
-        
-        sql <- glue::glue_sql("SELECT name, display_name FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} AND 
-          item_id = {d$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::pull(item_id)}", .con = r$db)
-        unit_name <- DBI::dbGetQuery(r$db, sql)
-        
-        unit_name <- unit_name %>% dplyr::mutate(name = dplyr::case_when(!is.na(display_name) ~ display_name, TRUE ~ name)) %>% dplyr::pull(name)
-        
-        gender <- d$person %>% dplyr::filter(person_id == m$selected_person) %>% dplyr::pull(gender_concept_id) %>% as.character() %>%
-          switch("8507" = i18n$t("male"), "8532" = i18n$t("female"), "8521" = i18n$t("other"), "8551" = i18n$t("unknown"), "8570" = i18n$t("ambiguous"))
+        if (!is.na(birth_datetime)) age <- lubridate::interval(birth_datetime, visit_detail_start_datetime) / lubridate::years(1)
+        if (is.na(birth_datetime)) age <- as.numeric(format(visit_detail_start_datetime, "%Y")) - year_of_birth
+
+        age_div <- tagList(age, " ", i18n$t("years"))
+        if (age <= 2) age_div <- tagList(round(age * 12, 0), " ", i18n$t("months"))
+
+        visit_detail <- d$visit_detail %>% dplyr::filter(visit_detail_id == m$selected_visit_detail)
+        visit_detail_start_datetime <- visit_detail %>% dplyr::pull(visit_detail_start_datetime) %>% format_datetime(language)
+        visit_detail_end_datetime <- visit_detail %>% dplyr::pull(visit_detail_end_datetime) %>% format_datetime(language)
+        visit_detail_concept_name <- visit_detail %>% dplyr::pull(visit_detail_concept_name)
         
         output$person_info <- renderUI({
           tagList(
             span(i18n$t("person_id"), style = style), m$selected_person, br(),
             span(i18n$t("gender"), style = style), gender, br(), br(),
-            span(i18n$t("stay_id"), style = style), m$selected_stay, br(),
+            span(i18n$t("visit_detail_id"), style = style), m$selected_visit_detail, br(),
             span(i18n$t("age"), style = style), age_div, br(),
-            span(i18n$t("hosp_unit"), style = style), unit_name, br(),
-            span(i18n$t("from"), style = style), admission_datetime, br(),
-            span(i18n$t("to"), style = style), discharge_datetime)
+            span(i18n$t("hosp_unit"), style = style), visit_detail_concept_name, br(),
+            span(i18n$t("from"), style = style), visit_detail_start_datetime, br(),
+            span(i18n$t("to"), style = style), visit_detail_end_datetime)
         })
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$stay"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_page_sidenav - observer input$visit_detail"))
       })
     }
   })

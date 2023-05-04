@@ -348,50 +348,34 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         # Reset variables
         
-        stay_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
-          "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
-          "drug_era", "dose_era", "condition_era")
-        person_tables <- c(stay_tables)
+        visit_detail_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+          "observation", "note", "note_nlp", "fact_relationship", "payer_plan_period", "cost")
+        person_tables <- c(visit_detail_tables, "specimen", "death", "drug_era", "dose_era", "condition_era")
         
-        sapply(stay_tables, function(table) d$data_stay[[table]] <- tibble::tibble())
         sapply(person_tables, function(table) d$data_person[[table]] <- tibble::tibble())
+        sapply(visit_detail_tables, function(table) d$data_visit_detail[[table]] <- tibble::tibble())
         
-        if (length(m$selected_person) > 0){
-          if (!is.na(m$selected_person) & m$selected_person != ""){
-            if (nrow(d$stays) > 0) d$data_person$stays <- d$stays %>% dplyr::filter(person_id == m$selected_person) %>% dplyr::arrange(admission_datetime)
-            if (nrow(d$labs_vitals) > 0) d$data_person$labs_vitals <- d$labs_vitals %>% dplyr::filter(person_id == m$selected_person)
-            if (nrow(d$text) > 0) d$data_person$text <- d$text %>% dplyr::filter(person_id == m$selected_person)
-            if (nrow(d$orders) > 0) d$data_person$orders <- d$orders %>% dplyr::filter(person_id == m$selected_person)
-          }
-        }
+        if (length(m$selected_person) > 0) for(table in person_tables) if (nrow(d$data_subset[[table]]) > 0) d$data_person[[table]] <- 
+          d$data_subset[[table]] %>% dplyr::filter(person_id == m$selected_person)
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$selected_person"))
       })
       
-      observeEvent(m$selected_stay, {
+      observeEvent(m$selected_visit_detail, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$selected_stay"))
+        if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer m$selected_visit_detail"))
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         
         req(d$data_person)
         
-        stay_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
-          "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
-          "drug_era", "dose_era", "condition_era")
-        sapply(stay_tables, function(table) d$data_stay[[table]] <- tibble::tibble())
+        visit_detail_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+          "observation", "note", "note_nlp", "fact_relationship", "payer_plan_period", "cost")
+        sapply(visit_detail_tables, function(table) d$data_visit_detail[[table]] <- tibble::tibble())
         
-        if (length(m$selected_stay) > 0){
-          if (!is.na(m$selected_stay) & m$selected_stay != ""){
-            
-            d$data_stay$stay <- d$data_person$stays %>% dplyr::filter(stay_id == m$selected_stay) %>% dplyr::select(admission_datetime, discharge_datetime)
-            
-            if (nrow(d$data_person$labs_vitals) > 0) d$data_stay$labs_vitals <- d$data_person$labs_vitals %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
-            if (nrow(d$data_person$text) > 0) d$data_stay$text <- d$data_person$text %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
-            if (nrow(d$data_person$orders) > 0) d$data_stay$orders <- d$data_person$orders %>% dplyr::filter(datetime_start >= d$data_stay$stay$admission_datetime & datetime_start <= d$data_stay$stay$discharge_datetime)
-          }
-        }
+        if (length(m$selected_visit_detail) > 0) for(table in visit_detail_tables) if (nrow(d$data_person[[table]]) > 0) d$data_visit_detail[[table]] <- 
+          d$data_person[[table]] %>% dplyr::filter(visit_detail_id == m$selected_visit_detail)
         
-        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$selected_stay"))
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$selected_visit_detail"))
       })
     }
     
