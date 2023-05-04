@@ -657,7 +657,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0("dataset_vocabulary_concepts_", mapping)]],
         output_name = paste0("vocabulary_", mapping, "_dt"), col_names = col_names, datatable_dom = "<'top't><'bottom'p>",
         sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        searchable_cols = searchable_cols, hidden_cols = hidden_cols)
+        searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$vocabulary_mapping_reload"))
     })
