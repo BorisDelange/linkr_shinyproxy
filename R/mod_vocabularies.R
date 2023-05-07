@@ -56,8 +56,9 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
         id = ns("vocabularies_concepts_card"),
         make_card(i18n$t("concepts"),
           div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "vocabulary", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+              div(style = "width:20px;"),
               make_dropdown(i18n = i18n, ns = ns, label = "columns", id = "vocabulary_table_cols", width = "300px", multiSelect = TRUE,
                 options = list(
                   list(key = 1, text = i18n$t("concept_id_1")),
@@ -76,8 +77,11 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
                   list(key = 15, text = i18n$t("num_rows")),
                   list(key = 16, text = i18n$t("num_patients"))
                 ),
-                value = c(1, 2, 3, 4, 5, 15, 16)
-              )
+                value = c(1, 2, 3, 4, 6, 15, 16)
+              ),
+              div(style = "width:10px;"),
+              div(shiny.fluent::Toggle.shinyInput(ns("vocabulary_show_mapped_concepts"), value = TRUE), style = "margin-top:45px;"),
+              div(i18n$t("show_mapped_concepts"), style = "font-weight:bold; margin-top:45px; margin-right:30px;")
             ),
             conditionalPanel(
               condition = "input.vocabulary_concepts_pivot == null | input.vocabulary_concepts_pivot == 'vocabulary_concepts_table_view'", ns = ns,
@@ -85,11 +89,11 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
               conditionalPanel("input.vocabulary == null", ns = ns, br()),
               conditionalPanel(
                 condition = "input.vocabulary != null", ns = ns,
+                uiOutput(ns("vocabulary_datatable_selected_item")),
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                   shiny.fluent::PrimaryButton.shinyInput(ns("save_vocabulary_concepts"), i18n$t("save")),
                   shiny.fluent::DefaultButton.shinyInput(ns("reload_vocabulary_concepts_cache"), i18n$t("reload_cache"))
-                ),
-                uiOutput(ns("vocabulary_datatable_selected_item"))
+                )
               )
             )
           )
@@ -265,6 +269,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$selected_dataset 2"))
     })
     
+    # Load all concepts
+    
     observeEvent(r$load_dataset_all_concepts, {
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$load_dataset_all_concepts"))
@@ -288,63 +294,83 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           "ORDER BY concept_id"), .con = m$db)
         r$dataset_all_concepts <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble() %>% dplyr::mutate(concept_display_name = NA_character_, .after = "concept_name")
         
-        # Get user's modifications on items names & concept_display_names
-        
-        sql <- glue::glue_sql(paste0(
-          "SELECT id, concept_id, concept_name, concept_display_name ",
-          "FROM concept_user ",
-          "WHERE user_id = {r$user_id} AND vocabulary_id IN ({r$dataset_vocabularies %>% dplyr::pull(vocabulary_id)*})"), .con = m$db)
-        dataset_user_concepts <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble()
-        
-        # Merge tibbles
-        if (nrow(dataset_user_concepts) > 0) r$dataset_all_concepts <-
-          r$dataset_all_concepts %>%
-          dplyr::left_join(
-            dataset_user_concepts %>% dplyr::select(concept_id, new_concept_name = concept_name, new_concept_display_name = concept_display_name),
-            by = "concept_id"
-          ) %>%
-          dplyr::mutate(
-            concept_name = dplyr::case_when(!is.na(new_concept_name) ~ new_concept_name, TRUE ~ concept_name),
-            concept_display_name = dplyr::case_when(!is.na(new_concept_display_name) ~ new_concept_display_name, TRUE ~ concept_display_name)
-          ) %>%
-          dplyr::select(-new_concept_name, -new_concept_display_name)
-        
         # Count rows
         
-        count_rows <- tibble::tibble()
+        omop_version <- r$options %>% dplyr::filter(category == "dataset" & link_id == r$selected_dataset & name == "omop_version") %>% dplyr::pull(value)
         
-        var_names <- c(
-          "condition_occurrence" = "condition_concept_id",
-          "drug_exposure" = "drug_concept_id",
-          "procedure_occurrence" = "procedure_concept_id",
-          "device_exposure" = "device_concept_id",
-          "measurement" = "measurement_concept_id",
-          "observation" = "observation_concept_id",
-          "specimen" = "specimen_concept_id",
-          "drug_era" = "drug_concept_id",
-          "dose_era" = "drug_concept_id",
-          "condition_era" = "condition_concept_id"
+        count_rows <- tibble::tibble()
+        secondary_concepts_count_rows <- tibble::tibble()
+        
+        tables <- c("person", "condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure",
+          "measurement", "observation", "specimen", "drug_era", "dose_era", "condition_era", "note", "specimen")
+        if (omop_version %in% c("5.3", "5.0")) tables <- c(tables, "death")
+        
+        main_cols <- c(
+          "condition_occurrence" = "condition",
+          "drug_exposure" = "drug",
+          "procedure_occurrence" = "procedure",
+          "device_exposure" = "device",
+          "measurement" = "measurement",
+          "observation" = "observation",
+          "specimen" = "specimen",
+          "drug_era" = "drug",
+          "dose_era" = "drug",
+          "condition_era" = "condition"
         )
         
-        for(var_name in names(var_names)){
-          if (nrow(d[[var_name]]) > 0){
-            count_rows <- 
+        secondary_cols <- list(
+          "person" = c("gender", "race", "ethnicity"),
+          "condition_occurrence" = c("condition_type", "condition_status"),
+          "drug_exposure" = c("drug_type", "route"),
+          "procedure_occurrence" = "procedure_type",
+          "device_exposure" = c("device_type"),
+          "measurement" = c("measurement_type", "unit"),
+          "observation" = c("observation_type", "qualifier", "unit"),
+          "note" = c("note_type", "note_class", "encoding", "language"),
+          "specimen" = c("specimen_type", "unit", "anatomic_site", "disease_status"),
+          "dose_era" = "unit"
+        )
+        
+        if (omop_version == "5.3") secondary_cols <- rlist::list.append(secondary_cols, "visit_occurrence" = c("admitting_source", "discharge_to", "visit", "visit_type"))
+        else if (omop_version %in% c("5.4", "6.0")) secondary_cols <- rlist::list.append(secondary_cols, "visit_occurrence" = c("admitted_from", "discharge_to", "visit", "visit_type"))
+        
+        if (omop_version %in% c("5.3", "5.0")) secondary_cols <- rlist::list.append(secondary_cols, "death" = c("death_type", "cause"))
+        
+        for(table in tables){
+          print(table)
+          if (nrow(d[[table]]) > 0){
+            
+            if (table %in% names(main_cols)) count_rows <- 
               count_rows %>% 
               dplyr::bind_rows(
-                d[[var_name]] %>% 
-                  dplyr::group_by_at(var_names[[var_name]]) %>%
-                  dplyr::summarize(count_persons_rows = dplyr::n_distinct(person_id), count_concepts_rows = dplyr::n()) %>% 
+                d[[table]] %>% 
+                  dplyr::group_by_at(paste0(main_cols[[table]], "_concept_id")) %>%
+                  dplyr::summarize(count_persons_rows = dplyr::n_distinct(person_id), count_concepts_rows = dplyr::n(), count_secondary_concepts_rows = 0L) %>% 
                   dplyr::ungroup() %>% 
-                  dplyr::rename(concept_id = var_names[[var_name]])
+                  dplyr::rename(concept_id = paste0(main_cols[[table]], "_concept_id"))
               )
+            
+            if (table %in% names(secondary_cols)){
+              for (col in secondary_cols[[table]]){
+                count_rows <- 
+                  count_rows %>%
+                  dplyr::bind_rows(
+                    d[[table]] %>% 
+                      dplyr::group_by_at(paste0(col, "_concept_id")) %>%
+                      dplyr::summarize(count_persons_rows = 0L, count_concepts_rows = 0L, count_secondary_concepts_rows = dplyr::n()) %>% 
+                      dplyr::ungroup() %>% 
+                      dplyr::rename(concept_id = paste0(col, "_concept_id"))
+                  )
+              } 
+            }
           }
         }
         
         # Merge count_rows, transform count_rows cols to integer, to be sortable
         if (nrow(count_rows) > 0) r$dataset_all_concepts <- r$dataset_all_concepts %>% 
           dplyr::left_join(count_rows, by = "concept_id") %>%
-          dplyr::mutate_at(c("count_concepts_rows", "count_persons_rows"), as.integer) %>%
-          dplyr::filter(count_concepts_rows > 0)
+          dplyr::mutate_at(c("count_concepts_rows", "count_persons_rows", "count_secondary_concepts_rows"), as.integer) %>%
+          dplyr::filter(count_concepts_rows > 0 | count_secondary_concepts_rows > 0)
         
         if (nrow(count_rows) == 0) r$dataset_all_concepts <- r$dataset_all_concepts %>% dplyr::slice(0)
         
@@ -404,6 +430,34 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         }
       }
       
+      # Get user's modifications on items names & concept_display_names
+      
+      sql <- glue::glue_sql(paste0(
+        "SELECT id, concept_id, concept_name, concept_display_name ",
+        "FROM concept_user ",
+        "WHERE user_id = {r$user_id} AND vocabulary_id IN ({r$dataset_vocabularies %>% dplyr::pull(vocabulary_id)*})"), .con = m$db)
+      dataset_user_concepts <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble()
+      
+      # Merge tibbles
+      if (nrow(dataset_user_concepts) > 0) r$dataset_all_concepts <-
+        r$dataset_all_concepts %>%
+        dplyr::left_join(
+          dataset_user_concepts %>% dplyr::select(concept_id_1 = concept_id, new_concept_name_1 = concept_name, new_concept_display_name_1 = concept_display_name),
+          by = "concept_id_1"
+        ) %>%
+        dplyr::mutate(
+          concept_name_1 = dplyr::case_when(!is.na(new_concept_name_1) ~ new_concept_name_1, TRUE ~ concept_name_1),
+          concept_display_name_1 = dplyr::case_when(!is.na(new_concept_display_name_1) ~ new_concept_display_name_1, TRUE ~ concept_display_name_1)
+        ) %>%
+        dplyr::left_join(
+          dataset_user_concepts %>% dplyr::select(concept_id_2 = concept_id, new_concept_name_2 = concept_name),
+          by = "concept_id_2"
+        ) %>%
+        dplyr::mutate(
+          concept_name_2 = dplyr::case_when(!is.na(new_concept_name_2) ~ new_concept_name_2, TRUE ~ concept_name_2)
+        ) %>%
+        dplyr::select(-new_concept_name_1, -new_concept_display_name_1, -new_concept_name_2)
+      
       # Reload datatable
       if (length(r$dataset_vocabulary_concepts_datatable_proxy) > 0) DT::replaceData(r$dataset_vocabulary_concepts_datatable_proxy,
         r$dataset_vocabulary_concepts %>% dplyr::slice(0), resetPaging = FALSE, rownames = FALSE)
@@ -412,9 +466,6 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       shiny.fluent::updateComboBox.shinyInput(session, "vocabulary", 
         options = convert_tibble_to_list(data = r$dataset_vocabularies, key_col = "id", text_col = "vocabulary_name", i18n = i18n), value = NULL)
       
-      # Update datatable columns dropdown
-      shiny.fluent::updateDropdown.shinyInput(session, "vocabulary_table_cols", value = c(1, 2, 3, 4, 5, 15, 16))
-      
       # Join d$person, d$visit_occurrence & d$visit_detail with r$dataset_all_concepts
       
       r$merge_concepts_and_d_vars <- Sys.time()
@@ -422,7 +473,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$load_dataset_all_concepts"))
     })
     
-    # Join d$person, d$visit_occurrence & d$visit_detail with r$dataset_all_concepts
+    # Join concepts cols of d$ vars with r$dataset_all_concepts
     
     observeEvent(r$merge_concepts_and_d_vars, {
       
@@ -437,71 +488,49 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       if ("gender_concept_name" %not_in% colnames(d$person)){
         
-        person_cols <- c("gender", "race", "ethnicity")
+        cols <- list(
+          "person" = c("gender", "race", "ethnicity"),
+          "condition_occurrence" = c("condition_type", "condition_status"),
+          "drug_exposure" = c("drug_type", "route"),
+          "procedure_occurrence" = "procedure_type",
+          "device_exposure" = c("device_type"),
+          "measurement" = c("measurement_type", "unit"),
+          "observation" = c("observation_type", "qualifier", "unit"),
+          "note" = c("note_type", "note_class", "encoding", "language"),
+          "specimen" = c("specimen_type", "unit", "anatomic_site", "disease_status"),
+          "dose_era" = "unit"
+        )
         
-        for (col in person_cols) d$person <- d$person %>%
-            dplyr::left_join(
-              r$dataset_all_concepts %>%
-                dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
-            ) %>%
-            dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
+        if (omop_version == "5.3") cols <- rlist::list.append(cols, "visit_occurrence" = c("admitting_source", "discharge_to", "visit", "visit_type"))
+        else if (omop_version %in% c("5.4", "6.0")) cols <- rlist::list.append(cols, "visit_occurrence" = c("admitted_from", "discharge_to", "visit", "visit_type"))
         
-        if (omop_version == "5.3") visit_cols <- c("admitting_source", "discharge_to")
-        else if (omop_version %in% c("5.4", "6.0")) visit_cols <- c("admitted_from", "discharge_to")
+        if (omop_version %in% c("5.3", "5.0")) cols <- rlist::list.append(cols, "death" = c("death_type", "cause"))
         
-        for (table in c("visit_occurrence", "visit_detail")){
-          
-          if (table == "visit_occurrence") sub_cols <- c("visit", "visit_type")
-          else sub_cols <- c("visit_detail", "visit_detail_type")
-          
-          for (col in sub_cols) d[[table]] <- d[[table]] %>%
-              dplyr::left_join(
-                r$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
-              ) %>%
-              dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
-          
-          for (col in visit_cols) d[[table]] <- d[[table]] %>%
-              dplyr::left_join(
-                r$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_concept_name") := concept_name_1), by = paste0(col, "_concept_id")
-              ) %>%
-              dplyr::relocate(!!paste0(col, "_concept_name"), .after = !!paste0(col, "_concept_id"))
+        for (table in names(cols)){
+          table_cols <- cols[[table]]
+          for (col in table_cols){
+            if (nrow(d[[table]]) > 0){
+              if (grepl("unit", col)) merge_col <- c("concept_code", "concept_code") else merge_col <- c("concept_name", "concept_name_1")
+              
+              d[[table]] <- d[[table]] %>%
+                dplyr::left_join(
+                  r$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_", merge_col[1]) := !!merge_col[2]), by = paste0(col, "_concept_id")
+                ) %>%
+                dplyr::relocate(!!paste0(col, "_", merge_col[1]), .after = !!paste0(col, "_concept_id"))
+            } 
+          }
         }
       }
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$merge_concepts_and_d_vars"))
     })
     
+    # When a vocabulary is selected, filter on it
+    
     observeEvent(input$vocabulary, {
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary"))
       
-      vocabulary_id <- r$vocabulary %>% dplyr::filter(id == input$vocabulary$key) %>% dplyr::pull(vocabulary_id)
-      
-      r$dataset_vocabulary_concepts <- r$dataset_all_concepts %>%
-        dplyr::filter(vocabulary_id == !!vocabulary_id) %>%
-        dplyr::mutate(modified = FALSE) %>%
-        dplyr::mutate_at("concept_id_1", as.character)
-      
-      editable_cols <- c("concept_name_1", "concept_display_name_1")
-      searchable_cols <- c("concept_id_1", "concept_name_1", "relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_1", "domain_id")
-      column_widths <- c("count_persons_rows" = "80px", "count_concepts_rows" = "80px")
-      sortable_cols <- c("concept_id_1", "concept_name_1", "relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_1", "domain_id", "count_persons_rows", "count_concepts_rows")
-      factorize_cols <- c("relationship_id")
-      centered_cols <- c("concept_id_1", "relationship_id", "concept_id_2", "domain_id", "count_persons_rows", "count_concepts_rows")
-      col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_with_counts", i18n = i18n)
-      hidden_cols <- c("id", "concept_id_2", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code", 
-        "valid_start_date", "valid_end_date", "invalid_reason", "modified")
-      
-      # Render datatable
-      render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$dataset_vocabulary_concepts,
-        output_name = "vocabulary_concepts", col_names = col_names,
-        editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols, factorize_cols = factorize_cols)
-      
-      # Create a proxy for datatatable
-      r$dataset_vocabulary_concepts_datatable_proxy <- DT::dataTableProxy("vocabulary_concepts", deferUntilFlush = FALSE)
-      
-      # Update datatable columns dropdown
-      shiny.fluent::updateDropdown.shinyInput(session, "vocabulary_table_cols", value = c(1, 2, 3, 4, 5, 15, 16))
+      r$reload_vocabulary_datatable <- Sys.time()
     })
     
     # Update which cols are hidden
@@ -514,6 +543,58 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       r$dataset_vocabulary_concepts_datatable_proxy %>%
         DT::showCols(1:17) %>%
         DT::hideCols(setdiff(1:17, input$vocabulary_table_cols))
+    })
+    
+    # Show mapped concepts in the datatable
+    
+    observeEvent(input$vocabulary_show_mapped_concepts, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_show_mapped_concepts"))
+      
+      req(length(input$vocabulary) > 0)
+      
+      r$reload_vocabulary_datatable <- Sys.time()
+    })
+    
+    # Reload datatable
+    
+    observeEvent(r$reload_vocabulary_datatable, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$reload_vocabulary_datatable"))
+      
+      vocabulary_id <- r$vocabulary %>% dplyr::filter(id == input$vocabulary$key) %>% dplyr::pull(vocabulary_id)
+      
+      # Filter only used concepts in d vars
+      r$dataset_vocabulary_concepts <- r$dataset_all_concepts %>% dplyr::filter(count_concepts_rows > 0) %>% dplyr::select(-count_secondary_concepts_rows)
+      
+      if (input$vocabulary_show_mapped_concepts) r$dataset_vocabulary_concepts <- r$dataset_vocabulary_concepts %>% dplyr::filter(vocabulary_id == !!vocabulary_id)
+      else r$dataset_vocabulary_concepts <- r$dataset_vocabulary_concepts %>% dplyr::filter(vocabulary_id == !!vocabulary_id, is.na(relationship_id))
+      
+      r$dataset_vocabulary_concepts <- r$dataset_vocabulary_concepts %>%
+        dplyr::mutate(modified = FALSE) %>%
+        dplyr::mutate_at("concept_id_1", as.character)
+      
+      if (length(r$dataset_vocabulary_concepts_datatable_proxy) == 0){
+        editable_cols <- c("concept_name_1", "concept_display_name_1")
+        searchable_cols <- c("concept_id_1", "concept_name_1", "relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_1", "domain_id")
+        column_widths <- c("count_persons_rows" = "80px", "count_concepts_rows" = "80px")
+        sortable_cols <- c("concept_id_1", "concept_name_1", "relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_1", "domain_id", "count_persons_rows", "count_concepts_rows")
+        factorize_cols <- c("relationship_id")
+        centered_cols <- c("concept_id_1", "relationship_id", "concept_id_2", "domain_id", "count_persons_rows", "count_concepts_rows")
+        col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_with_counts", i18n = i18n)
+        hidden_cols <- c("id", "concept_id_2", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code", 
+          "valid_start_date", "valid_end_date", "invalid_reason", "modified")
+        
+        # Render datatable
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$dataset_vocabulary_concepts,
+          output_name = "vocabulary_concepts", col_names = col_names,
+          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+          searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols, factorize_cols = factorize_cols)
+        
+        # Create a proxy for datatatable
+        r$dataset_vocabulary_concepts_datatable_proxy <- DT::dataTableProxy("vocabulary_concepts", deferUntilFlush = FALSE)
+      }
+      
+      else DT::replaceData(r$dataset_vocabulary_concepts_datatable_proxy, r$dataset_vocabulary_concepts, resetPaging = FALSE, rownames = FALSE)
     })
     
     # Reload cache
@@ -573,6 +654,20 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       # Store that this row has been modified
       r$dataset_vocabulary_concepts[[edit_info$row, "modified"]] <- TRUE
+      concept_id <- r$dataset_vocabulary_concepts[[edit_info$row, "concept_id_1"]]
+      
+      # Save this update in r$dataset_all_concepts also
+      r$dataset_all_concepts <- r$dataset_all_concepts %>% dplyr::mutate(
+        concept_name_1 = dplyr::case_when(
+          concept_id_1 == concept_id ~ r$dataset_vocabulary_concepts[[edit_info$row, "concept_name_1"]],
+          TRUE ~ concept_name_1),
+        concept_display_name_1 = dplyr::case_when(
+          concept_id_1 == concept_id ~ r$dataset_vocabulary_concepts[[edit_info$row, "concept_display_name_1"]],
+          TRUE ~ concept_display_name_1),
+        concept_name_2 = dplyr::case_when(
+          concept_id_2 == concept_id ~ r$dataset_vocabulary_concepts[[edit_info$row, "concept_name_1"]],
+          TRUE ~ concept_name_2)
+      )
     })
     
     # Save updates
@@ -599,8 +694,39 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_concepts_rows_selected"))
       
-      # r$vocabulary_concepts_selected_concept_id <- r$dataset_vocabulary_concepts_temp[input$vocabulary_concepts_rows_selected, ] %>% dplyr::pull(concept_id)
-      # r$vocabulary_concepts_selected_item_trigger <- Sys.time()
+      selected_concept <- r$dataset_vocabulary_concepts[input$vocabulary_concepts_rows_selected, ]
+      
+      concept_values <- tagList()
+
+      if (selected_concept$domain_id == "Measurement"){
+        if (nrow(d$measurement) > 0){
+          if (!is.na(selected_concept$concept_id_2)) measurement_concept_id <- selected_concept$concept_id_2
+          else measurement_concept_id <- selected_concept$concept_id_1
+          
+          values <- d$measurement %>% dplyr::filter(measurement_concept_id == !!measurement_concept_id)
+          
+          if (nrow(values) > 0) concept_values <- tagList(br(),
+            strong(i18n$t("values_as_number")), " : ", values %>% dplyr::slice_sample(n = 5, replace = TRUE) %>% 
+              dplyr::mutate(result = paste0(value_as_number, " ", unit_concept_code)) %>% dplyr::pull(result) %>% toString()
+          )
+        }
+      }
+      
+      concept_info <- tagList(
+        strong(i18n$t("concept_id")), " : ", selected_concept$concept_id_1, br(),
+        strong(i18n$t("concept_name")), " : ", selected_concept$concept_name_1, br(),
+        strong(i18n$t("concept_display_name")), " : ", selected_concept$concept_display_name_1, br(),
+        strong(i18n$t("domain_id")), " : ", selected_concept$domain_id, br(),
+        strong(i18n$t("standard_concept")), " : ", selected_concept$standard_concept, br(),
+        strong(i18n$t("concept_code")), " : ", selected_concept$concept_code, br(),
+        strong(i18n$t("valid_start_date")), " : ", selected_concept$valid_start_date, br(),
+        strong(i18n$t("valid_end_date")), " : ", selected_concept$valid_end_date, br(),
+        strong(i18n$t("invalid_reason")), " : ", selected_concept$invalid_reason, br(),
+        concept_values,
+        br(), br()
+      )
+      
+      output$vocabulary_datatable_selected_item <- renderUI(concept_info)
     })
     
     # --- --- --- --- --
