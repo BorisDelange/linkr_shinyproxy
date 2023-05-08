@@ -88,8 +88,11 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
               DT::DTOutput(ns("vocabulary_concepts")),
               conditionalPanel("input.vocabulary == null", ns = ns, br()),
               conditionalPanel(
-                condition = "input.vocabulary != null", ns = ns,
-                uiOutput(ns("vocabulary_datatable_selected_item")),
+                condition = "input.vocabulary != null", ns = ns, br(),
+                div(
+                  div(uiOutput(ns("vocabulary_datatable_selected_item")), style = "width:50%; display:flex; float:left; border:solid 1px;"),
+                  div(plotly::plotlyOutput(ns("vocabulary_datatable_selected_item_plot")), style = "width:50%; display:flex; float:rigth; border:solid 1px;")
+                ),
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                   shiny.fluent::PrimaryButton.shinyInput(ns("save_vocabulary_concepts"), i18n$t("save")),
                   shiny.fluent::DefaultButton.shinyInput(ns("reload_vocabulary_concepts_cache"), i18n$t("reload_cache"))
@@ -324,8 +327,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           "drug_exposure" = c("drug_type", "route"),
           "procedure_occurrence" = "procedure_type",
           "device_exposure" = c("device_type"),
-          "measurement" = c("measurement_type", "unit"),
-          "observation" = c("observation_type", "qualifier", "unit"),
+          "measurement" = c("measurement_type", "value_as", "unit"),
+          "observation" = c("observation_type", "qualifier", "value_as", "unit"),
           "note" = c("note_type", "note_class", "encoding", "language"),
           "specimen" = c("specimen_type", "unit", "anatomic_site", "disease_status"),
           "dose_era" = "unit"
@@ -457,8 +460,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           concept_name_2 = dplyr::case_when(!is.na(new_concept_name_2) ~ new_concept_name_2, TRUE ~ concept_name_2)
         ) %>%
         dplyr::select(-new_concept_name_1, -new_concept_display_name_1, -new_concept_name_2)
-      
-      # Reload datatable
+
       if (length(r$dataset_vocabulary_concepts_datatable_proxy) > 0) DT::replaceData(r$dataset_vocabulary_concepts_datatable_proxy,
         r$dataset_vocabulary_concepts %>% dplyr::slice(0), resetPaging = FALSE, rownames = FALSE)
       
@@ -494,8 +496,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           "drug_exposure" = c("drug_type", "route"),
           "procedure_occurrence" = "procedure_type",
           "device_exposure" = c("device_type"),
-          "measurement" = c("measurement_type", "unit"),
-          "observation" = c("observation_type", "qualifier", "unit"),
+          "measurement" = c("measurement_type", "value_as", "unit"),
+          "observation" = c("observation_type", "qualifier", "value_as", "unit"),
           "note" = c("note_type", "note_class", "encoding", "language"),
           "specimen" = c("specimen_type", "unit", "anatomic_site", "disease_status"),
           "dose_era" = "unit"
@@ -561,6 +563,9 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$reload_vocabulary_datatable"))
       
+      # Reset row details
+      output$vocabulary_datatable_selected_item <- renderUI("")
+      
       vocabulary_id <- r$vocabulary %>% dplyr::filter(id == input$vocabulary$key) %>% dplyr::pull(vocabulary_id)
       
       # Filter only used concepts in d vars
@@ -573,12 +578,12 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         dplyr::mutate(modified = FALSE) %>%
         dplyr::mutate_at("concept_id_1", as.character)
       
-      if (length(r$dataset_vocabulary_concepts_datatable_proxy) == 0){
+      # if (length(r$dataset_vocabulary_concepts_datatable_proxy) == 0){
         editable_cols <- c("concept_name_1", "concept_display_name_1")
         searchable_cols <- c("concept_id_1", "concept_name_1", "relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_1", "domain_id")
         column_widths <- c("count_persons_rows" = "80px", "count_concepts_rows" = "80px")
         sortable_cols <- c("concept_id_1", "concept_name_1", "relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_1", "domain_id", "count_persons_rows", "count_concepts_rows")
-        factorize_cols <- c("relationship_id")
+        factorize_cols <- c("relationship_id", "domain_id", "concept_class_id", "standard_concept", "invalid_reason")
         centered_cols <- c("concept_id_1", "relationship_id", "concept_id_2", "domain_id", "count_persons_rows", "count_concepts_rows")
         col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_with_counts", i18n = i18n)
         hidden_cols <- c("id", "concept_id_2", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code", 
@@ -592,9 +597,9 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         
         # Create a proxy for datatatable
         r$dataset_vocabulary_concepts_datatable_proxy <- DT::dataTableProxy("vocabulary_concepts", deferUntilFlush = FALSE)
-      }
+      # }
       
-      else DT::replaceData(r$dataset_vocabulary_concepts_datatable_proxy, r$dataset_vocabulary_concepts, resetPaging = FALSE, rownames = FALSE)
+      # else DT::replaceData(r$dataset_vocabulary_concepts_datatable_proxy, r$dataset_vocabulary_concepts, resetPaging = FALSE, rownames = FALSE)
     })
     
     # Reload cache
@@ -689,6 +694,15 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer input$save_vocabulary_concepts"))
     })
     
+    vocabulary_concepts_row_details <- tibble::tribble(
+      ~domain_id, ~table, ~concept_id, ~cols,
+      "Measurement", "measurement", "measurement_concept_id", list("values_as_number" = "value_as_number", "values_as_concept_id" = "value_as_concept_id"),
+      "Observation", "observation", "observation_concept_id", list("values_as_number" = "value_as_number", "values_as_string" = "value_as_string", "values_as_concept_id" = "value_as_concept_id"),
+      "Drug", "drug_exposure", "drug_concept_id", list("quantities" = "quantity"),
+      "Procedure", "procedure_occurrence", "procedure_concept_id", list("quantities" = "quantity"),
+      "Specimen", "specimen", "specimen_concept_id", list("quantities" = "quantity")
+    )
+    
     # When a row is selected
     observeEvent(input$vocabulary_concepts_rows_selected, {
       
@@ -697,18 +711,44 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       selected_concept <- r$dataset_vocabulary_concepts[input$vocabulary_concepts_rows_selected, ]
       
       concept_values <- tagList()
-
-      if (selected_concept$domain_id == "Measurement"){
-        if (nrow(d$measurement) > 0){
-          if (!is.na(selected_concept$concept_id_2)) measurement_concept_id <- selected_concept$concept_id_2
-          else measurement_concept_id <- selected_concept$concept_id_1
-          
-          values <- d$measurement %>% dplyr::filter(measurement_concept_id == !!measurement_concept_id)
-          
-          if (nrow(values) > 0) concept_values <- tagList(br(),
-            strong(i18n$t("values_as_number")), " : ", values %>% dplyr::slice_sample(n = 5, replace = TRUE) %>% 
-              dplyr::mutate(result = paste0(value_as_number, " ", unit_concept_code)) %>% dplyr::pull(result) %>% toString()
-          )
+      
+      for (i in 1:nrow(vocabulary_concepts_row_details)){
+        row <- vocabulary_concepts_row_details[i, ]
+        if (selected_concept$domain_id == row$domain_id){
+          if (nrow(d[[row$table]]) > 0){
+            if (!is.na(selected_concept$concept_id_2)) concept_id <- selected_concept$concept_id_2
+            else concept_id <- selected_concept$concept_id_1
+            
+            values <- d[[row$table]] %>% dplyr::filter(get(row$concept_id) == !!concept_id)
+            
+            if (nrow(values) > 0){
+              
+              values <- values %>% dplyr::slice_sample(n = 5, replace = TRUE)
+              
+              cols <- row$cols %>% unlist()
+              for (name in names(cols)){
+                col <- cols[[name]]
+                
+                if (nrow(values %>% dplyr::filter(!is.na(get(col)))) == 0) concept_values <- tagList(concept_values, br(), strong(i18n$t(name)), " : /")
+                else {
+                  if (col == "value_as_number") concept_values <- tagList(concept_values, br(),
+                    strong(i18n$t("values_as_number")), " : ", values %>% 
+                      dplyr::mutate(result = paste0(value_as_number, " ", unit_concept_code)) %>% dplyr::pull(result) %>% toString())
+                  
+                  else if (col == "value_as_concept_id") concept_values <- tagList(concept_values, br(),
+                    strong(i18n$t("values_as_concept_id")), " : ", values %>% dplyr::slice_sample(n = 5, replace = TRUE) %>% 
+                      dplyr::left_join(
+                        r$dataset_all_concepts %>% dplyr::select(value_as_concept_id = concept_id, value_as_concept_name = concept_name),
+                        by = "value_as_concept_id"
+                      ) %>% dplyr::pull(value_as_concept_name) %>% toString())
+                  
+                  else concept_values <- tagList(concept_values, br(),
+                    strong(i18n$t(name)), " : ", values %>% dplyr::slice_sample(n = 5, replace = TRUE) %>% 
+                      dplyr::pull(col) %>% toString())
+                }
+              }
+            }
+          }
         }
       }
       
