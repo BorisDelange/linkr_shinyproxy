@@ -77,10 +77,10 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
                   list(key = 15, text = i18n$t("num_rows")),
                   list(key = 16, text = i18n$t("num_patients"))
                 ),
-                value = c(1, 2, 3, 4, 6, 15, 16)
+                value = c(1, 2, 3, 15, 16)
               ),
               div(style = "width:10px;"),
-              div(shiny.fluent::Toggle.shinyInput(ns("vocabulary_show_mapped_concepts"), value = TRUE), style = "margin-top:45px;"),
+              div(shiny.fluent::Toggle.shinyInput(ns("vocabulary_show_mapped_concepts"), value = FALSE), style = "margin-top:45px;"),
               div(i18n$t("show_mapped_concepts"), style = "font-weight:bold; margin-top:45px; margin-right:30px;")
             ),
             conditionalPanel(
@@ -88,14 +88,14 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
               DT::DTOutput(ns("vocabulary_concepts")),
               conditionalPanel("input.vocabulary == null", ns = ns, br()),
               conditionalPanel(
-                condition = "input.vocabulary != null", ns = ns, br(),
-                div(
-                  div(uiOutput(ns("vocabulary_datatable_selected_item")), style = "width:50%; display:flex; float:left; border:solid 1px;"),
-                  div(plotly::plotlyOutput(ns("vocabulary_datatable_selected_item_plot")), style = "width:50%; display:flex; float:rigth; border:solid 1px;")
-                ),
+                condition = "input.vocabulary != null", ns = ns,
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                   shiny.fluent::PrimaryButton.shinyInput(ns("save_vocabulary_concepts"), i18n$t("save")),
                   shiny.fluent::DefaultButton.shinyInput(ns("reload_vocabulary_concepts_cache"), i18n$t("reload_cache"))
+                ), br(),
+                div(
+                  div(uiOutput(ns("vocabulary_datatable_selected_item")), style = "display:relative;float:left;"),
+                  div(plotly::plotlyOutput(ns("vocabulary_datatable_selected_item_plot"), height = "280px", width = "500px"), style = "display:relative; float:right;")
                 )
               )
             )
@@ -268,6 +268,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       # Reset UI of selected item
       output$vocabulary_datatable_selected_item <- renderUI("")
+      output$vocabulary_datatable_selected_item_plot <- plotly::renderPlotly(plotly::plotly_empty())
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$selected_dataset 2"))
     })
@@ -565,6 +566,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       # Reset row details
       output$vocabulary_datatable_selected_item <- renderUI("")
+      output$vocabulary_datatable_selected_item_plot <- plotly::renderPlotly(plotly::plotly_empty())
       
       vocabulary_id <- r$vocabulary %>% dplyr::filter(id == input$vocabulary$key) %>% dplyr::pull(vocabulary_id)
       
@@ -588,6 +590,14 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_with_counts", i18n = i18n)
         hidden_cols <- c("id", "concept_id_2", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code", 
           "valid_start_date", "valid_end_date", "invalid_reason", "modified")
+        value_show_cols <- c(1, 2, 3, 4, 6, 15, 16)
+        
+        if (!input$vocabulary_show_mapped_concepts){
+          hidden_cols <- c(hidden_cols, "relationship_id", "concept_name_2")
+          value_show_cols <- c(1, 2, 3, 15, 16)
+        }
+        
+        shiny.fluent::updateDropdown.shinyInput(session, "vocabulary_table_cols", value = value_show_cols)
         
         # Render datatable
         render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$dataset_vocabulary_concepts,
@@ -767,6 +777,23 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       )
       
       output$vocabulary_datatable_selected_item <- renderUI(concept_info)
+      
+      if (selected_concept$domain_id == "Measurement"){
+        
+        concept_plot <- d$measurement %>% dplyr::filter(measurement_concept_id == selected_concept$concept_id_1) %>%
+          ggplot2::ggplot(ggplot2::aes(x = value_as_number, y = 100 * ..count.. / sum(..count..),
+            text = paste(i18n$t("value"), " : ", value_as_number))) +
+          ggplot2::geom_histogram(fill = "#4F86C6") +
+          ggplot2::labs(x = selected_concept$concept_name_1, y = "Propotion (%)") +
+          ggplot2::theme(axis.title = ggplot2::element_text(size = 10), axis.text = ggplot2::element_text(size = 10))
+        
+        output$vocabulary_datatable_selected_item_plot <- plotly::renderPlotly(
+          plotly::ggplotly(concept_plot, tooltip = "text") %>%
+          plotly::config(displayModeBar = FALSE) %>%
+          plotly::style(hoverlabel = list(bgcolor = "white", font = list(size = 12))) %>%
+          plotly::layout(xaxis = list(tickfont = list(size = 12)), yaxis = list(tickfont = list(size = 12)))
+        )
+      }
     })
     
     # --- --- --- --- --
