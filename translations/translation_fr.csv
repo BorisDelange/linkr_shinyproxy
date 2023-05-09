@@ -540,8 +540,8 @@ evaluate_and_edit,Evaluer & éditer
 edit,Modifier
 vocabulary1,Terminologie 1
 vocabulary2,Terminologie 2
-item1_is,L'item 1
-to_item2,l'item 2
+concept_1_is,L'item 1
+to_concept_2,l'item 2
 equivalent_to,Est équivalent à
 included_in,Est inclus dans
 include,Inclut
@@ -558,9 +558,9 @@ vocabularies_and_concepts,Terminologies & concepts
 whats_a_vocabulary,Qu'est-ce qu'une terminologie ?
 whats_a_concept_mapping,Qu'est ce qu'un alignement de concepts ?
 vocabularies_concepts_mapping,Alignement de concepts
-thesaurus_mapping_added,Nouveau mapping ajouté
+vocabulary_mapping_added,Nouveau mapping ajouté
 thesaurus_item_added,Nouvel item ajouté
-thesaurus_mapping_already_exists,Ce mapping existe déjà
+vocabulary_mapping_already_exists,Ce mapping existe déjà
 thesaurus_item_already_exists,Cet item existe déjà dans la terminologie
 checked,Vérifié
 relation,Relation
@@ -625,7 +625,7 @@ none_masc,Aucun
 none_fem,Aucune
 unroll_tree,Dérouler l'arbre
 merge_mapped_items,Fusionner les concepts alignés
-thesaurus_mapping_same_items,Un item ne peut être aligné avec lui-même
+vocabulary_mapping_same_items,Un concept ne peut être aligné avec lui-même (hormis pour 'Correspond à')
 mapped_item,Item aligné
 widget_settings,Paramétrer un widget
 image,Image
@@ -807,3 +807,7 @@ texts,Textes
 proportion,Proportion
 no_data_to_show,Pas de donneés à afficher
 too_many_x_axis_values,Trop de données dans l'axe des x
+maps_to,Correspond à
+mapped_from,Provient de
+is_a,Est inclus dans
+subsumes,Inclut

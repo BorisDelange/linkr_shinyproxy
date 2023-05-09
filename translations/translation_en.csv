@@ -540,8 +540,8 @@ evaluate_and_edit,Evaluate & edit
 edit,Edit
 thesaurus1,Vocabulary 1
 thesaurus2,Vocabulary 2
-item1_is,Item 1
-to_item2,item 2
+concept_1_is,Item 1
+to_concept_2,item 2
 equivalent_to,Is equivalent to
 included_in,Is included in
 include,Include
@@ -558,9 +558,9 @@ vocabularies_and_concepts,Vocabularies & concepts
 whats_a_vocabulary,What's a vocabulary ?
 whats_a_concept_mapping,What's a concept mapping ?
 vocabularies_concepts_mapping,Vocabulary concepts mapping
-thesaurus_mapping_added,New mapping added
+vocabulary_mapping_added,New mapping added
 thesaurus_item_added,New item added
-thesaurus_mapping_already_exists,This mapping already exists
+vocabulary_mapping_already_exists,This mapping already exists
 thesaurus_item_already_exists,This item already exists in the thesaurus
 checked,Checked
 relation,Relation
@@ -625,7 +625,7 @@ none_masc,None
 none_fem,None
 unroll_tree,Unroll tree
 merge_mapped_items,Merge mapped items
-thesaurus_mapping_same_items,An item cannot be merge with itself
+vocabulary_mapping_same_concepts,A concept cannot be merge with itself (except for 'Maps to')
 mapped_item,Mapped item
 widget_settings,Widget settings
 image,Image
@@ -807,3 +807,7 @@ texts,Texts
 proportion,Proportion
 no_data_to_show,No data to show
 too_many_x_axis_values,Too many values in x axis
+maps_to,Maps to
+mapped_from,Mapped from
+is_a,Is a
+subsumes,Subsumes
