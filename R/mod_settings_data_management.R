@@ -1207,6 +1207,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (length(r[[input$vocabularies_table]]) == 0){
             sql <- glue::glue_sql("SELECT * FROM {`input$vocabularies_table`}", .con = m$db)
             r[[input$vocabularies_table]] <- DBI::dbGetQuery(m$db, sql) %>%
+              tibble::as_tibble() %>%
               dplyr::arrange(cols_order[[input$vocabularies_table]]) %>%
               dplyr::mutate_at(cols_to_char[[input$vocabularies_table]], as.character) %>%
               dplyr::mutate(modified = FALSE)
