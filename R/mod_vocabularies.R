@@ -94,9 +94,11 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
                   shiny.fluent::DefaultButton.shinyInput(ns("reload_vocabulary_concepts_cache"), i18n$t("reload_cache"))
                 ), br(),
                 div(
+                  id = ns("vocabulary_datatable_selected_item_div"),
                   div(uiOutput(ns("vocabulary_datatable_selected_item")), style = "display:relative; float:left; width:50%;"),
                   div(
                     div(shiny.fluent::Dropdown.shinyInput(ns("vocabulary_datatable_selected_item_plot_variable")), style = "width:300px; margin-left:42px;"),
+                    uiOutput(ns("vocabulary_datatable_selected_item_error_message")),
                     plotly::plotlyOutput(ns("vocabulary_datatable_selected_item_plot"), height = "280px"), 
                     style = "display:relative; float:right; width:50%;"
                   )
@@ -272,8 +274,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       # Reset UI of selected item
       output$vocabulary_datatable_selected_item <- renderUI("")
-      output$vocabulary_datatable_selected_item_plot <- plotly::renderPlotly(plotly::plotly_empty())
-      shinyjs::hide("vocabulary_datatable_selected_item_plot_variable")
+      output$vocabulary_datatable_selected_item_plot <- plotly::renderPlotly(plotly::plotly_empty() %>% plotly::config(displayModeBar = FALSE))
+      shinyjs::hide("vocabulary_datatable_selected_item_div")
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$selected_dataset 2"))
     })
@@ -571,8 +573,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       # Reset row details
       output$vocabulary_datatable_selected_item <- renderUI("")
-      output$vocabulary_datatable_selected_item_plot <- plotly::renderPlotly(plotly::plotly_empty())
-      shinyjs::hide("vocabulary_datatable_selected_item_plot_variable")
+      output$vocabulary_datatable_selected_item_plot <- plotly::renderPlotly(plotly::plotly_empty() %>% plotly::config(displayModeBar = FALSE))
+      shinyjs::hide("vocabulary_datatable_selected_item_div")
       
       vocabulary_id <- r$vocabulary %>% dplyr::filter(id == input$vocabulary$key) %>% dplyr::pull(vocabulary_id)
       
@@ -724,21 +726,28 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_concepts_rows_selected"))
       
+      shinyjs::show("vocabulary_datatable_selected_item_div")
+      
       selected_concept <- r$dataset_vocabulary_concepts[input$vocabulary_concepts_rows_selected, ]
       r$vocabulary_selected_concept <- selected_concept
       
       concept_values <- tagList()
       
-      # for (i in 1:nrow(vocabulary_concepts_row_details)){
       row <- vocabulary_concepts_row_details %>% dplyr::filter(domain_id == selected_concept$domain_id)
-        # if (selected_concept$domain_id == row$domain_id){
+      
       if (nrow(d[[row$table]]) > 0){
         if (!is.na(selected_concept$concept_id_2)) concept_id <- selected_concept$concept_id_2
         else concept_id <- selected_concept$concept_id_1
         
         values <- d[[row$table]] %>% dplyr::filter(get(row$concept_id) == !!concept_id)
+        r$vocabulary_selected_concept_values <- values
         
         if (nrow(values) > 0){
+          
+          unit <- character()
+          if (selected_concept$domain_id %in% c("measurement", "observation")) unit <- values %>% 
+              dplyr::filter(!is.na(unit_concept_code)) %>% dplyr::distinct(unit_concept_code) %>% dplyr::pull()
+          r$vocabulary_selected_concept_unit <- unit
           
           values <- values %>% dplyr::slice_sample(n = 5, replace = TRUE)
           
@@ -758,14 +767,10 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
             else {
               if (name == "value_as_number") concept_values <- tagList(concept_values, br(),
                 strong(i18n$t("values_as_number")), " : ", values %>% 
-                  dplyr::mutate(result = paste0(value_as_number, " ", unit_concept_code)) %>% dplyr::pull(result) %>% toString())
+                  dplyr::mutate(result = ifelse(!is.na(unit_concept_code), paste0(value_as_number, " ", unit_concept_code), value_as_number)) %>% dplyr::pull(result) %>% toString())
               
               else if (name == "value_as_concept_id") concept_values <- tagList(concept_values, br(),
-                strong(i18n$t("values_as_concept_id")), " : ", values %>% dplyr::slice_sample(n = 5, replace = TRUE) %>% 
-                  dplyr::left_join(
-                    r$dataset_all_concepts %>% dplyr::select(value_as_concept_id = concept_id, value_as_concept_name = concept_name),
-                    by = "value_as_concept_id"
-                  ) %>% dplyr::pull(value_as_concept_name) %>% toString())
+                strong(i18n$t("values_as_concept_id")), " : ", values %>% dplyr::pull(value_as_concept_name) %>% toString())
               
               else concept_values <- tagList(concept_values, br(),
                 strong(i18n$t(col)), " : ", values %>% dplyr::slice_sample(n = 5, replace = TRUE) %>% 
@@ -778,52 +783,129 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           # Update dropdown for plotly var
           shiny.fluent::updateDropdown.shinyInput(session, "vocabulary_datatable_selected_item_plot_variable",
             options = selected_item_plot_variable_options, value = selected_item_plot_variable_value)
-          
-          shinyjs::show("vocabulary_datatable_selected_item_plot_variable")
         }
       }
-        # }
-      # }
       
-      concept_info <- tagList(
-        strong(i18n$t("concept_id")), " : ", selected_concept$concept_id_1, br(),
-        strong(i18n$t("concept_name")), " : ", selected_concept$concept_name_1, br(),
-        strong(i18n$t("concept_display_name")), " : ", selected_concept$concept_display_name_1, br(),
-        strong(i18n$t("domain_id")), " : ", selected_concept$domain_id, br(),
-        strong(i18n$t("standard_concept")), " : ", selected_concept$standard_concept, br(),
-        strong(i18n$t("concept_code")), " : ", selected_concept$concept_code, br(),
-        strong(i18n$t("valid_start_date")), " : ", selected_concept$valid_start_date, br(),
-        strong(i18n$t("valid_end_date")), " : ", selected_concept$valid_end_date, br(),
-        strong(i18n$t("invalid_reason")), " : ", selected_concept$invalid_reason, br(),
-        concept_values,
-        br(), br()
-      )
+      concept_info <- tagList()
+      
+      if (is.na(selected_concept$relationship_id)) for (name in c("concept_id_1", "concept_name_1", "concept_display_name_1")) concept_info <- 
+        tagList(concept_info, strong(i18n$t(stringr::str_replace(name, "_1", ""))), " : ", selected_concept[[name]], br())
+      
+      else for (name in c("concept_id_1", "concept_name_1", "concept_display_name_1", "relationship_id",
+        "concept_id_2", "concept_name_2")) concept_info <- 
+        tagList(concept_info, strong(i18n$t(name)), " : ", selected_concept[[name]], br())
+        
+      for (name in c("domain_id", "standard_concept", "concept_code", "valid_start_date", "valid_end_date", "invalid_reason")) concept_info <- 
+        tagList(concept_info, strong(i18n$t(name)), " : ", selected_concept[[name]], br())
+      
+      concept_info <- tagList(concept_info, concept_values, br(), br())
       
       output$vocabulary_datatable_selected_item <- renderUI(concept_info)
+      
+      # Update plotly
+      r$vocabulary_datatable_selected_item_reload_plot <- Sys.time()
+    })
+    
+    observeEvent(input$vocabulary_datatable_selected_item_plot_variable, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_datatable_selected_item_plot_variable"))
+      r$vocabulary_datatable_selected_item_reload_plot <- Sys.time()
     })
     
     # Update plotly
     
-    observeEvent(input$vocabulary_datatable_selected_item_plot_variable, {
+    observeEvent(r$vocabulary_datatable_selected_item_reload_plot, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_datatable_selected_item_plot_variable"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$vocabulary_datatable_selected_item_reload_plot"))
       
-      # if (selected_concept$domain_id == "Measurement"){
+      req(length(input$vocabulary_datatable_selected_item_plot_variable) > 0)
+      
+      selected_concept <- r$vocabulary_selected_concept
+      row <- vocabulary_concepts_row_details %>% dplyr::filter(domain_id == selected_concept$domain_id)
+      values <- r$vocabulary_selected_concept_values
+      plot_variable <- input$vocabulary_datatable_selected_item_plot_variable
+      unit <- r$vocabulary_selected_concept_unit
+      
+      req(plot_variable %in% names(row$cols %>% unlist()))
+      
+      error_message <- NA_character_
+      
+      # Render empty plotly if there's only distinct value of the concept
+      # Or if there's too much distinct categorical values
+      
+      n_distinct_values <- values %>% dplyr::distinct(get(plot_variable)) %>% dplyr::rename("col" := "get(plot_variable)") %>% dplyr::filter(!is.na(col)) %>% nrow()
+      
+      if (n_distinct_values <= 1){
+        suppressWarnings(concept_plot <- plotly::plotly_empty() %>% plotly::config(displayModeBar = FALSE))
+        error_message <- "no_data_to_show"
+      }
 
-      concept_plot <- d$measurement %>% dplyr::filter(measurement_concept_id == selected_concept$concept_id_1) %>%
-        ggplot2::ggplot(ggplot2::aes(x = value_as_number, y = 100 * ..count.. / sum(..count..),
-          text = paste(i18n$t("value"), " : ", value_as_number))) +
-        ggplot2::geom_histogram(fill = "#4F86C6") +
-        ggplot2::labs(x = selected_concept$concept_name_1, y = "Propotion (%)") +
-        ggplot2::theme(axis.title = ggplot2::element_text(size = 10), axis.text = ggplot2::element_text(size = 10))
+      if (n_distinct_values > 1){
+        
+        # Keep unit if it is unique
+        x_axis_name <- selected_concept$concept_name_1
+        text_part_2 <- ""
+        
+        if (length(unit) == 1){
+          x_axis_name <- paste0(selected_concept$concept_name_1, " (", unit, ")")
+          text_part_2 <- paste0("<br />", i18n$t("unit"), " : ", unit)
+        }
+        
+        values <- values %>% dplyr::mutate(row_id = 1:dplyr::n())
+        values <- values %>% dplyr::left_join(
+          values %>% dplyr::select(row_id, !!plot_variable) %>% dplyr::group_by_at(plot_variable) %>% 
+            dplyr::summarize(row_id, count = dplyr::n()) %>% dplyr::ungroup() %>% dplyr::select(-!!plot_variable),
+          by = "row_id"
+        ) %>% dplyr::select(-row_id)
+        
+        if (plot_variable %in% c("value_as_concept_id", "value_as_string")){
+          
+          if (plot_variable == "value_as_concept_id") plot_variable <- "value_as_concept_name"
+          
+          if (n_distinct_values > 5){
+            suppressWarnings(concept_plot <- plotly::plotly_empty() %>% plotly::config(displayModeBar = FALSE))
+            error_message <- "too_many_x_axis_values"
+          }
+          
+          if (n_distinct_values <= 5) concept_plot <- values %>%
+            ggplot2::ggplot(ggplot2::aes(x = get(plot_variable),
+              text = paste0(i18n$t("value"), " : ", get(plot_variable), text_part_2, "<br />", i18n$t("row_number"), " : ", count))) +
+            ggplot2::geom_histogram(fill = "#4F86C6", stat = "count") +
+            ggplot2::labs(
+              x = selected_concept$concept_name_1, 
+              y = paste0(i18n$t("proportion"), " (%)")) +
+            ggplot2::theme(axis.title = ggplot2::element_text(size = 10), axis.text = ggplot2::element_text(size = 10))
+        }
+        
+        else {
+          concept_plot <- values %>%
+            ggplot2::ggplot(ggplot2::aes(x = get(plot_variable), y = 100 * ..count.. / sum(..count..),
+              text = paste0(i18n$t("value"), " : ", get(plot_variable), text_part_2, "<br />", i18n$t("row_number"), " : ", count))) +
+            ggplot2::geom_histogram(fill = "#4F86C6") +
+              ggplot2::labs(
+                x = x_axis_name, 
+                y = paste0(i18n$t("proportion"), " (%)")) +
+            ggplot2::theme(axis.title = ggplot2::element_text(size = 10), axis.text = ggplot2::element_text(size = 10))
+        }
+        
+        concept_plot <- concept_plot %>% 
+          plotly::ggplotly(tooltip = "text") %>%
+          plotly::config(displayModeBar = FALSE) %>%
+          plotly::style(hoverlabel = list(bgcolor = "white", font = list(size = 12))) %>%
+          plotly::layout(xaxis = list(tickfont = list(size = 12)), yaxis = list(tickfont = list(size = 12)))
+      }
 
-      output$vocabulary_datatable_selected_item_plot <- plotly::renderPlotly(
-        plotly::ggplotly(concept_plot, tooltip = "text") %>%
-        plotly::config(displayModeBar = FALSE) %>%
-        plotly::style(hoverlabel = list(bgcolor = "white", font = list(size = 12))) %>%
-        plotly::layout(xaxis = list(tickfont = list(size = 12)), yaxis = list(tickfont = list(size = 12)))
-        )
-      # }
+      output$vocabulary_datatable_selected_item_plot <- plotly::renderPlotly(concept_plot)
+      
+      if (!is.na(error_message)){
+        output$vocabulary_datatable_selected_item_error_message <- renderUI(tagList(br(),
+          div(shiny.fluent::MessageBar(i18n$t(error_message), messageBarType = 5), style = "width:300px; margin-left:42px;")))
+        shinyjs::hide("vocabulary_datatable_selected_item_plot")
+      } 
+      else {
+        output$vocabulary_datatable_selected_item_error_message <- renderUI("")
+        shinyjs::show("vocabulary_datatable_selected_item_plot")
+      }
+      
     })
     
     # --- --- --- --- --
