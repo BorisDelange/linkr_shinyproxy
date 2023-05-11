@@ -131,16 +131,16 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
               div(
                 div(
                   div(
-                    make_combobox(i18n = i18n, ns = ns, label = "vocabulary1", id = "vocabulary_mapping1", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-                    DT::DTOutput(ns("vocabulary_mapping1_dt"))
+                    make_combobox(i18n = i18n, ns = ns, label = "vocabulary1", id = "vocabulary_mapping_1", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+                    DT::DTOutput(ns("vocabulary_mapping_1_dt"))
                   ),
                   div(
-                    make_combobox(i18n = i18n, ns = ns, label = "vocabulary2", id = "vocabulary_mapping2", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-                    DT::DTOutput(ns("vocabulary_mapping2_dt"))
+                    make_combobox(i18n = i18n, ns = ns, label = "vocabulary2", id = "vocabulary_mapping_2", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+                    DT::DTOutput(ns("vocabulary_mapping_2_dt"))
                   ),
                   style = "width:100%; display:grid; grid-template-columns:1fr 1fr; grid-gap:20px;"
                 ), br(),
-                conditionalPanel(condition = "input.vocabulary_mapping1 != null && input.vocabulary_mapping2 != null", ns = ns, 
+                conditionalPanel(condition = "input.vocabulary_mapping_1 != null && input.vocabulary_mapping_2 != null", ns = ns, 
                   br(),
                   div(
                     div(uiOutput(ns("vocabulary_mapping_selected_concept_1")), style = "border:dashed 1px; padding:10px;"),
@@ -266,9 +266,9 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
             grepl(paste0("^", data_source, ","), data_source_id) |
             grepl(paste0(", ", data_source, ","), data_source_id)
         ) %>% dplyr::arrange(vocabulary_name)
-      vocabulary_options <- convert_tibble_to_list(data = r$dataset_vocabularies, key_col = "id", text_col = "vocabulary_name", i18n = i18n)
+      vocabulary_options <- convert_tibble_to_list(data = r$dataset_vocabularies, key_col = "vocabulary_id", text_col = "vocabulary_name", i18n = i18n)
       
-      for (var in c("vocabulary", "vocabulary_mapping1", "vocabulary_mapping2")) shiny.fluent::updateComboBox.shinyInput(session, var, options = vocabulary_options, value = NULL)
+      for (var in c("vocabulary", "vocabulary_mapping_1", "vocabulary_mapping_2")) shiny.fluent::updateComboBox.shinyInput(session, var, options = vocabulary_options, value = NULL)
       
       r$load_dataset_all_concepts <- Sys.time()
       
@@ -740,8 +740,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$vocabulary_concepts_rows_trigger"))
       
       if (r$vocabulary_concepts_rows_selected_type == "main_vocab") selected_concept <- r$dataset_vocabulary_concepts[input$vocabulary_concepts_rows_selected, ]
-      else if (r$vocabulary_concepts_rows_selected_type == "mapping_vocab_1") selected_concept <- r$dataset_vocabulary_concepts_mapping1[input$vocabulary_mapping1_dt_rows_selected, ]
-      else if (r$vocabulary_concepts_rows_selected_type == "mapping_vocab_2") selected_concept <- r$dataset_vocabulary_concepts_mapping2[input$vocabulary_mapping2_dt_rows_selected, ]
+      else if (r$vocabulary_concepts_rows_selected_type == "mapping_vocab_1") selected_concept <- r$dataset_vocabulary_concepts_mapping_1[input$vocabulary_mapping_1_dt_rows_selected, ]
+      else if (r$vocabulary_concepts_rows_selected_type == "mapping_vocab_2") selected_concept <- r$dataset_vocabulary_concepts_mapping_2[input$vocabulary_mapping_2_dt_rows_selected, ]
       
       r$vocabulary_selected_concept <- selected_concept
       
@@ -942,13 +942,13 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
     ## Create a mapping ----
     # --- --- --- --- --- --
     
-    observeEvent(input$vocabulary_mapping1, {
-      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_mapping1"))
-      r$vocabulary_mapping_reload <- paste0(Sys.time(), "_mapping1")
+    observeEvent(input$vocabulary_mapping_1, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_mapping_1"))
+      r$vocabulary_mapping_reload <- paste0(Sys.time(), "_mapping_1")
     })
-    observeEvent(input$vocabulary_mapping2, {
-      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_mapping2"))
-      r$vocabulary_mapping_reload <- paste0(Sys.time(), "_mapping2")
+    observeEvent(input$vocabulary_mapping_2, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_mapping_2"))
+      r$vocabulary_mapping_reload <- paste0(Sys.time(), "_mapping_2")
     })
     
     observeEvent(r$vocabulary_mapping_reload, {
@@ -956,14 +956,12 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$vocabulary_mapping_reload"))
       
-      if (grepl("mapping1", r$vocabulary_mapping_reload)) mapping <- "mapping1"
-      else if (grepl("mapping2", r$vocabulary_mapping_reload)) mapping <- "mapping2"
+      if (grepl("mapping_1", r$vocabulary_mapping_reload)) mapping <- "mapping_1"
+      else if (grepl("mapping_2", r$vocabulary_mapping_reload)) mapping <- "mapping_2"
       
       req(length(input[[paste0("vocabulary_", mapping)]]$key) > 0)
       
-      vocabulary_id <- r$vocabulary %>% dplyr::filter(id == input[[paste0("vocabulary_", mapping)]]$key) %>% dplyr::pull(vocabulary_id)
-      
-      sql <- glue::glue_sql("SELECT * FROM concept WHERE vocabulary_id = {vocabulary_id} ORDER BY concept_id", .con = m$db)
+      sql <- glue::glue_sql("SELECT * FROM concept WHERE vocabulary_id = {input[[paste0('vocabulary_', mapping)]]$key} ORDER BY concept_id", .con = m$db)
       r[[paste0("dataset_vocabulary_concepts_", mapping)]] <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble()
       
       # Merge count_rows from r$dataset_all_concepts
@@ -977,31 +975,32 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         dplyr::mutate_at("concept_id", as.character)
       
       searchable_cols <- c("concept_id", "concept_name")
-      column_widths <- c("count_persons_rows" = "80px", "count_concepts_rows" = "80px")
+      column_widths <- c("concept_id" = "100px", "count_concepts_rows" = "80px")
       sortable_cols <- c("concept_id", "concept_name", "count_persons_rows", "count_concepts_rows")
       centered_cols <- c("concept_id", "count_persons_rows", "count_concepts_rows")
       col_names <- get_col_names(table_name = "mapping_vocabulary_concepts_with_counts", i18n = i18n)
       hidden_cols <- c("id", "domain_id", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code",
         "valid_start_date", "valid_end_date", "invalid_reason", "count_persons_rows")
+      shortened_cols <- c("concept_name" = 40)
       
       # Render datatable
       render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0("dataset_vocabulary_concepts_", mapping)]],
         output_name = paste0("vocabulary_", mapping, "_dt"), col_names = col_names, datatable_dom = "<'top't><'bottom'p>",
         sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
+        searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols, shortened_cols = shortened_cols)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$vocabulary_mapping_reload"))
     })
     
     # When a row is selected
-    observeEvent(input$vocabulary_mapping1_dt_rows_selected, {
-      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_mapping1_dt_rows_selected"))
+    observeEvent(input$vocabulary_mapping_1_dt_rows_selected, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_mapping_1_dt_rows_selected"))
       
       r$vocabulary_concepts_rows_selected_trigger <- Sys.time()
       r$vocabulary_concepts_rows_selected_type <- "mapping_vocab_1"
     })
-    observeEvent(input$vocabulary_mapping2_dt_rows_selected, {
-      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_mapping2_dt_rows_selected"))
+    observeEvent(input$vocabulary_mapping_2_dt_rows_selected, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_mapping_2_dt_rows_selected"))
       
       r$vocabulary_concepts_rows_selected_trigger <- Sys.time()
       r$vocabulary_concepts_rows_selected_type <- "mapping_vocab_2"
@@ -1014,13 +1013,13 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$add_mapping"))
       
-      req(length(input$vocabulary_mapping1_dt_rows_selected) > 0)
-      req(length(input$vocabulary_mapping2_dt_rows_selected) > 0)
-      req(nrow(r$dataset_vocabulary_concepts_mapping1[input$vocabulary_mapping1_dt_rows_selected, ]) > 0)
-      req(nrow(r$dataset_vocabulary_concepts_mapping2[input$vocabulary_mapping2_dt_rows_selected, ]) > 0)
+      req(length(input$vocabulary_mapping_1_dt_rows_selected) > 0)
+      req(length(input$vocabulary_mapping_2_dt_rows_selected) > 0)
+      req(nrow(r$dataset_vocabulary_concepts_mapping_1[input$vocabulary_mapping_1_dt_rows_selected, ]) > 0)
+      req(nrow(r$dataset_vocabulary_concepts_mapping_2[input$vocabulary_mapping_2_dt_rows_selected, ]) > 0)
       
-      concept_1 <- r$dataset_vocabulary_concepts_mapping1[input$vocabulary_mapping1_dt_rows_selected, ] %>% dplyr::mutate_at("concept_id", as.integer)
-      concept_2 <- r$dataset_vocabulary_concepts_mapping2[input$vocabulary_mapping2_dt_rows_selected, ] %>% dplyr::mutate_at("concept_id", as.integer)
+      concept_1 <- r$dataset_vocabulary_concepts_mapping_1[input$vocabulary_mapping_1_dt_rows_selected, ] %>% dplyr::mutate_at("concept_id", as.integer)
+      concept_2 <- r$dataset_vocabulary_concepts_mapping_2[input$vocabulary_mapping_2_dt_rows_selected, ] %>% dplyr::mutate_at("concept_id", as.integer)
       
       # Check if mapping already added in database
       
@@ -1041,16 +1040,30 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       req(!vocabulary_mapping_same_items)
       
       # Add new mapping to r$vocabulary_added_mappings
+      # Add also the reverse of this mapping
       
-      new_row <- tibble::tribble(~id, ~concept_id_1, ~concept_id_2, ~relationship_id, ~valid_start_date, ~valid_end_date, ~invalid_reason,
-        get_last_row(m$db, "concept_relationship") + 1, concept_1$concept_id, concept_2$concept_id, input$relationship_id,
-        as.character(Sys.Date()), "2099-12-31", NA_character_)
+      last_row_concept_relationship <- get_last_row(m$db, "concept_relationship")
+      reverse_relationship_id <- switch(input$relationship_id, "Maps to" = "Mapped from", "Is a" = "Subsumes", "Subsumes" = "Is a")
       
-      r$vocabulary_added_mappings <- r$vocabulary_added_mappings %>% dplyr::bind_rows(new_row)
+      new_row_db <- tibble::tribble(
+        ~id, ~concept_id_1, ~concept_id_2, ~relationship_id, ~valid_start_date, ~valid_end_date, ~invalid_reason,
+        last_row_concept_relationship + 2, concept_1$concept_id, concept_2$concept_id, input$relationship_id, as.character(Sys.Date()), "2099-12-31", NA_character_,
+        last_row_concept_relationship + 1, concept_2$concept_id, concept_1$concept_id, reverse_relationship_id, as.character(Sys.Date()), "2099-12-31", NA_character_)
+      
+      new_row_datatable <- new_row_db %>%
+        dplyr::mutate(relationship_id = dplyr::case_when(
+          relationship_id == "Maps to" ~ i18n$t("maps_to"),
+          relationship_id == "Mapped from" ~ i18n$t("mapped_from"),
+          relationship_id == "Is a" ~ i18n$t("is_a"),
+          relationship_id == "Subsumes" ~ i18n$t("subsumes"))) %>%
+        dplyr::transmute(id, vocabulary_id_1 = input$vocabulary_mapping_1$key, concept_id_1, relationship_id, 
+          vocabulary_id_2 = input$vocabulary_mapping_2$key, concept_id_2)
+      
+      r$vocabulary_added_mappings <- r$vocabulary_added_mappings %>% dplyr::bind_rows(new_row_datatable) %>% dplyr::arrange(dplyr::desc(id))
 
       # Add new mapping to database
 
-      # DBI::dbAppendTable(r$db, "vocabulary_concepts_mapping", new_row)
+      DBI::dbAppendTable(m$db, "concept_relationship", new_row_db)
 
       # Notify user
       show_message_bar(output, "vocabulary_mapping_added", "success", i18n, ns = ns)
@@ -1103,14 +1116,14 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$selected_dataset 1"))
       
-      r$vocabulary_added_mappings <- tibble::tibble(id = integer(), concept_id_1 = integer(), concept_id_2 = integer(),
-        relationship_id = character(), valid_start_date = character(), valid_end_date = character(), invalid_reason = character())
+      r$vocabulary_added_mappings <- tibble::tibble(id = integer(), vocabulary_id_1 = character(), concept_id_1 = integer(),
+        relationship_id = character(), vocabulary_id_2 = character(), concept_id_2 = integer())
 
-      output$vocabulary_selected_concept_mapping1 <- renderText("")
-      output$vocabulary_selected_concept_mapping2 <- renderText("")
+      output$vocabulary_selected_concept_mapping_1 <- renderText("")
+      output$vocabulary_selected_concept_mapping_2 <- renderText("")
 
-      render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(), output_name = "vocabulary_mapping1_dt", datatable_dom = "")
-      render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(), output_name = "vocabulary_mapping2_dt", datatable_dom = "")
+      render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(), output_name = "vocabulary_mapping_1_dt", datatable_dom = "")
+      render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(), output_name = "vocabulary_mapping_2_dt", datatable_dom = "")
 
       r$reload_vocabulary_added_mappings_datatable <- Sys.time()
       r$reload_vocabulary_evaluate_mappings_datatable <- Sys.time()
@@ -1122,28 +1135,17 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$reload_vocabulary_added_mappings_datatable"))
-      
-      # r$vocabulary_added_mappings_temp <- r$vocabulary_added_mappings %>%
-      #   dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.character) %>%
-      #   dplyr::mutate(relation = dplyr::case_when(relation_id == 1 ~ i18n$t("equivalent_to"), relation_id == 2 ~ i18n$t("included_in"), relation_id == 3 ~ i18n$t("include"))) %>%
-      #   dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_1 = id, thesaurus_name_1 = name), by = "thesaurus_id_1") %>%
-      #   dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id_2 = id, thesaurus_name_2 = name), by = "thesaurus_id_2") %>%
-      #   dplyr::relocate(thesaurus_name_1, .after = "thesaurus_id_1") %>%
-      #   dplyr::relocate(thesaurus_name_2, .after = "thesaurus_id_2") %>%
-      #   dplyr::select(-thesaurus_id_1, -thesaurus_id_2, -relation_id) %>%
-      #   dplyr::relocate(relation, .after = concept_id_1) %>%
-      #   dplyr::arrange(dplyr::desc(datetime))
-      # 
-      # centered_cols <- c("id", "concept_id_1", "thesaurus_name_1", "concept_id_2", "thesaurus_name_2", "relation")
-      # col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_mapping", i18n = i18n)
-      # hidden_cols <- c("id", "creator_id", "datetime", "deleted", "category")
-      # 
-      # # Render datatable
-      # render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$vocabulary_added_mappings_temp, datatable_dom = "<'top't><'bottom'p>",
-      #   output_name = "vocabulary_added_mappings", col_names = col_names, centered_cols = centered_cols, hidden_cols = hidden_cols)
-      # 
-      # # Create a proxy for datatatable
-      # r$vocabulary_added_mappings_datatable_proxy <- DT::dataTableProxy("vocabulary_added_mappings", deferUntilFlush = FALSE)
+
+      centered_cols <- c("vocabulary_id_1", "concept_id_1", "relationship_id", "vocabulary_id_2", "concept_id_2")
+      col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_mapping", i18n = i18n)
+      hidden_cols <- c("id")
+
+      # Render datatable
+      render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$vocabulary_added_mappings, datatable_dom = "<'top't><'bottom'p>",
+        output_name = "vocabulary_added_mappings", col_names = col_names, centered_cols = centered_cols, hidden_cols = hidden_cols)
+
+      # Create a proxy for datatatable
+      r$vocabulary_added_mappings_datatable_proxy <- DT::dataTableProxy("vocabulary_added_mappings", deferUntilFlush = FALSE)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$reload_vocabulary_added_mappings_datatable"))
     })

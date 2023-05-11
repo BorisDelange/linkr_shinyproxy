@@ -736,6 +736,8 @@ all_users_user_access_description,Accéder au log de tous les utilisateurs
 only_me_user_access_description,Accéder au log de l'utilisateur connecté
 vocabulary_id_col,ID (vocabulary_id)
 vocabulary_id,ID de la terminologie
+vocabulary_id_1,ID terminologie 1
+vocabulary_id_2,ID terminologie 2
 vocabulary_name_col,Nom (vocabulary_name)
 vocabulary_name,Nom de la terminologie
 vocabulary,Terminologie

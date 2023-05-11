@@ -254,9 +254,9 @@ get_col_names <- function(table_name = character(), i18n = character()){
       i18n$t("num_patients"), i18n$t("num_rows"))
   }
   
-  if (table_name == "dataset_thesaurus_items_mapping"){
-    result <- c(i18n$t("id"), i18n$t("category"), i18n$t("vocabulary"), i18n$t("concept_id"), i18n$t("relation"), i18n$t("vocabulary"), i18n$t("concept_id"),
-      i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"))
+  if (table_name == "dataset_vocabulary_concepts_mapping"){
+    result <- c(i18n$t("id"), i18n$t("vocabulary_id_1"), i18n$t("concept_id_1"), i18n$t("relationship_id"), 
+      i18n$t("vocabulary_id_2"), i18n$t("concept_id_2"))
   }
   
   if (table_name == "dataset_thesaurus_items_mapping_evals"){

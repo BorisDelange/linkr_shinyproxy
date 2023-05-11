@@ -736,6 +736,8 @@ all_users_user_access_description,Access to log of all users
 only_me_user_access_description,Access the log of the connected user
 vocabulary_id_col,ID (vocabulary_id)
 vocabulary_id,Vocabulary ID
+vocabulary_id_1,Vocabulary ID 1
+vocabulary_id_2,Vocabulary ID 2
 vocabulary_name_col,Name (vocabulary_name)
 vocabulary_name,Vocabulary name
 vocabulary,Vocabulary

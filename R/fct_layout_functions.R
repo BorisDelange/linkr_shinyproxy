@@ -297,7 +297,7 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = character
   output_name = character(), col_names = character(), datatable_dom = "<'datatable_length'l><'top't><'bottom'p>", page_length = 10, start = 0,
   editable_cols = character(), sortable_cols = character(), centered_cols = character(), searchable_cols = character(), filter = FALSE, 
   factorize_cols = character(), column_widths = character(), hidden_cols = character(), truncated_cols = character(), selection = "single",
-  bold_rows = character()
+  bold_rows = character(), shortened_cols = character()
 ){
   
   # Translation for datatable
@@ -347,6 +347,11 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = character
     if (col != "") truncated_cols_vec <<- c(truncated_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
   })
   
+  # Whici cols are shortened
+  shortened_cols_vec <- integer()
+  for (col in shortened_cols) if (col != "") shortened_cols_vec <- 
+    c(shortened_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  
   # If filter is TRUE
   if (filter) filter_list <- list(position = "top")
   if (!filter) filter_list <- list()
@@ -367,6 +372,28 @@ render_datatable <- function(output, r = shiny::reactiveValues(), ns = character
   
   # Add searchable cols to column_defs
   column_defs <- rlist::list.append(column_defs, list(searchable = FALSE, targets = non_searchable_cols_vec))
+  
+  # Add shortened cols to column_defs
+  sapply(names(shortened_cols), function(name){
+    column_defs <<- rlist::list.append(column_defs, list(
+      render = htmlwidgets::JS(paste0(
+        "function(data, type, full, meta) {",
+        "  if (type === 'display' && data.length > ", shortened_cols[[name]], ") {",
+        "    return data.substr(0, ", shortened_cols[[name]], ") + '...';",
+        "  } else {",
+        "    return data;",
+        "  }",
+        "}"
+      )),
+      targets = which(grepl(paste0("^", name, "$"), names(data))) - 1))
+    })
+  
+  
+  if (length(shortened_cols) > 0){
+    shortened_cols_vec <- integer()
+    for (col in names(shortened_cols)) if (col != "") shortened_cols_vec <- 
+      c(shortened_cols_vec, c(which(grepl(paste0("^", col, "$"), names(data))) - 1))
+  }
   
   # Add no_selection cols to columns_defs
   # column_defs <- rlist::list.append(column_defs, list(className = "no-selection", targets = no_selection_cols_vec))
