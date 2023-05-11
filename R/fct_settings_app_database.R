@@ -223,6 +223,10 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         concept_class_id = character(), standard_concept = character(), concept_code = character(), valid_start_date = character(),
         valid_end_date = character(), invalid_reason = character()))
     
+    db_create_table(db, "concept_dataset", primary_key_col = "id", dbms = dbms,
+      tibble::tibble(id = integer(), concept_id = integer(), vocabulary_id = character(), dataset_id = integer(), 
+        count_persons_rows = integer(), count_concepts_rows = integer(), count_secondary_concepts_rows = integer()))
+    
     db_create_table(db, "concept_user", primary_key_col = "id", dbms = dbms, text_cols = c("name", "display_name"),
       tibble::tibble(id = integer(), user_id = integer(), concept_id = integer(), concept_name = character(), concept_display_name = character(),
         vocabulary_id = character()))
