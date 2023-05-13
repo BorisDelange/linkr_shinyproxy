@@ -149,7 +149,7 @@ create_data_source,Créer une source de données
 data_sources_management,Gestion des sources de données
 items_mapping,Alignement de concepts
 concepts_mapping,Alignement de concepts
-mapping,Mapping
+mapping,Alignement de concepts
 thesaurus_management,Gestion des terminologies
 vocabularies_management,Gestion des terminologies
 create_thesaurus,Créer une terminologie
@@ -440,7 +440,7 @@ no_plugin_available,Pas de plugin disponible
 plugin_added,Nouveau plugin ajouté
 unauthorized_action,Action non autorisée
 plugins_deleted,Plugin(s) supprimé(s)
-mapping_deleted,Alignement(s) de concepts supprimée(s)
+mapping_deleted,Alignement(s) de concepts supprimé(s)
 install_plugin,Installer ce plugin
 update_plugin,Mettre à jour ce plugin
 plugin_up_to_date,Plugin à jour
@@ -559,9 +559,9 @@ vocabularies_and_concepts,Terminologies & concepts
 whats_a_vocabulary,Qu'est-ce qu'une terminologie ?
 whats_a_concept_mapping,Qu'est ce qu'un alignement de concepts ?
 vocabularies_concepts_mapping,Alignement de concepts
-vocabulary_mapping_added,Nouveau mapping ajouté
+vocabulary_mapping_added,Nouvel alignement de concepts ajouté
 thesaurus_item_added,Nouvel item ajouté
-vocabulary_mapping_already_exists,Ce mapping existe déjà
+vocabulary_mapping_already_exists,Cet alignement de concepts existe déjà
 thesaurus_item_already_exists,Cet item existe déjà dans la terminologie
 checked,Vérifié
 relation,Relation
@@ -617,7 +617,7 @@ vocabulary_error_append_table,Erreur lors de l'ajout des nouveaux concepts dans 
 error_multiple_primary_keys,Certaines clefs primaires sont dupliquées. Retirer les duplicats avant d'importer la table de terminologie.
 error_multiple_identical_values,Certaines valeurs sont dupliquées. Retirer les duplicats avant d'importer la table de terminologie.
 invalid_category,Catégorie non valide
-error_duplicate_mappings,Certains mappings d'items sont dupliqués. Retirer les duplicats avant d'importer la terminologie.
+error_duplicate_mappings,Certains alignements de concepts sont dupliqués. Retirer les duplicats avant d'importer la terminologie.
 datatable_view,Tableau
 tree_view,Arbre
 fail_load_list_file,Erreur lors du chargement du fichier liste

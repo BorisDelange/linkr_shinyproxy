@@ -582,7 +582,8 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
   observeEvent(input[[paste0(delete_prefix, "_delete_confirmed")]], {
     
     m_tables <- c("patients_options", "widgets_options", "subsets" , "subset_persons",
-      "concept", "vocabulary", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
+      "concept", "vocabulary", "domain", "concept_class", "concept_relationship", "concept_relationship_user", "concept_relationship_evals",
+      "relationship", "concept_synonym", "concept_ancestor", "drug_strength")
     
     if (table %in% m_tables) db <- m$db
     else db <- r$db
@@ -610,7 +611,7 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
     DBI::dbSendStatement(r$db, sql) -> query
     DBI::dbClearResult(query)
     
-    if (table %not_in% m_tables | table == "vocabulary"){
+    if (table %not_in% m_tables | table %in% c("vocabulary", "concept_relationship_user")){
       if (length(r_table) > 0) r[[r_table]] <- r[[r_table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
       else r[[table]] <- r[[table]] %>% dplyr::filter(get(id_var_sql) %not_in% r[[id_var_r]])
     }

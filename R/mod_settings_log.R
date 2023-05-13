@@ -143,7 +143,7 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
         result,
         shiny.fluent::DefaultButton.shinyInput(ns("reload_log"), i18n$t("reload_log")),
         DT::DTOutput(ns("log_datatable")), br(),
-        div(uiOutput(ns("log_details")), 
+        div(verbatimTextOutput(ns("log_details")), 
           style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
       )
     })
@@ -204,10 +204,10 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     
     observeEvent(input$log_datatable_rows_selected, {
       
-      output$log_details <- renderUI(
-        tagList(
-          strong(i18n$t("name")), " : ", r$log[input$log_datatable_rows_selected, ] %>% dplyr::pull(name), br(), br(),
-          r$log[input$log_datatable_rows_selected, ] %>% dplyr::pull(value) %>% strwrap(width = 100) %>% paste(collase = "<br />"))
+      output$log_details <- renderText(
+        paste0(
+          r$log[input$log_datatable_rows_selected, ] %>% dplyr::pull(name), "\n\n",
+          r$log[input$log_datatable_rows_selected, ] %>% dplyr::pull(value) %>% strwrap(width = 100) %>% paste(collase = "\n"))
       )
     })
     

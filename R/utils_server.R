@@ -264,9 +264,9 @@ get_col_names <- function(table_name = character(), i18n = character()){
       i18n$t("vocabulary_id_2"), i18n$t("concept_id_2"))
   }
   
-  if (table_name == "dataset_thesaurus_items_mapping_evals"){
-    result <- c(i18n$t("id"), i18n$t("vocabulary"), i18n$t("concept_id"), i18n$t("relation"), i18n$t("vocabulary"), i18n$t("concept_id"),
-      i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("positive_evals_short"), i18n$t("negative_evals_short"), 
+  if (table_name == "dataset_vocabulary_concepts_mapping_evals"){
+    result <- c(i18n$t("id"), i18n$t("vocabulary_id_1"), i18n$t("concept_id_1"), i18n$t("relationship_id"), i18n$t("vocabulary_id_2"), i18n$t("concept_id_2"),
+      i18n$t("creator"), i18n$t("datetime"), i18n$t("positive_evals_short"), i18n$t("negative_evals_short"), 
       i18n$t("action"), i18n$t("user_evaluation_id"), i18n$t("modified"))
   }
   
