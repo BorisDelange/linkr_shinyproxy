@@ -87,7 +87,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
       "home", "pivot_item", "news", "news", "News", "", 2L, "2023-04-10 08:00:00",
       "home", "pivot_item", "versions", "versions", "Versions", "", 3L, "2023-04-10 08:00:00",
       
-      "home", "card", "overview", "div1", "LinkR", "2023-04-10_overview.Rmd", 1L, "2023-04-10 08:00:00",
+      "home", "card", "overview", "div1", "LinkR", "2023-04-10_overview.Md", 1L, "2023-04-10 08:00:00",
 
       "home", "card", "news", "news1", "News 1", "", 1L, "2023-04-10 08:00:00",
       "home", "card", "news", "news2", "News 2", "", 2L, "2023-04-10 08:00:00",

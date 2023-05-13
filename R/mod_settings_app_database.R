@@ -684,7 +684,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         last_row <- get_last_row(r$db, "options")
         new_data <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
           as.integer(last_row + 1), "last_db_save", NA_integer_, "last_db_save", as.character(Sys.time()),
-          NA_real_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+          NA_real_, r$user_id, as.character(Sys.time()), FALSE)
         DBI::dbAppendTable(r$db, "options", new_data)
         r$options <- r$options %>% dplyr::bind_rows(new_data)
       }
@@ -833,7 +833,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           
           new_data <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
             as.integer(last_row + 1), "last_db_restore", NA_integer_, "last_db_restore", as.character(Sys.time()),
-            NA_real_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+            NA_real_, r$user_id, as.character(Sys.time()), FALSE)
           query <- DBI::dbAppendTable(r$db, "options", new_data)
           r$options <- r$options %>% dplyr::bind_rows(new_data)
         }

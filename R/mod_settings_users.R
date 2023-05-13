@@ -601,7 +601,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
           data <- data %>% dplyr::bind_rows(
             tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
               "users_accesses", as.integer(link_id), options_toggles[[i, "name"]], "", as.numeric(input[[paste0("toggle_", options_toggles[[i, "name"]])]]),
-              as.integer(r$user_id), as.character(Sys.time()), FALSE)
+              r$user_id, as.character(Sys.time()), FALSE)
           )
           if (options_toggles[[i, "toggles"]] != ""){
             for (toggle in options_toggles[[i, "toggles"]][[1]]){
@@ -614,7 +614,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
               data <- data %>% dplyr::bind_rows(
                 tibble::tribble(~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
                   "users_accesses", as.integer(link_id), toggle, "", value_num,
-                  as.integer(r$user_id), as.character(Sys.time()), FALSE)
+                  r$user_id, as.character(Sys.time()), FALSE)
               )
             }
           }

@@ -814,3 +814,4 @@ maps_to,Maps to
 mapped_from,Mapped from
 is_a,Is a
 subsumes,Subsumes
+error_calculating_num_rows_concepts_dataset,Error calculating the number of rows per concept in the dataset

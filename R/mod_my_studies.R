@@ -977,7 +977,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if (nrow(has_inbox_messages) == 0){
           new_data <- conversation_messages %>% dplyr::select(message_id = id) %>%
             dplyr::mutate(id = 1:dplyr::n() + get_last_row(r$db, "inbox_messages"), .before = "message_id") %>%
-            dplyr::mutate(receiver_id = as.integer(r$user_id), read = TRUE, datetime = as.character(Sys.time()), deleted = FALSE)
+            dplyr::mutate(receiver_id = r$user_id, read = TRUE, datetime = as.character(Sys.time()), deleted = FALSE)
           DBI::dbAppendTable(r$db, "inbox_messages", new_data)
         }
         

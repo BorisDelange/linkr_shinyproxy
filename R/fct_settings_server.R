@@ -203,7 +203,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # Add a row in code if table is datasets, thesaurus
   if (table %in% c("datasets", "vocabulary")){
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row$code + 1, get_singular(word = table), last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$code + 1, get_singular(word = table), last_row$data + 1, "", r$user_id, as.character(Sys.time()), FALSE)
   }
   
   # For options of plugins, add one row for long description (Markdown) & 2 rows for users allowed to use this plugin
@@ -217,24 +217,24 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     username <- r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::mutate(fullname = paste0(firstname, " ", lastname)) %>% dplyr::pull(fullname)
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row$options + 1, "plugin", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 2, "plugin", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 3, "plugin", last_row$data + 1, "version", "0.0.1", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 4, "plugin", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 5, "plugin", last_row$data + 1, "author", username, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 6, "plugin", last_row$data + 1, "image", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 7, "plugin", last_row$data + 1, "description_fr", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 8, "plugin", last_row$data + 1, "description_en", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 9, "plugin", last_row$data + 1, "category_fr", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 10, "plugin", last_row$data + 1, "category_en", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 11, "plugin", last_row$data + 1, "name_fr", as.character(data$name), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 12, "plugin", last_row$data + 1, "name_en", as.character(data$name), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
+      last_row$options + 1, "plugin", last_row$data + 1, "users_allowed_read_group", "everybody", 1, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 2, "plugin", last_row$data + 1, "user_allowed_read", "", r$user_id, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 3, "plugin", last_row$data + 1, "version", "0.0.1", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 4, "plugin", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 5, "plugin", last_row$data + 1, "author", username, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 6, "plugin", last_row$data + 1, "image", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 7, "plugin", last_row$data + 1, "description_fr", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 8, "plugin", last_row$data + 1, "description_en", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 9, "plugin", last_row$data + 1, "category_fr", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 10, "plugin", last_row$data + 1, "category_en", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 11, "plugin", last_row$data + 1, "name_fr", as.character(data$name), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 12, "plugin", last_row$data + 1, "name_en", as.character(data$name), NA_integer_, r$user_id, as.character(Sys.time()), FALSE
       )
     # Add code rows
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row$code + 1, "plugin_ui", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$code + 2, "plugin_server", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$code + 3, "plugin_translations", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$code + 1, "plugin_ui", last_row$data + 1, "", r$user_id, as.character(Sys.time()), FALSE,
+      last_row$code + 2, "plugin_server", last_row$data + 1, "", r$user_id, as.character(Sys.time()), FALSE,
+      last_row$code + 3, "plugin_translations", last_row$data + 1, "", r$user_id, as.character(Sys.time()), FALSE)
   }
 
   # For options of scripts, add one row for long description (Markdown)
@@ -243,56 +243,56 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     # Add options rows
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row$options + 1, "script", last_row$data + 1, "markdown_description", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 2, "script", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 3, "script", last_row$data + 1, "category_fr", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 4, "script", last_row$data + 1, "category_en", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 5, "script", last_row$data + 1, "name_fr", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 6, "script", last_row$data + 1, "name_en", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$options + 1, "script", last_row$data + 1, "markdown_description", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 2, "script", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 3, "script", last_row$data + 1, "category_fr", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 4, "script", last_row$data + 1, "category_en", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 5, "script", last_row$data + 1, "name_fr", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 6, "script", last_row$data + 1, "name_en", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE)
     
     # Add code rows
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row$code + 1, "script", last_row$data + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$code + 1, "script", last_row$data + 1, "", r$user_id, as.character(Sys.time()), FALSE)
   }
   
   # For datasets options, need to add 3 rows in options
   if (table == "datasets"){
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row$options + 1, "dataset", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 2, "dataset", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 3, "dataset", last_row$data + 1, "show_only_aggregated_data", "", 0, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 4, "dataset", last_row$data + 1, "activate_scripts_cache", "", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 5, "dataset", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 6, "dataset", last_row$data + 1, "omop_version", "6.0", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$options + 1, "dataset", last_row$data + 1, "users_allowed_read_group", "everybody", 1, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 2, "dataset", last_row$data + 1, "user_allowed_read", "", r$user_id, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 3, "dataset", last_row$data + 1, "show_only_aggregated_data", "", 0, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 4, "dataset", last_row$data + 1, "activate_scripts_cache", "", 1, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 5, "dataset", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 6, "dataset", last_row$data + 1, "omop_version", "6.0", NA_integer_, r$user_id, as.character(Sys.time()), FALSE)
   }
   
   # For studies, need to add one row in options and add rows of code for subsets, with default value
   if (table == "studies"){
     
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row$options + 1, "study", last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 2, "study", last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 3, "study", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 4, "study", last_row$data + 1, "markdown_description", "", NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$options + 1, "study", last_row$data + 1, "users_allowed_read_group", "everybody", 1, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 2, "study", last_row$data + 1, "user_allowed_read", "", r$user_id, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 3, "study", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 4, "study", last_row$data + 1, "markdown_description", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE)
     
     # Add rows in subsets table, for inclusion / exclusion subsets
     # Add also code corresponding to each subset
     new_data$subsets <- tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id,  ~datetime, ~deleted,
-      last_row$subsets + 1, i18n$t("subset_all_patients"), "", last_row$data + 1, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$subsets + 1, i18n$t("subset_all_patients"), "", last_row$data + 1, r$user_id, as.character(Sys.time()), FALSE)
     
     # Add code for creating subset with all patients
     code <- paste0("add_persons_to_subset(output = output, m = m, persons = d$person %>% dplyr::select(person_id), subset_id = %subset_id%, i18n = i18n, ns = ns)")
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row$code + 1, "subset", last_row$subsets + 1, code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$code + 1, "subset", last_row$subsets + 1, code, r$user_id, as.character(Sys.time()), FALSE)
     
     # Add patient_lvl & aggregated tabs families
     
     new_data$patient_lvl_tabs_groups <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
-      get_last_row(r$db, "patient_lvl_tabs_groups") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      get_last_row(r$db, "patient_lvl_tabs_groups") + 1, data$name, "", r$user_id, as.character(Sys.time()), FALSE)
     
     new_data$aggregated_tabs_groups <- tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
-      get_last_row(r$db, "aggregated_tabs_groups") + 1, data$name, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      get_last_row(r$db, "aggregated_tabs_groups") + 1, data$name, "", r$user_id, as.character(Sys.time()), FALSE)
     
     # Add persons to subset
     tryCatch({
@@ -313,14 +313,14 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # For subsets, need to add one row in code
   if (table == "subsets"){
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      last_row$code + 1, "subset", last_row$subsets + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$code + 1, "subset", last_row$subsets + 1, "", r$user_id, as.character(Sys.time()), FALSE)
   }
   
   # For options of patient_lvl & aggregated tabs families, need to add two rows, for users accesses
   if (table %in% c("patient_lvl_tabs_groups", "aggregated_tabs_groups")){
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row$options + 1, get_singular(word = table), last_row$data + 1, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-      last_row$options + 2, get_singular(word = table), last_row$data + 1, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      last_row$options + 1, get_singular(word = table), last_row$data + 1, "users_allowed_read_group", "everybody", 1, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 2, get_singular(word = table), last_row$data + 1, "user_allowed_read", "", r$user_id, r$user_id, as.character(Sys.time()), FALSE)
   }
   
   # Hide creation card & options card, show management card
@@ -1334,7 +1334,7 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
       
       last_row <- get_last_row(r$db, "options")
       new_data <- tibble::tibble(id = (last_row + (1:length(data$users_allowed_read))), category = category, link_id = link_id,
-        name = "user_allowed_read", value = "", value_num = value_num, creator_id = as.integer(r$user_id),
+        name = "user_allowed_read", value = "", value_num = value_num, creator_id = r$user_id,
         datetime = as.character(Sys.time()), deleted = FALSE)
       DBI::dbAppendTable(r$db, "options", new_data)
       r$options <- r$options %>% dplyr::bind_rows(new_data)

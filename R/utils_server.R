@@ -315,8 +315,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   if (table_name == "log"){
-    result <- c(i18n$t("id"), i18n$t("category"), i18n$t("name"),
-      i18n$t("value"), i18n$t("value"), i18n$t("user"), i18n$t("datetime"))
+    result <- c(i18n$t("id"), i18n$t("category"), i18n$t("name"), i18n$t("value"), i18n$t("user"), i18n$t("datetime"))
   }
   
   if (table_name == "scripts"){

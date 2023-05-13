@@ -816,18 +816,18 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         last_row_options <- get_last_row(r$db, "options")
         
         new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-          last_row_options + 1, "plugin", new_row, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 2, "plugin", new_row, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 3, "plugin", new_row, "version", plugin$version, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 4, "plugin", new_row, "unique_id", plugin$unique_id, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 5, "plugin", new_row, "author", plugin$author, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 6, "plugin", new_row, "image", plugin$image, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 7, "plugin", new_row, "description_fr", plugin$description_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 8, "plugin", new_row, "description_en", plugin$description_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 9, "plugin", new_row, "category_fr", plugin$category_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 10, "plugin", new_row, "category_en", plugin$category_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 11, "plugin", new_row, "name_fr", plugin$name_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_options + 12, "plugin", new_row, "name_en", plugin$name_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
+          last_row_options + 1, "plugin", new_row, "users_allowed_read_group", "everybody", 1, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_options + 2, "plugin", new_row, "user_allowed_read", "", r$user_id, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_options + 3, "plugin", new_row, "version", plugin$version, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_options + 4, "plugin", new_row, "unique_id", plugin$unique_id, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_options + 5, "plugin", new_row, "author", plugin$author, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_options + 6, "plugin", new_row, "image", plugin$image, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_options + 7, "plugin", new_row, "description_fr", plugin$description_fr, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_options + 8, "plugin", new_row, "description_en", plugin$description_en, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_options + 9, "plugin", new_row, "category_fr", plugin$category_fr, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_options + 10, "plugin", new_row, "category_en", plugin$category_en, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_options + 11, "plugin", new_row, "name_fr", plugin$name_fr, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_options + 12, "plugin", new_row, "name_en", plugin$name_en, NA_integer_, r$user_id, as.character(Sys.time()), FALSE
         )
         
         DBI::dbAppendTable(r$db, "options", new_options)
@@ -851,9 +851,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         last_row_code <- get_last_row(r$db, "code")
         
         new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-          last_row_code + 1, "plugin_ui", new_row, plugin_ui_code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_code + 2, "plugin_server", new_row, plugin_server_code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-          last_row_code + 3, "plugin_translations", new_row, plugin_translations_code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+          last_row_code + 1, "plugin_ui", new_row, plugin_ui_code, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_code + 2, "plugin_server", new_row, plugin_server_code, r$user_id, as.character(Sys.time()), FALSE,
+          last_row_code + 3, "plugin_translations", new_row, plugin_translations_code, r$user_id, as.character(Sys.time()), FALSE)
         
         DBI::dbAppendTable(r$db, "code", new_code)
         add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
@@ -2134,18 +2134,18 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             last_row_options <- get_last_row(r$db, "options")
   
             new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-              last_row_options + 1, "plugin", new_row, "users_allowed_read_group", "everybody", 1, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 2, "plugin", new_row, "user_allowed_read", "", as.integer(r$user_id), as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 3, "plugin", new_row, "version", plugin$version, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 4, "plugin", new_row, "unique_id", plugin$unique_id, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 5, "plugin", new_row, "author", plugin$author, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 6, "plugin", new_row, "image", plugin$image, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 7, "plugin", new_row, "description_fr", plugin$description_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 8, "plugin", new_row, "description_en", plugin$description_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 9, "plugin", new_row, "category_fr", plugin$category_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 10, "plugin", new_row, "category_en", plugin$category_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 11, "plugin", new_row, "name_fr", plugin$name_fr, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_options + 12, "plugin", new_row, "name_en", plugin$name_en, NA_integer_, as.integer(r$user_id), as.character(Sys.time()), FALSE
+              last_row_options + 1, "plugin", new_row, "users_allowed_read_group", "everybody", 1, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 2, "plugin", new_row, "user_allowed_read", "", r$user_id, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 3, "plugin", new_row, "version", plugin$version, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 4, "plugin", new_row, "unique_id", plugin$unique_id, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 5, "plugin", new_row, "author", plugin$author, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 6, "plugin", new_row, "image", plugin$image, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 7, "plugin", new_row, "description_fr", plugin$description_fr, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 8, "plugin", new_row, "description_en", plugin$description_en, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 9, "plugin", new_row, "category_fr", plugin$category_fr, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 10, "plugin", new_row, "category_en", plugin$category_en, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 11, "plugin", new_row, "name_fr", plugin$name_fr, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 12, "plugin", new_row, "name_en", plugin$name_en, NA_integer_, r$user_id, as.character(Sys.time()), FALSE
             )
   
             DBI::dbAppendTable(r$db, "options", new_options)
@@ -2161,9 +2161,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             last_row_code <- get_last_row(r$db, "code")
   
             new_code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-              last_row_code + 1, "plugin_ui", new_row, plugin_ui_code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_code + 2, "plugin_server", new_row, plugin_server_code, as.integer(r$user_id), as.character(Sys.time()), FALSE,
-              last_row_code + 3, "plugin_translations", new_row, plugin_translations_code, as.integer(r$user_id), as.character(Sys.time()), FALSE)
+              last_row_code + 1, "plugin_ui", new_row, plugin_ui_code, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_code + 2, "plugin_server", new_row, plugin_server_code, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_code + 3, "plugin_translations", new_row, plugin_translations_code, r$user_id, as.character(Sys.time()), FALSE)
   
             DBI::dbAppendTable(r$db, "code", new_code)
             r$code <- r$code %>% dplyr::bind_rows(new_code)

@@ -143,18 +143,19 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
         result,
         shiny.fluent::DefaultButton.shinyInput(ns("reload_log"), i18n$t("reload_log")),
         DT::DTOutput(ns("log_datatable")), br(),
-        div(verbatimTextOutput(ns("log_details")), 
+        div(uiOutput(ns("log_details")), 
           style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
       )
     })
     
     col_names <- get_col_names("log", i18n = i18n)
-    page_length <- 100
-    centered_cols <- c("id", "name", "creator_id", "datetime")
+    page_length <- 10
+    column_widths <- c("id" = "80px")
+    centered_cols <- c("id", "creator_id", "datetime")
     sortable_cols <- c("id", "category", "name", "creator_id", "datetime")
     searchable_cols <- c("category", "name", "creator_id", "datetime")
     factorize_cols <- c("category")
-    hidden_cols <- "value_long"
+    shortened_cols <- c("category" = 20, "name" = 30, "value" = 30)
     
     # Reload datatable
     
@@ -182,20 +183,16 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
           by = "creator_id") %>% 
           dplyr::relocate(display_name, .before = "datetime") %>%
           dplyr::select(-creator_id, creator_id = display_name) %>%
-          dplyr::mutate(value_long = value, .after = "value") %>%
-          dplyr::mutate(value = dplyr::case_when(nchar(value) >= 20 ~ paste0(substr(value, 1, 20), "..."), TRUE ~ value)) %>%
           dplyr::arrange(desc(datetime))
       }
-      
-      if (nrow(r$log) == 0) r$log <- r$log %>% dplyr::mutate(value_long = "", .after = "value")
       
       if (length(r$log_datatable_proxy) > 0) DT::replaceData(r$log_datatable_proxy, r$log, resetPaging = FALSE, rownames = FALSE) 
       
       if (length(r$log_datatable_proxy) == 0){
         
         render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$log, output_name = "log_datatable", col_names = col_names,
-          page_length = page_length, centered_cols = centered_cols, sortable_cols = sortable_cols,
-          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+          page_length = page_length, centered_cols = centered_cols, sortable_cols = sortable_cols, column_widths = column_widths,
+          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, shortened_cols = shortened_cols)
         
         r$log_datatable_proxy <- DT::dataTableProxy("log_datatable", deferUntilFlush = FALSE)
       }
@@ -207,9 +204,10 @@ mod_settings_log_server <- function(id = character(), r = shiny::reactiveValuess
     
     observeEvent(input$log_datatable_rows_selected, {
       
-      output$log_details <- renderText(
-        r$log[input$log_datatable_rows_selected, ] %>% dplyr::pull(value_long) %>%
-          strwrap(width = 100) %>% paste(collase = "\n")
+      output$log_details <- renderUI(
+        tagList(
+          strong(i18n$t("name")), " : ", r$log[input$log_datatable_rows_selected, ] %>% dplyr::pull(name), br(), br(),
+          r$log[input$log_datatable_rows_selected, ] %>% dplyr::pull(value) %>% strwrap(width = 100) %>% paste(collase = "<br />"))
       )
     })
     

@@ -814,3 +814,4 @@ maps_to,Correspond à
 mapped_from,Provient de
 is_a,Est inclus dans
 subsumes,Inclut
+error_calculating_num_rows_concepts_dataset,Erreur lors du calcul du nombre de lignes par concept dans le set de données

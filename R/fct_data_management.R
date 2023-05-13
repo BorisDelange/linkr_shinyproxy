@@ -547,7 +547,7 @@ create_scripts_thesaurus <- function(output, r = shiny::reactiveValues(), data_s
     r$thesaurus <- r$thesaurus %>% dplyr::bind_rows(new_data)
     
     new_data <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-      get_last_row(r$db, "code") + 1, "thesaurus", last_row_thesaurus + 1, "", as.integer(r$user_id), as.character(Sys.time()), FALSE)
+      get_last_row(r$db, "code") + 1, "thesaurus", last_row_thesaurus + 1, "", r$user_id, as.character(Sys.time()), FALSE)
     DBI::dbAppendTable(r$db, "code", new_data)
     r$code <- r$code %>% dplyr::bind_rows(new_data)
     
