@@ -474,12 +474,22 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (nrow(d$visit_detail %>% dplyr::filter(person_id == input$person$key)) == 0) shiny.fluent::updateComboBox.shinyInput(session, "person", options = list(), value = NULL, errorMessage = i18n$t("no_person_in_subset"))
         if (nrow(d$visit_detail %>% dplyr::filter(person_id == input$person$key)) > 0){
           
-          if (tolower(language) == "fr") visit_details <- convert_tibble_to_list(data = d$visit_detail %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0(visit_detail_concept_name, " - ",
+          if ("visit_detail_concept_name" %in% colnames(d$visit_detail)){
+            if (tolower(language) == "fr") visit_details <- convert_tibble_to_list(data = d$visit_detail %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0(visit_detail_concept_name, " - ",
               format(as.POSIXct(visit_detail_start_datetime), format = "%d-%m-%Y"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(visit_detail_end_datetime), format = "%d-%m-%Y"))),
               key_col = "visit_detail_id", text_col = "name_display")
-          else visit_details <- convert_tibble_to_list(data = d$visit_detail %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0(visit_detail_concept_name, " - ",
-            format(as.POSIXct(visit_detail_start_datetime), format = "%Y-%m-%d"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(visit_detail_end_datetime), format = "%Y-%m-%d"))),
-            key_col = "visit_detail_id", text_col = "name_display")
+            else visit_details <- convert_tibble_to_list(data = d$visit_detail %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0(visit_detail_concept_name, " - ",
+              format(as.POSIXct(visit_detail_start_datetime), format = "%Y-%m-%d"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(visit_detail_end_datetime), format = "%Y-%m-%d"))),
+              key_col = "visit_detail_id", text_col = "name_display")
+          }
+          else {
+            if (tolower(language) == "fr") visit_details <- convert_tibble_to_list(data = d$visit_detail %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0(visit_detail_concept_id, " - ",
+              format(as.POSIXct(visit_detail_start_datetime), format = "%d-%m-%Y"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(visit_detail_end_datetime), format = "%d-%m-%Y"))),
+              key_col = "visit_detail_id", text_col = "name_display")
+            else visit_details <- convert_tibble_to_list(data = d$visit_detail %>% dplyr::filter(person_id == input$person$key) %>% dplyr::mutate(name_display = paste0(visit_detail_concept_id, " - ",
+              format(as.POSIXct(visit_detail_start_datetime), format = "%Y-%m-%d"), " ", tolower(i18n$t("to")), " ",  format(as.POSIXct(visit_detail_end_datetime), format = "%Y-%m-%d"))),
+              key_col = "visit_detail_id", text_col = "name_display")
+          }
           
           # Load visit_details of the person & update dropdown
           shiny.fluent::updateComboBox.shinyInput(session, "visit_detail", options = visit_details, value = NULL)
@@ -530,7 +540,8 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         visit_detail <- d$visit_detail %>% dplyr::filter(visit_detail_id == m$selected_visit_detail)
         visit_detail_start_datetime <- visit_detail %>% dplyr::pull(visit_detail_start_datetime) %>% format_datetime(language)
         visit_detail_end_datetime <- visit_detail %>% dplyr::pull(visit_detail_end_datetime) %>% format_datetime(language)
-        visit_detail_concept_name <- visit_detail %>% dplyr::pull(visit_detail_concept_name)
+        if ("visit_detail_concept_name" %in% names(visit_detail)) visit_detail_concept_name <- visit_detail %>% dplyr::pull(visit_detail_concept_name)
+        else visit_detail_concept_name <- visit_detail %>% dplyr::pull(visit_detail_concept_id)
         
         output$person_info <- renderUI({
           tagList(

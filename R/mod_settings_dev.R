@@ -203,14 +203,14 @@ mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(
     
     observeEvent(r$perf_monitoring_table, {
       
-      perf_monitoring_table <- r$perf_monitoring_table 
-      
-      if (nrow(perf_monitoring_table) > 0) perf_monitoring_table <- perf_monitoring_table %>%
+      if (nrow(r$perf_monitoring_table) > 0) perf_monitoring_table <- r$perf_monitoring_table %>%
         dplyr::mutate(elapsed_time = round(datetime_stop - datetime_start, 2), .before = "task") %>%
         dplyr::mutate_at(c("datetime_start", "datetime_stop"), as.character) %>%
         dplyr::mutate(row_num = 1:dplyr::n()) %>%
         dplyr::arrange(dplyr::desc(row_num)) %>%
         dplyr::select(-row_num)
+      
+      if (nrow(r$perf_monitoring_table) == 0) perf_monitoring_table <- r$perf_monitoring_table %>% dplyr::mutate(elapsed_time = NA_real_, .before = "task")
       
       # Render datatable
       if (length(r$perf_monitoring_datatable_proxy) == 0){

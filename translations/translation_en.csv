@@ -407,6 +407,8 @@ people_picker,Select users
 matching_people,Matching people
 thesaurus_items_management_card,Items management
 num_rows,Rows
+num_rows_with_mapping,Rows with mapped concepts
+num_rows_current_dataset,Rows in selected dataset
 num_datasets,Datasets
 num_patients,Patients
 concepts_rows,Rows
@@ -539,8 +541,8 @@ var_containing_item,Variable containing this item
 evaluate,Evaluate
 evaluate_and_edit,Evaluate & edit
 edit,Edit
-thesaurus1,Vocabulary 1
-thesaurus2,Vocabulary 2
+vocabulary_1,Vocabulary 1
+vocabulary_2,Vocabulary 2
 concept_1_is,Item 1
 to_concept_2,item 2
 equivalent_to,Is equivalent to
@@ -653,7 +655,7 @@ sql_lib,SQL library
 deleted_data_source,Deleted data source
 perf_monitoring,Performances monitoring
 to_do_list,To do list
-elapsed_time,Elapsed time (s)
+elapsed_time,Elapsed time (sec)
 task,Task
 datetime_start,Start
 datetime_stop,Stop
@@ -815,3 +817,6 @@ mapped_from,Mapped from
 is_a,Is a
 subsumes,Subsumes
 error_calculating_num_rows_concepts_dataset,Error calculating the number of rows per concept in the dataset
+show_only_not_mapped_concepts,Non-mapped concepts only
+vocabulary_show_only_not_evaluated_concepts,Non-evaluated mapping only
+vocabulary_show_mapping_details,Show details of selected mapping

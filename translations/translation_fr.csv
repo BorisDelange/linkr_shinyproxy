@@ -406,6 +406,8 @@ people_picker,Choisir les utilisateurs
 matching_people,Personnes correspondantes
 thesaurus_items_management_card,Concepts des terminologies
 num_rows,Lignes
+num_rows_with_mapping,Lignes avec concepts alignés
+num_rows_current_dataset,Lignes dans le set sélectionné
 num_datasets,Sets
 num_patients,Patients
 concepts_rows,Lignes
@@ -539,8 +541,8 @@ var_containing_item,Variable contenant cet item
 evaluate,Evaluer
 evaluate_and_edit,Evaluer & éditer
 edit,Modifier
-vocabulary1,Terminologie 1
-vocabulary2,Terminologie 2
+vocabulary_1,Terminologie 1
+vocabulary_2,Terminologie 2
 concept_1_is,L'item 1
 to_concept_2,l'item 2
 equivalent_to,Est équivalent à
@@ -653,7 +655,7 @@ sql_lib,Librairie SQL
 deleted_data_source,Source de données supprimée
 perf_monitoring,Mesures des performances
 to_do_list,To do list
-elapsed_time,Temps écoulé (s)
+elapsed_time,Temps écoulé (sec)
 task,Tâche
 datetime_start,Début
 datetime_stop,Fin
@@ -815,3 +817,6 @@ mapped_from,Provient de
 is_a,Est inclus dans
 subsumes,Inclut
 error_calculating_num_rows_concepts_dataset,Erreur lors du calcul du nombre de lignes par concept dans le set de données
+show_only_not_mapped_concepts,Concepts non alignés uniquement
+vocabulary_show_only_not_evaluated_concepts,Alignements non évalués uniquement
+vocabulary_show_mapping_details,Afficher le détail de l'alignement sélectionné

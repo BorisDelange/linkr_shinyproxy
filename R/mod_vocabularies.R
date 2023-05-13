@@ -74,8 +74,8 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
                   list(key = 12, text = i18n$t("valid_start_date")),
                   list(key = 13, text = i18n$t("valid_end_date")),
                   list(key = 14, text = i18n$t("invalid_reason")),
-                  list(key = 15, text = i18n$t("num_rows")),
-                  list(key = 16, text = i18n$t("num_patients"))
+                  list(key = 15, text = i18n$t("num_patients")),
+                  list(key = 16, text = i18n$t("num_rows"))
                 ),
                 value = c(1, 2, 3, 15, 16)
               ),
@@ -134,11 +134,16 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
               div(
                 div(
                   div(
-                    make_combobox(i18n = i18n, ns = ns, label = "vocabulary1", id = "vocabulary_mapping_1", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+                    shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                      make_combobox(i18n = i18n, ns = ns, label = "vocabulary_1", id = "vocabulary_mapping_1", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+                      div(style = "width:10px;"),
+                      div(shiny.fluent::Toggle.shinyInput(ns("vocabulary_show_only_not_mapped_concepts"), value = FALSE), style = "margin-top:45px;"),
+                      div(i18n$t("show_only_not_mapped_concepts"), style = "font-weight:bold; margin-top:45px; margin-right:30px;")
+                    ),
                     DT::DTOutput(ns("vocabulary_mapping_1_dt"))
                   ),
                   div(
-                    make_combobox(i18n = i18n, ns = ns, label = "vocabulary2", id = "vocabulary_mapping_2", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+                    make_combobox(i18n = i18n, ns = ns, label = "vocabulary_2", id = "vocabulary_mapping_2", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
                     DT::DTOutput(ns("vocabulary_mapping_2_dt"))
                   ),
                   style = "width:100%; display:grid; grid-template-columns:1fr 1fr; grid-gap:20px;"
@@ -166,6 +171,27 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
               )    
             ),
             conditionalPanel(condition = "input.mapping_current_tab == 'vocabularies_mapping_management'", ns = ns,
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                make_dropdown(i18n = i18n, ns = ns, label = "columns", id = "vocabulary_mapping_eval_cols", width = "300px", multiSelect = TRUE,
+                  options = list(
+                    list(key = 1, text = i18n$t("vocabulary_id_1")),
+                    list(key = 2, text = i18n$t("concept_id_1")),
+                    list(key = 3, text = i18n$t("relationship_id")),
+                    list(key = 4, text = i18n$t("vocabulary_id_2")),
+                    list(key = 5, text = i18n$t("concept_id_2")),
+                    list(key = 6, text = i18n$t("creator")),
+                    list(key = 7, text = i18n$t("datetime")),
+                    list(key = 8, text = i18n$t("positive_evals")),
+                    list(key = 9, text = i18n$t("negative_evals")),
+                    list(key = 10, text = i18n$t("action"))
+                  ),
+                  value = c(2, 3, 5, 7, 8, 9, 10)
+                ), div(style = "width:10px;"),
+                div(shiny.fluent::Toggle.shinyInput(ns("vocabulary_show_only_not_evaluated_concepts"), value = FALSE), style = "margin-top:45px;"),
+                div(i18n$t("vocabulary_show_only_not_evaluated_concepts"), style = "font-weight:bold; margin-top:45px; margin-right:30px;"),
+                div(shiny.fluent::Toggle.shinyInput(ns("vocabulary_show_mapping_details"), value = TRUE), style = "margin-top:45px;"),
+                div(i18n$t("vocabulary_show_mapping_details"), style = "font-weight:bold; margin-top:45px; margin-right:30px;")
+              ),
               div(DT::DTOutput(ns("vocabulary_evaluate_mappings")), style = "z-index:2"),
               div(
                 shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
@@ -173,7 +199,12 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
                   shiny.fluent::DefaultButton.shinyInput(ns("mapping_delete_selection"), i18n$t("delete_selection"))
                 ),
                 style = "position:relative; z-index:1; margin-top:-30px; width:500px;"), br(),
-              div(verbatimTextOutput(ns("vocabulary_mapping_details")), style = "border:dashed 1px; padding:10px;"), br(),
+              div(
+                div(uiOutput(ns("vocabulary_mapping_details_left")), style = "border:dashed 1px; padding:10px; margin:10px; flex:1;"),
+                div(uiOutput(ns("vocabulary_mapping_details_center")), style = "border:dashed 1px; padding:10px; margin:10px; flex:1;"),
+                div(uiOutput(ns("vocabulary_mapping_details_right")), style = "border:dashed 1px; padding:10px; margin:10px; flex:1;"),
+                style = "display:flex;"
+              )
             )
           )
         )
@@ -536,8 +567,16 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           "condition_era" = "condition"
         )
         
-        if (omop_version == "5.3") cols <- rlist::list.append(cols, "visit_occurrence" = c("admitting_source", "discharge_to", "visit", "visit_type"))
-        else if (omop_version %in% c("5.4", "6.0")) cols <- rlist::list.append(cols, "visit_occurrence" = c("admitted_from", "discharge_to", "visit", "visit_type"))
+        if (omop_version == "5.3"){
+          cols <- rlist::list.append(cols, 
+            "visit_occurrence" = c("visit", "visit_type", "admitting_source", "discharge_to"),
+            "visit_detail" = c("visit_detail", "visit_detail_type", "admitting_source", "discharge_to")) 
+        }
+        else if (omop_version %in% c("5.4", "6.0")){
+          cols <- rlist::list.append(cols, 
+            "visit_occurrence" = c("visit", "visit_type", "admitted_from", "discharge_to"),
+            "visit_detail" = c("visit_detail", "visit_detail_type", "admitted_from", "discharge_to")) 
+        }
         
         if (omop_version %in% c("5.3", "5.0")) cols <- rlist::list.append(cols, "death" = c("death_type", "cause"))
         
@@ -1025,6 +1064,13 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_mapping_2"))
       r$vocabulary_mapping_reload <- paste0(Sys.time(), "_mapping_2")
     })
+    observeEvent(input$vocabulary_show_only_not_mapped_concepts, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$show_only_not_mapped_concepts"))
+      req(length(r$vocabulary_mapping_reload) > 0)
+      if (grepl("mapping_1", r$vocabulary_mapping_reload)) mapping <- "mapping_1"
+      else if (grepl("mapping_2", r$vocabulary_mapping_reload)) mapping <- "mapping_2"
+      r$vocabulary_mapping_reload <- paste0(Sys.time(), "_", mapping)
+    })
     
     observeEvent(r$vocabulary_mapping_reload, {
       
@@ -1036,7 +1082,20 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       req(length(input[[paste0("vocabulary_", mapping)]]$key) > 0)
       
-      sql <- glue::glue_sql("SELECT * FROM concept WHERE vocabulary_id = {input[[paste0('vocabulary_', mapping)]]$key} ORDER BY concept_id", .con = m$db)
+      # Show only not mapped concepts ?
+      
+      show_only_not_mapped_concepts <- FALSE
+      if (length(input$vocabulary_show_only_not_mapped_concepts) > 0) if (input$vocabulary_show_only_not_mapped_concepts) show_only_not_mapped_concepts <- TRUE
+      
+      if (show_only_not_mapped_concepts) sql <- glue::glue_sql(
+        paste0("SELECT c.* FROM concept c ",
+          "WHERE c.vocabulary_id = {input[[paste0('vocabulary_', mapping)]]$key} ",
+          "AND c.concept_id NOT IN (SELECT cr.concept_id_1 FROM concept_relationship cr) ",
+          "AND c.concept_id NOT IN (SELECT cr.concept_id_2 FROM concept_relationship cr) ",
+          "ORDER BY concept_id"), .con = m$db)
+      
+      else sql <- glue::glue_sql("SELECT * FROM concept WHERE vocabulary_id = {input[[paste0('vocabulary_', mapping)]]$key} ORDER BY concept_id", .con = m$db)
+     
       r[[paste0("dataset_vocabulary_concepts_", mapping)]] <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble()
       
       # Merge count_rows from r$dataset_all_concepts (for mapping_1) or from database (for mapping_2)
@@ -1160,8 +1219,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           relationship_id == "Mapped from" ~ i18n$t("mapped_from"),
           relationship_id == "Is a" ~ i18n$t("is_a"),
           relationship_id == "Subsumes" ~ i18n$t("subsumes"))) %>%
-        dplyr::transmute(id, vocabulary_id_1 = input$vocabulary_mapping_1$key, concept_id_1, relationship_id, 
-          vocabulary_id_2 = input$vocabulary_mapping_2$key, concept_id_2)
+        dplyr::transmute(id, vocabulary_id_1 = c(input$vocabulary_mapping_1$key,input$vocabulary_mapping_2$key), concept_id_1, relationship_id, 
+          vocabulary_id_2 = c(input$vocabulary_mapping_2$key, input$vocabulary_mapping_1$key), concept_id_2)
       
       r$vocabulary_added_mappings <- r$vocabulary_added_mappings %>% dplyr::bind_rows(new_row_datatable) %>% dplyr::arrange(dplyr::desc(id))
       
@@ -1181,18 +1240,18 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
 
       # Update datatables
       r$reload_vocabulary_added_mappings_datatable <- Sys.time()
-      # r$reload_vocabulary_evaluate_mappings_datatable <- Sys.time()
 
       r$dataset_vocabulary_concepts_evaluate_mappings <- r$dataset_vocabulary_concepts_evaluate_mappings %>%
         dplyr::bind_rows(
           new_row_db %>%
-            dplyr::rowwise() %>%
             dplyr::transmute(
               concept_relationship_id = id,
-              vocabulary_id_1 = input$vocabulary_mapping_1$key, concept_id_1, relationship_id,
-              vocabulary_id_2 = input$vocabulary_mapping_2$key, concept_id_2,
+              vocabulary_id_1 = c(input$vocabulary_mapping_1$key, input$vocabulary_mapping_2$key), concept_id_1, relationship_id,
+              vocabulary_id_2 = c(input$vocabulary_mapping_2$key, input$vocabulary_mapping_1$key), concept_id_2,
               creator_name = r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::mutate(creator_name = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator_name),
-              datetime = as.character(Sys.time()), positive_evals = 0L, negative_evals = 0L,
+              datetime = as.character(Sys.time()), positive_evals = 0L, negative_evals = 0L) %>%
+            dplyr::rowwise() %>%
+            dplyr::mutate(
               action = as.character(tagList(
                 shiny::actionButton(paste0("positive_eval_", concept_relationship_id), "", icon = icon("thumbs-up"),
                   onclick = paste0("Shiny.setInputValue('", !!id, "-concept_mapping_evaluated_positive', this.id, {priority: 'event'})"),
@@ -1283,11 +1342,11 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
 
       sql <- glue::glue_sql(paste0("SELECT cr.id AS concept_relationship_id, ",
         "c1.vocabulary_id AS vocabulary_id_1, cr.concept_id_1, cr.relationship_id, ",
-        "c1.vocabulary_id AS vocabulary_id_2, cr.concept_id_2, cru.creator_id, cru.datetime ",
+        "c2.vocabulary_id AS vocabulary_id_2, cr.concept_id_2, cru.creator_id, cru.datetime ",
         "FROM concept_relationship_user cru ",
         "INNER JOIN concept_relationship cr ON cru.concept_relationship_id = cr.id ",
         "INNER JOIN concept c1 ON cr.concept_id_1 = c1.concept_id AND c1.vocabulary_id IN ({vocabulary_ids*}) ",
-        "INNER JOIN concept c2 ON cr.concept_id_1 = c2.concept_id AND c2.vocabulary_id IN ({vocabulary_ids*}) ",
+        "INNER JOIN concept c2 ON cr.concept_id_2 = c2.concept_id AND c2.vocabulary_id IN ({vocabulary_ids*}) ",
         "WHERE cru.deleted IS FALSE"), .con = m$db)
       r$dataset_vocabulary_concepts_evaluate_mappings <- DBI::dbGetQuery(m$db, sql)
 
@@ -1371,9 +1430,10 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         dplyr::ungroup() %>%
         dplyr::select(-positive_eval_button_background_color, -positive_eval_button_color, -negative_eval_button_background_color, -negative_eval_button_color)
 
-      # Select only mappings without evaluation
+      # Select only mappings without evaluation by current user
 
-      # ...
+      if(length(input$vocabulary_show_only_not_evaluated_concepts) > 0) if(input$vocabulary_show_only_not_evaluated_concepts) r$dataset_vocabulary_concepts_evaluate_mappings <- 
+        r$dataset_vocabulary_concepts_evaluate_mappings %>% dplyr::filter(is.na(user_evaluation_id))
       
       # Render datatable
 
@@ -1381,24 +1441,56 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         dplyr::arrange(dplyr::desc(concept_relationship_id)) %>% dplyr::mutate(modified = FALSE)
 
       searchable_cols <- c("concept_id_1", "concept_id_2", "relationship_id", "creator_name", "positive_evals", "negative_evals", "vocabulary_id_1", "vocabulary_id_2")
-      factorize_cols <- c("relationship_id", "creator_name", "vocabulary_id_1", "vocabulary_id_2")
+      # factorize_cols <- c("relationship_id", "creator_name", "vocabulary_id_1", "vocabulary_id_2")
       sortable_cols <- c("concept_id_1", "concept_id_2", "relationship_id", "creator_name", "datetime", "positive_evals", "negative_evals", "vocabulary_id_1", "vocabulary_id_2")
-      centered_cols <- c("datetime", "action", "vocabulary_id_1", "concept_id_1", "vocabulary_id_2", "concept_id_2", "relationship_id", "creator_name")
+      centered_cols <- c("datetime", "action", "vocabulary_id_1", "concept_id_1", "vocabulary_id_2", "concept_id_2", "relationship_id", "creator_name", "positive_evals", "negative_evals")
       col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_mapping_evals", i18n = i18n)
       hidden_cols <- c("concept_relationship_id", "modified", "user_evaluation_id", "creator_name", "vocabulary_id_1", "vocabulary_id_2")
       column_widths <- c("action" = "80px", "datetime" = "130px", "positive_evals" = "80px", "negative_evals" = "80px")
 
+      selection <- "multiple"
+      if (input$vocabulary_show_mapping_details) selection <- "single"
+      
       # Render datatable
       render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$dataset_vocabulary_concepts_evaluate_mappings,
         output_name = "vocabulary_evaluate_mappings", hidden_cols = hidden_cols, centered_cols = centered_cols, searchable_cols = searchable_cols,
-        col_names = col_names, filter = TRUE, factorize_cols = factorize_cols, sortable_cols = sortable_cols, column_widths = column_widths,
-        selection = "multiple"
+        col_names = col_names, filter = TRUE, sortable_cols = sortable_cols, column_widths = column_widths, #factorize_cols = factorize_cols,
+        selection = selection
       )
 
       # Create a proxy for datatatable
       r$dataset_vocabulary_concepts_evaluate_mappings_datatable_proxy <- DT::dataTableProxy("vocabulary_evaluate_mappings", deferUntilFlush = FALSE)
 
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$reload_vocabulary_evaluate_mappings_datatable"))
+    })
+    
+    # Reload when toggle input$vocabulary_show_only_not_evaluated_concepts is activated
+    
+    observeEvent(input$vocabulary_show_only_not_evaluated_concepts, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_show_only_not_evaluated_concepts"))
+      req(length(r$selected_dataset) > 0, !is.na(r$selected_dataset))
+      r$reload_vocabulary_evaluate_mappings_datatable <- Sys.time()
+    })
+    
+    # Reload when toggle input$vocabulary_show_mapping_details is activated
+    
+    observeEvent(input$vocabulary_show_mapping_details, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_show_mapping_details"))
+      req(length(r$selected_dataset) > 0, !is.na(r$selected_dataset))
+      r$reload_vocabulary_evaluate_mappings_datatable <- Sys.time()
+    })
+    
+    # Update which cols are hidden
+    
+    observeEvent(input$vocabulary_mapping_eval_cols, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_mapping_eval_cols"))
+      
+      req(length(r$dataset_vocabulary_concepts_evaluate_mappings_datatable_proxy) > 0)
+      
+      r$dataset_vocabulary_concepts_evaluate_mappings_datatable_proxy %>%
+        DT::showCols(1:12) %>%
+        DT::hideCols(setdiff(1:12, input$vocabulary_mapping_eval_cols))
     })
     
     # When an evaluation button is clicked
@@ -1580,8 +1672,79 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
     })
     
     # When a row is selected
-    # observeEvent(input$thesaurus_evaluate_mappings_rows_selected, {
-    #   
-    # })
+    observeEvent(input$vocabulary_evaluate_mappings_rows_selected, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_evaluate_mappings_rows_selected"))
+      
+      req(input$vocabulary_show_mapping_details)
+      
+      last_row_selected <- input$vocabulary_evaluate_mappings_rows_selected[length(input$vocabulary_evaluate_mappings_rows_selected)]
+      selected_row <- r$dataset_vocabulary_concepts_evaluate_mappings[last_row_selected, ]
+      
+    
+      
+      sql <- glue::glue_sql(paste0("SELECT concept_id, COUNT(DISTINCT(dataset_id)) AS count_datasets, ",
+        "SUM(count_concepts_rows) + SUM(count_secondary_concepts_rows) AS count_concepts_rows ",
+        "FROM concept_dataset ",
+        "WHERE concept_id IN ({c(selected_row$concept_id_1, selected_row$concept_id_2)*})",
+        "GROUP BY concept_id "), .con = m$db)
+      concept_dataset <- DBI::dbGetQuery(m$db, sql)
+      
+      sql <- glue::glue_sql("SELECT * FROM concept WHERE concept_id = {selected_row$concept_id_1}", .con = m$db)
+      concept_1 <- DBI::dbGetQuery(m$db, sql) %>%
+        dplyr::left_join(concept_dataset %>% dplyr::select(concept_id, count_datasets, count_concepts_rows), by = "concept_id") %>%
+        dplyr::left_join(r$dataset_all_concepts %>% dplyr::transmute(concept_id = concept_id_1, 
+          count_concepts_rows_current_dataset = count_concepts_rows + count_secondary_concepts_rows), by = "concept_id") %>%
+        dplyr::mutate(
+          count_datasets = ifelse(is.na(count_datasets), 0L, count_datasets),
+          count_concepts_rows = ifelse(is.na(count_concepts_rows), 0L, count_concepts_rows),
+          count_concepts_rows_current_dataset = ifelse(is.na(count_concepts_rows_current_dataset), 0L, count_concepts_rows_current_dataset)
+        )
+      
+      # Left panel
+      output$vocabulary_mapping_details_left <- renderUI(tagList(
+        strong(i18n$t("vocabulary_id_1")), " : ", selected_row$vocabulary_id_1, br(),
+        strong(i18n$t("concept_id_1")), " : ", selected_row$concept_id_1, br(),
+        strong(i18n$t("concept_name_1")), " : ", concept_1$concept_name, br(),
+        strong(i18n$t("domain_id")), " : ", concept_1$domain_id, br(),
+        strong(i18n$t("standard_concept")), " : ", concept_1$standard_concept, br(),
+        strong(i18n$t("concept_code")), " : ", concept_1$concept_code, br(), br(),
+        strong(i18n$t("num_datasets")), " : ", concept_1$count_datasets, br(),
+        strong(i18n$t("num_rows_with_mapping")), " : ", concept_1$count_concepts_rows, br(),
+        strong(i18n$t("num_rows_current_dataset")), " : ", concept_1$count_concepts_rows_current_dataset, br(),
+      ))
+      
+      # Middle panel
+      output$vocabulary_mapping_details_center <- renderUI(tagList(
+        strong(i18n$t("relationship_id")), " : ", selected_row$relationship_id, br(), br(),
+        strong(i18n$t("creator")), " : ", selected_row$creator_name, br(),
+        strong(i18n$t("datetime")), " : ", selected_row$datetime, br(), br(),
+        strong(i18n$t("positive_evals")), " : ", selected_row$positive_evals, br(),
+        strong(i18n$t("negative_evals")), " : ", selected_row$negative_evals
+      ))
+      
+      sql <- glue::glue_sql("SELECT * FROM concept WHERE concept_id = {selected_row$concept_id_2}", .con = m$db)
+      concept_2 <- DBI::dbGetQuery(m$db, sql) %>%
+        dplyr::left_join(concept_dataset %>% dplyr::select(concept_id, count_datasets, count_concepts_rows), by = "concept_id") %>%
+        dplyr::left_join(r$dataset_all_concepts %>% dplyr::transmute(concept_id = concept_id_1, 
+          count_concepts_rows_current_dataset = count_concepts_rows + count_secondary_concepts_rows), by = "concept_id") %>%
+        dplyr::mutate(
+          count_datasets = ifelse(is.na(count_datasets), 0L, count_datasets),
+          count_concepts_rows = ifelse(is.na(count_concepts_rows), 0L, count_concepts_rows),
+          count_concepts_rows_current_dataset = ifelse(is.na(count_concepts_rows_current_dataset), 0L, count_concepts_rows_current_dataset)
+        )
+      
+      # Right panel
+      output$vocabulary_mapping_details_right <- renderUI(tagList(
+        strong(i18n$t("vocabulary_id_2")), " : ", selected_row$vocabulary_id_2, br(),
+        strong(i18n$t("concept_id_2")), " : ", selected_row$concept_id_2, br(),
+        strong(i18n$t("concept_name_2")), " : ", concept_2$concept_name, br(),
+        strong(i18n$t("domain_id")), " : ", concept_2$domain_id, br(),
+        strong(i18n$t("standard_concept")), " : ", concept_2$standard_concept, br(),
+        strong(i18n$t("concept_code")), " : ", concept_2$concept_code, br(), br(),
+        strong(i18n$t("num_datasets")), " : ", concept_2$count_datasets, br(),
+        strong(i18n$t("num_rows_with_mapping")), " : ", concept_2$count_concepts_rows, br(),
+        strong(i18n$t("num_rows_current_dataset")), " : ", concept_2$count_concepts_rows_current_dataset, br(),
+      ))
+    })
   })
 }
