@@ -365,8 +365,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' @param dataset_id ID of dataset to count rows by item of the thesaurus (integer)
 #' @param category Category of cache, depending of the page of Settings (character)
 
-create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character(), tab_id = character(), 
-  vocabulary_id = integer(), dataset_id = 0, category = character()){
+create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character(), module_id = character(), 
+  vocabulary_id = integer(), dataset_id = NA_integer_, ids = integer(), category = character()){
   
   # Load join between our data and the cache
   
@@ -382,27 +382,14 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
   #   data <- DBI::dbGetQuery(m$db, sql)
   # }
   
-  # For count_persons_rows & count_concepts_rows, use dataset_id / link_id_bis (we count row for a specific dataset)
-  if (category %in% c("count_persons_rows", "count_concepts_rows")){
-    sql <- glue::glue_sql(paste0(
-      "SELECT c.*, ca.value ",
-      "FROM concept c ",
-      "LEFT JOIN cache ca ON ca.link_id = c.id AND ca.link_id_bis = {dataset_id} AND ca.category = {category} ",
-      "WHERE c.vocabulary_id = {vocabulary_id} ",
-      "ORDER BY c.concept_id"), .con = m$db)
+  # For thumbs_and_delete, search in concept_relationship_user table
+  if (category == "thumbs_and_delete"){
+    sql <- glue::glue_sql(paste0("SELECT cr.id, c.value ",
+      "FROM concept_relationship cr ",
+      "LEFT JOIN cache c ON c.link_id = cr.id AND c.category = {category} ",
+      "WHERE cr.id IN ({ids*})"), .con = m$db)
     data <- DBI::dbGetQuery(m$db, sql)
   }
-  
-  # For thumbs_and_delete, search in thesaurus_items_mapping table
-  # if (category == "thumbs_and_delete"){
-  #   sql <- glue::glue_sql(paste0("SELECT t.id, t.deleted, c.value ",
-  #     "FROM thesaurus_items_mapping t ",
-  #     "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ",
-  #     "WHERE (t.vocabulary_id_1 IN ({vocabulary_id*}) OR t.vocabulary_id_2 IN ({vocabulary_id*})) ",
-  #     "AND t.category = 'user_added_mapping' AND t.deleted IS FALSE ",
-  #     "ORDER BY t.id"), .con = m$db)
-  #   data <- DBI::dbGetQuery(m$db, sql)
-  # }
   
   # If there are missing data in the cache, reload cache 
   
@@ -413,18 +400,12 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
   # Reload cache if necessary
   if (data %>% dplyr::filter(is.na(data$value) | data$value == "") %>% nrow() > 0){
     
-    # Reload data
-    if (category %in% c("count_concepts_rows", "count_persons_rows")){
-      sql <- glue::glue_sql(paste0("SELECT * FROM concept WHERE vocabulary_id = {vocabulary_id} ORDER BY id"), .con = m$db)
+    if (category == "thumbs_and_delete"){
+      sql <- glue::glue_sql(paste0("SELECT * FROM concept_relationship cr WHERE ",
+        "cr.id IN ({ids*}) ",
+        "AND cr.id NOT IN ({ids_to_keep*}) "), .con = m$db)
       data_reload <- DBI::dbGetQuery(m$db, sql)
     }
-    # else if (category == "thumbs_and_delete"){
-    #   sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items_mapping t WHERE ",
-    #     "(t.vocabulary_id_1 IN ({vocabulary_id*}) OR t.vocabulary_id_2 IN ({vocabulary_id*})) ",
-    #     "AND t.id NOT IN ({ids_to_keep*}) AND t.category = 'user_added_mapping' AND deleted IS FALSE ",
-    #     "ORDER BY id"), .con = r$db)
-    #   data_reload <- DBI::dbGetQuery(r$db, sql)
-    # }
     # else {
     #   sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE vocabulary_id = {vocabulary_id} ",
     #     "AND id NOT IN ({ids_to_keep*}) AND deleted IS FALSE ORDER BY id"), .con = r$db)
@@ -432,68 +413,23 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     # }
     
     # Make action column, depending on category
-    # If category is count_concepts_rows, add a count row column with number of rows by item in the dataset
-    # If category is count_persons_rows, add a count row column with number of patients by item in the dataset
     # If category is delete, add a delete button only
     # If category is plus_minus, add plus and minus buttons
     # If category is thumbs_and_delete, add thumbs_up, thumbs_down and delete buttons
-    
-    if (category %in% c("count_concepts_rows", "count_persons_rows")){
-      
-      # Run dataset code
-      tryCatch(capture.output(run_dataset_code(output, r = r, d = d, dataset_id = dataset_id, i18n = i18n)),
-        error = function(e) report_bug(r = r, output = output, error_message = "fail_load_dataset",
-            error_name = "create_datatable_cache - count_concepts_rows / count_persons_rows - run_dataset_code", category = "Error", error_report = e, i18n = i18n))
-      
-      # Initiate variables
-      count_rows <- tibble::tibble(concept_id = integer(), count_rows = integer())
-      
-      var_names <- c(
-        "condition_occurrence" = "condition_concept_id",
-        "drug_exposure" = "drug_concept_id",
-        "procedure_occurrence" = "procedure_concept_id",
-        "device_exposure" = "device_concept_id",
-        "measurement" = "measurement_concept_id",
-        "observation" = "observation_concept_id",
-        "specimen" = "specimen_concept_id",
-        "drug_era" = "drug_concept_id",
-        "dose_era" = "drug_concept_id",
-        "condition_era" = "condition_concept_id"
-      )
-      
-      for(var_name in names(var_names)){
-        if (nrow(d[[var_name]]) > 0){
-          new_count_rows <- d[[var_name]] %>% dplyr::group_by_at(var_names[[var_name]])
-          
-          if (category == "count_concepts_rows") new_count_rows <- new_count_rows %>% dplyr::summarize(count_rows = dplyr::n())
-          if (category == "count_persons_rows") new_count_rows <- new_count_rows %>% dplyr::summarize(count_rows = dplyr::n_distinct(person_id))
-          
-          new_count_rows <- new_count_rows %>% dplyr::ungroup() %>% dplyr::rename(concept_id = var_names[[var_name]])
-          count_rows <- count_rows %>% dplyr::bind_rows(new_count_rows)
-        }
-      }
-      
-      if (nrow(count_rows) != 0) data_reload <- data_reload %>% dplyr::left_join(count_rows, by = "concept_id") %>% dplyr::rename(value = count_rows)
-      if (nrow(count_rows) == 0) data_reload <- data_reload %>% dplyr::mutate(value = 0)
-      
-      # Set 0 when value is na
-      # Convert value to character
-      data_reload <- data_reload %>% dplyr::mutate_at("value", as.character) %>% dplyr::mutate(value = dplyr::case_when(is.na(value) ~ "0", TRUE ~ value))
-    }
     
     # if (category == "delete"){
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
     #     tagList(
     #       shiny::actionButton(paste0("sub_delete_", id), "", icon = icon("trash-alt"),
-    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-thesaurus_items_deleted_pressed', this.id, {priority: 'event'})")))))
+    #         onclick = paste0("Shiny.setInputValue('", module_id, "-thesaurus_items_deleted_pressed', this.id, {priority: 'event'})")))))
     # }
     # if (category == "plus_minus"){
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
     #     tagList(
     #       shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-item_selected', this.id, {priority: 'event'})")),
+    #         onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")),
     #       shiny::actionButton(paste0("remove_", id), "", icon = icon("minus"),
-    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-item_removed', this.id, {priority: 'event'})")))))
+    #         onclick = paste0("Shiny.setInputValue('", module_id, "-item_removed', this.id, {priority: 'event'})")))))
     # }
     # if (category == "plus_plugin" | grepl("plus_tab", category)){
     #   if (category == "plus_plugin") input_name <- "item_selected"
@@ -502,27 +438,27 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
     #     tagList(
     #       shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-", input_name, "', this.id, {priority: 'event'})")))))
+    #         onclick = paste0("Shiny.setInputValue('", module_id, "-", input_name, "', this.id, {priority: 'event'})")))))
     # }
-    # if (category == "thumbs_and_delete"){
-    #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-    #     tagList(
-    #       shiny::actionButton(paste0("positive_eval_", id), "", icon = icon("thumbs-up"),
-    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-item_mapping_evaluated_positive', this.id, {priority: 'event'})"),
-    #         style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
-    #       shiny::actionButton(paste0("negative_eval_", id), "", icon = icon("thumbs-down"),
-    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-item_mapping_evaluated_negative', this.id, {priority: 'event'})"),
-    #         style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
-    #       shiny::actionButton(paste0("remove_", id), "", icon = icon("trash-alt"),
-    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-item_mapping_deleted_pressed', this.id, {priority: 'event'})"),
-    #         style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
-    #     )))
-    # }
+    if (category == "thumbs_and_delete"){
+      data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
+        tagList(
+          shiny::actionButton(paste0("positive_eval_", id), "", icon = icon("thumbs-up"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-concept_mapping_evaluated_positive', this.id, {priority: 'event'})"),
+            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
+          shiny::actionButton(paste0("negative_eval_", id), "", icon = icon("thumbs-down"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-concept_mapping_evaluated_negative', this.id, {priority: 'event'})"),
+            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
+          shiny::actionButton(paste0("remove_", id), "", icon = icon("trash-alt"),
+            onclick = paste0("Shiny.setInputValue('", module_id, "-concept_mapping_deleted_pressed', this.id, {priority: 'event'})"),
+            style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
+        )))
+    }
     # if (grepl("plus_data_explorer", category)){
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
     #     tagList(
     #       shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-    #         onclick = paste0("Shiny.setInputValue('", tab_id, "-data_explorer_item_selected', this.id, {priority: 'event'})")))))
+    #         onclick = paste0("Shiny.setInputValue('", module_id, "-data_explorer_item_selected', this.id, {priority: 'event'})")))))
     # }
     # if (category == "colours_plugin" | grepl("colours_tab", category)){
     #   
@@ -539,7 +475,7 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     #     list(id = "#FFD92F", color = "#FFD92F"),
     #     list(id = "#000000", color = "#000000"))
     #   
-    #   ns <- NS(tab_id)
+    #   ns <- NS(module_id)
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
     #     div(shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0(input_name, "_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells), 
     #       cellHeight = 15, cellWidth = 15#, cellMargin = 10
@@ -561,35 +497,20 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     #   DBI::dbSendStatement(r$db, sql) -> query
     # }
     
-    # For count_persons_rows & count_concepts_rows, use dataset_id / link_id_bis (we count row for a specific dataset)
-    if (category %in% c("count_persons_rows", "count_concepts_rows")){
-      sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
-        "SELECT ca.id FROM cache ca ",
-        "INNER JOIN concept c ON ca.link_id = c.id AND ca.link_id_bis = {dataset_id} AND ca.category = {category} ",
-        "WHERE c.vocabulary_id = {vocabulary_id}",
-        ")"), .con = m$db)
-      DBI::dbSendStatement(m$db, sql) -> query
-    }
-    
     # For thumbs_and_delete, use thesaurus_items_mapping table
-    # if (category == "thumbs_and_delete"){
-    #   sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
-    #     "SELECT c.id FROM cache c ",
-    #     "INNER JOIN thesaurus_items_mapping t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
-    #     "AND (t.vocabulary_id_1 IN ({vocabulary_id*}) OR t.vocabulary_id_2 IN ({vocabulary_id*})) ",
-    #     ")"), .con = r$db)
-    #   query <- DBI::dbSendStatement(r$db, sql)
-    # }
+    if (category == "thumbs_and_delete"){
+      sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
+        "SELECT c.id FROM cache c ",
+        "INNER JOIN concept_relationship cr ",
+        "ON cr.id IN ({ids*}) AND c.link_id = cr.id AND c.category = {category} AND cr.id NOT IN ({ids_to_keep*}))"), .con = m$db)
+      query <- DBI::dbSendStatement(m$db, sql)
+    }
     
     DBI::dbClearResult(query)
     
     # Merge new data & old data
-    if (category %not_in% c("count_concepts_rows", "count_persons_rows")){
-      if (nrow(data) > 0) data <- data %>% dplyr::filter(!is.na(data$value) & data$value != "") %>% dplyr::bind_rows(data_reload)
-      else data <- data_reload
-    }
+    if (nrow(data) > 0) data <- data %>% dplyr::filter(!is.na(data$value) & data$value != "") %>% dplyr::bind_rows(data_reload)
     else data <- data_reload
-    
     
     # Get last row & insert new data
     last_row <- as.integer(DBI::dbGetQuery(m$db, "SELECT COALESCE(MAX(id), 0) FROM cache") %>% dplyr::pull())
@@ -608,11 +529,10 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     DBI::dbAppendTable(m$db, "cache", data_insert)
   }
   # 
-  # if (category %in% c("delete", "plus_plugin", "plus_minus", "thumbs_and_delete") | 
-  #     grepl("plus_data_explorer", category) | grepl("plus_tab", category)) data <- data %>% dplyr::rename(action = value)
+  if (category %in% c("delete", "plus_plugin", "plus_minus", "thumbs_and_delete") |
+    grepl("plus_data_explorer", category) | grepl("plus_tab", category)) data <- data %>% dplyr::rename(action = value)
   # if (category == "colours_plugin" | grepl("colours_tab", category)) data <- data %>% dplyr::rename(colour = value)
-  if (category %in% c("count_persons_rows", "count_concepts_rows")) data <- data %>% dplyr::rename(!!category := value) %>% dplyr::select(concept_id, !!category)
-
+  
   data
 }
 
