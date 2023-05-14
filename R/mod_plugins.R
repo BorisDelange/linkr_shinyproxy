@@ -100,9 +100,9 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
               ),
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
                 conditionalPanel(condition = "input.all_plugins_source == 'remote_git'", ns = ns,
-                  make_dropdown(i18n = i18n, ns = ns, label = "remote_git_repo", id = "remote_git_repo", width = "300px")),
+                  make_dropdown(i18n = i18n, ns = ns, label = "remote_git_repo", id = "remote_git_repo", width = "320px")),
                 conditionalPanel(condition = "input.all_plugins_source == 'remote_git'", ns = ns, div(style = "width:20px;")),
-                make_dropdown(i18n = i18n, ns = ns, label = "category", id = "plugins_category", width = "300px"),
+                make_dropdown(i18n = i18n, ns = ns, label = "category", id = "plugins_category", width = "320px"),
               ),
               conditionalPanel(condition = "input.all_plugins_source == 'remote_git'", ns = ns,
                 uiOutput(ns("all_plugins_remote_git"))),
@@ -453,32 +453,24 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Update plugins catalog when a remote git repo is selected
     
     observeEvent(input$remote_git_repo, {
-      
-      if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$remote_git_repo"))
       
       # Get URL of remote git repo
-      # If there's not a slash at the end, add one
       url_address <- r$git_repos %>% dplyr::filter(id == input$remote_git_repo) %>% dplyr::pull(url_address)
+      if (substr(url_address, nchar(url_address), nchar(url_address)) != "/") url_address <- paste0(url_address, "/")
       r$url_address <- url_address
       
-      if (substr(url_address, nchar(url_address), nchar(url_address)) != "/") url_address <- paste0(url_address, "/")
-      
       error_loading_remote_git <- TRUE
-      
       plugins_file <- paste0(app_folder, "/temp_files/plugins.xml")
       
       if (r$has_internet){
-        if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$has_internet"))
         
         tryCatch({
-          xml2::download_xml(url = paste0(url_address, "plugins.xml"), file = plugins_file)
+          xml2::download_xml(paste0(url_address, "plugins.xml"), plugins_file)
           error_loading_remote_git <- FALSE
         }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_connection_remote_git", 
           error_name = "plugins_catalog load plugins.xml", category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       }
-      
-      # remote_git plugins
       
       if (error_loading_remote_git) r$remote_git_plugins <- tibble::tibble(type = integer(), unique_id = character())
       
@@ -488,18 +480,28 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         XML::xmlToDataFrame(nodes = XML::getNodeSet(., "//plugin")) %>%
         tibble::as_tibble()
       
-      r$reload_plugins_document_cards <- Sys.time()
-      
       r$error_loading_remote_git <- error_loading_remote_git
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$remote_git_repo"))
+      # Update dropdown of other page (patient_lvl or aggregated)
+      if (prefix == "patient_lvl") r$aggregated_remote_git_repo <- input$remote_git_repo
+      else r$patient_lvl_remote_git_repo <- input$remote_git_repo
+      
+      r$reload_plugins_document_cards <- Sys.time()
+    })
+    
+    observeEvent(r[[paste0(prefix, "_remote_git_repo")]], {
+      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$.._remote_git_repo"))
+      
+      shiny.fluent::updateDropdown.shinyInput(session, "remote_git_repo",
+        options = convert_tibble_to_list(r$git_repos %>% dplyr::filter(category == "plugin"), key_col = "id", text_col = "name"),
+        value = r[[paste0(prefix, "_remote_git_repo")]])
     })
     
     observeEvent(r$plugins, {
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$plugins"))
       r$reload_plugins_document_cards <- Sys.time()
     }, once = TRUE)
-   
+    
     observeEvent(input$reload_plugins_document_cards, {
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$reload_plugins_document_cards"))
       r$reload_plugins_document_cards <- Sys.time()
@@ -510,29 +512,28 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$reload_plugins_document_cards"))
       
-      if (length(r$remote_git_plugins) == 0) r$remote_git_plugins <- tibble::tibble(type = integer(), unique_id = character())
+      if (length(r$error_loading_remote_git) == 0){
+        r$remote_git_plugins <- tibble::tibble(type = integer(), unique_id = character())
+        error_loading_remote_git <- TRUE
+      } 
+      if (length(r$error_loading_remote_git) > 0) error_loading_remote_git <- r$error_loading_remote_git
       
       plugins <- list()
       plugins$remote_git <- r$remote_git_plugins %>% dplyr::filter(type == tab_type_id) %>% dplyr::mutate(id = unique_id)
       plugins$local <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id, !deleted)
       r$plugins_images <- tibble::tibble(type = character(), id = character(), image_url = character())
       
-      print(plugins$remote_git)
-      
-      for(type in c("remote_git", "local")){
+      sapply(c("remote_git", "local"), function(type){
         
         all_plugins <- tagList()
         all_plugins_document_cards <- tagList()
-       
-        if (type == "remote_git"){
-          if (length(input$remote_git_repo) == 0) output$all_plugins_remote_git <- renderUI(tagList(br(), shiny.fluent::MessageBar(i18n$t("choose_remote_git"), messageBarType = 5)))
-          else if (r$error_loading_remote_git) output$all_plugins_remote_git <- renderUI(tagList(br(), shiny.fluent::MessageBar(i18n$t("error_connection_remote_git"), messageBarType = 3)))
-          else if (nrow(plugins$remote_git) == 0) output$all_plugins_remote_git <- renderUI(tagList(br(), shiny.fluent::MessageBar(i18n$t("no_available_plugin"), messageBarType = 5)))
-        }
-        else if (type == "local" & nrow(plugins$local) == 0) output$all_plugins_local <- renderUI(tagList(br(), shiny.fluent::MessageBar(i18n$t("no_available_plugin"), messageBarType = 5)))
         
-        if (nrow(plugins[[type]]) > 0){
-  
+        if (type == "remote_git" & length(r$error_loading_remote_git) == 0) renderUI(tagList(br(), shiny.fluent::MessageBar(i18n$t("choose_remote_git"), messageBarType = 5)))
+        else if (type == "remote_git" & error_loading_remote_git) output$all_plugins_remote_git <- renderUI(tagList(br(), shiny.fluent::MessageBar(i18n$t("error_connection_remote_git"), messageBarType = 3)))
+        else if (nrow(plugins[[type]]) == 0) output[[paste0("all_plugins_", type)]] <- renderUI(tagList(br(), shiny.fluent::MessageBar(i18n$t("no_available_plugin"), messageBarType = 5)))
+        
+        else if (nrow(plugins[[type]]) > 0){
+          
           i <- 0
 
           for(plugin_id in plugins[[type]] %>% dplyr::pull(id)){
@@ -621,7 +622,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           
           output[[paste0("all_plugins_", type)]] <- renderUI(tagList(all_plugins, br()))
         }
-      }
+      })
       
       r$load_plugins_images <- Sys.time()
       
@@ -876,15 +877,15 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Code table
         
         plugin_ui_code <- 
-          paste0("https://raw.remote_gitusercontent.com/BorisDelange/linkr-content/main/plugins/", prefix, "/", plugin$unique_id, "/ui.R") %>%
+          paste0(r$url_address, prefix, "/", plugin$unique_id, "/ui.R") %>%
           readLines(warn = FALSE) %>% paste(collapse = "\n")
         
         plugin_server_code <-
-          paste0("https://raw.remote_gitusercontent.com/BorisDelange/linkr-content/main/plugins/", prefix, "/", plugin$unique_id, "/server.R") %>%
+          paste0(r$url_address, prefix, "/", plugin$unique_id, "/server.R") %>%
           readLines(warn = FALSE) %>% paste(collapse = "\n")
         
         plugin_translations_code <-
-          paste0("https://raw.remote_gitusercontent.com/BorisDelange/linkr-content/main/plugins/", prefix, "/", plugin$unique_id, "/translations.csv") %>%
+          paste0(r$url_address, prefix, "/", plugin$unique_id, "/translations.csv") %>%
           readLines(warn = FALSE) %>% paste(collapse = "\n")
         
         last_row_code <- get_last_row(r$db, "code")
