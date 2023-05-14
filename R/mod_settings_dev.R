@@ -196,7 +196,7 @@ mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(
     # --- --- --- --- -- -
     
     searchable_cols <- c("task")
-    column_widths <- c("elapsed_time" = "120px", "datetime_start" = "150px", "datetime_stop" = "150px")
+    column_widths <- c("elapsed_time" = "150px", "datetime_start" = "150px", "datetime_stop" = "150px")
     sortable_cols <- c("elapsed_time", "datetime_start", "datetime_stop", "task")
     centered_cols <- c("elapsed_time", "datetime_start", "datetime_stop")
     col_names <- get_col_names(table_name = "perf_monitoring", i18n = i18n)

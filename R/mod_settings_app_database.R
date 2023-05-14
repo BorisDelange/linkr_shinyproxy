@@ -264,7 +264,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       "conversations", "iccl",
       "inbox_messages", "iiilcl",
       "log", "icccic",
-      "git_sources", "iccccicl",
+      "git_repos", "iccccicl",
       "patients_options", "iiiiiiciccnicl",
       "widgets_options", "iiiiicccnicl",
       "subsets", "icciicl",

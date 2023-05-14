@@ -110,7 +110,7 @@ linkr <- function(
       "db_restore_card"),
     "remote_git_repos", c(
       "git_add_repo_card", 
-      "git_repo_management_card"),
+      "git_repos_management_card"),
     "users", c(
       "users_creation_card",
       "users_management_card",

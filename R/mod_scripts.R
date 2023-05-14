@@ -549,14 +549,12 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Scripts management ----
     # --- --- --- --- --- ---
     
-    # Action buttons for each tab / page
     action_buttons <- c("delete", "edit_code", "options")
-    
     editable_cols <- c("name")
     sortable_cols <- c("id", "name", "data_source_id", "creator_id", "datetime")
     column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
     centered_cols <- c("id", "creator", "datetime", "action")
-    searchable_cols <- c("name", "description", "creator_id", "data_source_id", "creator_id")
+    searchable_cols <- c("name", "creator_id", "data_source_id")
     factorize_cols <- c("creator_id")
     hidden_cols <- c("id", "description", "data_source_id", "deleted", "modified")
     col_names <- get_col_names("scripts", i18n)
@@ -576,7 +574,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         render_datatable(output = output, r = r, ns = ns, i18n = i18n,
           data = tibble::tibble(id = integer(), name = character(), data_source_id = integer(), creator_id = factor(),
             datetime = character(), deleted = integer(), modified = logical(), action = character()), 
-          col_names = get_col_names(table_name = "scripts", i18n = i18n), output_name = "scripts_datatable",
+          col_names = col_names, output_name = "scripts_datatable",
           editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
           searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
       }
@@ -585,6 +583,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
       r$scripts_temp <- r$scripts %>% dplyr::filter(data_source_id == !!data_source_id) %>% dplyr::mutate(modified = FALSE)
 
+      # req(length(r$scripts_datatable_proxy) == 0)
+      
       # Prepare data for datatable
 
       r$scripts_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
@@ -592,31 +592,35 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
       # Render datatable
 
-      render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$scripts_datatable_temp,
-        output_name = "scripts_datatable", col_names =  get_col_names(table_name = "scripts", i18n = i18n),
-        editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
-
-      # Create a proxy for datatable
-
-      r$scripts_datatable_proxy <- DT::dataTableProxy("scripts_datatable", deferUntilFlush = FALSE)
+      if (length(r$scripts_datatable_proxy) == 0){
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$scripts_datatable_temp,
+          output_name = "scripts_datatable", col_names = col_names,
+          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+  
+        # Create a proxy for datatable
+  
+        r$scripts_datatable_proxy <- DT::dataTableProxy("scripts_datatable", deferUntilFlush = FALSE)
+      }
+        
+      else DT::replaceData(r$scripts_datatable_proxy, r$scripts_datatable_temp, resetPaging = FALSE, rownames = FALSE)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$scripts"))
     })
 
     # Reload datatable
-    observeEvent(r$scripts_temp, {
-      
-      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts_temp"))
-      
-      # Reload datatable_temp variable
-      if (nrow(r$scripts_temp) > 0) r$scripts_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
-        table = "scripts", factorize_cols = factorize_cols, action_buttons = action_buttons, data_input = r$scripts_temp)
-
-      # Reload data of datatable
-      if (length(r$scripts_datatable_proxy) > 0) DT::replaceData(r$scripts_datatable_proxy,
-        r$scripts_datatable_temp, resetPaging = FALSE, rownames = FALSE)
-    })
+    # observeEvent(r$scripts_temp, {
+    #   
+    #   if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts_temp"))
+    #   
+    #   # Reload datatable_temp variable
+    #   if (nrow(r$scripts_temp) > 0) r$scripts_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
+    #     table = "scripts", factorize_cols = factorize_cols, action_buttons = action_buttons, data_input = r$scripts_temp)
+    #   if (nrow(r$scripts_temp) == 0) r$scripts_datatable_temp <- r$scripts_temp %>% dplyr::mutate(action = character())
+    #   
+    #   # Reload data of datatable
+    #   if (length(r$scripts_datatable_proxy) > 0) DT::replaceData(r$scripts_datatable_proxy, r$scripts_datatable_temp, resetPaging = FALSE, rownames = FALSE)
+    # })
 
     # Updates on datatable data
     observeEvent(input$scripts_datatable_cell_edit, {

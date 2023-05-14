@@ -68,7 +68,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       AND study_id = {data$study_id}", .con = db)
     else if (table == "plugins") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
       AND tab_type_id = {data$tab_type}", .con = db)
-    else if (table == "git_sources") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
+    else if (table == "git_repos") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
       AND category = {data$category}", .con = db)
     else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = db)
     
@@ -187,7 +187,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row$data + 1, as.character(data$name), as.character(data$description), r$user_id, as.character(Sys.time()), FALSE)
   }
   
-  else if (table == "git_sources"){
+  else if (table == "git_repos"){
     new_data$data <- tibble::tribble(~id, ~name, ~description, ~category, ~url_address, ~creator_id, ~datetime, ~deleted,
       last_row$data + 1, as.character(data$name), as.character(data$description), as.character(data$category), as.character(data$url_address), r$user_id, as.character(Sys.time()), FALSE)
   }
@@ -962,12 +962,6 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = cha
         
         delete <- actionButton(paste0("delete_", data_output[i, "id"]), "", icon = icon("trash-alt"),
           onclick = paste0("Shiny.setInputValue('", id, "-deleted_pressed', this.id, {priority: 'event'})"))
-        
-        # Default subsets are not deletable
-        if (id == "settings_subsets"){
-          if (data_output[i, "name"] %in% c("All patients", "Tous les patients", "Included patients", "Patients inclus", 
-            "Excluded patients", "Patients exclus")) delete <- ""
-        }
         
         actions <- tagList(actions, delete)
       }

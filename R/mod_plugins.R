@@ -101,7 +101,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
                   style = "width:320px;"
                 )#,
                 # conditionalPanel(condition = "input.all_plugins_source == 'github'", ns = ns, 
-                  # div(shiny.fluent::Dropdown.shinyInput(ns("github_source"), i18n$t("remote_git_repo")), style = "width:322px; margin-top:2px;"))
+                  # div(shiny.fluent::Dropdown.shinyInput(ns("github_source"), i18n$t("remote_git_repos")), style = "width:322px; margin-top:2px;"))
               ),
               conditionalPanel(condition = "input.all_plugins_source == 'github'", ns = ns,
                 uiOutput(ns("all_plugins_github"))),
@@ -885,22 +885,17 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$add_plugin"))
+        
+      new_data <- list()
+      new_data$name <- coalesce2(type = "char", x = input$plugin_name)
+      new_data$plugin_name <- new_data$name
+      new_data$tab_type <- tab_type_id
       
-      if ("plugins_creation_card" %in% r$user_accesses){
-        
-        new_data <- list()
-        new_data$name <- coalesce2(type = "char", x = input$plugin_name)
-        new_data$plugin_name <- new_data$name
-        new_data$tab_type <- tab_type_id
-        
-        add_settings_new_data(session = session, output = output, r = r, m = m, i18n = i18n, id = id, 
-          data = new_data, table = "plugins", required_textfields = "plugin_name", req_unique_values = "name")
-        
-        # Reload datatable
-        r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
-      }
+      add_settings_new_data(session = session, output = output, r = r, m = m, i18n = i18n, id = id, 
+        data = new_data, table = "plugins", required_textfields = "plugin_name", req_unique_values = "name")
       
-      else show_message_bar(output,  "unauthorized_action", "severeWarning", i18n = i18n, ns = ns)
+      # Reload datatable
+      r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$add_plugin"))
     })

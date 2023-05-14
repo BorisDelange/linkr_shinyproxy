@@ -248,7 +248,7 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
           tags$li(tags$em("messages"), " : les messages associés aux conversations"),
           tags$li(tags$em("inbox_messages"), " : les messages non lus sont indiqués ici"),
           tags$li(tags$em("log"), " : le log des utilisateurs est stocké ici"),
-          tags$li(tags$em("git_sources"), " : cette table permettra dans une future version de l'application de stocker les ",
+          tags$li(tags$em("git_repos"), " : cette table permettra dans une future version de l'application de stocker les ",
           " différents sources de git distants (à sélectionner dans la liste des plugins sur git distant notamment)")
         ),
         p(strong("2) BDD publique")),
@@ -310,7 +310,7 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
           tags$li(tags$em("messages"), " : the messages associated with the conversations"),
           tags$li(tags$em("inbox_messages"), " : unread messages are indicated here"),
           tags$li(tags$em("log"), " : user logs are stored here"),
-          tags$li(tags$em("git_sources"), " : this table will allow storing the ",
+          tags$li(tags$em("git_repos"), " : this table will allow storing the ",
             "different remote git sources (to be selected from the list of plugins on remote git) in a future version of the application")
         ),
         p(strong("2) Public database")),

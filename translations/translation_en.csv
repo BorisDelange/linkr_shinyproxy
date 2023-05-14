@@ -360,7 +360,7 @@ vocabulary_added,New vocabulary added
 user_added,New user added
 user_access_added,New user access added
 user_status_added,New user status added
-git_source_added,New remote git repository added
+git_repo_added,New remote git repository added
 delete,Delete
 dont_delete,Cancel
 scripts_delete,Delete a script
@@ -824,8 +824,11 @@ show_only_not_mapped_concepts,Non-mapped concepts only
 vocabulary_show_only_not_evaluated_concepts,Non-evaluated mapping only
 vocabulary_show_mapping_details,Show details of selected mapping
 add_git_repo,Add a repository
-git_repo_management,Repositories management
+git_repos_management,Repositories management
 git_add_repo_card_user_access_description,Add a repository
-git_repo_management_card_user_access_description,Repositories management
+git_repos_management_card_user_access_description,Repositories management
 link,Link
 url_address,Url address
+git_repos_delete,Delete git repo
+git_repos_delete_subtext,Do you want to delete this repo ?
+git_repo_deleted,Git repository deleted

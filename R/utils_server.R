@@ -327,5 +327,10 @@ get_col_names <- function(table_name = character(), i18n = character()){
     result <- c(i18n$t("elapsed_time"), i18n$t("task"), i18n$t("datetime_start"), i18n$t("datetime_stop"))
   }
   
+  if (table_name == "git_repos"){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("category"), i18n$t("url_address"),
+      i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+  }
+  
   result
 }

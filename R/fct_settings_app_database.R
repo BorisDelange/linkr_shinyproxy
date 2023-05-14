@@ -194,7 +194,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
     db_create_table(db, "log", primary_key_col = "id", dbms = dbms, text_cols = "value",
       tibble::tibble(id = integer(), category = character(), name = character(), value = character(), creator_id = integer(), datetime = character()))
     
-    db_create_table(db, "git_sources", primary_key_col = "id", dbms = dbms, text_cols = c("description", "link"),
+    db_create_table(db, "git_repos", primary_key_col = "id", dbms = dbms, text_cols = c("description", "link"),
       tibble::tibble(id = integer(), name = character(), description = character(), category = character(),
         url_address = character(), creator_id = integer(), datetime = character(), deleted = logical()))
   }
@@ -467,7 +467,7 @@ load_database <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues
   
   # Database tables to load
   r_tables <- c("users", "users_accesses", "users_statuses", "data_sources", "datasets", "thesaurus",
-    "plugins", "code", "options")
+    "plugins", "code", "options", "git_repos")
   
   m_tables <- c("vocabulary")
   

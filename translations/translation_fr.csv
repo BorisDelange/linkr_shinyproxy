@@ -359,7 +359,7 @@ vocabulary_added,Nouvelle terminologiee ajoutée
 user_added,Nouvel utilisateur ajouté
 user_access_added,Nouvel accès utilisateur ajouté
 user_status_added,Nouveau statut d'utilisateur ajouté
-git_source_added,Nouveau dépôt git distant ajouté
+git_repo_added,Nouveau dépôt git distant ajouté
 delete,Supprimer
 dont_delete,Annuler
 scripts_delete,Supprimer un script
@@ -824,8 +824,11 @@ show_only_not_mapped_concepts,Concepts non alignés uniquement
 vocabulary_show_only_not_evaluated_concepts,Alignements non évalués uniquement
 vocabulary_show_mapping_details,Afficher le détail de l'alignement sélectionné
 add_git_repo,Ajouter un dépôt git
-git_repo_management,Gestion des dépôts git
+git_repos_management,Gestion des dépôts git
 git_add_repo_card_user_access_description,Ajouter un dépôt git
-git_repo_management_card_user_access_description,Gestion des dépôts git
+git_repos_management_card_user_access_description,Gestion des dépôts git
 link,Lien
 url_address,Adresse URL
+git_repos_delete,Suppression de dépôt git
+git_repos_delete_subtext,Confirmer la suppression du dépôt git ?
+git_repo_deleted,Dépôt git supprimé
