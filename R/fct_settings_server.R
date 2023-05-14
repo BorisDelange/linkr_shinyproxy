@@ -68,6 +68,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       AND study_id = {data$study_id}", .con = db)
     else if (table == "plugins") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
       AND tab_type_id = {data$tab_type}", .con = db)
+    else if (table == "git_sources") sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE
+      AND category = {data$category}", .con = db)
     else sql <- glue::glue_sql("SELECT DISTINCT({`field`}) FROM {`table`} WHERE deleted IS FALSE", .con = db)
     
     distinct_values <- DBI::dbGetQuery(db, sql) %>% dplyr::pull() %>% tolower()
@@ -183,6 +185,11 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   else if (table %in% c("patient_lvl_tabs_groups", "aggregated_tabs_groups")){
     new_data$data <- tibble::tribble(~id, ~name,  ~description, ~creator_id, ~datetime, ~deleted,
       last_row$data + 1, as.character(data$name), as.character(data$description), r$user_id, as.character(Sys.time()), FALSE)
+  }
+  
+  else if (table == "git_sources"){
+    new_data$data <- tibble::tribble(~id, ~name, ~description, ~category, ~url_address, ~creator_id, ~datetime, ~deleted,
+      last_row$data + 1, as.character(data$name), as.character(data$description), as.character(data$category), as.character(data$url_address), r$user_id, as.character(Sys.time()), FALSE)
   }
   
   # Append data to the table and to r / m variables
@@ -352,7 +359,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   # Reset textfields
   if (table == "users") sapply(c("username", "firstname", "lastname", "password"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
   else if (table == "vocabulary") sapply(c("vocabulary_id", "vocabulary_name"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
-  else sapply(c("plugin_name", "script_name", "study_name", "subset_name", "name", "description"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
+  else sapply(c("plugin_name", "script_name", "study_name", "subset_name", "name", "description", "url_address"), function(name) shiny.fluent::updateTextField.shinyInput(session, name, value = ""))
 }
 
 #' Create cache for datatable data

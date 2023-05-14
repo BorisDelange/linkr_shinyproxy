@@ -31,6 +31,7 @@ get_singular <- function(word = character(), language = "EN"){
     "tab_types" = "tab_type",
     "plugins" = "plugin",
     "scripts" = "script",
+    "git_sources" = "git_source",
     "users" = "user",
     "users_accesses" = "user_access",
     "users_statuses" = "user_status") -> result
@@ -73,6 +74,7 @@ get_plural <- function(word = character(), language = "EN"){
     "plugins" = "plugins",
     "script" = "scripts",
     "scripts" = "scripts",
+    "git_source" = "git_sources",
     "user" = "users",
     "users" = "users",
     "user_access" = "users_accesses",

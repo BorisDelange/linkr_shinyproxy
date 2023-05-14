@@ -99,6 +99,7 @@ export_plugins_github,Export on remote git
 import_and_export_plugins,Import and export plugins
 git_remote_plugins,On remote git
 remote_git_repo,Remote git repository
+remote_git_repos,Remote git repositories
 local_plugins,Local plugins
 local_plugins_short,Local
 plugin,Plugin
@@ -317,6 +318,7 @@ only_me,Access to current account log only
 available_scripts,Available scripts
 selected_scripts,Selected scripts
 provide_valid_name,Please provide a valid name
+provide_valid_url_address,Please provide a valid URL address
 provide_valid_study_name,Please provide a valid name
 provide_valid_subset_name,Please provide a valid name
 provide_valid_script_name,Nom valide requis
@@ -358,6 +360,7 @@ vocabulary_added,New vocabulary added
 user_added,New user added
 user_access_added,New user access added
 user_status_added,New user status added
+git_source_added,New remote git repository added
 delete,Delete
 dont_delete,Cancel
 scripts_delete,Delete a script
@@ -820,3 +823,9 @@ error_calculating_num_rows_concepts_dataset,Error calculating the number of rows
 show_only_not_mapped_concepts,Non-mapped concepts only
 vocabulary_show_only_not_evaluated_concepts,Non-evaluated mapping only
 vocabulary_show_mapping_details,Show details of selected mapping
+add_git_repo,Add a repository
+git_repo_management,Repositories management
+git_add_repo_card_user_access_description,Add a repository
+git_repo_management_card_user_access_description,Repositories management
+link,Link
+url_address,Url address

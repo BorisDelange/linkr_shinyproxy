@@ -1067,9 +1067,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
     observeEvent(input$vocabulary_show_only_not_mapped_concepts, {
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$show_only_not_mapped_concepts"))
       req(length(r$vocabulary_mapping_reload) > 0)
-      if (grepl("mapping_1", r$vocabulary_mapping_reload)) mapping <- "mapping_1"
-      else if (grepl("mapping_2", r$vocabulary_mapping_reload)) mapping <- "mapping_2"
-      r$vocabulary_mapping_reload <- paste0(Sys.time(), "_", mapping)
+      r$vocabulary_mapping_reload <- paste0(Sys.time(), "_mapping_1")
     })
     
     observeEvent(r$vocabulary_mapping_reload, {
@@ -1680,8 +1678,6 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       last_row_selected <- input$vocabulary_evaluate_mappings_rows_selected[length(input$vocabulary_evaluate_mappings_rows_selected)]
       selected_row <- r$dataset_vocabulary_concepts_evaluate_mappings[last_row_selected, ]
       
-    
-      
       sql <- glue::glue_sql(paste0("SELECT concept_id, COUNT(DISTINCT(dataset_id)) AS count_datasets, ",
         "SUM(count_concepts_rows) + SUM(count_secondary_concepts_rows) AS count_concepts_rows ",
         "FROM concept_dataset ",
@@ -1692,13 +1688,18 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       sql <- glue::glue_sql("SELECT * FROM concept WHERE concept_id = {selected_row$concept_id_1}", .con = m$db)
       concept_1 <- DBI::dbGetQuery(m$db, sql) %>%
         dplyr::left_join(concept_dataset %>% dplyr::select(concept_id, count_datasets, count_concepts_rows), by = "concept_id") %>%
-        dplyr::left_join(r$dataset_all_concepts %>% dplyr::transmute(concept_id = concept_id_1, 
-          count_concepts_rows_current_dataset = count_concepts_rows + count_secondary_concepts_rows), by = "concept_id") %>%
+        # Sum counts if this concepts has been mapped to multiple concepts
+        dplyr::left_join(r$dataset_all_concepts %>% 
+          dplyr::transmute(concept_id = concept_id_1, count_concepts_rows_current_dataset = count_concepts_rows + count_secondary_concepts_rows) %>%
+          dplyr::group_by(concept_id) %>%
+          dplyr::summarize(count_concepts_rows_current_dataset = sum(count_concepts_rows_current_dataset)) %>%
+          dplyr::ungroup(), by = "concept_id") %>%
         dplyr::mutate(
           count_datasets = ifelse(is.na(count_datasets), 0L, count_datasets),
           count_concepts_rows = ifelse(is.na(count_concepts_rows), 0L, count_concepts_rows),
           count_concepts_rows_current_dataset = ifelse(is.na(count_concepts_rows_current_dataset), 0L, count_concepts_rows_current_dataset)
         )
+      print(concept_1)
       
       # Left panel
       output$vocabulary_mapping_details_left <- renderUI(tagList(
@@ -1725,8 +1726,11 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       sql <- glue::glue_sql("SELECT * FROM concept WHERE concept_id = {selected_row$concept_id_2}", .con = m$db)
       concept_2 <- DBI::dbGetQuery(m$db, sql) %>%
         dplyr::left_join(concept_dataset %>% dplyr::select(concept_id, count_datasets, count_concepts_rows), by = "concept_id") %>%
-        dplyr::left_join(r$dataset_all_concepts %>% dplyr::transmute(concept_id = concept_id_1, 
-          count_concepts_rows_current_dataset = count_concepts_rows + count_secondary_concepts_rows), by = "concept_id") %>%
+        dplyr::left_join(r$dataset_all_concepts %>% 
+          dplyr::transmute(concept_id = concept_id_1, count_concepts_rows_current_dataset = count_concepts_rows + count_secondary_concepts_rows) %>%
+          dplyr::group_by(concept_id) %>%
+          dplyr::summarize(count_concepts_rows_current_dataset = sum(count_concepts_rows_current_dataset)) %>%
+          dplyr::ungroup(), by = "concept_id") %>%
         dplyr::mutate(
           count_datasets = ifelse(is.na(count_datasets), 0L, count_datasets),
           count_concepts_rows = ifelse(is.na(count_concepts_rows), 0L, count_concepts_rows),

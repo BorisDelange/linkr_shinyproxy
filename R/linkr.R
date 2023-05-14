@@ -89,6 +89,7 @@ linkr <- function(
     "plugins_aggregated",
     "settings/general_settings",
     "settings/app_db",
+    "settings/git",
     "settings/users", 
     "settings/dev", 
     "settings/data_sources",
@@ -107,6 +108,9 @@ linkr <- function(
       "db_request_card",
       "db_save_card",
       "db_restore_card"),
+    "remote_git_repos", c(
+      "git_add_repo_card", 
+      "git_repo_management_card"),
     "users", c(
       "users_creation_card",
       "users_management_card",

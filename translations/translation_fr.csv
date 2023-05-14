@@ -97,7 +97,8 @@ export_plugins,Exporter les plugins
 export_plugins_github,Exporter sur git distant
 import_and_export_plugins,Importer et exporter des plugins
 git_remote_plugins,Sur git distant
-remote_git_repo,Repository git distant
+remote_git_repo,Dépôt git distant
+remote_git_repos,Dépôts git distants
 local_plugins,Plugins locaux
 local_plugins_short,Locaux
 plugin,Plugin
@@ -316,6 +317,7 @@ only_me,Accès uniquement à son log
 available_scripts,Scripts disponibles
 selected_scripts,Scripts choisis
 provide_valid_name,Nom valide requis
+provide_valid_url_address,URL valide requise
 provide_valid_study_name,Nom valide requis
 provide_valid_subset_name,Nom valide requis
 provide_valid_script_name,Nom valide requis
@@ -357,6 +359,7 @@ vocabulary_added,Nouvelle terminologiee ajoutée
 user_added,Nouvel utilisateur ajouté
 user_access_added,Nouvel accès utilisateur ajouté
 user_status_added,Nouveau statut d'utilisateur ajouté
+git_source_added,Nouveau dépôt git distant ajouté
 delete,Supprimer
 dont_delete,Annuler
 scripts_delete,Supprimer un script
@@ -820,3 +823,9 @@ error_calculating_num_rows_concepts_dataset,Erreur lors du calcul du nombre de l
 show_only_not_mapped_concepts,Concepts non alignés uniquement
 vocabulary_show_only_not_evaluated_concepts,Alignements non évalués uniquement
 vocabulary_show_mapping_details,Afficher le détail de l'alignement sélectionné
+add_git_repo,Ajouter un dépôt git
+git_repo_management,Gestion des dépôts git
+git_add_repo_card_user_access_description,Ajouter un dépôt git
+git_repo_management_card_user_access_description,Gestion des dépôts git
+link,Lien
+url_address,Adresse URL

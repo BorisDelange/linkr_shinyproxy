@@ -239,6 +239,11 @@ app_server <- function(router, language = "en", app_folder = character(),
       mod_page_sidenav_server("settings_app_db", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_app_db", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - settings_app_db")
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - settings_git"))
+      
+      mod_settings_git_server("settings_git", r, d, m, i18n, language, perf_monitoring, debug)
+      mod_page_header_server("settings_git", r, language, i18n)
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - settings_git")
       if (debug) print(paste0(Sys.time(), " - server - load server tabs - settings_users"))
     
       mod_settings_users_server("settings_users", r, m, i18n, language, perf_monitoring, debug, options_toggles)
@@ -250,12 +255,13 @@ app_server <- function(router, language = "en", app_folder = character(),
         mod_settings_users_server(paste0("settings_users_", page, "_management"), r, m, i18n, language, perf_monitoring, debug, options_toggles)
         mod_settings_users_server(paste0("settings_users_", page, "_options"), r, m, i18n, language, perf_monitoring, debug, options_toggles)
       })
+      
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - settings_users")
       if (debug) print(paste0(Sys.time(), " - server - load server tabs - settings_dev"))
-    
       mod_settings_dev_server("settings_dev", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_sidenav_server("settings_dev", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_dev", r, language, i18n)
+      
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - settings_dev")
       if (debug) print(paste0(Sys.time(), " - server - load server tabs - data_sources / datasets / vocabularies"))
     

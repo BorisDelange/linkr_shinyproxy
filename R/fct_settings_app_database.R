@@ -196,7 +196,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
     
     db_create_table(db, "git_sources", primary_key_col = "id", dbms = dbms, text_cols = c("description", "link"),
       tibble::tibble(id = integer(), name = character(), description = character(), category = character(),
-        value = character(), creator_id = integer(), datetime = character(), deleted = logical()))
+        url_address = character(), creator_id = integer(), datetime = character(), deleted = logical()))
   }
   
   if (type == "public"){

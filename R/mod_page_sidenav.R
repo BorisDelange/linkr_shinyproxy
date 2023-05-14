@@ -178,15 +178,15 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
     })
     
     links <- list()
-    sapply(c("general_settings", "app_db", "users", "dev", "data_management", "log"), function(page){
+    for(page in c("general_settings", "app_db", "git", "users", "dev", "data_management", "log")){
       # Sub links for data management
-      if (page == "data_management") links <<- rlist::list.append(links, list(name = i18n$t(page),
+      if (page == "data_management") links <- rlist::list.append(links, list(name = i18n$t(page),
         id = ns(page), key = page, links = links_data_management, selectedKey = substr(id, nchar("settings") + 2, 100), isExpanded = TRUE))
 
       # No sub links
-      else links <<- rlist::list.append(links, list(name = i18n$t(page),
-        id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
-    })
+      else if (page == "git") links <- rlist::list.append(links, list(name = i18n$t("remote_git_repos"), id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
+      else links <- rlist::list.append(links, list(name = i18n$t(page), id = ns(page), key = page, url = shiny.router::route_link(paste0("settings/", page))))
+    }
     
     div(class = "sidenav", 
       shiny.fluent::Nav(
