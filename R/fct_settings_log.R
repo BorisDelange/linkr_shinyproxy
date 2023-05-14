@@ -35,7 +35,7 @@ report_bug <- function(r = shiny::reactiveValues(), output, error_message = char
   # print(error_report)
   
   # Notification to user
-  if (error_message %not_in% c("fail_load_dataset", "fail_load_scripts")){
+  if (error_message %not_in% c("fail_load_dataset", "fail_load_scripts", "error_connection_remote_git")){
     
     if (length(ns) > 0) show_message_bar(output,  error_message, "severeWarning", i18n = i18n, ns = ns)
     if (length(ns) == 0) show_message_bar(output,  error_message, "severeWarning", i18n = i18n)

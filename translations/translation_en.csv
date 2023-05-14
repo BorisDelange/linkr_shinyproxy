@@ -95,9 +95,9 @@ plugin_options,Plugin options
 import_plugin,Import a plugin
 export_plugin,Export a plugin
 export_plugins,Export plugins
-export_plugins_github,Export on remote git
+export_plugins_remote_git,Export on remote git
 import_and_export_plugins,Import and export plugins
-git_remote_plugins,On remote git
+git_remote_plugins,On remote git repository
 remote_git_repo,Remote git repository
 remote_git_repos,Remote git repositories
 local_plugins,Local plugins
@@ -211,6 +211,7 @@ app_db_tables,Database tables
 app_db_tables_long,Database tables
 db_connexion_type,Connection type
 local,Local
+local_plural,Local
 distant,Distant
 remote,Remote
 dbname,Database name
@@ -451,8 +452,9 @@ install_plugin,Install plugin
 update_plugin,Update plugin
 plugin_up_to_date,Plugin up to date
 local_plugin_newer,Local plugin is newer
-error_install_github_plugin,Error installing a plugin from remote git
-success_installing_github_plugin,Plugin successfully installed from remote git
+error_install_remote_git_plugin,Error installing a plugin from remote git
+success_installing_remote_git_plugin,Plugin successfully installed from remote git
+choose_remote_git,Choose a remote git repository
 success_importing_plugin,Plugin(s) successfully imported
 success_importing_dataset,Dataset successfully imported
 error_importing_plugin,Error importing plugin(s)
@@ -548,6 +550,7 @@ vocabulary_1,Vocabulary 1
 vocabulary_2,Vocabulary 2
 concept_1_is,Item 1
 to_concept_2,item 2
+concept_1_is_to_concept_2,Concept 1 in regard to concept 2
 equivalent_to,Is equivalent to
 included_in,Is included in
 include,Include
@@ -574,7 +577,7 @@ positive_evals,Positive evals
 negative_evals,Negative evals
 plus_symbol,+
 minus_symbol,-
-error_connection_github,Couldn't connect to remote git
+error_connection_remote_git,Couldn't connect to remote git
 user_evaluation_id,User evaluation ID
 only_aggregated_data_authorized,Only aggregated data are available for this dataset
 remove_tab,Remove tab

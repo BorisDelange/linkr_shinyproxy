@@ -94,9 +94,9 @@ plugin_options,Options du plugin
 import_plugin,Importer un plugin
 export_plugin,Exporter un plugin
 export_plugins,Exporter les plugins
-export_plugins_github,Exporter sur git distant
+export_plugins_remote_git,Exporter sur dépôt git distant
 import_and_export_plugins,Importer et exporter des plugins
-git_remote_plugins,Sur git distant
+git_remote_plugins,Sur dépôt git distant
 remote_git_repo,Dépôt git distant
 remote_git_repos,Dépôts git distants
 local_plugins,Plugins locaux
@@ -210,6 +210,7 @@ app_db_tables,Tables de la BDD
 app_db_tables_long,Tables de la base de données
 db_connexion_type,Type de connexion
 local,Locale
+local_plural,Locaux
 distant,Distante
 remote,Distante
 dbname,Nom de la BDD
@@ -450,8 +451,9 @@ install_plugin,Installer ce plugin
 update_plugin,Mettre à jour ce plugin
 plugin_up_to_date,Plugin à jour
 local_plugin_newer,Le plugin local est plus récent
-error_install_github_plugin,Erreur lors de l'installation d'un plugin depuis le git distant
-success_installing_github_plugin,Plugin installé avec succès depuis le git distant
+error_install_remote_git_plugin,Erreur lors de l'installation d'un plugin depuis le git distant
+success_installing_remote_git_plugin,Plugin installé avec succès depuis le git distant
+choose_remote_git,Choisissez un dépôt de git distant
 success_importing_plugin,Plugin(s) importé(s) avec succès
 success_importing_dataset,Set de données importé avec succès
 error_importing_plugin,Erreur lors de l'importation du ou des plugin(s)
@@ -548,6 +550,7 @@ vocabulary_1,Terminologie 1
 vocabulary_2,Terminologie 2
 concept_1_is,L'item 1
 to_concept_2,l'item 2
+concept_1_is_to_concept_2,Le concept 1 par rapport au concept 2
 equivalent_to,Est équivalent à
 included_in,Est inclus dans
 include,Inclut
@@ -574,7 +577,7 @@ positive_evals,Evals positives
 negative_evals,Evals négatives
 plus_symbol,+
 minus_symbol,-
-error_connection_github,Impossible de se connecter au git distant
+error_connection_remote_git,Impossible de se connecter au git distant
 user_evaluation_id,ID évaluation utilisateur
 only_aggregated_data_authorized,Seules les données agrégées sont autorisées pour ce set de données
 remove_tab,Supprimer l'onglet
