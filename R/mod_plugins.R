@@ -98,11 +98,14 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
                 ), className = "inline_choicegroup"),
                 style = "width:320px;"
               ),
-              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 0),
-                conditionalPanel(condition = "input.all_plugins_source == 'remote_git'", ns = ns,
-                  make_dropdown(i18n = i18n, ns = ns, label = "remote_git_repo", id = "remote_git_repo", width = "320px")),
-                conditionalPanel(condition = "input.all_plugins_source == 'remote_git'", ns = ns, div(style = "width:20px;")),
-                make_dropdown(i18n = i18n, ns = ns, label = "category", id = "plugins_category", width = "320px"),
+              conditionalPanel(condition = "input.all_plugins_source == 'local'", ns = ns,
+                make_dropdown(i18n = i18n, ns = ns, label = "category", id = "local_plugins_category", width = "322px")
+              ),
+              conditionalPanel(condition = "input.all_plugins_source == 'remote_git'", ns = ns,
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                  make_dropdown(i18n = i18n, ns = ns, label = "remote_git_repo", id = "remote_git_repo", width = "322px"),
+                  make_dropdown(i18n = i18n, ns = ns, label = "category", id = "remote_git_plugins_category", width = "322px")
+                )
               ),
               conditionalPanel(condition = "input.all_plugins_source == 'remote_git'", ns = ns,
                 uiOutput(ns("all_plugins_remote_git"))),
@@ -415,6 +418,24 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       shiny.fluent::updateComboBox.shinyInput(session, "code_selected_plugin", options = options)
       shiny.fluent::updateComboBox.shinyInput(session, "options_selected_plugin", options = options)
+      
+      # Reload category dropdowns
+      
+      categories_options <- 
+        tibble::tibble(key = "all", text = i18n$t("all_categories")) %>%
+        dplyr::bind_rows(
+          r$plugins %>% 
+          dplyr::left_join(
+            r$options %>% dplyr::filter(category == "plugin", name == paste0("category_", language)) %>% dplyr::select(id = link_id, category = value),
+            by = "id") %>%
+          dplyr::filter(tab_type_id == !!tab_type_id & category != "" & !is.na(category)) %>%
+          dplyr::group_by(category) %>% dplyr::slice(1) %>% dplyr::ungroup() %>%
+          dplyr::select(key = category, text = category) %>%
+          dplyr::arrange(category)
+        )
+        
+      shiny.fluent::updateDropdown.shinyInput(session, "local_plugins_category", 
+        options = convert_tibble_to_list(categories_options, key_col = "key", text_col = "text"), value = "all")
     })
     
     # --- --- --- --- --- ---
@@ -507,10 +528,17 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       r$reload_plugins_document_cards <- Sys.time()
     })
     
+    observeEvent(input$local_plugins_category, {
+      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$local_plugins_category"))
+      r$reload_plugins_document_cards <- Sys.time()
+    })
+    
     observeEvent(r$reload_plugins_document_cards, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$reload_plugins_document_cards"))
+      
+      req(input$local_plugins_category)
       
       if (length(r$error_loading_remote_git) == 0){
         r$remote_git_plugins <- tibble::tibble(type = integer(), unique_id = character())
@@ -522,6 +550,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       plugins$remote_git <- r$remote_git_plugins %>% dplyr::filter(type == tab_type_id) %>% dplyr::mutate(id = unique_id)
       plugins$local <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id, !deleted)
       r$plugins_images <- tibble::tibble(type = character(), id = character(), image_url = character())
+      
+      # Filter local plugins on category
+      if (input$local_plugins_category != "all") plugins$local <- plugins$local %>%
+        dplyr::left_join(
+          r$options %>% dplyr::filter(category == "plugin", name == paste0("category_", language)) %>% dplyr::select(id = link_id, category = value),
+          by = "id") %>%
+        dplyr::filter(category == input$local_plugins_category)
       
       sapply(c("remote_git", "local"), function(type){
         
@@ -545,6 +580,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
               plugin$unique_id <- plugin$options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value)
               plugin$author <- plugin$options %>% dplyr::filter(name == "author") %>% dplyr::pull(value)
               plugin$version <- plugin$options %>% dplyr::filter(name == "version") %>% dplyr::pull(value)
+              plugin$category <- plugin$options %>% dplyr::filter(name == paste0("category_", language)) %>% dplyr::pull(value)
+              
+              # local_plugins_category
               
               if (plugin$options %>% dplyr::filter(name == "image") %>% dplyr::pull(value) != ""){
                 plugin$image_url <- paste0(app_folder, "/plugins/", prefix, "/",

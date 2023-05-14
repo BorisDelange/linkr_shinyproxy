@@ -835,3 +835,4 @@ url_address,Adresse URL
 git_repos_delete,Suppression de dépôt git
 git_repos_delete_subtext,Confirmer la suppression du dépôt git ?
 git_repo_deleted,Dépôt git supprimé
+all_categories,Toutes les catégories
