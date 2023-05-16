@@ -62,8 +62,13 @@ mod_settings_dev_ui <- function(id = character(), i18n = character()){
       div(id = ns("dev_perf_monitoring_card"),
         make_card(i18n$t("perf_monitoring"),
           div(
+            br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::DefaultButton.shinyInput(ns("show_datatable"), i18n$t("show_data")),
+              shiny.fluent::DefaultButton.shinyInput(ns("reset_perf_monitoring"), i18n$t("reset"))
+            ),
             DT::DTOutput(ns("perf_monitoring_datatable")),
-            shiny.fluent::DefaultButton.shinyInput(ns("reset_perf_monitoring"), i18n$t("reset"))
+            
           )
         )
       )
@@ -201,7 +206,7 @@ mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(
     centered_cols <- c("elapsed_time", "datetime_start", "datetime_stop")
     col_names <- get_col_names(table_name = "perf_monitoring", i18n = i18n)
     
-    observeEvent(r$perf_monitoring_table, {
+    observeEvent(input$show_datatable, {
       
       if (nrow(r$perf_monitoring_table) > 0) perf_monitoring_table <- r$perf_monitoring_table %>%
         dplyr::mutate(elapsed_time = round(datetime_stop - datetime_start, 2), .before = "task") %>%
@@ -218,7 +223,7 @@ mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(
         render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = perf_monitoring_table,
           output_name = "perf_monitoring_datatable", col_names = col_names,
           sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-          searchable_cols = searchable_cols, page_length = 100)
+          searchable_cols = searchable_cols, filter = TRUE, page_length = 100)
         
         # Create a proxy for datatatable
         r$perf_monitoring_datatable_proxy <- DT::dataTableProxy("perf_monitoring_datatable", deferUntilFlush = FALSE)

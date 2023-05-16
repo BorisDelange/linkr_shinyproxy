@@ -366,9 +366,9 @@ git_repo_added,Nouveau dépôt git distant ajouté
 delete,Supprimer
 dont_delete,Annuler
 scripts_delete,Supprimer un script
-scripts_delete_subtext,Confirmez-vous la suppression de ce subset ?
+scripts_delete_subtext,Confirmez-vous la suppression de ce script ?
 import_dataset_success,Set de données chargé avec succès
-script_deleted,Script supprimé
+script_deleted,Script(s) supprimé(s)
 modif_saved,Modifications enregistrées
 console,Console
 table,Table
@@ -839,3 +839,4 @@ git_repos_delete,Suppression de dépôt git
 git_repos_delete_subtext,Confirmer la suppression du dépôt git ?
 git_repo_deleted,Dépôt git supprimé
 all_categories,Toutes les catégories
+show_data,Afficher les données

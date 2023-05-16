@@ -176,15 +176,51 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
         id = ns("scripts_options_card"),
         make_card(i18n$t("script_options"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "script", id = "options_selected_script",
-              width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
-            strong(i18n$t("script_description")), br(),
-            
-            div(shinyAce::aceEditor(ns("ace_options_description"), "", mode = "markdown",
-              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
-            
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_options_description"), i18n$t("save")), " ",
-            shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("run_code")),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_combobox(i18n = i18n, ns = ns, label = "script", id = "options_selected_script",
+                width = "320px", allowFreeform = FALSE, multiSelect = FALSE),
+              make_textfield(i18n = i18n, ns = ns, label = "author", id = "script_author", width = "320px"),
+              make_textfield(i18n = i18n, ns = ns, label = "version", id = "script_version", width = "60px")
+            ), 
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_textfield(i18n = i18n, ns = ns, label = "name_fr", id = "script_name_fr", width = "320px"),
+              make_textfield(i18n = i18n, ns = ns, label = "name_en", id = "script_name_en", width = "320px")
+            ),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_textfield(i18n = i18n, ns = ns, label = "category_fr", id = "script_category_fr", width = "320px"),
+              make_textfield(i18n = i18n, ns = ns, label = "category_en", id = "script_category_en", width = "320px")
+            ), br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              div(paste0(i18n$t("description"), " :"), style = "font-weight:bold; margin-top:7px; margin-right:5px;"),
+              shiny.fluent::ChoiceGroup.shinyInput(ns("script_description_language"), value = "fr", options = list(
+                list(key = "fr", text = "FR"),
+                list(key = "en", text = "EN")
+              ), className = "inline_choicegroup")
+            ),
+            conditionalPanel(condition = "input.script_description_language == 'fr'", ns = ns,
+              div(shinyAce::aceEditor(ns("script_description_fr"), "", mode = "markdown", 
+                code_hotkeys = list(
+                  "markdown", 
+                  list(
+                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"),
+                    run_all = list(win = "CTRL-SHIFT-ENTER|CTRL-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER|CTRL-ENTER|CMD-ENTER") 
+                  )
+                ),
+                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
+            conditionalPanel(condition = "input.script_description_language == 'en'", ns = ns,
+              div(shinyAce::aceEditor(ns("script_description_en"), "", mode = "markdown", 
+                code_hotkeys = list(
+                  "markdown", 
+                  list(
+                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"),
+                    run_all = list(win = "CTRL-SHIFT-ENTER|CTRL-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER|CTRL-ENTER|CMD-ENTER") 
+                  )
+                ),
+                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 21),
+              shiny.fluent::PrimaryButton.shinyInput(ns("save_options_description"), i18n$t("save")), " ",
+              shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("run_code"))
+            ),
             br(), br(),
             div(id = ns("description_markdown_output"),
               uiOutput(ns("description_markdown_result")), 
@@ -263,7 +299,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     observeEvent(r$scripts, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts"))
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts 1"))
       
       options <- convert_tibble_to_list(r$scripts%>% dplyr::arrange(name), key_col = "id", text_col = "name")
       
@@ -550,10 +586,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # --- --- --- --- --- ---
     
     action_buttons <- c("delete", "edit_code", "options")
-    editable_cols <- c("name")
-    sortable_cols <- c("id", "name", "data_source_id", "creator_id", "datetime")
-    column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
-    centered_cols <- c("id", "creator", "datetime", "action")
+    sortable_cols <- c("id", "name", "data_source_id", "creator_id", "creation_datetime", "update_datetime")
+    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "80px", "creator_id" = "200px")
+    centered_cols <- c("id", "creator", "creation_datetime", "update_datetime", "action")
     searchable_cols <- c("name", "creator_id", "data_source_id")
     factorize_cols <- c("creator_id")
     hidden_cols <- c("id", "description", "data_source_id", "deleted", "modified")
@@ -564,7 +599,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     observeEvent(r$scripts, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts"))
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts 2"))
       
       # Reset fields
       
@@ -573,15 +608,18 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if(nrow(r$scripts %>% dplyr::filter(data_source_id == !!data_source_id)) == 0){
         render_datatable(output = output, r = r, ns = ns, i18n = i18n,
           data = tibble::tibble(id = integer(), name = character(), data_source_id = integer(), creator_id = factor(),
-            datetime = character(), deleted = integer(), modified = logical(), action = character()), 
-          col_names = col_names, output_name = "scripts_datatable",
-          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+            creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical(), action = character()), 
+          col_names = col_names, output_name = "scripts_datatable", selection = "multiple",
+          sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
           searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
       }
 
       req(nrow(r$scripts %>% dplyr::filter(data_source_id == !!data_source_id)) > 0)
 
-      r$scripts_temp <- r$scripts %>% dplyr::filter(data_source_id == !!data_source_id) %>% dplyr::mutate(modified = FALSE)
+      r$scripts_temp <- r$scripts %>% 
+        dplyr::filter(data_source_id == !!data_source_id) %>% 
+        dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
+        dplyr::mutate(modified = FALSE)
 
       # req(length(r$scripts_datatable_proxy) == 0)
       
@@ -594,8 +632,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
       if (length(r$scripts_datatable_proxy) == 0){
         render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$scripts_datatable_temp,
-          output_name = "scripts_datatable", col_names = col_names,
-          editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+          output_name = "scripts_datatable", col_names = col_names, selection = "multiple",
+          sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
           searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
   
         # Create a proxy for datatable
@@ -607,20 +645,6 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$scripts"))
     })
-
-    # Reload datatable
-    # observeEvent(r$scripts_temp, {
-    #   
-    #   if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts_temp"))
-    #   
-    #   # Reload datatable_temp variable
-    #   if (nrow(r$scripts_temp) > 0) r$scripts_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
-    #     table = "scripts", factorize_cols = factorize_cols, action_buttons = action_buttons, data_input = r$scripts_temp)
-    #   if (nrow(r$scripts_temp) == 0) r$scripts_datatable_temp <- r$scripts_temp %>% dplyr::mutate(action = character())
-    #   
-    #   # Reload data of datatable
-    #   if (length(r$scripts_datatable_proxy) > 0) DT::replaceData(r$scripts_datatable_proxy, r$scripts_datatable_temp, resetPaging = FALSE, rownames = FALSE)
-    # })
 
     # Updates on datatable data
     observeEvent(input$scripts_datatable_cell_edit, {
@@ -635,6 +659,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     })
 
     # Save updates
+    
     observeEvent(input$save_scripts_management, {
       
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_scripts_management"))
@@ -655,7 +680,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     script_react_variable <- "script_delete_confirm"
     script_table <- "scripts"
     script_id_var_sql <- "id"
-    script_id_var_r <- "delete_script"
+    script_id_var_r <- "delete_scripts"
     script_delete_message <- "script_deleted"
     script_reload_variable <- "reload_scripts"
     script_information_variable <- "script_deleted"
@@ -667,18 +692,42 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       delete_message = script_delete_message, translation = TRUE, reload_variable = script_reload_variable,
       information_variable = script_information_variable)
 
+    # Delete one row (with icon on DT)
+    
     observeEvent(input$deleted_pressed, {
       
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$deleted_pressed"))
-
-      r$delete_script <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
-      r[[script_delete_variable]] <- TRUE
-
-      reset_scripts_fields(session = session)
       
-      # Reload datatable (to unselect rows)
-      DT::replaceData(r$scripts_datatable_proxy, r$scripts_datatable_temp, resetPaging = FALSE, rownames = FALSE)
+      r$delete_scripts <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
+      r[[script_delete_variable]] <- TRUE
+      reset_scripts_fields(session = session)
     })
+    
+    # Delete multiple rows (with "Delete selection" button)
+    
+    observeEvent(input$delete_selection, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$delete_selection"))
+      
+      req(length(input$scripts_datatable_rows_selected) > 0)
+      
+      r$delete_scripts <- r$scripts_temp[input$scripts_datatable_rows_selected, ] %>% dplyr::pull(id)
+      r[[script_delete_variable]] <- TRUE
+      reset_scripts_fields(session = session)
+    })
+    
+    # observeEvent(input$deleted_pressed, {
+    #   
+    #   if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$deleted_pressed"))
+    # 
+    #   r$delete_script <- as.integer(substr(input$deleted_pressed, nchar("delete_") + 1, 100))
+    #   r[[script_delete_variable]] <- TRUE
+    # 
+    #   reset_scripts_fields(session = session)
+    #   
+    #   # Reload datatable (to unselect rows)
+    #   DT::replaceData(r$scripts_datatable_proxy, r$scripts_datatable_temp, resetPaging = FALSE, rownames = FALSE)
+    # })
 
     observeEvent(r$reload_scripts, {
       
@@ -688,7 +737,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # update_r(r = r, table = "scripts")
 
       # Reload datatable
-      r$scripts_temp <- r$scripts %>% dplyr::mutate(modified = FALSE)
+      r$scripts_temp <- r$scripts %>% 
+        dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
+        dplyr::mutate(modified = FALSE)
     })
     
     observeEvent(input$edit_code, {
@@ -786,10 +837,11 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
       # Update datetime in plugins table
 
-      sql <- glue::glue_sql("UPDATE scripts SET datetime = {as.character(Sys.time())} WHERE id = {link_id}", .con = r$db)
+      new_update_datetime <- as.character(Sys.time())
+      sql <- glue::glue_sql("UPDATE scripts SET update_datetime = {new_update_datetime} WHERE id = {link_id}", .con = r$db)
       query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
-      r$scripts <- r$scripts %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ as.character(Sys.time()), TRUE ~ datetime))
+      r$scripts <- r$scripts %>% dplyr::mutate(update_datetime = dplyr::case_when(id == link_id ~ new_update_datetime, TRUE ~ update_datetime))
       
       # Notify user
       show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
@@ -879,48 +931,80 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       }
       else code_link_id <- 0L
       
-      if (link_id != code_link_id){
-        options <- convert_tibble_to_list(r$scripts %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-        value <- list(key = link_id, text = r$scripts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
-        shiny.fluent::updateComboBox.shinyInput(session, "code_selected_script", options = options, value = value)
-      }
+      if (link_id != code_link_id)  
+        shiny.fluent::updateComboBox.shinyInput(session, "code_selected_script", 
+          options = convert_tibble_to_list(r$scripts %>% dplyr::arrange(name), key_col = "id", text_col = "name"),
+          value = list(key = link_id, text = r$scripts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name)))
       
       # Get description from database
-      description <- r$options %>% dplyr::filter(category == "script" & name == "markdown_description" & link_id == !!link_id) %>% dplyr::pull(value)
-      shinyAce::updateAceEditor(session, "ace_options_description", value = description)
+      # description <- r$options %>% dplyr::filter(category == "script" & name == "markdown_description" & link_id == !!link_id) %>% dplyr::pull(value)
+      # shinyAce::updateAceEditor(session, "ace_options_description", value = description)
+      
+      options <- r$options %>% dplyr::filter(category == "script", link_id == !!link_id)
+      
+      for (field in c("version", "author", "name_fr", "name_en", "category_fr", "category_en")) shiny.fluent::updateTextField.shinyInput(session,
+        paste0("script_", field), value = options %>% dplyr::filter(name == field) %>% dplyr::pull(value))
+      
+      for (field in c("description_fr", "description_en")) shinyAce::updateAceEditor(session,
+        paste0("script_", field), value = options %>% dplyr::filter(name == field) %>% dplyr::pull(value))
+      
     })
     
     # Save updates
     
+    observeEvent(input$script_description_fr_save, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$script_description_fr_save"))
+      r$script_save_options <- Sys.time()
+    })
+    observeEvent(input$script_description_en_save, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$script_description_en_save"))
+      r$script_save_options <- Sys.time()
+    })
     observeEvent(input$save_options_description, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_options_description"))
+      r$script_save_options <- Sys.time()
+    })
+    
+    observeEvent(r$script_save_options, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_options_description"))
       
-      if (length(input$options_selected_script) > 1) link_id <- input$options_selected_script$key
-      else link_id <- input$options_selected_script
-
-      req(!is.null(link_id))
-      # Update options
-
-      option_id <- r$options %>% dplyr::filter(category == "script" & name == "markdown_description" & link_id == !!link_id) %>% dplyr::pull(id)
+      script_name <- input[[paste0("script_name_", language)]]
       
-      new_description <- stringr::str_replace_all(input$ace_options_description, "'", "''")
-      sql <- glue::glue_sql("UPDATE options SET value = {new_description} WHERE id = {option_id}", .con = r$db)
+      if (is.na(script_name) | script_name == "") shiny.fluent::updateTextField.shinyInput(session, 
+        paste0("script_name_", language), errorMessage = i18n$t("provide_valid_name"))
+      
+      req(!is.na(script_name) & script_name != "")
+      
+      if (!is.na(script_name) & script_name != "") shiny.fluent::updateTextField.shinyInput(session, 
+        paste0("script_name_", language), errorMessage = NULL)
+      
+      req(length(input$options_selected_script) > 0)
+      if (length(input$options_selected_script) > 1) link_id <- input$options_selected_script$key
+      else link_id <- input$code_selected_script
+      
+      data <- list()
+      for (field in c("script_version", "script_author",
+        "script_name_fr", "script_name_en", "script_category_fr", "script_category_en",
+        "script_description_fr", "script_description_en")) data[[stringr::str_replace(field, "script_", "")]] <- input[[field]]
+      
+      save_settings_options(output = output, r = r, id = id, category = "script", code_id_input = paste0("options_", link_id),
+        i18n = i18n, data = data, page_options = c("version", "author", "description_fr", "description_en",
+          "name_fr", "name_en", "category_fr", "category_en"))
+      
+      # Change script_name & update_datetime in scripts table
+      new_update_datetime <- as.character(Sys.time())
+      sql <- glue::glue_sql("UPDATE scripts SET name = {script_name}, update_datetime = {new_update_datetime} WHERE id = {link_id}", .con = r$db)
       query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
-      r$options <- r$options %>% dplyr::mutate(value = dplyr::case_when(id == option_id ~ new_description, TRUE ~ value))
-
-      # Update datetime in scripts table
-
-      new_datetime <- as.character(Sys.time())
-      sql <- glue::glue_sql("UPDATE scripts SET datetime = {new_datetime} WHERE id = {link_id}", .con = r$db)
-      query <- DBI::dbSendStatement(r$db, sql)
-      DBI::dbClearResult(query)
-      r$scripts <- r$scripts %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ new_datetime, TRUE ~ datetime))
-
-      # Notify user
-      show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
+      
+      r$scripts <- r$scripts %>% dplyr::mutate(
+        name = dplyr::case_when(id == link_id ~ script_name, TRUE ~ name),
+        update_datetime = dplyr::case_when(id == link_id ~ new_update_datetime, TRUE ~ update_datetime))
+      r$scripts_temp <- r$scripts %>%
+        dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
+        dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input$save_options_description"))
     })
@@ -928,11 +1012,26 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # Render markdown
     
     observeEvent(input$execute_options_description, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$execute_options_description"))
+      r$script_options_description_trigger <- Sys.time()
+    })
+    
+    observeEvent(input$script_description_fr_run_all, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$script_description_fr_run_all"))
+      r$script_options_description_trigger <- Sys.time()
+    })
+    
+    observeEvent(input$script_description_en_run_all, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$script_description_en_run_all"))
+      r$script_options_description_trigger <- Sys.time()
+    })
+    
+    observeEvent(r$script_options_description_trigger, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$execute_options_description"))
       
-      options_description <- isolate(input$ace_options_description %>% stringr::str_replace_all("\r", "\n"))
+      options_description <- isolate(input[[paste0("script_description_", input$script_description_language)]] %>% stringr::str_replace_all("\r", "\n"))
       
       tryCatch({
         

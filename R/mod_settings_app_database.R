@@ -522,7 +522,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         error = function(e) ""
       )
       
-      colnames(data) <- c(i18n$t("table_name"), i18n$t("row_number"))
+      colnames(data) <- c(i18n$t("table_name"), i18n$t("num_rows"))
       
       dt_translation <- list(
         paginate = list(previous = i18n$t("dt_previous"), `next` = i18n$t("dt_next")),
@@ -539,7 +539,8 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
             pageLength = 40,
             language = dt_translation,
             columnDefs = list(
-              list(className = "dt-left", targets = "_all")
+              list(className = "dt-left", targets = "_all"),
+              list(width = "100px", targets = 1)
             )),
           rownames = FALSE, selection = "single")
         

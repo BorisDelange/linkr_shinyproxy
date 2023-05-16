@@ -91,26 +91,29 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
         div(id = ns("all_plugins_document_cards"),
           make_card(i18n$t("all_plugins"),
             div(
-              div(
-                shiny.fluent::ChoiceGroup.shinyInput(ns("all_plugins_source"), value = "local", options = list(
-                  list(key = "local", text = i18n$t("local_plural")),
-                  list(key = "remote_git", text = i18n$t("git_remote_plugins"))
-                ), className = "inline_choicegroup"),
-                style = "width:320px;"
-              ),
-              conditionalPanel(condition = "input.all_plugins_source == 'local'", ns = ns,
-                make_dropdown(i18n = i18n, ns = ns, label = "category", id = "local_plugins_category", width = "322px")
-              ),
-              conditionalPanel(condition = "input.all_plugins_source == 'remote_git'", ns = ns,
-                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-                  make_dropdown(i18n = i18n, ns = ns, label = "remote_git_repo", id = "remote_git_repo", width = "322px"),
-                  make_dropdown(i18n = i18n, ns = ns, label = "category", id = "remote_git_plugins_category", width = "322px")
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                div(
+                  shiny.fluent::ChoiceGroup.shinyInput(ns("all_plugins_source"), value = "local", options = list(
+                    list(key = "local", text = i18n$t("local_plural")),
+                    list(key = "remote_git", text = i18n$t("git_remote_plugins"))
+                  ), className = "inline_choicegroup"),
+                  style = "width:322px;"
+                ),
+                conditionalPanel(condition = "input.all_plugins_source == 'remote_git'", ns = ns,
+                  div(
+                    shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                      div(strong(i18n$t("remote_git_repo")), style = "margin-top:8px;"),
+                      div(shiny.fluent::Dropdown.shinyInput(ns("remote_git_repo")), style = "width:322px;margin-top:4px;")
+                    )
+                  )
                 )
               ),
-              conditionalPanel(condition = "input.all_plugins_source == 'remote_git'", ns = ns,
-                uiOutput(ns("all_plugins_remote_git"))),
               conditionalPanel(condition = "input.all_plugins_source == 'local'", ns = ns,
-                uiOutput(ns("all_plugins_local"))), br(),
+                make_dropdown(i18n = i18n, ns = ns, label = "category", id = "local_plugins_category", width = "322px"),
+                uiOutput(ns("all_plugins_local"))),
+              conditionalPanel(condition = "input.all_plugins_source == 'remote_git'", ns = ns,
+                make_dropdown(i18n = i18n, ns = ns, label = "category", id = "remote_git_plugins_category", width = "322px"),
+                uiOutput(ns("all_plugins_remote_git"))), br(),
               div(shiny.fluent::DefaultButton.shinyInput(ns("reload_plugins_document_cards"), i18n$t("refresh")), style = "margin-top:2px; width:320px;")
             )
           )
@@ -279,13 +282,32 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
             ),
             conditionalPanel(condition = "input.plugin_description_language == 'fr'", ns = ns,
               div(shinyAce::aceEditor(ns("plugin_description_fr"), "", mode = "markdown", 
-                code_hotkeys = list("markdown", list(save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"))),
+                code_hotkeys = list(
+                  "markdown", 
+                  list(
+                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"),
+                    run_all = list(win = "CTRL-SHIFT-ENTER|CTRL-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER|CTRL-ENTER|CMD-ENTER") 
+                  )
+                ),
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
             conditionalPanel(condition = "input.plugin_description_language == 'en'", ns = ns,
               div(shinyAce::aceEditor(ns("plugin_description_en"), "", mode = "markdown", 
-                code_hotkeys = list("markdown", list(save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"))),
+                code_hotkeys = list(
+                  "markdown", 
+                  list(
+                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"),
+                    run_all = list(win = "CTRL-SHIFT-ENTER|CTRL-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER|CTRL-ENTER|CMD-ENTER") 
+                  )
+                ),
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
-            shiny.fluent::PrimaryButton.shinyInput(ns("save_plugin_options"), i18n$t("save")),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::PrimaryButton.shinyInput(ns("save_plugin_options"), i18n$t("save")),
+              shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("run_code"))
+            ),
+            br(), br(),
+            div(id = ns("description_markdown_output"),
+              uiOutput(ns("description_markdown_result")), 
+              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px; padding-top: 10px;"),
             div(style = "display:none;", fileInput(ns("import_image_file"), label = "", multiple = FALSE, accept = c(".jpg", ".jpeg", ".png")))
           )
         ), br()
@@ -566,7 +588,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       plugins <- list()
       plugins$remote_git <- r$remote_git_plugins %>% dplyr::filter(type == tab_type_id) %>% dplyr::mutate(id = unique_id)
-      plugins$local <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id, !deleted)
+      if (nrow(plugins$remote_git) > 0) plugins$remote_git <- plugins$remote_git %>% dplyr::arrange(get(paste0("name_", language)))
+      plugins$local <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id, !deleted) %>% dplyr::arrange(name)
       r[[paste0(prefix, "_plugins_images")]] <- tibble::tibble(type = character(), id = character(), image_url = character())
       
       # Filter local plugins on category
@@ -1407,9 +1430,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (is.na(plugin_name) | plugin_name == "") shiny.fluent::updateTextField.shinyInput(session, 
         paste0("plugin_name_", language), errorMessage = i18n$t("provide_valid_name"))
       
-      req(!is.na(plugin_name) | plugin_name != "")
+      req(!is.na(plugin_name) & plugin_name != "")
       
-      if (!is.na(plugin_name) | plugin_name != "") shiny.fluent::updateTextField.shinyInput(session, 
+      if (!is.na(plugin_name) & plugin_name != "") shiny.fluent::updateTextField.shinyInput(session, 
         paste0("plugin_name_", language), errorMessage = NULL)
       
       req(length(input$options_selected_plugin) > 0)
@@ -1558,6 +1581,55 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           error_name = paste0(id, " - import plugin image"), category = "Error", error_report = e, i18n = i18n))
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$import_image_file"))
+    })
+    
+    # Render markdown
+    
+    observeEvent(input$execute_options_description, {
+      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$execute_options_description"))
+      r[[paste0(prefix, "_plugin_options_description_trigger")]] <- Sys.time()
+    })
+    
+    observeEvent(input$plugin_description_fr_run_all, {
+      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$plugin_description_fr_run_all"))
+      r[[paste0(prefix, "_plugin_options_description_trigger")]] <- Sys.time()
+    })
+    
+    observeEvent(input$plugin_description_en_run_all, {
+      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$plugin_description_en_run_all"))
+      r[[paste0(prefix, "_plugin_options_description_trigger")]] <- Sys.time()
+    })
+    
+    observeEvent(r[[paste0(prefix, "_plugin_options_description_trigger")]], {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$execute_options_description"))
+      
+      options_description <- isolate(input[[paste0("plugin_description_", input$plugin_description_language)]] %>% stringr::str_replace_all("\r", "\n"))
+      
+      tryCatch({
+        
+        # Clear temp dir
+        unlink(paste0(path.expand("~"), "/linkr_temp_files"), recursive = TRUE, force = TRUE)
+        
+        markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
+          path.expand("~"), "/linkr_temp_files')\n",
+          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files', fig.path = '", path.expand("~"), "/linkr_temp_files')\n```\n")
+        
+        markdown_file <- paste0(markdown_settings, options_description)
+        
+        # Create temp dir
+        dir <- paste0(path.expand("~"), "/linkr_temp_files")
+        file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
+        if (!dir.exists(dir)) dir.create(dir)
+        
+        # Create the markdown file
+        knitr::knit(text = markdown_file, output = file, quiet = TRUE)
+        
+        output$description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
+      }, error = function(e) "")
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$execute_options_description"))
     })
     
     # --- --- --- --- --- -

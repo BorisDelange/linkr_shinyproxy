@@ -320,7 +320,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   
   if (table_name == "scripts"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("data_source_id"), i18n$t("creator"), 
-      i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+      i18n$t("created_on"), i18n$t("updated_on"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
   if (table_name == "perf_monitoring"){

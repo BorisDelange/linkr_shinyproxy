@@ -324,8 +324,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         "users_accesses" = "", "users_statuses" = "")
       
       # Action buttons for each tab / page
-      if ("users_delete_data" %in% r$user_accesses) action_buttons <- "delete" else action_buttons <- ""
-      action_buttons = switch(table, "users" = action_buttons, "users_accesses" = c("options", action_buttons), "users_statuses" = action_buttons)
+      action_buttons = switch(table, "users" = "delete", "users_accesses" = c("options", "delete"), "users_statuses" = "delete")
       sortable_cols <- c("id", "name", "description", "username", "firstname", "lastname", "datetime")
       column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
       editable_cols <- switch(table, "users" = c("username", "firstname", "lastname"),
@@ -481,6 +480,8 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
         # Show options toggle
         r$users_statuses_options <- as.integer(substr(input$options, nchar("options_") + 1, nchar(input$options)))
 
+        # Reload datatable (to unselect rows)
+        DT::replaceData(r[[paste0(table, "_datatable_proxy")]], r[[paste0(table, "_datatable_temp")]], resetPaging = FALSE, rownames = FALSE)
       })
     }
     
