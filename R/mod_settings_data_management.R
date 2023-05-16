@@ -273,7 +273,7 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
                   list(key = "drug_strength", text = "DRUG_STRENGTH")
                 )),
               conditionalPanel(condition = "['concept', 'concept_relationship', 'concept_synonym', 'concept_ancestor', 'drug_strength'].includes(input.vocabularies_table)", ns = ns,
-                make_dropdown(i18n = i18n, ns = ns, label = "vocabulary", id = "vocabularies_table_vocabulary", width = "300px"))
+                make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "vocabularies_table_vocabulary", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"))
             ),
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 20),
@@ -286,15 +286,6 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
                 div(shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                   make_toggle(i18n = i18n, ns = ns, label = "vocabularies_datatable_show_row_details", inline = TRUE), style = "margin-top:45px;")))
             ),
-            # conditionalPanel(condition = "input.vocabularies_table == 'concept'", ns = ns,
-            #   shiny.fluent::Stack(
-            #     horizontal = TRUE, tokens = list(childrenGap = 50),
-            #     make_dropdown(i18n = i18n, ns = ns, label = "dataset", id = "vocabularies_dataset", width = "300px"),
-            #     conditionalPanel(condition = "input.dataset !== ''", ns = ns,
-            #       div(strong(i18n$t("show_only_used_items"), style = "display:block; padding-bottom:12px;"),
-            #         shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;"))
-            #   )
-            # ),
             DT::DTOutput(ns("vocabularies_tables_datatable")), br(),
             conditionalPanel(condition = "input.vocabularies_table == null", ns = ns, div(br(), br(), br())),
             div(
@@ -328,12 +319,12 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
           div(
             br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::DefaultButton.shinyInput(ns("import_vocabulary_browse_zip"), i18n$t("choose_zip_file")),
+              shiny.fluent::DefaultButton.shinyInput(ns("import_vocabulary_browse_zip"), i18n$t("choose_zip_file"), style = "width:270px;"),
               uiOutput(ns("import_vocabulary_zip_status"))), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::DefaultButton.shinyInput(ns("import_vocabulary_browse_csv"), i18n$t("choose_csv_files")),
+              shiny.fluent::DefaultButton.shinyInput(ns("import_vocabulary_browse_csv"), i18n$t("choose_csv_files"), style = "width:270px;"),
               uiOutput(ns("import_vocabulary_csv_status"))), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("import_vocabulary_button"), i18n$t("import_vocabulary"), iconProps = list(iconName = "Download")), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("import_vocabulary_button"), i18n$t("import_vocabulary"), iconProps = list(iconName = "Download"), style = "width:270px;"), br(),
             shinyjs::hidden(
               div(
                 id = ns("imported_vocabularies_div"), br(),
@@ -1218,13 +1209,18 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             sql <- glue::glue_sql("SELECT DISTINCT(vocabulary_id) FROM concept", .con = m$db)
             vocabularies <- DBI::dbGetQuery(m$db, sql) %>% dplyr::arrange(vocabulary_id)
             
-            dropdown_options <- convert_tibble_to_list(data = vocabularies, key_col = "vocabulary_id", text_col = "vocabulary_id")
-            dropdown_options <- rlist::list.append(dropdown_options, list(key = "all_vocabularies", text = i18n$t("all_vocabularies")))
+            dropdown_options <- convert_tibble_to_list(
+              data = tibble::tibble(vocabulary_id = "all_vocabularies", vocabulary_name = i18n$t("all_vocabularies")) %>%
+                dplyr::bind_rows(vocabularies %>% dplyr::mutate(vocabulary_name = vocabulary_id) %>% dplyr::arrange(vocabulary_name)), 
+              key_col = "vocabulary_id", text_col = "vocabulary_name")
             
-            shiny.fluent::updateDropdown.shinyInput(session, "vocabularies_table_vocabulary", options = dropdown_options, value = "all_vocabularies")
+            # dropdown_options <- convert_tibble_to_list(data = vocabularies, key_col = "vocabulary_id", text_col = "vocabulary_id")
+            # dropdown_options <- rlist::list.append(list(key = "all_vocabularies", text = i18n$t("all_vocabularies")), dropdown_options)
+            
+            shiny.fluent::updateComboBox.shinyInput(session, "vocabularies_table_vocabulary", options = dropdown_options, value = "all_vocabularies")
             r$vocabularies_table_vocabulary_options <- dropdown_options
           }
-          else shiny.fluent::updateDropdown.shinyInput(session, "vocabularies_table_vocabulary", options = r$vocabularies_table_vocabulary_options, value = "all_vocabularies")
+          else shiny.fluent::updateComboBox.shinyInput(session, "vocabularies_table_vocabulary", options = r$vocabularies_table_vocabulary_options, value = "all_vocabularies")
           
           # Render datatable rows dropdown
           r$vocabularies_table_update_table_rows_dropdown <- Sys.time()
@@ -1260,6 +1256,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$vocabularies_table_update_table_rows_dropdown"))
           
           req(input$vocabularies_table_vocabulary)
+          print(input$vocabularies_table_vocabulary)
           
           # Count rows of current table
           if (input$vocabularies_table %in% c("concept", "concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength") &
@@ -1399,6 +1396,18 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
 
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_tables_datatable_rows_selected"))
 
+          n_rows <- stringr::str_split_1(input$vocabularies_table_rows, ";")
+          n_rows_start <- as.integer(n_rows[1])
+          n_rows_end <- as.integer(n_rows[2])
+          
+          if (input$vocabularies_table %in% c("concept", "concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength") &
+              input$vocabularies_table_vocabulary != "all_vocabularies"){
+            
+            data <- r[[paste0(input$vocabularies_table, "_filtered")]] %>% dplyr::slice(n_rows_start:n_rows_end)
+          }
+          else data <- r[[input$vocabularies_table]] %>% dplyr::slice(n_rows_start:n_rows_end)
+          
+          
           # Show row details
 
           if(input$vocabularies_table %in% c("concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength")){
@@ -1411,7 +1420,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
               
               if (length(r$concept) == 0) result <- div(i18n$t("load_concept_data_before"))
 
-              selected_row <- r[[input$vocabularies_table]][input$vocabularies_tables_datatable_rows_selected, ]
+              selected_row <- data[input$vocabularies_tables_datatable_rows_selected, ]
               
               if (length(r$concept) > 0){
                 if (input$vocabularies_table == "concept_relationship"){
@@ -1470,20 +1479,21 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (input$vocabularies_table == "concept"){
             req(input$vocabularies_datatable_show_mapped_concepts)
 
-            selected_row <- r[[input$vocabularies_table]][input$vocabularies_tables_datatable_rows_selected, ]
-            if (length(r$concept_relationship) == 0) result <- show_message_bar(output,  "load_concept_relationship_data_before", "severeWarning", i18n = i18n, ns = ns)
+            selected_row <- data[input$vocabularies_tables_datatable_rows_selected, ]
+            if (length(r$concept_relationship) == 0) result <- show_message_bar(output, "load_concept_relationship_data_before", "severeWarning", i18n = i18n, ns = ns)
             
             req(length(r$concept_relationship) > 0)
             
             mapped_concepts <- r$concept_relationship %>%
-              dplyr::select(concept_id_1, relationship_id, concept_id_2) %>%
+              dplyr::filter(concept_id_1 == selected_row$concept_id) %>%
               dplyr::left_join(r$concept %>% dplyr::select(concept_id_2 = concept_id, concept_name_2 = concept_name), by = "concept_id_2") %>%
+              dplyr::select(concept_id_1, relationship_id, concept_id_2, concept_name_2) %>%
               dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.character)
 
             render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = mapped_concepts,
               output_name = "vocabularies_tables_mapped_concepts_datatable", sortable_cols = c("concept_id_1", "concept_id_2", "concept_name_2", "relationship_id"),
               centered_cols = c("concept_id_1", "concept_id_2", "relationship_id"), searchable_cols = c("concept_id_1", "concept_id_2", "concept_name_2", "relationship_id"),
-              filter = TRUE, factorize_cols = c("concept_id_1", "concept_id_2", "concept_name_2", "relationship_id"))
+              filter = TRUE, factorize_cols = c("relationship_id"))
           }
         })
 
@@ -1711,7 +1721,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
               shinyjs::show("imported_vocabularies_div")
               
               render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$import_vocabulary_count_rows,
-                output_name = "imported_vocabularies", col_names = c(i18n$t("table_name"), i18n$t("row_number")),
+                output_name = "imported_vocabularies", col_names = c(i18n$t("table_name"), i18n$t("num_rows")),
                 centered_cols = c("table_name", "n_rows"))
               
               show_message_bar(output,  "success_importing_vocabulary", "success", i18n = i18n, time = 15000, ns = ns)
@@ -1753,7 +1763,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
                 
                 render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$import_vocabulary_count_rows,
                   output_name = "imported_vocabularies", col_names = c(i18n$t("table_name"), i18n$t("row_number")),
-                  centered_cols = c("table_name", "n_rows"))
+                  centered_cols = c("table_name", "n_rows"), column_widths = c("n_rows" = "100px"))
                 
                 show_message_bar(output,  "success_importing_vocabulary", "success", i18n = i18n, time = 15000, ns = ns)
               },
