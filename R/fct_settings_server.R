@@ -153,8 +153,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   
   # Creation of new_data$data variable for plugins page
   else if (table == "plugins"){
-    new_data$data <- tibble::tribble(~id, ~name, ~description, ~tab_type_id, ~datetime, ~deleted,
-      last_row$data + 1, as.character(data$name), "", as.integer(data$tab_type), as.character(Sys.time()), FALSE)
+    new_data$data <- tibble::tribble(~id, ~name, ~description, ~tab_type_id, ~creation_datetime, ~update_datetime, ~deleted,
+      last_row$data + 1, as.character(data$name), "", as.integer(data$tab_type), as.character(Sys.time()), as.character(Sys.time()), FALSE)
   }
   
   # Creation of new_data$data variable for scripts page

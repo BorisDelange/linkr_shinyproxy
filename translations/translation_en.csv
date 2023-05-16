@@ -93,7 +93,9 @@ plugins_management,Plugins management
 edit_plugin_code,Edit plugin code
 plugin_options,Plugin options
 import_plugin,Import a plugin
+import_plugins,Import plugins
 export_plugin,Export a plugin
+export_selected_plugins,Export plugins
 export_plugins,Export plugins
 export_plugins_remote_git,Export on remote git
 import_and_export_plugins,Import and export plugins
@@ -426,6 +428,7 @@ mapping_delete,Mapping removal
 mapping_delete_subtext,Do you want to delete this or these mapping(s) ?
 tab_type,Tab type
 last_update,Last update
+created_on,Created on
 updated_on,Updated on
 thesaurus_selected_items,Selected items
 replace_already_existing_plugins,Replace already existing plugins

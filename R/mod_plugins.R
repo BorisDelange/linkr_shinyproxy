@@ -76,8 +76,8 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
       shiny.fluent::PivotItem(id = "plugins_datatable_card", itemKey = "plugins_datatable_card", headerText = i18n$t("plugins_management")),
       shiny.fluent::PivotItem(id = "plugins_edit_code_card", itemKey = "plugins_edit_code_card", headerText = i18n$t("edit_plugin_code")),
       shiny.fluent::PivotItem(id = "plugins_options_card", itemKey = "plugins_options_card", headerText = i18n$t("plugin_options")),
-      shiny.fluent::PivotItem(id = "import_plugin_card", itemKey = "import_plugin_card", headerText = i18n$t("import_plugin")),
-      shiny.fluent::PivotItem(id = "export_plugin_card", itemKey = "export_plugin_card", headerText = i18n$t("export_plugin"))
+      shiny.fluent::PivotItem(id = "import_plugin_card", itemKey = "import_plugin_card", headerText = i18n$t("import_plugins")),
+      shiny.fluent::PivotItem(id = "export_plugin_card", itemKey = "export_plugin_card", headerText = i18n$t("export_plugins"))
     ),
     forbidden_cards,
     
@@ -292,21 +292,21 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
       )
     ),
     
-    # --- --- --- --- --- --- -
-    # Import a plugin card ----
-    # --- --- --- --- --- --- -
+    # --- --- --- --- --- -- -
+    # Import plugins card ----
+    # --- --- --- --- --- -- -
     
     shinyjs::hidden(
       div(
         id = ns("import_plugin_card"),
-        make_card(i18n$t("import_plugin"),
+        make_card(i18n$t("import_plugins"),
           div(br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), 
               make_toggle(i18n = i18n, ns = ns, label = "replace_already_existing_plugins", inline = TRUE)), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::DefaultButton.shinyInput(ns("import_plugins_browse"), i18n$t("choose_zip_file")),
               uiOutput(ns("import_plugins_status"))), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("import_plugins_button"), i18n$t("import_plugin"), iconProps = list(iconName = "Download")), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("import_plugins_button"), i18n$t("import_plugins"), iconProps = list(iconName = "Download")), br(),
             shinyjs::hidden(
                 div(
                 id = ns("imported_plugins_div"), br(),
@@ -320,20 +320,20 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
       )
     ),
     
-    # --- --- --- --- --- --- -
-    # Export a plugin card ----
-    # --- --- --- --- --- --- -
+    # --- --- --- --- --- -- -
+    # Export plugins card ----
+    # --- --- --- --- --- -- -
     
     shinyjs::hidden(
       div(
         id = ns("export_plugin_card"),
-        make_card(i18n$t("export_plugin"),
+        make_card(i18n$t("export_plugins"),
           div(
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 10),
               make_dropdown(i18n = i18n, ns = ns, label = "plugins_to_export",
                 multiSelect = TRUE, width = "400px"),
-              div(shiny.fluent::PrimaryButton.shinyInput(ns("export_plugins"), 
+              div(shiny.fluent::PrimaryButton.shinyInput(ns("export_selected_plugins"), 
                 i18n$t("export_plugins"), iconProps = list(iconName = "Upload")), style = "margin-top:38px;"),
               div(style = "visibility:hidden;", downloadButton(ns("export_plugins_download"), label = "")),
               style = "position:relative; z-index:1; width:700px;"
@@ -901,9 +901,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Plugin table
         
         new_data <- tibble::tribble(
-          ~id, ~name, ~description, ~tab_type_id, ~datetime, ~deleted,
+          ~id, ~name, ~description, ~tab_type_id, ~creation_datetime, ~update_datetime, ~deleted,
           new_row, as.character(plugin[[paste0("name_", language)]]), "", as.integer(tab_type_id), as.character(Sys.time()), FALSE)
-        print(new_data)
+
         DBI::dbAppendTable(r$db, "plugins", new_data)
         add_log_entry(r = r, category = paste0("plugins - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
         r$plugins <- r$plugins %>% dplyr::bind_rows(new_data)
@@ -964,7 +964,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # r[[paste0("reload_", prefix, "_plugin")]] <- Sys.time()
         
         # Reload datatable
-        r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+        r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% 
+          dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
+          dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
         
         show_message_bar(output,  "success_installing_remote_git_plugin", "success", i18n = i18n, ns = ns)
         
@@ -992,7 +994,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         data = new_data, table = "plugins", required_textfields = "plugin_name", req_unique_values = "name")
       
       # Reload datatable
-      r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+      r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% 
+        dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
+        dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$add_plugin"))
     })
@@ -1006,9 +1010,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     action_buttons_export_plugins <- "add"
     
     editable_cols <- ""
-    sortable_cols <- c("id", "name", "datetime")
-    column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
-    centered_cols <- c("id", "datetime", "action")
+    sortable_cols <- c("id", "name", "creation_datetime", "update_datetime")
+    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "80px")
+    centered_cols <- c("id", "creation_datetime", "update_datetime", "action")
     searchable_cols <- c("name")
     hidden_cols <- c("id", "description", "tab_type_id", "deleted", "modified")
     col_names <- get_col_names("plugins", i18n)
@@ -1019,9 +1023,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       if (nrow(r$plugins) == 0){
         r[[paste0(prefix, "_plugins_temp")]] <- tibble::tibble(id = integer(), name = character(), description = character(),
-          tab_type_id = integer(), datetime = character(), deleted = integer(), modified = logical())
+          tab_type_id = integer(), creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical())
       }
       else r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>%
+        dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
         dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
     }, once = TRUE)
@@ -1049,7 +1054,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Default data for datatable
         
         data_plugins_datatable <- tibble::tibble(id = integer(), name = character(), description = character(),
-          tab_type_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
+          tab_type_id = integer(), creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical(), action = character())
         data_export_plugins_datatable <- data_plugins_datatable
         
       }
@@ -1116,7 +1121,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Reload datatable_temp variable
       if (nrow(r[[paste0(prefix, "_export_plugins_temp")]] == 0)){
         data <- tibble::tibble(id = integer(), name = character(), description = character(),
-          tab_type_id = integer(), datetime = character(), deleted = integer(), modified = logical(), action = character())
+          tab_type_id = integer(), creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical(), action = character())
       }
       if (nrow(r[[paste0(prefix, "_export_plugins_temp")]]) > 0){
         r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
@@ -1216,7 +1221,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$reload..plugins"))
       
       # Reload datatable
-      r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+      r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% 
+        dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
+        dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       # Reload remote_git description if opened
       r$show_plugin_details <- Sys.time()
@@ -1419,13 +1426,17 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         i18n = i18n, data = data, page_options = c("users_allowed_read", "version", "author", "image", "description_fr", "description_en",
           "name_fr", "name_en", "category_fr", "category_en"))
       
-      # Change plugin_name in plugins table
-      sql <- glue::glue_sql("UPDATE plugins SET name = {plugin_name} WHERE id = {link_id}", .con = r$db)
+      # Change plugin_name & update_datetime in plugins table
+      new_update_datetime <- as.character(Sys.time())
+      sql <- glue::glue_sql("UPDATE plugins SET name = {plugin_name}, update_datetime = {new_update_datetime} WHERE id = {link_id}", .con = r$db)
       query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
       
-      r$plugins <- r$plugins %>% dplyr::mutate(name = dplyr::case_when(id == link_id ~ plugin_name, TRUE ~ name))
+      r$plugins <- r$plugins %>% dplyr::mutate(
+        name = dplyr::case_when(id == link_id ~ plugin_name, TRUE ~ name),
+        update_datetime = dplyr::case_when(id == link_id ~ new_update_datetime, TRUE ~ update_datetime))
       r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>%
+        dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
         dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
       
       r$show_plugin_details <- Sys.time()
@@ -2090,36 +2101,34 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         req(!is.null(link_id))
         
         # Update code
-        # DON'T USE glue_sql, it adds some quotes in the code
         
-        ui_code_id <- r$code %>% dplyr::filter(category == "plugin_ui" & link_id == !!link_id) %>% dplyr::pull(id)
-        ui_code <- stringr::str_replace_all(input$ace_edit_code_ui, "'", "''")
-        server_code_id <- r$code %>% dplyr::filter(category == "plugin_server" & link_id == !!link_id) %>% dplyr::pull(id)
-        server_code <- stringr::str_replace_all(input$ace_edit_code_server, "'", "''")
-        translations_code_id <- r$code %>% dplyr::filter(category == "plugin_translations" & link_id == !!link_id) %>% dplyr::pull(id)
-        translations_code <- stringr::str_replace_all(input$ace_edit_code_translations, "'", "''")
-        
-        DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", ui_code, "' WHERE id = ", ui_code_id)) -> query
-        DBI::dbClearResult(query)
-        
-        DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", server_code, "' WHERE id = ", server_code_id)) -> query
-        DBI::dbClearResult(query)
-        
-        DBI::dbSendStatement(r$db, paste0("UPDATE code SET code = '", translations_code, "' WHERE id = ", translations_code_id)) -> query
-        DBI::dbClearResult(query)
-        
-        r$code <- r$code %>% 
-          dplyr::mutate(code = dplyr::case_when(id == ui_code_id ~ ui_code, TRUE ~ code)) %>%
-          dplyr::mutate(code = dplyr::case_when(id == server_code_id ~ server_code, TRUE ~ code)) %>%
-          dplyr::mutate(code = dplyr::case_when(id == translations_code_id ~ translations_code, TRUE ~ code))
+        for (name in c("ui", "server", "translations")){
+          
+          code_id <- r$code %>% dplyr::filter(category == paste0("plugin_", name) & link_id == !!link_id) %>% dplyr::pull(id)
+          code <- stringr::str_replace_all(input[[paste0("ace_edit_code_", name)]], "'", "''")
+          
+          print(link_id)
+          print(code_id)
+          print(code)
+          
+          sql <- glue::glue_sql("UPDATE code SET code = {code} WHERE id = {code_id}", .con = r$db)
+          query <- DBI::dbSendStatement(r$db, sql)
+          DBI::dbClearResult(query)
+          r$code <- r$code %>% dplyr::mutate(code = dplyr::case_when(id == code_id ~ !!code, TRUE ~ code))
+        }
         
         # Update datetime in plugins table
         
-        new_datetime <- as.character(Sys.time())
-        sql <- glue::glue_sql("UPDATE plugins SET datetime = {new_datetime} WHERE id = {link_id}", .con = r$db)
-        DBI::dbSendStatement(r$db, sql) -> query
+        new_update_datetime <- as.character(Sys.time())
+        sql <- glue::glue_sql("UPDATE plugins SET update_datetime = {new_update_datetime} WHERE id = {link_id}", .con = r$db)
+        query <- DBI::dbSendStatement(r$db, sql)
         DBI::dbClearResult(query)
-        r$plugins <- r$plugins %>% dplyr::mutate(datetime = dplyr::case_when(id == link_id ~ new_datetime, TRUE ~ datetime))
+        r$plugins <- r$plugins %>% dplyr::mutate(update_datetime = dplyr::case_when(id == link_id ~ new_update_datetime, TRUE ~ update_datetime))
+        
+        # Update datatable
+        r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>%
+          dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
+          dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
         
         # Notify user
         show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
@@ -2182,6 +2191,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         if (!input$replace_already_existing_plugins) plugins <- plugins %>% dplyr::filter(is.na(id))
         
+        # Select plugin type
+        plugins <- plugins %>% dplyr::filter(type == tab_type_id)
+        
         # Loop over each plugin
         
         if (nrow(plugins) > 0){
@@ -2215,8 +2227,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             new_row <- get_last_row(r$db, "plugins") + 1
   
             new_data <- tibble::tribble(
-              ~id, ~name, ~description, ~tab_type_id, ~datetime, ~deleted,
-              new_row, as.character(plugin[[paste0("name_", language)]]), "", as.integer(tab_type_id), as.character(Sys.time()), FALSE)
+              ~id, ~name, ~description, ~tab_type_id, ~creation_datetime, ~update_datetime, ~deleted,
+              new_row, as.character(plugin[[paste0("name_", language)]]), "", as.integer(tab_type_id), plugin$creation_datetime, plugin$update_datetime, FALSE)
   
             DBI::dbAppendTable(r$db, "plugins", new_data)
             r$plugins <- r$plugins %>% dplyr::bind_rows(new_data)
@@ -2279,7 +2291,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             r$show_plugin_details <- Sys.time()
             
             # Reload datatable
-            r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+            r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% 
+              dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
+              dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
           }
         }
         
@@ -2287,17 +2301,18 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         col_names <- c(i18n$t("id"), i18n$t("type"), i18n$t("name"), i18n$t("version"), i18n$t("unique_id"), i18n$t("author"), i18n$t("image"),
           i18n$t("description_fr"), i18n$t("description_en"), i18n$t("app_version"), 
-          i18n$t("name"), i18n$t("name"), i18n$t("category"), i18n$t("category"))
+          i18n$t("name"), i18n$t("name"), i18n$t("category"), i18n$t("category"), i18n$t("created_on"), i18n$t("updated_on"))
         centered_cols <- c("author", "version", "id")
-        column_widths <- c("author" = "100px", "version" = "80px", "id" = "50px")
+        column_widths <- c("author" = "100px", "version" = "80px", "id" = "50px", "creation_datetime" = "130px", "update_datetime" = "130px")
         hidden_cols <- c("id", "type", "unique_id", "image", "app_version", "description_fr", "description_en", 
          "name_en", "name_fr", "category_en", "category_fr")
         
         shinyjs::show("imported_plugins_div")
         
-        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = plugins,
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, 
+          data = plugins %>% dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE),
           output_name = "imported_plugins", col_names = col_names, centered_cols = centered_cols, column_widths = column_widths,
-          filter = FALSE, hidden_cols = hidden_cols)
+          filter = FALSE, hidden_cols = hidden_cols, datatable_dom = "")
 
         show_message_bar(output,  "success_importing_plugin", "success", i18n = i18n, time = 15000, ns = ns)
       },
@@ -2401,10 +2416,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           plugin_node <- XML::newXMLNode("plugin", parent = plugins_node, doc = xml)
           XML::newXMLNode("app_version", r$app_version, parent = plugin_node)
           XML::newXMLNode("type", tab_type_id, parent = plugin_node)
-          sapply(c("version", "unique_id", "author", "image", "description_fr", "description_en",
-            "name_fr", "name_en", "category_fr", "category_en"), function(name){
+          for(name in c("version", "unique_id", "author", "image", "description_fr", "description_en", "name_fr", "name_en", "category_fr", "category_en")){
             XML::newXMLNode(name, options %>% dplyr::filter(name == !!name) %>% dplyr::pull(value), parent = plugin_node)
-          })
+          }
+          for (name in c("creation_datetime", "update_datetime")) XML::newXMLNode(name, plugin %>% dplyr::pull(get(!!name)), parent = plugin_node)
           XML::saveXML(xml, file = paste0(plugin_dir, "/plugin.xml"))
           
           list_of_files <- list.files(plugin_dir)
