@@ -430,7 +430,7 @@ tab_type,Tab type
 last_update,Last update
 created_on,Created on
 updated_on,Updated on
-thesaurus_selected_items,Selected items
+vocabulary_selected_concepts,Selected concepts
 replace_already_existing_plugins,Replace already existing plugins
 plugins_to_export,Plugins to export
 image_url,Image URL
@@ -636,7 +636,7 @@ fail_save_list_file,Failed saving list file
 none_masc,None
 none_fem,None
 unroll_tree,Unroll tree
-merge_mapped_items,Merge mapped items
+merge_mapped_concepts,Merge mapped concepts
 vocabulary_mapping_same_concepts,A concept cannot be merge with itself (except for 'Maps to')
 mapped_item,Mapped item
 widget_settings,Widget settings

@@ -429,7 +429,7 @@ tab_type,Type d'onglet
 last_update,Dernière modification
 created_on,Créé le
 updated_on,Modifié le
-thesaurus_selected_items,Items sélectionnés
+vocabulary_selected_concepts,Concepts sélectionnés
 replace_already_existing_plugins,Remplacer les plugins déjà existants
 plugins_to_export,Plugins à exporter
 image_url,URL de l'image
@@ -636,7 +636,7 @@ fail_save_list_file,Erreur lors l'enregistrement du fichier liste
 none_masc,Aucun
 none_fem,Aucune
 unroll_tree,Dérouler l'arbre
-merge_mapped_items,Fusionner les concepts alignés
+merge_mapped_concepts,Fusionner les concepts alignés
 vocabulary_mapping_same_items,Un concept ne peut être aligné avec lui-même (hormis pour 'Correspond à')
 mapped_item,Item aligné
 widget_settings,Paramétrer un widget

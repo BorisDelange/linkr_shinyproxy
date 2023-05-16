@@ -385,9 +385,14 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
   #   sql <- glue::glue_sql(paste0(
   #     "SELECT t.id, t.vocabulary_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
   #     "FROM thesaurus_items t ",
-  #     "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ", 
+  #     "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ",
   #     "WHERE t.vocabulary_id = {vocabulary_id} AND t.deleted IS FALSE ",
   #     "ORDER BY t.id"), .con = m$db)
+  #   data <- DBI::dbGetQuery(m$db, sql)
+  # }
+  
+  # if (category %in% ("colours_add_widget", "colours_widget_settings", "colours_plugin", "plus_plugin")){
+  #   sql <- glue::glue_sql("SELECT link_id AS id, value FROM cache WHERE category = {category} AND link_id IN ({r$dataset_all_concepts %>% dplyr::pull(concept_id_1)*})", .con = m$db)
   #   data <- DBI::dbGetQuery(m$db, sql)
   # }
   
@@ -415,6 +420,10 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
         "AND cr.id NOT IN ({ids_to_keep*}) "), .con = m$db)
       data_reload <- DBI::dbGetQuery(m$db, sql)
     }
+    # else if (category %in% c("colours_add_widget", "colours_widget_settings", "colours_plugin", "plus_plugin")){
+    #   data_reload <- r$dataset_all_concepts %>% dplyr::filter(concept_id_1 %not_in% ids_to_keep)
+    # }
+    
     # else {
     #   sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE vocabulary_id = {vocabulary_id} ",
     #     "AND id NOT IN ({ids_to_keep*}) AND deleted IS FALSE ORDER BY id"), .con = r$db)
@@ -469,12 +478,12 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     #       shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
     #         onclick = paste0("Shiny.setInputValue('", module_id, "-data_explorer_item_selected', this.id, {priority: 'event'})")))))
     # }
-    # if (category == "colours_plugin" | grepl("colours_tab", category)){
-    #   
-    #   if (category == "colours_plugin") input_name <- "colours"
-    #   else if (category == "colours_widget_creation") input_name <- "widget_creation_colour"
-    #   else if (category == "colours_widget_settings") input_name <- "widget_settings_colour"
-    #   
+    # else if (category %in% c("colours_add_widget", "colours_widget_settings", "colours_plugin")){
+    # 
+    #   # if (category == "colours_plugin") input_name <- "colours"
+    #   # else if (category == "colours_add_widget") input_name <- "widget_creation_colour"
+    #   # else if (category == "colours_widget_settings") input_name <- "widget_settings_colour"
+    # 
     #   colorCells <- list(
     #     list(id = "#EF3B2C", color = "#EF3B2C"),
     #     list(id = "#CB181D", color = "#CB181D"),
@@ -483,10 +492,10 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     #     list(id = "#5AAE61", color = "#5AAE61"),
     #     list(id = "#FFD92F", color = "#FFD92F"),
     #     list(id = "#000000", color = "#000000"))
-    #   
+    # 
     #   ns <- NS(module_id)
     #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-    #     div(shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0(input_name, "_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells), 
+    #     div(shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0(input_name, "_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells),
     #       cellHeight = 15, cellWidth = 15#, cellMargin = 10
     #     )#,
     #       #style = "height:20px; padding:0px; margin-top:24px;"

@@ -334,7 +334,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           "FROM concept ",
           "WHERE vocabulary_id IN ({r$dataset_vocabularies %>% dplyr::pull(vocabulary_id)*}) ",
           "ORDER BY concept_id"), .con = m$db)
-        r$dataset_all_concepts <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble() %>% dplyr::mutate(concept_display_name = NA_character_, .after = "concept_name")
+        dataset_all_concepts <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble() %>% dplyr::mutate(concept_display_name = NA_character_, .after = "concept_name")
         
         # Count rows
         
@@ -420,15 +420,15 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         }
         
         # Merge count_rows, transform count_rows cols to integer, to be sortable
-        if (nrow(count_rows) > 0) r$dataset_all_concepts <- r$dataset_all_concepts %>% 
+        if (nrow(count_rows) > 0) dataset_all_concepts <- dataset_all_concepts %>% 
           dplyr::left_join(count_rows, by = "concept_id") %>%
           dplyr::mutate_at(c("count_concepts_rows", "count_persons_rows", "count_secondary_concepts_rows"), as.integer) %>%
           # dplyr::filter(count_concepts_rows > 0 | count_secondary_concepts_rows > 0)
           dplyr::filter(count_concepts_rows > 0)
         
-        if (nrow(count_rows) == 0) r$dataset_all_concepts <- r$dataset_all_concepts %>% dplyr::slice(0)
+        if (nrow(count_rows) == 0) dataset_all_concepts <- dataset_all_concepts %>% dplyr::slice(0)
         
-        r$dataset_all_concepts <- r$dataset_all_concepts %>%
+        dataset_all_concepts <- dataset_all_concepts %>%
           dplyr::rename(concept_id_1 = concept_id, concept_name_1 = concept_name, concept_display_name_1 = concept_display_name) %>%
           dplyr::mutate(relationship_id = NA_character_, concept_id_2 = NA_integer_, concept_name_2 = NA_character_, .after = "concept_display_name_1")
         
@@ -457,10 +457,10 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         
         # Merge mapped concepts
         
-        if (nrow(r$concept_relationship) > 0 & nrow(r$concept) > 0 & nrow(r$dataset_all_concepts) > 0){
-          r$dataset_all_concepts <- r$dataset_all_concepts %>%
+        if (nrow(r$concept_relationship) > 0 & nrow(r$concept) > 0 & nrow(dataset_all_concepts) > 0){
+          dataset_all_concepts <- dataset_all_concepts %>%
             dplyr::bind_rows(
-              r$dataset_all_concepts %>%
+              dataset_all_concepts %>%
                 dplyr::select(-relationship_id, -concept_id_2, -concept_name_2, -concept_display_name_1) %>%
                 dplyr::rename(concept_id_2 = concept_id_1, concept_name_2 = concept_name_1) %>%
                 dplyr::left_join(
@@ -480,17 +480,44 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                 dplyr::mutate(concept_display_name_1 = NA_character_, .after = "concept_name_1")
             )
           
+          dataset_all_concepts <- dataset_all_concepts %>% dplyr::slice(1:10)
+          
+          # Add colours & plus cols
+          
+          colorCells <- list(
+            list(id = "#EF3B2C", color = "#EF3B2C"),
+            list(id = "#CB181D", color = "#CB181D"),
+            list(id = "#7BCCC4", color = "#7BCCC4"),
+            list(id = "#2B8CBE", color = "#2B8CBE"),
+            list(id = "#5AAE61", color = "#5AAE61"),
+            list(id = "#FFD92F", color = "#FFD92F"),
+            list(id = "#000000", color = "#000000"))
+          
+          dataset_all_concepts <- dataset_all_concepts %>%
+            dplyr::filter(count_concepts_rows > 0) %>%
+            dplyr::rowwise() %>%
+            dplyr::mutate(
+              colours_input = as.character(
+                div(shiny.fluent::SwatchColorPicker.shinyInput(NS("%ns%")(paste0("%input_prefix%_", concept_id_1)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells),
+                  cellHeight = 15, cellWidth = 15))),
+              plus_input = as.character(shiny::actionButton(NS("%ns%")(paste0("%input_prefix%_", concept_id_1)), "", icon = icon("plus"),
+                onclick = paste0("Shiny.setInputValue('%ns%-data_explorer_item_selected', this.id, {priority: 'event'})")))
+            ) %>%
+            dplyr::ungroup()
+          
           # Delete old rows
           sql <- glue::glue_sql("DELETE FROM concept_dataset WHERE dataset_id = {r$selected_dataset}", .con = m$db)
           query <- DBI::dbSendStatement(m$db, sql)
           DBI::dbClearResult(query)
           
           # Add new rows to database
-          DBI::dbAppendTable(m$db, "concept_dataset", r$dataset_all_concepts %>% 
+          DBI::dbAppendTable(m$db, "concept_dataset", dataset_all_concepts %>% 
             dplyr::transmute(id = get_last_row(m$db, "concept_dataset") + 1:dplyr::n(), concept_id = concept_id_1, dataset_id = r$selected_dataset, vocabulary_id,
               count_persons_rows, count_concepts_rows, count_secondary_concepts_rows))
           
-          readr::write_csv(r$dataset_all_concepts, dataset_all_concepts_filename, progress = FALSE)
+          readr::write_csv(dataset_all_concepts, dataset_all_concepts_filename, progress = FALSE)
+          
+          r$dataset_all_concepts <- dataset_all_concepts
         }
       }
       
@@ -653,7 +680,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       r$dataset_vocabulary_concepts <- r$dataset_all_concepts %>% 
         # dplyr::filter(count_concepts_rows > 0 | count_secondary_concepts_rows > 0)
         dplyr::filter(count_concepts_rows > 0) %>%
-        dplyr::select(-count_secondary_concepts_rows) %>%
+        dplyr::select(-count_secondary_concepts_rows, -colours_input, -plus_input) %>%
         dplyr::arrange(dplyr::desc(count_concepts_rows))
       
       if (input$vocabulary_show_mapped_concepts) r$dataset_vocabulary_concepts <- r$dataset_vocabulary_concepts %>% dplyr::filter(vocabulary_id == !!vocabulary_id)

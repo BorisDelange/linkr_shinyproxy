@@ -122,12 +122,12 @@ a:hover {
   color: #129AFD;
 }
 
-.thesaurus_table table tbody td {
+.vocabulary_table table tbody td {
   height:15px;
   white-space: nowrap;
 }
 
-.thesaurus_table table tbody td div{
+.vocabulary_table table tbody td div{
   height:18px;
   word-wrap:break-word;
   position:relative;
