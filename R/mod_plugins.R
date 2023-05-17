@@ -1297,7 +1297,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       
-      sapply(c("code_selected_plugin", "thesaurus", "thesaurus_selected_items"), 
+      sapply(c("code_selected_plugin", "vocabulary", "vocabulary_selected_concepts"), 
         function(name) shiny.fluent::updateComboBox.shinyInput(session, name, options = options, value = NULL))
       shiny.fluent::updateChoiceGroup.shinyInput(session, "edit_code_ui_server", value = "ui")
       shiny.fluent::updateToggle.shinyInput(session, "hide_editor", value = FALSE)
@@ -1721,7 +1721,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$code_selected_plugin"))
     })
     
-    # Load thesaurus items
+    # Load vocabulary concepts
     
     if (prefix == "patient_lvl"){
       
@@ -1922,7 +1922,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
         # Initiate r variable if doesn't exist
         if (length(r$plugin_vocabulary_selected_concepts) == 0) r$plugin_vocabulary_selected_concepts <- tibble::tibble(vocabulary_id = character(), 
-            concept_id = integer(), concept_name = character(), concept_display_name = character(),
+            concept_id = integer(), concept_name = character(), concept_display_name = character(), domain_id = character(),
             concept_colour = character(), mapped_to_concept_id = integer(), merge_mapped_concepts = logical())
 
         if (grepl("mapped", input$concept_selected)) type <- "mapped_concept"
@@ -1939,7 +1939,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           if (type == "concept") new_data <- r$plugin_vocabulary_concepts %>%
             dplyr::mutate_at("concept_id", as.integer) %>%
             dplyr::filter(concept_id == link_id) %>%
-            dplyr::transmute(concept_id, concept_name, concept_display_name,
+            dplyr::transmute(concept_id, concept_name, concept_display_name, domain_id,
               concept_colour = input[[paste0("add_colour_", link_id)]], mapped_to_concept_id = NA_integer_, merge_mapped_concepts = FALSE)
           
           if (type == "mapped_concept"){
@@ -1952,11 +1952,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             new_data <- r$plugin_vocabulary_concepts %>%
               dplyr::mutate_at("concept_id", as.integer) %>%
               dplyr::filter(concept_id == selected_concept$concept_id_1) %>%
-              dplyr::transmute(concept_id, concept_name, concept_display_name,
+              dplyr::transmute(concept_id, concept_name, concept_display_name, domain_id,
                 concept_colour = input[[paste0("add_colour_", link_id)]], mapped_to_concept_id = NA_integer_, merge_mapped_concepts = FALSE) %>%
               dplyr::bind_rows(
                 selected_concept %>%
-                dplyr::transmute(concept_id = concept_id_2, concept_name = concept_name_2, concept_display_name = concept_display_name_2,
+                dplyr::transmute(concept_id = concept_id_2, concept_name = concept_name_2, concept_display_name = concept_display_name_2, domain_id,
                   concept_colour = input[[paste0("add_colour_", link_id)]], mapped_to_concept_id = concept_id_1, merge_mapped_concepts = input$merge_mapped_concepts)
               ) %>%
               dplyr::bind_rows(
@@ -1984,7 +1984,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
 
         if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$reset_vocabulary_concepts"))
 
-        # Reset r$plugin_thesaurus_selected_items
+        # Reset r$plugin_vocabulary_selected_concepts
         r$plugin_vocabulary_selected_concepts <- r$plugin_vocabulary_selected_concepts %>% dplyr::slice(0)
 
         r$plugin_vocabulary_update_selected_concepts_dropdown <- Sys.time()
@@ -2081,22 +2081,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       req(var_check)
       
-      # Get thesaurus items
+      # Get vocabulary concepts
       
-      thesaurus_selected_items <- tibble::tibble(thesaurus_name = character(), item_id = integer(), display_name = character(),
-        thesaurus_item_unit = character(), colour = character(), mapped_to_item_id = integer(), merge_items = logical())
-      
-      if (prefix == "patient_lvl"){
-        
-        # Check if some thesaurus items selected (not necessary)
-        if (length(r$plugin_thesaurus_selected_items) > 0){
-          
-          # Get thesaurus items with thesaurus own item_id
-          thesaurus_selected_items <- r$plugin_thesaurus_selected_items %>%
-            dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
-              thesaurus_item_unit, colour = thesaurus_item_colour, mapped_to_item_id, merge_items)
-        }
-      }
+      if (prefix == "patient_lvl") vocabulary_selected_concepts <- r$plugin_vocabulary_selected_concepts
       
       if (length(input$code_selected_plugin) > 1) link_id <- input$code_selected_plugin$key
       else link_id <- input$code_selected_plugin
@@ -2104,9 +2091,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       ui_code <- r[[paste0(id, "_ui_code")]]
       server_code <- r[[paste0(id, "_server_code")]]
       
-      # Replace %group_id% in ui_code with 1 for our example
-      
-      group_id <- get_last_row(r$db, paste0(prefix, "_widgets")) + 10^6 %>% as.integer()
+      widget_id <- get_last_row(r$db, paste0(prefix, "_widgets")) + 10^6 %>% as.integer()
       
       # Create a session number, to inactivate older observers
       # Reset all older observers
@@ -2120,8 +2105,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       ui_code <- ui_code %>% 
         stringr::str_replace_all("%tab_id%", "1") %>%
-        stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-        stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
+        stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
         stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
         stringr::str_replace_all("\r", "\n")
       
@@ -2129,8 +2113,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       server_code <- server_code %>% 
         stringr::str_replace_all("%tab_id%", "1") %>%
-        stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
-        stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
+        stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
         stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
         stringr::str_replace_all("\r", "\n")
       
@@ -2170,7 +2153,10 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Variables to hide
       new_env_vars <- list("r" = NA)
       # Variables to keep
-      for (var in c("d", "m", "o", "thesaurus_selected_items", "session_code", "session_num", "i18n", "i18np")) new_env_vars[[var]] <- eval(parse(text = var))
+      variables_to_keep <- c("d", "m", "o", "session_code", "session_num", "i18n", "i18np")
+      if (prefix == "patient_lvl") variables_to_keep <- c(variables_to_keep, "vocabulary_selected_concepts")
+      
+      for (var in variables_to_keep) new_env_vars[[var]] <- eval(parse(text = var))
       new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
       
       options('cli.num_colors' = 1)
@@ -2226,10 +2212,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         code_id <- r$code %>% dplyr::filter(category == paste0("plugin_", name) & link_id == !!link_id) %>% dplyr::pull(id)
         code <- stringr::str_replace_all(input[[paste0("ace_edit_code_", name)]], "'", "''")
-        
-        print(link_id)
-        print(code_id)
-        print(code)
         
         sql <- glue::glue_sql("UPDATE code SET code = {code} WHERE id = {code_id}", .con = r$db)
         query <- DBI::dbSendStatement(r$db, sql)
