@@ -224,19 +224,23 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   if (table_name == "dataset_vocabulary_concepts_with_counts"){
-    result <- c(i18n$t("id"), i18n$t("concept_id_1"), i18n$t("concept_name_1"), i18n$t("concept_display_name_1"),
-      i18n$t("relationship_id"), i18n$t("concept_id_2"), i18n$t("concept_name_2"),
-      i18n$t("domain_id"), i18n$t("vocabulary_id"), i18n$t("concept_class_id"),
-      i18n$t("standard_concept"), i18n$t("concept_code"), i18n$t("valid_start_date"), i18n$t("valid_end_date"), i18n$t("invalid_reason"),
+    result <- c(i18n$t("id"), i18n$t("vocabulary_id_1"), i18n$t("concept_id_1"), i18n$t("concept_name_1"), i18n$t("concept_display_name_1"),
+      i18n$t("relationship_id"), i18n$t("vocabulary_id_2"), i18n$t("concept_id_2"), i18n$t("concept_name_2"),
+      i18n$t("domain_id"), i18n$t("concept_class_id"), i18n$t("standard_concept"), i18n$t("concept_code"), 
+      i18n$t("valid_start_date"), i18n$t("valid_end_date"), i18n$t("invalid_reason"),
       i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("modified"))
   }
   
   if (table_name == "plugins_vocabulary_concepts_with_counts"){
-    result <- c(i18n$t("id"), i18n$t("concept_id_1"), i18n$t("concept_name_1"), i18n$t("concept_display_name_1"),
-      i18n$t("relationship_id"), i18n$t("concept_id_2"), i18n$t("concept_name_2"),
-      i18n$t("domain_id"), i18n$t("vocabulary_id"), i18n$t("concept_class_id"),
-      i18n$t("standard_concept"), i18n$t("concept_code"), i18n$t("valid_start_date"), i18n$t("valid_end_date"), i18n$t("invalid_reason"),
-      i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("modified"))
+    result <- c(i18n$t("concept_id"), i18n$t("concept_name"), i18n$t("concept_display_name"),
+      i18n$t("domain_id"), i18n$t("concept_class_id"), i18n$t("standard_concept"), i18n$t("concept_code"),
+      i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("colour"), i18n$t("action"))
+  }
+  
+  if (table_name == "plugins_vocabulary_mapped_concepts_with_counts"){
+    result <- c(i18n$t("concept_id"), i18n$t("relationship_id"), i18n$t("mapped_concept_id"),
+      i18n$t("mapped_concept_name"), i18n$t("mapped_concept_display_name"), i18n$t("domain_id"),
+      i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("colour"), i18n$t("action"))
   }
   
   if (table_name == "mapping_vocabulary_concepts_with_counts"){

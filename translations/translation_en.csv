@@ -84,6 +84,7 @@ item_id,Item ID
 concept_id,Concept ID
 concept_id_1,Concept 1 ID
 concept_id_2,Concept 2 ID
+mapped_concept_id,Mapped concept ID
 parent_item_id,Parent item ID
 parent_concept_id,Parent concept ID
 reset,Reset
@@ -400,6 +401,8 @@ thesaurus_no_items_to_insert,There's not any new items to insert in the database
 vocabulary_no_data_to_insert,There's not any new data to insert in the database
 column,Column
 columns,Columns
+columns_concepts,Concepts columns
+columns_mapped_concepts,Mapped concept columns
 import_thesaurus_success,Vocabulary successfully imported
 import_vocabulary_table_success,Vocabulary table successfully imported
 scripts_cache_memory,Cache memory
@@ -557,7 +560,7 @@ concept_1_is_to_concept_2,Concept 1 in regard to concept 2
 equivalent_to,Is equivalent to
 included_in,Is included in
 include,Include
-item_colour,Item colour
+colour,Colour
 load_some_patient_data_plugin,Load some data before executing plugin's code
 patient_id,Patient ID
 person_id,Person ID
@@ -791,9 +794,11 @@ rows_inserted,Rows inserted
 concept_name,Concept name
 concept_name_1,Concept 1 name
 concept_name_2,Concept 2 name
+mapped_concept_name,Mapped concept name
 concept_display_name,Concept 1 display name
 concept_display_name_1,Concept 1 display name
 concept_display_name_2,Concept 2 display name
+mapped_concept_display_name,Mapped concept display name
 domain_id,Domain ID
 concept_class_id,Concept class ID
 standard_concept,Standard concept

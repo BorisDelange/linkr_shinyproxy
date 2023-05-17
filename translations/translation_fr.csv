@@ -83,6 +83,7 @@ item_id,ID de l'item
 concept_id,ID du concept
 concept_id_1,ID du concept 1
 concept_id_2,ID du concept 2
+mapped_concept_id,ID du concept aligné
 parent_item_id,ID de l'item parent
 parent_concept_id,ID du concept parent
 reset,Remettre à zéro
@@ -399,6 +400,8 @@ thesaurus_no_items_to_insert,Pas de nouvel item à insérer dans la base de donn
 vocabulary_no_data_to_insert,Pas de nouvelles données à insérer dans la base de données
 column,Colonne
 columns,Colonnes
+columns_concepts,Colonnes des concepts
+columns_mapped_concepts,Colonnes des concepts alignés
 import_thesaurus_success,Terminologie importée avec succès
 import_vocabulary_table_success,Table de terminologie ajoutée avec succès
 scripts_cache_memory,Mémoire cache
@@ -557,7 +560,7 @@ concept_1_is_to_concept_2,Le concept 1 par rapport au concept 2
 equivalent_to,Est équivalent à
 included_in,Est inclus dans
 include,Inclut
-item_colour, Couleur de l'item
+colour,Couleur
 load_some_patient_data_plugin,Charger des données avant d'exécuter le code du plugin
 patient_id,ID du patient
 person_id,ID du patient
@@ -791,9 +794,11 @@ rows_inserted,Lignes ajoutées
 concept_name,Nom du concept
 concept_name_1,Nom du concept 1
 concept_name_2,Nom du concept 2
+mapped_concept_name,Nom du concept aligné
 concept_display_name,Nom d'affichage du concept
 concept_display_name_1,Nom d'affichage du concept 1
 concept_display_name_2,Nom d'affichage du concept 2
+mapped_concept_display_name,Nom d'affichage du concept aligné
 domain_id,ID du domaine
 concept_class_id,ID de la classe du concept
 standard_concept,Concept standard
