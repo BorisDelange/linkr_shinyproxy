@@ -20,8 +20,31 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
   vocabulary_concepts_div <- ""
   if (id == "plugins_patient_lvl"){
     vocabulary_concepts_div <- div(
-      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
         make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "vocabulary", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
+        make_dropdown(i18n = i18n, ns = ns, label = "columns", id = "vocabulary_table_cols", width = "300px", multiSelect = TRUE,
+          options = list(
+            list(key = 1, text = i18n$t("concept_id_1")),
+            list(key = 2, text = i18n$t("concept_name_1")),
+            list(key = 3, text = i18n$t("concept_display_name_1")),
+            list(key = 4, text = i18n$t("relationship_id")),
+            list(key = 5, text = i18n$t("concept_id_2")),
+            list(key = 6, text = i18n$t("concept_name_2")),
+            list(key = 7, text = i18n$t("domain_id")),
+            list(key = 9, text = i18n$t("concept_class_id")),
+            list(key = 10, text = i18n$t("standard_concept")),
+            list(key = 11, text = i18n$t("concept_code")),
+            list(key = 12, text = i18n$t("valid_start_date")),
+            list(key = 13, text = i18n$t("valid_end_date")),
+            list(key = 14, text = i18n$t("invalid_reason")),
+            list(key = 15, text = i18n$t("num_patients")),
+            list(key = 16, text = i18n$t("num_rows"))
+          ),
+          value = c(1, 2, 3, 15, 16)
+        )
+      ),
+      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+        
         make_dropdown(i18n = i18n, ns = ns, label = "concepts_mapping", id = "concepts_mapping", multiSelect = TRUE, width = "300px",
           options = list(
             list(key = "Maps to", text = i18n$t("maps_to")),
@@ -44,7 +67,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
         div(
           div(id = ns("vocabulary_selected_concepts_title"), class = "input_title", i18n$t("vocabulary_selected_concepts")),
           div(shiny.fluent::Dropdown.shinyInput(ns("vocabulary_selected_concepts"), value = NULL, options = list(), multiSelect = TRUE,
-            onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-vocabulary_selected_concepts_trigger', Math.random())"))), style = "width:650px;")
+            onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-vocabulary_selected_concepts_trigger', Math.random())"))), style = "width:620px;")
         ),
         div(shiny.fluent::DefaultButton.shinyInput(ns("reset_vocabulary_concepts"), i18n$t("reset")), style = "margin-top:38px;")
       ),
@@ -1736,18 +1759,18 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           r$dataset_all_concepts %>%
           dplyr::filter(vocabulary_id == input$vocabulary) %>%
           dplyr::select(concept_id = concept_id_1, concept_name = concept_name_1, concept_display_name = concept_display_name_1,
-            domain_id, count_persons_rows, count_concepts_rows, colours_input, plus_input) %>%
-          dplyr::mutate_at(c("colours_input", "plus_input"), stringr::str_replace_all, "%ns%", id) %>%
+            domain_id, count_persons_rows, count_concepts_rows, colours_input, add_concept_input) %>%
+          dplyr::mutate_at(c("colours_input", "add_concept_input"), stringr::str_replace_all, "%ns%", id) %>%
           dplyr::mutate_at("colours_input", stringr::str_replace_all, "%input_prefix%", "add_colour") %>%
-          dplyr::mutate_at("plus_input", stringr::str_replace_all, "%input_prefix%", "add_concept") %>%
+          dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix%", "add_concept") %>%
           dplyr::mutate_at("concept_id", as.character)
         
         editable_cols <- c("concept_display_name")
         searchable_cols <- c("concept_id", "concept_name", "concept_display_name")
         column_widths <- c("concept_id" = "80px", "action" = "80px")
         sortable_cols <- c("concept_id", "concept_name", "concept_display_name", "count_persons_rows", "count_concepts_rows")
-        centered_cols <- c("concept_id", "count_persons_rows", "count_concepts_rows", "plus_input")
-        col_names <- get_col_names(table_name = "tabs_thesaurus_items_with_counts", i18n = i18n)
+        centered_cols <- c("concept_id", "count_persons_rows", "count_concepts_rows", "colours_input", "add_concept_input")
+        col_names <- get_col_names(table_name = "plugins_vocabulary_concepts_with_counts", i18n = i18n)
         
         # Render datatable
         render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$plugin_vocabulary_concepts,

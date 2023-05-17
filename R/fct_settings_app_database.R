@@ -247,7 +247,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         valid_start_date = character(), valid_end_date = character(), invalid_reason = character()))
     
     db_create_table(db, "concept_relationship_user", primary_key_col = "id", dbms = dbms,
-      tibble::tibble(id = integer(), concept_relationship_id = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
+      tibble::tibble(id = integer(), concept_relationship_id = integer(), creator_id = integer(), datetime = character()))
     
     db_create_table(db, "concept_relationship_evals", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), concept_relationship_id = integer(), creator_id = integer(), evaluation_id = character(),

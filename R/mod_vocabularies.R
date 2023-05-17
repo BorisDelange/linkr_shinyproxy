@@ -198,11 +198,13 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
                   shiny.fluent::DefaultButton.shinyInput(ns("mapping_delete_selection"), i18n$t("delete_selection"))
                 ),
                 style = "position:relative; z-index:1; margin-top:-30px; width:500px;"), br(),
-              div(
-                div(uiOutput(ns("vocabulary_mapping_details_left")), style = "border:dashed 1px; padding:10px; margin:10px; flex:1;"),
-                div(uiOutput(ns("vocabulary_mapping_details_center")), style = "border:dashed 1px; padding:10px; margin:10px; flex:1;"),
-                div(uiOutput(ns("vocabulary_mapping_details_right")), style = "border:dashed 1px; padding:10px; margin:10px; flex:1;"),
-                style = "display:flex;"
+              conditionalPanel(condition = "input.vocabulary_show_mapping_details == true", ns = ns,
+                div(
+                  div(uiOutput(ns("vocabulary_mapping_details_left")), style = "border:dashed 1px; padding:10px; margin:10px; flex:1;"),
+                  div(uiOutput(ns("vocabulary_mapping_details_center")), style = "border:dashed 1px; padding:10px; margin:10px; flex:1;"),
+                  div(uiOutput(ns("vocabulary_mapping_details_right")), style = "border:dashed 1px; padding:10px; margin:10px; flex:1;"),
+                  style = "display:flex;"
+                )
               )
             )
           )
@@ -270,7 +272,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
     help_vocabularies(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
     
     # --- --- --- --- --- -- -
-    # Thesaurus items ----
+    # Vocabulary concepts ----
     # --- --- --- --- --- -- -
     
     observeEvent(r$selected_dataset, {
@@ -447,7 +449,21 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         
         for (table in tables){
           if (length(r$table) == 0){
-            sql <- glue::glue_sql("SELECT * FROM {`table`}", .con = m$db)
+            if (table == "concept") sql <- glue::glue_sql("SELECT * FROM concept", .con = m$db)
+            else if (table == "concept_relationship") sql <- glue::glue_sql(paste0(
+              "SELECT cr.* FROM concept_relationship cr WHERE cr.id NOT IN ( ",
+                "WITH cr AS (",
+                  "SELECT cru.concept_relationship_id, ",
+                  "SUM(CASE WHEN cre.evaluation_id = 1 THEN 1 ELSE 0 END) AS positive_evals, ",
+                  "SUM(CASE WHEN cre.evaluation_id = 2 THEN 1 ELSE 0 END) AS negative_evals ",
+                  "FROM concept_relationship_user cru ",
+                  "LEFT JOIN concept_relationship_evals cre ON cru.concept_relationship_id = cre.concept_relationship_id ",
+                  "GROUP BY cru.concept_relationship_id ",
+                  "HAVING positive_evals = 0 OR (positive_evals > 0 AND positive_evals <= negative_evals) ",
+                ") ",
+              "SELECT cr.concept_relationship_id FROM cr ",
+              ")"), .con = m$db)
+            
             r[[table]] <- DBI::dbGetQuery(m$db, sql) %>%
               dplyr::arrange(cols_order[[table]]) %>%
               dplyr::mutate_at(cols_to_char[[table]], as.character) %>%
@@ -480,7 +496,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                 dplyr::mutate(concept_display_name_1 = NA_character_, .after = "concept_name_1")
             )
           
-          dataset_all_concepts <- dataset_all_concepts %>% dplyr::slice(1:10)
+          r$temp <- dataset_all_concepts
+          dataset_all_concepts <- dataset_all_concepts %>% dplyr::slice(1:100)
           
           # Add colours & plus cols
           
@@ -500,7 +517,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
               colours_input = as.character(
                 div(shiny.fluent::SwatchColorPicker.shinyInput(NS("%ns%")(paste0("%input_prefix%_", concept_id_1)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells),
                   cellHeight = 15, cellWidth = 15))),
-              plus_input = as.character(shiny::actionButton(NS("%ns%")(paste0("%input_prefix%_", concept_id_1)), "", icon = icon("plus"),
+              add_concept_input = as.character(shiny::actionButton(NS("%ns%")(paste0("%input_prefix%_", concept_id_1)), "", icon = icon("plus"),
                 onclick = paste0("Shiny.setInputValue('%ns%-data_explorer_item_selected', this.id, {priority: 'event'})")))
             ) %>%
             dplyr::ungroup()
@@ -680,7 +697,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       r$dataset_vocabulary_concepts <- r$dataset_all_concepts %>% 
         # dplyr::filter(count_concepts_rows > 0 | count_secondary_concepts_rows > 0)
         dplyr::filter(count_concepts_rows > 0) %>%
-        dplyr::select(-count_secondary_concepts_rows, -colours_input, -plus_input) %>%
+        dplyr::select(-count_secondary_concepts_rows, -colours_input, -add_concept_input) %>%
         dplyr::arrange(dplyr::desc(count_concepts_rows))
       
       if (input$vocabulary_show_mapped_concepts) r$dataset_vocabulary_concepts <- r$dataset_vocabulary_concepts %>% dplyr::filter(vocabulary_id == !!vocabulary_id)
@@ -1257,9 +1274,9 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       last_row_concept_relationship_user <- get_last_row(m$db, "concept_relationship_user")
       
-      new_row_db_user <- tibble::tribble(~id, ~concept_relationship_id, ~creator_id, ~datetime, ~deleted,
-        last_row_concept_relationship_user + 1, last_row_concept_relationship + 1, r$user_id, as.character(Sys.time()), FALSE,
-        last_row_concept_relationship_user + 2, last_row_concept_relationship + 2, r$user_id, as.character(Sys.time()), FALSE)
+      new_row_db_user <- tibble::tribble(~id, ~concept_relationship_id, ~creator_id, ~datetime,
+        last_row_concept_relationship_user + 1, last_row_concept_relationship + 1, r$user_id, as.character(Sys.time()),
+        last_row_concept_relationship_user + 2, last_row_concept_relationship + 2, r$user_id, as.character(Sys.time()))
       
       # Add new mapping to database
 
@@ -1377,8 +1394,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         "FROM concept_relationship_user cru ",
         "INNER JOIN concept_relationship cr ON cru.concept_relationship_id = cr.id ",
         "INNER JOIN concept c1 ON cr.concept_id_1 = c1.concept_id AND c1.vocabulary_id IN ({vocabulary_ids*}) ",
-        "INNER JOIN concept c2 ON cr.concept_id_2 = c2.concept_id AND c2.vocabulary_id IN ({vocabulary_ids*}) ",
-        "WHERE cru.deleted IS FALSE"), .con = m$db)
+        "INNER JOIN concept c2 ON cr.concept_id_2 = c2.concept_id AND c2.vocabulary_id IN ({vocabulary_ids*})"), .con = m$db)
       r$dataset_vocabulary_concepts_evaluate_mappings <- DBI::dbGetQuery(m$db, sql)
 
       action_col <- tibble::tibble()
@@ -1508,6 +1524,10 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
     observeEvent(input$vocabulary_show_mapping_details, {
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_show_mapping_details"))
       req(length(r$selected_dataset) > 0, !is.na(r$selected_dataset))
+      
+      # Reload UI outputs
+      for(position in c("left", "center", "right")) output[[paste0("vocabulary_mapping_details_", position)]] <- renderUI("")
+      
       r$reload_vocabulary_evaluate_mappings_datatable <- Sys.time()
     })
     
@@ -1616,24 +1636,55 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
     
     # Delete a row or multiple rows in datatable
     
-    mappings_delete_prefix <- "mappings"
-    mappings_dialog_title <- "mapping_delete"
-    mappings_dialog_subtext <- "mapping_delete_subtext"
-    mappings_react_variable <- "mappings_delete_confirm"
-    mappings_table <- "concept_relationship_user"
-    mappings_r_table <- "dataset_vocabulary_concepts_evaluate_mappings"
-    mappings_id_var_sql <- "concept_relationship_id"
-    mappings_id_var_r <- "delete_mappings"
-    mappings_delete_message <- "mapping_deleted"
-    mappings_reload_variable <- "reload_mappings_evals"
-    mappings_information_variable <- "mappings_deleted"
-    mappings_delete_variable <- paste0(mappings_delete_prefix, "_open_dialog")
+    r$mappings_open_dialog <- FALSE
     
-    delete_element(r = r, m = m, input = input, output = output, session = session, ns = ns, i18n = i18n,
-      delete_prefix = mappings_delete_prefix, dialog_title = mappings_dialog_title, dialog_subtext = mappings_dialog_subtext,
-      react_variable = mappings_react_variable, table = mappings_table, r_table = mappings_r_table, id_var_sql = mappings_id_var_sql, id_var_r = mappings_id_var_r,
-      delete_message = mappings_delete_message, translation = TRUE, reload_variable = mappings_reload_variable,
-      information_variable = mappings_information_variable)
+    output$mappings_delete_confirm <- shiny.fluent::renderReact({
+      shiny.fluent::Dialog(
+        hidden = !r$mappings_open_dialog,
+        onDismiss = htmlwidgets::JS("function() { Shiny.setInputValue('mappings_hide_dialog', Math.random()); }"),
+        dialogContentProps = list(
+          type = 0,
+          title = i18n$t("mapping_delete"),
+          closeButtonAriaLabel = "Close",
+          subText = tagList(i18n$t("mapping_delete_subtext"), br(), br())
+        ),
+        modalProps = list(),
+        shiny.fluent::DialogFooter(
+          shiny.fluent::PrimaryButton.shinyInput(ns("mappings_delete_confirmed"), text = i18n$t("delete")),
+          shiny.fluent::DefaultButton.shinyInput(ns("mappings_delete_canceled"), text = i18n$t("dont_delete"))
+        )
+      )
+    })
+    
+    # Whether to close or not delete dialog box
+    observeEvent(input$mappings_hide_dialog, r$mappings_open_dialog <- FALSE)
+    observeEvent(input$mappings_delete_canceled, r$mappings_open_dialog <- FALSE)
+    
+    # When the deletion is confirmed
+    observeEvent(input$mappings_delete_confirmed, {
+      
+      r$mappings_open_dialog <- FALSE
+      
+      # Delete mappings from concept_relationship_user AND concept_relationship
+      sql <- glue::glue_sql("DELETE FROM concept_relationship_user WHERE concept_relationship_id IN ({r$delete_mappings*})", .con = m$db)
+      DBI::dbSendStatement(m$db, sql) -> query
+      DBI::dbClearResult(query)
+      
+      sql <- glue::glue_sql("DELETE FROM concept_relationship WHERE id IN ({r$delete_mappings*})", .con = m$db)
+      DBI::dbSendStatement(m$db, sql) -> query
+      DBI::dbClearResult(query)
+      
+      # Delete also evaluations
+      sql <- glue::glue_sql("DELETE FROM concept_relationship_evals WHERE concept_relationship_id IN ({r$delete_mappings*})", .con = m$db)
+      DBI::dbSendStatement(m$db, sql) -> query
+      DBI::dbClearResult(query)
+      r$dataset_vocabulary_concepts_evaluate_mappings <- r$dataset_vocabulary_concepts_evaluate_mappings %>%
+        dplyr::filter(concept_relationship_id %not_in% r$delete_mappings)
+      
+      r$reload_mappings_evals <- Sys.time()
+      
+      show_message_bar(output, "mapping_deleted", type = "severeWarning", i18n = i18n, ns = ns)
+    })
     
     # Delete one row (with icon on DT)
     
@@ -1642,7 +1693,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$concept_mapping_deleted_pressed"))
 
       r$delete_mappings <- as.integer(substr(input$concept_mapping_deleted_pressed, nchar("delete_") + 1, 100))
-      r[[mappings_delete_variable]] <- TRUE
+      r$mappings_open_dialog <- TRUE
       
       # Reload datatable (to unselect rows)
       DT::replaceData(r$dataset_vocabulary_concepts_evaluate_mappings_datatable_proxy, r$dataset_vocabulary_concepts_evaluate_mappings, resetPaging = FALSE, rownames = FALSE)
@@ -1657,12 +1708,12 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       req(length(input$vocabulary_evaluate_mappings_rows_selected) > 0)
 
       r$delete_mappings <- r$dataset_vocabulary_concepts_evaluate_mappings[input$vocabulary_evaluate_mappings_rows_selected, ] %>% dplyr::pull(concept_relationship_id)
-      r[[mappings_delete_variable]] <- TRUE
+      r$mappings_open_dialog <- TRUE
     })
     
     # Reload data
     
-    observeEvent(r[[mappings_reload_variable]], {
+    observeEvent(r$reload_mappings_evals, {
 
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$reload_mappings_evals"))
 

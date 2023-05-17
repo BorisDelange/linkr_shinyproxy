@@ -1196,7 +1196,25 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           
           # Get data from database
           if (length(r[[input$vocabularies_table]]) == 0){
-            sql <- glue::glue_sql("SELECT * FROM {`input$vocabularies_table`}", .con = m$db)
+            
+            # Filter concept_relationship with validated evaluations
+            
+            if (input$vocabularies_table == "concept_relationship") sql <- glue::glue_sql(paste0(
+              "SELECT cr.* FROM concept_relationship cr WHERE cr.id NOT IN ( ",
+              "WITH cr AS (",
+              "SELECT cru.concept_relationship_id, ",
+              "SUM(CASE WHEN cre.evaluation_id = 1 THEN 1 ELSE 0 END) AS positive_evals, ",
+              "SUM(CASE WHEN cre.evaluation_id = 2 THEN 1 ELSE 0 END) AS negative_evals ",
+              "FROM concept_relationship_user cru ",
+              "LEFT JOIN concept_relationship_evals cre ON cru.concept_relationship_id = cre.concept_relationship_id ",
+              "GROUP BY cru.concept_relationship_id ",
+              "HAVING positive_evals = 0 OR (positive_evals > 0 AND positive_evals <= negative_evals) ",
+              ") ",
+              "SELECT cr.concept_relationship_id FROM cr ",
+              ")"), .con = m$db)
+           
+            else sql <- glue::glue_sql("SELECT * FROM {`input$vocabularies_table`}", .con = m$db)
+            
             r[[input$vocabularies_table]] <- DBI::dbGetQuery(m$db, sql) %>%
               tibble::as_tibble() %>%
               dplyr::arrange(cols_order[[input$vocabularies_table]]) %>%
@@ -1256,7 +1274,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$vocabularies_table_update_table_rows_dropdown"))
           
           req(input$vocabularies_table_vocabulary)
-          print(input$vocabularies_table_vocabulary)
           
           # Count rows of current table
           if (input$vocabularies_table %in% c("concept", "concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength") &

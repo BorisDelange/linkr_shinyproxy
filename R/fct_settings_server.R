@@ -639,7 +639,7 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
     }
     
     # Notify user
-    if (!r_message_bar) show_message_bar(output, delete_message, type ="severeWarning", i18n = i18n, ns = ns)
+    if (!r_message_bar) show_message_bar(output, delete_message, type = "severeWarning", i18n = i18n, ns = ns)
     if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = delete_message, type = "severeWarning", trigger = Sys.time())
     
     # Activate reload variable
