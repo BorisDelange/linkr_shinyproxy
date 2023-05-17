@@ -513,15 +513,17 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           
           dataset_all_concepts <- dataset_all_concepts %>%
             dplyr::filter(count_concepts_rows > 0) %>%
-            dplyr::rowwise() %>%
             dplyr::mutate(
               colours_input = as.character(
-                div(shiny.fluent::SwatchColorPicker.shinyInput(NS("%ns%")(paste0("%input_prefix%_", concept_id_1)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells),
+                div(shiny.fluent::SwatchColorPicker.shinyInput(NS("%ns%")("%input_prefix%_%concept_id_1%"), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells),
                   cellHeight = 15, cellWidth = 15))),
-              add_concept_input = as.character(shiny::actionButton(NS("%ns%")(paste0("%input_prefix%_", concept_id_1)), "", icon = icon("plus"),
-                onclick = paste0("Shiny.setInputValue('%ns%-data_explorer_item_selected', this.id, {priority: 'event'})")))
+              add_concept_input = as.character(shiny::actionButton(NS("%ns%")("%input_prefix%_%concept_id_1%"), "", icon = icon("plus"),
+                onclick = paste0("Shiny.setInputValue('%ns%-%input_prefix_2%concept_selected', this.id, {priority: 'event'})")))
             ) %>%
-            dplyr::ungroup()
+            dplyr::mutate(
+              colours_input = stringr::str_replace_all(colours_input, "%concept_id_1%", as.character(concept_id_1)),
+              add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", as.character(concept_id_1)),
+            )
           
           # Delete old rows
           sql <- glue::glue_sql("DELETE FROM concept_dataset WHERE dataset_id = {r$selected_dataset}", .con = m$db)
@@ -721,9 +723,9 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       factorize_cols <- c("relationship_id", "domain_id", "concept_class_id", "standard_concept", "invalid_reason")
       centered_cols <- c("concept_id_1", "relationship_id", "concept_id_2", "domain_id", "count_persons_rows", "count_concepts_rows")
       col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_with_counts", i18n = i18n)
-      hidden_cols <- c("id", "concept_display_name_1", "concept_id_2", "vocabulary_id_1", "vocabulary_id_2", "concept_class_id", "standard_concept", "concept_code",
+      hidden_cols <- c("id", "concept_id_2", "vocabulary_id_1", "vocabulary_id_2", "concept_class_id", "standard_concept", "concept_code",
         "valid_start_date", "valid_end_date", "invalid_reason", "modified")
-      value_show_cols <- c(2, 3, 5, 8, 16, 17)
+      value_show_cols <- c(2, 3, 4, 9, 16, 17)
 
       if (!input$vocabulary_show_mapped_concepts){
         hidden_cols <- c(hidden_cols, "relationship_id", "concept_name_2")
@@ -826,7 +828,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       r$dataset_vocabulary_concept_user <- 
         r$dataset_vocabulary_concepts %>%
         dplyr::filter(modified) %>%
-        dplyr::transmute(user_id = r$user_id, concept_id = concept_id_1, concept_name = concept_name_1, concept_display_name = concept_display_name_1, vocabulary_id_1 = !!vocabulary_id)
+        dplyr::transmute(user_id = r$user_id, concept_id = concept_id_1, concept_name = concept_name_1, concept_display_name = concept_display_name_1, vocabulary_id = !!vocabulary_id)
       r$dataset_vocabulary_concept_user_temp <- r$dataset_vocabulary_concept_user %>% dplyr::mutate(modified = TRUE)
       
       save_settings_datatable_updates(output = output, r = r, m = m, ns = ns, table = "concept_user", r_table = "dataset_vocabulary_concept_user", duplicates_allowed = TRUE, i18n = i18n)
