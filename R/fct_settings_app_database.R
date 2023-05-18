@@ -150,6 +150,9 @@ db_create_tables <- function(db, type = character(), dbms = character()){
     db_create_table(db, "conversations", primary_key_col = "id", dbms = dbms, text_cols = "name",
       tibble::tibble(id = integer(), name = character(), datetime = character(), deleted = logical()))
     
+    db_create_table(db, "user_deleted_conversations", primary_key_col = "id", dbms = dbms, text_cols = "name",
+      tibble::tibble(id = integer(), conversation_id = integer(), user_id = integer(), datetime = character()))
+    
     db_create_table(db, "inbox_messages", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), message_id = integer(), receiver_id = integer(), read = logical(), 
         datetime = character(), deleted = logical()))

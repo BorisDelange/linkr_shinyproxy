@@ -801,3 +801,5 @@ git_repo_deleted,Dépôt git supprimé
 all_categories,Toutes les catégories
 show_data,Afficher les données
 hide_concepts_datatables,Masquer les tableaux
+study_delete_conversation_title,Supprimer une conversation
+study_delete_conversation_subtext,Confirmer la suppression de cette conversation ?
