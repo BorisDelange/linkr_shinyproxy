@@ -238,7 +238,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   if (table_name == "plugins_vocabulary_mapped_concepts_with_counts"){
-    result <- c(i18n$t("concept_id"), i18n$t("relationship_id"), i18n$t("mapped_concept_id"),
+    result <- c(i18n$t("id"), i18n$t("concept_id"), i18n$t("relationship_id"), i18n$t("mapped_concept_id"),
       i18n$t("mapped_concept_name"), i18n$t("mapped_concept_display_name"), i18n$t("domain_id"),
       i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("colour"), i18n$t("action"))
   }

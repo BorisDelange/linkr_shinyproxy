@@ -519,11 +519,11 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                   cellHeight = 15, cellWidth = 15))),
               add_concept_input = as.character(shiny::actionButton(NS("%ns%")("%input_prefix%_%concept_id_1%"), "", icon = icon("plus"),
                 onclick = paste0("Shiny.setInputValue('%ns%-%input_prefix_2%concept_selected', this.id, {priority: 'event'})")))
-            ) %>%
-            dplyr::mutate(
-              colours_input = stringr::str_replace_all(colours_input, "%concept_id_1%", as.character(concept_id_1)),
-              add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", as.character(concept_id_1)),
-            )
+            ) #%>%
+            #dplyr::mutate(
+            #  colours_input = stringr::str_replace_all(colours_input, "%concept_id_1%", as.character(concept_id_1)),
+            #  add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", as.character(concept_id_1))
+            #)
           
           # Delete old rows
           sql <- glue::glue_sql("DELETE FROM concept_dataset WHERE dataset_id = {r$selected_dataset}", .con = m$db)

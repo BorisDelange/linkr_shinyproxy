@@ -40,18 +40,18 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
         ),
         make_dropdown(i18n = i18n, ns = ns, label = "columns_mapped_concepts", id = "vocabulary_mapped_concepts_table_cols", width = "300px", multiSelect = TRUE,
           options = list(
-            list(key = 0, text = i18n$t("concept_id_1")),
-            list(key = 1, text = i18n$t("relationship_id")),
-            list(key = 2, text = i18n$t("concept_id_2")),
-            list(key = 3, text = i18n$t("concept_name_2")),
-            list(key = 4, text = i18n$t("concept_display_name_2")),
-            list(key = 5, text = i18n$t("domain_id")),
+            list(key = 1, text = i18n$t("concept_id")),
+            list(key = 2, text = i18n$t("relationship_id")),
+            list(key = 3, text = i18n$t("mapped_concept_id")),
+            list(key = 4, text = i18n$t("concept_name_2")),
+            list(key = 5, text = i18n$t("concept_display_name_2")),
+            list(key = 6, text = i18n$t("domain_id")),
             list(key = 7, text = i18n$t("num_patients")),
             list(key = 8, text = i18n$t("num_rows")),
             list(key = 9, text = i18n$t("colour")),
             list(key = 10, text = i18n$t("action"))
           ),
-          value = c(1, 2, 3, 4, 7, 8, 9, 10)
+          value = c(2, 3, 4, 5, 7, 8, 9, 10)
         )
       ),
       shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
@@ -1297,8 +1297,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       options <- convert_tibble_to_list(r[[paste0(prefix, "_plugins_temp")]] %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       
-      sapply(c("code_selected_plugin", "vocabulary", "vocabulary_selected_concepts"), 
-        function(name) shiny.fluent::updateComboBox.shinyInput(session, name, options = options, value = NULL))
+      shiny.fluent::updateComboBox.shinyInput(session, "code_selected_plugin", options = options, value = NULL)
       shiny.fluent::updateChoiceGroup.shinyInput(session, "edit_code_ui_server", value = "ui")
       shiny.fluent::updateToggle.shinyInput(session, "hide_editor", value = FALSE)
       sapply(c("ace_edit_code_ui", "ace_edit_code_server", "ace_edit_code_translations"),
@@ -1793,7 +1792,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           dplyr::mutate_at("colours_input", stringr::str_replace_all, "%input_prefix%", "add_colour") %>%
           dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix%", "add_concept") %>%
           dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix_2%", "") %>%
-          dplyr::mutate_at("concept_id", as.character)
+          dplyr::mutate_at("concept_id", as.character) %>%
+          dplyr::mutate(
+           colours_input = stringr::str_replace_all(colours_input, "%concept_id_1%", concept_id),
+           add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", concept_id)
+          )
         
         r$plugin_vocabulary_concepts <- plugin_vocabulary_concepts
         
@@ -1827,7 +1830,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Update which cols are hidden
       
       observeEvent(input$vocabulary_concepts_table_cols, {
-        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_concepts_table_cols"))
+        if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$vocabulary_concepts_table_cols"))
         
         req(length(r$plugin_vocabulary_concepts_proxy) > 0)
         
@@ -1837,19 +1840,19 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       })
       
       observeEvent(input$vocabulary_mapped_concepts_table_cols, {
-        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_mapped_concepts_table_cols"))
+        if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$vocabulary_mapped_concepts_table_cols"))
         
         req(length(r$plugin_vocabulary_mapped_concepts_proxy) > 0)
         
         r$plugin_vocabulary_mapped_concepts_proxy %>%
-          DT::showCols(0:10) %>%
-          DT::hideCols(setdiff(0:10, input$vocabulary_mapped_concepts_table_cols))
+          DT::showCols(1:10) %>%
+          DT::hideCols(setdiff(1:10, input$vocabulary_mapped_concepts_table_cols))
       })
       
       # Hide datatables
       
       observeEvent(input$hide_concepts_datatables, {
-        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$hide_concepts_datatables"))
+        if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$hide_concepts_datatables"))
         
         req(input$vocabulary)
         
@@ -1858,11 +1861,29 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (input$hide_concepts_datatables) shinyjs::show("blank_space") else shinyjs::hide("blank_space")
       })
       
+      # Updates in datatable
+      
+      observeEvent(input$plugin_vocabulary_concepts_cell_edit, {
+
+        if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$plugin_vocabulary_concepts_cell_edit"))
+
+        edit_info <- input$plugin_vocabulary_concepts_cell_edit
+        r$plugin_vocabulary_concepts <- DT::editData(r$plugin_vocabulary_concepts, edit_info, rownames = FALSE)
+      })
+      
+      observeEvent(input$plugin_vocabulary_mapped_concepts_cell_edit, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$plugin_vocabulary_mapped_concepts_cell_edit"))
+        
+        edit_info <- input$plugin_vocabulary_mapped_concepts_cell_edit
+        r$plugin_vocabulary_mapped_concepts <- DT::editData(r$plugin_vocabulary_mapped_concepts, edit_info, rownames = FALSE)
+      })
+      
       # Show mapped concepts
       
       observeEvent(input$plugin_vocabulary_concepts_rows_selected, {
         
-        if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$plugin_vocabulary_concepts_rows_selected"))
+        if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$plugin_vocabulary_concepts_rows_selected"))
         
         req(input$show_mapped_concepts)
         
@@ -1879,12 +1900,22 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           ) %>% 
           dplyr::relocate(concept_display_name_2, .after = "concept_name_2") %>%
           dplyr::relocate(domain_id, .after = "concept_display_name_2") %>%
+          dplyr::mutate(id = NA_integer_, .before = "concept_id_1")
+        
+        if (nrow(r$plugin_vocabulary_mapped_concepts) > 0) r$plugin_vocabulary_mapped_concepts <-
+          r$plugin_vocabulary_mapped_concepts %>%
           dplyr::group_by_all() %>% dplyr::slice(1) %>% dplyr::ungroup() %>%
           dplyr::mutate_at(c("colours_input", "add_concept_input"), stringr::str_replace_all, "%ns%", id) %>%
           dplyr::mutate_at("colours_input", stringr::str_replace_all, "%input_prefix%", "add_colour") %>%
           dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix%", "add_mapped_concept") %>%
           dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix_2%", "") %>%
-          dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.character)
+          dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.character) %>%
+          # Add a unique id (rows are not unique with only concept_id_2, cause there can be multiple concept_relationship)
+          dplyr::mutate(id = 1:dplyr::n()) %>%
+          dplyr::mutate(
+            colours_input = stringr::str_replace_all(colours_input, "%concept_id_1%", as.character(id)),
+            add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", as.character(id))
+          )
         
         if (length(r$plugin_vocabulary_mapped_concepts_proxy) == 0){
           editable_cols <- c("concept_display_name_2")
@@ -1894,7 +1925,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           sortable_cols <- c("relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_2", "count_persons_rows", "count_concepts_rows")
           centered_cols <- c("concept_id_1", "concept_id_2", "count_persons_rows", "count_concepts_rows", "colours_input", "add_concept_input")
           col_names <- get_col_names(table_name = "plugins_vocabulary_mapped_concepts_with_counts", i18n = i18n)
-          hidden_cols <- c("concept_id_1", "domain_id")
+          hidden_cols <- c("id", "concept_id_1", "domain_id")
           column_widths <- c("concept_id" = "100px", "count_persons_rows" = "80px", "count_concepts_rows" = "80px", 
             "add_concept_input" = "80px", "colours_input" = "200px")
           
@@ -1931,6 +1962,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Get ID of selected concept
         if (type == "mapped_concept") prefix <- "add_mapped_concept" else prefix <- "add_concept"
         link_id <- as.integer(substr(input$concept_selected, nchar(paste0(id, "-", prefix, "_")) + 1, nchar(input$concept_selected)))
+        print("link_id")
+        print(link_id)
         
         # If this concept is not already selected, add it to the vocabulary_selected_concepts dropdown
 
@@ -1946,14 +1979,15 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             
             selected_concept <- r$plugin_vocabulary_mapped_concepts %>%
               dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.integer) %>%
-              dplyr::filter(concept_id_2 == link_id) %>%
-              dplyr::slice(1)
+              dplyr::filter(id == link_id)
+            
+            print(selected_concept)
             
             new_data <- r$plugin_vocabulary_concepts %>%
               dplyr::mutate_at("concept_id", as.integer) %>%
               dplyr::filter(concept_id == selected_concept$concept_id_1) %>%
-              dplyr::transmute(concept_id, concept_name, concept_display_name, domain_id,
-                concept_colour = input[[paste0("add_colour_", link_id)]], mapped_to_concept_id = NA_integer_, merge_mapped_concepts = FALSE) %>%
+              dplyr::transmute(concept_id, concept_name, concept_display_name, domain_id, concept_colour = input[[paste0("add_colour_", concept_id)]], 
+                mapped_to_concept_id = NA_integer_, merge_mapped_concepts = FALSE) %>%
               dplyr::bind_rows(
                 selected_concept %>%
                 dplyr::transmute(concept_id = concept_id_2, concept_name = concept_name_2, concept_display_name = concept_display_name_2, domain_id,
