@@ -2155,7 +2155,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Create translations file
       
-      i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
+      # i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
       
       if (input$ace_edit_code_translations != ""){
         
@@ -2185,9 +2185,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Variables to hide
       new_env_vars <- list("r" = NA)
+      
       # Variables to keep
-      variables_to_keep <- c("d", "m", "o", "session_code", "session_num", "i18n", "i18np")
+      variables_to_keep <- c("d", "m", "o", "session_code", "session_num", "i18n")
       if (prefix == "patient_lvl") variables_to_keep <- c(variables_to_keep, "vocabulary_selected_concepts")
+      if (exists("i18np")) variables_to_keep <- c(variables_to_keep, "i18np")
       
       for (var in variables_to_keep) new_env_vars[[var]] <- eval(parse(text = var))
       new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))

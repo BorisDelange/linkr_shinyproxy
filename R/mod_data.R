@@ -1123,8 +1123,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             # Create translations file & var
             if (!check_deleted_plugin){
               
-              i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
-              
               plugin_translations <- r$code %>%
                 dplyr::filter(link_id == ids$plugin_id, category == "plugin_translations") %>%
                 dplyr::pull(code)
@@ -1165,8 +1163,16 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             
             # Variables to hide
             new_env_vars <- list("r" = NA)
+            
             # Variables to keep
-            for (var in c("d", "m", "o", "vocabulary_selected_concepts", "session_code", "session_num")) new_env_vars[[var]] <- eval(parse(text = var))
+            variables_to_keep <- c("d", "m", "o", "session_code", "session_num", "i18n")
+            if (prefix == "patient_lvl") variables_to_keep <- c(variables_to_keep, "vocabulary_selected_concepts")
+            print("a")
+            print(exists("i18np"))
+            if (exists("i18np")) variables_to_keep <- c(variables_to_keep, "i18np")
+            
+            for (var in variables_to_keep) new_env_vars[[var]] <- eval(parse(text = var))
+            
             new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
             tryCatch(eval(parse(text = code_server_card), envir = new_env), error = function(e) print(e), warning = function(w) print(w))
             
@@ -2559,8 +2565,13 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         # Variables to hide
         new_env_vars <- list("r" = NA)
+        
         # Variables to keep
-        for (var in c("d", "m", "o", "vocabulary_selected_concepts", "session_code", "session_num")) new_env_vars[[var]] <- eval(parse(text = var))
+        variables_to_keep <- c("d", "m", "o", "session_code", "session_num", "i18n")
+        if (prefix == "patient_lvl") variables_to_keep <- c(variables_to_keep, "vocabulary_selected_concepts")
+        if (exists("i18np")) variables_to_keep <- c(variables_to_keep, "i18np")
+        
+        for (var in variables_to_keep) new_env_vars[[var]] <- eval(parse(text = var))
         new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
         
         tryCatch(eval(parse(text = code_server_card), envir = new_env), error = function(e) print(e), warning = function(w) print(w))

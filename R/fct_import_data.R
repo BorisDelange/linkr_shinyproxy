@@ -884,6 +884,11 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
   if (!quiet) show_message_bar(output, 1, paste0("import_dataset_success_", type), "success", i18n = i18n, ns = ns)
 }
 
+# dataset_csv_exists <- function(r = shiny::reactiveValues(), table = character(), dataset_id = integer()){
+#   if (file.exists(paste0(r$app_folder, "/datasets/", dataset_id, "/", table, ".csv"))) return(TRUE)
+#   else return(FALSE)
+# }
+
 #' Import a thesaurus
 #' @param output variable from Shiny, used to render messages on the message bar
 #' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
