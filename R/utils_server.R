@@ -12,18 +12,24 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
   tables <- c("users", "users_accesses", "users_statuses",
     "data_sources", "datasets", "studies", "subsets", "subset_persons", "subsets_persons", "vocabulary", "thesaurus", "thesaurus_items",
     "plugins", "scripts",
-    "patient_lvl_tabs_groups", "patient_lvl_tabs", "patient_lvl_widgets", "patient_lvl_widgets_items",
-    "aggregated_tabs_groups", "aggregated_tabs", "aggregated_widgets", "aggregated_widgets_items", 
+    "patient_lvl_tabs_groups", "patient_lvl_tabs", "patient_lvl_widgets", "patient_lvl_widgets_concepts",
+    "aggregated_tabs_groups", "aggregated_tabs", "aggregated_widgets",
     "code", 
     "options",
     "widgets_options", "patients_options")
   
   if (table %not_in% tables) stop(paste0(i18n$t("invalid_table_name"), ". ", i18n$t("tables_allowed"), " : ", toString(tables)))
   
-  if (table %in% c("patients_options", "widgets_options", "subsets", "subset_persons", "subsets_persons")){
+  if (table %in% c("patients_options", "widgets_options", "subsets", "subset_persons", "subsets_persons", "patient_lvl_widgets_concepts")){
     db <- m$db
     
-    if (table %in% c("subsets", "subset_persons", "subsets_persons", "patients_options")){
+    if (table == "patient_lvl_widgets_concepts"){
+      widget_ids <- r$patient_lvl_widgets %>% dplyr::pull(id)
+      sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND widget_id IN ({widget_ids*})", .con = db)
+      r$patient_lvl_widgets_concepts <- DBI::dbGetQuery(db, sql)
+    }
+    
+    else if (table %in% c("subsets", "subset_persons", "subsets_persons", "patients_options")){
       
       if (table == "subsets_persons"){
         
@@ -80,30 +86,23 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
       else {
         if (grepl("patient_lvl", table)) prefix <- "patient_lvl" else prefix <- "aggregated"
         
-        if (grepl("group", table)){
+        if (table == paste0(prefix, "_tabs_groups")){
           tab_group_id <- r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(paste0(prefix, "_tab_group_id"))
           sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND id = {tab_group_id}", .con = db)
           r[[paste0(prefix, "_tabs_groups")]] <- DBI::dbGetQuery(db, sql)
         }
         
-        else if (grepl("widgets_items", table)){
-          widget_group_ids <- r[[paste0(prefix, "_widgets")]] %>% dplyr::pull(id)
-          sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND group_id IN ({widget_group_ids*})", .con = db)
-          r[[paste0(prefix, "_widgets_items")]] <- DBI::dbGetQuery(db, sql)
-        }
-        
-        else if (grepl("widgets", table)){
-          tabs_ids <- r[[paste0(prefix, "_tabs")]] %>% dplyr::pull(id)
-          sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND tab_id IN ({tabs_ids*})", .con = db)
-          r[[paste0(prefix, "_widgets")]] <- DBI::dbGetQuery(db, sql)
-        }
-        
-        else {
+        else if (table == paste0(prefix, "_tabs")){
           tab_group_id <- r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(paste0(prefix, "_tab_group_id"))
           sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND tab_group_id = {tab_group_id}", .con = db)
           r[[paste0(prefix, "_tabs")]] <- DBI::dbGetQuery(db, sql)
         }
         
+        else if (table == paste0(prefix, "_widgets")){
+          tabs_ids <- r[[paste0(prefix, "_tabs")]] %>% dplyr::pull(id)
+          sql <- glue::glue_sql("SELECT * FROM {`table`} WHERE deleted IS FALSE AND tab_id IN ({tabs_ids*})", .con = db)
+          r[[paste0(prefix, "_widgets")]] <- DBI::dbGetQuery(db, sql)
+        }
       }
     }
     

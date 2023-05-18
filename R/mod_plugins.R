@@ -1961,6 +1961,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         # Get ID of selected concept
         link_id <- as.integer(substr(input$concept_selected, nchar(paste0(id, "-add_", type, "_")) + 1, nchar(input$concept_selected)))
+        if (type == "concept") concept_id <- link_id
+        if (type == "mapped_concept") concept_id <- r$plugin_vocabulary_mapped_concepts %>% dplyr::filter(id == link_id) %>% dplyr::pull(concept_id_2)
         
         # If this concept is not already selected, add it to the vocabulary_selected_concepts dropdown
 
