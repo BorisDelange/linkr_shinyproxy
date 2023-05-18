@@ -2272,7 +2272,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           type <- r$widget_concept_selected_type
           
           # Initiate r variable if doesn't exist
-          if (length(r[[paste0(type, "_vocabulary_selected_concepts")]]) == 0) r[[paste0(type, "_vocabulary_selected_concepts")]] <- tibble::tibble(vocabulary_id = character(), 
+          if (length(r[[paste0(type, "_vocabulary_selected_concepts")]]) == 0) r[[paste0(type, "_vocabulary_selected_concepts")]] <- tibble::tibble(
             concept_id = integer(), concept_name = character(), concept_display_name = character(), domain_id = character(),
             concept_colour = character(), mapped_to_concept_id = integer(), merge_mapped_concepts = logical())
           
@@ -2416,7 +2416,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (perf_monitoring) monitor_perf(r = r, action = "start")
 
         new_data <- list()
-
+        
         new_data$name <- coalesce2(type = "char", x = input$widget_creation_name)
         new_data$tab_group <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(id == r[[paste0(prefix, "_selected_tab")]]) %>% dplyr::pull(tab_group_id)
         new_data$tab_new_element <- r[[paste0(prefix, "_selected_tab")]]
@@ -2451,9 +2451,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
 
         # Get last_row nb
         # last_row_widgets <- get_last_row(r$db, paste0(prefix, "_widgets"))
-        group_id <- get_last_row(r$db, paste0(prefix, "_widgets")) + 1
-        last_row_widgets_items <- get_last_row(r$db, paste0(prefix, "_widgets_items"))
-        # group_id <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(group_id), 0) FROM ", table)) %>% dplyr::pull() %>% as.integer() + 1
+        widget_id <- get_last_row(r$db, paste0(prefix, "_widgets")) + 1
+        last_row_widgets_concepts <- get_last_row(r$db, paste0(prefix, "_widgets_concepts"))
         last_display_order <- DBI::dbGetQuery(r$db, paste0("SELECT COALESCE(MAX(display_order), 0) FROM ", paste0(prefix, "_widgets"), " WHERE tab_id = ", new_data$tab_new_element)) %>% dplyr::pull() %>% as.integer()
 
         new_data <- tibble::tribble(~id, ~name, ~tab_id, ~plugin_id, ~display_order, ~creator_id, ~datetime, ~deleted,
@@ -2463,11 +2462,11 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         DBI::dbAppendTable(r$db, paste0(prefix, "_widgets"), new_data)
         add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
         r[[paste0(prefix, "_widgets")]] <- r[[paste0(prefix, "_widgets")]] %>% dplyr::bind_rows(new_data)
-        
-        has_vocabulary_concepts <- TRUE
-        vocabulary_selected_concepts <- tibble::tibble()
 
         if (prefix == "patient_lvl"){
+          
+          has_vocabulary_concepts <- TRUE
+          vocabulary_selected_concepts <- tibble::tibble()
 
           if (length(r$widget_creation_vocabulary_selected_concepts) == 0) has_vocabulary_concepts <- FALSE
           if (length(r$widget_creation_vocabulary_selected_concepts) > 0) if (nrow(r$widget_creation_vocabulary_selected_concepts) == 0) has_vocabulary_concepts <- FALSE
@@ -2477,38 +2476,23 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             new_data <-
               r$widget_creation_vocabulary_selected_concepts %>%
               dplyr::transmute(
-                id_temp = 1:dplyr::n() + last_row_widgets_items + 1,
-                db_item_id = id,
-                group_id = !!group_id,
-                thesaurus_name, thesaurus_item_id, thesaurus_item_display_name, thesaurus_item_unit, thesaurus_item_colour,
-                mapped_to_item_id, merge_items,
-                creator_id = r$user_id,
-                datetime = as.character(Sys.time()),
-                deleted = FALSE
-              ) %>%
-              dplyr::rename(id = id_temp)
+                id = 1:dplyr::n() + last_row_widgets_concepts + 1, widget_id = !!widget_id,
+                concept_id, concept_name, concept_display_name, domain_id, concept_colour, mapped_to_concept_id, merge_mapped_concepts, 
+                creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE
+              )
             
-            new_data <- new_data %>%
-              dplyr::left_join(
-                new_data %>% dplyr::select(mapped_to_item_id = db_item_id, new_mapped_to_item_id = id),
-                by = "mapped_to_item_id"
-              ) %>%
-              dplyr::mutate(mapped_to_item_id = new_mapped_to_item_id) %>%
-              dplyr::select(-new_mapped_to_item_id)
-            
-            DBI::dbAppendTable(r$db, paste0(prefix, "_widgets_items"), new_data)
+            DBI::dbAppendTable(m$db, paste0(prefix, "_widgets_concepts"), new_data)
             add_log_entry(r = r, category = paste0(table, " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
-            r[[paste0(prefix, "_widgets_items")]] <- r[[paste0(prefix, "_widgets_items")]] %>% dplyr::bind_rows(new_data)
+            r[[paste0(prefix, "_widgets_concepts")]] <- r[[paste0(prefix, "_widgets_concepts")]] %>% dplyr::bind_rows(new_data)
             
             # Save thesaurus items for server code
-            vocabulary_selected_concepts <- new_data %>%
-              dplyr::select(thesaurus_name, item_id = thesaurus_item_id, display_name = thesaurus_item_display_name,
-                thesaurus_item_unit, colour = thesaurus_item_colour, mapped_to_item_id, merge_items)
+            vocabulary_selected_concepts <- r$widget_creation_vocabulary_selected_concepts
             
             # Reset r$widget_vocabulary_selected_concepts & dropdown
-            r$widget_creation_vocabulary_selected_concepts <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
-              thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
-              thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = logical())
+            r$widget_creation_vocabulary_selected_concepts <- tibble::tibble(
+              concept_id = integer(), concept_name = character(), concept_display_name = character(), domain_id = character(),
+              concept_colour = character(), mapped_to_concept_id = integer(), merge_mapped_concepts = logical())
+            
             shiny.fluent::updateDropdown.shinyInput(session, "widget_creation_vocabulary_selected_concepts", options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
           }
         }
@@ -2521,7 +2505,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # Load translations file
         
         plugin_id <- input$widget_creation_plugin$key
-        i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
+        # i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
         plugin_translations <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_translations") %>% dplyr::pull(code)
         
         if (plugin_translations != ""){
@@ -2566,7 +2550,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               dplyr::filter(link_id == input$widget_creation_plugin$key, category == "plugin_server") %>%
               dplyr::pull(code) %>%
               stringr::str_replace_all("%tab_id%", as.character(r[[paste0(prefix, "_selected_tab")]])) %>%
-              stringr::str_replace_all("%group_id%", as.character(group_id)) %>%
               stringr::str_replace_all("%widget_id%", as.character(group_id)) %>%
               stringr::str_replace_all("\r", "\n")
   

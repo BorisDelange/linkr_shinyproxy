@@ -1952,7 +1952,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$concept_selected"))
 
         # Initiate r variable if doesn't exist
-        if (length(r$plugin_vocabulary_selected_concepts) == 0) r$plugin_vocabulary_selected_concepts <- tibble::tibble(vocabulary_id = character(), 
+        if (length(r$plugin_vocabulary_selected_concepts) == 0) r$plugin_vocabulary_selected_concepts <- tibble::tibble( 
             concept_id = integer(), concept_name = character(), concept_display_name = character(), domain_id = character(),
             concept_colour = character(), mapped_to_concept_id = integer(), merge_mapped_concepts = logical())
 
@@ -2165,6 +2165,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           new_dir <- paste0(r$app_folder, "/translations/", plugin_unique_id)
           if (!dir.exists(new_dir)) dir.create(new_dir)
           
+          # Erase old file if already exists
           writeLines(input$ace_edit_code_translations, paste0(new_dir, "/plugin_translations.csv"))
         },
           error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",

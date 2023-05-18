@@ -103,28 +103,6 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         patient_lvl_tab_group_id = integer(), aggregated_tab_group_id = integer(), creator_id = integer(),
         datetime = character(), deleted = logical()))
     
-    db_create_table(db, "thesaurus", primary_key_col = "id", dbms = dbms, text_cols = "description",
-      tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = character(), creator_id = integer(),
-        datetime = character(), deleted = logical()))
-    
-    db_create_table(db, "thesaurus_items", primary_key_col = "id", dbms = dbms, text_cols = c("name", "display_name"),
-      tibble::tibble(id = integer(), thesaurus_id = integer(), item_id = integer(),
-        name = character(), display_name = character(), unit = character(),
-        datetime = character(), deleted = logical()))
-    
-    db_create_table(db, "thesaurus_items_users", primary_key_col = "id", dbms = dbms, text_cols = c("name", "display_name"),
-      tibble::tibble(id = integer(), user_id = integer(), thesaurus_id = integer(), item_id = integer(),
-        name = character(), display_name = character(), unit = character(),
-        datetime = character(), deleted = logical()))
-    
-    db_create_table(db, "thesaurus_items_mapping", primary_key_col = "id", dbms = dbms,
-      tibble::tibble(id = integer(), category = character(), thesaurus_id_1 = integer(), item_id_1 = integer(), thesaurus_id_2 = integer(), item_id_2 = integer(),
-        relation_id = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
-    
-    db_create_table(db, "thesaurus_items_mapping_evals", primary_key_col = "id", dbms = dbms,
-      tibble::tibble(id = integer(), mapping_id = integer(), creator_id = integer(), evaluation_id = integer(),
-        datetime = character(), deleted = logical()))
-    
     db_create_table(db, "plugins", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), tab_type_id = integer(), 
         creation_datetime = character(), update_datetime = character(), deleted = logical()))
@@ -145,12 +123,6 @@ db_create_tables <- function(db, type = character(), dbms = character()){
       tibble::tibble(id = integer(), name = character(), tab_id = integer(), plugin_id = integer(), 
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
     
-    db_create_table(db, "patient_lvl_widgets_items", primary_key_col = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
-      tibble::tibble(id = integer(), db_item_id = integer(), group_id = integer(),
-        thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
-        thesaurus_item_colour = character(), mapped_to_item_id = integer(), merge_items = logical(),
-        creator_id = integer(), datetime = character(), deleted = logical()))
-    
     db_create_table(db, "aggregated_tabs_groups", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), description = character(), creator_id = integer(), datetime = character(),
         deleted = logical()))
@@ -162,12 +134,6 @@ db_create_tables <- function(db, type = character(), dbms = character()){
     db_create_table(db, "aggregated_widgets", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), name = character(), tab_id = integer(), plugin_id = integer(), 
         display_order = integer(), creator_id = integer(), datetime = character(), deleted = logical()))
-    
-    db_create_table(db, "aggregated_widgets_items", primary_key_col = "id", dbms = dbms, text_cols = "thesaurus_item_display_name",
-      tibble::tibble(id = integer(), group_id = integer(),
-        thesaurus_name = character(), thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(), 
-        thesaurus_item_colour = character(), mapped_to_item_id = integer(), merge_items = logical(),
-        creator_id = integer(), datetime = character(), deleted = logical()))
     
     db_create_table(db, "code", primary_key_col = "id", dbms = dbms, text_cols = "code",
       tibble::tibble(id = integer(), category = character(), link_id = integer(), code = character(), creator_id = integer(),
@@ -269,6 +235,12 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         amount_unit_concept_id = integer(), numerator_value = numeric(), numerator_unit_concept_id = integer(),
         denominator_value = numeric(), denominator_unit_concept_id = integer(), box_size = integer(),
         valid_start_date = character(), valid_end_date = character(), invalid_reason = character()))
+    
+    db_create_table(db, "patient_lvl_widgets_concepts", primary_key_col = "id", dbms = dbms,
+      tibble::tibble(id = integer(), widget_id = integer(), concept_id = integer(),
+        concept_name = character(), concept_display_name = character(), domain_id = character(), 
+        concept_colour = character(), mapped_to_concept_id = integer(), merge_mapped_concepts = logical(),
+        creator_id = integer(), datetime = character(), deleted = logical()))
     
     db_create_table(db, "cache", primary_key_col = "id", dbms = dbms, text_cols = "value",
       tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
