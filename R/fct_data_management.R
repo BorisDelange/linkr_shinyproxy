@@ -321,22 +321,6 @@ remove_persons_from_subset <- function(output, r = shiny::reactiveValues(), m = 
 #   data_with_paths
 # }
 
-#' Get thesaurus name
-#'
-#' @description Get thesaurus name from its ID
-#' @param r A shiny::reactiValues object, used to communicate between tabs
-#' @param thesaurus_id ID of the thesaurus (integer)
-get_thesaurus_name <- function(r = shiny::reactiveValues(), thesaurus_id = integer()){
-  
-  result <- NA_character_
-  
-  if (length(thesaurus_id) > 0){
-    result <- r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% dplyr::pull(name)
-  }
-  
-  result
-}
-
 #' Get thesaurus item
 #'
 #' @description Get a thesaurus item, from the thesaurus name and ID or name of the item.

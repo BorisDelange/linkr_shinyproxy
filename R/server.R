@@ -65,9 +65,14 @@ app_server <- function(router, language = "en", app_folder = character(),
     
     # Get translations
     # Update : use shiny.i18n instead. When it is done, delete get_translations
-    # r$words <- get_translations()
+    
     if (debug) print(paste0(Sys.time(), " - server - translations"))
-    i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
+    
+    translations_path <- "translations"
+    if (!dir.exists("translations")) translations_path <- paste0(find.package("linkr"), "/translations")
+    if (!dir.exists(translations_path)) print("Translations path not found")
+  
+    i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = translations_path))
     i18n$set_translation_language(language)
     r$i18n <- i18n
     

@@ -64,8 +64,13 @@ linkr <- function(
   
   # Load translations
   if (debug) print(paste0(Sys.time(), " - linkr - translation"))
-  i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
-  i18n$set_translation_language(tolower(language))
+  
+  translations_path <- "translations"
+  if (!dir.exists("translations")) translations_path <- paste0(find.package("linkr"), "/translations")
+  if (!dir.exists(translations_path)) print("Translations path not found")
+  
+  i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = translations_path))
+  i18n$set_translation_language(language)
   
   options(digits.secs = 0)
 

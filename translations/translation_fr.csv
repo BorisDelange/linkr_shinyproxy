@@ -11,6 +11,7 @@ whats_a_tab,Qu'est ce qu'un onglet ?
 add_tab,Ajouter un onglet
 widgets,Widgets
 whats_a_widget,Qu'est ce qu'un widget ?
+add_a_widget,Ajouter un widget
 get_started,Mise en place
 patient_lvl_or_aggregated_data,Données individuelles ou agrégées
 tutorials,Tutoriels
@@ -59,13 +60,9 @@ r_console,Console R
 subset,Subset
 study,Etude
 run_code,Exécuter
-all_items,Tous les items
-item,Item
-items,Items
 category,Catégorie
 categories,Catégories
 conversions,Conversions
-create_items,Créer des items
 choose_a_damatart_left_side,Choisissez un set de données dans le menu déroulant à gauche de l'écran
 choose_a_study_left_side,Choisissez une étude dans le menu déroulant à gauche de l'écran
 choose_study_and_dataset_left_side,Choisissez un set de données et une étude dans le menu déroulant à gauche de l'écran
@@ -77,15 +74,10 @@ numeric_values,Valeurs numériques
 rate,Débit
 amount,Quantité
 display_name,Nom d'affichage
-thesaurus_id,ID de la terminologie
-thesaurus_name,Nom de la terminologie
-item_id,ID de l'item
 concept_id,ID du concept
 concept_id_1,ID du concept 1
 concept_id_2,ID du concept 2
 mapped_concept_id,ID du concept aligné
-parent_item_id,ID de l'item parent
-parent_concept_id,ID du concept parent
 reset,Remettre à zéro
 all_plugins,Tous les plugins
 create_plugin,Créer un plugin
@@ -125,7 +117,6 @@ scripts_management,Gestion des scripts
 create_script,Créer un script
 edit_script_code,Editer le code du script
 script_options,Options du script
-thesaurus_items,Concepts de la terminologie
 concept,Concept
 concepts,Concepts
 accesses_opts,Configurer les accès
@@ -151,12 +142,9 @@ export_study,Exporter une étude
 dataset_options,Options du set de données
 create_data_source,Créer une source de données
 data_sources_management,Gestion des sources de données
-items_mapping,Alignement de concepts
 concepts_mapping,Alignement de concepts
 mapping,Alignement de concepts
-thesaurus_management,Gestion des terminologies
 vocabularies_management,Gestion des terminologies
-create_thesaurus,Créer une terminologie
 show_only_used_concepts,N'afficher que les concepts utilisés dans ce set de données
 create_dataset,Créer un set de données
 datasets_management,Gestion des sets de données
@@ -289,14 +277,6 @@ subsets_delete_data,Supprimer un subset
 subsets_creation_card,Créer un subset
 subsets_datatable_card,Gérer les subsets
 subsets_edit_code_card,Editer le code d'un subset
-thesaurus,Terminologies
-thesaurus_see_all_data,Accès à toutes les données
-thesaurus_edit_data,Editer les terminologies
-thesaurus_delete_data,Supprimer une terminologie
-thesaurus_creation_card,Créer une terminologie
-thesaurus_datatable_card,Gérer les terminologies
-thesaurus_sub_datatable_card,Gérer les concepts des terminologies
-thesaurus_edit_code_card,Editer le code d'une terminologie
 plugins,Plugins
 all_plugins_card,Accéder au catalogue des plugins
 plugins_see_all_data,Accéder à toutes les données
@@ -358,7 +338,6 @@ dataset_added,Nouveau set de données ajouté
 study_added,Nouvelle étude ajoutée
 subset_added,Nouveau subset ajouté
 script_added,Nouveau script ajouté
-thesaurus_added,Nouvelle terminologiee ajoutée
 vocabulary_added,Nouvelle terminologiee ajoutée
 user_added,Nouvel utilisateur ajouté
 user_access_added,Nouvel accès utilisateur ajouté
@@ -381,13 +360,6 @@ fail_load_dataset,Erreur lors du chargement du set de données
 fail_load_vocabulary,Erreur lors du chargement de la terminologie
 fail_load_vocabulary_code,Erreur lors du chargement du code de la terminologie
 fail_load_scripts,Erreur lors de l'exécution des scripts
-invalid_thesaurus_id_value,Valeur de thesaurus_id non valide
-invalid_vocabulary_id_value,Valeur de vocabulary_id non valide
-invalid_vocabulary_name_value,Valeur de vocabulary_name non valide
-invalid_thesaurus_item_name,Valeur de item_name non valide
-invalid_thesaurus_item_id,Valeur de item_id non valide
-invalid_thesaurus_search_method,Valeur de method non valide
-thesaurus_id_not_found,ID de la terminologie non trouvé
 invalid_col_names,Noms de colonnes non valides
 invalid_col_types,Types de colonnes non valides
 error_get_actual_primary_keys,Erreur lors du chargement des clés primaires de la terminologie
@@ -396,24 +368,20 @@ type_must_be_character,doit être de type character
 type_must_be_numeric,doit être de type numeric
 type_must_be_datetime,doit être de type datetime
 type_must_be_date,doit être de type date
-thesaurus_no_items_to_insert,Pas de nouvel item à insérer dans la base de données
 vocabulary_no_data_to_insert,Pas de nouvelles données à insérer dans la base de données
 column,Colonne
 columns,Colonnes
 columns_concepts,Colonnes des concepts
 columns_mapped_concepts,Colonnes des concepts alignés
-import_thesaurus_success,Terminologie importée avec succès
 import_vocabulary_table_success,Table de terminologie ajoutée avec succès
 scripts_cache_memory,Mémoire cache
 edit_dataset_code,Editer le code du set de données
-edit_thesaurus_code,Editer le code de la terminologie
 edit_vocabulary_code,Editer le code de la terminologie
 data_source,Source de données
 data_source_id,ID de la source de données
 show_only_aggregated_data,N'autoriser l'accès qu'aux données agrégées
 people_picker,Choisir les utilisateurs
 matching_people,Personnes correspondantes
-thesaurus_items_management_card,Concepts des terminologies
 num_rows,Lignes
 num_rows_with_mapping,Lignes avec concepts alignés
 num_rows_current_dataset,Lignes dans le set sélectionné
@@ -421,9 +389,6 @@ num_datasets,Sets
 num_patients,Patients
 concepts_rows,Lignes
 persons_rows,Patients
-thesaurus_categories_card,Gérer les catégories
-thesaurus_conversions_card,Gérer les conversions
-thesaurus_mapping_card,Gérer les alignements de concepts
 plugins_delete,Suppression de plugins
 plugins_delete_subtext,Confirmer la suppression du ou des plugin(s) ?
 mapping_delete,Suppression d'alignement de concepts
@@ -475,14 +440,12 @@ same_level_current_tab,Même niveau que l'onglet actuel
 level_under,Niveau d'en-dessous
 add_a_tab,Ajouter un onglet
 edit_a_tab,Editer un onglet
-add_a_widget,Ajouter un widget
 invalid_dataset_id_value,Valeur de dataset_id non valide
 var_type_not_valid,La variable 'type' n'est pas valide
 error_loading_csv,Erreur lors du chargement du fichier CSV
 error_transforming_tibble,Erreur dans la conversion de la variable au format tibble
 valid_col_names_are,Noms de colonnes non valides. Les noms requis sont : 
 error_saving_csv,Erreur dans l'enregistrement du fichier CSV
-error_linking_stays_with_thesaurus,Erreur dans le merge entre stays & thesaurus
 import_dataset_success_person,Variable person importée avec succès
 import_dataset_success_observation_period,Variable observation_period importée avec succès
 import_dataset_success_visit_occurrence,Variable visit_occurrence importée avec succès
@@ -536,26 +499,20 @@ data_sources_deleted,Source(s) de données supprimée(s)
 vocabulary_delete,Suppression de terminologie
 vocabulary_delete_subtext,Confirmer la suppression de la ou des terminologie(s) ?
 vocabulary_deleted,Terminologie(s) supprimée(s)
-thesaurus_reload_cache_text,Recharger le cache
-thesaurus_reload_cache_subtext,Confirmer la recharge du cache ?
 yes,Oui
 no,Non
-thesaurus_items_delete,Suppression d'items
-thesaurus_items_delete_subtext,Confirmer la suppression du ou des item(s) ?
-thesaurus_items_deleted,Item(s) supprimé(s)
 abbreviation,Abréviation
 name_abbreviation,Nom / Abréviation
 invalid_table_name,Nom de table non valide
 tables_allowed,Tables autorisées
 show_plots,Afficher les figures
-var_containing_item,Variable contenant cet item
 evaluate,Evaluer
 evaluate_and_edit,Evaluer & éditer
 edit,Modifier
 vocabulary_1,Terminologie 1
 vocabulary_2,Terminologie 2
-concept_1_is,L'item 1
-to_concept_2,l'item 2
+concept_1_is,Le concept 1
+to_concept_2,le concept 2
 concept_1_is_to_concept_2,Le concept 1 par rapport au concept 2
 equivalent_to,Est équivalent à
 included_in,Est inclus dans
@@ -574,9 +531,7 @@ whats_a_vocabulary,Qu'est-ce qu'une terminologie ?
 whats_a_concept_mapping,Qu'est ce qu'un alignement de concepts ?
 vocabularies_concepts_mapping,Alignement de concepts
 vocabulary_mapping_added,Nouvel alignement de concepts ajouté
-thesaurus_item_added,Nouvel item ajouté
 vocabulary_mapping_already_exists,Cet alignement de concepts existe déjà
-thesaurus_item_already_exists,Cet item existe déjà dans la terminologie
 checked,Vérifié
 relation,Relation
 positive_evals,Evals positives
@@ -610,7 +565,6 @@ add_tab_has_widgets,Impossible d'ajouter un onglet en-dessous de celui-ci parce 
 widget_name,Nom du widget
 error_run_plugin_ui_code,Erreur à l'éxécution du code de l'interface utilisateur du plugin
 error_run_plugin_server_code,Erreur à l'éxécution du code serveur du plugin
-show_used_items,Afficher les items utilisés
 positive_evals_short,Eval. pos.
 negative_evals_short,Eval. nég.
 all_messages,Tous les messages
@@ -626,7 +580,6 @@ object,Objet
 unread_messages,Messages non lus
 new_message,Nouveau message
 new_message_added,Nouveau message ajouté
-thesaurus_error_append_table,Erreur lors de l'ajout des nouveaux items dans la base de données
 vocabulary_error_append_table,Erreur lors de l'ajout des nouveaux concepts dans la base de données
 error_multiple_primary_keys,Certaines clefs primaires sont dupliquées. Retirer les duplicats avant d'importer la table de terminologie.
 error_multiple_identical_values,Certaines valeurs sont dupliquées. Retirer les duplicats avant d'importer la table de terminologie.
@@ -640,8 +593,7 @@ none_masc,Aucun
 none_fem,Aucune
 unroll_tree,Dérouler l'arbre
 merge_mapped_concepts,Fusionner les concepts alignés
-vocabulary_mapping_same_items,Un concept ne peut être aligné avec lui-même (hormis pour 'Correspond à')
-mapped_item,Item aligné
+vocabulary_mapping_same_concepts,Un concept ne peut être aligné avec lui-même (hormis pour 'Correspond à')
 widget_creation,Ajouter un widget
 widget_creation_save,Ajouter le widget
 widget_settings,Paramétrer un widget

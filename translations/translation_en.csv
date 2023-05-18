@@ -60,13 +60,9 @@ r_console,R console
 subset,Subset
 study,Study
 run_code,Run code
-all_items,All items
-item,Item
-items,Items
 category,Category
 categories,Categories
 conversions,Conversions
-create_items,Create items
 choose_a_damatart_left_side,Choose a dataset from the dropdown on the left side of the screen
 choose_a_study_left_side,Choose a study from the dropdown on the left side of the screen
 choose_study_and_dataset_left_side,Choose a dataset and a study from the dropdown on the left side of the screen
@@ -78,15 +74,10 @@ numeric_values,Numeric values
 rate,Rate
 amount,Amount
 display_name,Display name
-thesaurus_id,Vocabulary ID
-thesaurus_name,Vocabulary name
-item_id,Item ID
 concept_id,Concept ID
 concept_id_1,Concept 1 ID
 concept_id_2,Concept 2 ID
 mapped_concept_id,Mapped concept ID
-parent_item_id,Parent item ID
-parent_concept_id,Parent concept ID
 reset,Reset
 all_plugins,All plugins
 create_plugin,Create a plugin
@@ -126,7 +117,6 @@ scripts_management,Scripts management
 create_script,Create a script
 edit_script_code,Edit script code
 script_options,Script options
-thesaurus_items,Vocabulary items
 concept,Concept
 concepts,Concepts
 accesses_opts,Manage accesses
@@ -152,12 +142,9 @@ export_study,Export a study
 dataset_options,Dataset options
 create_data_source,Create a data source
 data_sources_management,Data sources management
-items_mapping,Items mapping
 concepts_mapping,Concepts mapping
 mapping,Mapping
-thesaurus_management,Vocabularies management
 vocabularies_management,Vocabularies management
-create_thesaurus,Create a thesaurus
 show_only_used_concepts,Show only concepts used in this dataset
 create_dataset,Create a dataset
 datasets_management,Datasets management
@@ -290,14 +277,6 @@ subsets_delete_data,Delete a subset
 subsets_creation_card,Create a subset
 subsets_datatable_card,Subsets management
 subsets_edit_code_card,Edit subset code
-thesaurus,Thesaurus
-thesaurus_see_all_data,Access to all data
-thesaurus_edit_data,Edit a thesaurus
-thesaurus_delete_data,Delete a thesaurus
-thesaurus_creation_card,Create a thesaurus
-thesaurus_datatable_card,Vocabularies management
-thesaurus_sub_datatable_card,Vocabulary items management
-thesaurus_edit_code_card,Edit vocabulary code
 plugins,Plugins
 all_plugins_card,Access to plugins catalog
 plugins_see_all_data,Access to all data
@@ -359,7 +338,6 @@ dataset_added,New dataset added
 study_added,New study added
 subset_added,New subset added
 script_added,New script added
-thesaurus_added,New vocabulary added
 vocabulary_added,New vocabulary added
 user_added,New user added
 user_access_added,New user access added
@@ -379,16 +357,9 @@ script_description,Script description
 scripts_descriptions_card,Scripts descriptions
 run_scripts_success,Scripts executed successfully
 fail_load_dataset,Failed loading dataset
-fail_load_vocabulary,Failed loading thesaurus
+fail_load_vocabulary,Failed loading vocabulary
 fail_load_vocabulary_code,Failed loading vocabulary code
 fail_load_scripts,Failed loading scripts
-invalid_thesaurus_id_value,Invalid thesaurus_id value
-invalid_vocabulary_id_value,Invalid vocabulary_id value
-invalid_thesaurus_name_value,Invalid thesaurus_name value
-invalid_thesaurus_item_name,Invalid item_name value
-invalid_thesaurus_item_id,Invalid item_id value
-invalid_thesaurus_search_method,Invalid method value
-thesaurus_id_not_found,Vocabulary ID not found
 invalid_col_names,Invalid column names
 invalid_col_types,Invalid column types
 error_get_actual_primary_keys,Error get vocabulary's primary keys
@@ -397,24 +368,20 @@ type_must_be_character,type must be character
 type_must_be_numeric,type must be numeric
 type_must_be_date,type must be date
 type_must_be_datetime,type must be datetime
-thesaurus_no_items_to_insert,There's not any new items to insert in the database
 vocabulary_no_data_to_insert,There's not any new data to insert in the database
 column,Column
 columns,Columns
 columns_concepts,Concepts columns
 columns_mapped_concepts,Mapped concept columns
-import_thesaurus_success,Vocabulary successfully imported
 import_vocabulary_table_success,Vocabulary table successfully imported
 scripts_cache_memory,Cache memory
 edit_dataset_code,Edit dataset code
-edit_thesaurus_code,Edit vocabulary code
 edit_vocabulary_code,Edit vocabulary code
 data_source,Data source
 data_source_id,Data source ID
 show_only_aggregated_data,Show only aggregated data
 people_picker,Select users
 matching_people,Matching people
-thesaurus_items_management_card,Items management
 num_rows,Rows
 num_rows_with_mapping,Rows with mapped concepts
 num_rows_current_dataset,Rows in selected dataset
@@ -422,9 +389,6 @@ num_datasets,Datasets
 num_patients,Patients
 concepts_rows,Rows
 persons_rows,Persons
-thesaurus_categories_card,Categories
-thesaurus_conversions_card,Conversions
-thesaurus_mapping_card,Mapping
 plugins_delete,Plugins removal
 plugins_delete_subtext,Do you want to delete this or these plugin(s) ?
 mapping_delete,Mapping removal
@@ -482,7 +446,6 @@ error_loading_csv,Error loading CSV file
 error_transforming_tibble,Error transforming data to tibble
 valid_col_names_are,Column names are not valid. Valid col names are :
 error_saving_csv,Error saving CSV file
-error_linking_stays_with_thesaurus,Error link stays variable with thesaurus
 import_dataset_success_person,Variable person imported with success
 import_dataset_success_observation_period,Variable observation_period imported with success
 import_dataset_success_visit_occurrence,Variable visit_occurrence imported with success
@@ -536,26 +499,20 @@ data_sources_deleted,Data source(s) successfully deleted
 vocabulary_delete,Vocabularies removal
 vocabulary_delete_subtext,Do you want to delete this or these vocabulary / vocabularies ?
 vocabulary_deleted,Vocabulary successfully deleted
-thesaurus_reload_cache_text,Reload cache
-thesaurus_reload_cache_subtext,Confirm reload of cache ?
 yes,Yes
 no,No
-thesaurus_items_delete,Vocabulary concepts removal
-thesaurus_items_delete_subtext,Do you want to delete this or these vocabulary concept(s) ?
-thesaurus_items_deleted,Vocabulary concept(s) deleted
 abbreviation,Abbreviation
 name_abbreviation,Name / abbreviation
 invalid_table_name,Invalid table name
 tables_allowed,Tables allowed
 show_plots,Show plots
-var_containing_item,Variable containing this item
 evaluate,Evaluate
 evaluate_and_edit,Evaluate & edit
 edit,Edit
 vocabulary_1,Vocabulary 1
 vocabulary_2,Vocabulary 2
-concept_1_is,Item 1
-to_concept_2,item 2
+concept_1_is,Concept 1
+to_concept_2,concept 2
 concept_1_is_to_concept_2,Concept 1 in regard to concept 2
 equivalent_to,Is equivalent to
 included_in,Is included in
@@ -574,9 +531,7 @@ whats_a_vocabulary,What's a vocabulary ?
 whats_a_concept_mapping,What's a concept mapping ?
 vocabularies_concepts_mapping,Vocabulary concepts mapping
 vocabulary_mapping_added,New mapping added
-thesaurus_item_added,New item added
 vocabulary_mapping_already_exists,This mapping already exists
-thesaurus_item_already_exists,This item already exists in the thesaurus
 checked,Checked
 relation,Relation
 positive_evals,Positive evals
@@ -610,7 +565,6 @@ add_tab_has_widgets, Can't add a tab under this tab because it contains at least
 widget_name, Widget name
 error_run_plugin_ui_code,Error running plugin's UI code
 error_run_plugin_server_code,Error running plugin's server code
-show_used_items,Show used items
 positive_evals_short,Pos. evals
 negative_evals_short,Neg. evals
 all_messages,All messages
@@ -626,12 +580,11 @@ object,Object
 unread_messages,Unread messages
 new_message,New message
 new_message_added,New message added
-thesaurus_error_append_table,Error adding new vocabulary concepts to database
 vocabulary_error_append_table,Error adding new vocabulary concepts to database
 error_multiple_primary_keys,Some primary keys are duplicated. Remove duplicates before insert vocabulary table.
 error_multiple_identical_values,Some values are duplicated. Remove duplicates before insert vocabulary table.
 invalid_category,Invalid category
-error_duplicate_mappings,Some mappings are duplicated. Remove duplicates before insert thesaurus.
+error_duplicate_mappings,Some mappings are duplicated. Remove duplicates before insert vocabulary.
 datatable_view,Datatable
 tree_view,Tree
 fail_load_list_file,Failed loading list file
@@ -641,7 +594,6 @@ none_fem,None
 unroll_tree,Unroll tree
 merge_mapped_concepts,Merge mapped concepts
 vocabulary_mapping_same_concepts,A concept cannot be merge with itself (except for 'Maps to')
-mapped_item,Mapped item
 widget_creation,Add a widget
 widget_creation_save,Add widget
 widget_settings,Widget settings

@@ -835,7 +835,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           
           # Loop over distinct cards (tabs elements), for this tab
           
-          for(widget_id in distinct_widgets){
+          # Use sapply instead of for loop, cause with for loop, widget_id doesn't change
+          sapply(distinct_widgets, function(widget_id){
             
             # if (tab_id != r[[paste0(prefix, "_first_tab_shown")]]$id) all_groups <- c(all_groups, widget_id)
             
@@ -856,8 +857,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               settings_widget_button <- actionButton(ns(paste0(prefix, "_widget_settings_", widget_id)), "", icon = icon("cog"))
               
               # Create translations file & var
-              
-              i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
               
               plugin_translations <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_translations") %>% dplyr::pull(code)
               
@@ -891,7 +890,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             # Append a toggle to our cards list
             r[[paste0(prefix, "_cards")]] <- c(r[[paste0(prefix, "_cards")]], paste0(prefix, "_widget_", widget_id))
             
-            toggles <- tagList(toggles,
+            toggles <<- tagList(toggles,
               shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_widget_", widget_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
               div(class = "toggle_title", widget_name, style = "padding-top:10px;"))
             
@@ -936,7 +935,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                 report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
                   error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = e, i18n = i18n, ns = ns)
               })
-          }
+          })
         }
         
         # Put all div together
@@ -1126,7 +1125,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             # Variables to keep
             variables_to_keep <- c("d", "m", "o", "session_code", "session_num", "i18n")
             if (prefix == "patient_lvl") variables_to_keep <- c(variables_to_keep, "vocabulary_selected_concepts")
-
             if (exists("i18np")) variables_to_keep <- c(variables_to_keep, "i18np")
             
             for (var in variables_to_keep) new_env_vars[[var]] <- eval(parse(text = var))
@@ -1354,18 +1352,19 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       toggles <- tagList()
 
       # Loop over distinct cards (tabs elements), for this tab
-      for(widget_id in distinct_widgets){
+      # Use sapply instead of for loop, cause with for loop, widget_id doesn't change
+      sapply(distinct_widgets, function(widget_id){
 
         # Get name of widget
         widget_name <- widgets %>% dplyr::filter(widget_id == !!widget_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
 
-        toggles <- tagList(toggles,
+        toggles <<- tagList(toggles,
           shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_widget_", widget_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
           div(class = "toggle_title", widget_name, style = "padding-top:10px;"))
 
         # Add to the list of opened cards
         r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_widget_", widget_id))
-      }
+      })
 
       toggles_div <- div(
         make_card("",
@@ -1455,7 +1454,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         dplyr::rename(widget_id = id)
       distinct_widgets <- unique(widgets$widget_id)
       
-      for(widget_id in distinct_widgets){
+      # Use sapply instead of for loop, cause with for loop, widget_id doesn't change
+      sapply(distinct_widgets, function(widget_id){
         
         # If toggle is ON
         if (length(input[[paste0(paste0(prefix, "_widget_", widget_id), "_toggle")]]) > 0){
@@ -1474,7 +1474,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_widget_", widget_id))
         }
         
-      }
+      })
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..selected_tab"))
     })
@@ -1556,7 +1556,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (input$add_tab_type == "level_under"){
           widgets <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(tab_id == r[[paste0(prefix, "_selected_tab")]], !deleted) %>%
             dplyr::rename(widget_id = id)
-          if (nrow(widgets) > 0) show_message_bar(output, message = "add_tab_has_widgets", i18n = i18n)
+          if (nrow(widgets) > 0) show_message_bar(output, message = "add_tab_has_widgets", i18n = i18n, ns = ns)
           req(nrow(widgets) == 0)
         }
       }
@@ -2396,7 +2396,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       # Load translations file
       
       plugin_id <- input$widget_creation_plugin$key
-      # i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = "translations"))
+      
       plugin_translations <- r$code %>% dplyr::filter(link_id == plugin_id, category == "plugin_translations") %>% dplyr::pull(code)
       
       if (plugin_translations != ""){
@@ -2552,18 +2552,19 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       
       # Loop over distinct cards (tabs elements), for this tab
       
-      for(widget_id in distinct_widgets){
+      # Use sapply instead of for loop, cause with for loop, widget_id doesn't change
+      sapply(distinct_widgets, function(widget_id){
         
         # Get name of widget
         widget_name <- widgets %>% dplyr::filter(widget_id == !!widget_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
         
-        toggles <- tagList(toggles,
+        toggles <<- tagList(toggles,
           shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_widget_", widget_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
           div(class = "toggle_title", widget_name, style = "padding-top:10px;"))
         
         # Add to the list of opened cards
         r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_widget_", widget_id))
-      }
+      })
       
       toggles_div <- div(
         make_card("",
@@ -2667,18 +2668,19 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       r[[paste0(prefix, "_opened_cards")]] <- ""
       
       # Loop over distinct cards (tabs elements), for this tab
-      for(widget_id in distinct_widgets){
+      # Use sapply instead of for loop, cause with for loop, widget_id doesn't change
+      sapply(distinct_widgets, function(widget_id){
         
         # Get name of widget
         widget_name <- widgets %>% dplyr::filter(widget_id == !!widget_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
         
-        toggles <- tagList(toggles,
+        toggles <<- tagList(toggles,
           shiny.fluent::Toggle.shinyInput(ns(paste0(paste0(prefix, "_widget_", widget_id), "_toggle")), value = TRUE, style = "margin-top:10px;"),
           div(class = "toggle_title", widget_name, style = "padding-top:10px;"))
         
         # Add to the list of opened cards
         r[[paste0(prefix, "_opened_cards")]] <- c(r[[paste0(prefix, "_opened_cards")]], paste0(prefix, "_widget_", widget_id))
-      }
+      })
       
       # Does this tab have sub-tabs ?
       if (r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(parent_tab_id == tab_id) %>% nrow() > 0) toggles_div <- div(

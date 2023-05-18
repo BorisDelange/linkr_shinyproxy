@@ -1254,12 +1254,12 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (nrow(existing_mapping) > 0) show_message_bar(output, "vocabulary_mapping_already_exists", "severeWarning", i18n, ns = ns)
       req(nrow(existing_mapping) == 0)
       
-      vocabulary_mapping_same_items <- FALSE
+      vocabulary_mapping_same_concepts <- FALSE
       if (concept_1$concept_id == concept_2$concept_id & input$relationship_id %not_in% c("Maps to", "Mapped from")){
-        show_message_bar(output,  "vocabulary_mapping_same_items", "severeWarning", i18n, ns = ns)
-        vocabulary_mapping_same_items <- TRUE
+        show_message_bar(output,  "vocabulary_mapping_same_concepts", "severeWarning", i18n, ns = ns)
+        vocabulary_mapping_same_concepts <- TRUE
       } 
-      req(!vocabulary_mapping_same_items)
+      req(!vocabulary_mapping_same_concepts)
       
       # Add new mapping to r$vocabulary_added_mappings
       # Add also the reverse of this mapping

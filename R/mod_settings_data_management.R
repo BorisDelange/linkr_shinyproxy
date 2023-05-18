@@ -861,6 +861,12 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           else link_id <- input$code_selected_dataset_or_vocabulary
           
           if (table == "datasets"){
+            
+            # Reset datatable of results
+            render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = tibble::tibble(name = character(), rows = integer()),
+              output_name = "code_datatable", col_names = c(i18n$t("table_name"), i18n$t("rows")),
+              column_widths = c("rows" = "150px"), datatable_dom = "", page_length = 30)
+            
             if (length(input$options_selected_dataset_or_vocabulary) > 0){
               if (length(input$options_selected_dataset_or_vocabulary) > 1) options_link_id <- input$options_selected_dataset_or_vocabulary$key
               else options_link_id <- input$options_selected_dataset_or_vocabulary
