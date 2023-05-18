@@ -803,3 +803,6 @@ show_data,Afficher les données
 hide_concepts_datatables,Masquer les tableaux
 study_delete_conversation_title,Supprimer une conversation
 study_delete_conversation_subtext,Confirmer la suppression de cette conversation ?
+study_delete_message_title,Supprimer un message
+study_delete_message_subtext,Confirmer la suppression de ce message ?
+deleted_message,Message supprimé

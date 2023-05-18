@@ -24,6 +24,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
     shiny.fluent::reactOutput(ns("help_modal")),
     shiny.fluent::reactOutput(ns("study_delete_confirm")),
     shiny.fluent::reactOutput(ns("conversation_delete_confirm")),
+    shiny.fluent::reactOutput(ns("message_delete_confirm")),
     shiny.fluent::Breadcrumb(items = list(
       list(key = "dataset_main", text = i18n$t("my_studies"))
     ), maxDisplayedItems = 3),
@@ -95,7 +96,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
                         uiOutput(ns("new_message_preview")),
                         style = "float:left; width:100%;"
                       )
-                    ), br()
+                    ), br(), br()
                   )
                 ),
                 uiOutput(ns("selected_conversation"))
@@ -741,11 +742,11 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         # Remove conversations deleted by the user (still visible for other users)
 
         sql <- glue::glue_sql(paste0(
-          "SELECT m.id, c.id AS conversation_id, c.name AS conversation_name, m.message, m.filepath, m.creator_id, m.datetime, im.read ",
+          "SELECT m.id, c.id AS conversation_id, c.name AS conversation_name, m.message, m.filepath, m.creator_id, m.datetime, im.read, m.deleted ",
           "FROM messages m ",
-          "INNER JOIN conversations c ON m.conversation_id = c.id AND m.deleted IS FALSE ",
+          "INNER JOIN conversations c ON m.conversation_id = c.id ",
           "LEFT JOIN inbox_messages im ON m.id = im.message_id AND im.receiver_id = {r$user_id} AND im.deleted IS FALSE ",
-          "WHERE category = 'study_message' AND m.study_id = {m$selected_study} AND m.deleted IS FALSE ",
+          "WHERE category = 'study_message' AND m.study_id = {m$selected_study} ",
           "AND m.conversation_id NOT IN (",
           " SELECT DISTINCT(udc.conversation_id) FROM user_deleted_conversations udc WHERE udc.user_id = {r$user_id}",
           ")"), .con = r$db)
@@ -821,11 +822,11 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         req(!is.na(m$selected_study))
         
         sql <- glue::glue_sql(paste0(
-          "SELECT m.id, c.id AS conversation_id, c.name AS conversation_name, m.message, m.filepath, m.creator_id, m.datetime, im.read ",
+          "SELECT m.id, c.id AS conversation_id, c.name AS conversation_name, m.message, m.filepath, m.creator_id, m.datetime, im.read, m.deleted ",
           "FROM messages m ",
-          "INNER JOIN conversations c ON m.conversation_id = c.id AND m.deleted IS FALSE ",
+          "INNER JOIN conversations c ON m.conversation_id = c.id ",
           "LEFT JOIN inbox_messages im ON m.id = im.message_id AND im.receiver_id = {r$user_id} AND im.deleted IS FALSE ",
-          "WHERE category = 'study_message' AND m.study_id = {m$selected_study} AND m.deleted IS FALSE ",
+          "WHERE category = 'study_message' AND m.study_id = {m$selected_study} ",
           "AND m.conversation_id NOT IN (",
           " SELECT DISTINCT(udc.conversation_id) FROM user_deleted_conversations udc WHERE udc.user_id = {r$user_id}",
           ")"), .con = r$db)
@@ -833,7 +834,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         study_messages <- DBI::dbGetQuery(r$db, sql) %>%
           tibble::as_tibble() %>% dplyr::mutate_at("datetime", as.POSIXct) %>% dplyr::arrange(dplyr::desc(datetime))
         
-        if (study_messages %>% dplyr::select(id) %>% dplyr::anti_join(r$study_messages %>% dplyr::select(id), by = "id") %>% nrow() > 0 & nrow(study_messages) > 0){
+        if (study_messages %>% dplyr::select(id, deleted) %>% dplyr::anti_join(r$study_messages %>% dplyr::select(id, deleted), by = c("id", "deleted")) %>% nrow() > 0 & nrow(study_messages) > 0){
           
           r$study_messages <- study_messages
           
@@ -913,7 +914,6 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$study_delete_conversation_delete_confirmed"))
         
         link_id <- substr(input$conversation_deletion, nchar(paste0(id, "-delete_conversation_")) + 1, nchar(input$conversation_deletion)) %>% as.integer()
-        print(link_id)
         
         new_data <- tibble::tibble(
           id = get_last_row(r$db, "user_deleted_conversations") + 1, conversation_id = link_id,
@@ -935,6 +935,71 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       observeEvent(input$conversation_deletion, {
         if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$conversation_deletion"))
         r$study_delete_conversation_open_dialog <- TRUE
+      })
+      
+      # --- --- --- --- --- --
+      ## Delete a message ----
+      # --- --- --- --- --- --
+      
+      r$study_delete_message_open_dialog <- FALSE
+      
+      output$message_delete_confirm <- shiny.fluent::renderReact({
+        
+        if (debug) print(paste0(Sys.time(), " - mod_my_subsets - output$message_delete_confirm"))
+        
+        shiny.fluent::Dialog(
+          hidden = !r$study_delete_message_open_dialog,
+          onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('study_delete_message_hide_dialog', Math.random()); }")),
+          dialogContentProps = list(
+            type = 0,
+            title = i18n$t("study_delete_message_title"),
+            closeButtonAriaLabel = "Close",
+            subText = tagList(i18n$t("study_delete_message_subtext"), br(), br())
+          ),
+          modalProps = list(),
+          shiny.fluent::DialogFooter(
+            shiny.fluent::PrimaryButton.shinyInput(ns("study_delete_message_delete_confirmed"), text = i18n$t("delete")),
+            shiny.fluent::DefaultButton.shinyInput(ns("study_delete_message_delete_canceled"), text = i18n$t("dont_delete"))
+          )
+        )
+      })
+      
+      # Whether to close or not delete dialog box
+      observeEvent(input$study_delete_message_hide_dialog, {
+        if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$study_delete_message_hide_dialog"))
+        r$study_delete_message_open_dialog <- FALSE 
+      })
+      observeEvent(input$study_delete_message_delete_canceled, {
+        if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$study_delete_message_delete_canceled"))
+        r$study_delete_message_open_dialog <- FALSE
+      })
+      
+      # When the deletion is confirmed
+      
+      observeEvent(input$study_delete_message_delete_confirmed, {
+        
+        if (debug) print(paste0(Sys.time(), " - mod_my_subsets - observer input$study_delete_message_delete_confirmed"))
+        
+        link_id <- substr(input$message_deletion, nchar(paste0(id, "-delete_message_")) + 1, nchar(input$message_deletion)) %>% as.integer()
+        print(link_id)
+        
+        sql <- glue::glue_sql("UPDATE messages SET deleted = TRUE WHERE id = {link_id}", .con = r$db)
+        query <- DBI::dbSendStatement(r$db, sql)
+        DBI::dbClearResult(query)
+        
+        r$study_messages <- r$study_messages %>% dplyr::mutate(deleted = ifelse(id == link_id, TRUE, deleted))
+        r$study_messages_temp <- r$study_messages %>% dplyr::mutate(modified = FALSE)
+        
+        r$study_delete_message_open_dialog <- FALSE
+        
+        # Reload conversation
+        r$study_reload_conversation <- Sys.time()
+        r$study_reload_conversation_type <- "refresh_conversation"
+      })
+      
+      observeEvent(input$message_deletion, {
+        if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$message_deletion"))
+        r$study_delete_message_open_dialog <- TRUE
       })
       
       # --- --- --- --- --- --- --- --- --- -
@@ -986,19 +1051,27 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
           study_message <- conversation_messages[i, ]
 
-          message_div <- div(HTML(study_message$message))
+          if (study_message$deleted) message_div <- div(HTML(i18n$t("deleted_message")))
+          else message_div <- div(HTML(study_message$message))
 
-          if (study_message$filepath != ""){
+          if (study_message$filepath != "" & !study_message$deleted){
             tryCatch({
               message_div <- div(class = "markdown_messages", withMathJax(includeMarkdown(study_message$filepath)))
             }, error = function(e) "")
           }
 
           date <- study_message$datetime %>% as.Date()
+          
+          if (!study_message$deleted & study_message$creator_id == r$user_id) deletion_div <- div(
+              actionButton(ns(paste0("delete_message_", study_message$id)), "X", style = "padding:0px 5px 0px 5px;",
+              onclick = paste0("Shiny.setInputValue('", id, "-message_deletion', this.id, {priority: 'event'})")), 
+            style = "float:right; margin-top:-10px; margin-right:-10px;")
+          else deletion_div <- ""
 
           if (study_message$creator_id == r$user_id){
             study_message_ui <- div(
               div(
+                deletion_div,
                 div(
                   div(paste0(date, ", ", format(study_message$datetime, "%H:%M"))),
                   style = "font-size:12px; margin-bottom:10px; color:#878787"
@@ -1018,9 +1091,16 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
             author_span <- shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
               div(creator_name), div(paste0(date, ", ", format(study_message$datetime, "%H:%M")))
             )
+            
+            if (!study_message$deleted & study_message$creator_id == r$user_id) deletion_div <- div(
+                actionButton(ns(paste0("delete_message_", study_message$id)), "X", style = "padding:0px 5px 0px 5px;",
+                onclick = paste0("Shiny.setInputValue('", id, "-message_deletion', this.id, {priority: 'event'})")), 
+              style = "float:right; margin-top:-10px; margin-right:-10px;")
+            else deletion_div <- ""
 
             study_message_ui <-
             div(
+              deletion_div,
               div(
                 div(
                   shiny.fluent::Persona(size = 2,
@@ -1344,8 +1424,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         r$study_messages <- r$study_messages %>%
           dplyr::bind_rows(
             tibble::tribble(
-              ~id, ~conversation_id, ~conversation_name, ~message, ~filepath, ~creator_id, ~datetime, ~read,
-              new_message_id, conversation_id, conversation_name, new_text, new_file, r$user_id, Sys.time(), 0
+              ~id, ~conversation_id, ~conversation_name, ~message, ~filepath, ~creator_id, ~datetime, ~read, ~deleted,
+              new_message_id, conversation_id, conversation_name, new_text, new_file, r$user_id, Sys.time(), 0, FALSE
             )
           ) %>%
           dplyr::arrange(dplyr::desc(datetime))
