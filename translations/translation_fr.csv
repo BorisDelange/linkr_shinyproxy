@@ -642,7 +642,10 @@ unroll_tree,Dérouler l'arbre
 merge_mapped_concepts,Fusionner les concepts alignés
 vocabulary_mapping_same_items,Un concept ne peut être aligné avec lui-même (hormis pour 'Correspond à')
 mapped_item,Item aligné
+widget_creation,Ajouter un widget
+widget_creation_save,Ajouter le widget
 widget_settings,Paramétrer un widget
+widget_settings_save,Sauvegarder
 image,Image
 plugin_deleted,Plugin supprimé
 translations,Traductions

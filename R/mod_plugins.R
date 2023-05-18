@@ -20,7 +20,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
   vocabulary_concepts_div <- ""
   if (id == "plugins_patient_lvl"){
     vocabulary_concepts_div <- div(
-      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
         make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "vocabulary", allowFreeform = FALSE, multiSelect = FALSE, width = "300px"),
         make_dropdown(i18n = i18n, ns = ns, label = "columns_concepts", id = "vocabulary_concepts_table_cols", width = "300px", multiSelect = TRUE,
           options = list(
@@ -54,13 +54,13 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
           value = c(2, 3, 4, 5, 7, 8, 9, 10)
         )
       ),
-      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
         div(
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
             div(shiny.fluent::Toggle.shinyInput(ns("show_mapped_concepts"), value = TRUE), style = "margin-top:30px; margin-bottom:5px;"),
             div(i18n$t("show_mapped_concepts"), style = "font-weight:bold; margin-top:30px;; margin-bottom:5px;")
           ),
-          style = "width:300px;"
+          style = "width:330px;"
         ),
         conditionalPanel(condition = "input.show_mapped_concepts == true", ns = ns, 
           div(
@@ -68,7 +68,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
               div(shiny.fluent::Toggle.shinyInput(ns("merge_mapped_concepts"), value = TRUE), style = "margin-top:30px;; margin-bottom:5px;"),
               div(i18n$t("merge_mapped_concepts"), style = "font-weight:bold; margin-top:30px;; margin-bottom:5px;")
             ),
-            style = "width:300px;"
+            style = "width:330px;"
           )
         ),
         div(
@@ -79,11 +79,11 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
         )
       ),
       shiny.fluent::Stack(
-        horizontal = TRUE, tokens = list(childrenGap = 20),
+        horizontal = TRUE, tokens = list(childrenGap = 50),
         div(
           div(id = ns("vocabulary_selected_concepts_title"), class = "input_title", i18n$t("vocabulary_selected_concepts")),
           div(shiny.fluent::Dropdown.shinyInput(ns("vocabulary_selected_concepts"), value = NULL, options = list(), multiSelect = TRUE,
-            onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-vocabulary_selected_concepts_trigger', Math.random())"))), style = "width:620px;")
+            onChanged = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-vocabulary_selected_concepts_trigger', Math.random())"))), style = "width:650px;")
         ),
         div(shiny.fluent::DefaultButton.shinyInput(ns("reset_vocabulary_concepts"), i18n$t("reset")), style = "margin-top:38px;")
       ),

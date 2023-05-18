@@ -173,7 +173,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         creator_id = integer(), datetime = character(), deleted = logical()))
     
     db_create_table(db, "widgets_options", primary_key_col = "id", dbms = dbms, text_cols = "value",
-      tibble::tibble(id = integer(), group_id = integer(), study_id = integer(), patient_id = integer(), link_id = integer(),
+      tibble::tibble(id = integer(), widget_id = integer(), patient_id = integer(), link_id = integer(),
         category = character(), name = character(), value = character(), value_num = numeric(),
         creator_id = integer(), datetime = character(), deleted = logical()))
     

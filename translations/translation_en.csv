@@ -642,7 +642,10 @@ unroll_tree,Unroll tree
 merge_mapped_concepts,Merge mapped concepts
 vocabulary_mapping_same_concepts,A concept cannot be merge with itself (except for 'Maps to')
 mapped_item,Mapped item
+widget_creation,Add a widget
+widget_creation_save,Add widget
 widget_settings,Widget settings
+widget_settings_save,Save
 image,Image
 plugin_deleted,Plugin deleted
 translations,Translations
