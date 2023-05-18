@@ -483,20 +483,20 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Reload category dropdowns
       
-      categories_options <- 
+      categories_options <-
         tibble::tibble(key = "all", text = i18n$t("all_categories")) %>%
         dplyr::bind_rows(
-          r$plugins %>% 
+          r$plugins %>%
             dplyr::left_join(
               r$options %>% dplyr::filter(category == "plugin", name == paste0("category_", language)) %>% dplyr::select(id = link_id, category = value),
               by = "id") %>%
             dplyr::filter(tab_type_id == !!tab_type_id & category != "" & !is.na(category)) %>%
             dplyr::group_by(category) %>% dplyr::slice(1) %>% dplyr::ungroup() %>%
             dplyr::select(key = category, text = category) %>%
-            dplyr::arrange(category)
+            dplyr::arrange(key)
         )
-      
-      shiny.fluent::updateDropdown.shinyInput(session, "local_plugins_category", 
+
+      shiny.fluent::updateDropdown.shinyInput(session, "local_plugins_category",
         options = convert_tibble_to_list(categories_options, key_col = "key", text_col = "text"), value = "all")
     })
     
@@ -1750,7 +1750,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       observeEvent(input$show_mapped_concepts, {
         if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$show_mapped_concepts"))
         r$reload_plugin_vocabulary_concepts <- Sys.time()
-        if (input$show_mapped_concepts) shinyjs::show("plugin_vocabulary_mapped_concepts")
+        if (input$show_mapped_concepts & !input$hide_concepts_datatables) shinyjs::show("plugin_vocabulary_mapped_concepts")
         else shinyjs::hide("plugin_vocabulary_mapped_concepts")
       })
       
@@ -1960,10 +1960,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         else type <- "concept"
         
         # Get ID of selected concept
-        if (type == "mapped_concept") prefix <- "add_mapped_concept" else prefix <- "add_concept"
-        link_id <- as.integer(substr(input$concept_selected, nchar(paste0(id, "-", prefix, "_")) + 1, nchar(input$concept_selected)))
-        print("link_id")
-        print(link_id)
+        link_id <- as.integer(substr(input$concept_selected, nchar(paste0(id, "-add_", type, "_")) + 1, nchar(input$concept_selected)))
         
         # If this concept is not already selected, add it to the vocabulary_selected_concepts dropdown
 
@@ -1981,20 +1978,19 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
               dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.integer) %>%
               dplyr::filter(id == link_id)
             
-            print(selected_concept)
-            
             new_data <- r$plugin_vocabulary_concepts %>%
               dplyr::mutate_at("concept_id", as.integer) %>%
               dplyr::filter(concept_id == selected_concept$concept_id_1) %>%
               dplyr::transmute(concept_id, concept_name, concept_display_name, domain_id, concept_colour = input[[paste0("add_colour_", concept_id)]], 
-                mapped_to_concept_id = NA_integer_, merge_mapped_concepts = FALSE) %>%
+                mapped_to_concept_id = NA_integer_, merge_mapped_concepts = input$merge_mapped_concepts) %>%
               dplyr::bind_rows(
                 selected_concept %>%
                 dplyr::transmute(concept_id = concept_id_2, concept_name = concept_name_2, concept_display_name = concept_display_name_2, domain_id,
                   concept_colour = input[[paste0("add_colour_", link_id)]], mapped_to_concept_id = concept_id_1, merge_mapped_concepts = input$merge_mapped_concepts)
               ) %>%
               dplyr::bind_rows(
-                r$plugin_vocabulary_selected_concepts %>% dplyr::filter(mapped_to_concept_id == selected_concept$concept_id_1)
+                r$plugin_vocabulary_selected_concepts %>% dplyr::filter(mapped_to_concept_id == selected_concept$concept_id_1) %>%
+                  dplyr::mutate(merge_mapped_concepts = input$merge_mapped_concepts)
               )
             
             # Add also original concept, which concepts are mapped from

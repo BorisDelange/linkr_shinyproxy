@@ -95,18 +95,18 @@ mod_data_ui <- function(id = character(), i18n = character()){
           ),
           make_dropdown(i18n = i18n, ns = ns, label = "columns_mapped_concepts", id = "widget_creation_vocabulary_mapped_concepts_table_cols", width = "300px", multiSelect = TRUE,
             options = list(
-              list(key = 0, text = i18n$t("concept_id")),
-              list(key = 1, text = i18n$t("relationship_id")),
-              list(key = 2, text = i18n$t("mapped_concept_id")),
-              list(key = 3, text = i18n$t("concept_name_2")),
-              list(key = 4, text = i18n$t("concept_display_name_2")),
-              list(key = 5, text = i18n$t("domain_id")),
-              list(key = 6, text = i18n$t("num_patients")),
-              list(key = 7, text = i18n$t("num_rows")),
-              list(key = 8, text = i18n$t("colour")),
-              list(key = 9, text = i18n$t("action"))
+              list(key = 1, text = i18n$t("concept_id")),
+              list(key = 2, text = i18n$t("relationship_id")),
+              list(key = 3, text = i18n$t("mapped_concept_id")),
+              list(key = 4, text = i18n$t("concept_name_2")),
+              list(key = 5, text = i18n$t("concept_display_name_2")),
+              list(key = 6, text = i18n$t("domain_id")),
+              list(key = 7, text = i18n$t("num_patients")),
+              list(key = 8, text = i18n$t("num_rows")),
+              list(key = 9, text = i18n$t("colour")),
+              list(key = 10, text = i18n$t("action"))
             ),
-            value = c(1, 2, 3, 4, 6, 7, 8, 9)
+            value = c(2, 3, 4, 5, 7, 8, 9, 10)
           )
         ),
         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
@@ -514,10 +514,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       # Reload create widget fields
       
       ## Reload thesaurus datatable & selected_concepts
-      if (length(r$widget_creation_vocabulary_concepts) > 0){
-        r$widget_creation_vocabulary_concepts <- r$widget_creation_vocabulary_concepts %>% dplyr::slice(0)
-        r$widget_creation_vocabulary_concepts_temp <- r$widget_creation_vocabulary_concepts %>% dplyr::mutate(modified = FALSE)
-      }
+      if (length(r$widget_creation_vocabulary_concepts) > 0) r$widget_creation_vocabulary_concepts <- r$widget_creation_vocabulary_concepts %>% dplyr::slice(0)
+      
       if (length(r$widget_creation_vocabulary_selected_concepts) > 0) r$widget_creation_vocabulary_selected_concepts <-
         r$widget_creation_vocabulary_selected_concepts %>% dplyr::slice(0)
       shiny.fluent::updateDropdown.shinyInput(session, "widget_creation_vocabulary_selected_concepts", options = list(), value = NULL)
@@ -2003,7 +2001,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_creation_show_mapped_concepts"))
           r$reload_widget_vocabulary_concepts <- Sys.time()
           r$reload_widget_vocabulary_concepts_type <- "widget_creation"
-          if (input$widget_creation_show_mapped_concepts) shinyjs::show("widget_creation_vocabulary_mapped_concepts")
+          if (input$widget_creation_show_mapped_concepts & !input$widget_creation_hide_concepts_datatables) shinyjs::show("widget_creation_vocabulary_mapped_concepts")
           else shinyjs::hide("widget_creation_vocabulary_mapped_concepts")
         })
         
@@ -2058,9 +2056,13 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             dplyr::mutate_at("colours_input", stringr::str_replace_all, "%input_prefix%", paste0(type, "_add_colour")) %>%
             dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix%", paste0(type, "_add_concept")) %>%
             dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix_2%", paste0(type, "_")) %>%
-            dplyr::mutate_at("concept_id", as.character)
+            dplyr::mutate_at("concept_id", as.character) %>%
+            dplyr::mutate(
+              colours_input = stringr::str_replace_all(colours_input, "%concept_id_1%", concept_id),
+              add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", concept_id)
+            )
 
-          r[[paste0(type, "_widget_vocabulary_concepts")]] <- widget_vocabulary_concepts
+          r[[paste0(type, "_vocabulary_concepts")]] <- widget_vocabulary_concepts
 
           if (length(r[[paste0("widget_", type, "_vocabulary_concepts_proxy")]]) == 0){
             editable_cols <- c("concept_display_name")
@@ -2113,437 +2115,296 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         # Hide datatables
         
-        # observeEvent(input$hide_concepts_datatables, {
-        #   if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$hide_concepts_datatables"))
+        observeEvent(input$widget_creation_hide_concepts_datatables, {
+          if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$widget_creation_hide_concepts_datatables"))
+
+          req(input$widget_creation_vocabulary)
+
+          sapply(c("widget_creation_vocabulary_concepts", "widget_creation_vocabulary_mapped_concepts"), function(datatable) if (input$widget_creation_hide_concepts_datatables)
+            shinyjs::hide(datatable) else shinyjs::show(datatable))
+          if (input$widget_creation_hide_concepts_datatables) shinyjs::show("widget_creation_blank_space") else shinyjs::hide("widget_creation_blank_space")
+        })
+        
+        # observeEvent(input$widget_settings_hide_concepts_datatables, {
+        #   if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$widget_settings_hide_concepts_datatables"))
         #   
-        #   req(input$vocabulary)
+        #   req(input$widget_settings_vocabulary)
         #   
-        #   sapply(c("widget_vocabulary_concepts", "plugin_vocabulary_mapped_concepts"), function(datatable) if (input$hide_concepts_datatables) 
+        #   sapply(c("widget_settings_vocabulary_concepts", "widget_settings_vocabulary_mapped_concepts"), function(datatable) if (input$widget_settings_hide_concepts_datatables)
         #     shinyjs::hide(datatable) else shinyjs::show(datatable))
-        #   if (input$hide_concepts_datatables) shinyjs::show("blank_space") else shinyjs::hide("blank_space")
+        #   if (input$widget_settings_hide_concepts_datatables) shinyjs::show("widget_settings_blank_space") else shinyjs::hide("widget_settings_blank_space")
         # })
         
         # Updates in datatable
         
-        # observeEvent(input$widget_vocabulary_concepts_cell_edit, {
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_vocabulary_concepts_cell_edit"))
-        #   
-        #   edit_info <- input$widget_vocabulary_concepts_cell_edit
-        #   r$widget_vocabulary_concepts <- DT::editData(r$widget_vocabulary_concepts, edit_info, rownames = FALSE)
-        # })
+        observeEvent(input$widget_creation_vocabulary_concepts_cell_edit, {
+
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_creation_vocabulary_concepts_cell_edit"))
+
+          edit_info <- input$widget_creation_vocabulary_concepts_cell_edit
+          r$widget_creation_vocabulary_concepts <- DT::editData(r$widget_creation_vocabulary_concepts, edit_info, rownames = FALSE)
+        })
         
-        # observeEvent(input$plugin_vocabulary_mapped_concepts_cell_edit, {
+        observeEvent(input$widget_creation_vocabulary_mapped_concepts_cell_edit, {
+
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_creation_vocabulary_mapped_concepts_cell_edit"))
+
+          edit_info <- input$widget_creation_vocabulary_mapped_concepts_cell_edit
+          r$widget_creation_vocabulary_mapped_concepts <- DT::editData(r$widget_creation_vocabulary_mapped_concepts, edit_info, rownames = FALSE)
+        })
+        
+        # observeEvent(input$widget_settings_vocabulary_concepts_cell_edit, {
         #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_data - observer input$plugin_vocabulary_mapped_concepts_cell_edit"))
+        #   if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_settings_vocabulary_concepts_cell_edit"))
         #   
-        #   edit_info <- input$plugin_vocabulary_mapped_concepts_cell_edit
-        #   r$plugin_vocabulary_mapped_concepts <- DT::editData(r$plugin_vocabulary_mapped_concepts, edit_info, rownames = FALSE)
+        #   edit_info <- input$widget_settings_vocabulary_concepts_cell_edit
+        #   r$widget_settings_vocabulary_concepts <- DT::editData(r$widget_settings_vocabulary_concepts, edit_info, rownames = FALSE)
+        # })
+        # 
+        # observeEvent(input$widget_settings_vocabulary_mapped_concepts_cell_edit, {
+        #   
+        #   if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_settings_vocabulary_mapped_concepts_cell_edit"))
+        #   
+        #   edit_info <- input$widget_settings_vocabulary_mapped_concepts_cell_edit
+        #   r$widget_settings_vocabulary_mapped_concepts <- DT::editData(r$widget_settings_vocabulary_mapped_concepts, edit_info, rownames = FALSE)
         # })
         
         # Show mapped concepts
         
-        # observeEvent(input$widget_vocabulary_concepts_rows_selected, {
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$widget_vocabulary_concepts_rows_selected"))
-        #   
-        #   req(input$show_mapped_concepts)
-        #   
-        #   selected_concept <- r$widget_vocabulary_concepts[input$widget_vocabulary_concepts_rows_selected, ]
-        #   
-        #   r$plugin_vocabulary_mapped_concepts <- r$dataset_all_concepts %>%
-        #     dplyr::filter(concept_id_1 == selected_concept$concept_id, !is.na(relationship_id)) %>%
-        #     dplyr::transmute(concept_id_1, relationship_id, concept_id_2, concept_name_2,
-        #       count_persons_rows, count_concepts_rows) %>%
-        #     dplyr::left_join(
-        #       r$dataset_all_concepts %>%
-        #         dplyr::select(concept_id_2 = concept_id_1, concept_display_name_2 = concept_display_name_1, domain_id, colours_input, add_concept_input),
-        #       by = "concept_id_2"
-        #     ) %>% 
-        #     dplyr::relocate(concept_display_name_2, .after = "concept_name_2") %>%
-        #     dplyr::relocate(domain_id, .after = "concept_display_name_2") %>%
-        #     dplyr::group_by_all() %>% dplyr::slice(1) %>% dplyr::ungroup() %>%
-        #     dplyr::mutate_at(c("colours_input", "add_concept_input"), stringr::str_replace_all, "%ns%", id) %>%
-        #     dplyr::mutate_at("colours_input", stringr::str_replace_all, "%input_prefix%", "add_colour") %>%
-        #     dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix%", "add_mapped_concept") %>%
-        #     dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix_2%", "") %>%
-        #     dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.character)
-        #   
-        #   if (length(r$plugin_vocabulary_mapped_concepts_proxy) == 0){
-        #     editable_cols <- c("concept_display_name_2")
-        #     searchable_cols <- c("relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_2")
-        #     column_widths <- c("concept_id_1" = "120px", "concept_id_2" = "120px", "count_persons_rows" = "80px", "count_concepts_rows" = "80px", 
-        #       "add_concept_input" = "80px", "colours_input" = "200px")
-        #     sortable_cols <- c("relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_2", "count_persons_rows", "count_concepts_rows")
-        #     centered_cols <- c("concept_id_1", "concept_id_2", "count_persons_rows", "count_concepts_rows", "colours_input", "add_concept_input")
-        #     col_names <- get_col_names(table_name = "plugins_vocabulary_mapped_concepts_with_counts", i18n = i18n)
-        #     hidden_cols <- c("concept_id_1", "domain_id")
-        #     column_widths <- c("concept_id" = "100px", "count_persons_rows" = "80px", "count_concepts_rows" = "80px", 
-        #       "add_concept_input" = "80px", "colours_input" = "200px")
-        #     
-        #     # Render datatable
-        #     render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$plugin_vocabulary_mapped_concepts,
-        #       output_name = "plugin_vocabulary_mapped_concepts", col_names =  col_names,
-        #       editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        #       searchable_cols = searchable_cols, filter = TRUE, hidden_col = hidden_cols)
-        #     
-        #     # Create a proxy for datatatable
-        #     r$plugin_vocabulary_mapped_concepts_proxy <- DT::dataTableProxy("plugin_vocabulary_mapped_concepts", deferUntilFlush = FALSE)
-        #   }
-        #   else DT::replaceData(r$plugin_vocabulary_mapped_concepts_proxy, r$plugin_vocabulary_mapped_concepts, resetPaging = FALSE, rownames = FALSE)
-        # })
+        observeEvent(input$widget_creation_vocabulary_concepts_rows_selected, {
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_creation_vocabulary_concepts_rows_selected"))
+          r$reload_widget_vocabulary_mapped_concepts <- Sys.time()
+          r$reload_widget_vocabulary_mapped_concepts_type <- "widget_creation"
+        })
         
+        observeEvent(input$widget_settings_vocabulary_concepts_rows_selected, {
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_settings_vocabulary_concepts_rows_selected"))
+          r$reload_widget_vocabulary_mapped_concepts <- Sys.time()
+          r$reload_widget_vocabulary_mapped_concepts_type <- "widget_settings"
+        })
         
-        # Load vocabularies attached to this dataset
-        # observeEvent(r$selected_dataset, {
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$selected_dataset"))
-        #   if (perf_monitoring) monitor_perf(r = r, action = "start")
-        # 
-        #   req(!is.na(r$selected_dataset))
-        #   
-        #   # Reset study menu
-        #   sapply(c("initial_breadcrumb", "choose_a_study_card"), shinyjs::show)
-        #   sapply(c("study_menu", paste0(prefix, "_add_widget"), paste0(prefix, "_widget_settings")), shinyjs::hide)
-        # 
-        #   # r[[paste0(prefix, "_reload_vocabulary_dropdown")]] <- Sys.time()
-        #   
-        #   # Reset datatable
-        #   # if (length(r$widget_creation_vocabulary_concepts) > 0){
-        #   #   r$widget_creation_vocabulary_concepts <- r$widget_creation_vocabulary_concepts %>% dplyr::slice(0)
-        #   #   r$widget_creation_vocabulary_concepts_temp <- r$widget_creation_vocabulary_concepts_temp %>% dplyr::slice(0)
-        #   # }
-        #   
-        #   # Reset selected_concepts combobox
-        #   # shiny.fluent::updateDropdown.shinyInput(session, "widget_creation_vocabulary_selected_concepts", options = list(), value = NULL)
-        #   # if (length(r$widget_creation_vocabulary_selected_concepts) > 0){
-        #   #   r$widget_creation_vocabulary_selected_concepts <- r$widget_creation_vocabulary_selected_concepts %>% dplyr::slice(0)
-        #   # }
-        #   
-        #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$selected_dataset"))
-        # })
+        observeEvent(r$reload_widget_vocabulary_mapped_concepts, {
+
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer r$reload_widget_vocabulary_mapped_concepts"))
+
+          type <- r$reload_widget_vocabulary_mapped_concepts_type
+          
+          req(input[[paste0(type, "_show_mapped_concepts")]])
+
+          selected_concept <- r[[paste0(type, "_vocabulary_concepts")]][input[[paste0(type, "_vocabulary_concepts_rows_selected")]], ]
+          
+          r[[paste0(type, "_vocabulary_mapped_concepts")]] <- r$dataset_all_concepts %>%
+            dplyr::filter(concept_id_1 == selected_concept$concept_id, !is.na(relationship_id)) %>%
+            dplyr::transmute(concept_id_1, relationship_id, concept_id_2, concept_name_2,
+              count_persons_rows, count_concepts_rows) %>%
+            dplyr::left_join(
+              r$dataset_all_concepts %>%
+                dplyr::select(concept_id_2 = concept_id_1, concept_display_name_2 = concept_display_name_1, domain_id, colours_input, add_concept_input),
+              by = "concept_id_2"
+            ) %>%
+            dplyr::relocate(concept_display_name_2, .after = "concept_name_2") %>%
+            dplyr::relocate(domain_id, .after = "concept_display_name_2") %>%
+            dplyr::mutate(id = NA_integer_, .before = "concept_id_1")
+
+          if (nrow(r[[paste0(type, "_vocabulary_mapped_concepts")]]) > 0) r[[paste0(type, "_vocabulary_mapped_concepts")]] <-
+            r[[paste0(type, "_vocabulary_mapped_concepts")]] %>%
+            dplyr::group_by_all() %>% dplyr::slice(1) %>% dplyr::ungroup() %>%
+            dplyr::mutate_at(c("colours_input", "add_concept_input"), stringr::str_replace_all, "%ns%", id) %>%
+            dplyr::mutate_at("colours_input", stringr::str_replace_all, "%input_prefix%", paste0(type, "_add_colour")) %>%
+            dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix%", paste0(type, "_add_mapped_concept")) %>%
+            dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix_2%", paste0(type, "_")) %>%
+            dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.character) %>%
+            # Add a unique id (rows are not unique with only concept_id_2, cause there can be multiple concept_relationship)
+            dplyr::mutate(id = 1:dplyr::n()) %>%
+            dplyr::mutate(
+              colours_input = stringr::str_replace_all(colours_input, "%concept_id_1%", as.character(id)),
+              add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", as.character(id))
+            )
+
+          if (length(r[[paste0(type, "_vocabulary_mapped_concepts_proxy")]]) == 0){
+            editable_cols <- c("concept_display_name_2")
+            searchable_cols <- c("relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_2")
+            column_widths <- c("concept_id_1" = "120px", "concept_id_2" = "120px", "count_persons_rows" = "80px", "count_concepts_rows" = "80px",
+              "add_concept_input" = "80px", "colours_input" = "200px")
+            sortable_cols <- c("relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_2", "count_persons_rows", "count_concepts_rows")
+            centered_cols <- c("concept_id_1", "concept_id_2", "count_persons_rows", "count_concepts_rows", "colours_input", "add_concept_input")
+            col_names <- get_col_names(table_name = "plugins_vocabulary_mapped_concepts_with_counts", i18n = i18n)
+            hidden_cols <- c("id", "concept_id_1", "domain_id")
+            column_widths <- c("concept_id" = "100px", "count_persons_rows" = "80px", "count_concepts_rows" = "80px",
+              "add_concept_input" = "80px", "colours_input" = "200px")
+
+            # Render datatable
+            
+            render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0(type, "_vocabulary_mapped_concepts")]],
+              output_name = paste0(type, "_vocabulary_mapped_concepts"), col_names =  col_names,
+              editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+              searchable_cols = searchable_cols, filter = TRUE, hidden_col = hidden_cols)
+
+            # Create a proxy for datatatable
+            r[[paste0(type, "_vocabulary_mapped_concepts_proxy")]] <- DT::dataTableProxy(paste0(type, "_vocabulary_mapped_concepts"), deferUntilFlush = FALSE)
+          }
+          else DT::replaceData(r[[paste0(type, "_vocabulary_mapped_concepts_proxy")]], r[[paste0(type, "_vocabulary_mapped_concepts")]], resetPaging = FALSE, rownames = FALSE)
+        })
         
-        
-
-        # Load vocabulary concepts
-        
-        # observeEvent(input$widget_creation_vocabulary, {
-        #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_creation_vocabulary"))
-        #   r[[paste0(prefix, "_load_thesaurus_trigger")]] <- Sys.time()
-        #   # r[[paste0(prefix, "_load_thesaurus_type")]] <- "widget_creation"
-        # })
-        
-        # observeEvent(r[[paste0(prefix, "_load_thesaurus_trigger")]], {
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..load_thesaurus_trigger"))
-        #   if (perf_monitoring) monitor_perf(r = r, action = "start")
-        #   
-        #   r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_vocabulary_concepts")
-        #   thesaurus_id <- input[[paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus")]]$key
-        #   
-        #   r[[r_var]] <- create_datatable_cache(output = output, r = r, i18n = i18n, tab_id = id, thesaurus_id = thesaurus_id, category = paste0("plus_", r[[paste0(prefix, "_widget_card_selected_type")]]))
-        #   colour_col <- create_datatable_cache(output = output, r = r, i18n = i18n, tab_id = id, thesaurus_id = thesaurus_id, category = paste0("colours_", r[[paste0(prefix, "_widget_card_selected_type")]]))
-        # 
-        #   if (nrow(colour_col) > 0) r[[r_var]] <- r[[r_var]] %>%
-        #     dplyr::left_join(colour_col %>% dplyr::select(id, colour), by = "id") %>% dplyr::relocate(colour, .before = "datetime")
-        # 
-        #   count_items_rows <- tibble::tibble()
-        #   count_patients_rows <- tibble::tibble()
-        # 
-        #   # Add count_items_rows in the cache & get it if already in the cache
-        #   tryCatch(count_items_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
-        #     dataset_id = r$selected_dataset, category = "count_items_rows"),
-        #       error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
-        #         error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
-        #           " - fail_load_dataset - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
-        # 
-        #   # Add count_items_rows in the cache & get it if already in the cache
-        #   tryCatch(count_patients_rows <- create_datatable_cache(output = output, r = r, i18n = i18n, thesaurus_id = thesaurus_id,
-        #     dataset_id = as.integer(r$selected_dataset), category = "count_patients_rows"),
-        #       error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_thesaurus",
-        #         error_name = paste0("patient_and_aggregated_data - create_datatable_cache - count_patients_rows - fail_load_thesaurus - id = ", thesaurus_id ,
-        #           " - fail_load_dataset - id = ", r$selected_dataset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
-        # 
-        #   if (nrow(count_items_rows) == 0 | nrow(count_patients_rows) == 0){
-        #     show_message_bar(output, "fail_load_thesaurus", "severeWarning", i18n = i18n, ns = ns)
-        #     r[[r_var]] <- r[[r_var]] %>% dplyr::slice(0)
-        #     r[[paste0(r_var, "_temp")]] <- r[[r_var]] %>% dplyr::mutate(modified = FALSE)
-        #   }
-        #   
-        #   if(nrow(count_items_rows) != 0 & nrow(count_patients_rows) != 0){
-        # 
-        #     # Transform count_rows cols to integer, to be sortable
-        #     r[[r_var]] <- r[[r_var]] %>%
-        #       dplyr::mutate(display_name = ifelse((display_name != "" & !is.na(display_name)), display_name, name)) %>%
-        #       dplyr::left_join(count_items_rows, by = "item_id") %>%
-        #       dplyr::left_join(count_patients_rows, by = "item_id") %>%
-        #       dplyr::mutate_at(c("count_items_rows", "count_patients_rows"), as.integer) %>%
-        #       dplyr::relocate(count_patients_rows, .before = "action") %>% dplyr::relocate(count_items_rows, .before = "action") %>%
-        #       dplyr::arrange(dplyr::desc(count_items_rows))
-        # 
-        #     # Filter on count_items_rows > 0
-        #     r[[r_var]] <- r[[r_var]] %>% dplyr::filter(count_items_rows > 0)
-        # 
-        #     r[[paste0(r_var, "_temp")]] <- r[[r_var]] %>%
-        #       dplyr::mutate(modified = FALSE) %>%
-        #       dplyr::mutate_at("item_id", as.character)
-        #   }
-        # 
-        #   editable_cols <- c("display_name", "unit")
-        #   searchable_cols <- c("item_id", "name", "display_name", "unit")
-        #   factorize_cols <- c("unit")
-        #   column_widths <- c("id" = "80px", "action" = "80px", "display_name" = "300px", "unit" = "100px")
-        #   sortable_cols <- c("id", "item_id", "name", "display_name", "count_patients_rows", "count_items_rows")
-        #   centered_cols <- c("id", "item_id", "unit", "datetime", "count_patients_rows", "count_items_rows", "action")
-        #   col_names <- get_col_names(table_name = "tabs_vocabulary_concepts_with_counts", i18n = i18n)
-        #   hidden_cols <- c("id", "name", "thesaurus_id", "item_id", "datetime", "deleted", "modified")
-        # 
-        #   # Render datatable
-        #   render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r[[paste0(r_var, "_temp")]],
-        #     output_name = r_var, col_names =  col_names,
-        #     editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-        #     searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
-        # 
-        #   # Create a proxy for datatatable
-        #   r[[paste0(r_var, "_proxy")]] <- DT::dataTableProxy(r_var, deferUntilFlush = FALSE)
-        # 
-        #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..load_thesaurus_trigger"))
-        # })
-
-        # Reload datatable
-        # observeEvent(r$widget_creation_vocabulary_concepts_temp, {
-        #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$widget_creation_vocabulary_concepts_temp"))
-        #   r[[paste0(prefix, "_reload_datatable_trigger")]] <- Sys.time()
-        # })
-
-        # observeEvent(r[[paste0(prefix, "_reload_datatable_trigger")]], {
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..reload_datatable_trigger"))
-        # 
-        #   r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_vocabulary_concepts")
-        # 
-        #   # Reload data of datatable
-        #   DT::replaceData(r[[paste0(r_var, "_proxy")]], r[[paste0(r_var, "_temp")]], resetPaging = FALSE, rownames = FALSE)
-        # })
-
-        # Updates in datatable
-
-        # observeEvent(input$widget_creation_vocabulary_concepts_cell_edit, {
-        #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_creation_vocabulary_concepts_cell_edit"))
-        #   r[[paste0(prefix, "_edit_datatable_trigger")]] <- Sys.time()
-        # })
-
-        # observeEvent(r[[paste0(prefix, "_edit_datatable_trigger")]], {
-        #   
-        #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..edit_datatable_trigger"))
-        # 
-        #   r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_vocabulary_concepts")
-        #   input_edit_info <- paste0(r_var, "_cell_edit")
-        # 
-        #   edit_info <- input[[input_edit_info]]
-        # 
-        #   r[[paste0(r_var, "_temp")]] <- DT::editData(r[[paste0(r_var, "_temp")]], edit_info, rownames = FALSE)
-        #   r[[paste0(r_var, "_temp")]][[edit_info$row, "modified"]] <- TRUE
-        # })
-
         # --- --- --- --- --- --- -
         ## Vocabulary concepts ----
         # --- --- --- --- --- --- -
 
-          # --- --- --- --- --- --- ---
-          ### Thesaurus Item added ----
-          # --- --- --- --- --- --- ---
+        # When add button is clicked
+        
+        observeEvent(input$widget_creation_concept_selected, {
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_creation_concept_selected"))
+          r$widget_concept_selected <- Sys.time()
+          r$widget_concept_selected_type <- "widget_creation"
+        })
+        
+        observeEvent(input$widget_settings_concept_selected, {
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_settings_concept_selected"))
+          r$widget_concept_selected <- Sys.time()
+          r$widget_concept_selected_type <- "widget_settings"
+        })
+        
+        observeEvent(r$widget_concept_selected, {
           
-          # observeEvent(input$widget_creation_item_selected, {
-          #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_creation_item_selected"))
-          #   r[[paste0(prefix, "_item_selected_trigger")]] <- Sys.time()
-          # })
+          if (perf_monitoring) monitor_perf(r = r, action = "start")
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer r$widget_concept_selected"))
           
-          # observeEvent(r[[paste0(prefix, "_item_selected_trigger")]], {
-          #   
-          #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..item_selected_trigger"))
-          #   if (perf_monitoring) monitor_perf(r = r, action = "start")
-          #   
-          #   r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_vocabulary_selected_concepts")
-          #   thesaurus_id <- input[[paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus")]]$key
-          #   thesaurus_mapping_input <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_thesaurus_mapping")
-          #   merge_mapped_items_input <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_merge_mapped_items")
-          #   vocabulary_selected_concepts_input <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_vocabulary_selected_concepts")
-          #   input_item_selected <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_item_selected")
-          #   input_colour <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_colour")
-          #   
-          #   # Initiate r variable if doesn't exist
-          #   if (length(r[[r_var]]) == 0){
-          #     r[[r_var]] <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
-          #       thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
-          #       thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = logical())
-          #   }
-          # 
-          #   # Get ID of selected thesaurus item
-          #   link_id <- as.integer(substr(input[[input_item_selected]], nchar("select_") + 1, nchar(input[[input_item_selected]])))
-          # 
-          #   # If this thesaurus item is not already selected, add it to the "thesaurus selected items" dropdown
-          # 
-          #   # value <- integer(1)
-          #   # if (nrow(r$widget_vocabulary_selected_concepts) > 0) value <- r$widget_vocabulary_selected_concepts %>%
-          #   #   dplyr::filter(thesaurus_id == input$thesaurus$key) %>% dplyr::pull(id)
-          # 
-          #   # if (link_id %not_in% value){
-          # 
-          #   # Get thesaurus name
-          #   thesaurus_name <- r$thesaurus %>% dplyr::filter(id == thesaurus_id) %>% dplyr::pull(name)
-          # 
-          #   # Get item informations from datatable
-          #   # NB : the thesaurus_item_id saved in the database is the thesaurus ITEM_ID, no its ID in the database (in case thesaurus is deleted or re-uploaded)
-          # 
-          #   item <- r[[paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_vocabulary_concepts_temp")]] %>% dplyr::filter(id == link_id) %>% dplyr::mutate(input_text = paste0(thesaurus_name, " - ", display_name))
-          # 
-          #   # display_name <- ifelse((item$display_name == "" | is.na(item$display_name)), item$name, item$display_name)
-          # 
-          #   # Get mapped items
-          #   thesaurus_mapped_items <- tibble::tibble()
-          #   if (length(input[[thesaurus_mapping_input]]) > 0){
-          #     # if (input$thesaurus_mapping %in% c(1, 2, 3)){
-          # 
-          #     # Select only validated mappings (with at least one positive eval and more positive than negative evals)
-          #     # Select mapping in the two ways (added item may be item_1, or item_2)
-          #     sql <- glue::glue_sql(paste0(
-          #       "SELECT m.thesaurus_id_2 AS thesaurus_id, m.item_id_2 AS thesaurus_item_id, e.evaluation_id, ",
-          #       "i.id, i.name AS thesaurus_item_name, i.display_name AS thesaurus_item_display_name, i.unit AS thesaurus_item_unit, ",
-          #       "u.name AS user_thesaurus_item_name, u.display_name AS user_thesaurus_item_display_name, u.unit AS user_thesaurus_item_unit ",
-          #       "FROM vocabulary_concepts_mapping m ",
-          #       "INNER JOIN vocabulary_concepts_mapping_evals e ON m.id = e.mapping_id AND e.deleted IS FALSE ",
-          #       "INNER JOIN vocabulary_concepts i ON m.thesaurus_id_2 = i.thesaurus_id AND m.item_id_2 = i.item_id AND i.deleted IS FALSE ",
-          #       "LEFT JOIN vocabulary_concepts_users u ON m.thesaurus_id_2 = u.thesaurus_id AND m.item_id_2 = u.item_id AND u.deleted IS FALSE ",
-          #       "WHERE m.thesaurus_id_1 = {as.integer(thesaurus_id)} AND m.item_id_1 = {as.integer(item$item_id)} AND m.relation_id IN ({input[[thesaurus_mapping_input]]*}) ",
-          #       "AND m.category = 'user_added_mapping' AND m.deleted IS FALSE ",
-          #       "UNION ",
-          #       "SELECT m.thesaurus_id_1 AS thesaurus_id, m.item_id_1 AS thesaurus_item_id, e.evaluation_id, ",
-          #       "i.id, i.name AS thesaurus_item_name, i.display_name AS thesaurus_item_display_name, i.unit AS thesaurus_item_unit, ",
-          #       "u.name AS user_thesaurus_item_name, u.display_name AS user_thesaurus_item_display_name, u.unit AS user_thesaurus_item_unit ",
-          #       "FROM vocabulary_concepts_mapping m ",
-          #       "INNER JOIN vocabulary_concepts_mapping_evals e ON m.id = e.mapping_id AND e.deleted IS FALSE ",
-          #       "INNER JOIN vocabulary_concepts i ON m.thesaurus_id_1 = i.thesaurus_id AND m.item_id_1 = i.item_id AND i.deleted IS FALSE ",
-          #       "LEFT JOIN vocabulary_concepts_users u ON m.thesaurus_id_1 = u.thesaurus_id AND m.item_id_1 = u.item_id AND u.deleted IS FALSE ",
-          #       "WHERE m.thesaurus_id_2 = {as.integer(thesaurus_id)} AND m.item_id_2 = {as.integer(item$item_id)} AND m.relation_id IN ({input[[thesaurus_mapping_input]]*}) ",
-          #       "AND m.category = 'user_added_mapping' AND m.deleted IS FALSE"
-          #       ), .con = r$db)
-          # 
-          #     thesaurus_mapped_items <- DBI::dbGetQuery(r$db, sql) %>%
-          #       dplyr::group_by(id, thesaurus_id, thesaurus_item_id,
-          #         thesaurus_item_display_name, user_thesaurus_item_display_name, thesaurus_item_name, user_thesaurus_item_name,
-          #         thesaurus_item_unit, user_thesaurus_item_unit) %>%
-          #       dplyr::summarize(
-          #         positive_evals = sum(evaluation_id == 1, na.rm = TRUE),
-          #         negative_evals = sum(evaluation_id == 2, na.rm = TRUE)
-          #       ) %>%
-          #       dplyr::ungroup() %>%
-          #       dplyr::mutate(
-          #         positive_evals = ifelse(positive_evals > 0, positive_evals, 0),
-          #         negative_evals = ifelse(negative_evals > 0, negative_evals, 0)
-          #       ) %>%
-          #       dplyr::filter(positive_evals > negative_evals) %>%
-          #       dplyr::left_join(r$thesaurus %>% dplyr::select(thesaurus_id = id, thesaurus_name = name), by = "thesaurus_id") %>%
-          #       dplyr::mutate(
-          #         thesaurus_item_name = ifelse((user_thesaurus_item_name != "" & !is.na(user_thesaurus_item_name)), user_thesaurus_item_name, thesaurus_item_name),
-          #         thesaurus_item_display_name = ifelse((user_thesaurus_item_display_name != "" & !is.na(user_thesaurus_item_display_name)), user_thesaurus_item_display_name, thesaurus_item_display_name),
-          #         thesaurus_item_unit = ifelse((user_thesaurus_item_unit != "" & !is.na(user_thesaurus_item_unit)), user_thesaurus_item_unit, thesaurus_item_unit),
-          #       ) %>%
-          #       dplyr::mutate(
-          #         thesaurus_item_display_name = ifelse((thesaurus_item_display_name != "" & !is.na(thesaurus_item_display_name)), thesaurus_item_display_name, thesaurus_item_name)
-          #       ) %>%
-          #       dplyr::transmute(
-          #         id, thesaurus_id, thesaurus_name, thesaurus_item_id, thesaurus_item_display_name,
-          #         thesaurus_item_unit, thesaurus_item_colour = as.character(input[[paste0(input_colour, "_", link_id)]]),
-          #         input_text = paste0("--- ", thesaurus_name, " - ", thesaurus_item_display_name, " (", tolower(i18n$t("mapped_item")), ")"),
-          #         mapped_to_item_id = link_id, merge_items = input[[paste0(prefix, "_", merge_mapped_items_input)]]
-          #       ) %>%
-          #       dplyr::anti_join(r[[r_var]] %>% dplyr::select(id), by = "id")
-          #     # }
-          #   }
-          # 
-          #   # Add item to selected items
-          #   add_vocabulary_concepts <-
-          #     # r$widget_vocabulary_selected_concepts %>%
-          #     # dplyr::bind_rows(
-          #       tibble::tribble(~id, ~thesaurus_id, ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name,
-          #         ~thesaurus_item_unit, ~thesaurus_item_colour, ~input_text, ~mapped_to_item_id, ~merge_items,
-          #         as.integer(link_id), as.integer(thesaurus_id), as.character(thesaurus_name), as.integer(item$item_id), as.character(item$display_name),
-          #         as.character(item$unit), as.character(input[[paste0(input_colour, "_", link_id)]]), as.character(item$input_text),
-          #         NA_integer_, FALSE)
-          #     # )
-          #   
-          #   if (nrow(thesaurus_mapped_items) > 0) add_vocabulary_concepts <-
-          #     add_vocabulary_concepts %>% dplyr::bind_rows(thesaurus_mapped_items)
-          # 
-          #   r[[r_var]] <- r[[r_var]] %>%
-          #     dplyr::anti_join(add_vocabulary_concepts %>% dplyr::select(id), by = "id") %>%
-          #     dplyr::bind_rows(add_vocabulary_concepts)
-          #   
-          #   # Update dropdown of selected items
-          #   options <- convert_tibble_to_list(r[[r_var]], key_col = "id", text_col = "input_text", i18n = i18n)
-          #   value <- r[[r_var]]%>% dplyr::pull(id)
-          #   shiny.fluent::updateDropdown.shinyInput(session, vocabulary_selected_concepts_input,
-          #     options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
-          #   # }
-          #   
-          #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer r$..item_selected_trigger"))
-          # 
-          # })
+          type <- r$widget_concept_selected_type
+          
+          # Initiate r variable if doesn't exist
+          if (length(r[[paste0(type, "_vocabulary_selected_concepts")]]) == 0) r[[paste0(type, "_vocabulary_selected_concepts")]] <- tibble::tibble(vocabulary_id = character(), 
+            concept_id = integer(), concept_name = character(), concept_display_name = character(), domain_id = character(),
+            concept_colour = character(), mapped_to_concept_id = integer(), merge_mapped_concepts = logical())
+          
+          if (grepl("mapped", input[[paste0(type, "_concept_selected")]])) sub_type <- "mapped_concept"
+          else sub_type <- "concept"
+          
+          # Get ID of selected concept
+          link_id <- as.integer(substr(input[[paste0(type, "_concept_selected")]], nchar(paste0(id, "-", type, "_add_", sub_type, "_")) + 1, nchar(input[[paste0(type, "_concept_selected")]])))
+          
+          print("link_id")
+          print(link_id)
+          
+          # If this concept is not already selected, add it to the vocabulary_selected_concepts dropdown
+          
+          if (link_id %not_in% r[[paste0(type, "_vocabulary_selected_concepts")]]$concept_id){
+            
+            if (sub_type == "concept") new_data <- r[[paste0(type, "_vocabulary_concepts")]] %>%
+                dplyr::mutate_at("concept_id", as.integer) %>%
+                dplyr::filter(concept_id == link_id) %>%
+                dplyr::transmute(concept_id, concept_name, concept_display_name, domain_id,
+                  concept_colour = input[[paste0(type, "_add_colour_", link_id)]], mapped_to_concept_id = NA_integer_, merge_mapped_concepts = FALSE)
+            
+            if (sub_type == "mapped_concept"){
+              
+              selected_concept <- r[[paste0(type, "_vocabulary_mapped_concepts")]] %>%
+                dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.integer) %>%
+                dplyr::filter(id == link_id)
+              
+              print(selected_concept)
+              
+              new_data <- r[[paste0(type, "_vocabulary_concepts")]] %>%
+                dplyr::mutate_at("concept_id", as.integer) %>%
+                dplyr::filter(concept_id == selected_concept$concept_id_1) %>%
+                dplyr::transmute(concept_id, concept_name, concept_display_name, domain_id, concept_colour = input[[paste0(type, "_add_colour_", concept_id)]], 
+                  mapped_to_concept_id = NA_integer_, merge_mapped_concepts = input[[paste0(type, "_merge_mapped_concepts")]]) %>%
+                dplyr::bind_rows(
+                  selected_concept %>%
+                    dplyr::transmute(concept_id = concept_id_2, concept_name = concept_name_2, concept_display_name = concept_display_name_2, domain_id,
+                      concept_colour = input[[paste0(type, "_add_colour_", link_id)]], mapped_to_concept_id = concept_id_1, merge_mapped_concepts = input[[paste0(type, "_merge_mapped_concepts")]])
+                ) %>%
+                dplyr::bind_rows(
+                  r[[paste0(type, "_vocabulary_selected_concepts")]] %>% 
+                    dplyr::filter(mapped_to_concept_id == selected_concept$concept_id_1) %>%
+                    dplyr::mutate(merge_mapped_concepts = input[[paste0(type, "_merge_mapped_concepts")]])
+                )
+              
+              # Add also original concept, which concepts are mapped from
+              r[[paste0(type, "_vocabulary_selected_concepts")]] <- r[[paste0(type, "_vocabulary_selected_concepts")]] %>% 
+                dplyr::filter(concept_id != selected_concept$concept_id_1, (is.na(mapped_to_concept_id) | mapped_to_concept_id != selected_concept$concept_id_1))
+            }
+            
+            r[[paste0(type, "_vocabulary_selected_concepts")]] <- new_data %>% dplyr::bind_rows(r[[paste0(type, "_vocabulary_selected_concepts")]])
+          }
+          
+          # Update dropdown of selected concepts
+          
+          r$widget_vocabulary_update_selected_concepts_dropdown <- Sys.time()
+          r$widget_vocabulary_update_selected_concepts_dropdown_type <- type
+          
+          if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - observer r$widget_concept_selected"))
+          
+        })
+        
+        # When reset button is clicked
+        observeEvent(input$widget_creation_reset_vocabulary_concepts, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer input$reset_vocabulary_concepts"))
+          
+          r$widget_creation_vocabulary_selected_concepts <- r$widget_creation_vocabulary_selected_concepts %>% dplyr::slice(0)
+          r$widget_creation_vocabulary_update_selected_concepts_dropdown <- Sys.time()
+        })
+        
+        # observeEvent(input$widget_settings_reset_vocabulary_concepts, {
+        #   
+        #   if (debug) print(paste0(Sys.time(), " - mod_data - observer input$reset_vocabulary_concepts"))
+        #   
+        #   r$widget_settings_vocabulary_selected_concepts <- r$widget_settings_vocabulary_selected_concepts %>% dplyr::slice(0)
+        #   r$widget_settings_vocabulary_update_selected_concepts_dropdown <- Sys.time()
+        # })
+        
+        # When dropdown is modified
+        
+        observeEvent(input$widget_creation_vocabulary_selected_concepts_trigger, {
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_creation_vocabulary_selected_concepts_trigger"))
+          r$widget_vocabulary_selected_concepts_trigger <- Sys.time()
+          r$widget_vocabulary_selected_concepts_trigger_type <- "widget_creation"
+        })
+        observeEvent(input$widget_settings_vocabulary_selected_concepts_trigger, {
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer input$widget_settings_vocabulary_selected_concepts_trigger"))
+          r$widget_vocabulary_selected_concepts_trigger <- Sys.time()
+          r$widget_vocabulary_selected_concepts_trigger_type <- "widget_settings"
+        })
+        
+        observeEvent(r$widget_vocabulary_selected_concepts_trigger, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer r$widget_vocabulary_selected_concepts_trigger"))
+          
+          type <- r$widget_vocabulary_selected_concepts_trigger_type
+          
+          if (length(input[[paste0(type, "_vocabulary_selected_concepts")]]) == 0) r[[paste0(type, "_vocabulary_selected_concepts")]] <- r[[paste0(type, "_vocabulary_selected_concepts")]] %>% dplyr::slice(0)
+          if (length(input[[paste0(type, "_vocabulary_selected_concepts")]]) > 0) {
+            r[[paste0(type, "_vocabulary_selected_concepts")]] <- r[[paste0(type, "_vocabulary_selected_concepts")]] %>%
+              dplyr::filter(concept_id %in% input[[paste0(type, "_vocabulary_selected_concepts")]])
+            
+            # Delete also mapped items
+            r[[paste0(type, "_vocabulary_selected_concepts")]] <- r[[paste0(type, "_vocabulary_selected_concepts")]] %>%
+              dplyr::filter(is.na(mapped_to_concept_id) | mapped_to_concept_id %in% r[[paste0(type, "_vocabulary_selected_concepts")]]$concept_id)
+          }
+          
+          r$widget_vocabulary_update_selected_concepts_dropdown <- Sys.time()
+          r$widget_vocabulary_update_selected_concepts_dropdown_type <- type
+        })
+        
+        # Update dropdown of selected concepts
+        
+        observeEvent(r$widget_vocabulary_update_selected_concepts_dropdown, {
+          
+          if (debug) print(paste0(Sys.time(), " - mod_data - observer r$widget_vocabulary_update_selected_concepts_dropdown"))
+          
+          type <- r$widget_vocabulary_update_selected_concepts_dropdown_type
+          
+          options <- convert_tibble_to_list(
+            r[[paste0(type, "_vocabulary_selected_concepts")]] %>%
+              dplyr::mutate(concept_name = ifelse(!is.na(mapped_to_concept_id), paste0("--- ", concept_name), concept_name)), 
+            key_col = "concept_id", text_col = "concept_name", i18n = i18n)
+          value <- r[[paste0(type, "_vocabulary_selected_concepts")]] %>% dplyr::pull(concept_id)
+          shiny.fluent::updateDropdown.shinyInput(session, paste0(type, "_vocabulary_selected_concepts"),
+            options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+        })
   
-          # When reset button is clicked
-          # observeEvent(input$widget_creation_reset_vocabulary_concepts, {
-          #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_creation_reset_vocabulary_concepts"))
-          #   r[[paste0(prefix, "_reset_vocabulary_concepts_trigger")]] <- Sys.time()
-          # })
-          
-          # observeEvent(r[[paste0(prefix, "_reset_vocabulary_concepts_trigger")]], {
-          #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..reset_vocabulary_concepts_trigger"))
-          #   
-          #   r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_vocabulary_selected_concepts")
-          #   input_vocabulary_selected_concepts <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_vocabulary_selected_concepts")
-          #   
-          #   r[[r_var]] <- tibble::tibble(id = integer(), thesaurus_id = integer(), thesaurus_name = character(),
-          #     thesaurus_item_id = integer(), thesaurus_item_display_name = character(), thesaurus_item_unit = character(),
-          #     thesaurus_item_colour = character(), input_text = character(), mapped_to_item_id = integer(), merge_items = logical())
-          # 
-          #   shiny.fluent::updateDropdown.shinyInput(session, input_vocabulary_selected_concepts, options = list(), multiSelect = TRUE, multiSelectDelimiter = " || ")
-          # })
-          
-          # --- --- --- --- --- -
-          ### Dropdown update ----
-          # --- --- --- --- --- -
-  
-          # When dropdown is modified
-          # observeEvent(input$widget_creation_vocabulary_selected_concepts_trigger, {
-          #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$widget_creation_vocabulary_selected_concepts_trigger"))
-          #   r[[paste0(prefix, "_vocabulary_selected_concepts_trigger")]] <- Sys.time()
-          # })
-          
-          # observeEvent(r[[paste0(prefix, "_vocabulary_selected_concepts_trigger")]], {
-          #   
-          #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$..vocabulary_selected_concepts_trigger"))
-          #   
-          #   r_var <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_vocabulary_selected_concepts")
-          #   input_vocabulary_selected_concepts <- paste0(r[[paste0(prefix, "_widget_card_selected_type")]], "_vocabulary_selected_concepts")
-          # 
-          #   if (length(input[[input_vocabulary_selected_concepts]]) == 0) r[[r_var]] <- r[[r_var]] %>% dplyr::slice(0)
-          #   if (length(input[[input_vocabulary_selected_concepts]]) > 0) {
-          #     r[[r_var]] <- r[[r_var]] %>%
-          #       dplyr::filter(id %in% input[[input_vocabulary_selected_concepts]])
-          #     # Delete also mapped items
-          #     r[[r_var]] <- r[[r_var]] %>%
-          #       dplyr::filter(is.na(mapped_to_item_id) | mapped_to_item_id %in% r[[r_var]]$id)
-          #   }
-          # 
-          #   options <- convert_tibble_to_list(r[[r_var]], key_col = "id", text_col = "input_text", i18n = i18n)
-          #   value <- r[[r_var]] %>% dplyr::pull(id)
-          #   shiny.fluent::updateDropdown.shinyInput(session, input_vocabulary_selected_concepts,
-          #     options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
-          # })
-  
-        }
-        # End of if(prefix == "patient_lvl")
+      }
+      # End of if(prefix == "patient_lvl")
         
       # --- --- --- --- --- --- --- ---
       ## Widget add button clicked ----
