@@ -1847,14 +1847,14 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " observer r$..reload_widget_vocabulary_concepts"))
         
-        req(length(r$dataset_all_concepts) > 0, nrow(r$dataset_all_concepts) > 0)
+        req(length(d$dataset_all_concepts) > 0, nrow(d$dataset_all_concepts) > 0)
         
         type <- r[[paste0(prefix, "_reload_widget_vocabulary_concepts_type")]]
         
         if (type == "widget_creation") vocabulary_id <- input$widget_creation_vocabulary$key
         if (type == "widget_settings") vocabulary_id <- input$widget_settings_vocabulary$key
         
-        widget_vocabulary_concepts <- r$dataset_all_concepts %>%
+        widget_vocabulary_concepts <- d$dataset_all_concepts %>%
           dplyr::filter(vocabulary_id_1 == vocabulary_id) %>%
           dplyr::select(concept_id = concept_id_1, concept_name = concept_name_1, concept_display_name = concept_display_name_1,
             relationship_id, domain_id, concept_class_id, standard_concept, concept_code,
@@ -2042,12 +2042,12 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         selected_concept <- r[[paste0(prefix, "_", type, "_vocabulary_concepts")]][input[[paste0(type, "_vocabulary_concepts_rows_selected")]], ]
         
-        r[[paste0(prefix, "_", type, "_vocabulary_mapped_concepts")]] <- r$dataset_all_concepts %>%
+        r[[paste0(prefix, "_", type, "_vocabulary_mapped_concepts")]] <- d$dataset_all_concepts %>%
           dplyr::filter(concept_id_1 == selected_concept$concept_id, !is.na(relationship_id)) %>%
           dplyr::transmute(concept_id_1, relationship_id, concept_id_2, concept_name_2,
             count_persons_rows, count_concepts_rows) %>%
           dplyr::left_join(
-            r$dataset_all_concepts %>%
+            d$dataset_all_concepts %>%
               dplyr::select(concept_id_2 = concept_id_1, concept_display_name_2 = concept_display_name_1, domain_id, colours_input, add_concept_input),
             by = "concept_id_2"
           ) %>%

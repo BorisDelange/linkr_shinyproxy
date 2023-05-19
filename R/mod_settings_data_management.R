@@ -1745,7 +1745,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
               
               render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$import_vocabulary_count_rows,
                 output_name = "imported_vocabularies", col_names = c(i18n$t("table_name"), i18n$t("num_rows")),
-                centered_cols = c("table_name", "n_rows"))
+                centered_cols = c("n_rows"), column_widths = c("n_rows" = "200px"))
               
               show_message_bar(output,  "success_importing_vocabulary", "success", i18n = i18n, time = 15000, ns = ns)
             },

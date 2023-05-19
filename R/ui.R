@@ -1,6 +1,11 @@
 #' The application User-Interface
 #' 
 #' @param request Internal parameter for `{shiny}`. 
+#' @param css CSS file location (character)
+#' @param page Pages created with shiny.router
+#' @param users_accesses_toggles_options A tibble containing users accesses, to add in database if no internet access (tibble)
+#' @param language Default language to use in the App (character)
+#' @param debug Debug mode : steps and errors will by displayed in the console (logical)
 #' @import shiny
 #' @noRd
 
@@ -21,6 +26,7 @@ app_ui <- function(request, css, page, users_accesses_toggles_options, language,
 #' This function is internally used to add external 
 #' resources inside the Shiny application. 
 #' 
+#' @param css CSS file location (character)
 #' @import shiny
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd

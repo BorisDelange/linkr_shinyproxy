@@ -327,7 +327,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       dataset_all_concepts_filename <- paste0(r$app_folder, "/datasets/", r$selected_dataset, "/dataset_all_concepts.csv")
       
-      if (file.exists(dataset_all_concepts_filename)) r$dataset_all_concepts <- vroom::vroom(dataset_all_concepts_filename, col_types = "icicccciccccccccii", progress = FALSE)
+      if (file.exists(dataset_all_concepts_filename)) d$dataset_all_concepts <- vroom::vroom(dataset_all_concepts_filename, col_types = "icicccciccccccccii", progress = FALSE)
      
       if (!file.exists(dataset_all_concepts_filename)){
         
@@ -537,7 +537,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           
           readr::write_csv(dataset_all_concepts, dataset_all_concepts_filename, progress = FALSE)
           
-          r$dataset_all_concepts <- dataset_all_concepts
+          d$dataset_all_concepts <- dataset_all_concepts
         }
       }
       
@@ -550,8 +550,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       dataset_user_concepts <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble()
       
       # Merge tibbles
-      if (nrow(dataset_user_concepts) > 0) r$dataset_all_concepts <-
-        r$dataset_all_concepts %>%
+      if (nrow(dataset_user_concepts) > 0) d$dataset_all_concepts <-
+        d$dataset_all_concepts %>%
         dplyr::left_join(
           dataset_user_concepts %>% dplyr::select(concept_id_1 = concept_id, new_concept_name_1 = concept_name, new_concept_display_name_1 = concept_display_name),
           by = "concept_id_1"
@@ -576,14 +576,14 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       shiny.fluent::updateComboBox.shinyInput(session, "vocabulary", 
         options = convert_tibble_to_list(data = r$dataset_vocabularies, key_col = "id", text_col = "vocabulary_name", i18n = i18n), value = NULL)
       
-      # Join d$person, d$visit_occurrence & d$visit_detail with r$dataset_all_concepts
+      # Join d$person, d$visit_occurrence & d$visit_detail with d$dataset_all_concepts
       
       r$merge_concepts_and_d_vars <- Sys.time()
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$load_dataset_all_concepts"))
     })
     
-    # Join concepts cols of d$ vars with r$dataset_all_concepts
+    # Join concepts cols of d$ vars with d$dataset_all_concepts
     
     observeEvent(r$merge_concepts_and_d_vars, {
       
@@ -636,7 +636,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                 
                 d[[table]] <- d[[table]] %>%
                   dplyr::left_join(
-                    r$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_", merge_col[1]) := !!merge_col[2]), by = paste0(col, "_concept_id")
+                    d$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_", merge_col[1]) := !!merge_col[2]), by = paste0(col, "_concept_id")
                   ) %>%
                   dplyr::relocate(!!paste0(col, "_", merge_col[1]), .after = !!paste0(col, "_concept_id"))
               }
@@ -694,10 +694,10 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
 
       vocabulary_id <- r$vocabulary %>% dplyr::filter(id == input$vocabulary$key) %>% dplyr::pull(vocabulary_id)
 
-      req(nrow(r$dataset_all_concepts) > 0)
+      req(nrow(d$dataset_all_concepts) > 0)
 
       # Filter only used concepts in d vars
-      r$dataset_vocabulary_concepts <- r$dataset_all_concepts %>%
+      r$dataset_vocabulary_concepts <- d$dataset_all_concepts %>%
         # dplyr::filter(count_concepts_rows > 0 | count_secondary_concepts_rows > 0)
         dplyr::filter(count_concepts_rows > 0) %>%
         dplyr::select(-count_secondary_concepts_rows, -colours_input, -add_concept_input) %>%
@@ -750,17 +750,17 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$reload_vocabulary_concepts_cache"))
       
-      r$dataset_all_concepts_reload_cache_open_dialog <- TRUE
+      d$dataset_all_concepts_reload_cache_open_dialog <- TRUE
     })
     
-    r$dataset_all_concepts_reload_cache_open_dialog <- FALSE
+    d$dataset_all_concepts_reload_cache_open_dialog <- FALSE
     
     output$dataset_all_concepts_reload_cache <- shiny.fluent::renderReact({
       
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - output$dataset_all_concepts_reload_cache"))
       
       shiny.fluent::Dialog(
-        hidden = !r$dataset_all_concepts_reload_cache_open_dialog,
+        hidden = !d$dataset_all_concepts_reload_cache_open_dialog,
         onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('vdataset_all_concepts_reload_cache_hide_dialog', Math.random()); }")),
         dialogContentProps = list(
           type = 0,
@@ -775,14 +775,14 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       )
     })
     
-    observeEvent(input$dataset_all_concepts_reload_cache_canceled, r$dataset_all_concepts_reload_cache_open_dialog <- FALSE)
+    observeEvent(input$dataset_all_concepts_reload_cache_canceled, d$dataset_all_concepts_reload_cache_open_dialog <- FALSE)
     
     observeEvent(input$dataset_all_concepts_reload_cache_confirmed, {
       
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$dataset_all_concepts_reload_cache_confirmed"))
       
       # Close dialog box
-      r$dataset_all_concepts_reload_cache_open_dialog <- FALSE
+      d$dataset_all_concepts_reload_cache_open_dialog <- FALSE
       
       file.remove(paste0(r$app_folder, "/datasets/", r$selected_dataset, "/dataset_all_concepts.csv"))
       
@@ -803,8 +803,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       r$dataset_vocabulary_concepts[[edit_info$row, "modified"]] <- TRUE
       concept_id <- r$dataset_vocabulary_concepts[[edit_info$row, "concept_id_1"]]
       
-      # Save this update in r$dataset_all_concepts also
-      r$dataset_all_concepts <- r$dataset_all_concepts %>% dplyr::mutate(
+      # Save this update in d$dataset_all_concepts also
+      d$dataset_all_concepts <- d$dataset_all_concepts %>% dplyr::mutate(
         concept_name_1 = dplyr::case_when(
           concept_id_1 == concept_id ~ r$dataset_vocabulary_concepts[[edit_info$row, "concept_name_1"]],
           TRUE ~ concept_name_1),
@@ -1155,13 +1155,13 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
      
       r[[paste0("dataset_vocabulary_concepts_", mapping)]] <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble()
       
-      # Merge count_rows from r$dataset_all_concepts (for mapping_1) or from database (for mapping_2)
+      # Merge count_rows from d$dataset_all_concepts (for mapping_1) or from database (for mapping_2)
       # For mapping_1, keep only concepts used in current dataset tables
       
       if (mapping == "mapping_1") r$dataset_vocabulary_concepts_mapping_1 <- 
         r$dataset_vocabulary_concepts_mapping_1 %>%
         dplyr::left_join(
-          r$dataset_all_concepts %>% 
+          d$dataset_all_concepts %>% 
             dplyr::filter(is.na(relationship_id)) %>%
             # dplyr::mutate(count_concepts_rows = ifelse(count_secondary_concepts_rows > 0, count_secondary_concepts_rows, count_concepts_rows)) %>%
             dplyr::select(concept_id = concept_id_1, count_concepts_rows),
@@ -1442,7 +1442,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
             dplyr::select(concept_relationship_id, user_evaluation_id = evaluation_id), by = "concept_relationship_id")
 
       # Create or get cache for action column
-      action_col <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, 
+      action_col <- create_datatable_cache(output = output, r = r, m = m, i18n = i18n, module_id = id, 
         ids = r$dataset_vocabulary_concepts_evaluate_mappings %>% dplyr::pull(concept_relationship_id), category = "thumbs_and_delete")
 
       r$dataset_vocabulary_concepts_evaluate_mappings <- r$dataset_vocabulary_concepts_evaluate_mappings %>%
@@ -1785,7 +1785,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       concept_1 <- DBI::dbGetQuery(m$db, sql) %>%
         dplyr::left_join(concept_dataset %>% dplyr::select(concept_id, count_datasets, count_concepts_rows), by = "concept_id") %>%
         # Sum counts if this concepts has been mapped to multiple concepts
-        dplyr::left_join(r$dataset_all_concepts %>% 
+        dplyr::left_join(d$dataset_all_concepts %>% 
             dplyr::transmute(concept_id = concept_id_1, count_concepts_rows_current_dataset = count_concepts_rows) %>%
           # dplyr::transmute(concept_id = concept_id_1, count_concepts_rows_current_dataset = count_concepts_rows + count_secondary_concepts_rows) %>%
           dplyr::group_by(concept_id) %>%
@@ -1822,7 +1822,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       sql <- glue::glue_sql("SELECT * FROM concept WHERE concept_id = {selected_row$concept_id_2}", .con = m$db)
       concept_2 <- DBI::dbGetQuery(m$db, sql) %>%
         dplyr::left_join(concept_dataset %>% dplyr::select(concept_id, count_datasets, count_concepts_rows), by = "concept_id") %>%
-        dplyr::left_join(r$dataset_all_concepts %>% 
+        dplyr::left_join(d$dataset_all_concepts %>% 
           dplyr::transmute(concept_id = concept_id_1, count_concepts_rows_current_dataset = count_concepts_rows) %>%
           # dplyr::transmute(concept_id = concept_id_1, count_concepts_rows_current_dataset = count_concepts_rows + count_secondary_concepts_rows) %>%
           dplyr::group_by(concept_id) %>%

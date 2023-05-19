@@ -1759,9 +1759,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (perf_monitoring) monitor_perf(r = r, action = "start")
         if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$reload_plugin_vocabulary_concepts"))
         
-        req(length(r$dataset_all_concepts) > 0, nrow(r$dataset_all_concepts) > 0)
+        req(length(d$dataset_all_concepts) > 0, nrow(d$dataset_all_concepts) > 0)
         
-        plugin_vocabulary_concepts <- r$dataset_all_concepts %>% 
+        plugin_vocabulary_concepts <- d$dataset_all_concepts %>% 
           dplyr::filter(vocabulary_id_1 == input$vocabulary) %>%
           dplyr::select(concept_id = concept_id_1, concept_name = concept_name_1, concept_display_name = concept_display_name_1,
             relationship_id, domain_id, concept_class_id, standard_concept, concept_code,
@@ -1889,12 +1889,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         selected_concept <- r$plugin_vocabulary_concepts[input$plugin_vocabulary_concepts_rows_selected, ]
         
-        r$plugin_vocabulary_mapped_concepts <- r$dataset_all_concepts %>%
+        r$plugin_vocabulary_mapped_concepts <- d$dataset_all_concepts %>%
           dplyr::filter(concept_id_1 == selected_concept$concept_id, !is.na(relationship_id)) %>%
           dplyr::transmute(concept_id_1, relationship_id, concept_id_2, concept_name_2,
             count_persons_rows, count_concepts_rows) %>%
           dplyr::left_join(
-            r$dataset_all_concepts %>%
+            d$dataset_all_concepts %>%
               dplyr::select(concept_id_2 = concept_id_1, concept_display_name_2 = concept_display_name_1, domain_id, colours_input, add_concept_input),
             by = "concept_id_2"
           ) %>% 

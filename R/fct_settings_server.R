@@ -368,12 +368,13 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' 
 #' @param output Shiny output value, to show message bars
 #' @param r Shiny reactive value, to communicate between modules
+#' @param m Shiny reactive value, to communicate between modules
 #' @param i18n Translator object from shiny.i18n library
 #' @param module_id ID of current page / module (character)
 #' @param ids IDs of rows in database
 #' @param category Category of cache, depending of the page of Settings (character)
 
-create_datatable_cache <- function(output, r = shiny::reactiveValues(), i18n = character(), module_id = character(), 
+create_datatable_cache <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character(), module_id = character(), 
   ids = integer(), category = character()){
   
   # For thumbs_and_delete, search in concept_relationship_user table

@@ -7,9 +7,9 @@
 #' a folder will be created depending of the value 'path.expand("~")' ('path.expand("~")/linkr').\cr
 #' @param language Default language to use in the App (character)
 #' @param app_folder Location of the application folder (character).
-#' @param perf_monitoring Monitor app performances (boolean)
-#' @param debug Debug mode : steps and errors will by displayed in the console (boolean)
-#' @param local Run the app in local mode, do not load files on the internet (boolean)
+#' @param perf_monitoring Monitor app performances (logical)
+#' @param debug Debug mode : steps and errors will by displayed in the console (logical)
+#' @param local Run the app in local mode, do not load files on the internet (logical)
 #' @examples 
 #' \dontrun{
 #' linkr(language = "en", perf_monitoring = FALSE, debug = FALSE, local = FALSE)

@@ -1,7 +1,13 @@
 #' The application server-side
 #' 
 #' @param input,output,session Internal parameters for {shiny}. 
-#'
+#' @param router Router used with shiny.router library
+#' @param language Default language to use in the App (character)
+#' @param app_folder Location of the application folder (character).
+#' @param perf_monitoring Monitor app performances (logical)
+#' @param debug Debug mode : steps and errors will by displayed in the console (logical)
+#' @param local Run the app in local mode, do not load files on the internet (logical)
+#' @param users_accesses_toggles_options A tibble containing users accesses, to add in database if no internet access (tibble)
 #' @import shiny
 #' @noRd
 
@@ -161,8 +167,8 @@ app_server <- function(router, language = "en", app_folder = character(),
       if (debug) print(paste0(Sys.time(), " - server - observer r$db"))
       
       # Add default values in database, if it is empty
-      insert_default_data(output = output, r = r, m = m, i18n = i18n, has_internet = has_internet, 
-        db_col_types = db_col_types, users_accesses_toggles_options = users_accesses_toggles_options)
+      insert_default_data(output = output, r = r, m = m, i18n = i18n, db_col_types = db_col_types, 
+        users_accesses_toggles_options = users_accesses_toggles_options)
       
       # Load database
       load_database(r = r, m = m, i18n = i18n)

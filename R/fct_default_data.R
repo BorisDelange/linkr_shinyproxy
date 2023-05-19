@@ -1,10 +1,20 @@
-
-#' Insert default values in database
+#' Insert default data
 #'
-#' @param r shiny reactive value, used to communicate between modules
+#' @description Insert default data in app database, from a remote git if an internet connection is available
+#' @param output Shiny output variable
+#' @param r Shiny reactive value, used to communicate between modules
+#' @param m Shiny reactive value, used to communicate between modules
+#' @param i18n Translator object from shiny.i18n library
+#' @param db_col_types A tibble containing the col_types by table, used by vroom or readr to read csv files (tibble)
+#' @param users_accesses_toggles_options A tibble containing users accesses, to add in database if no internet access (tibble)
+#' @examples 
+#' \dontrun{
+#' insert_default_data(output = output, r = r, m = m, i18n = i18n,
+#'   db_col_types = db_col_types, users_accesses_toggles_options = users_accesses_toggles_options)
+#' }
 
 insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  i18n = character(), has_internet = FALSE, db_col_types = character(), users_accesses_toggles_options = tibble::tibble()){
+  i18n = character(), db_col_types = tibble::tibble(), users_accesses_toggles_options = tibble::tibble()){
   
   if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM users")) == 0) {
     
