@@ -1442,7 +1442,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
             dplyr::select(concept_relationship_id, user_evaluation_id = evaluation_id), by = "concept_relationship_id")
 
       # Create or get cache for action column
-      action_col <- create_datatable_cache(output = output, r = r, m = m, i18n = i18n, module_id = id, 
+      action_col <- create_datatable_cache(output = output, r = r, i18n = i18n, module_id = id, 
         ids = r$dataset_vocabulary_concepts_evaluate_mappings %>% dplyr::pull(concept_relationship_id), category = "thumbs_and_delete")
 
       r$dataset_vocabulary_concepts_evaluate_mappings <- r$dataset_vocabulary_concepts_evaluate_mappings %>%

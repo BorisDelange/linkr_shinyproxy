@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_data_management.R
 \name{get_thesaurus_item}
 \alias{get_thesaurus_item}
-\title{Get thesaurus item}
+\title{Get thesaurus items levels}
 \usage{
 get_thesaurus_item(
   output,
@@ -20,7 +20,7 @@ get_thesaurus_item(
 \arguments{
 \item{output}{Output variable from Shiny, used to render messages on message bars}
 
-\item{r}{A shiny::reactiValues object, used to communicate between tabs}
+\item{r}{A shiny::reactiValues object, used to communicate between modules}
 
 \item{thesaurus_name}{Name of the thesaurus (character)}
 
@@ -37,8 +37,14 @@ get_thesaurus_item(
 \item{i18n}{shiny.i18n object for translations}
 
 \item{ns}{shiny namespace object, used to render messages on message bars}
+
+\item{data}{datatable containing thesaurus items}
 }
 \description{
+Get levels of thesaurus items to create thesaurus tree
+
+Get paths of thesaurus items to create thesaurus tree
+
 Get a thesaurus item, from the thesaurus name and ID or name of the item.
 }
 \examples{

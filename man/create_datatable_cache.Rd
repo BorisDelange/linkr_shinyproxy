@@ -7,28 +7,24 @@
 create_datatable_cache(
   output,
   r = shiny::reactiveValues(),
-  d = shiny::reactiveValues(),
   i18n = character(),
-  tab_id = character(),
-  thesaurus_id = integer(),
-  dataset_id = 0,
+  module_id = character(),
+  ids = integer(),
   category = character()
 )
 }
 \arguments{
 \item{output}{Shiny output value, to show message bars}
 
-\item{r}{Shiny r reactive value, to communicate between tabs}
+\item{r}{Shiny reactive value, to communicate between modules}
 
-\item{tab_id}{ID of current page / tab (character)}
+\item{i18n}{Translator object from shiny.i18n library}
 
-\item{thesaurus_id}{ID of thesaurus, which thesaurus items depend on (integer)}
+\item{module_id}{ID of current page / module (character)}
 
-\item{dataset_id}{ID of dataset to count rows by item of the thesaurus (integer)}
+\item{ids}{IDs of rows in database}
 
 \item{category}{Category of cache, depending of the page of Settings (character)}
-
-\item{language}{Language used (character)}
 }
 \description{
 Create cache for datatable data

@@ -9,7 +9,7 @@ db_create_table(
   table_name = character(),
   dataframe = tibble::tibble(),
   dbms = character(),
-  primary_key_cols = character(),
+  primary_key_col = character(),
   unique_cols = character(),
   not_null_cols = character(),
   text_cols = character()

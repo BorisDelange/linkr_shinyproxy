@@ -4,7 +4,7 @@
 #' @import shiny
 #' @noRd
 
-app_ui <- function(request, css, page, options_toggles, language, debug = FALSE) {
+app_ui <- function(request, css, page, users_accesses_toggles_options, language, debug = FALSE) {
   
   # Secure page with ShinyManager
   shinymanager::secure_app(

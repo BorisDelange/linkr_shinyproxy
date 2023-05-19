@@ -1,13 +1,13 @@
-
 #' Get singular form of a word
 #' 
 #' @description Returns the singular form of a word
 #' @param word Original word, in its plural form (character)
 #' @param language language used for conversion (character)
 #' @examples 
-#' get_singular(word = "studies", language = "EN")
-get_singular <- function(word = character(), language = "EN"){
-  # IDs of settings pages are prefixed with "settings_", if this is the case, remove this prefix
+#' get_singular(word = "studies", language = "en")
+get_singular <- function(word = character(), language = "en"){
+  
+  # IDs of settings pages are prefixed with "settings_", in that case, remove the prefix
   if (grepl("settings_", word)) word <- substr(word, nchar("settings_") + 1, nchar(word))
   switch(word, 
     "data_sources" = "data_source",
@@ -44,9 +44,9 @@ get_singular <- function(word = character(), language = "EN"){
 #' @param word Original word, in its singular form (character)
 #' @param language language used for conversion (character)
 #' @examples 
-#' get_plural(word = "study", language = "EN")
-get_plural <- function(word = character(), language = "EN"){
-  # IDs of settings pages are prefixed with "settings_", if this is the case, remove this prefix
+#' get_plural(word = "study", language = "en")
+get_plural <- function(word = character(), language = "en"){
+  # IDs of settings pages are prefixed with "settings_", in that case, remove the prefix
   if (grepl("settings_", word)) word <- substr(word, nchar("settings_") + 1, nchar(word))
   switch(word, 
     "data_source" = "data_sources",

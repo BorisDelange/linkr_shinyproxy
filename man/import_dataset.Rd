@@ -7,21 +7,22 @@
 import_dataset(
   output,
   ns = character(),
+  i18n = character(),
   r = shiny::reactiveValues(),
   d = shiny::reactiveValues(),
   dataset_id = integer(),
   data = tibble::tibble(),
-  type = "patients",
+  type = "",
+  omop_version = "6.0",
   save_as_csv = TRUE,
   rewrite = FALSE,
-  i18n = character(),
   quiet = TRUE
 )
 }
 \arguments{
 \item{output}{variable from Shiny, used to render messages on the message bar}
 
-\item{r}{The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)}
+\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
 
 \item{dataset_id}{ID of the dataset, used to create directory in data/ (eg : dataset_3)}
 

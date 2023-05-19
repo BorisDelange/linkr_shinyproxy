@@ -2,10 +2,22 @@
 % Please edit documentation in R/fct_settings_ui.R
 \name{forbidden_card}
 \alias{forbidden_card}
-\title{Forbidden card}
+\title{Render cards where user has no access}
 \usage{
 forbidden_card(ns = character(), name = character(), i18n = character())
 }
+\arguments{
+\item{ns}{Shiny namespace}
+
+\item{name}{Name of the card}
+
+\item{i18n}{Translator object from shiny.i18n library}
+}
 \description{
-Forbidden card
+Render cards where user has no access
+}
+\examples{
+\dontrun{
+render_settings_code_card(ns = NS("settings_datasets"), name = "edit_dataset_code_card", i18n = i18n)
+}
 }

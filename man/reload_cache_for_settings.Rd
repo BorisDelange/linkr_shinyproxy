@@ -11,7 +11,7 @@ reload_cache_for_settings(
 )
 }
 \arguments{
-\item{r}{Shiny r reactive value}
+\item{r}{Shiny reactive value}
 
 \item{table}{Database table name}
 

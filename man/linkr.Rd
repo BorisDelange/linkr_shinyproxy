@@ -5,58 +5,32 @@
 \title{Run the Shiny Application}
 \usage{
 linkr(
-  language = "EN",
+  language = "en",
   app_folder = character(),
   perf_monitoring = FALSE,
   debug = FALSE,
-  local = FALSE,
-  options = list(),
-  ...
+  local = FALSE
 )
 }
 \arguments{
 \item{language}{Default language to use in the App (character)}
 
-\item{perf_monitoring}{Monitore app performances print timestamps step by step (boolean)}
+\item{app_folder}{Location of the application folder (character).}
 
-\item{options}{A list of options that could be passed to shiny::shinyApp() function (list)}
+\item{perf_monitoring}{Monitor app performances (boolean)}
 
-\item{...}{arguments to pass to golem_opts.}
+\item{debug}{Debug mode : steps and errors will by displayed in the console (boolean)}
 
-\item{db_info}{Database connection informations, if it is needed to connect a distant db (list).}
-
-\item{datasets_folder}{Folder where to save datasets CSV files (character)}
-
-\item{app_db_folder}{Folder where to save local database file (character)}
+\item{local}{Run the app in local mode, do not load files on the internet (boolean)}
 }
 \description{
-Runs the cdwtools Shiny Application.\cr
-Use language argument to choose language to use ("EN" or "FR" available).\cr
-Use options to set options to shiny::shinyApp() function, see documentation of shiny::shinyApp for more informations.\cr\cr
-To connect to distant database, use db_info argument. db_info is a list, containing these parameters :\cr
-\itemize{
-\item{\strong{sql_lib} : SQL library used, "postgres" or "sqlite" available for now}
-\item{\strong{dbname} : database name (character)}
-\item{\strong{host} : host connection name (character)}
-\item{\strong{port} : connection port (integer)}
-\item{\strong{user} : user name (character)}
-\item{\strong{password} : password in clear (character)}
-}
+Runs the LinkR Shiny Application.\cr
+Use language argument to choose language to use ("en" or "fr" available).\cr
+Use app_folder argument to choose a folder where the files of the application will be saved. By default, 
+a folder will be created depending of the value 'path.expand("~")' ('path.expand("~")/linkr').\cr
 }
 \examples{
 \dontrun{
-db_info <- list(
-  sql_lib = "postgres",
-  dbname = "cdwtools",
-  host = "localhost",
-  port = 5432,
-  user = "admin",
-  passord = "admin"
-)
-datasets_folder <- "C:/Users/John/My CDW project/data"
-app_db_folder <- "C:/Users/John/My CDW project"
-cdwtools(language = "EN", db_info = db_info, datasets_folder = datasets_folder, app_db_folder = app_db_folder)
+linkr(language = "en", perf_monitoring = FALSE, debug = FALSE, local = FALSE)
 }
-See `?golem::get_golem_options` for more details.
-
 }

@@ -288,7 +288,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
 #' @noRd 
 
 mod_settings_app_database_server <- function(id = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character(),
-  language = "en", app_folder = character(), perf_monitoring = FALSE, debug = FALSE){
+  language = "en", db_col_types = character(), app_folder = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -296,52 +296,6 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     sapply(1:20, function(i) observeEvent(input[[paste0("close_message_bar_", i)]], shinyjs::hide(paste0("message_bar", i))))
     
     app_db_folder = paste0(app_folder, "/app_database")
-    
-    # Col types of database (to restore database)
-    col_types <- tibble::tribble(
-      ~table, ~col_types,
-      "users", "icccciicl",
-      "users_accesses", "icccl",
-      "users_statuses", "icccl",
-      "data_sources", "iccicl",
-      "datasets", "icciicl",
-      "studies", "icciiiicl",
-      "plugins", "icciccl",
-      "scripts", "iciiccl",
-      "patient_lvl_tabs_groups", "iccicl",
-      "patient_lvl_tabs", "icciiiicl",
-      "patient_lvl_widgets", "iciiiicl",
-      "aggregated_tabs_groups", "iccicl",
-      "aggregated_tabs", "icciiiicl",
-      "aggregated_widgets", "iciiiicl",
-      "code", "icicicl",
-      "options", "iciccnicl",
-      "messages", "iiicccicl",
-      "conversations", "iccl",
-      "user_deleted_conversations", "iiic",
-      "inbox_messages", "iiilcl",
-      "log", "icccic",
-      "git_repos", "iccccicl",
-      "persons_options", "iiiiiiciccnicl",
-      "widgets_options", "iiiicccnicl",
-      "subsets", "icciicl",
-      "subset_persons", "iiiicl",
-      "concept", "iiccccccccc",
-      "concept_dataset", "iiciiii",
-      "concept_user", "iiiccc",
-      "vocabulary", "icccccciicl",
-      "domain", "icci",
-      "concept_class", "icci",
-      "concept_relationship", "iiicccc",
-      "concept_relationship_user", "iiic",
-      "concept_relationship_evals", "iiicc",
-      "relationship", "iccccci",
-      "concept_synonym", "iici",
-      "concept_ancestor", "iiiii",
-      "drug_strength", "iiinininiiccc",
-      "patient_lvl_widgets_concepts", "iiiccccilicl",
-      "aggregated_widgets_concepts", "iiiccccilicl"
-    )
     
     # --- --- --- --- --- ---
     # Show or hide cards ----
@@ -885,11 +839,8 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
               tryCatch({
                 # Load CSV file
                 
-                col_types_temp <- col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
+                col_types_temp <- db_col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
                 temp <- vroom::vroom(paste0(exdir, "/", file_name), col_types = col_types_temp)
-                
-                print(table)
-                print(temp)
                 
                 # Delete data from old table
                 sql <- glue::glue_sql("DELETE FROM {`table`}", .con = con)

@@ -104,7 +104,7 @@ linkr <- function(
   
   # Toggles for users accesses
   
-  options_toggles <- tibble::tribble(
+  users_accesses_toggles_options <- tibble::tribble(
     ~name, ~toggles,
     "general_settings", "change_password_card",
     "app_db", c(
@@ -172,7 +172,7 @@ linkr <- function(
   do.call(shiny.router::make_router, 
     lapply(pages, function(page){
       if (debug) print(paste0(Sys.time(), " - linkr - make_router - ", page))
-      shiny.router::route(page, make_layout(language = language, page = page, i18n = i18n, options_toggles = options_toggles))
+      shiny.router::route(page, make_layout(language = language, page = page, i18n = i18n, users_accesses_toggles_options = users_accesses_toggles_options))
     })
   ) -> page
   
@@ -183,7 +183,7 @@ linkr <- function(
     app = shinyApp(
       ui = app_ui(css = css, page = page, language = language, debug = debug),
       server = app_server(router = page, language = language, app_folder = app_folder, 
-        perf_monitoring = perf_monitoring, debug = debug, local = local, options_toggles = options_toggles),
+        perf_monitoring = perf_monitoring, debug = debug, local = local, users_accesses_toggles_options = users_accesses_toggles_options),
       options = options
     ), 
     golem_opts = list()

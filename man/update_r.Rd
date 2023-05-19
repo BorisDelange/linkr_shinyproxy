@@ -12,17 +12,19 @@ update_r(
 )
 }
 \arguments{
-\item{r}{The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)}
+\item{r}{A shiny reactiveValue, used to communicate between modules in the ShinyApp (reactiveValues object)}
+
+\item{m}{A shiny reactiveValue, used to communicate between modules in the ShinyApp (reactiveValues object)}
 
 \item{table}{Database table name (character)}
 
-\item{language}{language used for the translation (character)}
+\item{i18n}{Translator object from shiny.i18n library}
 }
 \description{
-Update r value, requesting the corresponding table in the database
+Update r reactive variable, requesting the corresponding table in the database
 }
 \examples{
 \dontrun{
-update_r(r = r, table = "subsets")
+update_r(r = r, table = "subsets", i18n = i18n)
 }
 }

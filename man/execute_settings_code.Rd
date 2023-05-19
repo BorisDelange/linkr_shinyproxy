@@ -16,7 +16,8 @@ execute_settings_code(
   m = shiny::reactiveValues(),
   edited_code = character(),
   code_type = "",
-  data = list()
+  data = list(),
+  col_types = character()
 )
 }
 \arguments{
@@ -30,7 +31,7 @@ execute_settings_code(
 
 \item{ns}{Shiny namespace}
 
-\item{r}{The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)}
+\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
 
 \item{edited_code}{New code, after editing it (character)}
 

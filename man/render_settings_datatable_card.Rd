@@ -15,6 +15,8 @@ render_settings_datatable_card(
 )
 }
 \arguments{
+\item{i18n}{Translator object from shiny.i18n library}
+
 \item{ns}{Shiny namespace}
 
 \item{div_id}{ID of the div, to show or hide with toggles, default = "datatable_card" (character)}
@@ -22,14 +24,12 @@ render_settings_datatable_card(
 \item{output_id}{ID of div & DTOutput, allows to have multiple management_datatable in one tab, default = "management_datatable" (character)}
 
 \item{title}{Title used to create the card, it will be translated with translate function (character)}
-
-\item{language}{Language used (character)}
 }
 \description{
 Render UI of settings datatable card
 }
 \examples{
 \dontrun{
-render_settings_datatable_card(language = "EN", ns = ns, output_id = "management_datatable", title = "datasets_management")
+render_settings_datatable_card(i18n = i18n, ns = ns, output_id = "management_datatable", title = "datasets_management")
 }
 }

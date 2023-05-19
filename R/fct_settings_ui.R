@@ -5,8 +5,9 @@
 #' @param ns Shiny namespace
 #' @return Shiny UI elements / HTML code
 #' @examples
+#' \dontrun{
 #' render_settings_default_elements(ns = NS("settings_dataset"))
-
+#' }
 render_settings_default_elements <- function(ns = character()){
   
   message_bars <- tagList()
@@ -20,19 +21,20 @@ render_settings_default_elements <- function(ns = character()){
 
 #' Render UI of settings creation card
 #' 
-#' @param language Language used (character)
+#' @param i18n Translator object from shiny.i18n library
 #' @param ns Shiny namespace
 #' @param id ID of current tab / page (character)
-#' @param title Title used to create the card, it will be translated with translate function (character)
+#' @param title Title used to create the card (character)
 #' @param textfields A character vector containing distinct textfields to render in the card (character)
 #' @param textfields_width Width of the textfields, CSS code, so it could be "100\%", "200px" etc (character)
 #' @param dropdowns A character vector containing distinct dropdowns to render in the card (character)
 #' @param dropdowns_width Width of the dropdowns, CSS code, so it could be "100\%", "200px" etc (character)
 #' @return Shiny UI elements / HTML code
 #' @examples 
-#' render_settings_creation_card(language = "EN", ns = NS("settings_dataset"), title = "create_dataset",
+#' \dontrun{
+#' render_settings_creation_card(i18n = i18n, ns = NS("settings_dataset"), title = "create_dataset",
 #' textfields = c("name", "description"), dropdowns = "data_source")
-
+#' }
 render_settings_creation_card <- function(i18n = character(), ns = character(), id = character(), title = character(), 
   textfields = character(), textfields_width = "200px", dropdowns = character(), dropdowns_width = "200px"){
   
@@ -66,14 +68,14 @@ render_settings_creation_card <- function(i18n = character(), ns = character(), 
 
 #' Render UI of settings datatable card
 #' 
-#' @param language Language used (character)
+#' @param i18n Translator object from shiny.i18n library
 #' @param ns Shiny namespace
 #' @param div_id ID of the div, to show or hide with toggles, default = "datatable_card" (character)
 #' @param output_id ID of div & DTOutput, allows to have multiple management_datatable in one tab, default = "management_datatable" (character)
 #' @param title Title used to create the card, it will be translated with translate function (character)
 #' @examples 
 #' \dontrun{
-#' render_settings_datatable_card(language = "EN", ns = ns, output_id = "management_datatable", title = "datasets_management")
+#' render_settings_datatable_card(i18n = i18n, ns = ns, output_id = "management_datatable", title = "datasets_management")
 #' }
 render_settings_datatable_card <- function(i18n = character(), ns = character(), div_id = "datatable_card",
   output_id = "management_datatable", title = character(), inputs = character(), dropdown_multiselect = FALSE){
@@ -114,16 +116,16 @@ render_settings_datatable_card <- function(i18n = character(), ns = character(),
 #' Render UI of edit_code card
 #' 
 #' @param ns Shiny namespace
-#' @param r r Shiny reactive value to communicate between tabs
+#' @param r r Shiny reactive value to communicate between modules
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
 #' @param title Title of the card (character)
 #' @param code Code to show in ShinyAce editor (list)
 #' @param link_id ID allows to link with code table (integer)
-#' @param language Language used (character)
+#' @param i18n Translator object from shiny.i18n library
 #' @examples 
 #' \dontrun{
 #' render_settings_code_card(ns = NS("settings_datasets"), r = r, id = "settings_datasets", title = "edit_dataset_code",
-#'   code = "Enter your code here", link_id = 3, language = "EN")
+#'   code = "Enter your code here", link_id = 3, i18n = i18n)
 #' }
 render_settings_code_card <- function(ns = character(), r = shiny::reactiveValues(), id = character(), title = character(), code = list(), 
   link_id = integer(), i18n = character()){
@@ -238,8 +240,15 @@ render_settings_code_card <- function(ns = character(), r = shiny::reactiveValue
   )
 }
 
-#' Forbidden card
+#' Render cards where user has no access
 #' 
+#' @param ns Shiny namespace
+#' @param name Name of the card
+#' @param i18n Translator object from shiny.i18n library
+#' @examples 
+#' \dontrun{
+#' render_settings_code_card(ns = NS("settings_datasets"), name = "edit_dataset_code_card", i18n = i18n)
+#' }
 forbidden_card <- function(ns = character(), name = character(), i18n = character()){
   shinyjs::hidden(
     div(

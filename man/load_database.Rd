@@ -4,10 +4,14 @@
 \alias{load_database}
 \title{Load database}
 \usage{
-load_database(r = shiny::reactiveValues(), i18n = character())
+load_database(
+  r = shiny::reactiveValues(),
+  m = shiny::reactiveValues(),
+  i18n = character()
+)
 }
 \arguments{
-\item{r}{Shiny r reactive value, used to communicate between tabs}
+\item{r}{Shiny reactive value, used to communicate between modules}
 }
 \description{
 Load database

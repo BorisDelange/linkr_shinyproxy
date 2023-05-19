@@ -12,7 +12,7 @@ render_settings_delete_react(
 )
 }
 \arguments{
-\item{r}{Shiny r reactive value to communicate between tabs}
+\item{r}{Shiny reactive value to communicate between modules}
 
 \item{ns}{Shiny namespace}
 

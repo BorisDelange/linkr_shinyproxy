@@ -50,11 +50,11 @@ make_page <- function (title = character(), subtitle = character(), contents = c
 }
 
 #' Make a complete layout with header, sidenav, main & footer
-make_layout <- function(language = "EN", page = character(), i18n = character(), options_toggles = tibble::tibble()){
+make_layout <- function(language = "EN", page = character(), i18n = character(), users_accesses_toggles_options = tibble::tibble()){
   div(class = "grid-container",
     mod_page_header_ui(id = stringr::str_replace(page, "/", "_"), i18n = i18n),
     mod_page_sidenav_ui(id = stringr::str_replace(page, "/", "_"), i18n = i18n),
-    mod_page_main_ui(id = stringr::str_replace(page, "/", "_"), language = language, i18n = i18n, options_toggles = options_toggles),
+    mod_page_main_ui(id = stringr::str_replace(page, "/", "_"), language = language, i18n = i18n, users_accesses_toggles_options = users_accesses_toggles_options),
     mod_page_footer_ui(i18n = i18n)
   )
 }
@@ -277,7 +277,7 @@ make_choicegroup <- function(language = "EN", ns = character(), label = characte
 #' @description Renders a datatable (from library DT)
 #' 
 #' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
+#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param ns Shiny namespace
 #' @param language Language used (charater)
 #' @param data data used in the datatable (tibble or dataframe)

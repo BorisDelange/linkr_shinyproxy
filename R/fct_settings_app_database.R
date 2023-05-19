@@ -258,7 +258,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
 
 #' Get authorized data for a user
 #'
-#' @param r Shiny r reactive value, used to communicate between tabs
+#' @param r Shiny reactive value, used to communicate between modules
 #' @param table Name of the table the data comes from (character)
 #' @param data If data is not r[[table]] (tibble / dataframe)
 
@@ -443,7 +443,7 @@ get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues
 
 #' Load database
 #' 
-#' @param r Shiny r reactive value, used to communicate between tabs
+#' @param r Shiny reactive value, used to communicate between modules
 load_database <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character()){
   
   # Database tables to load

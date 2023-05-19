@@ -1,12 +1,13 @@
 #' Update r variable
 #' 
-#' @description Update r value, requesting the corresponding table in the database
-#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
+#' @description Update r reactive variable, requesting the corresponding table in the database
+#' @param r A shiny reactiveValue, used to communicate between modules in the ShinyApp (reactiveValues object)
+#' @param m A shiny reactiveValue, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param table Database table name (character)
-#' @param language language used for the translation (character)
+#' @param i18n Translator object from shiny.i18n library
 #' @examples
 #' \dontrun{
-#' update_r(r = r, table = "subsets")
+#' update_r(r = r, table = "subsets", i18n = i18n)
 #' }
 update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), table = character(), i18n = character()){
   tables <- c("users", "users_accesses", "users_statuses",
@@ -141,7 +142,7 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
 #' Get options of a page
 #' 
 #' @description Get the options of a setting page (as datasets, studies...)
-#' @param id ID of the tab / page 
+#' @param id ID of the page 
 #' @return A character vector with options
 #' @examples 
 #' get_page_options(id == "settings_datasets")
@@ -159,10 +160,11 @@ get_page_options <- function(id = character()){
 
 #' Get column names
 #' 
+#' @description Get the columns names of a table
 #' @param table_name Name of the table (character)
-#' @param language Language used (charater)
+#' @param i18n Translator object from shiny.i18n library
 #' @examples 
-#' get_col_names(table_name = "datasets", language = "EN")
+#' get_col_names(table_name = "datasets", i18n = i18n)
 get_col_names <- function(table_name = character(), i18n = character()){
   result <- ""
   

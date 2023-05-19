@@ -10,11 +10,12 @@ insert_default_data(
   m = shiny::reactiveValues(),
   i18n = character(),
   has_internet = FALSE,
-  options_toggles = tibble::tibble()
+  db_col_types = character(),
+  users_accesses_toggles_options = tibble::tibble()
 )
 }
 \arguments{
-\item{r}{shiny reactive value, used to communicate between tabs}
+\item{r}{shiny reactive value, used to communicate between modules}
 }
 \description{
 Insert default values in database

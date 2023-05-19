@@ -26,7 +26,9 @@ add_settings_new_data(
 
 \item{output}{Shiny output variable}
 
-\item{r}{Shiny r reactive value, to communicate between tabs (reactiveValue)}
+\item{r}{Shiny reactive value, to communicate between modules (reactiveValue)}
+
+\item{i18n}{Translator object from shiny.i18n library}
 
 \item{id}{ID of current tab / page (character)}
 
@@ -42,7 +44,7 @@ add_settings_new_data(
 
 \item{dropdowns}{Tibble with the values of distinct dropdowns names (tibble)}
 
-\item{language}{Language used (character)}
+\item{r_message_bar}{If the MessageBar is displayed with a r variable or with show_message_bar function (TRUE for r variable)}
 }
 \description{
 Add new settings data
@@ -53,6 +55,6 @@ data <- list()
 data$name <- "New dataset"
 data$description <- "Description of the dataset"
 data$data_source <- 5
-add_settings_new_data(output = output, r = r, language = language, id = "settings_datasets", data = data, dropdowns = "data_source")
+add_settings_new_data(output = output, r = r, i18n = i18n, id = "settings_datasets", data = data, table = "datasets", dropdowns = "data_source")
 }
 }

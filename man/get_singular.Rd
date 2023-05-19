@@ -4,7 +4,7 @@
 \alias{get_singular}
 \title{Get singular form of a word}
 \usage{
-get_singular(word = character(), language = "EN")
+get_singular(word = character(), language = "en")
 }
 \arguments{
 \item{word}{Original word, in its plural form (character)}
@@ -15,5 +15,5 @@ get_singular(word = character(), language = "EN")
 Returns the singular form of a word
 }
 \examples{
-get_singular(word = "studies", language = "EN")
+get_singular(word = "studies", language = "en")
 }

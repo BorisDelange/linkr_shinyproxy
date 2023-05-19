@@ -633,6 +633,7 @@ reload_app_to_take_into_account_changes,Vous devez redémarrer la session pour p
 modif_names_duplicates,Certains noms sont utilisés plusieurs fois, retirez-les avant de sauvegarder
 error_restoring_database,Erreur lors de la restauration de la base de données
 error_restoring_database_table,Erreur lors de la restauration d'une table de la base de données
+error_importing_default_database,Erreur lors de l'importation de la base de données par défaut
 database_restored,Base de données restaurée
 reload_log,Recharger le log
 value,Valeur

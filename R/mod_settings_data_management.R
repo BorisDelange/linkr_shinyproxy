@@ -979,7 +979,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           output$datetime_code_execution <- renderText(format_datetime(Sys.time(), language))
           output$code_result <- renderText(
             execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
-              i18n = i18n, r = r, d = d, m = m, edited_code = edited_code, col_types = col_types))
+              i18n = i18n, r = r, d = d, m = m, edited_code = edited_code))
           
           r[[paste0(id, "_code_datatable_trigger")]] <- Sys.time()
           

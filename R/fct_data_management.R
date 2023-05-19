@@ -3,8 +3,8 @@
 #' @description Runs dataset code
 #' @details The code to load the dataset is loaded from the application database, in code table, from dataset_id.
 #' @param output Output variable from Shiny, used to render messages on message bars
-#' @param r A shiny::reactiValues object, used to communicate between tabs
-#' @param d A shiny::reactiValues object, used to communicate between tabs. Contains data loaded from dataset code (d$patients, d$labs_vitals...).
+#' @param r A shiny::reactiValues object, used to communicate between modules
+#' @param d A shiny::reactiValues object, used to communicate between modules. Contains data loaded from dataset code (d$patients, d$labs_vitals...).
 #' @param dataset_id ID of dataset containing the code (integer)
 #' @param i18n shiny.i18n object for translations
 #' @examples 
@@ -49,8 +49,8 @@ run_dataset_code <- function(output, r = shiny::reactiveValues(), d = shiny::rea
 #'
 #' @description Add patients to a subset, only if not already in the subset
 #' @param output Output variable from Shiny, used to render messages on message bars
-#' @param r A shiny::reactiValues object, used to communicate between tabs
-#' @param m A shiny::reactiValues object, used to communicate between tabs
+#' @param r A shiny::reactiValues object, used to communicate between modules
+#' @param m A shiny::reactiValues object, used to communicate between modules
 #' @param patients data variable containing patients (data.frame / tibble)
 #' @param subset_id ID of the subset (integer)
 #' @param i18n shiny.i18n object for translations
@@ -141,8 +141,8 @@ add_persons_to_subset <- function(output, r = shiny::reactiveValues(), m = shiny
 #'
 #' @description Remove patients from a subset
 #' @param output Output variable from Shiny, used to render messages on message bars
-#' @param r A shiny::reactiValues object, used to communicate between tabs
-#' @param m A shiny::reactiValues object, used to communicate between tabs
+#' @param r A shiny::reactiValues object, used to communicate between modules
+#' @param m A shiny::reactiValues object, used to communicate between modules
 #' @param patients data variable containing patients (data.frame / tibble)
 #' @param subset_id ID of subset (integer)
 #' @param i18n shiny.i18n object for translations
@@ -232,7 +232,7 @@ remove_persons_from_subset <- function(output, r = shiny::reactiveValues(), m = 
 #'
 #' @description Get levels of thesaurus items to create thesaurus tree
 #' @param data datatable containing thesaurus items
-#' @param r A shiny::reactiValues object, used to communicate between tabs
+#' @param r A shiny::reactiValues object, used to communicate between modules
 # get_thesaurus_items_levels <- function(data = tibble::tibble(), r = shiny::reactiveValues()){
 #   
 #   data_with_levels <- tibble::tibble()
@@ -283,7 +283,7 @@ remove_persons_from_subset <- function(output, r = shiny::reactiveValues(), m = 
 #'
 #' @description Get paths of thesaurus items to create thesaurus tree
 #' @param data datatable containing thesaurus items
-#' @param r A shiny::reactiValues object, used to communicate between tabs
+#' @param r A shiny::reactiValues object, used to communicate between modules
 # get_thesaurus_items_paths <- function(data = tibble::tibble(), r = shiny::reactiveValues()){
 #   
 #   data_with_paths <- data %>% dplyr::mutate(path = "")
@@ -325,7 +325,7 @@ remove_persons_from_subset <- function(output, r = shiny::reactiveValues(), m = 
 #'
 #' @description Get a thesaurus item, from the thesaurus name and ID or name of the item.
 #' @param output Output variable from Shiny, used to render messages on message bars
-#' @param r A shiny::reactiValues object, used to communicate between tabs
+#' @param r A shiny::reactiValues object, used to communicate between modules
 #' @param thesaurus_name Name of the thesaurus (character)
 #' @param item_name Name of the item to get, if method = "item_name" (character)
 #' @param item_id ID of the item to get, if method = "item_id" (integer)
@@ -420,7 +420,7 @@ get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
 #' @details To add an item in a thesaurus, you need to specify its name and unit.
 #' The item ID will be the ID of the last item of this thesaurus, plus one.
 #' @param output Output variable from Shiny, used to render messages on message bars
-#' @param r A shiny::reactiValues object, used to communicate between tabs
+#' @param r A shiny::reactiValues object, used to communicate between modules
 #' @param thesaurus_name Name of the thesaurus where the item will be added (character)
 #' @param item_name Name of the item (character)
 #' @param item_unit Unit of the item (character)
@@ -501,7 +501,7 @@ add_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
 #' This function creates a new thesaurus, for a data source, named [data_source_name - scripts], which will include
 #' all items created in the scripts depending of this data source.
 #' @param output Output variable from Shiny, used to render messages on message bars
-#' @param r A shiny::reactiValues object, used to communicate between tabs
+#' @param r A shiny::reactiValues object, used to communicate between modules
 #' @param data_source_id ID of the data source where the script is recorded
 #' @param i18n shiny.i18n object for translations
 #' @param ns shiny namespace object, used to render messages on message bars

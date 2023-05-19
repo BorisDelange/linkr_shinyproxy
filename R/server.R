@@ -6,7 +6,7 @@
 #' @noRd
 
 app_server <- function(router, language = "en", app_folder = character(), 
-  perf_monitoring = FALSE, debug = FALSE, local = FALSE, options_toggles = tibble::tibble()){
+  perf_monitoring = FALSE, debug = FALSE, local = FALSE, users_accesses_toggles_options = tibble::tibble()){
   function(input, output, session ) {
     
     if (debug) print(paste0(Sys.time(), " - server - init"))
@@ -34,6 +34,53 @@ app_server <- function(router, language = "en", app_folder = character(),
     
     # App version
     r$app_version <- "0.2.0"
+    
+    # Col types of database tables, to import and restore database
+    
+    db_col_types <- tibble::tribble(
+      ~table, ~col_types, ~db,
+      "users", "icccciicl", "main",
+      "users_accesses", "icccl", "main",
+      "users_statuses", "icccl", "main",
+      "data_sources", "iccicl", "main",
+      "datasets", "icciicl", "main",
+      "studies", "icciiiicl", "main",
+      "plugins", "icciccl", "main",
+      "scripts", "iciiccl", "main",
+      "patient_lvl_tabs_groups", "iccicl", "main",
+      "patient_lvl_tabs", "icciiiicl", "main",
+      "patient_lvl_widgets", "iciiiicl", "main",
+      "aggregated_tabs_groups", "iccicl", "main",
+      "aggregated_tabs", "icciiiicl", "main",
+      "aggregated_widgets", "iciiiicl", "main",
+      "code", "icicicl", "main",
+      "options", "iciccnicl", "main",
+      "messages", "iiicccicl", "main",
+      "conversations", "iccl", "main",
+      "user_deleted_conversations", "iiic", "main",
+      "inbox_messages", "iiilcl", "main",
+      "log", "icccic", "main",
+      "git_repos", "iccccicl", "main",
+      "persons_options", "iiiiiiciccnicl", "public",
+      "widgets_options", "iiiicccnicl", "public",
+      "subsets", "icciicl", "public",
+      "subset_persons", "iiiicl", "public",
+      "concept", "iiccccccccc", "public",
+      "concept_dataset", "iiciiii", "public",
+      "concept_user", "iiiccc", "public",
+      "vocabulary", "icccccciicl", "public",
+      "domain", "icci", "public",
+      "concept_class", "icci", "public",
+      "concept_relationship", "iiicccc", "public",
+      "concept_relationship_user", "iiic", "public",
+      "concept_relationship_evals", "iiicc", "public",
+      "relationship", "iccccci", "public",
+      "concept_synonym", "iici", "public",
+      "concept_ancestor", "iiiii", "public",
+      "drug_strength", "iiinininiiccc", "public",
+      "patient_lvl_widgets_concepts", "iiiccccilicl", "public",
+      "aggregated_widgets_concepts", "iiiccccilicl", "public"
+    )
     
     # Test internet connection
     # If local is TRUE, don't use internet connection
@@ -114,7 +161,8 @@ app_server <- function(router, language = "en", app_folder = character(),
       if (debug) print(paste0(Sys.time(), " - server - observer r$db"))
       
       # Add default values in database, if it is empty
-      insert_default_data(output = output, r = r, m = m, i18n = i18n, has_internet = has_internet, options_toggles = options_toggles)
+      insert_default_data(output = output, r = r, m = m, i18n = i18n, has_internet = has_internet, 
+        db_col_types = db_col_types, users_accesses_toggles_options = users_accesses_toggles_options)
       
       # Load database
       load_database(r = r, m = m, i18n = i18n)
@@ -241,7 +289,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - general_settings")
       if (debug) print(paste0(Sys.time(), " - server - load server tabs - settings_app_db"))
     
-      mod_settings_app_database_server("settings_app_db", r, m, i18n, language, app_folder, perf_monitoring, debug)
+      mod_settings_app_database_server("settings_app_db", r, m, i18n, language, db_col_types, app_folder, perf_monitoring, debug)
       mod_page_sidenav_server("settings_app_db", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_app_db", r, language, i18n)
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - settings_app_db")
@@ -252,14 +300,14 @@ app_server <- function(router, language = "en", app_folder = character(),
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - settings_git")
       if (debug) print(paste0(Sys.time(), " - server - load server tabs - settings_users"))
     
-      mod_settings_users_server("settings_users", r, m, i18n, language, perf_monitoring, debug, options_toggles)
+      mod_settings_users_server("settings_users", r, m, i18n, language, perf_monitoring, debug, users_accesses_toggles_options)
       mod_page_sidenav_server("settings_users", r, d, m, i18n, language, perf_monitoring, debug)
       mod_page_header_server("settings_users", r, language, i18n)
     
       sapply(c("users", "users_statuses", "users_accesses"), function(page){
-        mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, m, i18n, language, perf_monitoring, debug, options_toggles)
-        mod_settings_users_server(paste0("settings_users_", page, "_management"), r, m, i18n, language, perf_monitoring, debug, options_toggles)
-        mod_settings_users_server(paste0("settings_users_", page, "_options"), r, m, i18n, language, perf_monitoring, debug, options_toggles)
+        mod_settings_users_server(paste0("settings_users_", page, "_creation"), r, m, i18n, language, perf_monitoring, debug, users_accesses_toggles_options)
+        mod_settings_users_server(paste0("settings_users_", page, "_management"), r, m, i18n, language, perf_monitoring, debug, users_accesses_toggles_options)
+        mod_settings_users_server(paste0("settings_users_", page, "_options"), r, m, i18n, language, perf_monitoring, debug, users_accesses_toggles_options)
       })
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - settings_users")

@@ -8,7 +8,7 @@ make_layout(
   language = "EN",
   page = character(),
   i18n = character(),
-  options_toggles = tibble::tibble()
+  users_accesses_toggles_options = tibble::tibble()
 )
 }
 \description{

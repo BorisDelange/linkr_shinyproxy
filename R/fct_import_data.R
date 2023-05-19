@@ -1,6 +1,6 @@
 #' Import a dataset
 #' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
+#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param dataset_id ID of the dataset, used to create directory in data/ (eg : dataset_3)
 #' @param data data variable (data.frame or tibble)
 #' @param type type or name of data to create c("patients", "stays", "labs_vitals", "text", "orders")
@@ -891,7 +891,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
 
 #' Import a thesaurus
 #' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
+#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
 #' @param thesaurus_id ID of the thesaurus, used to update thesaurus table (integer)
 #' @param thesaurus thesaurus data variable (data.frame or tibble)
 #' @param language language used for error / warning messages (character, default = "EN")

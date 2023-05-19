@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_settings_ui.R
 \name{render_settings_code_card}
 \alias{render_settings_code_card}
-\title{Render UI of options card}
+\title{Render UI of edit_code card}
 \usage{
 render_settings_code_card(
   ns = character(),
@@ -17,7 +17,7 @@ render_settings_code_card(
 \arguments{
 \item{ns}{Shiny namespace}
 
-\item{r}{r Shiny reactive value to communicate between tabs}
+\item{r}{r Shiny reactive value to communicate between modules}
 
 \item{id}{ID of the current page, format = "settings_[PAGE]" (character)}
 
@@ -27,16 +27,14 @@ render_settings_code_card(
 
 \item{link_id}{ID allows to link with code table (integer)}
 
-\item{category}{Category allowing to link with code table (character)}
-
-\item{language}{Language used (character)}
+\item{i18n}{Translator object from shiny.i18n library}
 }
 \description{
-Render UI of options card
+Render UI of edit_code card
 }
 \examples{
 \dontrun{
 render_settings_code_card(ns = NS("settings_datasets"), r = r, id = "settings_datasets", title = "edit_dataset_code",
-  code = "Enter your code here", link_id = 3, language = "EN")
+  code = "Enter your code here", link_id = 3, i18n = i18n)
 }
 }

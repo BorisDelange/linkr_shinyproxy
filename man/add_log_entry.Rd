@@ -7,7 +7,7 @@
 add_log_entry(r, category, name, value)
 }
 \arguments{
-\item{r}{Shiny reactive value r used to communicate between tabs}
+\item{r}{Shiny reactive value r used to communicate between modules}
 
 \item{category}{Category of the log entry, eg : "SQL query" (character)}
 

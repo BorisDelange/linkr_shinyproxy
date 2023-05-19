@@ -7,7 +7,7 @@
 get_page_options(id = character())
 }
 \arguments{
-\item{id}{ID of the tab / page}
+\item{id}{ID of the page}
 }
 \value{
 A character vector with options

@@ -9,11 +9,11 @@ get_col_names(table_name = character(), i18n = character())
 \arguments{
 \item{table_name}{Name of the table (character)}
 
-\item{language}{Language used (charater)}
+\item{i18n}{Translator object from shiny.i18n library}
 }
 \description{
-Get column names
+Get the columns names of a table
 }
 \examples{
-get_col_names(table_name = "datasets", language = "EN")
+get_col_names(table_name = "datasets", i18n = i18n)
 }

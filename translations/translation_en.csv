@@ -633,6 +633,7 @@ reload_app_to_take_into_account_changes,You have to restart session to take into
 modif_names_duplicates,There are duplicates in the names, please remove duplicates before saving
 error_restoring_database,Error restoring database
 error_restoring_database_table,Error restoring database table
+error_importing_default_database,Error importing default database
 database_restored,Database restored
 reload_log,Reload log
 value,Value

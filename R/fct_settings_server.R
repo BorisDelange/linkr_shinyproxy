@@ -2,8 +2,8 @@
 #' 
 #' @param session Shiny session variable
 #' @param output Shiny output variable
-#' @param r Shiny r reactive value, to communicate between tabs (reactiveValue)
-#' @param language Language used (character)
+#' @param r Shiny reactive value, used to communicate between modules (reactiveValue)
+#' @param i18n Translator object from shiny.i18n library
 #' @param id ID of current tab / page (character)
 #' @param data A list with data to add (list)
 #' @param table Name of the corresponding table in database (character)
@@ -11,15 +11,15 @@
 #' @param req_unique_values Which fields require unique values before inserting data in database ? (character)
 #' @param required_dropdowns Which dropdowns are required (not empty) before insert data in database ? Default to "all" (character)
 #' @param dropdowns Tibble with the values of distinct dropdowns names (tibble)
+#' @param r_message_bar If the MessageBar is displayed with a r variable or with show_message_bar function (TRUE for r variable)
 #' @examples 
 #' \dontrun{
 #' data <- list()
 #' data$name <- "New dataset"
 #' data$description <- "Description of the dataset"
 #' data$data_source <- 5
-#' add_settings_new_data(output = output, r = r, language = language, id = "settings_datasets", data = data, dropdowns = "data_source")
+#' add_settings_new_data(output = output, r = r, i18n = i18n, id = "settings_datasets", data = data, table = "datasets", dropdowns = "data_source")
 #' }
-
 add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
   i18n = character(), id = character(), data = tibble::tibble(), table = character(), required_textfields = character(), req_unique_values = character(), 
   required_dropdowns = "all", dropdowns = character(), r_message_bar = FALSE){
@@ -367,34 +367,14 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
 #' Create cache for datatable data
 #' 
 #' @param output Shiny output value, to show message bars
-#' @param r Shiny r reactive value, to communicate between tabs
-#' @param language Language used (character)
-#' @param tab_id ID of current page / tab (character)
-#' @param thesaurus_id ID of thesaurus, which thesaurus items depend on (integer)
-#' @param dataset_id ID of dataset to count rows by item of the thesaurus (integer)
+#' @param r Shiny reactive value, to communicate between modules
+#' @param i18n Translator object from shiny.i18n library
+#' @param module_id ID of current page / module (character)
+#' @param ids IDs of rows in database
 #' @param category Category of cache, depending of the page of Settings (character)
 
-create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character(), module_id = character(), 
-  vocabulary_id = integer(), dataset_id = NA_integer_, ids = integer(), category = character()){
-  
-  # Load join between our data and the cache
-  
-  # For action buttons (delete & plus_minus) & colours, don't use dataset_id / link_id_bis
-  # if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") |
-  #     grepl("plus_data_explorer", category) | grepl("colours_tab", category) | grepl("plus_tab", category)){
-  #   sql <- glue::glue_sql(paste0(
-  #     "SELECT t.id, t.vocabulary_id, t.item_id, t.name, t.display_name, t.unit, t.datetime, t.deleted, c.value ",
-  #     "FROM thesaurus_items t ",
-  #     "LEFT JOIN cache c ON c.link_id = t.id AND c.category = {category} ",
-  #     "WHERE t.vocabulary_id = {vocabulary_id} AND t.deleted IS FALSE ",
-  #     "ORDER BY t.id"), .con = m$db)
-  #   data <- DBI::dbGetQuery(m$db, sql)
-  # }
-  
-  # if (category %in% ("colours_add_widget", "colours_widget_settings", "colours_plugin", "plus_plugin")){
-  #   sql <- glue::glue_sql("SELECT link_id AS id, value FROM cache WHERE category = {category} AND link_id IN ({r$dataset_all_concepts %>% dplyr::pull(concept_id_1)*})", .con = m$db)
-  #   data <- DBI::dbGetQuery(m$db, sql)
-  # }
+create_datatable_cache <- function(output, r = shiny::reactiveValues(), i18n = character(), module_id = character(), 
+  ids = integer(), category = character()){
   
   # For thumbs_and_delete, search in concept_relationship_user table
   if (category == "thumbs_and_delete"){
@@ -415,50 +395,12 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
   if (data %>% dplyr::filter(is.na(data$value) | data$value == "") %>% nrow() > 0){
     
     if (category == "thumbs_and_delete"){
+      
       sql <- glue::glue_sql(paste0("SELECT * FROM concept_relationship cr WHERE ",
         "cr.id IN ({ids*}) ",
         "AND cr.id NOT IN ({ids_to_keep*}) "), .con = m$db)
       data_reload <- DBI::dbGetQuery(m$db, sql)
-    }
-    # else if (category %in% c("colours_add_widget", "colours_widget_settings", "colours_plugin", "plus_plugin")){
-    #   data_reload <- r$dataset_all_concepts %>% dplyr::filter(concept_id_1 %not_in% ids_to_keep)
-    # }
-    
-    # else {
-    #   sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE vocabulary_id = {vocabulary_id} ",
-    #     "AND id NOT IN ({ids_to_keep*}) AND deleted IS FALSE ORDER BY id"), .con = r$db)
-    #   data_reload <- DBI::dbGetQuery(r$db, sql)
-    # }
-    
-    # Make action column, depending on category
-    # If category is delete, add a delete button only
-    # If category is plus_minus, add plus and minus buttons
-    # If category is thumbs_and_delete, add thumbs_up, thumbs_down and delete buttons
-    
-    # if (category == "delete"){
-    #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-    #     tagList(
-    #       shiny::actionButton(paste0("sub_delete_", id), "", icon = icon("trash-alt"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-thesaurus_items_deleted_pressed', this.id, {priority: 'event'})")))))
-    # }
-    # if (category == "plus_minus"){
-    #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-    #     tagList(
-    #       shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-item_selected', this.id, {priority: 'event'})")),
-    #       shiny::actionButton(paste0("remove_", id), "", icon = icon("minus"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-item_removed', this.id, {priority: 'event'})")))))
-    # }
-    # if (category == "plus_plugin" | grepl("plus_tab", category)){
-    #   if (category == "plus_plugin") input_name <- "item_selected"
-    #   else if (category == "plus_widget_creation") input_name <- "widget_creation_item_selected"
-    #   else if (category == "plus_widget_settings") input_name <- "widget_settings_item_selected"
-    #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-    #     tagList(
-    #       shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-", input_name, "', this.id, {priority: 'event'})")))))
-    # }
-    if (category == "thumbs_and_delete"){
+  
       data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
         tagList(
           shiny::actionButton(paste0("positive_eval_", id), "", icon = icon("thumbs-up"),
@@ -471,52 +413,7 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
             onclick = paste0("Shiny.setInputValue('", module_id, "-concept_mapping_deleted_pressed', this.id, {priority: 'event'})"),
             style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
         )))
-    }
-    # if (grepl("plus_data_explorer", category)){
-    #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-    #     tagList(
-    #       shiny::actionButton(paste0("select_", id), "", icon = icon("plus"),
-    #         onclick = paste0("Shiny.setInputValue('", module_id, "-data_explorer_item_selected', this.id, {priority: 'event'})")))))
-    # }
-    # else if (category %in% c("colours_add_widget", "colours_widget_settings", "colours_plugin")){
-    # 
-    #   # if (category == "colours_plugin") input_name <- "colours"
-    #   # else if (category == "colours_add_widget") input_name <- "widget_creation_colour"
-    #   # else if (category == "colours_widget_settings") input_name <- "widget_settings_colour"
-    # 
-    #   colorCells <- list(
-    #     list(id = "#EF3B2C", color = "#EF3B2C"),
-    #     list(id = "#CB181D", color = "#CB181D"),
-    #     list(id = "#7BCCC4", color = "#7BCCC4"),
-    #     list(id = "#2B8CBE", color = "#2B8CBE"),
-    #     list(id = "#5AAE61", color = "#5AAE61"),
-    #     list(id = "#FFD92F", color = "#FFD92F"),
-    #     list(id = "#000000", color = "#000000"))
-    # 
-    #   ns <- NS(module_id)
-    #   data_reload <- data_reload %>% dplyr::rowwise() %>% dplyr::mutate(value = as.character(
-    #     div(shiny.fluent::SwatchColorPicker.shinyInput(ns(paste0(input_name, "_", id)), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells),
-    #       cellHeight = 15, cellWidth = 15#, cellMargin = 10
-    #     )#,
-    #       #style = "height:20px; padding:0px; margin-top:24px;"
-    #     )
-    #   ))
-    # }
-    
-    # Delete old cache
-    
-    # if (category %in% c("delete", "plus_plugin", "plus_minus", "colours_plugin") | 
-    #     grepl("plus_data_explorer", category) | grepl("plus_tab", category) | grepl("colours_tab", category)){
-    #   sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
-    #     "SELECT c.id FROM cache c ",
-    #     "INNER JOIN thesaurus_items t ON c.link_id = t.id AND c.category = {category} AND t.id NOT IN ({ids_to_keep*}) ",
-    #     "WHERE t.vocabulary_id = {vocabulary_id}", 
-    #     ")"), .con = r$db)
-    #   DBI::dbSendStatement(r$db, sql) -> query
-    # }
-    
-    # For thumbs_and_delete, use thesaurus_items_mapping table
-    if (category == "thumbs_and_delete"){
+      
       sql <- glue::glue_sql(paste0("DELETE FROM cache WHERE id IN (",
         "SELECT c.id FROM cache c ",
         "INNER JOIN concept_relationship cr ",
@@ -537,7 +434,7 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
       dplyr::transmute(
         category = !!category,
         link_id = id,
-        link_id_bis = dataset_id,
+        link_id_bis = NA_integer_,
         value,
         datetime = as.character(Sys.time()))
     data_insert$id <- seq.int(nrow(data_insert)) + last_row
@@ -546,16 +443,57 @@ create_datatable_cache <- function(output, r = shiny::reactiveValues(), d = shin
     # Add data in cache table
     DBI::dbAppendTable(m$db, "cache", data_insert)
   }
-  # 
-  if (category %in% c("delete", "plus_plugin", "plus_minus", "thumbs_and_delete") |
-    grepl("plus_data_explorer", category) | grepl("plus_tab", category)) data <- data %>% dplyr::rename(action = value)
-  # if (category == "colours_plugin" | grepl("colours_tab", category)) data <- data %>% dplyr::rename(colour = value)
+  
+  data <- data %>% dplyr::rename(action = value)
   
   data
 }
 
 #' Delete element
 #' 
+#' @description Create reactivity to delete a row in a datatable
+#' @param r Shiny reactive value, to communicate between modules (reactiveValue)
+#' @param m Shiny reactive value, to communicate between modules (reactiveValue)
+#' @param session Shiny session variable
+#' @param input Shiny input variable
+#' @param output Shiny output variable
+#' @param ns Shiny namespace
+#' @param i18n Translator object from shiny.i18n library
+#' @param delete_prefix Prefix used for reactive & input variables (character)
+#' @param dialog_title Text for the title of the reactOutput (character)
+#' @param dialog_subtext Text for the subText area of the reactOutput (character)
+#' @param react_variable Name of r variable used to open or close reactOutput (character)
+#' @param table Name of the table in the database where the data will be deleted (character)
+#' @param r_table Name of the r variable containing the data to be deleted (charadter)
+#' @param id_var_sql Name of the ID column in the database (character)
+#' @param id_var_r Name of the ID column in r variable (character)
+#' @param delete_message Message displayed when the deletion is confirmed (character)
+#' @param reload_variable Name of r variable that triggers the reload of data (character)
+#' @param information_variable Name of r variable containing the ID of deleted data (character)
+#' @param translation TRUE if dialog_title & dialog_subtext have to be translated (logical)
+#' @param app_folder App folder (character)
+#' @param prefix A prefix used in Shiny modules (character)
+#' @param r_message_bar If the MessageBar is displayed with a r variable or with show_message_bar function (TRUE for r variable)
+#' @examples 
+#' \dontrun{
+#' widget_delete_prefix <- paste0(prefix, "_widget")
+#' widget_dialog_title <- paste0(prefix, "_widgets_delete")
+#' widget_dialog_subtext <- paste0(prefix, "_widgets_delete_subtext")
+#' widget_react_variable <- "widget_delete_confirm"
+#' widget_table <- paste0(prefix, "_widgets")
+#' widget_id_var_sql <- "id"
+#' widget_id_var_r <- paste0(prefix, "_selected_widget")
+#' widget_delete_message <- paste0(prefix, "_widget_deleted")
+#' widget_reload_variable <- paste0(prefix, "_load_ui")
+#' widget_delete_variable <- paste0(widget_delete_prefix, "_open_dialog")
+#' widget_information_variable <- paste0(prefix, "_widget_deleted")
+#'
+#' delete_element(r = r, input = input, output = output, session = session, ns = ns, i18n = i18n,
+#'   delete_prefix = widget_delete_prefix, dialog_title = widget_dialog_title, dialog_subtext = widget_dialog_subtext,
+#'   react_variable = widget_react_variable, table = widget_table, id_var_sql = widget_id_var_sql, id_var_r = widget_id_var_r,
+#'   delete_message = widget_delete_message, translation = TRUE, reload_variable = widget_reload_variable,
+#'   information_variable = widget_information_variable)
+#' }
 delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), session, input, output, ns = character(), i18n = character(),
   delete_prefix = character(), dialog_title = character(), dialog_subtext = character(),
   react_variable = character(), table = character(), r_table = character(), id_var_sql = character(), id_var_r = character(),
@@ -651,122 +589,18 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
   })
 }
 
-#' Delete a row in datatable
-#' 
-#' @param output Shiny output variable
-#' @param r r Shiny reactive value used to communicate between tabs
-#' @param ns Shiny namespace
-#' @param language Language used (character)
-#' @param row_deleted ID of row to delete (integer) 
-#' @param table Name of the table used (character)
-#' @examples 
-#' \dontrun{
-#' delete_settings_datatable_row(output = output, r = r, ns = ns, language = "EN", row_deleted = 13, table = "datasets")
-#' }
-delete_settings_datatable_row <- function(output, id = character(), r = shiny::reactiveValues(), ns = character(), i18n = character(),
-  link_id = integer(), category = character(), row_deleted = integer(), table = character()){
-  
-  # Close dialog box
-  r[[paste0(table, "_delete_dialog")]] <- FALSE
-  
-  # Delete row in database
-  DBI::dbSendStatement(r$db, paste0("UPDATE ", table, " SET deleted = TRUE WHERE id = ", row_deleted)) -> query
-  DBI::dbClearResult(query)
-  r[[table]] <- r[[table]] %>% dplyr::filter(id != row_deleted)
-  
-  # Prefix, for patient_lvl & aggregated tables
-  prefix <- ""
-  if (grepl("patient_lvl", table)) prefix <- "patient_lvl"
-  if (grepl("aggregated", table)) prefix <- "aggregated"
-  
-  # If we delete a dataset, delete all studies & subsets associated
-  if (table == "datasets"){
-    
-    studies <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM studies WHERE dataset_id = ", row_deleted))
-    
-    if(nrow(studies) > 0){
-      studies <- studies %>% dplyr::pull()
-      
-      sql <- glue::glue_sql("UPDATE studies SET deleted = TRUE WHERE dataset_id = {row_deleted}", .con = r$db)
-      query <- DBI::dbSendStatement(r$db, sql)
-      DBI::dbClearResult(query)
-      r$studies <- r$studies %>% dplyr::filter(dataset_id != row_deleted)
-      
-      sql <- glue::glue_sql("UPDATE subsets SET deleted = TRUE WHERE study_id IN ({studies*})", .con = r$db)
-      query <- DBI::dbSendStatement(r$db, sql)
-      DBI::dbClearResult(query)
-      r$subsets <- r$subsets %>% dplyr::filter(study_in %not_in% studies)
-      
-      # update_r(r = r, table = "studies")
-      # update_r(r = r, table = "subsets")
-    }
-  }
-  
-  # If we delete a study, delete all subsets associated
-  if (table == "studies"){
-    
-    sql <- glue::glue_sql("UPDATE subsets SET deleted = TRUE WHERE study_id = {row_deleted}", .con = r$db)
-    query <- DBI::dbSendStatement(r$db, sql)
-    DBI::dbClearResult(query)
-    r$subsets <- r$subsets %>% dplyr::filter(study_id != row_deleted)
-    
-    # update_r(r = r, table = "subsets")
-  }
-  
-  # If we delete a tab family, delete all tabs & tabs elements associated
-  if (table == paste0(prefix, "_tabs_groups")){
-    
-    tabs <- DBI::dbGetQuery(r$db, paste0("SELECT id FROM ", prefix, "_tabs WHERE tab_group_id = ", row_deleted)) %>% dplyr::pull()
-    
-    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_tabs'`} SET deleted = TRUE WHERE tab_group_id = {row_deleted}", .con = r$db)
-    query <- DBI::dbSendStatement(r$db, sql)
-    DBI::dbClearResult(query)
-    r[[paste0(prefix, "_tabs")]] <- r[[paste0(prefix, "_tabs")]] %>% dplyr::filter(tab_group_id != row_deleted)
-    
-    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_widgets'`} SET deleted = TRUE WHERE tab_id IN ({tabs*})", .con = r$db)
-    query <- DBI::dbSendStatement(r$db, sql)
-    DBI::dbClearResult(query)
-    r[[paste0(prefix, "_widgets")]] <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(tab_id %not_in% tabs)
-    
-    # update_r(r = r, table = paste0(prefix, "_tabs"))
-    # update_r(r = r, table = paste0(prefix, "_widgets"))
-  }
-  
-  # If we delete a tab, delete all tabs elements associated
-  if (table == paste0(prefix, "_tabs")){
-    
-    sql <- glue::glue_sql("UPDATE {`paste0(prefix, '_widgets')`} SET deleted = TRUE WHERE tab_id = {row_deleted}", .con = r$db)
-    query <- DBI::dbSendStatement(r$db, sql)
-    DBI::dbClearResult(query)
-    r[[paste0(prefix, "_widgets")]] <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(tab_id != row_deleted)
-    
-    # update_r(r = r, table = paste0(prefix, "_widgets"))
-  }
-  
-  # Update r vars
-  # For thesaurus_items : the r variable is r$sub_thesaurus_items (from page settings / data management / thesaurus)
-  # This page is the only place from where we can delete a thesaurus item
-  # Distinct r$ names are to avoid conflict with other pages (settings / plugins & settings / tabs)
-  
-  if (table == "thesaurus_items") r$thesaurus_refresh_thesaurus_items <- paste0(r$thesaurus_refresh_thesaurus_items, "_delete")
-  
-  # if (table != "thesaurus_items") update_r(r = r, table = table)
-  
-  # Notification to user
-  show_message_bar(output, paste0(get_singular(word = table), "_deleted"), type = "severeWarning", i18n = i18n, ns = ns)
-}
-
 #' Execute / test code after edition
 #' 
-#' @description Execute code entered in the ShinyAce editor\cr
-#' For plugins page, UI & server code are displayed in distinct outputs (uiOutput for UI code, textOutput for server code to display error messages)
-#' @param input variable from Shiny, used to execute UI & server code (plugins page)
-#' @param output variable from Shiny, used to render messages on the message bar
-#' @param session variable from Shiny, used to execute UI & server code (plugins page)
-#' @param id ID of the current page / tab
+#' @description Execute code entered in the ShinyAce editor
+#' @param input Input Shiny variable
+#' @param output Output Shiny variable
+#' @param session Session Shiny variable
+#' @param id ID of the current page / module 
 #' @param ns Shiny namespace
-#' @param language language used (character)
-#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
+#' @param i18n Translator object from shiny.i18n library
+#' @param r Shiny reactive value, used to communicate between modules (reactiveValue)
+#' @param d Shiny reactive value, used to communicate between modules (reactiveValue)
+#' @param m Shiny reactive value, used to communicate between modules (reactiveValue)
 #' @param edited_code New code, after editing it (character)
 #' @param code_type For plugins page, code_type could be UI or server (character)
 #' @param data A list containing dataframes / tibbles, if data need to be used in the evaluated code (list)
@@ -776,7 +610,7 @@ delete_settings_datatable_row <- function(output, id = character(), r = shiny::r
 #' }
 execute_settings_code <- function(input, output, session, id = character(), ns = character(), i18n = character(), 
   r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
-  edited_code = character(), code_type = "", data = list(), col_types = character()){
+  edited_code = character(), code_type = "", data = list()){
   
   result <- ""
   
@@ -831,6 +665,16 @@ execute_settings_code <- function(input, output, session, id = character(), ns =
   result
 }
 
+#' Monitor performances
+#' 
+#' @description Monitor performances of the ShinyApp, with calculating time each step takes
+#' @param r Shiny reactive value, used to communicate between modules (reactiveValue)
+#' @param action If the function is called at the beginning of the end of a task, takes "start" or "stop" values (character)
+#' @param task Name of the task (character)
+#' @examples 
+#' \dontrun{
+#'  monitor_perf(r = r, action = "start", task = "Load database")
+#' }
 monitor_perf <- function(r = shiny::reactiveValues(), action = "stop", task = character()){
   
   # if (!r$perf_monitoring) return()
@@ -849,9 +693,29 @@ monitor_perf <- function(r = shiny::reactiveValues(), action = "stop", task = ch
   }
 }
 
+#' Prepare data for datatable
+#' 
+#' @description Prepare data to be used in a DT datable
+#' @param output Shiny output value, to show message bars
+#' @param r Shiny reactive value, used to communicate between modules (reactiveValue)
+#' @param ns Shiny namespace
+#' @param i18n i18n Translator object from shiny.i18n library
+#' @param id ID of the current page / module 
+#' @param table Table of the database containing the data (character)
+#' @param dropdowns Names of the dropdowns displayed in the datatable (character)
+#' @param dropdowns_multiselect Names of the dropdowns which have the multiSelect argument set to TRUE (character)
+#' @param dropdowns_null_value Names of the dropdowns where a null value is added at the beginning (character)
+#' @param factorize_cols Names of the columns which will be factorized, to be sortable (character)
+#' @param action_buttons Names of the action buttons needed (character)
+#' @param data_input The data which will be transformed (tibble)
+#' @examples 
+#' \dontrun{
+#'  prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = "settings_users",
+#' table = "users", dropdowns = "user_status", action_buttons = "delete", data_input = r$users_temp)
+#' }
 prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = character(), i18n = character(), id = character(),
   table = character(), dropdowns = character(), dropdowns_multiselect = character(), dropdowns_null_value = character(), factorize_cols = character(),
-  action_buttons = character(), data_input = tibble::tibble(), data_output = tibble::tibble()){
+  action_buttons = character(), data_input = tibble::tibble()){
 
   # Initiate data_output, starting from data_input
   data_output <- data_input
@@ -865,8 +729,7 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = cha
   }
   
   # Add a column action in the DataTable
-  # Action column is already loaded for thesaurus_items (cache system)
-  if (!grepl("thesaurus_items", table) & length(action_buttons) != 0) data_output["action"] <- NA_character_
+  if (length(action_buttons) != 0) data_output["action"] <- NA_character_
   
   # Dropdowns is a named character vector, with names corresponding to column names (eg data_source_id)
   # and values corresponding to data_var / data variables names (eg data_sources)
@@ -879,9 +742,9 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = cha
   # - add an Action column with delete action button (+/- options / edit code buttons)
   # - show creator name
   
-  # Loop over data only if necessary (eg not necessary for thesaurus_items, with a lot of rows...)
+  # Loop over data only if necessary
   # Not necessary if no dropdowns, no action_buttons & no creator_id col
-  if (!grepl("thesaurus_items", table) & (length(dropdowns) != 0 | length(action_buttons) != 0 | "creator_id" %in% names(data_output))){
+  if (length(dropdowns) != 0 | length(action_buttons) != 0 | "creator_id" %in% names(data_output)){
     
     for (i in 1:nrow(data_output)){
       
@@ -1029,143 +892,81 @@ prepare_data_datatable <- function(output, r = shiny::reactiveValues(), ns = cha
   data_output
 }
 
-prepare_data_shiny_tree <- function(data = tibble::tibble(), stopened = FALSE){
-  full_list <- list()
-  
-  if (nrow(data) > 0){
-    
-    # Loop over categories levels
-    for (i in 1:(max(data$level))){
-      
-      if (i == 1){
-        
-        current_lvl_categories <- data %>% dplyr::filter(level == 1)
-        
-        # Loop over categories
-        for (j in 1:nrow(current_lvl_categories)){
-          
-          row <- current_lvl_categories[j, ]
-          
-          new_list <- list(structure("", stid = row$item_id, sttype = "default", stopened = stopened))
-          names(new_list) <- row$name
-          full_list <- append(full_list, new_list)
-        }
-      }
-      
-      else {
-        
-        filtered_categories <- data %>% dplyr::filter(level == i)
-        
-        # Create path column
-        paths <- data %>% 
-          dplyr::filter(level == i) %>%
-          dplyr::pull(path)
-        
-        # Loop over paths
-        for (j in 1:length(paths)){
-          
-          path <- paths[j]
-          
-          # Select data with the same path
-          same_path_categories <- filtered_categories %>% dplyr::filter(path == !!path)
-          
-          new_list <- list()
-          
-          for (k in 1:nrow(same_path_categories)){
-            
-            row <- same_path_categories[k, ]
-            new_list_child <- list(structure("", stid = row$item_id, sttype = "default", stopened = stopened))
-            names(new_list_child) <- paste0(row$name, " (", row$count_persons_rows, " | ", row$count_concepts_rows, ")")
-            
-            new_list <- new_list %>% append(new_list_child)
-          }
-          
-          eval(parse(text = paste0("full_list$", path, " <- structure(
-            sttype = 'default', stid = attributes(full_list$", path, ")$stid, stopened = ", stopened, ", new_list)")))
-        }
-      }
-    }
-  }
-  
-  full_list
-}
-
-#' Reload cache
-#' 
-#' @param r Shiny r reactive value
-#' @param table Database table name
-#' @param data Data
-
-reload_cache_for_settings <- function(r = shiny::reactiveValues(), table = character(), data = tibble::tibble()){
-  
-  # Delete old values from cache
-  
-  sql <- glue::glue_sql("DELETE FROM cache_for_settings WHERE table_name = {table}", .con = r$db)
-  query <- DBI::dbSendStatement(r$db, sql)
-  DBI::dbClearResult(query)
-  
-  # Add values to cache
-  
-  for (i in 1:nrow(data)){
-    
-    row <- data[i, ] %>% dplyr::rename(link_id = id)
-    row_values <- row %>% unlist(use.names = FALSE)
-    
-    get_last_row(r$db, "cache_for_settings")
-    
-    sql <- glue::glue_sql("INSERT INTO cache_for_settings(id, table_name, {`colnames(row)`*})
-            SELECT {get_last_row(r$db, 'cache_for_settings') + 1}, {table}, {row*}", .con = r$db)
-    query <- DBI::dbSendStatement(r$db, sql)
-    DBI::dbClearResult(query)
-  }
-}
-
-#' Render delete react
-#' 
-#' @param r Shiny r reactive value to communicate between tabs
-#' @param ns Shiny namespace
-#' @param table Name of the table used (character)
-#' @param language Language used (character)
-#' @examples 
-#' \dontrun{
-#' render_settings_delete_react(r = r, table = "datasets")
-#' }
-render_settings_delete_react <- function(r = shiny::reactiveValues(), ns = character(), table = character(), i18n = character()){
-  prefix <- ""
-  if (table == "thesaurus_items") prefix <- "thesaurus_items_"
-  
-  dialogContentProps <- list(
-    type = 0,
-    title = i18n$t(paste0(table, "_delete")),
-    closeButtonAriaLabel = "Close",
-    subText = i18n$t(paste0(table, "_delete_subtext"))
-  )
-  shiny.fluent::Dialog(
-    hidden = !r[[paste0(table, "_delete_dialog")]],
-    onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", prefix, "hide_dialog', Math.random()); }")),
-    dialogContentProps = dialogContentProps,
-    modalProps = list(),
-    shiny.fluent::DialogFooter(
-      shiny.fluent::PrimaryButton.shinyInput(ns(paste0(prefix, "delete_confirmed")), text = i18n$t("delete")),
-      shiny.fluent::DefaultButton.shinyInput(ns(paste0(prefix, "delete_canceled")), text = i18n$t("dont_delete"))
-    )
-  )
-}
+# prepare_data_shiny_tree <- function(data = tibble::tibble(), stopened = FALSE){
+#   full_list <- list()
+#   
+#   if (nrow(data) > 0){
+#     
+#     # Loop over categories levels
+#     for (i in 1:(max(data$level))){
+#       
+#       if (i == 1){
+#         
+#         current_lvl_categories <- data %>% dplyr::filter(level == 1)
+#         
+#         # Loop over categories
+#         for (j in 1:nrow(current_lvl_categories)){
+#           
+#           row <- current_lvl_categories[j, ]
+#           
+#           new_list <- list(structure("", stid = row$item_id, sttype = "default", stopened = stopened))
+#           names(new_list) <- row$name
+#           full_list <- append(full_list, new_list)
+#         }
+#       }
+#       
+#       else {
+#         
+#         filtered_categories <- data %>% dplyr::filter(level == i)
+#         
+#         # Create path column
+#         paths <- data %>% 
+#           dplyr::filter(level == i) %>%
+#           dplyr::pull(path)
+#         
+#         # Loop over paths
+#         for (j in 1:length(paths)){
+#           
+#           path <- paths[j]
+#           
+#           # Select data with the same path
+#           same_path_categories <- filtered_categories %>% dplyr::filter(path == !!path)
+#           
+#           new_list <- list()
+#           
+#           for (k in 1:nrow(same_path_categories)){
+#             
+#             row <- same_path_categories[k, ]
+#             new_list_child <- list(structure("", stid = row$item_id, sttype = "default", stopened = stopened))
+#             names(new_list_child) <- paste0(row$name, " (", row$count_persons_rows, " | ", row$count_concepts_rows, ")")
+#             
+#             new_list <- new_list %>% append(new_list_child)
+#           }
+#           
+#           eval(parse(text = paste0("full_list$", path, " <- structure(
+#             sttype = 'default', stid = attributes(full_list$", path, ")$stid, stopened = ", stopened, ", new_list)")))
+#         }
+#       }
+#     }
+#   }
+#   
+#   full_list
+# }
 
 #' Save code edition
 #' 
 #' @description Save code in code table after editing it
-#' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
+#' @param output Shiny output variable
+#' @param r Shiny reactive value, used to communicate between modules (reactiveValue)
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
 #' @param category Category column in code table, eg : "dataset", "plugin" (character)
 #' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
 #' @param edited_code New code, after editing it (character)
-#' @param language Language used
+#' @param i18n Translator object from shiny.i18n library
 #' @examples
 #' \dontrun{
 #' save_settings_code(output = output, r = r, id = "settings_dataset", category = "dataset", code_id_input = "edit_code_5",
-#'   edited_code = "print('test code edition')", language = "EN")
+#'   edited_code = "print('test code edition')", i18n = i18n)
 #' }
 save_settings_code <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
   code_id_input = integer(), edited_code = character(), i18n = character()){
@@ -1195,20 +996,22 @@ save_settings_code <- function(output, r = shiny::reactiveValues(), id = charact
 
 #' Save options
 #' 
-#' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)
+#' @description Save options in settings pages
+#' @param output Shiny output variable
+#' @param r Shiny reactive value, used to communicate between modules (reactiveValue)
 #' @param id ID of the current page, format = "settings_[PAGE]" (character)
 #' @param category Category column in code table, eg : "dataset", "plugin" (character)
 #' @param code_id_input Input of the actionButton containing ID of current row, in datatable, format = "edit_code_[ID]" (character)
 #' @param data New data to store in options table (list)
-#' @param language Language used
+#' @param i18n Translator object from shiny.i18n library
+#' @param page_options Which options need to be saved (character)
 #' @examples
 #' \dontrun{
 #' data <- list()
 #' data$show_only_aggregated_data <- TRUE
 #' data$users_allowed_read <- c(1, 3, 4)
 #' save_settings_options(output = output, r = r, id = "settings_dataset", category = "dataset", code_id_input = "edit_code_3",
-#'   data = data, language = "EN")
+#'   data = data, i18n = i18n, page_options = c("show_only_aggregated_data", "users_allowed_read"))
 #' }
 save_settings_options <- function(output, r = shiny::reactiveValues(), id = character(), category = character(),
   code_id_input = integer(), data = data, i18n = character(), page_options = character()){
@@ -1289,17 +1092,22 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
 }
 
-#' Save changes in datatable
+#' Save updates in datatable
 #' 
+#' @description Save updates in a datatable in settings pages
 #' @param output Shiny output variable
-#' @param r Shiny r reactive value to communicate between tabs
+#' @param r Shiny reactive value, used to communicate between modules (reactiveValue)
+#' @param m Shiny reactive value, used to communicate between modules (reactiveValue)
 #' @param ns Shiny namespace
-#' @param table Name of the table used (character)
+#' @param table Name of the database table (character)
+#' @param r_table Name of the r variable containing the data (character)
 #' @param duplicates_allowed Are duplicates in the name column allowed (logical)
-#' @param language Language used (character)
+#' @param i18n Translator object from shiny.i18n library
+#' @param r_message_bar If the MessageBar is displayed with a r variable or with show_message_bar function (TRUE for r variable)
 #' @examples 
 #' \dontrun{
-#' save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datasets", language = "EN")
+#' save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datasets", 
+#'   r_table = "datasets", duplicates_allowed = FALSE, i18n = i18n, r_message_bar = FALSE)
 #' }
 save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), ns = character(), 
   table = character(), r_table = character(), duplicates_allowed = FALSE, i18n = character(), r_message_bar = FALSE){
@@ -1458,17 +1266,19 @@ show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table =
 
 #' Update datatable
 #' 
+#' @description Update data in r variable when an update is made in the datatable
 #' @param input Shiny input variable
-#' @param r Shiny r reactive value to communicate between tabs
+#' @param r Shiny reactive value, used to communicate between modules (reactiveValue)
 #' @param ns Shiny namespace
-#' @param table Name of the table used (character)
-#' @param dropdowns Dropdowns shown on datatable (character)
-#' @param language Language used (character)
+#' @param table Name of the database table used (character)
+#' @param dropdowns Dropdowns displayed on datatable (character)
+#' @param i18n Translator object from shiny.i18n library
 #' @examples 
 #' \dontrun{
-#' update_settings_datatable(r = r, ns = ns, table = "datasets", dropdowns = "data_source", language = "EN")
+#' update_settings_datatable(r = r, ns = ns, table = "datasets", dropdowns = "data_source", i18n = i18n)
 #' }
-update_settings_datatable <- function(input, tab_id = character(), r = shiny::reactiveValues(), ns = character(), table = character(), dropdowns = character(), i18n = character()){
+update_settings_datatable <- function(input, tab_id = character(), r = shiny::reactiveValues(), ns = character(), 
+  table = character(), dropdowns = character(), i18n = character()){
   
   sapply(r[[table]] %>% dplyr::pull(id), function(id){
     sapply(dropdowns, function(dropdown){

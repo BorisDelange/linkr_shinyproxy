@@ -4,7 +4,7 @@
 \alias{get_plural}
 \title{Get plural form of a word}
 \usage{
-get_plural(word = character(), language = "EN")
+get_plural(word = character(), language = "en")
 }
 \arguments{
 \item{word}{Original word, in its singular form (character)}
@@ -15,5 +15,5 @@ get_plural(word = character(), language = "EN")
 Returns the plural form of a word
 }
 \examples{
-get_plural(word = "study", language = "EN")
+get_plural(word = "study", language = "en")
 }

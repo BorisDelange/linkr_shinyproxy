@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_helpers.R
 \name{coalesce2}
 \alias{coalesce2}
-\title{Coalesce}
+\title{Coalesce2}
 \usage{
 coalesce2(type, x)
 }
@@ -15,7 +15,7 @@ coalesce2(type, x)
 Return NA if variable is null or empty, returns the variable if not null & not empty
 }
 \description{
-Coalesce
+Returns a NA value
 }
 \examples{
 coalesce2("char", "my_char")

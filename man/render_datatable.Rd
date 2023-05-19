@@ -25,13 +25,14 @@ render_datatable(
   hidden_cols = character(),
   truncated_cols = character(),
   selection = "single",
-  bold_rows = character()
+  bold_rows = character(),
+  shortened_cols = character()
 )
 }
 \arguments{
 \item{output}{variable from Shiny, used to render messages on the message bar}
 
-\item{r}{The "petit r" object, used to communicate between tabs in the ShinyApp (reactiveValues object)}
+\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
 
 \item{ns}{Shiny namespace}
 
