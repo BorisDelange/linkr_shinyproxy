@@ -632,6 +632,7 @@ successfully_connected,Connecté avec succès
 reload_app_to_take_into_account_changes,Vous devez redémarrer la session pour prendre en compte les changements
 modif_names_duplicates,Certains noms sont utilisés plusieurs fois, retirez-les avant de sauvegarder
 error_restoring_database,Erreur lors de la restauration de la base de données
+error_restoring_database_table,Erreur lors de la restauration d'une table de la base de données
 database_restored,Base de données restaurée
 reload_log,Recharger le log
 value,Valeur
@@ -808,3 +809,7 @@ study_delete_message_subtext,Confirmer la suppression de ce message ?
 deleted_message,Message supprimé
 fail_load_message,Erreur lors du chargement d'un message
 fail_load_message_show_raw_message,"Erreur lors du chargement du message, affichage du texte brut."
+main_tables_to_export,Tables de la BDD principale
+public_tables_to_export,Tables de la BDD publique
+main_tables_to_import,Tables de la BDD principale
+public_tables_to_import,Tables de la BDD publique

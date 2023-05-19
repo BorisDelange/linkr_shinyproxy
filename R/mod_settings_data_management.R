@@ -1201,7 +1201,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             options = table_cols_options[[input$vocabularies_table]], value = table_cols_options_value[[input$vocabularies_table]])
           
           # Get data from database
-          if (length(r[[input$vocabularies_table]]) == 0){
+          if (length(m[[input$vocabularies_table]]) == 0){
             
             # Filter concept_relationship with validated evaluations
             
@@ -1221,7 +1221,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
            
             else sql <- glue::glue_sql("SELECT * FROM {`input$vocabularies_table`}", .con = m$db)
             
-            r[[input$vocabularies_table]] <- DBI::dbGetQuery(m$db, sql) %>%
+            m[[input$vocabularies_table]] <- DBI::dbGetQuery(m$db, sql) %>%
               tibble::as_tibble() %>%
               dplyr::arrange(cols_order[[input$vocabularies_table]]) %>%
               dplyr::mutate_at(cols_to_char[[input$vocabularies_table]], as.character) %>%
@@ -1285,48 +1285,48 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (input$vocabularies_table %in% c("concept", "concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength") &
               input$vocabularies_table_vocabulary != "all_vocabularies"){
             
-            if (length(r$concept) == 0) result <- show_message_bar(output,  "load_concept_data_before", "severeWarning", i18n = i18n, ns = ns)
-            req(length(r$concept) > 0)
+            if (length(m$concept) == 0) result <- show_message_bar(output,  "load_concept_data_before", "severeWarning", i18n = i18n, ns = ns)
+            req(length(m$concept) > 0)
             
-            r$concept_filtered <- r$concept %>% dplyr::filter(vocabulary_id == input$vocabularies_table_vocabulary)
+            m$concept_filtered <- m$concept %>% dplyr::filter(vocabulary_id == input$vocabularies_table_vocabulary)
             
-            if (input$vocabularies_table == "concept") n_rows <- nrow(r$concept_filtered)
+            if (input$vocabularies_table == "concept") n_rows <- nrow(m$concept_filtered)
             else if (input$vocabularies_table %in% c("concept_relationship", "concept_ancestor", "drug_strength")){
               
               if (input$vocabularies_table == "concept_relationship"){
-                r[[paste0(input$vocabularies_table, "_filtered")]] <- 
-                  r[[input$vocabularies_table]] %>%
-                  dplyr::left_join(r$concept_filtered %>% dplyr::select(concept_id_1 = concept_id, vocabulary_id_1 = vocabulary_id), by = "concept_id_1") %>%
-                  dplyr::left_join(r$concept_filtered %>% dplyr::select(concept_id_2 = concept_id, vocabulary_id_2 = vocabulary_id), by = "concept_id_2")
+                m[[paste0(input$vocabularies_table, "_filtered")]] <- 
+                  m[[input$vocabularies_table]] %>%
+                  dplyr::left_join(m$concept_filtered %>% dplyr::select(concept_id_1 = concept_id, vocabulary_id_1 = vocabulary_id), by = "concept_id_1") %>%
+                  dplyr::left_join(m$concept_filtered %>% dplyr::select(concept_id_2 = concept_id, vocabulary_id_2 = vocabulary_id), by = "concept_id_2")
               }
               else if (input$vocabularies_table == "concept_ancestor"){
-                r[[paste0(input$vocabularies_table, "_filtered")]] <- 
-                  r[[input$vocabularies_table]] %>%
-                  dplyr::left_join(r$concept_filtered %>% dplyr::select(ancestor_concept_id = concept_id, vocabulary_id_1 = vocabulary_id), by = "ancestor_concept_id") %>%
-                  dplyr::left_join(r$concept_filtered %>% dplyr::select(descendant_concept_id = concept_id, vocabulary_id_2 = vocabulary_id), by = "descendant_concept_id")
+                m[[paste0(input$vocabularies_table, "_filtered")]] <- 
+                  m[[input$vocabularies_table]] %>%
+                  dplyr::left_join(m$concept_filtered %>% dplyr::select(ancestor_concept_id = concept_id, vocabulary_id_1 = vocabulary_id), by = "ancestor_concept_id") %>%
+                  dplyr::left_join(m$concept_filtered %>% dplyr::select(descendant_concept_id = concept_id, vocabulary_id_2 = vocabulary_id), by = "descendant_concept_id")
               }
               else if (input$vocabularies_table == "drug_strength"){
-                r[[paste0(input$vocabularies_table, "_filtered")]] <- 
-                  r[[input$vocabularies_table]] %>%
-                  dplyr::left_join(r$concept_filtered %>% dplyr::select(drug_concept_id = concept_id, vocabulary_id_1 = vocabulary_id), by = "drug_concept_id") %>%
-                  dplyr::left_join(r$concept_filtered %>% dplyr::select(ingredient_concept_id = concept_id, vocabulary_id_2 = vocabulary_id), by = "ingredient_concept_id")
+                m[[paste0(input$vocabularies_table, "_filtered")]] <- 
+                  m[[input$vocabularies_table]] %>%
+                  dplyr::left_join(m$concept_filtered %>% dplyr::select(drug_concept_id = concept_id, vocabulary_id_1 = vocabulary_id), by = "drug_concept_id") %>%
+                  dplyr::left_join(m$concept_filtered %>% dplyr::select(ingredient_concept_id = concept_id, vocabulary_id_2 = vocabulary_id), by = "ingredient_concept_id")
               }
               
-              r[[paste0(input$vocabularies_table, "_filtered")]] <- 
-                r[[paste0(input$vocabularies_table, "_filtered")]] %>% 
+              m[[paste0(input$vocabularies_table, "_filtered")]] <- 
+                m[[paste0(input$vocabularies_table, "_filtered")]] %>% 
                 dplyr::filter(vocabulary_id_1 == input$vocabularies_table_vocabulary | vocabulary_id_2 == input$vocabularies_table_vocabulary) %>%
                 dplyr::select(-vocabulary_id_1, -vocabulary_id_2)
               
-              n_rows <- nrow(r[[paste0(input$vocabularies_table, "_filtered")]])
+              n_rows <- nrow(m[[paste0(input$vocabularies_table, "_filtered")]])
             }
             else if (input$vocabularies_table == "concept_synonym"){
-              r$concept_synonym_filtered <-
-                r$concept_synonym %>% 
-                dplyr::inner_join(r$concept_filtered %>% dplyr::select(concept_id, vocabulary_id), by = "concept_id")
-              n_rows <- nrow(r$concept_synonym_filtered)
+              m$concept_synonym_filtered <-
+                m$concept_synonym %>% 
+                dplyr::inner_join(m$concept_filtered %>% dplyr::select(concept_id, vocabulary_id), by = "concept_id")
+              n_rows <- nrow(m$concept_synonym_filtered)
             }
           }
-          else n_rows <- nrow(r[[input$vocabularies_table]])
+          else n_rows <- nrow(m[[input$vocabularies_table]])
           
           if (n_rows == 0){
             dropdown_options <- list(list(key = "0;0", text = "0"))
@@ -1380,9 +1380,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (input$vocabularies_table %in% c("concept", "concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength") &
               input$vocabularies_table_vocabulary != "all_vocabularies"){
             
-            data <- r[[paste0(input$vocabularies_table, "_filtered")]] %>% dplyr::slice(n_rows_start:n_rows_end)
+            data <- m[[paste0(input$vocabularies_table, "_filtered")]] %>% dplyr::slice(n_rows_start:n_rows_end)
           }
-          else data <- r[[input$vocabularies_table]] %>% dplyr::slice(n_rows_start:n_rows_end)
+          else data <- m[[input$vocabularies_table]] %>% dplyr::slice(n_rows_start:n_rows_end)
 
           if ((input$vocabularies_table %in% c("concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength") & input$vocabularies_datatable_show_row_details) |
               (input$vocabularies_table == "concept" & input$vocabularies_datatable_show_mapped_concepts)) selection <- "single" else selection <- "multiple"
@@ -1426,9 +1426,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (input$vocabularies_table %in% c("concept", "concept_relationship", "concept_synonym", "concept_ancestor", "drug_strength") &
               input$vocabularies_table_vocabulary != "all_vocabularies"){
             
-            data <- r[[paste0(input$vocabularies_table, "_filtered")]] %>% dplyr::slice(n_rows_start:n_rows_end)
+            data <- m[[paste0(input$vocabularies_table, "_filtered")]] %>% dplyr::slice(n_rows_start:n_rows_end)
           }
-          else data <- r[[input$vocabularies_table]] %>% dplyr::slice(n_rows_start:n_rows_end)
+          else data <- m[[input$vocabularies_table]] %>% dplyr::slice(n_rows_start:n_rows_end)
           
           
           # Show row details
@@ -1441,33 +1441,33 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
 
               result <- ""
               
-              if (length(r$concept) == 0) result <- div(i18n$t("load_concept_data_before"))
+              if (length(m$concept) == 0) result <- div(i18n$t("load_concept_data_before"))
 
               selected_row <- data[input$vocabularies_tables_datatable_rows_selected, ]
               
-              if (length(r$concept) > 0){
+              if (length(m$concept) > 0){
                 if (input$vocabularies_table == "concept_relationship"){
                   result <- div(
                     strong("concept_id_1"), " : ", selected_row$concept_id_1, br(),
-                    strong("concept_name_1"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$concept_id_1) %>% dplyr::pull(concept_name), br(),
+                    strong("concept_name_1"), " : ", m$concept %>% dplyr::filter(concept_id == selected_row$concept_id_1) %>% dplyr::pull(concept_name), br(),
                     strong("relationship_id"), " : ", selected_row$relationship_id, br(),
                     strong("concept_id_2"), " : ", selected_row$concept_id_2, br(),
-                    strong("concept_name_2"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$concept_id_2) %>% dplyr::pull(concept_name), br(),
+                    strong("concept_name_2"), " : ", m$concept %>% dplyr::filter(concept_id == selected_row$concept_id_2) %>% dplyr::pull(concept_name), br(),
                   )
                 }
                 
                 else if (input$vocabularies_table == "concept_synonym"){
                   result <- div(
-                    strong("concept_id"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$concept_id) %>% dplyr::pull(concept_name), br(),
+                    strong("concept_id"), " : ", m$concept %>% dplyr::filter(concept_id == selected_row$concept_id) %>% dplyr::pull(concept_name), br(),
                     strong("concept_synonym_name"), " : ", selected_row$concept_synonym_name, br(),
-                    strong("language_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$language_concept_id) %>% dplyr::pull(concept_name), br()
+                    strong("language_concept_name"), " : ", m$concept %>% dplyr::filter(concept_id == selected_row$language_concept_id) %>% dplyr::pull(concept_name), br()
                   )
                 }
                 
                 else if (input$vocabularies_table == "concept_ancestor"){
                   result <- div(
-                    strong("ancestor_concept_id"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$ancestor_concept_id) %>% dplyr::pull(concept_name), br(),
-                    strong("descendant_concept_id"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$descendant_concept_id) %>% dplyr::pull(concept_name), br(),
+                    strong("ancestor_concept_id"), " : ", m$concept %>% dplyr::filter(concept_id == selected_row$ancestor_concept_id) %>% dplyr::pull(concept_name), br(),
+                    strong("descendant_concept_id"), " : ", m$concept %>% dplyr::filter(concept_id == selected_row$descendant_concept_id) %>% dplyr::pull(concept_name), br(),
                     strong("min_level_of_separation"), " : ", selected_row$min_levels_of_separation, br(),
                     strong("max_level_of_separation"), " : ", selected_row$max_levels_of_separation, br()
                   )
@@ -1476,18 +1476,18 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
                 else if (input$vocabularies_table == "drug_strength"){
                   result <- div(
                     strong("drug_concept_id"), " : ", selected_row$drug_concept_id, br(),
-                    strong("drug_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$drug_concept_id) %>% dplyr::pull(concept_name), br(),
+                    strong("drug_concept_name"), " : ", m$concept %>% dplyr::filter(concept_id == selected_row$drug_concept_id) %>% dplyr::pull(concept_name), br(),
                     strong("ingredient_concept_id"), " : ", selected_row$ingredient_concept_id, br(),
-                    strong("ingredient_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$ingredient_concept_id) %>% dplyr::pull(concept_name), br(),
+                    strong("ingredient_concept_name"), " : ", m$concept %>% dplyr::filter(concept_id == selected_row$ingredient_concept_id) %>% dplyr::pull(concept_name), br(),
                     strong("amount_value"), " : ", selected_row$amount_value, br(),
                     strong("amount_unit_concept_id"), " : ", selected_row$amount_unit_concept_id, br(),
-                    strong("amount_unit_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$amount_unit_concept_id) %>% dplyr::pull(concept_name), br(),
+                    strong("amount_unit_concept_name"), " : ", m$concept %>% dplyr::filter(concept_id == selected_row$amount_unit_concept_id) %>% dplyr::pull(concept_name), br(),
                     strong("numerator_value"), " : ", selected_row$numerator_value, br(),
                     strong("numerator_unit_concept_id"), " : ", selected_row$numerator_unit_concept_id, br(),
-                    strong("numerator_unit_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$numerator_unit_concept_id) %>% dplyr::pull(concept_name), br(),
+                    strong("numerator_unit_concept_name"), " : ", m$concept %>% dplyr::filter(concept_id == selected_row$numerator_unit_concept_id) %>% dplyr::pull(concept_name), br(),
                     strong("denominator_value"), " : ", selected_row$denominator_value, br(),
                     strong("denominator_unit_concept_id"), " : ", selected_row$denominator_unit_concept_id, br(),
-                    strong("denominator_unit_concept_name"), " : ", r$concept %>% dplyr::filter(concept_id == selected_row$denominator_unit_concept_id) %>% dplyr::pull(concept_name), br(),
+                    strong("denominator_unit_concept_name"), " : ", m$concept %>% dplyr::filter(concept_id == selected_row$denominator_unit_concept_id) %>% dplyr::pull(concept_name), br(),
                     strong("box_size"), " : ", selected_row$box_size, br(),
                   )
                 }
@@ -1503,13 +1503,13 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             req(input$vocabularies_datatable_show_mapped_concepts)
 
             selected_row <- data[input$vocabularies_tables_datatable_rows_selected, ]
-            if (length(r$concept_relationship) == 0) result <- show_message_bar(output, "load_concept_relationship_data_before", "severeWarning", i18n = i18n, ns = ns)
+            if (length(m$concept_relationship) == 0) result <- show_message_bar(output, "load_concept_relationship_data_before", "severeWarning", i18n = i18n, ns = ns)
             
-            req(length(r$concept_relationship) > 0)
+            req(length(m$concept_relationship) > 0)
             
-            mapped_concepts <- r$concept_relationship %>%
+            mapped_concepts <- m$concept_relationship %>%
               dplyr::filter(concept_id_1 == selected_row$concept_id) %>%
-              dplyr::left_join(r$concept %>% dplyr::select(concept_id_2 = concept_id, concept_name_2 = concept_name), by = "concept_id_2") %>%
+              dplyr::left_join(m$concept %>% dplyr::select(concept_id_2 = concept_id, concept_name_2 = concept_name), by = "concept_id_2") %>%
               dplyr::select(concept_id_1, relationship_id, concept_id_2, concept_name_2) %>%
               dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.character)
 
@@ -1529,10 +1529,10 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_tables_datatable_cell_edit"))
 
           edit_info <- input$vocabularies_tables_datatable_cell_edit
-          r[[input$vocabularies_table]] <- DT::editData(r[[input$vocabularies_table]], edit_info, rownames = FALSE)
+          m[[input$vocabularies_table]] <- DT::editData(m[[input$vocabularies_table]], edit_info, rownames = FALSE)
 
           # Store that this row has been modified
-          r[[input$vocabularies_table]][[edit_info$row, "modified"]] <- TRUE
+          m[[input$vocabularies_table]][[edit_info$row, "modified"]] <- TRUE
         })
 
         # Save updates
@@ -1541,9 +1541,9 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
 
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_tables_datatable_save"))
 
-          if (nrow(r[[input$vocabularies_table]] %>% dplyr::filter(modified)) == 0) show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
+          if (nrow(m[[input$vocabularies_table]] %>% dplyr::filter(modified)) == 0) show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
 
-          ids_to_del <- r[[input$vocabularies_table]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
+          ids_to_del <- m[[input$vocabularies_table]] %>% dplyr::filter(modified) %>% dplyr::pull(id)
           req(length(ids_to_del) > 0)
 
           # Check if there are duplicates
@@ -1560,7 +1560,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           )
 
           if (data_check_duplicates_cols == "") check_duplicates <- 0
-          else check_duplicates <- r[[input$vocabularies_table]] %>% dplyr::group_by_at(data_check_duplicates_cols) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+          else check_duplicates <- m[[input$vocabularies_table]] %>% dplyr::group_by_at(data_check_duplicates_cols) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
 
           if (check_duplicates > 0) show_message_bar(output, "vocab_tables_duplicates_cols", "severeWarning", i18n, ns = ns)
 
@@ -1576,7 +1576,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             "drug_strength" = c("drug_concept_id", "ingredient_concept_id", "valid_start_date", "valid_end_date")
           )
 
-          check_required_cols <- r[[input$vocabularies_table]] %>% dplyr::filter(dplyr::if_any(dplyr::all_of(data_required_cols), ~ . %in% c("", NA_character_, NA_integer_))) %>% nrow()
+          check_required_cols <- m[[input$vocabularies_table]] %>% dplyr::filter(dplyr::if_any(dplyr::all_of(data_required_cols), ~ . %in% c("", NA_character_, NA_integer_))) %>% nrow()
 
           if (check_required_cols > 0) show_message_bar(output, "vocab_tables_empty_cols", "severeWarning", i18n, ns = ns)
 
@@ -1586,7 +1586,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           DBI::dbSendStatement(m$db, sql) -> query
           DBI::dbClearResult(query)
 
-          data <- r[[input$vocabularies_table]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
+          data <- m[[input$vocabularies_table]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
 
           DBI::dbAppendTable(m$db, input$vocabularies_table, data)
 
@@ -1607,7 +1607,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
 
           req(length(input$vocabularies_tables_datatable_rows_selected) > 0)
 
-          r$delete_vocabularies_table_rows <- r[[input$vocabularies_table]][input$vocabularies_tables_datatable_rows_selected, ] %>% dplyr::pull(id)
+          r$delete_vocabularies_table_rows <- m[[input$vocabularies_table]][input$vocabularies_tables_datatable_rows_selected, ] %>% dplyr::pull(id)
           r$vocabularies_table_open_dialog <- TRUE
         })
 
@@ -1648,7 +1648,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           DBI::dbSendStatement(m$db, sql) -> query
           DBI::dbClearResult(query)
 
-          r[[input$vocabularies_table]] <- r[[input$vocabularies_table]] %>% dplyr::filter(id %not_in% r$delete_vocabularies_table_rows)
+          m[[input$vocabularies_table]] <- m[[input$vocabularies_table]] %>% dplyr::filter(id %not_in% r$delete_vocabularies_table_rows)
 
           r$vocabulary_table_reload_datatable <- Sys.time()
 
@@ -1661,7 +1661,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
 
           if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer r$vocabulary_table_reload_datatable"))
 
-          DT::replaceData(r$vocabularies_tables_datatable_proxy, r[[input$vocabularies_table]], resetPaging = FALSE, rownames = FALSE)
+          DT::replaceData(r$vocabularies_tables_datatable_proxy, m[[input$vocabularies_table]], resetPaging = FALSE, rownames = FALSE)
         })
       }
       

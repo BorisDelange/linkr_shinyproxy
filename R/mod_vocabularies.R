@@ -437,7 +437,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           dplyr::mutate(relationship_id = NA_character_, vocabulary_id_2 = NA_character_, concept_id_2 = NA_integer_, concept_name_2 = NA_character_, .after = "concept_display_name_1") %>%
           dplyr::relocate(vocabulary_id_1, .before = "concept_id_1")
         
-        # Load r$concept & r$concept_relationship if not already loaded from mod_settings_data_management.R
+        # Load m$concept & m$concept_relationship if not already loaded from mod_settings_data_management.R
         # Convert cols to char and arrange cols as done in mod_settings_data_management.R
         
         tables <- c("concept", "concept_relationship")
@@ -451,7 +451,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         cols_order$concept_relationship <- "concept_id_1"
         
         for (table in tables){
-          if (length(r$table) == 0){
+          if (length(m[[table]]) == 0){
             if (table == "concept") sql <- glue::glue_sql("SELECT * FROM concept", .con = m$db)
             else if (table == "concept_relationship") sql <- glue::glue_sql(paste0(
               "SELECT cr.* FROM concept_relationship cr WHERE cr.id NOT IN ( ",
@@ -467,7 +467,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
               "SELECT cr.concept_relationship_id FROM cr ",
               ")"), .con = m$db)
             
-            r[[table]] <- DBI::dbGetQuery(m$db, sql) %>%
+            m[[table]] <- DBI::dbGetQuery(m$db, sql) %>%
               dplyr::arrange(cols_order[[table]]) %>%
               dplyr::mutate_at(cols_to_char[[table]], as.character) %>%
               dplyr::mutate(modified = FALSE)
@@ -476,21 +476,21 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         
         # Merge mapped concepts
         
-        if (nrow(r$concept_relationship) > 0 & nrow(r$concept) > 0 & nrow(dataset_all_concepts) > 0){
+        if (nrow(m$concept_relationship) > 0 & nrow(m$concept) > 0 & nrow(dataset_all_concepts) > 0){
           dataset_all_concepts <- dataset_all_concepts %>%
             dplyr::bind_rows(
               dataset_all_concepts %>%
                 dplyr::select(vocabulary_id_2 = vocabulary_id_1, concept_id_2 = concept_id_1, concept_name_2 = concept_name_1,
                   count_persons_rows, count_concepts_rows) %>%
                 dplyr::left_join(
-                  r$concept_relationship %>% 
+                  m$concept_relationship %>% 
                     dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.integer) %>%
                     dplyr::select(concept_id_1, concept_id_2, relationship_id),
                   by = "concept_id_2"
                 ) %>%
                 dplyr::filter(concept_id_1 != concept_id_2) %>%
                 dplyr::left_join(
-                  r$concept %>%
+                  m$concept %>%
                     dplyr::mutate_at("concept_id", as.integer) %>%
                     dplyr::select(vocabulary_id_1 = vocabulary_id, concept_id_1 = concept_id, concept_name_1 = concept_name,
                       domain_id, concept_class_id, standard_concept, concept_code, valid_start_date, valid_end_date, invalid_reason),

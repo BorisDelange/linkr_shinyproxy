@@ -400,41 +400,6 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       r$reload_studies_datatable <- Sys.time()
       
-      # Load thesaurus associated to data_source
-      # If thesaurus contains no data, maybe thesaurus code hasn't been run yet
-      
-      data_source <- r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id)
-      selected_thesaurus <- r$thesaurus %>%
-        dplyr::filter(
-          grepl(paste0("^", data_source, "$"), data_source_id) | 
-            grepl(paste0(", ", data_source, "$"), data_source_id) | 
-            grepl(paste0("^", data_source, ","), data_source_id) |
-            grepl(paste0(", ", data_source, ","), data_source_id)
-        ) %>% 
-        dplyr::inner_join(
-          r$code %>% dplyr::filter(category == "thesaurus") %>% dplyr::select(id = link_id, code),
-          by = "id"
-        )
-      
-      if (nrow(selected_thesaurus) > 0){
-        for (i in 1:nrow(selected_thesaurus)){
-          row <- selected_thesaurus[i, ]
-          thesaurus_code <- r$code %>% dplyr::filter(category == "thesaurus", link_id == row$id) %>% dplyr::pull(code) %>%
-            stringr::str_replace_all("\r", "\n") %>%
-            stringr::str_replace_all("%dataset_id%", as.character(r$selected_dataset)) %>%
-            stringr::str_replace_all("%thesaurus_id%", as.character(row$id))
-          
-          sql <- glue::glue_sql("SELECT COUNT(*) AS count FROM thesaurus_items WHERE thesaurus_id = {row$id} AND deleted IS FALSE", .con = r$db)
-          thesaurus_items_count <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(count)
-          
-          if (thesaurus_items_count == 0){
-            tryCatch(eval(parse(text = thesaurus_code)),
-              error = function(e) ""
-            )
-          }
-        }
-      }
-      
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$selected_dataset"))
     })
     

@@ -447,7 +447,7 @@ get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues
 load_database <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character()){
   
   # Database tables to load
-  r_tables <- c("users", "users_accesses", "users_statuses", "data_sources", "datasets", "thesaurus",
+  r_tables <- c("users", "users_accesses", "users_statuses", "data_sources", "datasets",
     "plugins", "code", "options", "git_repos")
   
   m_tables <- c("vocabulary")

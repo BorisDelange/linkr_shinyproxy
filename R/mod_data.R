@@ -1851,13 +1851,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         type <- r[[paste0(prefix, "_reload_widget_vocabulary_concepts_type")]]
         
-        print(input$widget_creation_vocabulary$key)
-        print(type)
-        
         if (type == "widget_creation") vocabulary_id <- input$widget_creation_vocabulary$key
         if (type == "widget_settings") vocabulary_id <- input$widget_settings_vocabulary$key
-        
-        print(vocabulary_id)
         
         widget_vocabulary_concepts <- r$dataset_all_concepts %>%
           dplyr::filter(vocabulary_id_1 == vocabulary_id) %>%

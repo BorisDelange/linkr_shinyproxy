@@ -632,6 +632,7 @@ successfully_connected,Successfully connected
 reload_app_to_take_into_account_changes,You have to restart session to take into account the changes
 modif_names_duplicates,There are duplicates in the names, please remove duplicates before saving
 error_restoring_database,Error restoring database
+error_restoring_database_table,Error restoring database table
 database_restored,Database restored
 reload_log,Reload log
 value,Value
@@ -808,3 +809,7 @@ study_delete_message_subtext,Do you want to delete this message ?
 deleted_message,Deleted message
 fail_load_message,Failed loading a message
 fail_load_message_show_raw_message,"Failed loading the message, display of raw message."
+main_tables_to_export,Main tables
+public_tables_to_export,Public tables
+main_tables_to_import,Main tables
+public_tables_to_import,Public tables

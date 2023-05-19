@@ -18,6 +18,61 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
     forbidden_cards <<- tagList(forbidden_cards, forbidden_card(ns = ns, name = card, i18n = i18n))
   })
   
+  main_db_tables <- list(
+    list(key = "users", text = "users"),
+    list(key = "users_accesses", text = "users_accesses"),
+    list(key = "users_statuses", text = "users_statuses"),
+    list(key = "data_sources", text = "data_sources"),
+    list(key = "datasets", text = "datasets"),
+    list(key = "studies", text = "studies"),
+    list(key = "plugins", text = "plugins"),
+    list(key = "scripts", text = "scripts"),
+    list(key = "patient_lvl_tabs_groups", text = "patient_lvl_tabs_groups"),
+    list(key = "patient_lvl_tabs", text = "patient_lvl_tabs"),
+    list(key = "patient_lvl_widgets", text = "patient_lvl_widgets"),
+    list(key = "aggregated_tabs_groups", text = "aggregated_tabs_groups"),
+    list(key = "aggregated_tabs", text = "aggregated_tabs"),
+    list(key = "aggregated_widgets", text = "aggregated_widgets"),
+    list(key = "code", text = "code"),
+    list(key = "options", text = "options"),
+    list(key = "messages", text = "messages"),
+    list(key = "conversations", text = "conversations"),
+    list(key = "user_deleted_conversations", text = "user_deleted_conversations"),
+    list(key = "inbox_messages", text = "inbox_messages"),
+    list(key = "log", text = "log"),
+    list(key = "git_repos", text = "git_repos")
+  )
+  
+  main_db_values <- c("users", "users_accesses", "users_statuses", "data_sources", "datasets", "studies", "plugins", "scripts",
+    "patient_lvl_tabs_groups", "patient_lvl_tabs", "patient_lvl_widgets", "aggregated_tabs_groups", "aggregated_tabs", "aggregated_widgets",
+    "code", "options", "messages", "conversations", "user_deleted_conversations", "inbox_messages", "git_repos")
+  
+  public_db_tables <- list(
+    list(key = "persons_options", text = "persons_options"),
+    list(key = "widgets_options", text = "widgets_options"),
+    list(key = "subsets", text = "subsets"),
+    list(key = "subset_persons", text = "subset_persons"),
+    list(key = "concept", text = "concept"),
+    list(key = "concept_dataset", text = "concept_dataset"),
+    list(key = "concept_user", text = "concept_user"),
+    list(key = "vocabulary", text = "vocabulary"),
+    list(key = "domain", text = "domain"),
+    list(key = "concept_class", text = "concept_class"),
+    list(key = "concept_relationship", text = "concept_relationship"),
+    list(key = "concept_relationship_user", text = "concept_relationship_user"),
+    list(key = "concept_relationship_evals", text = "concept_relationship_evals"),
+    list(key = "relationship", text = "relationship"),
+    list(key = "concept_synonym", text = "concept_synonym"),
+    list(key = "concept_ancestor", text = "concept_ancestor"),
+    list(key = "drug_strength", text = "drug_strength"),
+    list(key = "patient_lvl_widgets_concepts", text = "patient_lvl_widgets_concepts"),
+    list(key = "aggregated_widgets_concepts", text = "aggregated_widgets_concepts")
+  )
+  
+  public_db_values <- c("persons_options", "widgets_options", "subsets", "subset_persons", "concept", "concept_dataset",
+    "concept_user", "vocabulary", "domain", "concept_class", "concept_relationship", "concept_relationship_user", "concept_relationship_evals",
+    "relationship", "concept_synonym", "concept_ancestor", "drug_strength", "patient_lvl_widgets_concepts", "aggregated_widgets_concepts")
+  
   div(class = "main",
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("help_panel")),
@@ -185,9 +240,13 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
           div(
             br(), uiOutput(ns("current_db_save")),
             br(), uiOutput(ns("last_db_save")), br(),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle(i18n = i18n, ns = ns, label = "db_export_log", value = FALSE, inline = TRUE)), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("db_save_button"), i18n$t("export_db"), iconProps = list(iconName = "Download")),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+              make_dropdown(i18n = i18n, ns = ns, label = "main_tables_to_export", id = "main_db_tables_to_export", width = "300px", multiSelect = TRUE,
+                options = main_db_tables, value = main_db_values),
+              make_dropdown(i18n = i18n, ns = ns, label = "public_tables_to_export", id = "public_db_tables_to_export", width = "300px", multiSelect = TRUE,
+                options = public_db_tables, value = public_db_values)
+            ), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("db_save_button"), i18n$t("export_db"), iconProps = list(iconName = "Download"), style = "width:300px;"),
             div(style = "visibility:hidden;", downloadButton(ns("db_save"), label = ""))
           )
         )
@@ -206,12 +265,16 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
           div(
             br(), uiOutput(ns("current_db_restore")),
             br(), uiOutput(ns("last_db_restore")), br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+              make_dropdown(i18n = i18n, ns = ns, label = "main_tables_to_import", id = "main_tables_to_import", width = "300px", multiSelect = TRUE,
+                options = main_db_tables, value = main_db_values),
+              make_dropdown(i18n = i18n, ns = ns, label = "public_tables_to_import", id = "public_tables_to_import", width = "300px", multiSelect = TRUE,
+                options = public_db_tables, value = public_db_values)
+            ), br(),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_toggle(i18n = i18n, ns = ns, label = "db_import_log", value = FALSE, inline = TRUE)), br(),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::DefaultButton.shinyInput(ns("db_restore_browse"), i18n$t("choose_zip_file")),
+              shiny.fluent::DefaultButton.shinyInput(ns("db_restore_browse"), i18n$t("choose_zip_file"), style = "width:300px;"),
               uiOutput(ns("db_restore_status"))), br(),
-            shiny.fluent::PrimaryButton.shinyInput(ns("db_restore_button"), i18n$t("restore_db"), iconProps = list(iconName = "Upload")),
+            shiny.fluent::PrimaryButton.shinyInput(ns("db_restore_button"), i18n$t("restore_db"), iconProps = list(iconName = "Upload"), style = "width:300px;"),
             div(style = "display:none;", fileInput(ns("db_restore"), label = "", multiple = FALSE, accept = ".zip"))
           )
         )
@@ -243,32 +306,41 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       "data_sources", "iccicl",
       "datasets", "icciicl",
       "studies", "icciiiicl",
-      "thesaurus", "icccicl",
-      "thesaurus_items", "iiiccccl",
-      "thesaurus_items_users", "iiiiccccl",
-      "thesaurus_items_mapping", "iciiiiiicl",
-      "thesaurus_items_mapping_evals", "iiiicl",
-      "plugins", "iccicl",
-      "scripts", "iciicl",
+      "plugins", "icciccl",
+      "scripts", "iciiccl",
       "patient_lvl_tabs_groups", "iccicl",
-      "aggregated_tabs_groups", "iccicl",
       "patient_lvl_tabs", "icciiiicl",
+      "patient_lvl_widgets", "iciiiicl",
+      "aggregated_tabs_groups", "iccicl",
       "aggregated_tabs", "icciiiicl",
-      "patient_lvl_widgets", "iciiiciccciicl",
-      "aggregated_widgets", "iciiiiicl",
-      "patient_lvl_widgets_items", "iiicicccilicl",
-      "aggregated_widgets_items", "iicicccilicl",
+      "aggregated_widgets", "iciiiicl",
       "code", "icicicl",
       "options", "iciccnicl",
       "messages", "iiicccicl",
       "conversations", "iccl",
+      "user_deleted_conversations", "iiic",
       "inbox_messages", "iiilcl",
       "log", "icccic",
       "git_repos", "iccccicl",
-      "patients_options", "iiiiiiciccnicl",
-      "widgets_options", "iiiiicccnicl",
+      "persons_options", "iiiiiiciccnicl",
+      "widgets_options", "iiiicccnicl",
       "subsets", "icciicl",
-      "subset_persons", "iiiicl"
+      "subset_persons", "iiiicl",
+      "concept", "iiccccccccc",
+      "concept_dataset", "iiciiii",
+      "concept_user", "iiiccc",
+      "vocabulary", "icccccciicl",
+      "domain", "icci",
+      "concept_class", "icci",
+      "concept_relationship", "iiicccc",
+      "concept_relationship_user", "iiic",
+      "concept_relationship_evals", "iiicc",
+      "relationship", "iccccci",
+      "concept_synonym", "iici",
+      "concept_ancestor", "iiiii",
+      "drug_strength", "iiinininiiccc",
+      "patient_lvl_widgets_concepts", "iiiccccilicl",
+      "aggregated_widgets_concepts", "iiiccccilicl"
     )
     
     # --- --- --- --- --- ---
@@ -675,6 +747,8 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_settings_app_database - observer input$db_save_button"))
       
+      req(length(input$main_db_tables_to_export) > 0 | length(input$public_db_tables_to_export))
+      
       shinyjs::click("db_save")
       
       last_save <- DBI::dbGetQuery(r$db, "SELECT * FROM options WHERE category = 'last_db_save' AND name = 'last_db_save'")
@@ -721,24 +795,20 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         
         files <- NULL
         
-        db_list <- list()
-        db_list$main_db <- r$db
-        db_list$public_db <- m$db
+        db_list <- c("main_db", "public_db")
         
         for (db in db_list){
           
-          tables <- DBI::dbListTables(db)
+          tables <- input[[paste0(db, "_tables_to_export")]]
+          
+          if (db == "main_db") con <- r$db
+          if (db == "public_db") con <- m$db
   
-          for (table in tables){
-            # Download all tables, except cache table
-            if (table != "cache"){
-              
-              # Download log if user choice is TRUE
-              if (table != "log" | (table == "log" & input$db_export_log)){
-                file_name <- paste0(table, ".csv")
-                readr::write_csv(DBI::dbGetQuery(db, paste0("SELECT * FROM ", table)), file_name)
-                files <- c(file_name, files)
-              }
+          if (length(tables) > 0){
+            for (table in tables){
+              file_name <- paste0(table, ".csv")
+              readr::write_csv(DBI::dbGetQuery(con, paste0("SELECT * FROM ", table)), file_name)
+              files <- c(file_name, files)
             }
           }
         }
@@ -788,6 +858,8 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
       
       # Restore database
       
+      error_restoring_db <- FALSE
+      
       tryCatch({
         
         exdir <- paste0(app_folder, "/temp_files/", as.character(Sys.time()) %>% stringr::str_replace_all(":| |-", "_"))
@@ -803,22 +875,39 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
             # Name of the table
             table <- substr(file_name, 1, nchar(file_name) - 4)
  
-            if (table != "log" | (table == "log" & input$db_import_log)){
+            db_list <- c("main_db", "public_db")
             
-              if (table %in% c("widgets_options", "patients_options", "subset_persons", "subsets")) db <- m$db
-              else db <- r$db
-              
-              # Load CSV file
-              col_types_temp <- col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
-              temp <- readr::read_csv(paste0(exdir, "/", file_name), col_types = col_types_temp, show_col_types = FALSE)
-  
-              # Delete data from old table
-              sql <- glue::glue_sql("DELETE FROM {`table`}", .con = db)
-              query <- DBI::dbSendStatement(db, sql)
-              DBI::dbClearResult(query)
-  
-              # Insert new data in table
-              DBI::dbAppendTable(db, table, temp)
+            if (table %in% input$main_db_tables_to_export | table %in% input$public_db_tables_to_export){
+                
+              if (table %in% input$main_db_tables_to_export) con <- r$db
+              if (table %in% input$public_db_tables_to_export) con <- m$db
+               
+              tryCatch({
+                # Load CSV file
+                
+                col_types_temp <- col_types %>% dplyr::filter(table == !!table) %>% dplyr::pull(col_types)
+                temp <- vroom::vroom(paste0(exdir, "/", file_name), col_types = col_types_temp)
+                
+                print(table)
+                print(temp)
+                
+                # Delete data from old table
+                sql <- glue::glue_sql("DELETE FROM {`table`}", .con = con)
+                query <- DBI::dbSendStatement(con, sql)
+                DBI::dbClearResult(query)
+                
+                # Insert new data in table
+                DBI::dbAppendTable(con, table, temp)
+                
+              }, error = function(e){
+                report_bug(r = r, output = output, error_message = "error_restoring_database_table",
+                  error_name = paste0(id, " - restore database - table = ", table), category = "Error", error_report = e, i18n = i18n, ns = ns)
+                error_restoring_db <<- TRUE
+              }, warning = function(w){
+                report_bug(r = r, output = output, error_message = "error_restoring_database_table",
+                  error_name = paste0(id, " - restore database - table = ", table), category = "Error", error_report = w, i18n = i18n, ns = ns)
+                error_restoring_db <<- TRUE
+              })
             }
           }
         })
@@ -850,11 +939,16 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
           )
         }
         
-        show_message_bar(output,  "database_restored", "success", i18n = i18n, ns = ns)
-        show_message_bar(output,  "reload_app_to_take_into_account_changes", "warning", i18n = i18n, ns = ns)
+        if (!error_restoring_db){
+          show_message_bar(output,  "database_restored", "success", i18n = i18n, ns = ns)
+          show_message_bar(output,  "reload_app_to_take_into_account_changes", "warning", i18n = i18n, ns = ns) 
+        }
+        if (error_restoring_db) show_message_bar(output, "error_restoring_database", "severeWarning", i18n = i18n, ns = ns)
       },
       error = function(e) report_bug(r = r, output = output, error_message = "error_restoring_database",
-        error_name = paste0(id, " - restore database"), category = "Error", error_report = e, i18n = i18n, ns = ns))
+        error_name = paste0(id, " - restore database"), category = "Error", error_report = e, i18n = i18n, ns = ns),
+      warning = function(w) report_bug(r = r, output = output, error_message = "error_restoring_database",
+          error_name = paste0(id, " - restore database"), category = "Error", error_report = w, i18n = i18n, ns = ns))
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_app_database - observer input$db_restore_button"))
     })

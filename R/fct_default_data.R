@@ -57,78 +57,6 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
       1, i18n$t("mortality_prediction"), "", 1, 1, 1, 1, as.character(Sys.time()), FALSE))
   }
   
-  # Add default subsets
-  if (nrow(DBI::dbGetQuery(m$db, "SELECT * FROM subsets")) == 0){
-    DBI::dbAppendTable(m$db, "subsets", tibble::tribble(~id, ~name, ~description, ~study_id, ~creator_id, ~datetime, ~deleted,
-      1, i18n$t("subset_all_patients"), "", 1, 1, as.character(Sys.time()), FALSE))
-  }
-  
-  # Add default thesaurus
-  if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM thesaurus")) == 0){
-    DBI::dbAppendTable(r$db, "thesaurus", tibble::tribble(~id, ~name, ~description, ~data_source_id, ~creator_id, ~datetime, ~deleted,
-      1, "MIMIC-IV", "", 1L, 1, as.character(Sys.time()), FALSE))
-  }
-  
-  # --- --- --- --- --- -- -
-  # Add default tabs ----
-  # --- --- --- --- --- -- -
-  
-  # Add default patient_lvl_tabs_groups
-  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_tabs_groups")) == 0){
-  #   DBI::dbAppendTable(r$db, "patient_lvl_tabs_groups", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
-  #     1, "Default patient-lvl tab family", "", 1, as.character(Sys.time()), FALSE))
-  # }
-  
-  # Add default patient_lvl_tabs
-  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_tabs")) == 0){
-  #   DBI::dbAppendTable(r$db, "patient_lvl_tabs", tibble::tribble(~id, ~name, ~description, ~tab_group_id, ~parent_tab_id, ~display_order, 
-  #     ~creator_id, ~datetime, ~deleted,
-  #     1, "Haemodynamics", "A tab containing haemodynamics data", 1, NA_integer_, 1, 1, as.character(Sys.time()), FALSE,
-  #     2, "Respiratory", "A tab containing respiratory data", 1, NA_integer_, 2, 1, as.character(Sys.time()), FALSE,
-  #     3, "Clinical notes", "A tab containing clinical notes", 1, NA_integer_, 3, 1, as.character(Sys.time()), FALSE,
-  #     4, "Admission notes", "A sub-tab containing admission clinical notes", 1, 3, 1, 1, as.character(Sys.time()), FALSE,
-  #     5, "Daily notes", "A sub-tab containing daily clinical notes", 1, 3, 2, 1, as.character(Sys.time()), FALSE))
-  # }
-  
-  # Add default patient_lvl_widgets
-  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM patient_lvl_widgets")) == 0){
-  #   DBI::dbAppendTable(r$db, "patient_lvl_widgets", tibble::tribble(~id, ~name, ~group_id, ~tab_id, ~plugin_id, 
-  #     ~thesaurus_name, ~thesaurus_item_id, ~thesaurus_item_display_name, ~thesaurus_item_unit, ~thesaurus_item_colour, ~display_order, ~creator_id, ~datetime, ~deleted,
-  #     1, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 11, "HR", "bpm", "#5AAE61", 1, 1, as.character(Sys.time()), FALSE,
-  #     2, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 12, "SBP", "bpm", "#CB181D", 1, 1, as.character(Sys.time()), FALSE,
-  #     3, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 13, "DBP", "bpm", "#CB181D", 1, 1, as.character(Sys.time()), FALSE,
-  #     4, "Vitals dygraph", 1, 1, 1, "My datawarehouse thesaurus", 14, "MBP", "bpm", "#EF3B2C", 1, 1, as.character(Sys.time()), FALSE,
-  #     5, "Vitals datatable", 2, 1, 2, "My datawarehouse thesaurus", 11, "HR", "bpm", "#5AAE61", 2, 1, as.character(Sys.time()), FALSE,
-  #     6, "Vitals datatable", 2, 1, 2, "My datawarehouse thesaurus", 12, "SBP", "bpm", "#CB181D", 2, 1, as.character(Sys.time()), FALSE,
-  #     7, "Vitals datatable", 2, 1, 2, "My datawarehouse thesaurus", 13, "DBP", "bpm", "#CB181D", 2, 1, as.character(Sys.time()), FALSE,
-  #     8, "Vitals datatable", 2, 1, 2, "My datawarehouse thesaurus", 14, "MBP", "bpm", "#EF3B2C", 2, 1, as.character(Sys.time()), FALSE,
-  #     9, "Vitals dygraph", 3, 2, 1, "My datawarehouse thesaurus", 16, "Tidal volume", "mL", "#000000", 1, 1, as.character(Sys.time()), FALSE,
-  #     10, "Vitals dygraph", 3, 2, 1, "My datawarehouse thesaurus", 17, "PEEP", "cmH2O", "#000000", 1, 1, as.character(Sys.time()), FALSE,
-  #     11, "Vitals dygraph", 3, 2, 1, "My datawarehouse thesaurus", 15, "Pulse oxymetry", "%", "#2B8CBE", 1, 1, as.character(Sys.time()), FALSE,
-  #     12, "Vitals datatable", 4, 2, 2, "My datawarehouse thesaurus", 16, "Tidal volume", "mL", "#000000", 2, 1, as.character(Sys.time()), FALSE,
-  #     13, "Vitals datatable", 4, 2, 2, "My datawarehouse thesaurus", 17, "PEEP", "cmH2O", "#000000", 2, 1, as.character(Sys.time()), FALSE,
-  #     14, "Vitals datatable", 4, 2, 2, "My datawarehouse thesaurus", 15, "Pulse oxymetry", "%", "#2B8CBE", 2, 1, as.character(Sys.time()), FALSE,
-  #     15, "Admission notes", 5, 4, 3, "My datawarehouse thesaurus", 18, "Daily clinical note", "", "#000000", 1, 1, as.character(Sys.time()), FALSE,
-  #     16, "Admission notes", 5, 4, 3, "My datawarehouse thesaurus", 19, "Reason for hospital admission", "", "#000000", 1, 1, as.character(Sys.time()), FALSE,
-  #     17, "Daily notes", 6, 5, 3, "My datawarehouse thesaurus", 20, "Daily clinical note", "", "#000000", 1, 1, as.character(Sys.time()), FALSE))
-  # }
-  
-  # Add default aggregated_tabs_groups
-  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM aggregated_tabs_groups")) == 0){
-  #   DBI::dbAppendTable(r$db, "aggregated_tabs_groups", tibble::tribble(~id, ~name, ~description, ~creator_id, ~datetime, ~deleted,
-  #     1, "Default aggregated tab family", "", 1, as.character(Sys.time()), FALSE))
-  # }
-  
-  # Add default aggregated_tabs
-  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM aggregated_tabs")) == 0){
-  #   DBI::dbAppendTable(r$db, "aggregated_tabs", tibble::tribble(~id, ~name, ~description, ~tab_group_id, ~parent_tab_id, ~display_order,
-  #     ~creator_id, ~datetime, ~deleted,
-  #     1, "Study patients management", "A tab made to manage patients status for the study", 1, NA_integer_, 1, 1, as.character(Sys.time()), FALSE,
-  #     2, "Inclusion / exclusion", "A tab made to manage inclusion & exclusion criteria", 1, 1, 1, 1, as.character(Sys.time()), FALSE,
-  #     3, "Flowchart", "A tab made to create the flowchart", 1, 1, 2, 1, as.character(Sys.time()), FALSE,
-  #     4, "Guidelines", "A tab made to show EQUATOR guidelines", 1, NA_integer_, 2, 1, as.character(Sys.time()), FALSE))
-  # }
-  
   # --- --- --- --- --- -- -
   # Add default options ----
   # --- --- --- --- --- -- -
@@ -229,18 +157,4 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
         2, "thesaurus", 1, thesaurus_code, 1, as.character(Sys.time()), FALSE,
         3, "subset", 1, subset_code, 1, as.character(Sys.time()), FALSE))
     }
-  # --- --- --- -- -
-  # Add plugins ----
-  # --- --- --- -- -
-  
-  # if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM plugins")) == 0){
-  #   DBI::dbAppendTable(r$db, "plugins", tibble::tribble(~id, ~name, ~description, ~tab_type_id, ~datetime, ~deleted,
-  #     1, "Dygraph", "", 1, as.character(Sys.time()), FALSE,
-  #     2, "Datatable", "", 1, as.character(Sys.time()), FALSE,
-  #     3, "Text", "", 1, as.character(Sys.time()), FALSE))
-  # }
-    
-  # --- --- --- -- -
-  # Add scripts ----
-  # --- --- --- -- -
 }
