@@ -197,7 +197,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("run_code"))
+              shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("preview"))
             ),
             br(),
             div(id = ns("description_markdown_output"),
@@ -1051,16 +1051,27 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
 
           study_message <- conversation_messages[i, ]
 
-          if (study_message$deleted) message_div <- div(HTML(i18n$t("deleted_message")))
+          if (study_message$deleted) message_div <- div(tags$em(i18n$t("deleted_message")))
           else message_div <- div(HTML(study_message$message))
 
           if (study_message$filepath != "" & !study_message$deleted){
+            
+            fail_load_message <- TRUE
+            
             tryCatch({
               message_div <- div(class = "markdown_messages", withMathJax(includeMarkdown(study_message$filepath)))
-            }, error = function(e) "")
+              fail_load_message <- FALSE
+            }, error = function(e) report_bug(r = r, output = output, error_message = "fail_load_message",
+              error_name = paste0(id, " - load message - message_id = ", study_message$id), category = "Error", error_report = e, i18n = i18n, ns = ns),
+              warning = function(w) report_bug(r = r, output = output, error_message = "fail_load_message",
+                error_name = paste0(id, " - load message - message_id = ", study_message$id), category = "Error", error_report = w, i18n = i18n, ns = ns))
+            
+            if (fail_load_message) message_div <- div(
+              tags$em(i18n$t("fail_load_message_show_raw_message")), br(), br(), HTML(study_message$message))
           }
 
           date <- study_message$datetime %>% as.Date()
+          if (language == "fr") date <- date %>% format(format = "%d-%m-%Y")
           
           if (!study_message$deleted & study_message$creator_id == r$user_id) deletion_div <- div(
               actionButton(ns(paste0("delete_message_", study_message$id)), "X", style = "padding:0px 5px 0px 5px;",

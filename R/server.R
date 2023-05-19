@@ -58,6 +58,7 @@ app_server <- function(router, language = "en", app_folder = character(),
     # App folder
     if (debug) print(paste0(Sys.time(), " - server - app_folder"))
     r$app_folder <- app_folder
+    m$app_folder <- app_folder
     
     # App db folder
     app_db_folder <- paste0(app_folder, "/app_database")
@@ -286,10 +287,10 @@ app_server <- function(router, language = "en", app_folder = character(),
       
       r$end_load_tabs <- TRUE
       
-      # r$perf_monitoring_table <-
-      #   r$perf_monitoring_table %>%
-      #   dplyr::mutate(elapsed_time = round(datetime_stop - datetime_start, 2), .before = "task") #%>%
-        # dplyr::arrange(dplyr::desc(elapsed_time))
+      # Close all connections
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - closeAllConnections"))
+      closeAllConnections()
+      
     })
   }
 }

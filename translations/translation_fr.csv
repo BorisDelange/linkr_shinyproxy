@@ -806,3 +806,5 @@ study_delete_conversation_subtext,Confirmer la suppression de cette conversation
 study_delete_message_title,Supprimer un message
 study_delete_message_subtext,Confirmer la suppression de ce message ?
 deleted_message,Message supprimé
+fail_load_message,Erreur lors du chargement d'un message
+fail_load_message_show_raw_message,"Erreur lors du chargement du message, affichage du texte brut."
