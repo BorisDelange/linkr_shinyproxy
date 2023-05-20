@@ -341,10 +341,6 @@ app_server <- function(router, language = "en", app_folder = character(),
       
       r$end_load_tabs <- TRUE
       
-      # Close all connections
-      if (debug) print(paste0(Sys.time(), " - server - load server tabs - closeAllConnections"))
-      closeAllConnections()
-      
     })
   }
 }
