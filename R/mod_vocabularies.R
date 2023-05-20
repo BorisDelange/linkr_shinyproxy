@@ -323,9 +323,13 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$load_dataset_all_concepts"))
       
+      # Create dataset folder if doesn't exist
+      dataset_folder <- paste0(r$app_folder, "/datasets/", r$selected_dataset)
+      if (!dir.exists(dataset_folder)) dir.create(dataset_folder)
+      
       # Load csv file if it exists
       
-      dataset_all_concepts_filename <- paste0(r$app_folder, "/datasets/", r$selected_dataset, "/dataset_all_concepts.csv")
+      dataset_all_concepts_filename <- paste0(dataset_folder, "/dataset_all_concepts.csv")
       
       if (file.exists(dataset_all_concepts_filename)) d$dataset_all_concepts <- vroom::vroom(dataset_all_concepts_filename, col_types = "icicccciccccccccii", progress = FALSE)
      
@@ -423,12 +427,21 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           }
         }
         
-        # Merge count_rows, transform count_rows cols to integer, to be sortable
-        if (nrow(count_rows) > 0) dataset_all_concepts <- dataset_all_concepts %>% 
+        if (nrow(count_rows) > 0){
+          
+          # Group count_rows : if a concept_id is in distinct tables, it will produce two more than one row by concept_id
+          count_rows <- count_rows %>% dplyr::group_by(concept_id) %>% 
+            dplyr::summarize(count_persons_rows = max(count_persons_rows), count_concepts_rows = sum(count_concepts_rows),
+              count_secondary_concepts_rows = sum(count_secondary_concepts_rows)) %>%
+            dplyr::ungroup()
+          
+          # Merge count_rows, transform count_rows cols to integer, to be sortable
+          dataset_all_concepts <- dataset_all_concepts %>% 
           dplyr::left_join(count_rows, by = "concept_id") %>%
           dplyr::mutate_at(c("count_concepts_rows", "count_persons_rows", "count_secondary_concepts_rows"), as.integer) %>%
           # dplyr::filter(count_concepts_rows > 0 | count_secondary_concepts_rows > 0)
           dplyr::filter(count_concepts_rows > 0)
+        }
         
         if (nrow(count_rows) == 0) dataset_all_concepts <- dataset_all_concepts %>% dplyr::slice(0)
         
@@ -437,7 +450,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           dplyr::mutate(relationship_id = NA_character_, vocabulary_id_2 = NA_character_, concept_id_2 = NA_integer_, concept_name_2 = NA_character_, .after = "concept_display_name_1") %>%
           dplyr::relocate(vocabulary_id_1, .before = "concept_id_1")
         
-        # Load m$concept & m$concept_relationship if not already loaded from mod_settings_data_management.R
+        # Load d$concept & d$concept_relationship if not already loaded from mod_settings_data_management.R
         # Convert cols to char and arrange cols as done in mod_settings_data_management.R
         
         tables <- c("concept", "concept_relationship")
@@ -451,7 +464,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         cols_order$concept_relationship <- "concept_id_1"
         
         for (table in tables){
-          if (length(m[[table]]) == 0){
+          if (length(d[[table]]) == 0){
             if (table == "concept") sql <- glue::glue_sql("SELECT * FROM concept", .con = m$db)
             else if (table == "concept_relationship") sql <- glue::glue_sql(paste0(
               "SELECT cr.* FROM concept_relationship cr WHERE cr.id NOT IN ( ",
@@ -467,7 +480,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
               "SELECT cr.concept_relationship_id FROM cr ",
               ")"), .con = m$db)
             
-            m[[table]] <- DBI::dbGetQuery(m$db, sql) %>%
+            d[[table]] <- DBI::dbGetQuery(m$db, sql) %>%
               dplyr::arrange(cols_order[[table]]) %>%
               dplyr::mutate_at(cols_to_char[[table]], as.character) %>%
               dplyr::mutate(modified = FALSE)
@@ -476,21 +489,21 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         
         # Merge mapped concepts
         
-        if (nrow(m$concept_relationship) > 0 & nrow(m$concept) > 0 & nrow(dataset_all_concepts) > 0){
+        if (nrow(d$concept_relationship) > 0 & nrow(d$concept) > 0 & nrow(dataset_all_concepts) > 0){
           dataset_all_concepts <- dataset_all_concepts %>%
             dplyr::bind_rows(
               dataset_all_concepts %>%
                 dplyr::select(vocabulary_id_2 = vocabulary_id_1, concept_id_2 = concept_id_1, concept_name_2 = concept_name_1,
                   count_persons_rows, count_concepts_rows) %>%
                 dplyr::left_join(
-                  m$concept_relationship %>% 
+                  d$concept_relationship %>% 
                     dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.integer) %>%
                     dplyr::select(concept_id_1, concept_id_2, relationship_id),
                   by = "concept_id_2"
                 ) %>%
                 dplyr::filter(concept_id_1 != concept_id_2) %>%
                 dplyr::left_join(
-                  m$concept %>%
+                  d$concept %>%
                     dplyr::mutate_at("concept_id", as.integer) %>%
                     dplyr::select(vocabulary_id_1 = vocabulary_id, concept_id_1 = concept_id, concept_name_1 = concept_name,
                       domain_id, concept_class_id, standard_concept, concept_code, valid_start_date, valid_end_date, invalid_reason),
@@ -519,11 +532,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                   cellHeight = 15, cellWidth = 15))),
               add_concept_input = as.character(shiny::actionButton(NS("%ns%")("%input_prefix%_%concept_id_1%"), "", icon = icon("plus"),
                 onclick = paste0("Shiny.setInputValue('%ns%-%input_prefix_2%concept_selected', this.id, {priority: 'event'})")))
-            ) #%>%
-            #dplyr::mutate(
-            #  colours_input = stringr::str_replace_all(colours_input, "%concept_id_1%", as.character(concept_id_1)),
-            #  add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", as.character(concept_id_1))
-            #)
+            )
           
           # Delete old rows
           sql <- glue::glue_sql("DELETE FROM concept_dataset WHERE dataset_id = {r$selected_dataset}", .con = m$db)
@@ -534,11 +543,19 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           DBI::dbAppendTable(m$db, "concept_dataset", dataset_all_concepts %>% 
             dplyr::transmute(id = get_last_row(m$db, "concept_dataset") + 1:dplyr::n(), concept_id = concept_id_1, dataset_id = r$selected_dataset, vocabulary_id = vocabulary_id_1,
               count_persons_rows, count_concepts_rows, count_secondary_concepts_rows))
-          
-          readr::write_csv(dataset_all_concepts, dataset_all_concepts_filename, progress = FALSE)
-          
-          d$dataset_all_concepts <- dataset_all_concepts
         }
+        
+        else if (nrow(dataset_all_concepts) == 0){
+          dataset_all_concepts <- dataset_all_concepts %>% dplyr::mutate(
+            count_persons_rows = integer(), count_concepts_rows = integer(), count_secondary_concepts_rows = integer(),
+            colours_input = character(), add_concept_input = character())
+        }
+        
+        # Save data as csv
+        readr::write_csv(dataset_all_concepts, dataset_all_concepts_filename, progress = FALSE)
+        
+        # Update d var
+        d$dataset_all_concepts <- dataset_all_concepts
       }
       
       # Get user's modifications on items names & concept_display_names
@@ -577,10 +594,95 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         options = convert_tibble_to_list(data = r$dataset_vocabularies, key_col = "id", text_col = "vocabulary_name", i18n = i18n), value = NULL)
       
       # Join d$person, d$visit_occurrence & d$visit_detail with d$dataset_all_concepts
-      
       r$merge_concepts_and_d_vars <- Sys.time()
       
+      # Then load d$dataset_drug_strength
+      r$load_dataset_drug_strength <- Sys.time()
+      
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$load_dataset_all_concepts"))
+    })
+    
+    observeEvent(r$load_dataset_drug_strength, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer r$load_dataset_drug_strength"))
+      
+      dataset_drug_strength_filename <- paste0(r$app_folder, "/datasets/", r$selected_dataset, "/dataset_drug_strength.csv")
+      
+      if (file.exists(dataset_drug_strength_filename)) d$dataset_drug_strength <- vroom::vroom(dataset_drug_strength_filename, col_types = "iicicncncnciccc", progress = FALSE)
+      
+      if (!file.exists(dataset_drug_strength_filename)){
+        
+        failed_load_data <- TRUE
+        
+        if (nrow(d$dataset_all_concepts) > 0){
+        
+          # Get all distincts drug_concept_id, with mappings
+          drug_concept_ids <- 
+            d$dataset_all_concepts %>% dplyr::filter(domain_id == "Drug") %>% dplyr::distinct(concept_id_1) %>% dplyr::select(drug_concept_id = concept_id_1) %>%
+            dplyr::bind_rows(
+              d$dataset_all_concepts %>% dplyr::filter(domain_id == "Drug") %>% dplyr::distinct(concept_id_2) %>% dplyr::select(drug_concept_id = concept_id_2)
+            ) %>%
+            dplyr::distinct(drug_concept_id)
+          
+          # Load d$drug_strength if not loaded yet
+          if (length(d$drug_strength) == 0){
+            sql <- glue::glue_sql("SELECT * FROM drug_strength", .con = m$db)
+            d$drug_strength <- DBI::dbGetQuery(m$db, sql) %>% 
+              tibble::as_tibble() %>%
+              dplyr::arrange(drug_concept_id) %>%
+              dplyr::mutate_at(c("drug_concept_id", "ingredient_concept_id", "amount_unit_concept_id", "numerator_unit_concept_id", "denominator_unit_concept_id"), as.character) %>%
+              dplyr::mutate(modified = FALSE)
+          }
+          
+          if (nrow(d$drug_strength) > 0){
+            
+            drug_strength <-
+              d$drug_strength %>%
+              dplyr::select(-modified) %>%
+              dplyr::mutate_at(c("drug_concept_id", "ingredient_concept_id", "amount_unit_concept_id", 
+                "numerator_unit_concept_id", "denominator_unit_concept_id"), as.integer) %>%
+              dplyr::inner_join(
+                drug_concept_ids, by = "drug_concept_id"
+              )
+            
+            concepts_ids <- list()
+            concepts <- list()
+            
+            for (col in c("drug", "ingredient", "amount_unit", "numerator_unit", "denominator_unit")){
+              
+              concepts_ids[[col]] <- drug_strength %>% 
+                dplyr::distinct(!!rlang::sym(paste0(col, "_concept_id"))) %>% 
+                dplyr::mutate_at(paste0(col, "_concept_id"), as.integer) %>% dplyr::pull()
+              
+              sql <- glue::glue_sql(paste0("SELECT concept_id AS {paste0(col, '_concept_id')}, ",
+              "concept_name AS {paste0(col, '_concept_name')} FROM concept WHERE concept_id IN ({concepts_ids[[col]]*})"), .con = m$db)
+              
+              concepts[[col]] <- DBI::dbGetQuery(m$db, sql) %>% tibble::as_tibble()
+              
+              drug_strength <- drug_strength %>% 
+                dplyr::left_join(concepts[[col]], by = paste0(col, "_concept_id")) %>%
+                dplyr::relocate(!!paste0(col, "_concept_name"), .after = paste0(col, "_concept_id"))
+            }
+            
+            failed_load_data <- FALSE
+          }
+        }
+        
+        if (failed_load_data) drug_strength <- tibble::tibble(id = integer(), drug_concept_id = integer(), drug_concept_name = character(),
+          ingredient_concept_id = integer(), ingredient_concept_name = character(), 
+          amount_value = numeric(), amount_unit_concept_id = integer(), amount_unit_concept_name = integer(),
+          numerator_value = numeric(), numerator_unit_concept_id = integer(), numerator_unit_concept_name = integer(),
+          denominator_value = numeric(), denominator_unit_concept_id = integer(), denominator_unit_concept_name = integer(),
+          box_size = integer(), valid_start_date = character(), valid_end_date = character(), invalid_reason = character())
+        
+        # Save as csv
+        readr::write_csv(drug_strength, dataset_drug_strength_filename, progress = FALSE)
+        
+        d$dataset_drug_strength <- drug_strength
+      }
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_vocabularies - observer r$load_dataset_drug_strength"))
     })
     
     # Join concepts cols of d$ vars with d$dataset_all_concepts

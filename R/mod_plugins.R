@@ -54,7 +54,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
           value = c(2, 3, 4, 5, 7, 8, 9, 10)
         )
       ),
-      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 50),
+      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
         div(
           shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
             div(shiny.fluent::Toggle.shinyInput(ns("show_mapped_concepts"), value = TRUE), style = "margin-top:30px; margin-bottom:5px;"),
@@ -2129,11 +2129,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       # Reset all older observers
       
       session_code <- "plugin_test"
-      if (length(o[[session_code]]) == 0) session_num <- 1L
-      if (length(o[[session_code]]) > 0) session_num <- o[[session_code]] + 1
-      o[[session_code]] <- session_num
+      if (length(m[[session_code]]) == 0) session_num <- 1L
+      if (length(m[[session_code]]) > 0) session_num <- m[[session_code]] + 1
+      m[[session_code]] <- session_num
       
-      # NB : req(o[[session_code]] == session_num) must be put at the beginning of each observeEvent in plugins code
+      # NB : req(m[[session_code]] == session_num) must be put at the beginning of each observeEvent in plugins code
       
       ui_code <- ui_code %>% 
         stringr::str_replace_all("%tab_id%", "1") %>%
@@ -2187,7 +2187,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       new_env_vars <- list("r" = NA)
       
       # Variables to keep
-      variables_to_keep <- c("d", "m", "o", "session_code", "session_num", "i18n")
+      variables_to_keep <- c("d", "m", "session_code", "session_num", "i18n")
       if (prefix == "patient_lvl") variables_to_keep <- c(variables_to_keep, "vocabulary_selected_concepts")
       if (exists("i18np")) variables_to_keep <- c(variables_to_keep, "i18np")
       

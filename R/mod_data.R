@@ -1080,18 +1080,18 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             # Create a session number, to inactivate older observers
             # Reset all older observers for this widget_id
             
-            session_code <- paste0("tab_", ids$tab_id, "_widget_", widget_id)
-            if (length(o[[session_code]]) == 0) session_num <- 1L
-            if (length(o[[session_code]]) > 0) session_num <- o[[session_code]] + 1
-            o[[session_code]] <- session_num
+            session_code <- paste0(prefix, "_widget_", widget_id)
+            if (length(m[[session_code]]) == 0) session_num <- 1L
+            if (length(m[[session_code]]) > 0) session_num <- m[[session_code]] + 1
+            m[[session_code]] <- session_num
             
-            # NB : req(o[[session_code]] == session_num) must be put at the beginning of each observeEvent in plugins code
+            # NB : req(m[[session_code]] == session_num) must be put at the beginning of each observeEvent in plugins code
             
             # Variables to hide
             new_env_vars <- list("r" = NA)
             
             # Variables to keep
-            variables_to_keep <- c("d", "m", "o", "session_code", "session_num", "i18n", "vocabulary_selected_concepts")
+            variables_to_keep <- c("d", "m", "session_code", "session_num", "i18n", "vocabulary_selected_concepts")
             if (exists("i18np")) variables_to_keep <- c(variables_to_keep, "i18np")
             
             for (var in variables_to_keep) new_env_vars[[var]] <- eval(parse(text = var))
@@ -1286,16 +1286,16 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       # If it is an aggregated plugin, change %study_id% with current selected study
       if (length(m$selected_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
 
-      session_code <- paste0("tab_", ids$tab_id, "_widget_", widget_id)
-      if (length(o[[session_code]]) == 0) session_num <- 1L
-      if (length(o[[session_code]]) > 0) session_num <- o[[session_code]] + 1
-      o[[session_code]] <- session_num
+      session_code <- paste0(prefix, "_widget_", widget_id)
+      if (length(m[[session_code]]) == 0) session_num <- 1L
+      if (length(m[[session_code]]) > 0) session_num <- m[[session_code]] + 1
+      m[[session_code]] <- session_num
 
       # Variables to hide
       new_env_vars <- list("r" = NA)
       
       # Variables to keep
-      variables_to_keep <- c("d", "m", "o", "session_code", "session_num", "i18n", "vocabulary_selected_concepts")
+      variables_to_keep <- c("d", "m", "session_code", "session_num", "i18n", "vocabulary_selected_concepts")
       if (exists("i18np")) variables_to_keep <- c(variables_to_keep, "i18np")
       
       for (var in variables_to_keep) new_env_vars[[var]] <- eval(parse(text = var))
@@ -2406,18 +2406,18 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         # Create a session number, to inactivate older observers
         # Reset all older observers for this widget_id
         
-        session_code <- paste0("tab_", r[[paste0(prefix, "_selected_tab")]], "_widget_", widget_id)
-        if (length(o[[session_code]]) == 0) session_num <- 1L
-        if (length(o[[session_code]]) > 0) session_num <- o[[session_code]] + 1
-        o[[session_code]] <- session_num
+        session_code <- paste0(prefix, "_widget_", widget_id)
+        if (length(m[[session_code]]) == 0) session_num <- 1L
+        if (length(m[[session_code]]) > 0) session_num <- m[[session_code]] + 1
+        m[[session_code]] <- session_num
         
-        # NB : req(o[[session_code]] == session_num) must be put at the beginning of each observeEvent in plugins code
+        # NB : req(m[[session_code]] == session_num) must be put at the beginning of each observeEvent in plugins code
         
         # Variables to hide
         new_env_vars <- list("r" = NA)
         
         # Variables to keep
-        variables_to_keep <- c("d", "m", "o", "session_code", "session_num", "i18n", "vocabulary_selected_concepts")
+        variables_to_keep <- c("d", "m", "session_code", "session_num", "i18n", "vocabulary_selected_concepts")
         if (exists("i18np")) variables_to_keep <- c(variables_to_keep, "i18np")
         
         for (var in variables_to_keep) new_env_vars[[var]] <- eval(parse(text = var))

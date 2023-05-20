@@ -319,10 +319,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
       
       if (debug) print(paste0(Sys.time(), " - mod_subsets - observer m$subsets"))
       
-      if (nrow(m$subsets) == 0) data <- tibble::tibble(id = integer(), name = character(), description = character(), study_id = factor(),
-        creator_id = factor(), datetime = character(), deleted = integer(), modified = logical(), action = character())
-      
-      if (nrow(m$subsets) > 0) m$subsets_temp <- m$subsets %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+      m$subsets_temp <- m$subsets %>% dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
     })
     
     # Reload datatable
