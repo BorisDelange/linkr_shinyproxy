@@ -824,3 +824,6 @@ invalid_concept_code_value,Valeur de concept_code non valide
 vocabulary_concept_already_exists,Ce concept est déjà présent dans la base de données
 vocabulary_concept_added,Nouveau concept ajouté
 vocabulary_id_doesnt_exist,Ce vocabulary_id n'existe pas dans la base de données
+invalid_method_value,Valeur de method non valide
+invalid_concept_id_value,Valeur de concept_id non valide
+concept_not_found,Concept non trouvé

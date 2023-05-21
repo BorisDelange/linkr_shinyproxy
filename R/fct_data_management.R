@@ -229,92 +229,78 @@ remove_persons_from_subset <- function(output, r = shiny::reactiveValues(), m = 
 
 #' Get vocabulary concept
 #'
-#' @description Get a thesaurus item, from the thesaurus name and ID or name of the item.
-#' @param output Output variable from Shiny, used to render messages on message bars
-#' @param r A shiny::reactiveValues object, used to communicate between modules
-#' @param thesaurus_name Name of the thesaurus (character)
-#' @param item_name Name of the item to get, if method = "item_name" (character)
-#' @param item_id ID of the item to get, if method = "item_id" (integer)
-#' @param method Method used to get the thesaurus item. Could be "item_name" or "item_id" (character).
-#' @param create If the item is not found and create is TRUE, the item is created, with add_thesaurus_item function (logical).
-#' @param item_unit Unit of the item, if it is not found and create is TRUE (character).
-#' @param i18n shiny.i18n object for translations
-#' @param ns shiny namespace object, used to render messages on message bars
+#' @description Get a vocabulary concept, from the vocabulary_id and the concept_id or the concept_name
+#' @param output Shiny output variable
+#' @param m A shiny::reactiveValues object, used to communicate between modules
+#' @param vocabulary_id Value of vocabulary_id where the concept will be added (character)
+#' @param concept_name Value of concept_name (character)
+#' @param concept_id Valud of concept_id (integer)
+#' @param method Method used to get the vocabulary concept. Could be "concept_name" or "concept_id" (character)
+#' @param i18n Translator object from shiny.i18n library
+#' @param ns Shiny namespace
 #' @examples 
 #' \dontrun{
-#' # Search item "Respiratory rate" from thesaurus "MIMIC-IV"
-#' get_thesaurus_item(output = output, r = r, thesaurus_name = "MIMIC-IV", item_name = "Respiratory rate", method = "item_name", i18n = i18n, ns = ns)
-#' 
-#' # Search item 83748 from thesaurus "MIMIC-IV", and create it if not found
-#' get_thesaurus_item(output = output, r = r, thesaurus_name = "MIMIC-IV", item_id = 83746, 
-#'  item_name = "Heart rate", item_unit = "bpm", method = "item_id", i18n = i18n, ns = ns)
+#' get_vocabulary_concept(output = output, m = m, vocabulary_id = "MIMIC-IV", concept_name = "Diuresis", 
+#'   method = "concept_name", i18n = i18n, ns = ns)
 #' }
-get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_name = character(), 
-  item_name = character(), item_id = integer(), method = character(), create = FALSE, item_unit = NA_character_, 
-  i18n = character(), ns = character()){
+get_vocabulary_concept <- function(output, m = shiny::reactiveValues(), vocabulary_id = character(), 
+  concept_name = character(), concept_id = integer(), method = character(), i18n = character(), ns = character()){
   
   stop_fct <- FALSE
+  result <- tibble::tibble()
   
-  # Check thesaurus_name
+  # Check vocabulary_id
   
-  if (length(thesaurus_name) == 0) stop_fct <- TRUE
-  else if (is.na(thesaurus_name)) stop_fct <- TRUE
+  if (length(vocabulary_id) == 0) stop_fct <- TRUE
+  else if (is.na(vocabulary_id) | vocabulary_id == "") stop_fct <- TRUE
   
   if (stop_fct){
-    show_message_bar(output, "invalid_thesaurus_name_value", "severeWarning", i18n = i18n, ns = ns)
-    stop(i18n$t("invalid_thesaurus_name_value"))
+    show_message_bar(output, "invalid_vocabulary_id_value", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_vocabulary_id_value"))
   }
   
-  # Get thesaurus_id
-  
-  sql <- glue::glue_sql("SELECT * FROM thesaurus WHERE name = {thesaurus_name} AND deleted IS FALSE", .con = r$db)
-  thesaurus_id <- DBI::dbGetQuery(r$db, sql) %>% dplyr::pull(id)
-  if (length(thesaurus_id) == 0){
-    show_message_bar(output, "thesaurus_id_not_found", "severeWarning", i18n = i18n, ns = ns)
-    stop(i18n$t("thesaurus_id_not_found"))
-  }
+  # Check method
   
   if (length(method) == 0) stop_fct <- TRUE
-  else if (is.na(method)) stop_fct <- TRUE
+  else if (method %not_in% c("concept_id", "concept_name")) stop_fct <- TRUE
   if (stop_fct){
-    show_message_bar(output, "invalid_thesaurus_search_method", "severeWarning", i18n = i18n, ns = ns)
-    stop(i18n$t("invalid_thesaurus_search_method"))
+    show_message_bar(output, "invalid_method_value", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_method_value"))
   }
   
-  # Search by item name
+  # Search by concept name
   
-  if (method == "item_name"){
+  if (method == "concept_name"){
     
-    if (length(item_name) == 0) stop_fct <- TRUE
-    else if (is.na(item_name)) stop_fct <- TRUE
+    if (length(concept_name) == 0) stop_fct <- TRUE
+    else if (is.na(concept_name) | concept_name == "") stop_fct <- TRUE
     if (stop_fct){
-      show_message_bar(output, "invalid_thesaurus_item_name", "severeWarning", i18n = i18n, ns = ns)
-      stop(i18n$t("invalid_thesaurus_item_name"))
+      show_message_bar(output, "invalid_concept_name_value", "severeWarning", i18n = i18n, ns = ns)
+      stop(i18n$t("invalid_concept_name_value"))
     }
     
-    sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} AND ",
-      "name = {item_name} AND deleted IS FALSE"), .con = r$db)
-    result <- DBI::dbGetQuery(r$db, sql)
+    sql <- glue::glue_sql("SELECT * FROM concept WHERE vocabulary_id = {vocabulary_id} AND concept_name = {concept_name}", .con = m$db)
+    result <- DBI::dbGetQuery(m$db, sql)
   }
   
-  # Search by item id
+  # Search by concept id
   
-  if (method == "item_id"){
+  else if (method == "concept_id"){
     
-    if (length(item_id) == 0) stop_fct <- TRUE
-    else if (is.na(item_id)) stop_fct <- TRUE
+    if (length(concept_id) == 0) stop_fct <- TRUE
+    else if (is.na(concept_id)) stop_fct <- TRUE
     if (stop_fct){
-      show_message_bar(output, "invalid_thesaurus_item_id", "severeWarning", i18n = i18n, ns = ns)
-      stop(i18n$t("invalid_thesaurus_item_id"))
+      show_message_bar(output, "invalid_concept_id_value", "severeWarning", i18n = i18n, ns = ns)
+      stop(i18n$t("invalid_concept_id_value"))
     }
     
-    sql <- glue::glue_sql(paste0("SELECT * FROM thesaurus_items WHERE thesaurus_id = {thesaurus_id} AND ",
-      "item_id = {item_id} AND deleted IS FALSE"), .con = r$db)
-    result <- DBI::dbGetQuery(r$db, sql)
+    sql <- glue::glue_sql("SELECT * FROM concept WHERE vocabulary_id = {vocabulary_id} AND concept_id = {concept_id}", .con = m$db)
+    result <- DBI::dbGetQuery(m$db, sql)
   }
   
-  if (nrow(result) == 0 & create){
-    add_thesaurus_item(output = output, r = r, thesaurus_name = thesaurus_name, item_name = item_name, item_unit = item_unit, i18n = i18n, ns = ns)
+  if (nrow(result) == 0){
+    show_message_bar(output, "concept_not_found", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("concept_not_found"))
   }
   
   else result
@@ -338,7 +324,8 @@ get_thesaurus_item <- function(output, r = shiny::reactiveValues(), thesaurus_na
 #' @param ns Shiny namespace
 #' @examples 
 #' \dontrun{
-#' 
+#' add_vocabulary_concept(output = output, m = m, i18n = i18n, ns = ns, vocabulary_id = "MIMIC-IV", 
+#'   concept_name = "Diuresis", domain_id = "Measurement", concept_class_id = "Clinical Observation", concept_code = "Diuresis")
 #' }
 add_vocabulary_concept <- function(output, m = shiny::reactiveValues(), vocabulary_id = character(), 
   concept_name = character(), domain_id = character(), concept_class_id = character(), concept_code = character(), i18n = character(), ns = character()){
