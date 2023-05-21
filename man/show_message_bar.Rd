@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_layout_functions.R
 \name{show_message_bar}
 \alias{show_message_bar}
-\title{Display an error message}
+\title{Display a message bar}
 \usage{
 show_message_bar(
   output,
@@ -16,25 +16,24 @@ show_message_bar(
 \arguments{
 \item{output}{Shiny output variable}
 
-\item{message}{message that will be displayed, after translation (character)}
+\item{message}{Message that will be displayed, after translation (character)}
 
-\item{type}{type of message bar displayed (reference to Microsoft MessageBarType enum) (character)}
+\item{type}{Type of message bar displayed (reference to Microsoft MessageBarType num) (character)}
 
-\item{time}{time the message bar will by displayed, in ms (integer)}
+\item{i18n}{Translator object from shiny.i18n library}
 
-\item{id}{ID of the warning output used (integer)}
+\item{time}{Time the message bar will by displayed, in ms (integer)}
 
-\item{language}{language used for the translation (character)}
+\item{ns}{Shiny namespace}
 }
 \description{
-Displays an error message on the top of the page
+Displays a shiny.fluent message bar on the top of the page
 }
 \details{
-Choose different warning IDs on one page, to allows multiple messages to be displayed.
 The different possible types are : c("info", "error", "blocked", "severeWarning", "success", "warning")
 }
 \examples{
 \dontrun{
-message_bar(id = 2, message = "name_already_used", type = "severeWarning", language = language, time = 5000)
+message_bar(output = output, message = "name_already_used", type = "severeWarning", i18n = i18n, time = 5000, ns = ns)
 }
 }

@@ -874,10 +874,6 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$script_code_trigger"))
       
-      # Create thesaurus for scripts if doesn't exist
-      create_scripts_thesaurus(output = output, r = r, 
-        data_source_id = r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id), i18n = i18n, ns = ns)
-      
       edited_code <- r$script_code %>% stringr::str_replace_all("\r", "\n")
       
       # Variables to hide

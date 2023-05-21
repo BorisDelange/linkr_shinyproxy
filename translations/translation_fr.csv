@@ -814,3 +814,13 @@ main_tables_to_export,Tables de la BDD principale
 public_tables_to_export,Tables de la BDD publique
 main_tables_to_import,Tables de la BDD principale
 public_tables_to_import,Tables de la BDD publique
+error_downloading_tabs_and_cards_csv_file,Erreur lors du téléchargement du fichier tabs_and_cards.csv
+error_loading_tabs_and_cards_csv_file,Erreur lors du chargement du fichier tabs_and_cards.csv
+invalid_vocabulary_id_value,Valeur de vocabulary_id non valide
+invalid_concept_name_value,Valeur de concept_name non valide
+invalid_domain_id_value,Valeur de domain_id non valide
+invalid_concept_class_id_value,Valeur de concept_class_id non valide
+invalid_concept_code_value,Valeur de concept_code non valide
+vocabulary_concept_already_exists,Ce concept est déjà présent dans la base de données
+vocabulary_concept_added,Nouveau concept ajouté
+vocabulary_id_doesnt_exist,Ce vocabulary_id n'existe pas dans la base de données

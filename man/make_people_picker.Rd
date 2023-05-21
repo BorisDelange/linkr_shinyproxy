@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_layout_functions.R
 \name{make_people_picker}
 \alias{make_people_picker}
-\title{Make a shiny.fluent people picker}
+\title{Make peopel picker}
 \usage{
 make_people_picker(
   i18n = character(),
@@ -16,6 +16,8 @@ make_people_picker(
 )
 }
 \arguments{
+\item{i18n}{Translator object from shiny.i18n library}
+
 \item{ns}{Shiny namespace}
 
 \item{id}{ID used for the input (character)}
@@ -28,24 +30,25 @@ make_people_picker(
 
 \item{width}{CSS code for width, could be all CSS forms, as "200px" or "100\%" etc (character)}
 
-\item{language}{Language used (character)}
+\item{style}{CSS style added to the div containing the people picker (character)}
 }
 \value{
 HTML / Shiny UI code
 }
 \description{
-Creates a shiny.fluent NormalPeoplePicker
+Creates a shiny.fluent people picker
 }
 \details{
-options argument has to be a data.frame or a tibble, with columns = c("key", "imageInitials", "text", "secondaryText")
-key is the ID of the choice, text is the text of the choice, imageInitials are the letters put on a circle,
-secondaryText is the text under the principal text
+Options argument has to be a data.frame or a tibble, with columns = c("key", "imageInitials", "text", "secondaryText").\cr
+Key is the ID of the choice, text is the text of the choice, imageInitials are the letters put on a circle,
+SecondaryText is the text under the principal text.
 }
 \examples{
 \dontrun{
 options <- tibble::tribble(~key,  ~imageInitials, ~text, ~secondaryText,
   1, "JD", "John Doe", "Clinician",
   2, "DA", "Doug Altman", "Statistician")
-make_people_picker(language = "EN", ns = ns, id = "my_people_picker", "My people picker", options = options, value = 2, width = "200px")
+make_people_picker(i18n = i18n, ns = ns, id = "my_people_picker", "My people picker", 
+  options = options, value = 2, width = "200px")
 }
 }

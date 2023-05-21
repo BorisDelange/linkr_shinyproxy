@@ -44,6 +44,13 @@ golem_add_external_resources <- function(css){
     # Link to CSS file
     htmltools::tags$link(href = css, rel = "stylesheet", type = "text/css"),
     
+    # Add fontawesome icons
+    htmltools::tags$link(
+      rel = "stylesheet",
+      href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css",
+      integrity = "sha384-cmES2APjF1Ar8dUWeaROssI2FTx2MFqjMq9u2p89A/QD5/dZqk3bxDi1y5w2AWiS",
+      crossorigin = "anonymous"),
+    
     # Shinyjs is used to show and hide message bars
     shinyjs::useShinyjs(),
     

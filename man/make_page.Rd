@@ -17,8 +17,10 @@ make_page(title = character(), subtitle = character(), contents = character())
 Shiny UI elements / HTML code
 }
 \description{
-Code available in shiny.fluent github pages (Articles). Creates a shiny.fluent page.
+Creates a shiny.fluent page. Code available in shiny.fluent github pages (Articles).
 }
 \examples{
+\dontrun{
 make_page(title = "My page title", subtitle = "My page subtitle", contents = "shiny::div('My page content')")
+}
 }

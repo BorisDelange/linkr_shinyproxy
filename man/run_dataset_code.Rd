@@ -13,24 +13,21 @@ run_dataset_code(
 )
 }
 \arguments{
-\item{output}{Output variable from Shiny, used to render messages on message bars}
+\item{output}{Shiny output variable}
 
-\item{r}{A shiny::reactiValues object, used to communicate between modules}
+\item{r}{A shiny::reactiveValues object, used to communicate between modules}
 
-\item{d}{A shiny::reactiValues object, used to communicate between modules. Contains data loaded from dataset code (d$patients, d$labs_vitals...).}
+\item{d}{A shiny::reactiveValues object, used to communicate between modules. Contains data loaded from dataset code (d$patients, d$labs_vitals...).}
 
-\item{dataset_id}{ID of dataset containing the code (integer)}
+\item{dataset_id}{ID of the dataset we want to load (integer)}
 
-\item{i18n}{shiny.i18n object for translations}
+\item{i18n}{Translator object from shiny.i18n library}
 }
 \description{
-Runs dataset code
-}
-\details{
-The code to load the dataset is loaded from the application database, in code table, from dataset_id.
+Runs the code of a dataset
 }
 \examples{
 \dontrun{
-run_dataset_code(output = output, r = r, d = d, i18n = i18n, dataset_id = 3)
+run_dataset_code(output = output, r = r, d = d, dataset_id = 3, i18n = i18n)
 }
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_import_data.R
 \name{import_vocabulary_table}
 \alias{import_vocabulary_table}
-\title{Import a thesaurus}
+\title{Import a vocabulary}
 \usage{
 import_vocabulary_table(
   output,
@@ -19,34 +19,36 @@ import_vocabulary_table(
 \arguments{
 \item{output}{variable from Shiny, used to render messages on the message bar}
 
-\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
+\item{ns}{Shiny namespace}
 
-\item{thesaurus_id}{ID of the thesaurus, used to update thesaurus table (integer)}
+\item{i18n}{shiny.i18n object for translations}
 
-\item{thesaurus}{thesaurus data variable (data.frame or tibble)}
+\item{r}{A shiny::reactiveValues object, used to communicate between modules}
 
-\item{language}{language used for error / warning messages (character, default = "EN")}
+\item{m}{A shiny::reactiveValues object, used to communicate between modules}
+
+\item{table_name}{Name of the vocabulary table we import (concept, concept_relationship or other) (character)}
+
+\item{data}{A tibble containing the data}
+
+\item{vocabulary_id}{ID of the vocabulary, for example LOINC (character)}
+
+\item{message_bars}{Render messages in message bars or not (logical)}
 }
 \description{
-Add new thesaurus items to database
+Import an OMOP vocabulary and save it in app database
 }
 \details{
-The function is used in a thesaurus code, it is launched only when you click on "Run code" on the thesaurus page.\cr\cr
-Columns needed  :\cr\cr
-\itemize{
-\item{item_id = integer}
-\item{name = character}
-\item{display_name = character}
-\item{category = character}
-\item{unit = character}
-}
+The function is used in a vocabulary code, it is launched only when you click on "Run code" on the vocabulary page.\cr\cr
+See \href{https://ohdsi.github.io/CommonDataModel/cdm60.html}{\strong{OMOP common data model}} for more information.
 }
 \examples{
 \dontrun{
-thesaurus <- tibble::tribble(~item_id, ~name, ~display_name, ~category, ~unit,
-  44543L, "Heart rate", "HR", "Vitals", "bpm",
-  46531L, "Respiratory rate", "RR", "Vitals", "cpm")
+concept <- tibble::tibble(concept_id = 3027018, concept_name = "Heart rate", domain_id = "Measurement",
+  concept_class_id = "Clinical Observation", standard_concept = "S", concept_code = "8867-4",
+  valid_start_date = "1970-01-01", valid_end_date = "2099-12-31", invalid_reason = NA_character_)
   
-import_thesaurus(output = output, r = r, thesaurus_id = 5, thesaurus = thesaurus, language = language)
+import_vocabulary_table(output = output, ns = ns, i18n = i18n, r = r, m = m,
+  table_name = "concept", data = concept, vocabulary_id = "LOINC", message_bars = FALSE)
 }
 }

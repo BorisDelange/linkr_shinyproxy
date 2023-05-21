@@ -28,7 +28,11 @@ report_bug(
 
 \item{error_report}{Report of the error (character)}
 
-\item{language}{Language used for translations (character)}
+\item{i18n}{Translator object from shiny.i18n library
+#' \dontrun{
+report_bug(r = r, output = output, error_message = "failed_execute_code", 
+  error_name = "failed_execute_code", category = "Error", error_report = error_report, i18n = i18n)
+}}
 }
 \description{
 Add log entry - report bug

@@ -2,15 +2,19 @@
 % Please edit documentation in R/fct_settings_app_database.R
 \name{get_last_row}
 \alias{get_last_row}
-\title{Get last row ID of a table}
+\title{Get last row}
 \usage{
 get_last_row(con, table)
 }
 \arguments{
 \item{con}{DBI connection object to the database}
 
-\item{table}{Name of the table}
+\item{table}{Name of the table (character)
+#' @examples
+\dontrun{
+get_last_row(con = r$db, table = "plugins")
+}}
 }
 \description{
-Get last row ID of a table
+Get the last row ID of a table
 }

@@ -4,12 +4,13 @@
 #' Runs the LinkR Shiny Application.\cr
 #' Use language argument to choose language to use ("en" or "fr" available).\cr
 #' Use app_folder argument to choose a folder where the files of the application will be saved. By default, 
-#' a folder will be created depending of the value 'path.expand("~")' ('path.expand("~")/linkr').\cr
+#' a 'linkr' folder will be created in the folder returned by path.expand("~").\cr
 #' @param language Default language to use in the App (character)
 #' @param app_folder Location of the application folder (character).
 #' @param perf_monitoring Monitor app performances (logical)
 #' @param debug Debug mode : steps and errors will by displayed in the console (logical)
 #' @param local Run the app in local mode, do not load files on the internet (logical)
+#' @param show_home_page Should the home page be loaded ? (logical)
 #' @examples 
 #' \dontrun{
 #' linkr(language = "en", perf_monitoring = FALSE, debug = FALSE, local = FALSE)
@@ -24,7 +25,8 @@ linkr <- function(
   app_folder = character(),
   perf_monitoring = FALSE,
   debug = FALSE,
-  local = FALSE
+  local = FALSE,
+  show_home_page = TRUE
 ) {
   
   # Maximum size for uploaded data (4096 MB)
@@ -183,7 +185,8 @@ linkr <- function(
     app = shinyApp(
       ui = app_ui(css = css, page = page, language = language, debug = debug),
       server = app_server(router = page, language = language, app_folder = app_folder, 
-        perf_monitoring = perf_monitoring, debug = debug, local = local, users_accesses_toggles_options = users_accesses_toggles_options),
+        perf_monitoring = perf_monitoring, debug = debug, local = local, show_home_page = show_home_page,
+        users_accesses_toggles_options = users_accesses_toggles_options),
       options = options
     ), 
     golem_opts = list()

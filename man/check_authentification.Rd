@@ -7,8 +7,8 @@
 check_authentification(db)
 }
 \arguments{
-\item{r}{shiny r reactive value}
+\item{db}{A DBI database connection object}
 }
 \description{
-Check user authentification
+Check user authentification using shinymanager library
 }

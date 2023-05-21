@@ -9,10 +9,18 @@ get_authorized_data(r, table, data = tibble::tibble())
 \arguments{
 \item{r}{Shiny reactive value, used to communicate between modules}
 
-\item{table}{Name of the table the data comes from (character)}
+\item{table}{Name of the table in the database (character)}
 
 \item{data}{If data is not r[[table]] (tibble / dataframe)}
 }
 \description{
 Get authorized data for a user
+}
+\details{
+Some data have a restricted access. This function filter the data the user has access to.
+}
+\examples{
+\dontrun{
+get_authorized_data(r = r, table = "plugins")
+}
 }

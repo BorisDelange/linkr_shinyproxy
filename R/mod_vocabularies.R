@@ -825,13 +825,14 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       factorize_cols <- c("relationship_id", "domain_id", "concept_class_id", "standard_concept", "invalid_reason")
       centered_cols <- c("concept_id_1", "relationship_id", "concept_id_2", "domain_id", "count_persons_rows", "count_concepts_rows")
       col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_with_counts", i18n = i18n)
-      hidden_cols <- c("id", "concept_id_2", "vocabulary_id_1", "vocabulary_id_2", "concept_class_id", "standard_concept", "concept_code",
-        "valid_start_date", "valid_end_date", "invalid_reason", "modified")
+      hidden_cols <- c("id", "vocabulary_id_1", "relationship_id", "vocabulary_id_2", "concept_id_2", "concept_name_2", "concept_class_id", 
+        "standard_concept", "concept_code", "valid_start_date", "valid_end_date", "invalid_reason", "modified")
       value_show_cols <- c(2, 3, 4, 9, 16, 17)
 
-      if (!input$vocabulary_show_mapped_concepts){
-        hidden_cols <- c(hidden_cols, "relationship_id", "concept_name_2")
-        value_show_cols <- c(2, 3, 4, 9, 16, 17)
+      if (input$vocabulary_show_mapped_concepts){
+        hidden_cols <- c("id", "vocabulary_id_1", "concept_display_name_1", "vocabulary_id_2", "concept_id_2", "concept_class_id", 
+          "standard_concept", "concept_code", "valid_start_date", "valid_end_date", "invalid_reason", "modified", "relationship_id", "concept_name_2")
+        value_show_cols <- c(2, 3, 5, 7, 8, 16, 17)
       }
 
       shiny.fluent::updateDropdown.shinyInput(session, "vocabulary_table_cols", value = value_show_cols)

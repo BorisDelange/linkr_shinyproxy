@@ -26,7 +26,7 @@ add_settings_new_data(
 
 \item{output}{Shiny output variable}
 
-\item{r}{Shiny reactive value, to communicate between modules (reactiveValue)}
+\item{r}{Shiny reactive value, used to communicate between modules (reactiveValue)}
 
 \item{i18n}{Translator object from shiny.i18n library}
 

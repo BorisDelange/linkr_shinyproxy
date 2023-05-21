@@ -22,91 +22,48 @@ import_dataset(
 \arguments{
 \item{output}{variable from Shiny, used to render messages on the message bar}
 
-\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
+\item{ns}{Shiny namespace}
 
-\item{dataset_id}{ID of the dataset, used to create directory in data/ (eg : dataset_3)}
+\item{i18n}{shiny.i18n object for translations}
 
-\item{data}{data variable (data.frame or tibble)}
+\item{r}{A shiny::reactiveValues object, used to communicate between modules}
 
-\item{type}{type or name of data to create c("patients", "stays", "labs_vitals", "text", "orders")}
+\item{d}{A shiny::reactiveValues object, used to communicate between modules}
 
-\item{save_as_csv}{save or not the data to CSV file (logical, default = TRUE)}
+\item{dataset_id}{ID of the dataset, used to create directory in data folder (integer)}
 
-\item{rewrite}{if save_as_csv is TRUE, rewrite or not existing CSV file (logical, default = FALSE)}
+\item{data}{Data variable (data.frame or tibble)}
 
-\item{language}{language used for error / warning messages (character, default = "EN")}
+\item{type}{Name of the OMOP table to import (character)}
+
+\item{omop_version}{OMOP versions of the imported data, accepts "5.3", "5.4" or "6.0" (character)}
+
+\item{save_as_csv}{Save or not the data to CSV file (logical)}
+
+\item{rewrite}{If save_as_csv is TRUE, rewrite or not existing CSV file (logical)}
+
+\item{quiet}{Should message bars be displayed (logical)}
 }
 \description{
+Import a dataset in the application, with OMOP CDM
+
 Load +/- save data when a dataset is selected by the user.
 }
 \details{
-The function is used in a dataset code and is launched each time a user selects a dataset. \cr
+The function is used in a dataset code and is launched each time a user selects a dataset. \cr\cr
 You can choose to \strong{load data each time} the function is used with save_as_csv set to FALSE (eg when dataset is small and the
-connection to source database is good) or you can \strong{save the data in a CSV file} with save_as_csv set to TRUE. \cr
-Basically, 5 data variables are created for each dataset (distinct values of 'type' parameter).\cr\cr
-Columns needed for each data type :\cr\cr
-\strong{type = "patients"} :\cr
-\itemize{
-\item{patient_id = integer}
-\item{gender = character}
-\item{age = numeric}
-\item{dod = datetime}
-}
-\strong{type = "stays"} :\cr
-\itemize{
-\item{patient_id = integer}
-\item{stay_id = integer}
-\item{thesaurus_name = character}
-\item{item_id = integer}
-\item{admission_datetime = datetime}
-\item{discharge_datetime = datetime}
-}
-\strong{type = "labs_vitals"} :\cr
-\itemize{
-\item{patient_id = integer}
-\item{thesaurus_name = character}
-\item{item_id = integer}
-\item{datetime_start = datetime}
-\item{datetime_stop = datetime}
-\item{value = character}
-\item{value_num = numeric}
-\item{unit = character}
-\item{comments = character}
-}
-\strong{type = "text"} :\cr
-\itemize{
-\item{patient_id = integer}
-\item{thesaurus_name = character}
-\item{item_id = integer}
-\item{datetime_start = datetime}
-\item{datetime_stop = datetime}
-\item{value = character}
-\item{comments = character}
-}
-\strong{type = "orders"} :\cr
-\itemize{
-\item{patient_id = integer}
-\item{thesaurus_name = character}
-\item{item_id = integer}
-\item{datetime_start = datetime}
-\item{datetime_stop = datetime}
-\item{route = character}
-\item{continuous = integer}
-\item{amount = numeric}
-\item{amount_unit = character}
-\item{rate = numeric}
-\item{rate_unit = character}
-\item{concentration = numeric}
-\item{concentration_unit = character}
-\item{comments = character}
-}
+data is loaded from a data warehouse) or you can \strong{save the data in a CSV file} with save_as_csv set to TRUE. \cr\cr
+The data you import must respect the format of \href{https://ohdsi.github.io/CommonDataModel/cdm60.html}{\strong{OMOP common data model}}.\cr\cr
+See help pages in the app for more informations.
 }
 \examples{
 \dontrun{
-patients <- tibble::tribble(~patient_id, ~gender, ~age, ~dod, 44565L, "F", 45, "2021-05-01 00:00:00") \%>\%
-  dplyr::mutate_at("dod", lubridate::ymd_hms)
+persons <- tibble::tibble(person_id = 1L, gender_concept_id = 8532L, year_of_birth = NA_integer_, month_of_birth = NA_integer_,
+  day_of_birth = NA_integer_, birth_datetime = lubridate::ymd_hms("1990-01-03 00:00:00"), race_concept_id = NA_integer_,
+  ethnicity_concept_id = NA_integer_, location_id = NA_integer_, provider_id = NA_integer_, care_site_id = NA_integer_,
+  person_source_value = NA_character_, gender_source_value = "F", race_source_value = NA_character_, ethnicity_source_value = NA_character_)
     
-import_dataset(output = output, r = r, dataset_id = 5, data = patients, type = "patients", 
-  save_as_csv = FALSE, rewrite = FALSE, language = language)
+import_dataset(output = output, ns = ns, i18n = i18n, r = r, d = d, dataset_id = 5, data = persons, type = "persons", 
+  omop_versions = "5.4", save_as_csv = FALSE, rewrite = FALSE, quiet = TRUE)
 }
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_settings_server.R
 \name{save_settings_datatable_updates}
 \alias{save_settings_datatable_updates}
-\title{Save changes in datatable}
+\title{Save updates in datatable}
 \usage{
 save_settings_datatable_updates(
   output,
@@ -19,21 +19,28 @@ save_settings_datatable_updates(
 \arguments{
 \item{output}{Shiny output variable}
 
-\item{r}{Shiny reactive value to communicate between modules}
+\item{r}{Shiny reactive value, used to communicate between modules (reactiveValue)}
+
+\item{m}{Shiny reactive value, used to communicate between modules (reactiveValue)}
 
 \item{ns}{Shiny namespace}
 
-\item{table}{Name of the table used (character)}
+\item{table}{Name of the database table (character)}
+
+\item{r_table}{Name of the r variable containing the data (character)}
 
 \item{duplicates_allowed}{Are duplicates in the name column allowed (logical)}
 
-\item{language}{Language used (character)}
+\item{i18n}{Translator object from shiny.i18n library}
+
+\item{r_message_bar}{If the MessageBar is displayed with a r variable or with show_message_bar function (TRUE for r variable)}
 }
 \description{
-Save changes in datatable
+Save updates in a datatable in settings pages
 }
 \examples{
 \dontrun{
-save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datasets", language = "EN")
+save_settings_datatable_updates(output = output, r = r, ns = ns, table = "datasets", 
+  r_table = "datasets", duplicates_allowed = FALSE, i18n = i18n, r_message_bar = FALSE)
 }
 }

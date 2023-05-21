@@ -12,7 +12,16 @@ load_database(
 }
 \arguments{
 \item{r}{Shiny reactive value, used to communicate between modules}
+
+\item{m}{Shiny reactive value, used to communicate between modules}
+
+\item{i18n}{Translator object from shiny.i18n library}
 }
 \description{
-Load database
+Load application database with only used tables
+}
+\examples{
+\dontrun{
+load_database(r = r, m = m, i18n = i18n)
+}
 }

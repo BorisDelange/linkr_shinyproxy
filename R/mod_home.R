@@ -24,14 +24,14 @@ mod_home_ui <- function(id = character(), i18n = character()){
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("help_panel")),
     shiny.fluent::reactOutput(ns("help_modal")),
-    main
+    main, br()
   )
 }
 
 #' home Server Functions
 #'
 #' @noRd 
-mod_home_server <- function(id = character(), r, language = "en", i18n = character(), perf_monitoring = FALSE, debug = FALSE){
+mod_home_server <- function(id = character(), r, language = "en", i18n = character(), perf_monitoring = FALSE, debug = FALSE, show_home_page = TRUE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -80,49 +80,24 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
     # Get CSV file for tabs & cards ----
     # --- --- --- --- --- --- --- --- --
     
-    r$tabs_and_cards <- tibble::tribble(
-      ~page, ~type, ~category, ~key, ~title, ~markdown_file, ~display_order, ~datetime,
-      
-      "home", "pivot_item", "overview", "overview", "Présentation", "", 1L, "2023-04-10 08:00:00",
-      "home", "pivot_item", "news", "news", "News", "", 2L, "2023-04-10 08:00:00",
-      "home", "pivot_item", "versions", "versions", "Versions", "", 3L, "2023-04-10 08:00:00",
-      
-      "home", "card", "overview", "div1", "LinkR", "2023-04-10_overview.Md", 1L, "2023-04-10 08:00:00",
-
-      "home", "card", "news", "news1", "News 1", "", 1L, "2023-04-10 08:00:00",
-      "home", "card", "news", "news2", "News 2", "", 2L, "2023-04-10 08:00:00",
-
-      "en", "home", "pivot_item", "overview", "Overview", "", 1L, "2023-04-10 08:00:00",
-      "en", "home", "pivot_item", "news", "News", "", 2L, "2023-04-10 08:00:00",
-      "en", "home", "versions", "versions", "Versions", "", 3L, "2023-04-10 08:00:00",
-      
-      "resources", "pivot_item", "learn_r", "learn_r", "Programmer en R", "", 2L, "2023-04-10 08:00:00",
-      "resources", "pivot_item", "health_data_warehouses", "health_data_warehouses", "Entrepôts de données de santé", "", 1L, "2023-04-10 08:00:00",
-      "resources", "pivot_item", "learn_sql", "learn_sql", "Programmer en SQL", "", 3L, "2023-04-10 08:00:00",
-      "resources", "pivot_item", "learn_python", "learn_python", "Programmer en Python", "", 4L, "2023-04-10 08:00:00",
-      "resources", "card", "health_data_warehouses", "div1", "Div 1", "", 2L, "2023-04-10 08:00:00",
-      "resources", "card", "health_data_warehouses", "div2", "Div 2", "", 1L, "2023-04-10 08:00:00",
-      "tutorials", "pivot_item", "health_data_warehouses", "health_data_warehouses", "Entrepôts de données de santé", "", 1L, "2023-04-10 08:00:00",
-      "tutorials", "card", "health_data_warehouses", "div1", "Div 1", "", 1L, "2023-04-10 08:00:00"
-    )
+    r$tabs_and_cards <- tibble::tibble()
     
-    # if (r$has_internet & page == "home"){
-    #   
-    #   if (perf_monitoring) monitor_perf(r = r, action = "start")
-    #   if (debug) print(paste0(Sys.time(), " - mod_home - load_csv"))
-    #   
-    #   r$tabs_and_cards <- tibble::tibble()
-    #   
-    #   tryCatch(
-    #     r$tabs_and_cards <- readr::read_csv(paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/", language, "/tabs_and_cards.csv"),
-    #       col_types = "ccccccciT"),
-    #     error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_home_files", 
-    #       error_name = "Home error loading tabs_and_cards.csv", category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
-    #   
-    #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home - load_csv"))
-    # }
-    # 
-    # if (nrow(r$tabs_and_cards) == 0) output[[paste0(page, "_cards")]] <- renderUI(make_card("", shiny.fluent::MessageBar(i18n$t("error_connection_github"), messageBarType = 3)))
+    if (show_home_page){
+      
+      filename <- paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/", language, "/tabs_and_cards.csv")
+      filename_local <- paste0(r$app_folder, "/home/", language, "/tabs_and_cards.csv")
+    
+      # Get csv file from remote git
+      if (r$has_internet){
+        tryCatch(download.file(filename, filename_local, quiet = TRUE),
+          error = function(e) report_bug(r = r, output = output, error_message = "error_downloading_tabs_and_cards_csv_file",
+            error_name = "home download tabs_and_cards.csv", category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+      }
+      
+      tryCatch(r$tabs_and_cards <- vroom::vroom(filename_local, col_types = "cccccciT"),
+        error = function(e) report_bug(r = r, output = output, error_message = "error_loading_tabs_and_cards_csv_file",
+          error_name = "home load tabs_and_cards.csv", category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+    }
     
     # --- --- --- --- --- ---
     # Render UI of pages ----
@@ -193,6 +168,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
       first_card <- list()
       
       # Create summary cards
+      # Only for pages that are not overview, news or versions, where all the cards are displayed without a summary
       
       if (length(categories) > 0){
         for (i in 1:length(categories)){
@@ -202,6 +178,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
           cards_rows <- r$tabs_and_cards %>% dplyr::filter(page == !!page, type == "card", category == !!category) %>% dplyr::arrange(display_order)
           first_card[[category]] <- r$tabs_and_cards %>% dplyr::filter(page == !!page, type == "card", category == !!category, display_order == 1) %>% dplyr::pull(key)
           
+          # Links displayed in summary div, to show cards
           summary_links <- tagList()
           
           if (nrow(cards_rows) > 0){
@@ -221,6 +198,8 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
             )
           )
           
+          # Show only first card, hide the other ones
+          # If category in overview, news or versions, there is not a summary card
           if (category %not_in% c("overview", "news", "versions")){
             if (i == 1) ui_result <- tagList(ui_result, summary_card)
             else ui_result <- tagList(ui_result, shinyjs::hidden(summary_card)) 
@@ -233,35 +212,33 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
       markdown_list <- list()
       
       if (nrow(page_cards) > 0){
-        
+
         for (i in 1:nrow(page_cards)){
           row <- page_cards[i, ]
-          
+
           content_div <- div()
           if (!is.na(row$markdown_file) & row$markdown_file != ""){
-            
+
             tryCatch({
               filename <- paste0(r$app_folder, "/home/", language, "/", row$page, "/", row$markdown_file)
-              
+
               # Check if file exists. If not, copy file.
-              
+
               if (!file.exists(filename)){
                 filename_local <- filename
                 filename <- paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/", language, "/", row$page, "/", row$markdown_file)
                 download.file(filename, filename_local, quiet = TRUE)
               }
-              
+
               con <- textConnection(filename)
-              
               markdown_list[[row$key]] <- readLines(con, warn = FALSE) %>% includeMarkdown() %>% withMathJax()
-              
               content_div <- uiOutput(ns(paste0(row$key, "_markdown")))
-              
               close(con)
-            }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_home_files", 
+              
+            }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_home_files",
               error_name = "Home overview_card load markdown", category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
           }
-          
+
           div_result <-  div(
             id = ns(row$key),
             make_card(
@@ -270,23 +247,22 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
             ),
             style = "a:visited { color: black; text-decoration: none; }"
           )
-          
+
           if (row$category == categories[1] & row$display_order == 1) ui_result <- tagList(ui_result, div_result)
           else ui_result <- tagList(ui_result, shinyjs::hidden(div_result))
         }
       }
-      
+
       output[[paste0(page, "_cards")]] <- renderUI({
-        
+
         if (debug) print(paste0(Sys.time(), " - mod_home - output .._cards"))
-        
+
         div(ui_result)
       })
       
-      if (length(markdown_list) > 0){
-        for (key in names(markdown_list)){
-          output[[paste0(key, "_markdown")]] <- renderUI(markdown_list[[key]])
-        }
+      if (length(markdown_list) > 0) for (key in names(markdown_list)){
+        if (key == "overview") output[[paste0(key, "_markdown")]] <- renderUI(div(markdown_list[[key]], style = "margin-top:-15px;"))
+        else output[[paste0(key, "_markdown")]] <- renderUI(markdown_list[[key]])
       }
       
       # Show or hide cards

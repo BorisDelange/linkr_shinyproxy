@@ -242,8 +242,6 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         tags$ul(
           tags$li(tags$em("code"), " : les codes de différentes tables (datasets, thésaurus etc) sont stockés ici"),
           tags$li(tags$em("options"), " : les options de différentes tables (data_sources, datasets etc) sont stockées ici"),
-          tags$li(tags$em("cache"), " : cette table permet de créer un cache pour les opérations prenant du temps ",
-          " (création des datatables de thésaurus avec les boutons plus, moins, supprimer...)"),
           tags$li(tags$em("conversations"), " : les conversations que l'on créé au sein d'études sont stockées ici"),
           tags$li(tags$em("messages"), " : les messages associés aux conversations"),
           tags$li(tags$em("inbox_messages"), " : les messages non lus sont indiqués ici"),
@@ -304,8 +302,6 @@ help_settings_app_database <- function(output, r = shiny::reactiveValues(), id =
         tags$ul(
           tags$li(tags$em("code"), " : the codes of different tables (datasets, thesaurus, etc.) are stored here"),
           tags$li(tags$em("options"), " : the options of different tables (data_sources, datasets, etc.) are stored here"),
-          tags$li(tags$em("cache"), " : this table allows creating a cache for operations that take time ",
-            " (creating thesaurus datatables with the plus, minus, delete buttons, etc.)"),
           tags$li(tags$em("conversations"), " : the conversations created within studies are stored here"),
           tags$li(tags$em("messages"), " : the messages associated with the conversations"),
           tags$li(tags$em("inbox_messages"), " : unread messages are indicated here"),

@@ -16,17 +16,31 @@ db_create_table(
 )
 }
 \arguments{
-\item{db}{Database connection object (DBI)}
+\item{db}{A DBI database connection object}
 
-\item{table_name}{Name of the new table (character)}
+\item{table_name}{Name of the new table in the database (character)}
 
 \item{dataframe}{Dataframe with table informations (columns names & type of value) (dataframe / tibble)}
+
+\item{dbms}{Database management system used ("postgres" and "sqlite" supported) (character)}
+
+\item{primary_key_col}{Character vector containing the primary key columns, to create a PRIMARY KEY constraint (character)}
+
+\item{unique_cols}{Character vector containing the columns with a UNIQUE contraint (character)}
+
+\item{not_null_cols}{Character vector containing the columns with a NOT NULL constraint (character)}
+
+\item{text_cols}{Character vector containing the text columns, to create a column with TEXT type in postgres DBMS (character)}
 }
 \description{
 Create a new table in the database
 }
+\details{
+The distinct constraints can be combined (a column can have a constraint UNIQUE and NOT NULL)
+}
 \examples{
 \dontrun{
-  db_create_table(db, "my_new_table", tibble::tibble(id = integer(), name = character()))
+db_create_table(db = db, "my_new_table", tibble::tibble(id = integer(), name = character()), dbms = "postgres",
+  primary_key_col = "id")
 }
 }

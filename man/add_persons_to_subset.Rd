@@ -15,26 +15,26 @@ add_persons_to_subset(
 )
 }
 \arguments{
-\item{output}{Output variable from Shiny, used to render messages on message bars}
+\item{output}{Shiny output variable}
 
-\item{r}{A shiny::reactiValues object, used to communicate between modules}
+\item{r}{A shiny::reactiveValues object, used to communicate between modules}
 
-\item{m}{A shiny::reactiValues object, used to communicate between modules}
+\item{m}{A shiny::reactiveValues object, used to communicate between modules}
+
+\item{persons}{data variable containing patients / persons (data.frame / tibble)}
 
 \item{subset_id}{ID of the subset (integer)}
 
-\item{i18n}{shiny.i18n object for translations}
+\item{i18n}{Translator object from shiny.i18n library}
 
-\item{ns}{shiny namespace object, used to render messages on message bars}
-
-\item{patients}{data variable containing patients (data.frame / tibble)}
+\item{ns}{Shiny namespace}
 }
 \description{
-Add patients to a subset, only if not already in the subset
+Add patients to a subset
 }
 \examples{
 \dontrun{
-patients <- tibble::tribble(~patient_id, 123L, 456L, 789L)
-subset_add_patients(output = output, r = r, m = m, patients = patients, subset_id = 3, i18n = i18n, ns = ns)
+persons <- tibble::tribble(~person_id, 123L, 456L, 789L)
+subset_add_patients(output = output, r = r, m = m, persons = persons, subset_id = 3, i18n = i18n, ns = ns)
 }
 }

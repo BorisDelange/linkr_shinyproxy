@@ -7,12 +7,13 @@
 #' @param perf_monitoring Monitor app performances (logical)
 #' @param debug Debug mode : steps and errors will by displayed in the console (logical)
 #' @param local Run the app in local mode, do not load files on the internet (logical)
+#' @param show_home_page Should the home page be loaded ? (logical)
 #' @param users_accesses_toggles_options A tibble containing users accesses, to add in database if no internet access (tibble)
 #' @import shiny
 #' @noRd
 
 app_server <- function(router, language = "en", app_folder = character(), 
-  perf_monitoring = FALSE, debug = FALSE, local = FALSE, users_accesses_toggles_options = tibble::tibble()){
+  perf_monitoring = FALSE, debug = FALSE, local = FALSE, show_home_page = TRUE, users_accesses_toggles_options = tibble::tibble()){
   function(input, output, session ) {
     
     if (debug) print(paste0(Sys.time(), " - server - init"))
@@ -248,7 +249,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       
       if (debug) print(paste0(Sys.time(), " - server - load server tabs - home"))
       sapply(c("home", "home_get_started", "home_tutorials", "home_resources", "home_dev"), function(page){
-        mod_home_server(page, r, language, i18n, perf_monitoring, debug)
+        mod_home_server(page, r, language, i18n, perf_monitoring, debug, show_home_page)
         mod_page_header_server(page, r, language, i18n)
       })
      

@@ -15,9 +15,9 @@ save_settings_code(
 )
 }
 \arguments{
-\item{output}{variable from Shiny, used to render messages on the message bar}
+\item{output}{Shiny output variable}
 
-\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
+\item{r}{Shiny reactive value, used to communicate between modules (reactiveValue)}
 
 \item{id}{ID of the current page, format = "settings_[PAGE]" (character)}
 
@@ -27,7 +27,7 @@ save_settings_code(
 
 \item{edited_code}{New code, after editing it (character)}
 
-\item{language}{Language used}
+\item{i18n}{Translator object from shiny.i18n library}
 }
 \description{
 Save code in code table after editing it
@@ -35,6 +35,6 @@ Save code in code table after editing it
 \examples{
 \dontrun{
 save_settings_code(output = output, r = r, id = "settings_dataset", category = "dataset", code_id_input = "edit_code_5",
-  edited_code = "print('test code edition')", language = "EN")
+  edited_code = "print('test code edition')", i18n = i18n)
 }
 }

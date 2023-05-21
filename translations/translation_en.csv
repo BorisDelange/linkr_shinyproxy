@@ -814,3 +814,13 @@ main_tables_to_export,Main tables
 public_tables_to_export,Public tables
 main_tables_to_import,Main tables
 public_tables_to_import,Public tables
+error_downloading_tabs_and_cards_csv_file,Error downloading tabs_and_cards.csv
+error_loading_tabs_and_cards_csv_file,Error loading tabs_and_cards.csv
+invalid_vocabulary_id_value,Invalid vocabulary_id value
+invalid_concept_name_value,Invalid concept_name value
+invalid_domain_id_value,Invalid domain_id value
+invalid_concept_class_id_value,Invalid concept_class_id value
+invalid_concept_code_value,Invalid concept_code value
+vocabulary_concept_already_exists,This concept already exists in the database
+vocabulary_concept_added,New concept successfully added
+vocabulary_id_doesnt_exist,This vocabulary_id doesn't exist in database

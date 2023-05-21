@@ -19,8 +19,10 @@ make_card(title = character(), content = character(), size = 12, style = "")
 Shiny UI elements / HTML code
 }
 \description{
-Code available in shiny.fluent github pages (Articles). Creates a shiny.fluent card.
+Creates a shiny.fluent card. Code available in shiny.fluent github pages (Articles).
 }
 \examples{
+\dontrun{
 make_card(title = "Introduction", content = "This is the text of my introduction card", size = 12)
+}
 }

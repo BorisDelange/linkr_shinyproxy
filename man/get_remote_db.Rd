@@ -13,10 +13,21 @@ get_remote_db(
 )
 }
 \arguments{
-\item{local_db}{DBI db object of local database}
+\item{r}{Shiny reactive value, used to communicate between modules}
 
-\item{language}{Language used to display messages (character)}
+\item{m}{Shiny reactive value, used to communicate between modules}
+
+\item{output}{Shiny output variable}
+
+\item{i18n}{Translator object from shiny.i18n library}
+
+\item{ns}{Shiny namespace}
 }
 \description{
 Get a connection to a remote database. If the remote connection fails, returns local DBI connection object.
+}
+\examples{
+\dontrun{
+get_remote_db(r = r, m = m, output = output, i18n = i18n, ns = ns)
+}
 }

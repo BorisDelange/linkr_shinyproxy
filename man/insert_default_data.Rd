@@ -2,21 +2,36 @@
 % Please edit documentation in R/fct_default_data.R
 \name{insert_default_data}
 \alias{insert_default_data}
-\title{Insert default values in database}
+\title{Insert default data}
 \usage{
 insert_default_data(
   output,
   r = shiny::reactiveValues(),
   m = shiny::reactiveValues(),
   i18n = character(),
-  has_internet = FALSE,
-  db_col_types = character(),
+  db_col_types = tibble::tibble(),
   users_accesses_toggles_options = tibble::tibble()
 )
 }
 \arguments{
-\item{r}{shiny reactive value, used to communicate between modules}
+\item{output}{Shiny output variable}
+
+\item{r}{Shiny reactive value, used to communicate between modules}
+
+\item{m}{Shiny reactive value, used to communicate between modules}
+
+\item{i18n}{Translator object from shiny.i18n library}
+
+\item{db_col_types}{A tibble containing the col_types by table, used by vroom or readr to read csv files (tibble)}
+
+\item{users_accesses_toggles_options}{A tibble containing users accesses, to add in database if no internet access (tibble)}
 }
 \description{
-Insert default values in database
+Insert default data in app database, from a remote git if an internet connection is available
+}
+\examples{
+\dontrun{
+insert_default_data(output = output, r = r, m = m, i18n = i18n,
+  db_col_types = db_col_types, users_accesses_toggles_options = users_accesses_toggles_options)
+}
 }

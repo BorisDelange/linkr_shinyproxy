@@ -2,40 +2,53 @@
 % Please edit documentation in R/fct_layout_functions.R
 \name{make_combobox}
 \alias{make_combobox}
-\title{Make a shiny.fluent combo box}
+\title{Make combobox}
 \usage{
 make_combobox(
   i18n = character(),
   ns = character(),
+  id = NA_character_,
   label = character(),
   options = list(),
+  value = NULL,
   multiSelect = FALSE,
   allowFreeform = FALSE,
   autoComplete = "on",
-  id = NA_character_,
-  value = NULL,
   width = NULL
 )
 }
 \arguments{
+\item{i18n}{Translator object from shiny.i18n library}
+
 \item{ns}{Shiny namespace}
-
-\item{label}{Label used for the input (character)}
-
-\item{options}{Options available for the dropdown (list)}
-
-\item{multiSelect}{Is multiselection of options is possible ? (logical)}
 
 \item{id}{ID used for the input (character)}
 
-\item{value}{Value of the toggle : TRUE or FALSE (logical)}
+\item{label}{Label used for the input (character)}
+
+\item{options}{Options available for the combobox (list)}
+
+\item{value}{Value of the combobox (character)}
+
+\item{multiSelect}{Is multiselection of options is possible ? (logical)}
+
+\item{autoComplete}{Auto completion of the text entered in the combobox, to match with available options / choices ("on" of "off") (character)}
 
 \item{width}{Width of the dropdown, CSS code so "300px" or "100\%" are accepted}
 
-\item{language}{Language used (character)}
-
-\item{allowFreeForm}{Allows user to enter free text, not provided by options (logical)}
+\item{allowFreeForm}{Allows user to enter free text, not provided in the options / choices (logical)}
 }
 \description{
-Make a shiny.fluent combo box
+Creates a shiny.fluent combo box
+}
+\examples{
+\dontrun{
+options <- list(
+  list(key = "my_key1", text = "my_text1"),
+  list(key = "my_key2", text = "my_text2")
+)
+make_combobox(i18n = i18n, ns = NS("settings_datasets"), id = "my_dropdown", label = "my_dropdown",
+  options = options, value = "my_key1", multiSelect = FALSE, allowFreeform = FALSE, autoComplete = "on",
+  width = "100\%", disabled = FALSE)
+}
 }

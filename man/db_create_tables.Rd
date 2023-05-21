@@ -7,8 +7,15 @@
 db_create_tables(db, type = character(), dbms = character())
 }
 \arguments{
-\item{db}{Database connection object (DBI)}
+\item{db}{A DBI database connection object}
+
+\item{dbms}{Database management system used ("postgres" and "sqlite" supported) (character)}
 }
 \description{
-Create all application database required tables. It creates the tables if they do not already exist.
+Create all the tables used in the application.
+}
+\examples{
+\dontrun{
+db_create_tables(db = db, dbms = "postgres")
+}
 }

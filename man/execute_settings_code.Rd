@@ -16,34 +16,36 @@ execute_settings_code(
   m = shiny::reactiveValues(),
   edited_code = character(),
   code_type = "",
-  data = list(),
-  col_types = character()
+  data = list()
 )
 }
 \arguments{
-\item{input}{variable from Shiny, used to execute UI & server code (plugins page)}
+\item{input}{Input Shiny variable}
 
-\item{output}{variable from Shiny, used to render messages on the message bar}
+\item{output}{Output Shiny variable}
 
-\item{session}{variable from Shiny, used to execute UI & server code (plugins page)}
+\item{session}{Session Shiny variable}
 
-\item{id}{ID of the current page / tab}
+\item{id}{ID of the current page / module}
 
 \item{ns}{Shiny namespace}
 
-\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
+\item{i18n}{Translator object from shiny.i18n library}
+
+\item{r}{Shiny reactive value, used to communicate between modules (reactiveValue)}
+
+\item{d}{Shiny reactive value, used to communicate between modules (reactiveValue)}
+
+\item{m}{Shiny reactive value, used to communicate between modules (reactiveValue)}
 
 \item{edited_code}{New code, after editing it (character)}
 
 \item{code_type}{For plugins page, code_type could be UI or server (character)}
 
 \item{data}{A list containing dataframes / tibbles, if data need to be used in the evaluated code (list)}
-
-\item{language}{language used (character)}
 }
 \description{
-Execute code entered in the ShinyAce editor\cr
-For plugins page, UI & server code are displayed in distinct outputs (uiOutput for UI code, textOutput for server code to display error messages)
+Execute code entered in the ShinyAce editor
 }
 \examples{
 \dontrun{

@@ -9,7 +9,8 @@ linkr(
   app_folder = character(),
   perf_monitoring = FALSE,
   debug = FALSE,
-  local = FALSE
+  local = FALSE,
+  show_home_page = TRUE
 )
 }
 \arguments{
@@ -17,17 +18,19 @@ linkr(
 
 \item{app_folder}{Location of the application folder (character).}
 
-\item{perf_monitoring}{Monitor app performances (boolean)}
+\item{perf_monitoring}{Monitor app performances (logical)}
 
-\item{debug}{Debug mode : steps and errors will by displayed in the console (boolean)}
+\item{debug}{Debug mode : steps and errors will by displayed in the console (logical)}
 
-\item{local}{Run the app in local mode, do not load files on the internet (boolean)}
+\item{local}{Run the app in local mode, do not load files on the internet (logical)}
+
+\item{show_home_page}{Should the home page be loaded ? (logical)}
 }
 \description{
 Runs the LinkR Shiny Application.\cr
 Use language argument to choose language to use ("en" or "fr" available).\cr
 Use app_folder argument to choose a folder where the files of the application will be saved. By default, 
-a folder will be created depending of the value 'path.expand("~")' ('path.expand("~")/linkr').\cr
+a 'linkr' folder will be created in the folder returned by path.expand("~").\cr
 }
 \examples{
 \dontrun{

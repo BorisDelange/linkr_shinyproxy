@@ -14,7 +14,6 @@ render_datatable(
   col_names = character(),
   datatable_dom = "<'datatable_length'l><'top't><'bottom'p>",
   page_length = 10,
-  start = 0,
   editable_cols = character(),
   sortable_cols = character(),
   centered_cols = character(),
@@ -23,7 +22,6 @@ render_datatable(
   factorize_cols = character(),
   column_widths = character(),
   hidden_cols = character(),
-  truncated_cols = character(),
   selection = "single",
   bold_rows = character(),
   shortened_cols = character()
@@ -32,11 +30,13 @@ render_datatable(
 \arguments{
 \item{output}{variable from Shiny, used to render messages on the message bar}
 
-\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
+\item{r}{A shiny::reactiveValues object, used to communicate between modules}
 
 \item{ns}{Shiny namespace}
 
-\item{data}{data used in the datatable (tibble or dataframe)}
+\item{i18n}{Translator object from shiny.i18n library}
+
+\item{data}{Data used in the datatable (tibble or dataframe)}
 
 \item{output_name}{Name of the datatable output}
 
@@ -46,8 +46,6 @@ render_datatable(
 
 \item{page_length}{Page length of the datatable, default to 10 rows (integer)}
 
-\item{start}{Which page display (used when we save datatable state), default to 1 (integer)}
-
 \item{editable_cols}{Which cols are editable (character vector)}
 
 \item{sortable_cols}{Which cols are sortable (character vector)}
@@ -56,14 +54,39 @@ render_datatable(
 
 \item{searchable_cols}{If filter is TRUE, choose which columns are searchable (character)}
 
-\item{filter}{If TRUE, we can filter we search box each column (logical)}
+\item{filter}{If TRUE, we can filter with a textfield each column (logical)}
 
 \item{factorize_cols}{Which columns are factorized (to be filtered with a dropdown) (character)}
 
 \item{column_widths}{Columns widths (named character vector)}
 
-\item{language}{Language used (charater)}
+\item{hidden_cols}{Which cols are hidden (character vector)}
+
+\item{selection}{Can we select one or multiple rows ? ("single" or "multiple") (character)}
+
+\item{bold_rows}{Which cols are displayed with bold text (character vector)}
+
+\item{shortened_cols}{Which cols are shortened, and with how many characters (named vector)}
 }
 \description{
 Renders a datatable (from library DT)
+}
+\examples{
+\dontrun{
+editable_cols <- c("name", "description", "url_address")
+sortable_cols <- c("name", "creator_id", "datetime")
+column_widths <- c("id" = "80px", "datetime" = "130px", "creator_id" = "200px", "action" = "80px", "category" = "130px")
+centered_cols <- c("creator_id", "datetime", "action", "category")
+searchable_cols <- c("name", "creator_id", "category")
+factorize_cols <- c("creator_id", "category")
+hidden_cols <- c("id", "deleted", "modified", "description")
+col_names <- get_col_names("git_repos", i18n)
+shortened_cols <- c("name" = 30, "url_address" = 30, "creator_id" = 20)
+my_data <- tibble::tibble(col_1 = c("value_1", "value_2"), col_2 = c("value_3", "value_4"))
+
+render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = my_data,
+  output_name = "git_repos_datatable", col_names = col_names, shortened_cols = shortened_cols,
+  editable_cols = editable_cols, sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+  searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+}
 }

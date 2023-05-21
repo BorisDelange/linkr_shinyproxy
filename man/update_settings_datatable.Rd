@@ -17,21 +17,21 @@ update_settings_datatable(
 \arguments{
 \item{input}{Shiny input variable}
 
-\item{r}{Shiny reactive value to communicate between modules}
+\item{r}{Shiny reactive value, used to communicate between modules (reactiveValue)}
 
 \item{ns}{Shiny namespace}
 
-\item{table}{Name of the table used (character)}
+\item{table}{Name of the database table used (character)}
 
-\item{dropdowns}{Dropdowns shown on datatable (character)}
+\item{dropdowns}{Dropdowns displayed on datatable (character)}
 
-\item{language}{Language used (character)}
+\item{i18n}{Translator object from shiny.i18n library}
 }
 \description{
-Update datatable
+Update data in r variable when an update is made in the datatable
 }
 \examples{
 \dontrun{
-update_settings_datatable(r = r, ns = ns, table = "datasets", dropdowns = "data_source", language = "EN")
+update_settings_datatable(r = r, ns = ns, table = "datasets", dropdowns = "data_source", i18n = i18n)
 }
 }

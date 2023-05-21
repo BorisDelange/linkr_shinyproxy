@@ -11,13 +11,17 @@ get_db(
 )
 }
 \arguments{
-\item{db_info}{DB informations given in cdwtools function}
+\item{r}{Shiny reactive value, used to communicate between modules}
 
-\item{language}{Language used to display messages (character)}
+\item{m}{Shiny reactive value, used to communicate between modules}
+
+\item{app_db_folder}{Folder where the application database is saved (character)}
 }
 \description{
-Get final database connection DBI object.
-First, get local database connection. 
-Second, if db_info argument is not empty, try a connection with these informations.
-Third, if db_info argument is empty or connection fails and if the choice recorded in local database is remote db, try remote db connection.
+Get final database connection DBI object (local or remote).
+}
+\examples{
+\dontrun{
+get_db(r = r, m = m, app_db_folder = paste0(r$app_folder, "/app_database"))
+}
 }

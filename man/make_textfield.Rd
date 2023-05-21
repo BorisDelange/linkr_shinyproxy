@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_layout_functions.R
 \name{make_textfield}
 \alias{make_textfield}
-\title{Make a shiny.fluent textfield}
+\title{Make textfield}
 \usage{
 make_textfield(
   i18n = character(),
@@ -19,12 +19,39 @@ make_textfield(
   disabled = FALSE
 )
 }
+\arguments{
+\item{i18n}{Translator object from shiny.i18n library}
+
+\item{ns}{Shiny namespace}
+
+\item{label}{Displayed name of the textfield (character)}
+
+\item{id}{Id of the textfield (character)}
+
+\item{value}{Value of the textfield (character)}
+
+\item{type}{Type of the input ("password" or NULL) (character)}
+
+\item{canRevealPassword}{If the type is password, show a button to reveal the password (logical)}
+
+\item{width}{Width of the dropdown, CSS code so "300px" or "100\%" are accepted (character)}
+
+\item{min_width}{Min width of the textfield, same format as width (character)}
+
+\item{max_width}{Max width of the textfield, same format as width (character)}
+
+\item{margin_right}{Margin at the right side of the textfield, like "30px" (character)}
+
+\item{disabled}{Is the textfield is disabled (character)}
+}
 \value{
 Shiny UI elements / HTML code
 }
 \description{
-Make a shiny.fluent textfield
+Creates a shiny.fluent textfield
 }
 \examples{
-
+\dontrun{
+make_textfield(i18n = i18n, ns = ns, label = "password", id = "password", width = "300px", type = "password", canRevealPassword = TRUE)
+}
 }

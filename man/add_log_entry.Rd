@@ -4,16 +4,24 @@
 \alias{add_log_entry}
 \title{Add a log entry}
 \usage{
-add_log_entry(r, category, name, value)
+add_log_entry(
+  r,
+  category = character(),
+  name = character(),
+  value = character()
+)
 }
 \arguments{
-\item{r}{Shiny reactive value r used to communicate between modules}
+\item{r}{Shiny reactive value used to communicate between modules}
 
 \item{category}{Category of the log entry, eg : "SQL query" (character)}
 
 \item{name}{Name of the log entry, eg : "Add a new dataset" (character)}
 
-\item{value}{Value of the log entry, eg : "INSERT INTO ..."}
+\item{value}{Value of the log entry, eg : "INSERT INTO ..."
+\dontrun{
+add_log_entry(r = r, category = "delete_data", name = "SQL query", value = "DELETE FROM datasets WHERE id = 5")
+}}
 }
 \description{
 Add a log entry

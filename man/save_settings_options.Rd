@@ -16,9 +16,9 @@ save_settings_options(
 )
 }
 \arguments{
-\item{output}{variable from Shiny, used to render messages on the message bar}
+\item{output}{Shiny output variable}
 
-\item{r}{The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)}
+\item{r}{Shiny reactive value, used to communicate between modules (reactiveValue)}
 
 \item{id}{ID of the current page, format = "settings_[PAGE]" (character)}
 
@@ -28,10 +28,12 @@ save_settings_options(
 
 \item{data}{New data to store in options table (list)}
 
-\item{language}{Language used}
+\item{i18n}{Translator object from shiny.i18n library}
+
+\item{page_options}{Which options need to be saved (character)}
 }
 \description{
-Save options
+Save options in settings pages
 }
 \examples{
 \dontrun{
@@ -39,6 +41,6 @@ data <- list()
 data$show_only_aggregated_data <- TRUE
 data$users_allowed_read <- c(1, 3, 4)
 save_settings_options(output = output, r = r, id = "settings_dataset", category = "dataset", code_id_input = "edit_code_3",
-  data = data, language = "EN")
+  data = data, i18n = i18n, page_options = c("show_only_aggregated_data", "users_allowed_read"))
 }
 }

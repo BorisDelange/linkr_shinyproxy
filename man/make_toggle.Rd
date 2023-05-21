@@ -2,40 +2,41 @@
 % Please edit documentation in R/fct_layout_functions.R
 \name{make_toggle}
 \alias{make_toggle}
-\title{Make a shiny.fluent toggle}
+\title{Make toggle}
 \usage{
 make_toggle(
   i18n = character(),
   ns = character(),
-  label = character(),
   id = NULL,
+  label = character(),
   value = FALSE,
   inline = FALSE,
-  translate = TRUE,
   bold = TRUE
 )
 }
 \arguments{
+\item{i18n}{Translator object from shiny.i18n library}
+
 \item{ns}{Shiny namespace}
 
-\item{label}{Label used for the input (character)}
-
 \item{id}{ID used for the input (character)}
+
+\item{label}{Label used for the input (character)}
 
 \item{value}{Value of the toggle : TRUE or FALSE (logical)}
 
 \item{inline}{Should the toggle displayed inline (logical)}
 
-\item{language}{Language used (character)}
+\item{bold}{Should the text of the title be bold (logical)}
 }
 \value{
 HTML / Shiny UI code
 }
 \description{
-Make a shiny.fluent toggle
+Creates a shiny.fluent toggle
 }
 \examples{
 \dontrun{
-make_toggle(language = "EN", ns = ns, label = "My toggle", id = "my_toggle", value = TRUE, inline = FALSE)
+make_toggle(i18n = i18n, ns = ns, label = "My toggle", id = "my_toggle", value = TRUE, inline = FALSE, bold = TRUE)
 }
 }

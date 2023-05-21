@@ -1,34 +1,37 @@
 #' Check user authentification
 #' 
-#' @param r shiny r reactive value
-
+#' @description Check user authentification using shinymanager library
+#' @param db A DBI database connection object
 check_authentification <- function(db){
-  
   function(user, password) {
     
     password <- rlang::hash(password)
     
     res <- DBI::dbGetQuery(db, paste0("SELECT * FROM users WHERE username = '", user, "' AND password = '", password, "'"))
     
-    
     if (nrow(res) > 0) list(result = TRUE, user_info = list(user = user, id = res$id))
     else list(result = FALSE)
-    
   }
 }
 
 #' Create a new table
 #' 
 #' @description Create a new table in the database
+#' @details The distinct constraints can be combined (a column can have a constraint UNIQUE and NOT NULL)
 #' 
-#' @param db Database connection object (DBI)
-#' @param table_name Name of the new table (character)
+#' @param db A DBI database connection object
+#' @param table_name Name of the new table in the database (character)
 #' @param dataframe Dataframe with table informations (columns names & type of value) (dataframe / tibble)
+#' @param dbms Database management system used ("postgres" and "sqlite" supported) (character)
+#' @param primary_key_col Character vector containing the primary key columns, to create a PRIMARY KEY constraint (character)
+#' @param unique_cols Character vector containing the columns with a UNIQUE contraint (character)
+#' @param not_null_cols Character vector containing the columns with a NOT NULL constraint (character)
+#' @param text_cols Character vector containing the text columns, to create a column with TEXT type in postgres DBMS (character)
 #' @examples 
 #' \dontrun{
-#'   db_create_table(db, "my_new_table", tibble::tibble(id = integer(), name = character()))
+#' db_create_table(db = db, "my_new_table", tibble::tibble(id = integer(), name = character()), dbms = "postgres",
+#'   primary_key_col = "id")
 #' }
-
 db_create_table <- function(db, table_name = character(), dataframe = tibble::tibble(), dbms = character(), 
   primary_key_col = character(), unique_cols = character(), not_null_cols = character(), text_cols = character()){
   if (table_name %not_in% DBI::dbListTables(db)){
@@ -63,12 +66,16 @@ db_create_table <- function(db, table_name = character(), dataframe = tibble::ti
 
 #' Create tables
 #' 
-#' @description Create all application database required tables. It creates the tables if they do not already exist.
-#' @param db Database connection object (DBI)
-
+#' @description Create all the tables used in the application.
+#' @param db A DBI database connection object
+#' @param dbms Database management system used ("postgres" and "sqlite" supported) (character)
+#' @examples 
+#' \dontrun{
+#' db_create_tables(db = db, dbms = "postgres")
+#' }
 db_create_tables <- function(db, type = character(), dbms = character()){
   
-  # Create tables if doest not exist
+  # Create tables if does not exist
   
   # Type = main for main database
   # Type = public for plugins / tabs database
@@ -156,9 +163,6 @@ db_create_tables <- function(db, type = character(), dbms = character()){
     db_create_table(db, "inbox_messages", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), message_id = integer(), receiver_id = integer(), read = logical(), 
         datetime = character(), deleted = logical()))
-    
-    db_create_table(db, "cache", primary_key_col = "id", dbms = dbms, text_cols = "value",
-      tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
     
     db_create_table(db, "log", primary_key_col = "id", dbms = dbms, text_cols = "value",
       tibble::tibble(id = integer(), category = character(), name = character(), value = character(), creator_id = integer(), datetime = character()))
@@ -250,18 +254,19 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         concept_name = character(), concept_display_name = character(), domain_id = character(), 
         concept_colour = character(), mapped_to_concept_id = integer(), merge_mapped_concepts = logical(),
         creator_id = integer(), datetime = character(), deleted = logical()))
-    
-    db_create_table(db, "cache", primary_key_col = "id", dbms = dbms, text_cols = "value",
-      tibble::tibble(id = integer(), category = character(), link_id = integer(), link_id_bis = integer(), value = character(), datetime = character()))
   }
 }
 
 #' Get authorized data for a user
 #'
+#' @details Some data have a restricted access. This function filter the data the user has access to.
 #' @param r Shiny reactive value, used to communicate between modules
-#' @param table Name of the table the data comes from (character)
+#' @param table Name of the table in the database (character)
 #' @param data If data is not r[[table]] (tibble / dataframe)
-
+#' @examples
+#' \dontrun{
+#' get_authorized_data(r = r, table = "plugins")
+#' }
 get_authorized_data <- function(r, table, data = tibble::tibble()){
   
   if (nrow(data) == 0) data <- r[[table]]
@@ -292,13 +297,14 @@ get_authorized_data <- function(r, table, data = tibble::tibble()){
 
 #' Get database DBI object
 #'
-#' @description Get final database connection DBI object.
-#' First, get local database connection. 
-#' Second, if db_info argument is not empty, try a connection with these informations.
-#' Third, if db_info argument is empty or connection fails and if the choice recorded in local database is remote db, try remote db connection.
-#' @param db_info DB informations given in cdwtools function
-#' @param language Language used to display messages (character)
-
+#' @description Get final database connection DBI object (local or remote).
+#' @param r Shiny reactive value, used to communicate between modules
+#' @param m Shiny reactive value, used to communicate between modules
+#' @param app_db_folder Folder where the application database is saved (character)
+#' @examples
+#' \dontrun{
+#' get_db(r = r, m = m, app_db_folder = paste0(r$app_folder, "/app_database"))
+#' }
 get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app_db_folder = character()){
   
   # Get local database connection
@@ -388,11 +394,15 @@ get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app
   }
 }
 
-#' Get last row ID of a table
+#' Get last row
 #'
+#' @description Get the last row ID of a table
 #' @param con DBI connection object to the database
-#' @param table Name of the table
-
+#' @param table Name of the table (character)
+#' #' @examples
+#' \dontrun{
+#' get_last_row(con = r$db, table = "plugins")
+#' }
 get_last_row <- function(con, table){
   glue::glue_sql("SELECT COALESCE(MAX(id), 0) FROM {`table`}", .con = con) -> sql
   DBI::dbGetQuery(con, sql) %>% dplyr::pull() %>% as.integer()
@@ -401,9 +411,15 @@ get_last_row <- function(con, table){
 #' Connection to remote database
 #' 
 #' @description Get a connection to a remote database. If the remote connection fails, returns local DBI connection object.
-#' @param local_db DBI db object of local database
-#' @param language Language used to display messages (character)
-
+#' @param r Shiny reactive value, used to communicate between modules
+#' @param m Shiny reactive value, used to communicate between modules
+#' @param output Shiny output variable
+#' @param i18n Translator object from shiny.i18n library
+#' @param ns Shiny namespace
+#' @examples
+#' \dontrun{
+#' get_remote_db(r = r, m = m, output = output, i18n = i18n, ns = ns)
+#' }
 get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), output, i18n = character(), ns = character()){
   
   result <- "failure"
@@ -443,7 +459,14 @@ get_remote_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues
 
 #' Load database
 #' 
+#' @description Load application database with only used tables
 #' @param r Shiny reactive value, used to communicate between modules
+#' @param m Shiny reactive value, used to communicate between modules
+#' @param i18n Translator object from shiny.i18n library
+#' @examples
+#' \dontrun{
+#' load_database(r = r, m = m, i18n = i18n)
+#' }
 load_database <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), i18n = character()){
   
   # Database tables to load

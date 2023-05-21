@@ -1,83 +1,36 @@
 #' Import a dataset
+#' 
+#' @description Import a dataset in the application, with OMOP CDM
 #' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
-#' @param dataset_id ID of the dataset, used to create directory in data/ (eg : dataset_3)
-#' @param data data variable (data.frame or tibble)
-#' @param type type or name of data to create c("patients", "stays", "labs_vitals", "text", "orders")
-#' @param save_as_csv save or not the data to CSV file (logical, default = TRUE)
-#' @param rewrite if save_as_csv is TRUE, rewrite or not existing CSV file (logical, default = FALSE)
-#' @param language language used for error / warning messages (character, default = "EN")
+#' @param ns Shiny namespace
+#' @param i18n shiny.i18n object for translations
+#' @param r A shiny::reactiveValues object, used to communicate between modules
+#' @param d A shiny::reactiveValues object, used to communicate between modules
+#' @param dataset_id ID of the dataset, used to create directory in data folder (integer)
+#' @param data Data variable (data.frame or tibble)
+#' @param type Name of the OMOP table to import (character)
+#' @param omop_version OMOP versions of the imported data, accepts "5.3", "5.4" or "6.0" (character)
+#' @param save_as_csv Save or not the data to CSV file (logical)
+#' @param rewrite If save_as_csv is TRUE, rewrite or not existing CSV file (logical)
+#' @param quiet Should message bars be displayed (logical)
 #' @description Load +/- save data when a dataset is selected by the user.
-#' @details The function is used in a dataset code and is launched each time a user selects a dataset. \cr
+#' @details The function is used in a dataset code and is launched each time a user selects a dataset. \cr\cr
 #' You can choose to \strong{load data each time} the function is used with save_as_csv set to FALSE (eg when dataset is small and the
-#' connection to source database is good) or you can \strong{save the data in a CSV file} with save_as_csv set to TRUE. \cr
-#' Basically, 5 data variables are created for each dataset (distinct values of 'type' parameter).\cr\cr
-#' Columns needed for each data type :\cr\cr
-#' \strong{type = "patients"} :\cr
-#' \itemize{
-#' \item{patient_id = integer}
-#' \item{gender = character}
-#' \item{age = numeric}
-#' \item{dod = datetime}
-#' }
-#' \strong{type = "stays"} :\cr
-#' \itemize{
-#' \item{patient_id = integer}
-#' \item{stay_id = integer}
-#' \item{thesaurus_name = character}
-#' \item{item_id = integer}
-#' \item{admission_datetime = datetime}
-#' \item{discharge_datetime = datetime}
-#' }
-#' \strong{type = "labs_vitals"} :\cr
-#' \itemize{
-#' \item{patient_id = integer}
-#' \item{thesaurus_name = character}
-#' \item{item_id = integer}
-#' \item{datetime_start = datetime}
-#' \item{datetime_stop = datetime}
-#' \item{value = character}
-#' \item{value_num = numeric}
-#' \item{unit = character}
-#' \item{comments = character}
-#' }
-#' \strong{type = "text"} :\cr
-#' \itemize{
-#' \item{patient_id = integer}
-#' \item{thesaurus_name = character}
-#' \item{item_id = integer}
-#' \item{datetime_start = datetime}
-#' \item{datetime_stop = datetime}
-#' \item{value = character}
-#' \item{comments = character}
-#' }
-#' \strong{type = "orders"} :\cr
-#' \itemize{
-#' \item{patient_id = integer}
-#' \item{thesaurus_name = character}
-#' \item{item_id = integer}
-#' \item{datetime_start = datetime}
-#' \item{datetime_stop = datetime}
-#' \item{route = character}
-#' \item{continuous = integer}
-#' \item{amount = numeric}
-#' \item{amount_unit = character}
-#' \item{rate = numeric}
-#' \item{rate_unit = character}
-#' \item{concentration = numeric}
-#' \item{concentration_unit = character}
-#' \item{comments = character}
-#' }
+#' data is loaded from a data warehouse) or you can \strong{save the data in a CSV file} with save_as_csv set to TRUE. \cr\cr
+#' The data you import must respect the format of \href{https://ohdsi.github.io/CommonDataModel/cdm60.html}{\strong{OMOP common data model}}.\cr\cr
+#' See help pages in the app for more informations.
 #' @examples
 #' \dontrun{
-#' patients <- tibble::tribble(~patient_id, ~gender, ~age, ~dod, 44565L, "F", 45, "2021-05-01 00:00:00") %>%
-#'   dplyr::mutate_at("dod", lubridate::ymd_hms)
+#' persons <- tibble::tibble(person_id = 1L, gender_concept_id = 8532L, year_of_birth = NA_integer_, month_of_birth = NA_integer_,
+#'   day_of_birth = NA_integer_, birth_datetime = lubridate::ymd_hms("1990-01-03 00:00:00"), race_concept_id = NA_integer_,
+#'   ethnicity_concept_id = NA_integer_, location_id = NA_integer_, provider_id = NA_integer_, care_site_id = NA_integer_,
+#'   person_source_value = NA_character_, gender_source_value = "F", race_source_value = NA_character_, ethnicity_source_value = NA_character_)
 #'     
-#' import_dataset(output = output, r = r, dataset_id = 5, data = patients, type = "patients", 
-#'   save_as_csv = FALSE, rewrite = FALSE, language = language)
+#' import_dataset(output = output, ns = ns, i18n = i18n, r = r, d = d, dataset_id = 5, data = persons, type = "persons", 
+#'   omop_versions = "5.4", save_as_csv = FALSE, rewrite = FALSE, quiet = TRUE)
 #' }
-import_dataset <- function(output, ns = character(), i18n = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), dataset_id = integer(), data = tibble::tibble(), 
-  type = "", omop_version = "6.0", save_as_csv = TRUE, rewrite = FALSE, quiet = TRUE){
+import_dataset <- function(output, ns = character(), i18n = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), 
+  dataset_id = integer(), data = tibble::tibble(), type = "", omop_version = "6.0", save_as_csv = TRUE, rewrite = FALSE, quiet = TRUE){
   
   # Check omop_version
   if (omop_version %not_in% c("5.3", "5.4", "6.0")){
@@ -889,29 +842,28 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
 #   else return(FALSE)
 # }
 
-#' Import a thesaurus
+#' Import a vocabulary
+#' 
+#' @description Import an OMOP vocabulary and save it in app database
 #' @param output variable from Shiny, used to render messages on the message bar
-#' @param r The "petit r" object, used to communicate between modules in the ShinyApp (reactiveValues object)
-#' @param thesaurus_id ID of the thesaurus, used to update thesaurus table (integer)
-#' @param thesaurus thesaurus data variable (data.frame or tibble)
-#' @param language language used for error / warning messages (character, default = "EN")
-#' @description Add new thesaurus items to database
-#' @details The function is used in a thesaurus code, it is launched only when you click on "Run code" on the thesaurus page.\cr\cr
-#' Columns needed  :\cr\cr
-#' \itemize{
-#' \item{item_id = integer}
-#' \item{name = character}
-#' \item{display_name = character}
-#' \item{category = character}
-#' \item{unit = character}
-#' }
+#' @param ns Shiny namespace
+#' @param i18n shiny.i18n object for translations
+#' @param r A shiny::reactiveValues object, used to communicate between modules
+#' @param m A shiny::reactiveValues object, used to communicate between modules
+#' @param table_name Name of the vocabulary table we import (concept, concept_relationship or other) (character)
+#' @param data A tibble containing the data
+#' @param vocabulary_id ID of the vocabulary, for example LOINC (character)
+#' @param message_bars Render messages in message bars or not (logical)
+#' @details The function is used in a vocabulary code, it is launched only when you click on "Run code" on the vocabulary page.\cr\cr
+#' See \href{https://ohdsi.github.io/CommonDataModel/cdm60.html}{\strong{OMOP common data model}} for more information.
 #' @examples
 #' \dontrun{
-#' thesaurus <- tibble::tribble(~item_id, ~name, ~display_name, ~category, ~unit,
-#'   44543L, "Heart rate", "HR", "Vitals", "bpm",
-#'   46531L, "Respiratory rate", "RR", "Vitals", "cpm")
+#' concept <- tibble::tibble(concept_id = 3027018, concept_name = "Heart rate", domain_id = "Measurement",
+#'   concept_class_id = "Clinical Observation", standard_concept = "S", concept_code = "8867-4",
+#'   valid_start_date = "1970-01-01", valid_end_date = "2099-12-31", invalid_reason = NA_character_)
 #'   
-#' import_thesaurus(output = output, r = r, thesaurus_id = 5, thesaurus = thesaurus, language = language)
+#' import_vocabulary_table(output = output, ns = ns, i18n = i18n, r = r, m = m,
+#'   table_name = "concept", data = concept, vocabulary_id = "LOINC", message_bars = FALSE)
 #' }
 import_vocabulary_table <- function(output, ns = character(), i18n = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(),
   table_name = character(), data = tibble::tibble(), vocabulary_id = character(), messages_bars = FALSE){
