@@ -272,7 +272,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   if (table_name == "plugins"){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("tab_type"), 
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("tab_type"), 
       i18n$t("created_on"), i18n$t("updated_on"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
@@ -320,7 +320,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   if (table_name == "scripts"){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("data_source_id"), i18n$t("creator"), 
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("data_source_id"), 
       i18n$t("created_on"), i18n$t("updated_on"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   

@@ -164,7 +164,9 @@ linkr <- function(
       "scripts_descriptions_card",
       "scripts_datatable_card",
       "scripts_edit_code_card",
-      "scripts_options_card"
+      "scripts_options_card",
+      "import_script_card",
+      "export_script_card"
     ),
     "log", c(
       "all_users",

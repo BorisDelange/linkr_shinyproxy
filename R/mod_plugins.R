@@ -414,7 +414,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
 #'
 #' @noRd 
 mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), o = shiny::reactiveValues(),
-  language = "en", i18n = character(), app_folder = character(), perf_monitoring = FALSE, debug = FALSE){
+  language = "en", i18n = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -544,7 +544,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       r$url_address <- url_address
       
       error_loading_remote_git <- TRUE
-      plugins_file <- paste0(app_folder, "/temp_files/plugins.xml")
+      plugins_file <- paste0(r$app_folder, "/temp_files/plugins.xml")
       
       if (r$has_internet){
         
@@ -629,7 +629,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       plugins <- list()
       plugins$remote_git <- r$remote_git_plugins %>% dplyr::filter(type == tab_type_id) %>% dplyr::mutate(id = unique_id)
       if (nrow(plugins$remote_git) > 0) plugins$remote_git <- plugins$remote_git %>% dplyr::arrange(get(paste0("name_", language)))
-      plugins$local <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id, !deleted) %>% dplyr::arrange(name)
+      plugins$local <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>% dplyr::arrange(name)
       r[[paste0(prefix, "_plugins_images")]] <- tibble::tibble(type = character(), id = character(), image_url = character())
       
       # Filter local plugins on category
@@ -668,7 +668,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
               plugin$category <- plugin$options %>% dplyr::filter(name == paste0("category_", language)) %>% dplyr::pull(value)
               
               if (plugin$options %>% dplyr::filter(name == "image") %>% dplyr::pull(value) != ""){
-                plugin$image_url <- paste0(app_folder, "/plugins/", prefix, "/",
+                plugin$image_url <- paste0(r$app_folder, "/plugins/", prefix, "/",
                   plugin$options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value), "/",
                   plugin$options %>% dplyr::filter(name == "image") %>% dplyr::pull(value))
               }
@@ -790,7 +790,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Render markdown description
       
-      dir <- paste0(app_folder, "/temp_files")
+      dir <- paste0(r$app_folder, "/temp_files")
       
       markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", dir, "')\n",
         "knitr::opts_chunk$set(root.dir = '", dir, "', fig.path = '", dir, "')\n```\n")
@@ -807,7 +807,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           plugin_options %>% dplyr::filter(name == paste0("description_", tolower(language))) %>% dplyr::pull(value)
         )
         
-        plugin_folder <- paste0(app_folder, "/plugins/", prefix, "/", plugin_options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
+        plugin_folder <- paste0(r$app_folder, "/plugins/", prefix, "/", plugin_options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
       }
       
       # For remote_git plugins
@@ -844,7 +844,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         plugins <- 
           r$plugins %>%
-          dplyr::filter(!deleted, tab_type_id == !!tab_type_id) %>%
+          dplyr::filter(tab_type_id == !!tab_type_id) %>%
           dplyr::left_join(
             r$options %>% dplyr::filter(category == "plugin", name == "unique_id") %>% dplyr::select(id = link_id, unique_id = value),
             by = "id"
@@ -941,7 +941,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           
           new_row <- r$options %>% dplyr::filter(category == "plugin", name == "unique_id", value == plugin$unique_id) %>% 
             dplyr::select(id = link_id, value) %>%
-            dplyr::inner_join(r$plugins %>% dplyr::filter(!deleted), by = "id") %>%
+            dplyr::inner_join(r$plugins, by = "id") %>%
             dplyr::pull(id)
           
           sql <- glue::glue_sql("DELETE FROM plugins WHERE id = {new_row}", .con = r$db)
@@ -1085,7 +1085,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     observeEvent(r$plugins, {
       
       if (nrow(r$plugins) == 0){
-        r[[paste0(prefix, "_plugins_temp")]] <- tibble::tibble(id = integer(), name = character(), description = character(),
+        r[[paste0(prefix, "_plugins_temp")]] <- tibble::tibble(id = integer(), name = character(),
           tab_type_id = integer(), creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical())
       }
       else r[[paste0(prefix, "_plugins_temp")]] <- r$plugins %>% dplyr::filter(tab_type_id == !!tab_type_id) %>%
@@ -1108,7 +1108,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$..plugins_reload_datatables"))
       
-      # Reset selected plugins for export and export_plugins var for datatable
+      # Reset selected plugins for export_plugins & export_plugins_selected
       r[[paste0(prefix, "_export_plugins_temp")]] <- r[[paste0(prefix, "_plugins_temp")]]
       r[[paste0(prefix, "_export_plugins_selected")]] <- r[[paste0(prefix, "_export_plugins_temp")]] %>% dplyr::slice(0)
       
@@ -1116,7 +1116,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         # Default data for datatable
         
-        data_plugins_datatable <- tibble::tibble(id = integer(), name = character(), description = character(),
+        data_plugins_datatable <- tibble::tibble(id = integer(), name = character(),
           tab_type_id = integer(), creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical(), action = character())
         data_export_plugins_datatable <- data_plugins_datatable
         
@@ -1183,8 +1183,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Reload datatable_temp variable
       if (nrow(r[[paste0(prefix, "_export_plugins_temp")]] == 0)){
-        data <- tibble::tibble(id = integer(), name = character(), description = character(),
-          tab_type_id = integer(), creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical(), action = character())
+        data <- tibble::tibble(id = integer(), name = character(), tab_type_id = integer(),
+          creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical(), action = character())
       }
       if (nrow(r[[paste0(prefix, "_export_plugins_temp")]]) > 0){
         r[[paste0(prefix, "_export_plugins_datatable_temp")]] <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
@@ -1255,7 +1255,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       delete_prefix = plugin_delete_prefix, dialog_title = plugin_dialog_title, dialog_subtext = plugin_dialog_subtext,
       react_variable = plugin_react_variable, table = plugin_table, id_var_sql = plugin_id_var_sql, id_var_r = plugin_id_var_r,
       delete_message = plugin_delete_message, translation = TRUE, reload_variable = plugin_reload_variable,
-      information_variable = plugin_information_variable, app_folder = app_folder, prefix = prefix)
+      information_variable = plugin_information_variable, app_folder = r$app_folder, prefix = prefix)
     
     # Delete one row (with icon on DT)
     
@@ -1410,7 +1410,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Plugin version, author, image and descriptions
       
-      plugin_folder <- paste0(app_folder, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
+      plugin_folder <- paste0(r$app_folder, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
       files_list <- list.files(path = plugin_folder, pattern = "*.\\.(jpeg|jpg|JPG|JPEG|png|PNG)$")
       shiny.fluent::updateDropdown.shinyInput(session, "plugin_image", 
         options = convert_tibble_to_list(tibble::tibble(text = c("", files_list), key = c("", files_list)), key_col = "key", text_col = "text"),
@@ -1440,7 +1440,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       link_id <- input$options_selected_plugin$key
       options <- r$options %>% dplyr::filter(category == "plugin", link_id == !!link_id)
-      plugin_folder <- paste0(app_folder, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
+      plugin_folder <- paste0(r$app_folder, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
       
       list(src = paste0(plugin_folder, "/", input$plugin_image), width = 318, height = 200)
     }, deleteFile = FALSE)
@@ -1559,7 +1559,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             by = "id"
           )
         
-        plugin_folder <- paste0(app_folder, "/plugins/", prefix, "/", plugin$unique_id)
+        plugin_folder <- paste0(r$app_folder, "/plugins/", prefix, "/", plugin$unique_id)
         unlink(paste0(plugin_folder, "/", input$plugin_image))
         
         files_list <- list.files(path = plugin_folder, pattern = "*.\\.(jpeg|jpg|JPG|JPEG|png|PNG)$")
@@ -1600,7 +1600,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             by = "id"
           )
         
-        plugin_folder <- paste0(app_folder, "/plugins/", prefix, "/", plugin$unique_id)
+        plugin_folder <- paste0(r$app_folder, "/plugins/", prefix, "/", plugin$unique_id)
         
         if (!dir.exists(plugin_folder)) dir.create(plugin_folder, recursive = TRUE)
         file.copy(input$import_image_file$datapath, paste0(plugin_folder, "/", input$import_image_file$name), overwrite = TRUE)
@@ -2273,9 +2273,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer r$..save_code"))
     })
     
-    # --- --- --- --- -- -
-    # Import a plugin ----
-    # --- --- --- --- -- -
+    # --- --- --- --- - -
+    # Import plugins ----
+    # --- --- --- --- - -
     
     observeEvent(input$import_plugins_browse, {
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$import_plugins_browse"))
@@ -2301,7 +2301,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         # Extract ZIP file
         
-        temp_dir <- paste0(app_folder, "/temp_files/", Sys.time() %>% stringr::str_replace_all(":| |-", ""), paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
+        temp_dir <- paste0(r$app_folder, "/temp_files/", Sys.time() %>% stringr::str_replace_all(":| |-", ""), paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
         zip::unzip(input$import_plugins_upload$datapath, exdir = temp_dir)
         
         # Read XML file
@@ -2313,9 +2313,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           tibble::as_tibble() %>%
           dplyr::left_join(
             r$plugins %>%
-              dplyr::filter(tab_type_id == !!tab_type_id, !deleted) %>%
+              dplyr::filter(tab_type_id == !!tab_type_id) %>%
               dplyr::inner_join(
-                r$options %>% dplyr::filter(category == "plugin", name == "unique_id", !deleted) %>% dplyr::select(id = link_id, unique_id = value),
+                r$options %>% dplyr::filter(category == "plugin", name == "unique_id") %>% dplyr::select(id = link_id, unique_id = value),
                 by = "id"
               ) %>%
               dplyr::select(id, unique_id),
@@ -2359,13 +2359,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
               r$code <- r$code %>% dplyr::filter(link_id != plugin$id | (link_id == plugin$id & category %not_in% c("plugin_ui", "plugin_server", "plugin_translations")))
             }
             
-            # Plugin table
+            # Plugins table
             
             new_row <- get_last_row(r$db, "plugins") + 1
             
             new_data <- tibble::tribble(
-              ~id, ~name, ~description, ~tab_type_id, ~creation_datetime, ~update_datetime, ~deleted,
-              new_row, as.character(plugin[[paste0("name_", language)]]), "", as.integer(tab_type_id), plugin$creation_datetime, plugin$update_datetime, FALSE)
+              ~id, ~name, ~tab_type_id, ~creation_datetime, ~update_datetime, ~deleted,
+              new_row, as.character(plugin[[paste0("name_", language)]]), as.integer(tab_type_id), plugin$creation_datetime, plugin$update_datetime, FALSE)
             
             DBI::dbAppendTable(r$db, "plugins", new_data)
             r$plugins <- r$plugins %>% dplyr::bind_rows(new_data)
@@ -2413,7 +2413,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             
             # Copy files
             # Create folder if doesn't exist
-            plugin_dir <- paste0(app_folder, "/plugins/", prefix, "/", plugin$unique_id)
+            plugin_dir <- paste0(r$app_folder, "/plugins/", prefix, "/", plugin$unique_id)
             if (!dir.exists(plugin_dir)) dir.create(plugin_dir, recursive = TRUE)
             
             list_of_files <- list.files(paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id))
@@ -2439,7 +2439,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         col_names <- c(i18n$t("id"), i18n$t("type"), i18n$t("name"), i18n$t("version"), i18n$t("unique_id"), i18n$t("author"), i18n$t("image"),
           i18n$t("description_fr"), i18n$t("description_en"), i18n$t("app_version"), 
           i18n$t("name"), i18n$t("name"), i18n$t("category"), i18n$t("category"), i18n$t("created_on"), i18n$t("updated_on"))
-        centered_cols <- c("author", "version", "id")
+        centered_cols <- c("author", "version", "id", "creation_datetime", "update_datetime")
         column_widths <- c("author" = "100px", "version" = "80px", "id" = "50px", "creation_datetime" = "130px", "update_datetime" = "130px")
         hidden_cols <- c("id", "type", "unique_id", "image", "app_version", "description_fr", "description_en", 
           "name_en", "name_fr", "category_en", "category_fr")
@@ -2461,9 +2461,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$import_plugins_button"))
     })
     
-    # --- --- --- --- -- -
-    # Export a plugin ----
-    # --- --- --- --- -- -
+    # --- --- --- --- - -
+    # Export plugins ----
+    # --- --- --- --- - -
     
     # When add button is clicked
     observeEvent(input$add_item, {
@@ -2507,7 +2507,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     })
     
     # Export plugins
-    observeEvent(input$export_plugins, {
+    observeEvent(input$export_selected_plugins, {
       
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$export_plugins"))
       
@@ -2529,7 +2529,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         owd <- setwd(tempdir())
         on.exit(setwd(owd))
         
-        temp_dir <- paste0(app_folder, "/temp_files/", Sys.time() %>% stringr::str_replace_all(":| |-", ""), paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
+        temp_dir <- paste0(r$app_folder, "/temp_files/", Sys.time() %>% stringr::str_replace_all(":| |-", ""), paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
         dir.create(paste0(temp_dir, "/plugins/", prefix), recursive = TRUE)
         
         for (plugin_id in r[[paste0(prefix, "_export_plugins_selected")]] %>% dplyr::pull(id)){
@@ -2539,7 +2539,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           code <- r$code %>% dplyr::filter(link_id == plugin_id, category %in% c("plugin_ui", "plugin_server", "plugin_translations"))
           
           # Create folder if doesn't exist
-          plugin_dir <- paste0(app_folder, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
+          plugin_dir <- paste0(r$app_folder, "/plugins/", prefix, "/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
           if (!dir.exists(plugin_dir)) dir.create(plugin_dir, recursive = TRUE)
           
           # Create ui.R & server.R

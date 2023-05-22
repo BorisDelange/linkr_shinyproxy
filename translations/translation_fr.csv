@@ -89,6 +89,11 @@ import_plugins,Importer des plugins
 export_plugin,Exporter un plugin
 export_plugins,Exporter des plugins
 export_selected_plugins,Exporter les plugins
+import_script,Importer un script
+import_scripts,Importer des scripts
+export_script,Exporter un script
+export_scripts,Exporter des scripts
+export_selected_scripts,Exporter les scripts
 export_plugins_remote_git,Exporter sur dépôt git distant
 import_and_export_plugins,Importer et exporter des plugins
 git_remote_plugins,Sur dépôt git distant
@@ -399,7 +404,9 @@ created_on,Créé le
 updated_on,Modifié le
 vocabulary_selected_concepts,Concepts sélectionnés
 replace_already_existing_plugins,Remplacer les plugins déjà existants
+replace_already_existing_scripts,Remplacer les scripts déjà existants
 plugins_to_export,Plugins à exporter
+scripts_to_export,Scripts à exporter
 image_url,URL de l'image
 no_results_found,Pas de résultats
 french,Français
@@ -426,14 +433,17 @@ error_install_remote_git_plugin,Erreur lors de l'installation d'un plugin depuis
 success_installing_remote_git_plugin,Plugin installé avec succès depuis le git distant
 choose_remote_git,Choisissez un dépôt de git distant
 success_importing_plugin,Plugin(s) importé(s) avec succès
+success_importing_script,Script(s) importé(s) avec succès
 success_importing_dataset,Set de données importé avec succès
 error_importing_plugin,Erreur lors de l'importation du ou des plugin(s)
 error_importing_image,Erreur lors de l'importation de l'image
+error_importing_script,Erreur lors de l'importation du ou des script(s)
 unique_id,ID unique
 type,Type
 refresh,Rafraîchir
 delete_selection,Supprimer la sélection
 imported_plugins,Plugins importés
+imported_scripts,Scripts importés
 image_imported,Image importée
 never,Jamais
 same_level_current_tab,Même niveau que l'onglet actuel
@@ -471,6 +481,7 @@ import_dataset_success_drug_era,Variable drug_era importée avec succès
 import_dataset_success_dose_era,Variable dose_era importée avec succès
 import_dataset_success_condition_era,Variable condition_era importée avec succès
 rows,Lignes
+code,Code
 fail_load_code,Erreur lors du chargement du code
 fail_execute_code,Erreur lors de l'éxécution du code
 fail_execute_dataset_code,Erreur lors de l'éxécution du code du set de données
@@ -697,13 +708,15 @@ all_plugins_card_user_access_description,Accéder à l'onglet 'Tous les plugins'
 plugins_datatable_card_user_access_description,"Gérer les plugins (ajouter, éditer et supprimer)"
 plugins_options_card_user_access_description,Editer les options des plugins
 plugins_edit_code_card_user_access_description,Editer le code des plugins
-import_plugin_card_user_access_description,Importer un plugin
-export_plugin_card_user_access_description,Exporter un plugin
+import_plugin_card_user_access_description,Importer des plugins
+export_plugin_card_user_access_description,Exporter des plugins
 scripts_datatable_card_user_access_description,"Gérer les scripts (ajouter, éditer et supprimer)"
 scripts_descriptions_card_user_access_description,Accéder aux descriptions des scripts
 dataset_scripts_card_user_access_description,Configurer les scripts des datasets (quels scripts seront exécutés au chargement d'un dataset)
 scripts_edit_code_card_user_access_description,Editer le code des scripts
 scripts_options_card_user_access_description,Editer les options des scripts
+import_script_card_user_access_description,Importer des scripts
+export_script_card_user_access_description,Exporter des scripts
 all_users_user_access_description,Accéder au log de tous les utilisateurs
 only_me_user_access_description,Accéder au log de l'utilisateur connecté
 vocabulary_id_col,ID (vocabulary_id)

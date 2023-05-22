@@ -111,11 +111,11 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         datetime = character(), deleted = logical()))
     
     db_create_table(db, "plugins", primary_key_col = "id", dbms = dbms, text_cols = "description",
-      tibble::tibble(id = integer(), name = character(), description = character(), tab_type_id = integer(), 
+      tibble::tibble(id = integer(), name = character(), tab_type_id = integer(), 
         creation_datetime = character(), update_datetime = character(), deleted = logical()))
     
     db_create_table(db, "scripts", primary_key_col = "id", dbms = dbms,
-      tibble::tibble(id = integer(), name = character(), data_source_id = integer(), creator_id = integer(),
+      tibble::tibble(id = integer(), name = character(), data_source_id = integer(),
         creation_datetime = character(), update_datetime = character(), deleted = logical()))
     
     db_create_table(db, "patient_lvl_tabs_groups", primary_key_col = "id", dbms = dbms, text_cols = "description",

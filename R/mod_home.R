@@ -36,13 +36,13 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
     ns <- session$ns
     
     if(perf_monitoring) monitor_perf(r = r, action = "start")
-    if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - start"))
+    if (debug) print(paste0(Sys.time(), " - mod_home - ", id, " - start"))
     
     if (id == "home") page <- "home" else page <- substr(id, 6, nchar(id))
     
     observeEvent(input$current_tab, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - observer input$current_tab"))
+      if (debug) print(paste0(Sys.time(), " - mod_home - ", id, " - observer input$current_tab"))
       
       sapply(cards %>% setdiff(., input$current_tab), shinyjs::hide)
       shinyjs::show(input$current_tab)
@@ -82,7 +82,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
     
     r$tabs_and_cards <- tibble::tibble()
     
-    if (show_home_page){
+    if (show_home_page & id == "home"){
       
       filename <- paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/", language, "/tabs_and_cards.csv")
       filename_local <- paste0(r$app_folder, "/home/", language, "/tabs_and_cards.csv")
@@ -106,7 +106,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
     if (nrow(r$tabs_and_cards) > 0){
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_home - render UI"))
+      if (debug) print(paste0(Sys.time(), " - mod_home - ", id, " - render UI"))
     
       # --- --- --- -- --
       ## Pivot items ----
@@ -123,7 +123,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
       
       output[[paste0(page, "_pivot")]] <- renderUI({
         
-        if (debug) print(paste0(Sys.time(), " - mod_home - output .._pivot"))
+        if (debug) print(paste0(Sys.time(), " - mod_home - ", id, " - output .._pivot"))
         
         shiny.fluent::Pivot(
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-", page, "_pivot_current_tab', item.props.id)")),
@@ -137,7 +137,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
       
       observeEvent(input[[paste0(page, "_pivot_current_tab")]], {
         
-        if (debug) print(paste0(Sys.time(), " - mod_home - observer .._pivot_current_tab"))
+        if (debug) print(paste0(Sys.time(), " - mod_home - ", id, " - observer .._pivot_current_tab"))
         
         sapply(page_divs, shinyjs::hide)
         sapply(categories, function(category) shinyjs::hide(paste0(category, "_summary")))
@@ -255,7 +255,7 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
 
       output[[paste0(page, "_cards")]] <- renderUI({
 
-        if (debug) print(paste0(Sys.time(), " - mod_home - output .._cards"))
+        if (debug) print(paste0(Sys.time(), " - mod_home - ", id, " - output .._cards"))
 
         div(ui_result)
       })
@@ -269,16 +269,16 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
       
       observeEvent(input[[paste0(page, "_current_card")]], {
         
-        if (debug) print(paste0(Sys.time(), " - mod_home - observer .._current_card"))
+        if (debug) print(paste0(Sys.time(), " - mod_home - ", id, " - observer .._current_card"))
         
         sapply(page_divs, shinyjs::hide)
         shinyjs::show(input[[paste0(page, "_current_card")]])
       })
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home - render UI"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_home - ", id, " - render UI"))
       
     }
     
-    if (debug) print(paste0(Sys.time(), " - mod_home_server - ", id, " - end"))
+    if (debug) print(paste0(Sys.time(), " - mod_home - ", id, " - end"))
   })
 }

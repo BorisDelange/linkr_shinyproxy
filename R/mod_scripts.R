@@ -11,7 +11,7 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   
   cards <- c("scripts_descriptions_card", "dataset_scripts_card", "scripts_datatable_card", 
-    "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card")
+    "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card", "import_script_card", "export_script_card")
   
   forbidden_cards <- tagList()
   sapply(cards, function(card){
@@ -41,7 +41,9 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
           shiny.fluent::PivotItem(id = "scripts_descriptions_card", itemKey = "scripts_descriptions_card", headerText = i18n$t("scripts_descriptions_card")),
           shiny.fluent::PivotItem(id = "scripts_datatable_card", itemKey = "scripts_datatable_card", headerText = i18n$t("scripts_management")),
           shiny.fluent::PivotItem(id = "scripts_edit_code_card", itemKey = "scripts_edit_code_card", headerText = i18n$t("edit_script_code")),
-          shiny.fluent::PivotItem(id = "scripts_options_card", itemKey = "scripts_options_card", headerText = i18n$t("script_options"))
+          shiny.fluent::PivotItem(id = "scripts_options_card", itemKey = "scripts_options_card", headerText = i18n$t("script_options")),
+          shiny.fluent::PivotItem(id = "import_script_card", itemKey = "import_script_card", headerText = i18n$t("import_scripts")),
+          shiny.fluent::PivotItem(id = "export_script_card", itemKey = "export_script_card", headerText = i18n$t("export_scripts"))
         )
       )
     ),
@@ -228,6 +230,58 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
           )
         ), br()
       )
+    ),
+    
+    # --- --- --- --- --- -- -
+    # Import scripts card ----
+    # --- --- --- --- --- -- -
+    
+    shinyjs::hidden(
+      div(
+        id = ns("import_script_card"),
+        make_card(i18n$t("import_scripts"),
+          div(br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10), 
+              make_toggle(i18n = i18n, ns = ns, label = "replace_already_existing_scripts", inline = TRUE)), br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              shiny.fluent::DefaultButton.shinyInput(ns("import_scripts_browse"), i18n$t("choose_zip_file"), style = "width:270px;"),
+              uiOutput(ns("import_scripts_status"))), br(),
+            shiny.fluent::PrimaryButton.shinyInput(ns("import_scripts_button"), i18n$t("import_scripts"), iconProps = list(iconName = "Download"), style = "width:270px;"), br(),
+            shinyjs::hidden(
+              div(
+                id = ns("imported_scripts_div"), br(),
+                strong(i18n$t("imported_scripts")),
+                div(DT::DTOutput(ns("imported_scripts")))
+              )
+            ),
+            div(style = "display:none;", fileInput(ns("import_scripts_upload"), label = "", multiple = FALSE, accept = ".zip"))
+          )
+        ), br()
+      )
+    ),
+    
+    # --- --- --- --- --- -- -
+    # Export scripts card ----
+    # --- --- --- --- --- -- -
+    
+    shinyjs::hidden(
+      div(
+        id = ns("export_script_card"),
+        make_card(i18n$t("export_scripts"),
+          div(
+            shiny.fluent::Stack(
+              horizontal = TRUE, tokens = list(childrenGap = 10),
+              make_dropdown(i18n = i18n, ns = ns, label = "scripts_to_export",
+                multiSelect = TRUE, width = "400px"),
+              div(shiny.fluent::PrimaryButton.shinyInput(ns("export_selected_scripts"), 
+                i18n$t("export_scripts"), iconProps = list(iconName = "Upload")), style = "margin-top:38px;"),
+              div(style = "visibility:hidden;", downloadButton(ns("export_scripts_download"), label = "")),
+              style = "position:relative; z-index:1; width:700px;"
+            ),
+            div(DT::DTOutput(ns("scripts_to_export_datatable")), style = "margin-top:-30px; z-index:2")
+          )
+        ), br()
+      )
     )
   ) -> result
   
@@ -250,7 +304,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # --- --- --- --- --- ---
     
     cards <- c("scripts_descriptions_card", "dataset_scripts_card", "scripts_datatable_card",
-      "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card")
+      "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card", "import_script_card", "export_script_card")
     show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     # Close message bar
@@ -351,10 +405,6 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         dplyr::filter(category == "dataset", name == "activate_scripts_cache", link_id == r$selected_dataset) %>% dplyr::pull(value_num)
       shiny.fluent::updateToggle.shinyInput(session, "activate_scripts_cache", value = as.logical(value))
       
-      # Create empty var for r$scripts, if there's an error loading the dataset
-      # r$scripts <- tibble::tibble(id = integer(), name = character(), description = character(), data_source_id = integer(), creator_id = integer(),
-      #   datetime = character(), deleted = logical())
-      
       # Load scripts for this dataset
       update_r(r = r, table = "scripts")
       
@@ -416,14 +466,14 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if(length(input$dataset_selected_scripts) > 0){
         
         data_insert <- tibble::tibble(category = character(), link_id = integer(), name = character(), value = character(),
-          value_num = numeric(), creator_id = integer(), datetime = character(), deleted = logical())
+          value_num = numeric(), datetime = character(), deleted = logical())
         
         sapply(input$dataset_selected_scripts, function(script){
           data_insert <<- data_insert %>%
             dplyr::bind_rows(
               tibble::tibble(category = "dataset_scripts", link_id = r$selected_dataset, name = "", value = "",
                 value_num = r$scripts %>% dplyr::filter(name == script) %>% dplyr::pull(id),
-                creator_id = r$user_id, datetime = as.character(Sys.time()), deleted = FALSE)
+                datetime = as.character(Sys.time()), deleted = FALSE)
             )
         })
         
@@ -453,7 +503,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       query <- DBI::dbSendStatement(r$db, sql)
       DBI::dbClearResult(query)
       r$options <- r$options %>% dplyr::mutate(value_num = dplyr::case_when(
-        category == "dataset" & name == "activate_scripts_cache" & link_id == r$selected_dataset & !deleted ~ as.numeric(input$activate_scripts_cache),
+        category == "dataset" & name == "activate_scripts_cache" & link_id == r$selected_dataset ~ as.numeric(input$activate_scripts_cache),
         TRUE ~ value_num
       ))
       
@@ -586,11 +636,10 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # --- --- --- --- --- ---
     
     action_buttons <- c("delete", "edit_code", "options")
-    sortable_cols <- c("id", "name", "data_source_id", "creator_id", "creation_datetime", "update_datetime")
-    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "80px", "creator_id" = "200px")
+    sortable_cols <- c("id", "name", "data_source_id", "creation_datetime", "update_datetime")
+    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "80px")
     centered_cols <- c("id", "creator", "creation_datetime", "update_datetime", "action")
-    searchable_cols <- c("name", "creator_id", "data_source_id")
-    factorize_cols <- c("creator_id")
+    searchable_cols <- c("name", "data_source_id")
     hidden_cols <- c("id", "description", "data_source_id", "deleted", "modified")
     col_names <- get_col_names("scripts", i18n)
     
@@ -601,47 +650,62 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts 2"))
       
-      # Reset fields
-      
       data_source_id <- r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id)
 
       if(nrow(r$scripts %>% dplyr::filter(data_source_id == !!data_source_id)) == 0){
-        render_datatable(output = output, r = r, ns = ns, i18n = i18n,
-          data = tibble::tibble(id = integer(), name = character(), data_source_id = integer(), creator_id = factor(),
-            creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical(), action = character()), 
-          col_names = col_names, output_name = "scripts_datatable", selection = "multiple",
-          sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+        
+        data_scripts_datatable <- tibble::tibble(id = integer(), name = character(), data_source_id = integer(),
+          creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical(), action = character())
+        data_export_scripts_datatable <- data_scripts_datatable
       }
 
-      req(nrow(r$scripts %>% dplyr::filter(data_source_id == !!data_source_id)) > 0)
+      if(nrow(r$scripts %>% dplyr::filter(data_source_id == !!data_source_id)) > 0){
 
-      r$scripts_temp <- r$scripts %>% 
-        dplyr::filter(data_source_id == !!data_source_id) %>% 
-        dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
-        dplyr::mutate(modified = FALSE)
-
-      # req(length(r$scripts_datatable_proxy) == 0)
+        r$scripts_temp <- r$scripts %>% 
+          dplyr::filter(data_source_id == !!data_source_id) %>% 
+          dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
+          dplyr::mutate(modified = FALSE)
+        
+        # Reset selected scripts for export_scripts and export_scripts_selected
+        r$export_scripts_temp  <- r$scripts_temp
+        r$export_scripts_selected <- r$export_scripts_temp %>% dplyr::slice(0)
+        
+        # Prepare data for datatables
+        
+        r$scripts_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
+          table = "scripts", action_buttons = action_buttons, data_input = r$scripts_temp)
+        data_scripts_datatable <- r$scripts_datatable_temp
+        
+        r$export_scripts_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
+          table = "scripts", action_buttons = "add", data_input = r$export_scripts_temp)
+        data_export_scripts_datatable <- r$export_scripts_datatable_temp
+      }
       
-      # Prepare data for datatable
-
-      r$scripts_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
-        table = "scripts", factorize_cols = factorize_cols, action_buttons = action_buttons, data_input = r$scripts_temp)
-
-      # Render datatable
+      # Render datatables
 
       if (length(r$scripts_datatable_proxy) == 0){
-        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$scripts_datatable_temp,
-          output_name = "scripts_datatable", col_names = col_names, selection = "multiple",
+        
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n,
+          data = data_scripts_datatable, 
+          col_names = col_names, output_name = "scripts_datatable", selection = "multiple",
           sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
-          searchable_cols = searchable_cols, filter = TRUE, factorize_cols = factorize_cols, hidden_cols = hidden_cols)
+          searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
+        
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = data_export_scripts_datatable,
+          output_name = "scripts_to_export_datatable", col_names = col_names,
+          sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+          searchable_cols = searchable_cols, filter = TRUE, hidden_cols = hidden_cols)
   
-        # Create a proxy for datatable
+        # Create a proxy for datatables
   
         r$scripts_datatable_proxy <- DT::dataTableProxy("scripts_datatable", deferUntilFlush = FALSE)
+        r$scripts_to_export_datatable_proxy <- DT::dataTableProxy("scripts_to_export_datatable", deferUntilFlush = FALSE)
       }
         
-      else DT::replaceData(r$scripts_datatable_proxy, r$scripts_datatable_temp, resetPaging = FALSE, rownames = FALSE)
+      else {
+        DT::replaceData(r$scripts_datatable_proxy, data_scripts_datatable, resetPaging = FALSE, rownames = FALSE)
+        DT::replaceData(r$scripts_to_export_datatable_proxy, data_export_scripts_datatable, resetPaging = FALSE, rownames = FALSE)
+      }
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$scripts"))
     })
@@ -1053,6 +1117,331 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input$execute_options_description"))
     })
+    
+    # --- --- --- --- - -
+    # Import scripts ----
+    # --- --- --- --- - -
+    
+    observeEvent(input$import_scripts_browse, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$import_scripts_browse"))
+      shinyjs::click("import_scripts_upload")
+    })
+
+    output$import_scripts_status <- renderUI({
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - output$import_scripts_status"))
+
+      tagList(div(
+        span(i18n$t("loaded_file"), " : ", style = "padding-top:5px;"),
+        span(input$import_scripts_upload$name, style = "font-weight:bold; color:#0078D4;"), style = "padding-top:5px;"))
+    })
+
+    observeEvent(input$import_scripts_button, {
+
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$import_scripts_button"))
+
+      req(input$import_scripts_upload)
+
+      tryCatch({
+
+        # Extract ZIP file
+
+        temp_dir <- paste0(r$app_folder, "/temp_files/", Sys.time() %>% stringr::str_replace_all(":| |-", ""), paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
+        zip::unzip(input$import_scripts_upload$datapath, exdir = temp_dir)
+
+        # Read XML file
+
+        scripts <-
+          xml2::read_xml(paste0(temp_dir, "/scripts/scripts.xml")) %>%
+          XML::xmlParse() %>%
+          XML::xmlToDataFrame(nodes = XML::getNodeSet(., "//script")) %>%
+          tibble::as_tibble() %>%
+          dplyr::left_join(
+            r$scripts %>%
+              dplyr::inner_join(
+                r$options %>% dplyr::filter(category == "script", name == "unique_id") %>% dplyr::select(id = link_id, unique_id = value),
+                by = "id"
+              ) %>%
+              dplyr::select(id, unique_id),
+            by = "unique_id"
+          ) %>%
+          dplyr::mutate(name = dplyr::case_when(
+            language == "fr" ~ name_fr, TRUE ~ name_en
+          )) %>%
+          dplyr::relocate(id)
+
+        if (!input$replace_already_existing_scripts) scripts <- scripts %>% dplyr::filter(is.na(id))
+
+        # Loop over each script
+
+        if (nrow(scripts) > 0){
+
+          for (i in 1:nrow(scripts)){
+
+            script <- scripts[i, ]
+
+            # Delete old rows
+
+            if (!is.na(script$id)){
+
+              sql <- glue::glue_sql("DELETE FROM scripts WHERE id = {script$id}", .con = r$db)
+              query <- DBI::dbSendStatement(r$db, sql)
+              DBI::dbClearResult(query)
+              r$scripts <- r$scripts %>% dplyr::filter(id != script$id)
+
+              sql <- glue::glue_sql("DELETE FROM options WHERE category = 'script' AND link_id = {script$id}", .con = r$db)
+              query <- DBI::dbSendStatement(r$db, sql)
+              DBI::dbClearResult(query)
+              r$options <- r$options %>% dplyr::filter(link_id != script$id | (link_id == script$id & category != "script"))
+
+              sql <- glue::glue_sql("DELETE FROM code WHERE category = 'script' AND link_id = {script$id}", .con = r$db)
+              query <- DBI::dbSendStatement(r$db, sql)
+              DBI::dbClearResult(query)
+              r$code <- r$code %>% dplyr::filter(link_id != script$id | (link_id == script$id & category == "script"))
+            }
+
+            # Scripts table
+
+            new_row <- get_last_row(r$db, "scripts") + 1
+            data_source_id <- r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id)
+
+            new_data <- tibble::tribble(
+              ~id, ~name, ~data_source_id, ~creation_datetime, ~update_datetime, ~deleted,
+              new_row, as.character(script[[paste0("name_", language)]]), data_source_id, script$creation_datetime, script$update_datetime, FALSE)
+
+            DBI::dbAppendTable(r$db, "scripts", new_data)
+            r$scripts <- r$scripts %>% dplyr::bind_rows(new_data)
+            add_log_entry(r = r, category = paste0("scripts - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_data))
+
+            # Options table
+
+            last_row_options <- get_last_row(r$db, "options")
+
+            new_options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
+              last_row_options + 1, "script", new_row, "version", script$version, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 2, "script", new_row, "unique_id", script$unique_id, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 3, "script", new_row, "author", script$author, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 4, "script", new_row, "description_fr", script$description_fr, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 5, "script", new_row, "description_en", script$description_en, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 6, "script", new_row, "category_fr", script$category_fr, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 7, "script", new_row, "category_en", script$category_en, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 8, "script", new_row, "name_fr", script$name_fr, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+              last_row_options + 9, "script", new_row, "name_en", script$name_en, NA_integer_, r$user_id, as.character(Sys.time()), FALSE
+            )
+
+            DBI::dbAppendTable(r$db, "options", new_options)
+            r$options <- r$options %>% dplyr::bind_rows(new_options)
+            add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_options))
+
+            # Code table
+            last_row_code <- get_last_row(r$db, "code")
+
+            new_code <- tibble::tribble(
+              ~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
+              last_row_code + 1, "script", new_row, script$code, r$user_id, as.character(Sys.time()), FALSE)
+
+            DBI::dbAppendTable(r$db, "code", new_code)
+            r$code <- r$code %>% dplyr::bind_rows(new_code)
+            add_log_entry(r = r, category = paste0("code", " - ", i18n$t("insert_new_data")), name = i18n$t("sql_query"), value = toString(new_code))
+
+            # Copy files
+            # Create folder if doesn't exist
+            script_dir <- paste0(r$app_folder, "/scripts/", script$unique_id)
+            if (!dir.exists(script_dir)) dir.create(script_dir, recursive = TRUE)
+
+            list_of_files <- list.files(paste0(temp_dir, "/scripts/", script$unique_id))
+
+            # Copy files to temp dir
+            file.copy(
+              paste0(paste0(temp_dir, "/scripts/", script$unique_id), "/", list_of_files),
+              paste0(script_dir, "/", list_of_files),
+              overwrite = TRUE
+            )
+
+            r$show_script_details <- Sys.time()
+
+            # Reload datatable
+            r$scripts_temp <- r$scripts %>%
+              dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
+              dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+          }
+        }
+
+        # Show imported scripts
+
+        col_names <- c(i18n$t("id"), i18n$t("name"), i18n$t("version"), i18n$t("unique_id"),
+          i18n$t("description_fr"), i18n$t("description_en"), i18n$t("app_version"), i18n$t("author"),
+          i18n$t("name"), i18n$t("name"), i18n$t("category"), i18n$t("category"), i18n$t("created_on"), i18n$t("updated_on"), i18n$t("code"))
+        centered_cols <- c("author", "version", "id", "creation_datetime", "update_datetime")
+        column_widths <- c("author" = "100px", "version" = "80px", "id" = "50px", "creation_datetime" = "130px", "update_datetime" = "130px")
+        hidden_cols <- c("id", "type", "unique_id", "image", "app_version", "description_fr", "description_en",
+          "name_en", "name_fr", "category_en", "category_fr", "code")
+
+        shinyjs::show("imported_scripts_div")
+
+        print(scripts)
+        
+        render_datatable(output = output, r = r, ns = ns, i18n = i18n,
+          data = scripts %>% dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE),
+          output_name = "imported_scripts", col_names = col_names, centered_cols = centered_cols, column_widths = column_widths,
+          filter = FALSE, hidden_cols = hidden_cols, datatable_dom = "")
+
+        show_message_bar(output,  "success_importing_script", "success", i18n = i18n, time = 15000, ns = ns)
+      },
+        error = function(e) report_bug(r = r, output = output, error_message = "error_importing_script",
+          error_name = paste0(id, " - import scripts"), category = "Error", error_report = e, i18n = i18n, ns = ns),
+        warning = function(w) report_bug(r = r, output = output, error_message = "error_importing_script",
+          error_name = paste0(id, " - import scripts"), category = "Error", error_report = w, i18n = i18n, ns = ns))
+
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer input$import_scripts_button"))
+    })
+    
+    # --- --- --- --- - -
+    # Export scripts ----
+    # --- --- --- --- - -
+    
+    # When add button is clicked
+    observeEvent(input$add_item, {
+
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$add_item"))
+
+      # Get ID of selected script
+      link_id <- as.integer(substr(input$add_item, nchar("add_item_") + 1, nchar(input$add_item)))
+
+      # If this script is not already selected, add it to the selected items dropdown
+
+      value <- integer(1)
+      if (nrow(r$export_scripts_selected) > 0) value <- r$export_scripts_selected %>% dplyr::pull(id)
+
+      if (link_id %not_in% value){
+
+        r$export_scripts_selected <- r$export_scripts_temp %>% dplyr::filter(id == link_id) %>%
+          dplyr::bind_rows(r$export_scripts_selected)
+
+        # Update dropdown of selected items
+        options <- convert_tibble_to_list(r$export_scripts_selected, key_col = "id", text_col = "name", i18n = i18n)
+        value <- r$export_scripts_selected %>% dplyr::pull(id)
+        shiny.fluent::updateDropdown.shinyInput(session, "scripts_to_export",
+          options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+      }
+
+    })
+    
+    # When dropdown is modified
+    observeEvent(input$scripts_to_export, {
+
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$scripts_to_export"))
+
+      r$export_scripts_selected <- r$export_scripts_selected %>%
+        dplyr::filter(id %in% input$scripts_to_export)
+
+      options <- convert_tibble_to_list(r$export_scripts_selected, key_col = "id", text_col = "name", i18n = i18n)
+      value <- r$export_scripts_selected %>% dplyr::pull(id)
+      shiny.fluent::updateDropdown.shinyInput(session, "scripts_to_export",
+        options = options, value = value, multiSelect = TRUE, multiSelectDelimiter = " || ")
+    })
+    
+    # Export scripts
+    observeEvent(input$export_selected_scripts, {
+
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$export_scripts"))
+
+      req(nrow(r$export_scripts_selected) > 0)
+
+      shinyjs::click("export_scripts_download")
+    })
+    
+    output$export_scripts_download <- downloadHandler(
+
+      filename = function() paste0("linkr_export_scripts_",
+        Sys.time() %>% stringr::str_replace_all(" ", "_") %>% stringr::str_replace_all(":", "_") %>% as.character(), ".zip"),
+
+      content = function(file){
+
+        if (perf_monitoring) monitor_perf(r = r, action = "start")
+        if (debug) print(paste0(Sys.time(), " - mod_scripts - output$export_scripts_download"))
+
+        owd <- setwd(tempdir())
+        on.exit(setwd(owd))
+
+        temp_dir <- paste0(r$app_folder, "/temp_files/", Sys.time() %>% stringr::str_replace_all(":| |-", ""), paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
+        dir.create(paste0(temp_dir, "/scripts"), recursive = TRUE)
+
+        for (script_id in r$export_scripts_selected %>% dplyr::pull(id)){
+
+          script <- r$scripts %>% dplyr::filter(id == script_id)
+          options <- r$options %>% dplyr::filter(category == "script", link_id == script_id)
+          code <- r$code %>% dplyr::filter(link_id == script_id, category == "script")
+
+          # Create folder if doesn't exist
+          script_dir <- paste0(r$app_folder, "/scripts/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
+          if (!dir.exists(script_dir)) dir.create(script_dir, recursive = TRUE)
+
+          # Create ui.R & server.R
+          # writeLines(code %>% dplyr::filter(category == "script") %>% dplyr::pull(code), paste0(script_dir, "/", name, ".R"))
+
+          # Create XML file
+          xml <- XML::newXMLDoc()
+          scripts_node <- XML::newXMLNode("scripts", doc = xml)
+          script_node <- XML::newXMLNode("script", parent = scripts_node, doc = xml)
+          XML::newXMLNode("app_version", r$app_version, parent = script_node)
+          for(name in c("version", "unique_id", "author", "description_fr", "description_en", "name_fr", "name_en", "category_fr", "category_en")) XML::newXMLNode(name, 
+            options %>% dplyr::filter(name == !!name) %>% dplyr::pull(value), parent = script_node)
+          for (name in c("creation_datetime", "update_datetime")) XML::newXMLNode(name, script %>% dplyr::pull(get(!!name)), parent = script_node)
+          XML::newXMLNode("code", code %>% dplyr::pull(code), parent = script_node)
+          XML::saveXML(xml, file = paste0(script_dir, "/script.xml"))
+
+          list_of_files <- list.files(script_dir)
+
+          # Copy files to temp dir
+          temp_dir_copy <- paste0(temp_dir, "/scripts/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
+          if (!dir.exists(temp_dir_copy)) dir.create(temp_dir_copy, recursive = TRUE)
+          file.copy(
+            paste0(script_dir, "/", list_of_files),
+            paste0(temp_dir_copy, "/", list_of_files),
+            overwrite = TRUE
+          )
+        }
+
+        # Create XML file with all exported scripts
+        scripts_dir <- paste0(temp_dir, "/scripts")
+
+        scripts_tibble <- tibble::tibble(name = character(), version = character(), unique_id = character(),
+          description_fr = character(), description_en = character())
+
+        dirs <- list.dirs(scripts_dir, full.names = TRUE)
+        for (dir in dirs){
+          if (dir != scripts_dir){
+            scripts_tibble <-
+              scripts_tibble %>%
+              dplyr::bind_rows(
+                xml2::read_xml(paste0(dir, "/script.xml")) %>%
+                  XML::xmlParse() %>%
+                  XML::xmlToDataFrame(nodes = XML::getNodeSet(., "//script")) %>%
+                  tibble::as_tibble()
+              )
+          }
+        }
+
+        scripts_xml <- XML::newXMLDoc()
+        scripts_node <- XML::newXMLNode("scripts", doc = scripts_xml)
+
+        scripts_nodes <- apply(scripts_tibble, 1, function(x) {
+          script_node <- XML::newXMLNode("script")
+          XML::addChildren(script_node, lapply(names(x), function(y) XML::newXMLNode(y, x[y])))
+        })
+
+        XML::xmlParent(scripts_nodes) <- scripts_node
+        
+        XML::saveXML(scripts_xml, file = paste0(scripts_dir, "/scripts.xml"))
+        
+        # Create a ZIP
+        
+        zip::zipr(file, paste0(temp_dir, "/scripts"))
+        
+        if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - output$export_scripts_download"))
+      }
+    )
     
   })
 }

@@ -89,6 +89,11 @@ import_plugins,Import plugins
 export_plugin,Export a plugin
 export_selected_plugins,Export plugins
 export_plugins,Export plugins
+import_script,Import a script
+import_scripts,Import scripts
+export_script,Export a script
+export_selected_scripts,Export scripts
+export_scripts,Export scripts
 export_plugins_remote_git,Export on remote git
 import_and_export_plugins,Import and export plugins
 git_remote_plugins,On remote git repository
@@ -399,7 +404,9 @@ created_on,Created on
 updated_on,Updated on
 vocabulary_selected_concepts,Selected concepts
 replace_already_existing_plugins,Replace already existing plugins
+replace_already_existing_scripts,Replace already existing scripts
 plugins_to_export,Plugins to export
+scripts_to_export,Plugins to export
 image_url,Image URL
 no_results_found,No results found
 french,French
@@ -426,14 +433,17 @@ error_install_remote_git_plugin,Error installing a plugin from remote git
 success_installing_remote_git_plugin,Plugin successfully installed from remote git
 choose_remote_git,Choose a remote git repository
 success_importing_plugin,Plugin(s) successfully imported
+success_importing_script,Script(s) successfully imported
 success_importing_dataset,Dataset successfully imported
 error_importing_plugin,Error importing plugin(s)
 error_importing_image,Error importing image
+error_importing_script,Error importing script(s)
 unique_id,Unique ID
 type,Type
 refresh,Refresh
 delete_selection,Delete selection
 imported_plugins,Imported plugins
+imported_scripts,Imported scripts
 image_imported,Image successfully imported
 never,Never
 same_level_current_tab,Same level of current tab
@@ -471,6 +481,7 @@ import_dataset_success_drug_era,Variable drug_era imported with success
 import_dataset_success_dose_era,Variable dose_era imported with success
 import_dataset_success_condition_era,Variable condition_era imported with success
 rows,Rows
+code,Code
 fail_load_code,Failed loading code
 fail_execute_code,Failed executing code
 fail_execute_dataset_code,Failed executing dataset code
@@ -697,13 +708,15 @@ all_plugins_card_user_access_description,Access to 'All plugins' tab
 plugins_datatable_card_user_access_description,"Manage plugins (add, edit and delete)"
 plugins_options_card_user_access_description,Edit plugins options
 plugins_edit_code_card_user_access_description,Edit plugins code
-import_plugin_card_user_access_description,Import a plugin
-export_plugin_card_user_access_description,Export a plugin
+import_plugin_card_user_access_description,Import plugins
+export_plugin_card_user_access_description,Export plugins
 scripts_datatable_card_user_access_description,"Manage scripts (add, edit and delete)"
 scripts_descriptions_card_user_access_description,Access to scripts descriptions
 dataset_scripts_card_user_access_description,Configure datasets scripts (which scripts are loaded when a dataset is loaded)
 scripts_edit_code_card_user_access_description,Edit scripts code
 scripts_options_card_user_access_description,Edit scripts options
+import_script_card_user_access_description,Import scripts
+export_script_card_user_access_description,Export scripts
 all_users_user_access_description,Access to log of all users
 only_me_user_access_description,Access the log of the connected user
 vocabulary_id_col,ID (vocabulary_id)
