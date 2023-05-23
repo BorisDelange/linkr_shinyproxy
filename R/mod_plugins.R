@@ -2553,7 +2553,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           plugin_node <- XML::newXMLNode("plugin", parent = plugins_node, doc = xml)
           XML::newXMLNode("app_version", r$app_version, parent = plugin_node)
           XML::newXMLNode("type", tab_type_id, parent = plugin_node)
-          for(name in c("version", "unique_id", "author", "image", "description_fr", "description_en", "name_fr", "name_en", "category_fr", "category_en")){
+          for(name in c("unique_id", "version", "author", "image", "name_fr", "name_en", "category_fr", "category_en", "description_fr", "description_en")){
             XML::newXMLNode(name, options %>% dplyr::filter(name == !!name) %>% dplyr::pull(value), parent = plugin_node)
           }
           for (name in c("creation_datetime", "update_datetime")) XML::newXMLNode(name, plugin %>% dplyr::pull(get(!!name)), parent = plugin_node)
@@ -2575,8 +2575,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         plugins_dir <- paste0(temp_dir, "/plugins")
         
-        plugins_tibble <- tibble::tibble(type = character(), name = character(), version = character(), unique_id = character(),
-          author = character(), image = character(), description_fr = character(), description_en = character())
+        plugins_tibble <- tibble::tibble(app_version = character(), type = character(), unique_id = character(), version = character(),
+          author = character(), image = character(), name_fr = character(), name_en = character(), category_fr = character(), category_en = character(),
+          description_fr = character(), description_en = character(), creation_datetime = character(), update_datetime = character())
         
         for (category in c("patient_lvl", "aggregated")){
           

@@ -94,7 +94,7 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
                   )
                 )
               )
-            ),
+            ), br(),
             all_scripts_cards$local,
             all_scripts_cards$remote_git
           )
@@ -651,8 +651,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         dplyr::left_join(r$options %>% dplyr::filter(category == "script", name == "version") %>% dplyr::select(id = link_id, version = value), by = "id") %>%
         dplyr::left_join(r$options %>% dplyr::filter(category == "script", name == paste0("category_", language)) %>% dplyr::select(id = link_id, category = value), by = "id") %>%
         dplyr::left_join(r$options %>% dplyr::filter(category == "script", name == paste0("description_", language)) %>% dplyr::select(id = link_id, description = value), by = "id") %>%
+          dplyr::left_join(r$options %>% dplyr::filter(category == "script", name == "unique_id") %>% dplyr::select(id = link_id, unique_id = value), by = "id") %>%
         dplyr::select(-deleted) %>%
-        dplyr::relocate(description, category, author, version, .after = "name")
+        dplyr::relocate(description, category, author, version, unique_id, .after = "name")
       
       # Create datatable if doesn't exist
       
@@ -663,7 +664,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         centered_cols <- c("author", "creation_datetime", "update_datetime", "version", "category")
         searchable_cols <- c("name", "category", "author")
         factorize_cols <- c("category", "author")
-        hidden_cols <- c("id", "description")
+        hidden_cols <- c("id", "description", "unique_id")
         col_names <- get_col_names("local_scripts", i18n)
         
         render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$local_scripts, 
@@ -712,6 +713,86 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
       }, error = function(e) report_bug(r = r, output = output, error_message = "error_loading_script_description",
         error_name = "scripts catalog - render markdown description", category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+    })
+    
+    # Download scripts from repo git
+    
+    observeEvent(input$remote_git_repo, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$remote_git_repo"))
+      
+      # Get URL of remote git repo
+      url_address <- r$git_repos %>% dplyr::filter(id == input$remote_git_repo) %>% dplyr::pull(url_address)
+      if (substr(url_address, nchar(url_address), nchar(url_address)) != "/") url_address <- paste0(url_address, "/")
+      print(url_address)
+      
+      error_loading_remote_git <- TRUE
+      scripts_file <- paste0(r$app_folder, "/temp_files/scripts.xml")
+      
+      if (r$has_internet){
+        
+        tryCatch({
+          xml2::download_xml(paste0(url_address, "scripts.xml"), scripts_file)
+          error_loading_remote_git <- FALSE
+        }, error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_connection_remote_git", 
+          error_name = "scripts_catalog load scripts.xml", category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
+      }
+      
+      if (error_loading_remote_git) r$remote_git_scripts <- tibble::tibble(name = character(), description = character(),
+        category = character(), author = character(), version = character(), creation_datetime = character(), update_datetime = character(), action = character())
+      
+      else r$remote_git_scripts <-
+        xml2::read_xml(scripts_file) %>%
+        XML::xmlParse() %>%
+        XML::xmlToDataFrame(nodes = XML::getNodeSet(., "//script")) %>%
+        tibble::as_tibble()
+      
+      r$update_remote_git_scripts_datatable <- Sys.time()
+    })
+    
+    observeEvent(r$update_remote_git_scripts_datatable, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$update_remote_git_scripts_datatable"))
+      
+      # Merge with local scripts, to know if a plugin is already installed
+      
+      # r$remote_git_scripts <- r$remote_git_scripts %>%
+      #   dplyr::mutate(action = dplyr::case_when(
+      #     unique_id %in% r$local_scripts$unique_id ~ "already_installed", TRUE ~ "not_installed"
+      #   ))
+        
+      
+      # if (nrow(r$scripts) == 0) r$local_scripts <- tibble::tibble(id = integer(), name = character(), description = character(),
+      #   category = character(), author = character(), version = character(), creation_datetime = character(), update_datetime = character())
+      # 
+      # if (nrow(r$scripts) > 0) r$local_scripts <- r$scripts %>%
+      #   dplyr::left_join(r$options %>% dplyr::filter(category == "script", name == "author") %>% dplyr::select(id = link_id, author = value), by = "id") %>%
+      #   dplyr::left_join(r$options %>% dplyr::filter(category == "script", name == "version") %>% dplyr::select(id = link_id, version = value), by = "id") %>%
+      #   dplyr::left_join(r$options %>% dplyr::filter(category == "script", name == paste0("category_", language)) %>% dplyr::select(id = link_id, category = value), by = "id") %>%
+      #   dplyr::left_join(r$options %>% dplyr::filter(category == "script", name == paste0("description_", language)) %>% dplyr::select(id = link_id, description = value), by = "id") %>%
+      #   dplyr::select(-deleted) %>%
+      #   dplyr::relocate(description, category, author, version, .after = "name")
+      # 
+      # # Create datatable if doesn't exist
+      # 
+      # if (length(r$local_scripts_datatable_proxy) == 0){
+      # 
+      #   sortable_cols <- c("name", "creation_datetime", "update_datetime", "category")
+      #   column_widths <- c("creation_datetime" = "130px", "update_datetime" = "130px", "author" = "100px")
+      #   centered_cols <- c("author", "creation_datetime", "update_datetime", "version", "category")
+      #   searchable_cols <- c("name", "category", "author")
+      #   factorize_cols <- c("category", "author")
+      #   hidden_cols <- c("id", "description")
+      #   col_names <- get_col_names("local_scripts", i18n)
+      # 
+      #   render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$local_scripts,
+      #     col_names = col_names, output_name = "local_scripts_datatable", selection = "single",
+      #     sortable_cols = sortable_cols, centered_cols = centered_cols, column_widths = column_widths,
+      #     searchable_cols = searchable_cols, factorize_cols = factorize_cols, filter = TRUE, hidden_cols = hidden_cols)
+      # }
+      # 
+      # if (length(r$local_scripts_datatable_proxy) > 0){
+      #   r$local_scripts_datatable_proxy <- DT::dataTableProxy("local_scripts_datatable", deferUntilFlush = FALSE)
+      #   DT::replaceData(r$local_scripts_datatable_proxy, r$local_scripts, resetPaging = FALSE, rownames = FALSE)
+      # }
     })
     
     # --- --- --- -- -- --
@@ -1479,7 +1560,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
           scripts_node <- XML::newXMLNode("scripts", doc = xml)
           script_node <- XML::newXMLNode("script", parent = scripts_node, doc = xml)
           XML::newXMLNode("app_version", r$app_version, parent = script_node)
-          for(name in c("version", "unique_id", "author", "description_fr", "description_en", "name_fr", "name_en", "category_fr", "category_en")) XML::newXMLNode(name, 
+          for(name in c("unique_id", "version", "author",  "name_fr", "name_en", "category_fr", "category_en", "description_fr", "description_en")) XML::newXMLNode(name, 
             options %>% dplyr::filter(name == !!name) %>% dplyr::pull(value), parent = script_node)
           for (name in c("creation_datetime", "update_datetime")) XML::newXMLNode(name, script %>% dplyr::pull(get(!!name)), parent = script_node)
           XML::newXMLNode("code", code %>% dplyr::pull(code), parent = script_node)
@@ -1500,8 +1581,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Create XML file with all exported scripts
         scripts_dir <- paste0(temp_dir, "/scripts")
         
-        scripts_tibble <- tibble::tibble(name = character(), version = character(), unique_id = character(),
-          description_fr = character(), description_en = character())
+        scripts_tibble <- tibble::tibble(app_version = character(), unique_id = character(), version = character(), author = character(),
+          name_fr = character(), name_en = character(), category_fr = character(), category_en = character(), 
+          description_fr = character(), description_en = character(), creation_datetime = character(), update_datetime = character(), code = character())
         
         dirs <- list.dirs(scripts_dir, full.names = TRUE)
         for (dir in dirs){
