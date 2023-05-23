@@ -111,11 +111,10 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
       }
     }
     
-    else if (table %in% c("studies", "scripts")){
+    else if (table == "studies"){
       
       tables <- tibble::tribble(~name, ~col_name, ~col_value,
-        "studies", "dataset_id", r$selected_dataset,
-        "scripts", "data_source_id", r$datasets %>% dplyr::filter(id == r$selected_dataset) %>% dplyr::pull(data_source_id))
+        "studies", "dataset_id", r$selected_dataset)
       
       row <- tables %>% dplyr::filter(name == table)
       
@@ -180,55 +179,55 @@ get_col_names <- function(table_name = character(), i18n = character()){
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name == "vocabulary") result <- c(i18n$t("id"), i18n$t("vocabulary_id_col"), i18n$t("vocabulary_name_col"),
+  else if (table_name == "vocabulary") result <- c(i18n$t("id"), i18n$t("vocabulary_id_col"), i18n$t("vocabulary_name_col"),
     i18n$t("vocabulary_reference"), i18n$t("vocabulary_version"), i18n$t("vocabulary_concept_id"), i18n$t("data_source_id"),
     i18n$t("display_order"), i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   
-  if (table_name == "studies"){
+  else if (table_name == "studies"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"),
       i18n$t("dataset"), i18n$t("patient_lvl_tab_group"),
       i18n$t("aggregated_tab_group"), i18n$t("creator"), i18n$t("datetime"),
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name == "studies_no_data"){
+  else if (table_name == "studies_no_data"){
     result <- c(i18n$t("name"), i18n$t("creator"), i18n$t("datetime"), i18n$t("action"))
   }
   
-  if (table_name == "study_conversations"){
+  else if (table_name == "study_conversations"){
     result <- c(i18n$t("conversation_id"), i18n$t("object"), i18n$t("datetime"), 
       i18n$t("unread_messages"), i18n$t("action"), i18n$t("modified"))
   }
   
-  if (table_name == "subsets"){
+  else if (table_name == "subsets"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"),
       i18n$t("study"), i18n$t("creator"), i18n$t("datetime"),
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name == "subset_persons"){
+  else if (table_name == "subset_persons"){
     result <- c(i18n$t("id"), i18n$t("subset"), i18n$t("patient"),
       i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"))
   }
   
-  if (table_name == "subset_add_patients"){
+  else if (table_name == "subset_add_patients"){
     result <- c(i18n$t("patient"))
   }
   
-  if (table_name == "thesaurus_items"){
+  else if (table_name == "thesaurus_items"){
     result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("name"), 
       i18n$t("abbreviation"), i18n$t("unit"),
       i18n$t("datetime"), i18n$t("deleted"), i18n$t("action"), i18n$t("modified"))
   }
   
-  if (table_name == "tabs_thesaurus_items"){
+  else if (table_name == "tabs_thesaurus_items"){
     result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("name"), 
       i18n$t("abbreviation"), i18n$t("unit"),
       i18n$t("colour"), i18n$t("datetime"), i18n$t("deleted"),
       i18n$t("action"), i18n$t("modified"))
   }
   
-  if (table_name == "dataset_vocabulary_concepts_with_counts"){
+  else if (table_name == "dataset_vocabulary_concepts_with_counts"){
     result <- c(i18n$t("id"), i18n$t("vocabulary_id_1"), i18n$t("concept_id_1"), i18n$t("concept_name_1"), i18n$t("concept_display_name_1"),
       i18n$t("relationship_id"), i18n$t("vocabulary_id_2"), i18n$t("concept_id_2"), i18n$t("concept_name_2"),
       i18n$t("domain_id"), i18n$t("concept_class_id"), i18n$t("standard_concept"), i18n$t("concept_code"), 
@@ -236,70 +235,70 @@ get_col_names <- function(table_name = character(), i18n = character()){
       i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("modified"))
   }
   
-  if (table_name == "plugins_vocabulary_concepts_with_counts"){
+  else if (table_name == "plugins_vocabulary_concepts_with_counts"){
     result <- c(i18n$t("concept_id"), i18n$t("concept_name"), i18n$t("concept_display_name"),
       i18n$t("domain_id"), i18n$t("concept_class_id"), i18n$t("standard_concept"), i18n$t("concept_code"),
       i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("colour"), i18n$t("action"))
   }
   
-  if (table_name == "plugins_vocabulary_mapped_concepts_with_counts"){
+  else if (table_name == "plugins_vocabulary_mapped_concepts_with_counts"){
     result <- c(i18n$t("id"), i18n$t("concept_id"), i18n$t("relationship_id"), i18n$t("mapped_concept_id"),
       i18n$t("mapped_concept_name"), i18n$t("mapped_concept_display_name"), i18n$t("domain_id"),
       i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("colour"), i18n$t("action"))
   }
   
-  if (table_name == "mapping_vocabulary_concepts_with_counts"){
+  else if (table_name == "mapping_vocabulary_concepts_with_counts"){
     result <- c(i18n$t("id"), i18n$t("concept_id"), i18n$t("concept_name"), i18n$t("domain_id"), 
       i18n$t("vocabulary_id"), i18n$t("concept_class_id"), i18n$t("standard_concept"), i18n$t("concept_code"),
       i18n$t("valid_start_date"), i18n$t("valid_end_date"), i18n$t("invalid_reason"), i18n$t("num_rows"))
   }
   
-  if (table_name == "mapping_vocabulary_concepts_with_counts_and_datasets"){
+  else if (table_name == "mapping_vocabulary_concepts_with_counts_and_datasets"){
     result <- c(i18n$t("id"), i18n$t("concept_id"), i18n$t("concept_name"), i18n$t("domain_id"), 
       i18n$t("vocabulary_id"), i18n$t("concept_class_id"), i18n$t("standard_concept"), i18n$t("concept_code"),
       i18n$t("valid_start_date"), i18n$t("valid_end_date"), i18n$t("invalid_reason"), i18n$t("num_datasets"), i18n$t("num_rows"))
   }
   
-  if (table_name == "dataset_vocabulary_concepts_mapping"){
+  else if (table_name == "dataset_vocabulary_concepts_mapping"){
     result <- c(i18n$t("id"), i18n$t("vocabulary_id_1"), i18n$t("concept_id_1"), i18n$t("relationship_id"), 
       i18n$t("vocabulary_id_2"), i18n$t("concept_id_2"))
   }
   
-  if (table_name == "dataset_vocabulary_concepts_mapping_evals"){
+  else if (table_name == "dataset_vocabulary_concepts_mapping_evals"){
     result <- c(i18n$t("id"), i18n$t("vocabulary_id_1"), i18n$t("concept_id_1"), i18n$t("relationship_id"), i18n$t("vocabulary_id_2"), i18n$t("concept_id_2"),
       i18n$t("creator"), i18n$t("datetime"), i18n$t("positive_evals_short"), i18n$t("negative_evals_short"), 
       i18n$t("action"), i18n$t("user_evaluation_id"), i18n$t("modified"))
   }
   
-  if (table_name == "plugins"){
+  else if (table_name == "plugins"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("tab_type"), 
       i18n$t("created_on"), i18n$t("updated_on"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name == "users"){
+  else if (table_name == "users"){
     result <- c(i18n$t("id"), i18n$t("username"), i18n$t("firstname"), i18n$t("lastname"),
       i18n$t("password"), i18n$t("user_access"), i18n$t("user_status"), i18n$t("datetime"), 
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name %in% c("users_accesses", "users_statuses")){
+  else if (table_name %in% c("users_accesses", "users_statuses")){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), 
       i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name %in% c("patient_lvl_tabs", "aggregated_tabs")){
+  else if (table_name %in% c("patient_lvl_tabs", "aggregated_tabs")){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("tab_group"),
       i18n$t("parent_tab"), i18n$t("display_order"), i18n$t("creator"), i18n$t("datetime"), 
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name %in% c("patient_lvl_tabs_groups", "aggregated_tabs_groups")){
+  else if (table_name %in% c("patient_lvl_tabs_groups", "aggregated_tabs_groups")){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"),
       i18n$t("creator"), i18n$t("datetime"), 
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name == "patient_lvl_widgets"){
+  else if (table_name == "patient_lvl_widgets"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("tab_group"), 
       i18n$t("group"), i18n$t("tab"), i18n$t("plugin"), 
       i18n$t("thesaurus"), i18n$t("thesaurus_item"), i18n$t("abbreviation"),
@@ -308,27 +307,31 @@ get_col_names <- function(table_name = character(), i18n = character()){
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name == "aggregated_widgets"){
+  else if (table_name == "aggregated_widgets"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("tab_group"),
       i18n$t("group"), i18n$t("tab"), 
       i18n$t("plugin"), i18n$t("display_order"), i18n$t("creator"),
       i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name == "log"){
+  else if (table_name == "log"){
     result <- c(i18n$t("id"), i18n$t("category"), i18n$t("name"), i18n$t("value"), i18n$t("user"), i18n$t("datetime"))
   }
   
-  if (table_name == "scripts"){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("data_source_id"), 
-      i18n$t("created_on"), i18n$t("updated_on"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
+  else if (table_name == "scripts"){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("created_on"), i18n$t("updated_on"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
-  if (table_name == "perf_monitoring"){
+  else if (table_name == "local_scripts"){
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("category"), i18n$t("author"), i18n$t("version"),
+      i18n$t("created_on"), i18n$t("updated_on"))
+  }
+  
+  else if (table_name == "perf_monitoring"){
     result <- c(i18n$t("elapsed_time"), i18n$t("task"), i18n$t("datetime_start"), i18n$t("datetime_stop"))
   }
   
-  if (table_name == "git_repos"){
+  else if (table_name == "git_repos"){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("category"), i18n$t("url_address"),
       i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }

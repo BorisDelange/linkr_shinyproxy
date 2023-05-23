@@ -161,7 +161,7 @@ linkr <- function(
       "export_plugin_card"),
     "scripts", c(
       "dataset_scripts_card",
-      "scripts_descriptions_card",
+      "all_scripts_card",
       "scripts_datatable_card",
       "scripts_edit_code_card",
       "scripts_options_card",

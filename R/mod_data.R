@@ -225,7 +225,7 @@ mod_data_ui <- function(id = character(), i18n = character()){
 #' @noRd 
 
 mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), 
-  o = shiny::reactiveValues(), language = "en", i18n = character(), perf_monitoring = FALSE, debug = FALSE){
+  language = "en", i18n = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -847,13 +847,13 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                   if (!file.exists(new_file)) writeLines(plugin_translations, new_file)
                 },
                   error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",
-                    error_name = paste0(id, " - create translations files - plugin_id ", plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+                    error_name = paste0(id, " - create translations files - plugin_id ", plugin_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
                 
                 tryCatch({
                   i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = new_dir))
                   i18np$set_translation_language(language)},
                   error = function(e) report_bug(r = r, output = output, error_message = "error_creating_new_translator",
-                    error_name = paste0(id, " - create i18np translator - plugin_id ", plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+                    error_name = paste0(id, " - create i18np translator - plugin_id ", plugin_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
               }
             }
             
@@ -906,7 +906,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             },
               error = function(e){
                 report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
-                  error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = e, i18n = i18n, ns = ns)
+                  error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
               })
           })
         }
@@ -1067,13 +1067,13 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                   if (!file.exists(new_file)) writeLines(plugin_translations, new_file)
                 },
                   error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",
-                    error_name = paste0(id, " - create translations files - plugin_id ", ids$plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+                    error_name = paste0(id, " - create translations files - plugin_id ", ids$plugin_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
                 
                 tryCatch({
                   i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = new_dir))
                   i18np$set_translation_language(language)},
                   error = function(e) report_bug(r = r, output = output, error_message = "error_creating_new_translator",
-                    error_name = paste0(id, " - create i18np translator - plugin_id ", ids$plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+                    error_name = paste0(id, " - create i18np translator - plugin_id ", ids$plugin_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
               }
             }
             
@@ -1099,7 +1099,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             new_env <- rlang::new_environment(data = new_env_vars, parent = pryr::where("r"))
             tryCatch(eval(parse(text = code_server_card), envir = new_env),
               error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
-                error_name = paste0(id, " - run_study_server_code - run_plugin_code - plugin_id ", ids$plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+                error_name = paste0(id, " - run_study_server_code - run_plugin_code - plugin_id ", ids$plugin_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
             
             # --- --- --- --- --- ---
             #### Delete a widget ----
@@ -1265,13 +1265,13 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           if (!file.exists(new_file)) writeLines(plugin_translations, new_file)
         },
           error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",
-            error_name = paste0(id, " - create translations files - plugin_id ", ids$plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+            error_name = paste0(id, " - create translations files - plugin_id ", ids$plugin_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
 
         tryCatch({
           i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = new_dir))
           i18np$set_translation_language(language)},
           error = function(e) report_bug(r = r, output = output, error_message = "error_creating_new_translator",
-            error_name = paste0(id, " - create i18np translator - plugin_id ", ids$plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+            error_name = paste0(id, " - create i18np translator - plugin_id ", ids$plugin_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       }
 
       # Run server code
@@ -1303,7 +1303,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       
       tryCatch(eval(parse(text = code_server_card), envir = new_env),
         error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
-          error_name = paste0(id, " - save_widget_settings - run_plugin_code - plugin_id ", ids$plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+          error_name = paste0(id, " - save_widget_settings - run_plugin_code - plugin_id ", ids$plugin_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       
       # Update toggles
 
@@ -2367,13 +2367,13 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
           if (!file.exists(new_file)) writeLines(plugin_translations, new_file)
         },
           error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",
-            error_name = paste0(id, " - create translations files - plugin_id ", plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+            error_name = paste0(id, " - create translations files - plugin_id ", plugin_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
         
         tryCatch({
           i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = new_dir))
           i18np$set_translation_language(language)},
           error = function(e) report_bug(r = r, output = output, error_message = "error_creating_new_translator",
-            error_name = paste0(id, " - create i18np translator - plugin_id ", plugin_id), category = "Error", error_report = e, i18n = i18n, ns = ns))
+            error_name = paste0(id, " - create i18np translator - plugin_id ", plugin_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       }
       
       # Run server code
@@ -2425,7 +2425,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         
         tryCatch(eval(parse(text = code_server_card), envir = new_env),
           error = function(e) report_bug(r = r, output = output, error_message = "error_run_plugin_server_code",
-            error_name = paste0(id, " - add_new_widget - run_plugin_code - plugin_id ", input$widget_creation_plugin$key), category = "Error", error_report = e, i18n = i18n, ns = ns))
+            error_name = paste0(id, " - add_new_widget - run_plugin_code - plugin_id ", input$widget_creation_plugin$key), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
         
         # Code for toggle reactivity
         toggle <- paste0(prefix, "_widget_", widget_id)
@@ -2484,7 +2484,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       },
         error = function(e){
           report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
-            error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = e, i18n = i18n, ns = ns)}
+            error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)}
       )
       # Remove toggles UI for this tab
       # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", tab_id))))

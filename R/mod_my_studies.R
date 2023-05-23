@@ -379,7 +379,6 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       # Load studies & scripts related to this dataset
       update_r(r = r, m = m, table = "studies")
-      update_r(r = r, m = m, table = "scripts")
       
       r$force_reload_scripts_cache <- FALSE
       
@@ -395,7 +394,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       error = function(e){
         r$show_message_bar <- tibble::tibble(message = "fail_load_dataset", type = "severeWarning", trigger = Sys.time())
         report_bug(r = r, output = output, error_message = "fail_load_dataset",
-          error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)
+          error_name = paste0(id, " - run server code"), category = "Error", error_report = toString(e), i18n = i18n)
       })
       
       r$reload_studies_datatable <- Sys.time()
@@ -442,7 +441,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
                 error = function(e){
                   r$show_message_bar <- tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
                   report_bug(r = r, output = output, error_message = "fail_load_scripts",
-                    error_name = paste0(id, " - run server code"), category = "Error", error_report = e, i18n = i18n)})
+                    error_name = paste0(id, " - run server code"), category = "Error", error_report = toString(e), i18n = i18n)})
             )
           }
         }
@@ -632,16 +631,16 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       tryCatch({
         
         # Clear temp dir
-        unlink(paste0(path.expand("~"), "/linkr_temp_files"), recursive = TRUE, force = TRUE)
+        unlink(paste0(r$app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
         
         markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
-          path.expand("~"), "/linkr_temp_files')\n",
-          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files/', fig.path = '", path.expand("~"), "/linkr_temp_files/')\n```\n")
+          r$app_folder, "/temp_files')\n",
+          "knitr::opts_chunk$set(root.dir = '", r$app_folder, "/temp_files/', fig.path = '", r$app_folder, "/temp_files/')\n```\n")
         
         markdown_file <- paste0(markdown_settings, study_description)
         
         # Create temp dir
-        dir <- paste0(path.expand("~"), "/linkr_temp_files")
+        dir <- paste0(r$app_folder, "/temp_files")
         file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
         if (!dir.exists(dir)) dir.create(dir)
         
@@ -1027,7 +1026,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
               message_div <- div(class = "markdown_messages", withMathJax(includeMarkdown(study_message$filepath)))
               fail_load_message <- FALSE
             }, error = function(e) report_bug(r = r, output = output, error_message = "fail_load_message",
-              error_name = paste0(id, " - load message - message_id = ", study_message$id), category = "Error", error_report = e, i18n = i18n, ns = ns),
+              error_name = paste0(id, " - load message - message_id = ", study_message$id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns),
               warning = function(w) report_bug(r = r, output = output, error_message = "fail_load_message",
                 error_name = paste0(id, " - load message - message_id = ", study_message$id), category = "Error", error_report = w, i18n = i18n, ns = ns))
             
@@ -1717,16 +1716,16 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       tryCatch({
         
         # Clear temp dir
-        unlink(paste0(path.expand("~"), "/linkr_temp_files"), recursive = TRUE, force = TRUE)
+        unlink(paste0(r$app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
         
         markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
-          path.expand("~"), "/linkr_temp_files')\n",
-          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files', fig.path = '", path.expand("~"), "/linkr_temp_files')\n```\n")
+          r$app_folder, "/temp_files')\n",
+          "knitr::opts_chunk$set(root.dir = '", r$app_folder, "/temp_files', fig.path = '", r$app_folder, "/temp_files')\n```\n")
         
         markdown_file <- paste0(markdown_settings, options_description)
         
         # Create temp dir
-        dir <- paste0(path.expand("~"), "/linkr_temp_files")
+        dir <- paste0(r$app_folder, "/temp_files")
         file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
         if (!dir.exists(dir)) dir.create(dir)
         

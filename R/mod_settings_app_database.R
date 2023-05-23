@@ -852,7 +852,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
                 
               }, error = function(e){
                 report_bug(r = r, output = output, error_message = "error_restoring_database_table",
-                  error_name = paste0(id, " - restore database - table = ", table), category = "Error", error_report = e, i18n = i18n, ns = ns)
+                  error_name = paste0(id, " - restore database - table = ", table), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
                 error_restoring_db <<- TRUE
               }, warning = function(w){
                 report_bug(r = r, output = output, error_message = "error_restoring_database_table",
@@ -897,7 +897,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
         if (error_restoring_db) show_message_bar(output, "error_restoring_database", "severeWarning", i18n = i18n, ns = ns)
       },
       error = function(e) report_bug(r = r, output = output, error_message = "error_restoring_database",
-        error_name = paste0(id, " - restore database"), category = "Error", error_report = e, i18n = i18n, ns = ns),
+        error_name = paste0(id, " - restore database"), category = "Error", error_report = toString(e), i18n = i18n, ns = ns),
       warning = function(w) report_bug(r = r, output = output, error_message = "error_restoring_database",
           error_name = paste0(id, " - restore database"), category = "Error", error_report = w, i18n = i18n, ns = ns))
       

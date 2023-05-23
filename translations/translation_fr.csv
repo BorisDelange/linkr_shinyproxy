@@ -97,6 +97,7 @@ export_selected_scripts,Exporter les scripts
 export_plugins_remote_git,Exporter sur dépôt git distant
 import_and_export_plugins,Importer et exporter des plugins
 git_remote_plugins,Sur dépôt git distant
+git_remote_scripts,Sur dépôt git distant
 remote_git_repo,Dépôt git distant
 remote_git_repos,Dépôts git distants
 local_plugins,Plugins locaux
@@ -359,7 +360,7 @@ console,Console
 table,Table
 output,Output
 script_description,Description du script
-scripts_descriptions_card,Description des scripts
+all_scripts_card,Tous les scripts
 run_scripts_success,Scripts exécutés avec succès
 fail_load_dataset,Erreur lors du chargement du set de données
 fail_load_vocabulary,Erreur lors du chargement de la terminologie
@@ -711,7 +712,7 @@ plugins_edit_code_card_user_access_description,Editer le code des plugins
 import_plugin_card_user_access_description,Importer des plugins
 export_plugin_card_user_access_description,Exporter des plugins
 scripts_datatable_card_user_access_description,"Gérer les scripts (ajouter, éditer et supprimer)"
-scripts_descriptions_card_user_access_description,Accéder aux descriptions des scripts
+all_scripts_card_user_access_description,Accéder à l'onglet 'Tous les scripts'
 dataset_scripts_card_user_access_description,Configurer les scripts des datasets (quels scripts seront exécutés au chargement d'un dataset)
 scripts_edit_code_card_user_access_description,Editer le code des scripts
 scripts_options_card_user_access_description,Editer les options des scripts
@@ -840,3 +841,4 @@ vocabulary_id_doesnt_exist,Ce vocabulary_id n'existe pas dans la base de donnée
 invalid_method_value,Valeur de method non valide
 invalid_concept_id_value,Valeur de concept_id non valide
 concept_not_found,Concept non trouvé
+error_loading_script_description,Erreur lors du chargement de la description du script

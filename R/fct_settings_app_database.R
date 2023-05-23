@@ -115,7 +115,7 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         creation_datetime = character(), update_datetime = character(), deleted = logical()))
     
     db_create_table(db, "scripts", primary_key_col = "id", dbms = dbms,
-      tibble::tibble(id = integer(), name = character(), data_source_id = integer(),
+      tibble::tibble(id = integer(), name = character(),
         creation_datetime = character(), update_datetime = character(), deleted = logical()))
     
     db_create_table(db, "patient_lvl_tabs_groups", primary_key_col = "id", dbms = dbms, text_cols = "description",
@@ -471,7 +471,7 @@ load_database <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues
   
   # Database tables to load
   r_tables <- c("users", "users_accesses", "users_statuses", "data_sources", "datasets",
-    "plugins", "code", "options", "git_repos")
+    "plugins", "scripts", "code", "options", "git_repos")
   
   m_tables <- c("vocabulary")
   

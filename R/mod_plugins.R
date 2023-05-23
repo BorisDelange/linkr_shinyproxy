@@ -413,7 +413,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
 #' plugins Server Functions
 #'
 #' @noRd 
-mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(), o = shiny::reactiveValues(),
+mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
   language = "en", i18n = character(), perf_monitoring = FALSE, debug = FALSE){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
@@ -1570,7 +1570,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         show_message_bar(output,  "image_deleted", "success", i18n = i18n, ns = ns)
         
       }, error = function(e) report_bug(r = r, output = output, error_message = "error_deleting_image",
-        error_name = paste0(id, " - delete plugin image"), category = "Error", error_report = e, i18n = i18n))
+        error_name = paste0(id, " - delete plugin image"), category = "Error", error_report = toString(e), i18n = i18n))
       
       r[[paste0(prefix, "_plugins_delete_image")]] <- FALSE
     })
@@ -1617,7 +1617,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         show_message_bar(output,  "image_imported", "success", i18n = i18n, ns = ns)
         
       }, error = function(e) report_bug(r = r, output = output, error_message = "error_importing_image",
-        error_name = paste0(id, " - import plugin image"), category = "Error", error_report = e, i18n = i18n))
+        error_name = paste0(id, " - import plugin image"), category = "Error", error_report = toString(e), i18n = i18n))
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$import_image_file"))
     })
@@ -1649,16 +1649,16 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       tryCatch({
         
         # Clear temp dir
-        unlink(paste0(path.expand("~"), "/linkr_temp_files"), recursive = TRUE, force = TRUE)
+        unlink(paste0(r$app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
         
         markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
-          path.expand("~"), "/linkr_temp_files')\n",
-          "knitr::opts_chunk$set(root.dir = '", path.expand("~"), "/linkr_temp_files', fig.path = '", path.expand("~"), "/linkr_temp_files')\n```\n")
+          r$app_folder, "/temp_files')\n",
+          "knitr::opts_chunk$set(root.dir = '", r$app_folder, "/temp_files', fig.path = '", r$app_folder, "/temp_files')\n```\n")
         
         markdown_file <- paste0(markdown_settings, options_description)
         
         # Create temp dir
-        dir <- paste0(path.expand("~"), "/linkr_temp_files")
+        dir <- paste0(r$app_folder, "/temp_files")
         file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
         if (!dir.exists(dir)) dir.create(dir)
         
@@ -2171,13 +2171,13 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           writeLines(input$ace_edit_code_translations, paste0(new_dir, "/plugin_translations.csv"))
         },
           error = function(e) report_bug(r = r, output = output, error_message = "error_creating_translations_file",
-            error_name = paste0(id, " - create translations files"), category = "Error", error_report = e, i18n = i18n, ns = ns))
+            error_name = paste0(id, " - create translations files"), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
         
         tryCatch({
           i18np <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = new_dir))
           i18np$set_translation_language(language)},
           error = function(e) report_bug(r = r, output = output, error_message = "error_creating_new_translator",
-            error_name = paste0(id, " - create i18n translator"), category = "Error", error_report = e, i18n = i18n, ns = ns))
+            error_name = paste0(id, " - create i18n translator"), category = "Error", error_report = toString(e), i18n = i18n, ns = ns))
       }
       
       # New environment, to authorize access to selected variables from shinyAce editor
@@ -2454,7 +2454,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         show_message_bar(output,  "success_importing_plugin", "success", i18n = i18n, time = 15000, ns = ns)
       },
         error = function(e) report_bug(r = r, output = output, error_message = "error_importing_plugin",
-          error_name = paste0(id, " - import plugins"), category = "Error", error_report = e, i18n = i18n, ns = ns),
+          error_name = paste0(id, " - import plugins"), category = "Error", error_report = toString(e), i18n = i18n, ns = ns),
         warning = function(w) report_bug(r = r, output = output, error_message = "error_importing_plugin",
           error_name = paste0(id, " - import plugins"), category = "Error", error_report = w, i18n = i18n, ns = ns))
       

@@ -260,7 +260,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
     })
     
     observeEvent(shiny.router::get_page(), {
-      if (debug) print(paste0(Sys.time(), " - mod_scripts - ", id, " - observer shiny_router::change_page"))
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer shiny_router::change_page"))
       
       # Close help pages when page changes
       r$help_vocabularies_open_panel <- FALSE

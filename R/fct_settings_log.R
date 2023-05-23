@@ -33,7 +33,7 @@ add_log_entry <- function(r, category = character(), name = character(), value =
 #' @param i18n Translator object from shiny.i18n library
 #' #' \dontrun{
 #' report_bug(r = r, output = output, error_message = "failed_execute_code", 
-#'   error_name = "failed_execute_code", category = "Error", error_report = error_report, i18n = i18n)
+#'   error_name = "failed_execute_code", category = "Error", error_report = toString(e)rror_report, i18n = i18n)
 #' }
 report_bug <- function(r = shiny::reactiveValues(), output, error_message = character(), 
   error_name = character(), category = character(), error_report = character(), i18n = character(), ns = character()){

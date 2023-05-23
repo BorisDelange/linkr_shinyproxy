@@ -159,8 +159,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   
   # Creation of new_data$data variable for scripts page
   else if (table == "scripts"){
-    new_data$data <- tibble::tribble(~id, ~name, ~data_source_id, ~creation_datetime, ~update_datetime, ~deleted,
-      last_row$data + 1, as.character(data$name), as.integer(data$data_source), as.character(Sys.time()), as.character(Sys.time()), FALSE)
+    new_data$data <- tibble::tribble(~id, ~name, ~creation_datetime, ~update_datetime, ~deleted,
+      last_row$data + 1, as.character(data$name), as.character(Sys.time()), as.character(Sys.time()), FALSE)
   }
   
   # Creation of new_data$data variable for users sub-pages
@@ -248,16 +248,15 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     
     # Add options rows
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
-      last_row$options + 1, "script", last_row$data + 1, "markdown_description", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 2, "script", last_row$data + 1, "version", "0.0.1", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 3, "script", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 4, "script", last_row$data + 1, "author", username, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 5, "script", last_row$data + 1, "description_fr", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 6, "script", last_row$data + 1, "description_en", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 7, "script", last_row$data + 1, "category_fr", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 8, "script", last_row$data + 1, "category_en", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 9, "script", last_row$data + 1, "name_fr", as.character(data$name), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 10, "script", last_row$data + 1, "name_en", as.character(data$name), NA_integer_, r$user_id, as.character(Sys.time()), FALSE)
+      last_row$options + 1, "script", last_row$data + 1, "version", "0.0.1", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 2, "script", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 3, "script", last_row$data + 1, "author", username, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 4, "script", last_row$data + 1, "description_fr", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 5, "script", last_row$data + 1, "description_en", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 6, "script", last_row$data + 1, "category_fr", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 7, "script", last_row$data + 1, "category_en", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 8, "script", last_row$data + 1, "name_fr", as.character(data$name), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 9, "script", last_row$data + 1, "name_en", as.character(data$name), NA_integer_, r$user_id, as.character(Sys.time()), FALSE)
     
     # Add code rows
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,

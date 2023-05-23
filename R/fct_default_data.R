@@ -49,7 +49,7 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
         
       }, error = function(e) {
         report_bug(r = r, output = output, error_message = "error_importing_default_database",
-          error_name = "import_default_database", category = "Error", error_report = e, i18n = i18n)
+          error_name = "import_default_database", category = "Error", error_report = toString(e), i18n = i18n)
         error_loading_database <<- TRUE
         })
     }

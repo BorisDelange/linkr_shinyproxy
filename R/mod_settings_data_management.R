@@ -1757,7 +1757,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
               show_message_bar(output,  "success_importing_vocabulary", "success", i18n = i18n, time = 15000, ns = ns)
             },
               error = function(e) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
-                error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = e, i18n = i18n, ns = ns),
+                error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = toString(e), i18n = i18n, ns = ns),
               warning = function(w) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
                 error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = w, i18n = i18n, ns = ns))
           }
@@ -1798,7 +1798,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
                 show_message_bar(output,  "success_importing_vocabulary", "success", i18n = i18n, time = 15000, ns = ns)
               },
                 error = function(e) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
-                  error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = e, i18n = i18n, ns = ns),
+                  error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = toString(e), i18n = i18n, ns = ns),
                 warning = function(w) report_bug(r = r, output = output, error_message = "error_importing_vocabulary",
                   error_name = paste0(id, " - import vocabulary"), category = "Error", error_report = w, i18n = i18n, ns = ns))
             }

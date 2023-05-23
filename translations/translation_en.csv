@@ -97,6 +97,7 @@ export_scripts,Export scripts
 export_plugins_remote_git,Export on remote git
 import_and_export_plugins,Import and export plugins
 git_remote_plugins,On remote git repository
+git_remote_scripts,On remote git repository
 remote_git_repo,Remote git repository
 remote_git_repos,Remote git repositories
 local_plugins,Local plugins
@@ -359,7 +360,7 @@ console,Console
 table,Table
 output,Output
 script_description,Script description
-scripts_descriptions_card,Scripts descriptions
+all_scripts_card,All scripts
 run_scripts_success,Scripts executed successfully
 fail_load_dataset,Failed loading dataset
 fail_load_vocabulary,Failed loading vocabulary
@@ -711,7 +712,7 @@ plugins_edit_code_card_user_access_description,Edit plugins code
 import_plugin_card_user_access_description,Import plugins
 export_plugin_card_user_access_description,Export plugins
 scripts_datatable_card_user_access_description,"Manage scripts (add, edit and delete)"
-scripts_descriptions_card_user_access_description,Access to scripts descriptions
+all_scripts_card_user_access_description,Access to 'All scripts' tab
 dataset_scripts_card_user_access_description,Configure datasets scripts (which scripts are loaded when a dataset is loaded)
 scripts_edit_code_card_user_access_description,Edit scripts code
 scripts_options_card_user_access_description,Edit scripts options
@@ -840,3 +841,4 @@ vocabulary_id_doesnt_exist,This vocabulary_id doesn't exist in database
 invalid_method_value,Invalid method value
 invalid_concept_id_value,Invalid concept_id value
 concept_not_found,Concept not found
+error_loading_script_description,Error loading script description
