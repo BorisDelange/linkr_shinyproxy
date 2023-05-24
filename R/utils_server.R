@@ -167,12 +167,10 @@ get_page_options <- function(id = character()){
 get_col_names <- function(table_name = character(), i18n = character()){
   result <- ""
   
-  if (table_name %in% c("data_sources", "datasets", "studies", "subsets")){
+  if (table_name %in% c("data_sources", "datasets", "subsets")){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"))
     c(result, switch(table_name,
       "datasets" = i18n$t("data_source"),
-      "studies" = c(i18n$t("dataset"), i18n$t("patient_lvl_tab_group"),
-        i18n$t("aggregated_tab_group")),
       "subsets" = i18n$t("study"),
       "thesaurus" = i18n$t("data_sources"))) -> result
     result <- c(result, i18n$t("creator"), i18n$t("datetime"),
@@ -184,9 +182,8 @@ get_col_names <- function(table_name = character(), i18n = character()){
     i18n$t("display_order"), i18n$t("creator"), i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   
   else if (table_name == "studies"){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"),
-      i18n$t("dataset"), i18n$t("patient_lvl_tab_group"),
-      i18n$t("aggregated_tab_group"), i18n$t("creator"), i18n$t("datetime"),
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("dataset"), i18n$t("patient_lvl_tab_group"),
+      i18n$t("aggregated_tab_group"), i18n$t("creator"), i18n$t("created_on"), i18n$t("updated_on"),
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
@@ -212,19 +209,6 @@ get_col_names <- function(table_name = character(), i18n = character()){
   
   else if (table_name == "subset_add_patients"){
     result <- c(i18n$t("patient"))
-  }
-  
-  else if (table_name == "thesaurus_items"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("name"), 
-      i18n$t("abbreviation"), i18n$t("unit"),
-      i18n$t("datetime"), i18n$t("deleted"), i18n$t("action"), i18n$t("modified"))
-  }
-  
-  else if (table_name == "tabs_thesaurus_items"){
-    result <- c(i18n$t("id"), i18n$t("thesaurus"), i18n$t("concept_id"), i18n$t("name"), 
-      i18n$t("abbreviation"), i18n$t("unit"),
-      i18n$t("colour"), i18n$t("datetime"), i18n$t("deleted"),
-      i18n$t("action"), i18n$t("modified"))
   }
   
   else if (table_name == "dataset_vocabulary_concepts_with_counts"){
@@ -323,8 +307,13 @@ get_col_names <- function(table_name = character(), i18n = character()){
   }
   
   else if (table_name == "local_scripts"){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"), i18n$t("category"), i18n$t("author"), i18n$t("version"),
-      i18n$t("unique_version"), i18n$t("created_on"), i18n$t("updated_on"))
+    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("unique_id"), i18n$t("description"), i18n$t("category"), i18n$t("author"), i18n$t("version"),
+      i18n$t("created_on"), i18n$t("updated_on"))
+  }
+  
+  else if (table_name == "remote_git_scripts"){
+    result <- c(i18n$t("name"), i18n$t("unique_id"), i18n$t("description"), i18n$t("category"), i18n$t("author"), i18n$t("version"),
+      i18n$t("created_on"), i18n$t("updated_on"), i18n$t("action"))
   }
   
   else if (table_name == "perf_monitoring"){

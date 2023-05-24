@@ -106,9 +106,9 @@ db_create_tables <- function(db, type = character(), dbms = character()){
         datetime = character(), deleted = logical()))
     
     db_create_table(db, "studies", primary_key_col = "id", dbms = dbms, text_cols = "description",
-      tibble::tibble(id = integer(), name = character(), description = character(), dataset_id = integer(),
+      tibble::tibble(id = integer(), name = character(), dataset_id = integer(),
         patient_lvl_tab_group_id = integer(), aggregated_tab_group_id = integer(), creator_id = integer(),
-        datetime = character(), deleted = logical()))
+        creation_datetime = character(), update_datetime = character(), deleted = logical()))
     
     db_create_table(db, "plugins", primary_key_col = "id", dbms = dbms, text_cols = "description",
       tibble::tibble(id = integer(), name = character(), tab_type_id = integer(), 

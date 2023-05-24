@@ -344,6 +344,8 @@ dataset_added,New dataset added
 study_added,New study added
 subset_added,New subset added
 script_added,New script added
+script_updated,Script updated
+script_imported,Script imported
 vocabulary_added,New vocabulary added
 user_added,New user added
 user_access_added,New user access added

@@ -143,7 +143,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
                   div(
                     shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                       div(strong(i18n$t("remote_git_repo")), style = "margin-top:8px;"),
-                      div(shiny.fluent::Dropdown.shinyInput(ns("remote_git_repo")), style = "width:322px;margin-top:4px;")
+                      div(shiny.fluent::Dropdown.shinyInput(ns("remote_git_repo")), style = "width:322px;margin-top:3px;")
                     )
                   )
                 )

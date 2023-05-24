@@ -181,7 +181,20 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
         id = ns("studies_options_card"),
         make_card(i18n$t("study_options"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "study", id = "options_selected", width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_combobox(i18n = i18n, ns = ns, label = "study", id = "options_selected_study",
+                width = "320px", allowFreeform = FALSE, multiSelect = FALSE),
+              make_textfield(i18n = i18n, ns = ns, label = "author", id = "study_author", width = "320px"),
+              make_textfield(i18n = i18n, ns = ns, label = "version", id = "study_version", width = "60px")
+            ), 
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_textfield(i18n = i18n, ns = ns, label = "name_fr", id = "study_name_fr", width = "320px"),
+              make_textfield(i18n = i18n, ns = ns, label = "name_en", id = "study_name_en", width = "320px")
+            ),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+              make_textfield(i18n = i18n, ns = ns, label = "category_fr", id = "study_category_fr", width = "320px"),
+              make_textfield(i18n = i18n, ns = ns, label = "category_en", id = "study_category_en", width = "320px")
+            ), br(),
             div(
               div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
               shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
@@ -192,9 +205,33 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
                 uiOutput(ns("users_allowed_read_div"))
               )
             ), br(),
-            strong(i18n$t("study_description")),
-            div(shinyAce::aceEditor(ns("ace_options_description"), "", mode = "markdown",
-              autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
+            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+              div(paste0(i18n$t("description"), " :"), style = "font-weight:bold; margin-top:7px; margin-right:5px;"),
+              shiny.fluent::ChoiceGroup.shinyInput(ns("study_description_language"), value = "fr", options = list(
+                list(key = "fr", text = "FR"),
+                list(key = "en", text = "EN")
+              ), className = "inline_choicegroup")
+            ),
+            conditionalPanel(condition = "input.study_description_language == 'fr'", ns = ns,
+              div(shinyAce::aceEditor(ns("study_description_fr"), "", mode = "markdown", 
+                code_hotkeys = list(
+                  "markdown", 
+                  list(
+                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"),
+                    run_all = list(win = "CTRL-SHIFT-ENTER|CTRL-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER|CTRL-ENTER|CMD-ENTER") 
+                  )
+                ),
+                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
+            conditionalPanel(condition = "input.study_description_language == 'en'", ns = ns,
+              div(shinyAce::aceEditor(ns("study_description_en"), "", mode = "markdown", 
+                code_hotkeys = list(
+                  "markdown", 
+                  list(
+                    save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S"),
+                    run_all = list(win = "CTRL-SHIFT-ENTER|CTRL-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER|CTRL-ENTER|CMD-ENTER") 
+                  )
+                ),
+                autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
             shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
               shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("save")),
               shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("preview"))
@@ -567,7 +604,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       # Update dropdown for study options
       options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
-      shiny.fluent::updateComboBox.shinyInput(session, "options_selected", options = options)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_study", options = options)
     })
     
     # --- --- --- --- --- --- --- --
@@ -607,7 +644,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # Update study options combobox
       options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = m$selected_study, text = r$studies %>% dplyr::filter(id == m$selected_study) %>% dplyr::pull(name))
-      shiny.fluent::updateComboBox.shinyInput(session, "options_selected", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_study", options = options, value = value)
       
       # Subsets depending on the selected study
       update_r(r = r, m = m, table = "subsets")
@@ -1435,7 +1472,6 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       new_data <- list()
       new_data$name <- coalesce2(type = "char", x = input$study_name)
       new_data$study_name <- new_data$name
-      new_data$description <- ""
       new_data$patient_lvl_tab_group <- get_last_row(r$db, "patient_lvl_tabs_groups") + 1
       new_data$aggregated_tab_group <- get_last_row(r$db, "aggregated_tabs_groups") + 1
       new_data$dataset <- r$selected_dataset
@@ -1457,12 +1493,12 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     action_buttons <- c("options", "delete")
     
     studies_management_editable_cols <- c("name")
-    studies_management_sortable_cols <- c("id", "name", "description", "dataset_id", "data_source_id", "study_id", "creator_id", "datetime")
-    studies_management_column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
-    studies_management_centered_cols <- c("id", "creator", "datetime", "action")
-    studies_management_searchable_cols <- c("name", "description", "data_source_id", "dataset_id", "study_id", "creator_id")
+    studies_management_sortable_cols <- c("id", "name", "dataset_id", "data_source_id", "study_id", "creator_id", "datetime")
+    studies_management_column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "80px", "creator_id" = "200px")
+    studies_management_centered_cols <- c("id", "creator", "creation_datetime", "update_datetime", "action")
+    studies_management_searchable_cols <- c("name", "data_source_id", "dataset_id", "study_id", "creator_id")
     studies_management_factorize_cols <- c("dataset_id", "creator_id")
-    studies_management_hidden_cols <- c("id", "description", "dataset_id", "patient_lvl_tab_group_id", "aggregated_tab_group_id", "deleted", "modified")
+    studies_management_hidden_cols <- c("id", "dataset_id", "patient_lvl_tab_group_id", "aggregated_tab_group_id", "deleted", "modified")
     studies_management_col_names <- get_col_names("studies", i18n)
     
     # Prepare data for datatable
@@ -1477,9 +1513,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       if (nrow(r$studies) == 0) {
         
-        data <- tibble::tibble(id = integer(), name = character(), description = character(), dataset_id = factor(),
-          patient_lvl_tab_group_id = integer(), aggregated_tab_group_id = integer(), creator_id = factor(), datetime = character(),
-          deleted = integer(), modified = logical(), action = character())
+        data <- tibble::tibble(id = integer(), name = character(), dataset_id = factor(),
+          patient_lvl_tab_group_id = integer(), aggregated_tab_group_id = integer(), creator_id = factor(), 
+          creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical(), action = character())
       }
       
       if (nrow(r$studies) > 0){
@@ -1520,9 +1556,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$studies_temp"))
 
       # Reload datatable_temp variable
-      if (nrow(r$studies_temp) == 0) r$studies_datatable_temp <- tibble::tibble(id = integer(), name = character(), description = character(), dataset_id = factor(),
-        patient_lvl_tab_group_id = integer(), aggregated_tab_group_id = integer(), creator_id = factor(), datetime = character(),
-        deleted = integer(), modified = logical(), action = character())
+      if (nrow(r$studies_temp) == 0) r$studies_datatable_temp <- tibble::tibble(id = integer(), name = character(), dataset_id = factor(),
+        patient_lvl_tab_group_id = integer(), aggregated_tab_group_id = integer(), creator_id = factor(),
+        creation_datetime = character(), update_datetime = character(), deleted = integer(), modified = logical(), action = character())
       
       if (nrow(r$studies_temp) > 0) r$studies_datatable_temp <- prepare_data_datatable(output = output, r = r, ns = ns, i18n = i18n, id = id,
         table = "studies", factorize_cols = studies_management_factorize_cols, action_buttons = action_buttons, data_input = r$studies_temp)
@@ -1627,7 +1663,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       options <- convert_tibble_to_list(r$studies %>% dplyr::arrange(name), key_col = "id", text_col = "name")
       value <- list(key = link_id, text = r$studies %>% dplyr::filter(id == link_id) %>% dplyr::pull(name))
 
-      shiny.fluent::updateComboBox.shinyInput(session, "options_selected", options = options, value = value)
+      shiny.fluent::updateComboBox.shinyInput(session, "options_selected_study", options = options, value = value)
 
       # Reload datatable (to unselect rows)
       DT::replaceData(r$studies_datatable_proxy, r$studies_datatable_temp, resetPaging = FALSE, rownames = FALSE)
@@ -1637,12 +1673,12 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       shinyjs::runjs(glue::glue("$('#{id}-studies_pivot button[name=\"{button_name}\"]').click();"))
     })
     
-    observeEvent(input$options_selected, {
+    observeEvent(input$options_selected_study, {
       
-      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$options_selected"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$options_selected_study"))
       
-      if (length(input$options_selected) > 1) link_id <- input$options_selected$key
-      else link_id <- input$options_selected
+      if (length(input$options_selected_study) > 1) link_id <- input$options_selected_study$key
+      else link_id <- input$options_selected_study
       
       options <- r$options %>% dplyr::filter(category == "study", link_id == !!link_id)
       
@@ -1679,27 +1715,82 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           width = "100%", style = "padding-bottom:10px;")
       })
       
-      # Study description
-      description <- r$options %>% dplyr::filter(category == "study" & name == "markdown_description" & link_id == !!link_id) %>% dplyr::pull(value)
-      shinyAce::updateAceEditor(session, "ace_options_description", value = description)
+      # Update other fields
+      
+      for (field in c("version", "author", "name_fr", "name_en", "category_fr", "category_en")) shiny.fluent::updateTextField.shinyInput(session,
+        paste0("study_", field), value = options %>% dplyr::filter(name == field) %>% dplyr::pull(value))
+      
+      for (field in c("description_fr", "description_en")) shinyAce::updateAceEditor(session,
+        paste0("study_", field), value = options %>% dplyr::filter(name == field) %>% dplyr::pull(value))
     })
     
+    # Save updates
+    
+    observeEvent(input$study_description_fr_save, {
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$study_description_fr_save"))
+      r$study_save_options <- Sys.time()
+    })
+    observeEvent(input$study_description_en_save, {
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$study_description_en_save"))
+      r$study_save_options <- Sys.time()
+    })
     observeEvent(input$options_save, {
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$options_save"))
+      r$study_save_options <- Sys.time()
+    })
+    
+    observeEvent(r$study_save_options, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$options_save"))
+      if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$study_save_options"))
 
-      req(input$options_selected)
-
-      if (length(input$options_selected) > 1) link_id <- input$options_selected$key
-      else link_id <- input$options_selected
+      study_name <- input[[paste0("study_name_", language)]]
+      
+      if (is.na(study_name) | study_name == "") shiny.fluent::updateTextField.shinyInput(session, 
+        paste0("study_name_", language), errorMessage = i18n$t("provide_valid_name"))
+      
+      req(!is.na(study_name) & study_name != "")
+      
+      if (!is.na(study_name) & study_name != "") shiny.fluent::updateTextField.shinyInput(session, 
+        paste0("study_name_", language), errorMessage = NULL)
+      
+      req(length(input$options_selected_study) > 0)
+      if (length(input$options_selected_study) > 1) link_id <- input$options_selected_study$key
+      else link_id <- input$options_selected_study
       
       data <- list()
-      data$users_allowed_read <- input$users_allowed_read
-      data$users_allowed_read_group <- input$users_allowed_read_group
-      data$markdown_description <- input$ace_options_description
+      for (field in c("study_version", "study_author", "users_allowed_read", "users_allowed_read_group",
+        "study_name_fr", "study_name_en", "study_category_fr", "study_category_en",
+        "study_description_fr", "study_description_en")) data[[stringr::str_replace(field, "study_", "")]] <- input[[field]]
+      
       save_settings_options(output = output, r = r, id = id, category = "study", code_id_input = paste0("options_", link_id),
-        i18n = i18n, data = data, page_options = c("users_allowed_read", "markdown_description"))
+        i18n = i18n, data = data, page_options = c("version", "author", "description_fr", "description_en",
+          "name_fr", "name_en", "category_fr", "category_en", "users_allowed_read"))
+      
+      # Change study_name & update_datetime in studies table
+      new_update_datetime <- as.character(Sys.time())
+      sql <- glue::glue_sql("UPDATE studies SET name = {study_name}, update_datetime = {new_update_datetime} WHERE id = {link_id}", .con = r$db)
+      query <- DBI::dbSendStatement(r$db, sql)
+      DBI::dbClearResult(query)
+      
+      r$studies <- r$studies %>% dplyr::mutate(
+        name = dplyr::case_when(id == link_id ~ study_name, TRUE ~ name),
+        update_datetime = dplyr::case_when(id == link_id ~ new_update_datetime, TRUE ~ update_datetime))
+      r$studies_temp <- r$studies %>%
+        dplyr::mutate_at(c("creation_datetime", "update_datetime"), format_datetime, language = "en", sec = FALSE) %>%
+        dplyr::mutate(modified = FALSE) %>% dplyr::arrange(name)
+      
+      # req(input$options_selected_study)
+      # 
+      # if (length(input$options_selected_study) > 1) link_id <- input$options_selected_study$key
+      # else link_id <- input$options_selected_study
+      # 
+      # data <- list()
+      # data$users_allowed_read <- input$users_allowed_read
+      # data$users_allowed_read_group <- input$users_allowed_read_group
+      # data$markdown_description <- input$ace_options_description
+      # save_settings_options(output = output, r = r, id = id, category = "study", code_id_input = paste0("options_", link_id),
+      #   i18n = i18n, data = data, page_options = c("users_allowed_read", "markdown_description"))
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer input$options_save"))
     })
@@ -1736,6 +1827,55 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       }, error = function(e) "")
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer input$execute_options_description"))
+    })
+    
+    # Render markdown
+    
+    observeEvent(input$execute_options_description, {
+      if (debug) print(paste0(Sys.time(), " - mod_studies - observer input$execute_options_description"))
+      r$study_options_description_trigger <- Sys.time()
+    })
+    
+    observeEvent(input$study_description_fr_run_all, {
+      if (debug) print(paste0(Sys.time(), " - mod_studies - observer input$study_description_fr_run_all"))
+      r$study_options_description_trigger <- Sys.time()
+    })
+    
+    observeEvent(input$study_description_en_run_all, {
+      if (debug) print(paste0(Sys.time(), " - mod_studies - observer input$study_description_en_run_all"))
+      r$study_options_description_trigger <- Sys.time()
+    })
+    
+    observeEvent(r$study_options_description_trigger, {
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "start")
+      if (debug) print(paste0(Sys.time(), " - mod_studies - observer input$execute_options_description"))
+      
+      options_description <- isolate(input[[paste0("study_description_", input$study_description_language)]] %>% stringr::str_replace_all("\r", "\n"))
+      
+      tryCatch({
+        
+        # Clear temp dir
+        unlink(paste0(r$app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
+        
+        markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
+          r$app_folder, "/temp_files')\n",
+          "knitr::opts_chunk$set(root.dir = '", r$app_folder, "/temp_files', fig.path = '", r$app_folder, "/temp_files')\n```\n")
+        
+        markdown_file <- paste0(markdown_settings, options_description)
+        
+        # Create temp dir
+        dir <- paste0(r$app_folder, "/temp_files")
+        file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
+        if (!dir.exists(dir)) dir.create(dir)
+        
+        # Create the markdown file
+        knitr::knit(text = markdown_file, output = file, quiet = TRUE)
+        
+        output$description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
+      }, error = function(e) "")
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_studies - observer input$execute_options_description"))
     })
     
     # --- --- --- --- ---

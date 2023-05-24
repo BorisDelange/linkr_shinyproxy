@@ -126,17 +126,13 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   new_data <- list()
   
   # Creation of new_data$data variable for data_management pages
-  if (table %in% c("data_sources", "datasets", "studies", "subsets")){
+  if (table %in% c("data_sources", "datasets", "subsets")){
     
     # These columns are found in all of these tables
     new_data$data <- tibble::tribble(~id, ~name, ~description, last_row$data + 1, as.character(data$name), as.character(data$description))
     
     if (table == "datasets") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, as.integer(data$data_source)))
-    if (table == "studies") new_data$data <- new_data$data %>% dplyr::bind_cols(
-      tibble::tribble(~dataset_id, ~patient_lvl_tab_group_id, ~aggregated_tab_group_id,
-        as.integer(data$dataset), as.integer(data$patient_lvl_tab_group), as.integer(data$aggregated_tab_group)))
     if (table == "subsets") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~study_id, as.integer(data$study)))
-    if (table == "thesaurus") new_data$data <- new_data$data %>% dplyr::bind_cols(tibble::tribble(~data_source_id, data$data_source))
     
     # These columns are also found in all of these tables
     # Add them at last to respect the order of cols
@@ -149,6 +145,14 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       ~vocabulary_concept_id, ~display_order, ~data_source_id, ~creator_id, ~datetime, ~deleted,
       last_row$data + 1, as.character(data$vocabulary_id), as.character(data$vocabulary_name), "", "", "", NA_integer_,
       data$data_source, r$user_id, as.character(Sys.time()), FALSE)
+  }
+  
+  # Creation of new_data$data variable for studies page
+  else if (table == "studies"){
+    new_data$data <- tibble::tribble(
+      ~id, ~name, ~dataset_id, ~patient_lvl_tab_group_id, ~aggregated_tab_group_id, ~creator_id, ~creation_datetime, ~update_datetime, ~deleted,
+      last_row$data + 1, as.character(data$name), as.integer(data$dataset), as.integer(data$patient_lvl_tab_group), as.integer(data$aggregated_tab_group),
+      r$user_id, as.character(Sys.time()), as.character(Sys.time()), FALSE)
   }
   
   # Creation of new_data$data variable for plugins page
@@ -281,8 +285,15 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
     new_data$options <- tibble::tribble(~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
       last_row$options + 1, "study", last_row$data + 1, "users_allowed_read_group", "everybody", 1, r$user_id, as.character(Sys.time()), FALSE,
       last_row$options + 2, "study", last_row$data + 1, "user_allowed_read", "", r$user_id, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 3, "study", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 4, "study", last_row$data + 1, "markdown_description", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE)
+      last_row$options + 3, "study", last_row$data + 1, "version", "0.0.1", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 4, "study", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 5, "study", last_row$data + 1, "author", username, NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 6, "study", last_row$data + 1, "description_fr", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 7, "study", last_row$data + 1, "description_en", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 8, "study", last_row$data + 1, "category_fr", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 9, "study", last_row$data + 1, "category_en", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 10, "study", last_row$data + 1, "name_fr", as.character(data$name), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 11, "study", last_row$data + 1, "name_en", as.character(data$name), NA_integer_, r$user_id, as.character(Sys.time()), FALSE)
     
     # Add rows in subsets table, for inclusion / exclusion subsets
     # Add also code corresponding to each subset
