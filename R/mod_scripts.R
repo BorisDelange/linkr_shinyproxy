@@ -22,7 +22,7 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
   for (name in c("local", "remote_git")){
     all_scripts_cards[[name]] <- tagList(
       conditionalPanel(condition = paste0("input.all_scripts_source == '", name, "'"), ns = ns, 
-        DT::DTOutput(ns(paste0(name, "_scripts_datatable"))),
+        DT::DTOutput(ns(paste0(name, "_scripts_datatable"))), br(),
         shinyjs::hidden(
           div(id = ns(paste0(name, "_selected_script_markdown_div")),
             uiOutput(ns(paste0(name, "_selected_script_markdown"))),
@@ -94,7 +94,7 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
                   )
                 )
               )
-            ), br(), br(),
+            ),
             all_scripts_cards$local,
             all_scripts_cards$remote_git
           )
@@ -834,8 +834,11 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$add_remote_git_script"))
       
       unique_id <- substr(input$add_remote_git_script, nchar("add_remote_git_script_") + 1, nchar(input$add_remote_git_script))
+      print("1")
+      print(unique_id)
       
       script_updated <- FALSE
+      link_id <- integer(0)
       
       # Delete old script if exists
       if (nrow(r$options %>% dplyr::filter(category == "script" & name == "unique_id" & value == unique_id)) > 0){
@@ -845,14 +848,17 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         sql <- glue::glue_sql("DELETE FROM options WHERE category = 'script' & link_id = {link_id}", .con = r$db)
         query <- DBI::dbSendStatement(r$db, sql) -> query
         DBI::dbClearResult(query)
+        r$options <- r$options %>% dplyr::filter(category != "script" | (category == "script" & link_id != !!link_id))
 
         sql <- glue::glue_sql("DELETE FROM code WHERE category = 'script' & link_id = {link_id}", .con = r$db)
         query <- DBI::dbSendStatement(r$db, sql) -> query
         DBI::dbClearResult(query)
+        r$code <- r$code %>% dplyr::filter(category != "script" | (category == "script" & link_id != !!link_id))
 
         sql <- glue::glue_sql("DELETE FROM scripts WHERE id = {link_id}", .con = r$db)
         query <- DBI::dbSendStatement(r$db, sql) -> query
         DBI::dbClearResult(query)
+        r$scripts <- r$scripts %>% dplyr::filter(id != link_id)
         
         script_updated <- TRUE
       }
@@ -866,10 +872,10 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       new_data <- list()
       
+      link_id <- last_row$scripts + 1
+      
       new_data$scripts <- tibble::tibble(id = last_row$scripts + 1, name = script[[paste0("name_", language)]], 
         creation_datetime = script$creation_datetime, update_datetime = script$update_datetime, deleted = FALSE)
-      
-      link_id <- last_row$scripts + 1
       
       new_data$options <- tibble::tribble(
         ~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
@@ -885,13 +891,23 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       new_data$code <- tibble::tribble(
         ~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
-        last_row$code + 1, "script", link_id, script$code, r$user_id, script$creation_datetime, FALSE
-      )
+        last_row$code + 1, "script", link_id, script$code, r$user_id, script$creation_datetime, FALSE)
       
-      for (name in c("scripts", "options", "code")) DBI::dbAppendTable(r$db, name, new_data[[name]])
+      for (name in c("scripts", "options", "code")){
+        DBI::dbAppendTable(r$db, name, new_data[[name]])
+        r[[name]] <- r[[name]] %>% dplyr::bind_rows(new_data[[name]])
+      }
       
       if (script_updated) show_message_bar(output, message = "script_updated", type = "success", i18n = i18n, ns = ns)
       else show_message_bar(output, message = "script_imported", type = "success", i18n = i18n, ns = ns)
+      
+      r$local_scripts <- r$local_scripts %>%
+        dplyr::filter(id != link_id) %>%
+        dplyr::bind_rows(tibble::tibble(
+          id = link_id, name = script[[paste0("name_", language)]], unique_id = script$unique_id,
+          description = script[[paste0("description_", language)]], category = script[[paste0("category_", language)]],
+          author = script$author, version = script$version, creation_datetime = script$creation_datetime, update_datetime = script$update_datetime
+        ))
       
       r$update_remote_git_scripts_datatable <- Sys.time()
     })
