@@ -714,7 +714,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         dplyr::left_join(r$options %>% dplyr::filter(category == "script", name == paste0("description_", language)) %>% dplyr::select(id = link_id, description = value), by = "id") %>%
         dplyr::left_join(r$options %>% dplyr::filter(category == "script", name == "unique_id") %>% dplyr::select(id = link_id, unique_id = value), by = "id") %>%
         dplyr::select(-deleted) %>%
-        dplyr::relocate(unique_id, description, category, author, version, unique_id, .after = "name")
+        dplyr::relocate(unique_id, description, category, author, version, unique_id, .after = "name") %>%
+        dplyr::arrange(name)
       
       # Create datatable if doesn't exist
       
@@ -1355,7 +1356,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       }
       else code_link_id <- 0L
       
-      if (link_id != code_link_id)  
+      if (link_id != code_link_id)
         shiny.fluent::updateComboBox.shinyInput(session, "code_selected_script", 
           options = convert_tibble_to_list(r$scripts %>% dplyr::arrange(name), key_col = "id", text_col = "name"),
           value = list(key = link_id, text = r$scripts %>% dplyr::filter(id == link_id) %>% dplyr::pull(name)))
@@ -1388,21 +1389,29 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     observeEvent(r$script_save_options, {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$save_options_description"))
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$script_save_options"))
+      
+      req(length(input$options_selected_script) > 0)
+      if (length(input$options_selected_script) > 1) link_id <- input$options_selected_script$key
+      else link_id <- input$code_selected_script
       
       script_name <- input[[paste0("script_name_", language)]]
-      
       if (is.na(script_name) | script_name == "") shiny.fluent::updateTextField.shinyInput(session, 
         paste0("script_name_", language), errorMessage = i18n$t("provide_valid_name"))
       
       req(!is.na(script_name) & script_name != "")
       
+      duplicate_names <- FALSE
+      current_names <- r$scripts_temp %>% dplyr::filter(id != link_id) %>% dplyr::pull(name)
+      if (script_name %in% current_names){
+        duplicate_names <- TRUE
+        shiny.fluent::updateTextField.shinyInput(session, paste0("script_name_", language), errorMessage = i18n$t("name_already_used"))
+      }
+      
+      req(!duplicate_names)
+      
       if (!is.na(script_name) & script_name != "") shiny.fluent::updateTextField.shinyInput(session, 
         paste0("script_name_", language), errorMessage = NULL)
-      
-      req(length(input$options_selected_script) > 0)
-      if (length(input$options_selected_script) > 1) link_id <- input$options_selected_script$key
-      else link_id <- input$code_selected_script
       
       data <- list()
       for (field in c("script_version", "script_author",

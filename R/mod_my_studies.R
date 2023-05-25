@@ -1744,6 +1744,10 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer r$study_save_options"))
 
+      req(length(input$options_selected_study) > 0)
+      if (length(input$options_selected_study) > 1) link_id <- input$options_selected_study$key
+      else link_id <- input$options_selected_study
+      
       study_name <- input[[paste0("study_name_", language)]]
       
       if (is.na(study_name) | study_name == "") shiny.fluent::updateTextField.shinyInput(session, 
@@ -1751,12 +1755,17 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       req(!is.na(study_name) & study_name != "")
       
+      duplicate_names <- FALSE
+      current_names <- r$studies_temp %>% dplyr::filter(id != link_id) %>% dplyr::pull(name)
+      if (study_name %in% current_names){
+        duplicate_names <- TRUE
+        shiny.fluent::updateTextField.shinyInput(session, paste0("study_name_", language), errorMessage = i18n$t("name_already_used"))
+      }
+      
+      req(!duplicate_names)
+      
       if (!is.na(study_name) & study_name != "") shiny.fluent::updateTextField.shinyInput(session, 
         paste0("study_name_", language), errorMessage = NULL)
-      
-      req(length(input$options_selected_study) > 0)
-      if (length(input$options_selected_study) > 1) link_id <- input$options_selected_study$key
-      else link_id <- input$options_selected_study
       
       data <- list()
       for (field in c("study_version", "study_author", "users_allowed_read", "users_allowed_read_group",

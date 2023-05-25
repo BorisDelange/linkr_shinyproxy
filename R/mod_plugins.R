@@ -1465,18 +1465,27 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$..save_options"))
       
+      req(length(input$options_selected_plugin) > 0)
+      if (length(input$options_selected_plugin) > 1) link_id <- input$options_selected_plugin$key
+      else link_id <- input$code_selected_plugin
+      
       plugin_name <- input[[paste0("plugin_name_", language)]]
       if (is.na(plugin_name) | plugin_name == "") shiny.fluent::updateTextField.shinyInput(session, 
         paste0("plugin_name_", language), errorMessage = i18n$t("provide_valid_name"))
       
       req(!is.na(plugin_name) & plugin_name != "")
       
+      duplicate_names <- FALSE
+      current_names <- r$plugins_temp %>% dplyr::filter(tab_type_id == !!tab_type_id, id != link_id) %>% dplyr::pull(name)
+      if (plugin_name %in% current_names){
+        duplicate_names <- TRUE
+        shiny.fluent::updateTextField.shinyInput(session, paste0("plugin_name_", language), errorMessage = i18n$t("name_already_used"))
+      }
+      
+      req(!duplicate_names)
+      
       if (!is.na(plugin_name) & plugin_name != "") shiny.fluent::updateTextField.shinyInput(session, 
         paste0("plugin_name_", language), errorMessage = NULL)
-      
-      req(length(input$options_selected_plugin) > 0)
-      if (length(input$options_selected_plugin) > 1) link_id <- input$options_selected_plugin$key
-      else link_id <- input$code_selected_plugin
       
       data <- list()
       data$users_allowed_read <- unique(input$users_allowed_read)
