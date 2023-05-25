@@ -80,6 +80,7 @@ concept_id_2,ID du concept 2
 mapped_concept_id,ID du concept aligné
 reset,Remettre à zéro
 all_plugins,Tous les plugins
+all_scripts,Tous les scripts
 create_plugin,Créer un plugin
 plugins_management,Gestion des plugins
 edit_plugin_code,Editer le code du plugin

@@ -111,7 +111,8 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
         id = ns("dataset_scripts_card"),
         div(
           class = glue::glue("card ms-depth-8 ms-sm{12} ms-xl{12}"),
-          shiny.fluent::Text(variant = "large", i18n$t("choose_dataset_scripts"), block = TRUE),
+          shiny.fluent::Text(variant = "large", i18n$t("choose_dataset_scripts"), block = TRUE), br(),
+          div(shiny.fluent::Dropdown.shinyInput(ns("dataset_scripts_category"), i18n$t("category")), style = "width:300px"),
           div(uiOutput(ns("dataset_scripts_bucket_list"))),
           shiny.fluent::PrimaryButton.shinyInput(ns("save_dataset_scripts"), i18n$t("save"))
         ), 
@@ -457,9 +458,6 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         dplyr::filter(category == "dataset", name == "activate_scripts_cache", link_id == r$selected_dataset) %>% dplyr::pull(value_num)
       shiny.fluent::updateToggle.shinyInput(session, "activate_scripts_cache", value = as.logical(value))
       
-      # Load scripts for this dataset
-      # update_r(r = r, table = "scripts")
-      
       # Show first card & hide "choose a dataset" card
       shinyjs::hide("choose_a_dataset_card")
       # shinyjs::show("menu")
@@ -470,30 +468,28 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (length(input$current_tab) > 0){
         if ("dataset_scripts_card" %in% r$user_accesses) if (input$current_tab == "dataset_scripts_card") shinyjs::show("dataset_scripts_card")
       }
-      # Show list of scripts for this dataset
       
-      output$dataset_scripts_bucket_list <- renderUI({
-        
-        all_scripts <- r$scripts
-        selected_scripts <- r$scripts %>% dplyr::inner_join(
-          r$options %>%
-            dplyr::filter(category == "dataset_scripts", link_id == r$selected_dataset) %>%
-            dplyr::select(id = value_num),
-          by = "id"
-        )
-        
-        available_scripts <- all_scripts %>% dplyr::anti_join(selected_scripts, by = "id")
-        
-        result <- sortable::bucket_list(
-          header = NULL,
-          group_name = ns("all_dataset_scripts"),
-          orientation = "horizontal",
-          sortable::add_rank_list(text = i18n$t("selected_scripts"), labels = selected_scripts$name, input_id = ns("dataset_selected_scripts")),
-          sortable::add_rank_list(text = i18n$t("available_scripts"), labels = available_scripts$name, input_id = ns("dataset_available_scripts"))
-        )
-        
-        result
-      })
+      # Update category dropdown
+      
+      categories_options <-
+        tibble::tibble(key_col = "all_scripts", text_col = i18n$t("all_scripts")) %>% dplyr::bind_rows(
+          r$scripts %>%
+            dplyr::left_join(r$options %>% dplyr::filter(category == "script", name == paste0("category_", language)) %>%
+              dplyr::select(id = link_id, category = value), by = "id") %>%
+            dplyr::filter(!is.na(category) & category != "") %>%
+            dplyr::select(category) %>%
+            dplyr::group_by(category) %>%
+            dplyr::slice(1) %>%
+            dplyr::ungroup() %>%
+            dplyr::arrange(category) %>%
+            dplyr::select(key_col = category, text_col = category)) %>%
+        convert_tibble_to_list(key_col = "key_col", text_col = "text_col")
+
+      shiny.fluent::updateDropdown.shinyInput(session, "dataset_scripts_category", options = categories_options, value = "all_scripts")
+      
+      # Update bucket_list
+      
+      r$scripts_reload_bucket_list_var <- Sys.time()
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$selected_dataset"))
     })
@@ -501,6 +497,82 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     # --- --- --- --- --- -
     # Dataset scripts ----
     # --- --- --- --- --- -
+    
+    # Select scripts category
+    
+    observeEvent(input$dataset_scripts_category, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$dataset_scripts_category"))
+      
+      r$scripts_update_bucket_list <- Sys.time()
+    })
+    
+    # Reload bucket_list scripts var
+    
+    observeEvent(r$scripts_reload_bucket_list_var, {
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts_reload_bucket_list_var"))
+      
+      req(r$selected_dataset)
+      
+      r$bucket_list_all_scripts <- r$local_scripts
+      
+      r$bucket_list_selected_scripts <- r$local_scripts %>% dplyr::inner_join(
+        r$options %>%
+          dplyr::filter(category == "dataset_scripts", link_id == r$selected_dataset) %>%
+          dplyr::select(id = value_num),
+        by = "id"
+      )
+      
+      r$scripts_update_bucket_list <- Sys.time()
+    })
+    
+    # Update bucket_list
+    
+    observeEvent(r$scripts_update_bucket_list, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer r$scripts_update_bucket_list"))
+            
+      req(input$dataset_scripts_category)
+      
+      all_scripts <- r$bucket_list_all_scripts
+      selected_scripts <- r$bucket_list_selected_scripts
+      available_scripts <- all_scripts %>% dplyr::anti_join(selected_scripts, by = "id")
+      
+      if (input$dataset_scripts_category != "all_scripts"){
+        selected_scripts <- selected_scripts %>% dplyr::filter(category == input$dataset_scripts_category)
+        available_scripts <- available_scripts %>% dplyr::filter(category == input$dataset_scripts_category)
+      }
+      
+      output$dataset_scripts_bucket_list <- renderUI({
+        
+        sortable::bucket_list(
+          header = NULL,
+          group_name = ns("all_dataset_scripts"),
+          orientation = "horizontal",
+          sortable::add_rank_list(text = i18n$t("selected_scripts"), labels = selected_scripts$name, input_id = ns("dataset_selected_scripts")),
+          sortable::add_rank_list(text = i18n$t("available_scripts"), labels = available_scripts$name, input_id = ns("dataset_available_scripts"))
+        )
+      })
+    })
+    
+    # Updates on bucket_list
+    
+    observeEvent(input$dataset_selected_scripts, {
+      
+      if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$dataset_selected_scripts"))
+      
+      if (length(input$dataset_selected_scripts) == 0){
+        if (input$dataset_scripts_category == "all_scripts") r$bucket_list_selected_scripts <- r$bucket_list_selected_scripts %>% dplyr::slice(0)
+        else r$bucket_list_selected_scripts <- r$bucket_list_selected_scripts %>% dplyr::filter(category != input$dataset_scripts_category)
+      }
+      if (length(input$dataset_selected_scripts) > 0){
+        if (input$dataset_scripts_category == "all_scripts") r$bucket_list_selected_scripts <- r$bucket_list_all_scripts %>% 
+          dplyr::filter(name %in% input$dataset_selected_scripts)
+          
+        else r$bucket_list_selected_scripts <- r$bucket_list_selected_scripts %>%
+          dplyr::filter(is.na(category) | category == "" | category != input$dataset_scripts_category) %>%
+          dplyr::bind_rows(r$bucket_list_all_scripts %>% dplyr::filter(category == input$dataset_scripts_category & name %in% input$dataset_selected_scripts))
+      }
+    })
     
     # Save dataset scripts
     
@@ -515,31 +587,20 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       DBI::dbSendStatement(r$db, sql) -> query
       DBI::dbClearResult(query)
       r$options <- r$options %>% dplyr::filter(category != "dataset_scripts" | (category == "dataset_scripts" & link_id != r$selected_dataset))
-      
+
       # Add in options table informations concerning the scripts for this dataset
       
-      if(length(input$dataset_selected_scripts) > 0){
-        
-        data_insert <- tibble::tibble(category = character(), link_id = integer(), name = character(), value = character(),
-          value_num = numeric(), datetime = character(), deleted = logical())
-        
-        sapply(input$dataset_selected_scripts, function(script){
-          data_insert <<- data_insert %>%
-            dplyr::bind_rows(
-              tibble::tibble(category = "dataset_scripts", link_id = r$selected_dataset, name = "", value = "",
-                value_num = r$scripts %>% dplyr::filter(name == script) %>% dplyr::pull(id),
-                datetime = as.character(Sys.time()), deleted = FALSE)
-            )
-        })
-        
-        data_insert$id <- seq.int(nrow(data_insert)) + get_last_row(r$db, "options")
-        data_insert <- data_insert %>% dplyr::relocate(id)
-        
-        DBI::dbAppendTable(r$db, "options", data_insert)
-        r$options <- r$options %>% dplyr::bind_rows(data_insert)
-      }
-      
-      # update_r(r = r, table = "options")
+      r$bucket_list_selected_scripts
+
+      data_insert <- r$bucket_list_selected_scripts %>%
+        dplyr::transmute(category = "dataset_scripts", link_id = r$selected_dataset, name = "", value = "",
+          value_num = id, datetime = as.character(Sys.time()), deleted = FALSE)
+
+      data_insert$id <- seq.int(nrow(data_insert)) + get_last_row(r$db, "options")
+      data_insert <- data_insert %>% dplyr::relocate(id)
+
+      DBI::dbAppendTable(r$db, "options", data_insert)
+      r$options <- r$options %>% dplyr::bind_rows(data_insert)
       
       show_message_bar(output,  "modif_saved", "success", i18n, ns = ns)
       
@@ -1006,6 +1067,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       # Reload remote git scripts datatable
       r$update_remote_git_scripts_datatable <- Sys.time()
+      
+      # Reload bucket_list scripts var
+      r$scripts_reload_bucket_list_var <- Sys.time()
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_scripts - observer r$scripts"))
     })

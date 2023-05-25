@@ -80,6 +80,7 @@ concept_id_2,Concept 2 ID
 mapped_concept_id,Mapped concept ID
 reset,Reset
 all_plugins,All plugins
+all_scripts,All scripts
 create_plugin,Create a plugin
 plugins_management,Plugins management
 edit_plugin_code,Edit plugin code
