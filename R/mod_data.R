@@ -548,7 +548,11 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         r[[paste0(prefix, "_first_tab_shown")]] <- first_tab_shown
       }
       
-      r[[paste0(prefix, "_display_tabs")]] <- display_tabs
+      r[[paste0(prefix, "_display_tabs")]] <- display_tabs %>%
+        dplyr::group_by(level, parent_tab_id) %>%
+        dplyr::summarize(id = id, tab_group_id = tab_group_id, tab_sub_group = dplyr::cur_group_id(), parent_tab_id = parent_tab_id,
+          name = name, display_order = display_order, level = level) %>%
+        dplyr::ungroup()
       
       # Load UI cards
       if (grepl("first_load_ui", r[[paste0(prefix, "_load_display_tabs")]])) r[[paste0(prefix, "_load_ui_cards")]] <- Sys.time()
@@ -565,199 +569,298 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     # --- --- --- --- --- --
     
     # Render menu
-    output$study_menu <- renderUI({
-      
-      if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - output$study_menu"))
+    observeEvent(r[[paste0(prefix, "_display_tabs")]], {
+      if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - r$..display_tabs"))
       if (perf_monitoring) monitor_perf(r = r, action = "start")
       
-      # The output is reloaded in these conditions :
-      # - Change in r[[paste0(prefix, "_display_tabs")]]
-      # - Change in r[[paste0(prefix, "_load_ui_menu")]]
-      # - Change in input$study_current_tab
+      tab_group_id <- r[[paste0(prefix, "_display_tabs")]] %>% dplyr::slice(1) %>% dplyr::pull(tab_group_id)
       
-      req(!is.na(m$selected_study))
-      req(r[[paste0(prefix, "_display_tabs")]])
-      r[[paste0(prefix, "_load_ui_menu")]]
+      # Create an ID per level / sub_group
+      display_tabs <- r[[paste0(prefix, "_display_tabs")]]
       
-      # Hide initial breadcrumb
-      shinyjs::hide("initial_breadcrumb")
+      # Load Breadcrumb(s) é Pivot(s), one per level / subgroup
       
-      # Check if users has access only to aggregated data
-      if (prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) == 1) show_message_bar(output, "only_aggregated_data_authorized", "severeWarning", i18n = i18n, ns = ns)
-      req((prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) != 1) | prefix == "aggregated")
+      breadcrumbs <- tagList()
+      pivots <- tagList()
       
-      display_tabs <- isolate(r[[paste0(prefix, "_display_tabs")]])
+      i <- 1L
       
-      # If no tab to show, notify user
-      if (nrow(display_tabs) == 0 | "level" %not_in% names(display_tabs)){
+      for (tab_sub_group in unique(display_tabs$tab_sub_group)){
         
-        # selected_key <- 0L
-        # if (!is.na(isolate(r[[paste0(prefix, "_selected_tab")]]))) selected_key <- isolate(r[[paste0(prefix, "_selected_tab")]])
+        tabs <- display_tabs %>% dplyr::filter(tab_sub_group == !!tab_sub_group)
+        tabs_ui <- tagList()
         
-        return(tagList(
-          shiny.fluent::Breadcrumb(items = list(
-            list(key = "main", text = i18n$t(paste0(prefix, "_data")), href = paste0("#!/", page_name), isCurrentItem = TRUE,
-              onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', 0)")))),
-            maxDisplayedItems = 3),
-          shiny.fluent::Pivot(
-            onLinkClick = htmlwidgets::JS(paste0("item => {",
-              "Shiny.setInputValue('", id, "-study_current_tab', item.props.id);",
-              "Shiny.setInputValue('", id, "-study_current_tab_trigger', Math.random());",
-              "}"
-            )),
-            selectedKey = NULL,
-            shiny.fluent::PivotItem(id = paste0(prefix, "_add_tab_", 0), headerText = span(i18n$t("add_tab"), style = "padding-left:5px;"), itemIcon = "Add")
+        for (j in 1:nrow(tabs)){
+          tab <- tabs[j, ]
+          tabs_ui <- tagList(tabs_ui, 
+            shiny.fluent::PivotItem(id = tab$id, itemKey = tab$id, headerText = tab$name)
           )
-        ))
-      }
-      
-      req(nrow(display_tabs) > 0 & "level" %in% names(display_tabs) & !is.na(isolate(m$selected_study)))
-      
-      # First tab shown
-      first_tab_shown <- isolate(r[[paste0(prefix, "_first_tab_shown")]])
-      
-      shown_tabs_temp <- tibble::tibble()
-      
-      # If we are at level one, show all levels one
-      if (first_tab_shown$level == 1){
-        shown_tabs <- display_tabs %>% dplyr::filter(level == 1)
-      }
-      
-      # Else, show only current & those who has same level & same parent
-      if (first_tab_shown$level > 1){
-        shown_tabs_temp <- display_tabs %>% dplyr::filter(level == first_tab_shown$level & parent_tab_id == first_tab_shown$parent_tab_id)
-        if (nrow(shown_tabs_temp) > 0) shown_tabs <- shown_tabs_temp
-        if (nrow(shown_tabs_temp) == 0) shown_tabs <- first_tab_shown
-      }
-      
-      if (length(input$study_current_tab) > 0){
-        
-        # If value = 0, go back to first level
-        if (input$study_current_tab == 0){
-          shown_tabs <- display_tabs %>% dplyr::filter(level == 1)
-          r[[paste0(prefix, "_selected_tab")]] <- first_tab_shown$id
-        } 
-        else {
           
-          if (grepl("show_tab", isolate(r[[paste0(prefix, "_selected_tab")]]))){
-            study_current_tab <- as.integer(substr(isolate(r[[paste0(prefix, "_selected_tab")]]), nchar("show_tab_") + 1, 100))
-            shown_tabs_temp <- display_tabs %>% dplyr::filter(parent_tab_id == study_current_tab)
-          }
-          else if (grepl("add_tab", input$study_current_tab)){
-            shown_tabs_temp <- tibble::tibble()
-            study_current_tab <- isolate(r[[paste0(prefix, "_selected_tab")]])
-          }
-          else {
-            study_current_tab <- input$study_current_tab
-            shown_tabs_temp <- display_tabs %>% dplyr::filter(parent_tab_id == study_current_tab)
-          }
-          
-          # If current tab has children
-          if (nrow(shown_tabs_temp) > 0) shown_tabs <- shown_tabs_temp
-          
-          # If current tab has no children
-          if (nrow(shown_tabs_temp) == 0){
-            current_tab <- display_tabs %>% dplyr::filter(id == study_current_tab)
-            if (nrow(current_tab) > 0) shown_tabs <- display_tabs %>% dplyr::filter(parent_tab_id == current_tab$parent_tab_id & level == current_tab$level)
-            else shown_tabs <- tibble::tibble()
-            
-            # If not any "brother", we are at level one
-            if (nrow(shown_tabs) == 0){
-              shown_tabs <- display_tabs %>% dplyr::filter(level == 1)
-            }
-          }
+          if (i == 1 & j == 1) r[[paste0(prefix, "_selected_tab")]] <- tab$id
         }
-      }
-      
-      # Currently selected tab
-      
-      # We have just deleted a tab
-      if (grepl("show_tab", isolate(r[[paste0(prefix, "_selected_tab")]]))){
-        r[[paste0(prefix, "_selected_tab")]] <- 
-          as.integer(substr(isolate(r[[paste0(prefix, "_selected_tab")]]), nchar("show_tab_") + 1, 100))
-      }
-      
-      # First existing tab or load another study
-      else if (length(input$study_current_tab) == 0 | grepl("first_time", isolate(r[[paste0(prefix, "_load_ui_stage")]])) |
-          isolate(r[[paste0(prefix, "_selected_tab")]]) %not_in% isolate(r[[paste0(prefix, "_tabs")]] %>% dplyr::pull(id))){
-        r[[paste0(prefix, "_selected_tab")]] <- shown_tabs %>% dplyr::slice(1) %>% dplyr::pull(id)
-      }
-      
-      # We have clicked on a tab
-      else if (length(input$study_current_tab) > 0){
         
-        # Current tab has children, take the first of this level of tabs
-        if (nrow(shown_tabs_temp) > 0) r[[paste0(prefix, "_selected_tab")]] <- shown_tabs %>% dplyr::slice(1) %>% dplyr::pull(id)
+        pivot_id <- paste0(prefix, "_study_pivot_", tab_group_id, "_", tab_sub_group)
         
-        # Take the input as current tab
-        else if (!grepl("add_tab", input$study_current_tab) & input$study_current_tab != 0) r[[paste0(prefix, "_selected_tab")]] <- input$study_current_tab
-      }
-      
-      nb_levels <- max(shown_tabs$level)
-      
-      # First level
-      is_current_item <- FALSE
-      if (nb_levels == 1) is_current_item <- TRUE
-      
-      items <- list(
-        list(key = "main", text = i18n$t(page_name), href = paste0("#!/", page_name), isCurrentItem = is_current_item,
-          onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', 0)"))))
-      
-      # Other levels
-      if (nb_levels >= 2){
-        
-        # Remove last level
-        tabs_tree <- display_tabs %>% dplyr::filter(level < nb_levels)
-        
-        current_parent <- NA_integer_
-        for(current_level in nb_levels:1){
-          if (!is.na(current_parent)){
-            tabs_tree <- tabs_tree %>% dplyr::filter(level != current_level | id == current_parent)
-            current_parent <- display_tabs %>% dplyr::filter(id == current_parent) %>% dplyr::pull(parent_tab_id)
-          }
-          if (is.na(current_parent)) current_parent <- shown_tabs %>% dplyr::slice(1) %>% dplyr::pull(parent_tab_id)
-        }
-        tabs_tree <- tabs_tree %>% dplyr::arrange(level)
-        for(i in 1:nrow(tabs_tree)){
-          is_current_item <- FALSE
-          if (tabs_tree[[i, "level"]] == nb_levels) is_current_item <- TRUE
-          items <- rlist::list.append(items, list(
-            key = tabs_tree[[i, "name"]], text = tabs_tree[[i, "name"]], href = paste0("#!/", page_name), isCurrentItem = is_current_item,
-            onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', ", tabs_tree[[i, "id"]], ")"))
-          ))
-        }
-      }
-      
-      shown_tabs_final <- tagList()
-      
-      for(i in 1:nrow(shown_tabs)){
-        shown_tabs_final <- tagList(shown_tabs_final, shiny.fluent::PivotItem(id = shown_tabs[[i, "id"]], itemKey = shown_tabs[[i, "id"]], headerText = shown_tabs[[i, "name"]]))
-      }
-      
-      # Add an add button, to add a new tab
-      shown_tabs_final <- tagList(shown_tabs_final, shiny.fluent::PivotItem(id = paste0(prefix, "_add_tab_", itemKet = isolate(r[[paste0(prefix, "_selected_tab")]])), headerText = span(i18n$t("add_tab"), style = "padding-left:5px;"), itemIcon = "Add"))
-      
-      r[[paste0(prefix, "_load_ui_stage")]] <- "end_loading_tabs_menu"
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - output$study_menu"))
-      
-      tagList(
-        shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
-        shiny.fluent::Pivot(
-          id = paste0(prefix, "_study_pivot"),
+        pivot <- shiny.fluent::Pivot(
+          id = ns(pivot_id),
           onLinkClick = htmlwidgets::JS(paste0("item => {",
             "Shiny.setInputValue('", id, "-study_current_tab', item.props.id);",
             "Shiny.setInputValue('", id, "-study_current_tab_trigger', Math.random());",
             "}"
           )),
-          selectedKey = isolate(r[[paste0(prefix, "_selected_tab")]]),
-          shown_tabs_final
-        ),
-        # A script to use sortable with PivotItems
-        tags$script(paste0('$("#', prefix, '_study_pivot").children().first().attr("id", "', prefix, '_pivot_tabs");')),
-        sortable::sortable_js(paste0(prefix, "_pivot_tabs"), options = sortable::sortable_options(onUpdate = htmlwidgets::JS(paste0("function(evt) { Shiny.setInputValue('", id, "-study_pivot_order', evt.from.innerText);}"))))
-      )
+          tabs_ui,
+          shiny.fluent::PivotItem(id = paste0(prefix, "_add_tab_", tab_sub_group), headerText = span(i18n$t("add_tab"), style = "padding-left:5px;"), itemIcon = "Add")
+        )
+        
+        # if (i > 1) pivot <- shinyjs::hidden(pivot)
+        
+        pivots <- tagList(
+          pivots, pivot#,
+          # A script to use sortable with PivotItems
+          # tags$script(paste0('$("#', pivot_id, '").children().first().attr("id", "', prefix, '_pivot_tabs_', tab_group_id, '_', tab_sub_group, '");')),
+          # sortable::sortable_js(paste0(prefix, "_pivot_tabs_", tab_group_id, "_", tab_sub_group), options = sortable::sortable_options(onUpdate = 
+          #   htmlwidgets::JS(paste0("function(evt) { Shiny.setInputValue('", id, "-study_pivot_order', evt.from.innerText);}"))))  
+        )
+        
+        # breadcrumbs <- tagList()
+        
+        i <- 2L
+      }
       
+      output$study_menu <- renderUI(tagList(pivots, breadcrumbs))
+      
+      r[[paste0(prefix, "_hide_pivots")]] <- Sys.time()
+    
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - r$..display_tabs"))
     })
+    
+    # shinyjs::hidden doesn't work, so delay shinyjs::hide to hide pivots
+    observeEvent(r[[paste0(prefix, "_hide_pivots")]], {
+      if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer r$..hide_pivots"))
+
+      display_tabs <- r[[paste0(prefix, "_display_tabs")]]
+
+      tab_group_id <- display_tabs %>% dplyr::slice(1) %>% dplyr::pull(tab_group_id)
+
+      shinyjs::delay(100,
+        for (tab_sub_group in unique(display_tabs$tab_sub_group)){
+          if (tab_sub_group > 1) shinyjs::hide(paste0(prefix, "_study_pivot_", tab_group_id, "_", tab_sub_group))
+        }
+      )
+    })
+    
+    observeEvent(input$study_current_tab_trigger, {
+      if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$study_current_tab_trigger"))
+      
+      r[[paste0(prefix, "_selected_tab")]] <- input$study_current_tab
+      
+      current_tab <- r[[paste0(prefix, "_display_tabs")]] %>% dplyr::filter(id == input$study_current_tab)
+      children_tabs <- r[[paste0(prefix, "_display_tabs")]] %>% dplyr::filter(parent_tab_id == input$study_current_tab)
+      
+      # If current tab has children, load children
+      if (nrow(children_tabs) > 0){
+        first_child <- children_tabs %>% dplyr::arrange(display_order) %>% dplyr::slice(1)
+        r[[paste0(prefix, "_selected_tab")]] <- first_child$id
+        
+        shinyjs::hide(paste0(prefix, "_study_pivot_", current_tab$tab_group_id, "_", current_tab$tab_sub_group))
+        shinyjs::show(paste0(prefix, "_study_pivot_", first_child$tab_group_id, "_", first_child$tab_sub_group))
+      }
+    })
+    
+    # Render menu
+    # output$study_menu <- renderUI({
+    #   
+    #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - output$study_menu"))
+    #   if (perf_monitoring) monitor_perf(r = r, action = "start")
+    #   
+    #   # The output is reloaded in these conditions :
+    #   # - Change in r[[paste0(prefix, "_display_tabs")]]
+    #   # - Change in r[[paste0(prefix, "_load_ui_menu")]]
+    #   # - Change in input$study_current_tab
+    #   
+    #   req(!is.na(m$selected_study))
+    #   req(r[[paste0(prefix, "_display_tabs")]])
+    #   r[[paste0(prefix, "_load_ui_menu")]]
+    #   
+    #   # Hide initial breadcrumb
+    #   shinyjs::hide("initial_breadcrumb")
+    #   
+    #   # Check if users has access only to aggregated data
+    #   if (prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) == 1) show_message_bar(output, "only_aggregated_data_authorized", "severeWarning", i18n = i18n, ns = ns)
+    #   req((prefix == "patient_lvl" & isolate(r[[paste0(prefix, "_show_only_aggregated_data")]]) != 1) | prefix == "aggregated")
+    #   
+    #   display_tabs <- isolate(r[[paste0(prefix, "_display_tabs")]])
+    #   
+    #   # If no tab to show, notify user
+    #   if (nrow(display_tabs) == 0 | "level" %not_in% names(display_tabs)){
+    #     
+    #     # selected_key <- 0L
+    #     # if (!is.na(isolate(r[[paste0(prefix, "_selected_tab")]]))) selected_key <- isolate(r[[paste0(prefix, "_selected_tab")]])
+    #     
+    #     return(tagList(
+    #       shiny.fluent::Breadcrumb(items = list(
+    #         list(key = "main", text = i18n$t(paste0(prefix, "_data")), href = paste0("#!/", page_name), isCurrentItem = TRUE,
+    #           onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', 0)")))),
+    #         maxDisplayedItems = 3),
+    #       shiny.fluent::Pivot(
+    #         onLinkClick = htmlwidgets::JS(paste0("item => {",
+    #           "Shiny.setInputValue('", id, "-study_current_tab', item.props.id);",
+    #           "Shiny.setInputValue('", id, "-study_current_tab_trigger', Math.random());",
+    #           "}"
+    #         )),
+    #         selectedKey = NULL,
+    #         shiny.fluent::PivotItem(id = paste0(prefix, "_add_tab_", 0), headerText = span(i18n$t("add_tab"), style = "padding-left:5px;"), itemIcon = "Add")
+    #       )
+    #     ))
+    #   }
+    #   
+    #   req(nrow(display_tabs) > 0 & "level" %in% names(display_tabs) & !is.na(isolate(m$selected_study)))
+    #   
+    #   # First tab shown
+    #   first_tab_shown <- isolate(r[[paste0(prefix, "_first_tab_shown")]])
+    #   
+    #   shown_tabs_temp <- tibble::tibble()
+    #   
+    #   # If we are at level one, show all levels one
+    #   if (first_tab_shown$level == 1){
+    #     shown_tabs <- display_tabs %>% dplyr::filter(level == 1)
+    #   }
+    #   
+    #   # Else, show only current & those who has same level & same parent
+    #   if (first_tab_shown$level > 1){
+    #     shown_tabs_temp <- display_tabs %>% dplyr::filter(level == first_tab_shown$level & parent_tab_id == first_tab_shown$parent_tab_id)
+    #     if (nrow(shown_tabs_temp) > 0) shown_tabs <- shown_tabs_temp
+    #     if (nrow(shown_tabs_temp) == 0) shown_tabs <- first_tab_shown
+    #   }
+    #   
+    #   if (length(input$study_current_tab) > 0){
+    #     
+    #     # If value = 0, go back to first level
+    #     if (input$study_current_tab == 0){
+    #       shown_tabs <- display_tabs %>% dplyr::filter(level == 1)
+    #       r[[paste0(prefix, "_selected_tab")]] <- first_tab_shown$id
+    #     } 
+    #     else {
+    #       
+    #       if (grepl("show_tab", isolate(r[[paste0(prefix, "_selected_tab")]]))){
+    #         study_current_tab <- as.integer(substr(isolate(r[[paste0(prefix, "_selected_tab")]]), nchar("show_tab_") + 1, 100))
+    #         shown_tabs_temp <- display_tabs %>% dplyr::filter(parent_tab_id == study_current_tab)
+    #       }
+    #       else if (grepl("add_tab", input$study_current_tab)){
+    #         shown_tabs_temp <- tibble::tibble()
+    #         study_current_tab <- isolate(r[[paste0(prefix, "_selected_tab")]])
+    #       }
+    #       else {
+    #         study_current_tab <- input$study_current_tab
+    #         shown_tabs_temp <- display_tabs %>% dplyr::filter(parent_tab_id == study_current_tab)
+    #       }
+    #       
+    #       # If current tab has children
+    #       if (nrow(shown_tabs_temp) > 0) shown_tabs <- shown_tabs_temp
+    #       
+    #       # If current tab has no children
+    #       if (nrow(shown_tabs_temp) == 0){
+    #         current_tab <- display_tabs %>% dplyr::filter(id == study_current_tab)
+    #         if (nrow(current_tab) > 0) shown_tabs <- display_tabs %>% dplyr::filter(parent_tab_id == current_tab$parent_tab_id & level == current_tab$level)
+    #         else shown_tabs <- tibble::tibble()
+    #         
+    #         # If not any "brother", we are at level one
+    #         if (nrow(shown_tabs) == 0){
+    #           shown_tabs <- display_tabs %>% dplyr::filter(level == 1)
+    #         }
+    #       }
+    #     }
+    #   }
+    #   
+    #   # Currently selected tab
+    #   
+    #   # We have just deleted a tab
+    #   if (grepl("show_tab", isolate(r[[paste0(prefix, "_selected_tab")]]))){
+    #     r[[paste0(prefix, "_selected_tab")]] <- 
+    #       as.integer(substr(isolate(r[[paste0(prefix, "_selected_tab")]]), nchar("show_tab_") + 1, 100))
+    #   }
+    #   
+    #   # First existing tab or load another study
+    #   else if (length(input$study_current_tab) == 0 | grepl("first_time", isolate(r[[paste0(prefix, "_load_ui_stage")]])) |
+    #       isolate(r[[paste0(prefix, "_selected_tab")]]) %not_in% isolate(r[[paste0(prefix, "_tabs")]] %>% dplyr::pull(id))){
+    #     r[[paste0(prefix, "_selected_tab")]] <- shown_tabs %>% dplyr::slice(1) %>% dplyr::pull(id)
+    #   }
+    #   
+    #   # We have clicked on a tab
+    #   else if (length(input$study_current_tab) > 0){
+    #     
+    #     # Current tab has children, take the first of this level of tabs
+    #     if (nrow(shown_tabs_temp) > 0) r[[paste0(prefix, "_selected_tab")]] <- shown_tabs %>% dplyr::slice(1) %>% dplyr::pull(id)
+    #     
+    #     # Take the input as current tab
+    #     else if (!grepl("add_tab", input$study_current_tab) & input$study_current_tab != 0) r[[paste0(prefix, "_selected_tab")]] <- input$study_current_tab
+    #   }
+    #   
+    #   nb_levels <- max(shown_tabs$level)
+    #   
+    #   # First level
+    #   is_current_item <- FALSE
+    #   if (nb_levels == 1) is_current_item <- TRUE
+    #   
+    #   items <- list(
+    #     list(key = "main", text = i18n$t(page_name), href = paste0("#!/", page_name), isCurrentItem = is_current_item,
+    #       onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', 0)"))))
+    #   
+    #   # Other levels
+    #   if (nb_levels >= 2){
+    #     
+    #     # Remove last level
+    #     tabs_tree <- display_tabs %>% dplyr::filter(level < nb_levels)
+    #     
+    #     current_parent <- NA_integer_
+    #     for(current_level in nb_levels:1){
+    #       if (!is.na(current_parent)){
+    #         tabs_tree <- tabs_tree %>% dplyr::filter(level != current_level | id == current_parent)
+    #         current_parent <- display_tabs %>% dplyr::filter(id == current_parent) %>% dplyr::pull(parent_tab_id)
+    #       }
+    #       if (is.na(current_parent)) current_parent <- shown_tabs %>% dplyr::slice(1) %>% dplyr::pull(parent_tab_id)
+    #     }
+    #     tabs_tree <- tabs_tree %>% dplyr::arrange(level)
+    #     for(i in 1:nrow(tabs_tree)){
+    #       is_current_item <- FALSE
+    #       if (tabs_tree[[i, "level"]] == nb_levels) is_current_item <- TRUE
+    #       items <- rlist::list.append(items, list(
+    #         key = tabs_tree[[i, "name"]], text = tabs_tree[[i, "name"]], href = paste0("#!/", page_name), isCurrentItem = is_current_item,
+    #         onClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-study_current_tab', ", tabs_tree[[i, "id"]], ")"))
+    #       ))
+    #     }
+    #   }
+    #   
+    #   shown_tabs_final <- tagList()
+    #   
+    #   for(i in 1:nrow(shown_tabs)){
+    #     shown_tabs_final <- tagList(shown_tabs_final, shiny.fluent::PivotItem(id = shown_tabs[[i, "id"]], itemKey = shown_tabs[[i, "id"]], headerText = shown_tabs[[i, "name"]]))
+    #   }
+    #   
+    #   # Add an add button, to add a new tab
+    #   shown_tabs_final <- tagList(shown_tabs_final, shiny.fluent::PivotItem(id = paste0(prefix, "_add_tab_", itemKet = isolate(r[[paste0(prefix, "_selected_tab")]])), headerText = span(i18n$t("add_tab"), style = "padding-left:5px;"), itemIcon = "Add"))
+    #   
+    #   r[[paste0(prefix, "_load_ui_stage")]] <- "end_loading_tabs_menu"
+    #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - output$study_menu"))
+    #   
+    #   tagList(
+    #     shiny.fluent::Breadcrumb(items = items, maxDisplayedItems = 3),
+    #     shiny.fluent::Pivot(
+    #       id = paste0(prefix, "_study_pivot"),
+    #       onLinkClick = htmlwidgets::JS(paste0("item => {",
+    #         "Shiny.setInputValue('", id, "-study_current_tab', item.props.id);",
+    #         "Shiny.setInputValue('", id, "-study_current_tab_trigger', Math.random());",
+    #         "}"
+    #       )),
+    #       selectedKey = isolate(r[[paste0(prefix, "_selected_tab")]]),
+    #       shown_tabs_final
+    #     ),
+    #     # A script to use sortable with PivotItems
+    #     tags$script(paste0('$("#', prefix, '_study_pivot").children().first().attr("id", "', prefix, '_pivot_tabs");')),
+    #     sortable::sortable_js(paste0(prefix, "_pivot_tabs"), options = sortable::sortable_options(onUpdate = htmlwidgets::JS(paste0("function(evt) { Shiny.setInputValue('", id, "-study_pivot_order', evt.from.innerText);}"))))
+    #   )
+    #   
+    # })
     
     # If r$studies changes, hide study_menu
     observeEvent(r$studies, {
@@ -1355,40 +1458,40 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
     ## Sortable / change pivotitems order ----
     # --- --- --- --- --- --- --- --- --- -- -
     
-    observeEvent(input$study_pivot_order, {
-      
-      if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$study_pivot_order"))
-      if (perf_monitoring) monitor_perf(r = r, action = "start")
-      
-      new_pivot_order <- tibble::tibble(name = stringr::str_split(input$study_pivot_order, "\n") %>% unlist()) %>%
-        dplyr::mutate(display_order = 1:dplyr::n())
-      
-      table <- paste0(prefix, "_tabs")
-      tab_group_id <- r[[table]] %>% dplyr::filter(id == r[[paste0(prefix, '_selected_tab')]]) %>% dplyr::pull(tab_group_id)
-      
-      if (is.na(tab_group_id)) all_tabs <- r[[table]] %>% dplyr::filter(is.na(tab_group_id))
-      else all_tabs <- r[[table]] %>% dplyr::filter(tab_group_id == !!tab_group_id)
-      
-      all_tabs <- all_tabs %>%
-        dplyr::select(-display_order) %>%
-        dplyr::inner_join(new_pivot_order, by = "name") %>%
-        dplyr::relocate(display_order, .after = "parent_tab_id")
-      
-      sql <- glue::glue_sql("DELETE FROM {`table`} WHERE id IN ({all_tabs %>% dplyr::pull(id)*})", .con = r$db)
-      query <- DBI::dbSendStatement(r$db, sql)
-      DBI::dbClearResult(query)
-      
-      DBI::dbAppendTable(r$db, table, all_tabs)
-      
-      r[[table]] <- r[[table]] %>% 
-        dplyr::anti_join(all_tabs %>% dplyr::select(id), by = "id") %>%
-        dplyr::bind_rows(all_tabs) %>%
-        dplyr::arrange(id)
-      
-      r[[paste0(prefix, "_load_display_tabs")]] <- Sys.time()
-      
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer input$study_pivot_oder"))
-    })
+    # observeEvent(input$study_pivot_order, {
+    #   
+    #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$study_pivot_order"))
+    #   if (perf_monitoring) monitor_perf(r = r, action = "start")
+    #   
+    #   new_pivot_order <- tibble::tibble(name = stringr::str_split(input$study_pivot_order, "\n") %>% unlist()) %>%
+    #     dplyr::mutate(display_order = 1:dplyr::n())
+    #   
+    #   table <- paste0(prefix, "_tabs")
+    #   tab_group_id <- r[[table]] %>% dplyr::filter(id == r[[paste0(prefix, '_selected_tab')]]) %>% dplyr::pull(tab_group_id)
+    #   
+    #   if (is.na(tab_group_id)) all_tabs <- r[[table]] %>% dplyr::filter(is.na(tab_group_id))
+    #   else all_tabs <- r[[table]] %>% dplyr::filter(tab_group_id == !!tab_group_id)
+    #   
+    #   all_tabs <- all_tabs %>%
+    #     dplyr::select(-display_order) %>%
+    #     dplyr::inner_join(new_pivot_order, by = "name") %>%
+    #     dplyr::relocate(display_order, .after = "parent_tab_id")
+    #   
+    #   sql <- glue::glue_sql("DELETE FROM {`table`} WHERE id IN ({all_tabs %>% dplyr::pull(id)*})", .con = r$db)
+    #   query <- DBI::dbSendStatement(r$db, sql)
+    #   DBI::dbClearResult(query)
+    #   
+    #   DBI::dbAppendTable(r$db, table, all_tabs)
+    #   
+    #   r[[table]] <- r[[table]] %>% 
+    #     dplyr::anti_join(all_tabs %>% dplyr::select(id), by = "id") %>%
+    #     dplyr::bind_rows(all_tabs) %>%
+    #     dplyr::arrange(id)
+    #   
+    #   r[[paste0(prefix, "_load_display_tabs")]] <- Sys.time()
+    #   
+    #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer input$study_pivot_oder"))
+    # })
     
     # --- --- --- --- --- --- --- --- --- --- --- -
     ## Show / hide div when pivot item selected ----
@@ -1404,8 +1507,12 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       # Hide all cards
       sapply(r[[paste0(prefix, "_cards")]], shinyjs::hide)
       
-      # Hide Add widget card & Add tab card
-      sapply(c(paste0(prefix, "_add_tab"), paste0(prefix, "_edit_tab"), paste0(prefix, "_add_widget"), paste0(prefix, "_widget_settings")), shinyjs::hide)
+      # Hide Add widget card & Edit tab card
+      sapply(c(paste0(prefix, "_edit_tab"), paste0(prefix, "_add_widget"), paste0(prefix, "_widget_settings")), shinyjs::hide)
+      
+      # Show Add tab card if button clicked
+      if (grepl("add_tab", r[[paste0(prefix, "_selected_tab")]])) shinyjs::show(paste0(prefix, "_add_tab"))
+      else shinyjs::hide(paste0(prefix, "_add_tab"))
       
       # Show toggles for this tab
       shinyjs::show(paste0(prefix, "_toggles_", r[[paste0(prefix, "_selected_tab")]]))
