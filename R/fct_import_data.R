@@ -868,6 +868,9 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
 import_vocabulary_table <- function(output, ns = character(), i18n = character(), r = shiny::reactiveValues(), m = shiny::reactiveValues(),
   table_name = character(), data = tibble::tibble(), vocabulary_id = character(), messages_bars = FALSE){
  
+  # Create var to count rows if doesn't exist
+  if (length(r$import_vocabulary_count_rows) == 0) r$import_vocabulary_count_rows <- tibble::tibble(table_name = character(), n_rows = integer())
+  
   if (table_name %not_in% c("concept", "domain", "concept_class", "concept_relationship", "relationship", "concept_synonym", "concept_ancestor", "drug_strength")){
     if (messages_bars) show_message_bar(output, "invalid_vocabulary_table", "severeWarning", i18n = i18n, ns = ns)
     return(i18n$t("invalid_vocabulary_table"))

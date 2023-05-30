@@ -80,9 +80,9 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
     # Get CSV file for tabs & cards ----
     # --- --- --- --- --- --- --- --- --
     
-    r$tabs_and_cards <- tibble::tibble()
-    
     if (show_home_page & id == "home"){
+      
+      r$tabs_and_cards <- tibble::tibble()
       
       filename <- paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/", language, "/tabs_and_cards.csv")
       filename_local <- paste0(r$app_folder, "/home/", language, "/tabs_and_cards.csv")
@@ -160,9 +160,9 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
         }
       })
       
-      # --- --- ---
+      # --- --- --
       # Cards ----
-      # --- --- ---
+      # --- --- --
       
       ui_result <- tagList()
       first_card <- list()

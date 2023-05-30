@@ -246,13 +246,13 @@ db_create_tables <- function(db, type = character(), dbms = character()){
     db_create_table(db, "patient_lvl_widgets_concepts", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), widget_id = integer(), concept_id = integer(),
         concept_name = character(), concept_display_name = character(), domain_id = character(), 
-        concept_colour = character(), mapped_to_concept_id = integer(), merge_mapped_concepts = logical(),
+        mapped_to_concept_id = integer(), merge_mapped_concepts = logical(),
         creator_id = integer(), datetime = character(), deleted = logical()))
     
     db_create_table(db, "aggregated_widgets_concepts", primary_key_col = "id", dbms = dbms,
       tibble::tibble(id = integer(), widget_id = integer(), concept_id = integer(),
         concept_name = character(), concept_display_name = character(), domain_id = character(), 
-        concept_colour = character(), mapped_to_concept_id = integer(), merge_mapped_concepts = logical(),
+        mapped_to_concept_id = integer(), merge_mapped_concepts = logical(),
         creator_id = integer(), datetime = character(), deleted = logical()))
   }
 }

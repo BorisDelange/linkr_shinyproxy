@@ -44,6 +44,11 @@ golem_add_external_resources <- function(css){
     # Link to CSS file
     htmltools::tags$link(href = css, rel = "stylesheet", type = "text/css"),
     
+    # Add highlight.js
+    # tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/styles/default.min.css"),
+    # tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/highlight.min.js"),
+    # tags$script(HTML("hljs.highlightAll();")),
+    
     # Add fontawesome icons
     htmltools::tags$link(
       rel = "stylesheet",

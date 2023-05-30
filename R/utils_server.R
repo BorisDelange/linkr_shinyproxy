@@ -222,13 +222,13 @@ get_col_names <- function(table_name = character(), i18n = character()){
   else if (table_name == "plugins_vocabulary_concepts_with_counts"){
     result <- c(i18n$t("concept_id"), i18n$t("concept_name"), i18n$t("concept_display_name"),
       i18n$t("domain_id"), i18n$t("concept_class_id"), i18n$t("standard_concept"), i18n$t("concept_code"),
-      i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("colour"), i18n$t("action"))
+      i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("action"))
   }
   
   else if (table_name == "plugins_vocabulary_mapped_concepts_with_counts"){
     result <- c(i18n$t("id"), i18n$t("concept_id"), i18n$t("relationship_id"), i18n$t("mapped_concept_id"),
       i18n$t("mapped_concept_name"), i18n$t("mapped_concept_display_name"), i18n$t("domain_id"),
-      i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("colour"), i18n$t("action"))
+      i18n$t("num_patients"), i18n$t("num_rows"), i18n$t("action"))
   }
   
   else if (table_name == "mapping_vocabulary_concepts_with_counts"){
@@ -280,22 +280,6 @@ get_col_names <- function(table_name = character(), i18n = character()){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"),
       i18n$t("creator"), i18n$t("datetime"), 
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
-  }
-  
-  else if (table_name == "patient_lvl_widgets"){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("tab_group"), 
-      i18n$t("group"), i18n$t("tab"), i18n$t("plugin"), 
-      i18n$t("thesaurus"), i18n$t("thesaurus_item"), i18n$t("abbreviation"),
-      i18n$t("unit"), i18n$t("colour"), i18n$t("display_order"),
-      i18n$t("creator"), i18n$t("datetime"),
-      i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
-  }
-  
-  else if (table_name == "aggregated_widgets"){
-    result <- c(i18n$t("id"), i18n$t("name"), i18n$t("tab_group"),
-      i18n$t("group"), i18n$t("tab"), 
-      i18n$t("plugin"), i18n$t("display_order"), i18n$t("creator"),
-      i18n$t("datetime"), i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }
   
   else if (table_name == "log"){

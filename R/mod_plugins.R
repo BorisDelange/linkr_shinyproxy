@@ -33,10 +33,9 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
             list(key = 6, text = i18n$t("concept_code")),
             list(key = 7, text = i18n$t("num_patients")),
             list(key = 8, text = i18n$t("num_rows")),
-            list(key = 9, text = i18n$t("colour")),
-            list(key = 10, text = i18n$t("action"))
+            list(key = 9, text = i18n$t("action"))
           ),
-          value = c(0, 1, 2, 7, 8, 9, 10)
+          value = c(0, 1, 2, 7, 8, 9)
         ),
         make_dropdown(i18n = i18n, ns = ns, label = "columns_mapped_concepts", id = "vocabulary_mapped_concepts_table_cols", width = "300px", multiSelect = TRUE,
           options = list(
@@ -48,10 +47,9 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
             list(key = 6, text = i18n$t("domain_id")),
             list(key = 7, text = i18n$t("num_patients")),
             list(key = 8, text = i18n$t("num_rows")),
-            list(key = 9, text = i18n$t("colour")),
             list(key = 10, text = i18n$t("action"))
           ),
-          value = c(2, 3, 4, 5, 7, 8, 9, 10)
+          value = c(2, 3, 4, 5, 7, 8, 9)
         )
       ),
       shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
@@ -1774,7 +1772,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           dplyr::filter(vocabulary_id_1 == input$vocabulary) %>%
           dplyr::select(concept_id = concept_id_1, concept_name = concept_name_1, concept_display_name = concept_display_name_1,
             relationship_id, domain_id, concept_class_id, standard_concept, concept_code,
-            count_persons_rows, count_concepts_rows, colours_input, add_concept_input)
+            count_persons_rows, count_concepts_rows, add_concept_input)
         
         if (input$show_mapped_concepts) plugin_vocabulary_concepts <- plugin_vocabulary_concepts %>%
           dplyr::group_by(concept_id) %>%
@@ -1797,15 +1795,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         plugin_vocabulary_concepts <- plugin_vocabulary_concepts %>%
           dplyr::select(-relationship_id) %>%
-          dplyr::mutate_at(c("colours_input", "add_concept_input"), stringr::str_replace_all, "%ns%", id) %>%
-          dplyr::mutate_at("colours_input", stringr::str_replace_all, "%input_prefix%", "add_colour") %>%
+          dplyr::mutate_at(c("add_concept_input"), stringr::str_replace_all, "%ns%", id) %>%
           dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix%", "add_concept") %>%
           dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix_2%", "") %>%
           dplyr::mutate_at("concept_id", as.character) %>%
-          dplyr::mutate(
-           colours_input = stringr::str_replace_all(colours_input, "%concept_id_1%", concept_id),
-           add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", concept_id)
-          )
+          dplyr::mutate(add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", concept_id))
         
         r$plugin_vocabulary_concepts <- plugin_vocabulary_concepts
         
@@ -1814,11 +1808,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           searchable_cols <- c("concept_id", "concept_name", "concept_display_name")
           column_widths <- c("concept_id" = "80px", "action" = "80px")
           sortable_cols <- c("concept_id", "concept_name", "concept_display_name", "count_persons_rows", "count_concepts_rows")
-          centered_cols <- c("concept_id", "count_persons_rows", "count_concepts_rows", "colours_input", "add_concept_input")
+          centered_cols <- c("concept_id", "count_persons_rows", "count_concepts_rows", "add_concept_input")
           col_names <- get_col_names(table_name = "plugins_vocabulary_concepts_with_counts", i18n = i18n)
           hidden_cols <- c("domain_id", "concept_class_id", "standard_concept", "concept_code")
           column_widths <- c("concept_id" = "120px", "count_persons_rows" = "80px", "count_concepts_rows" = "80px", 
-            "add_concept_input" = "80px", "colours_input" = "200px")
+            "add_concept_input" = "80px")
           
           # Render datatable
           render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = plugin_vocabulary_concepts,
@@ -1844,8 +1838,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         req(length(r$plugin_vocabulary_concepts_proxy) > 0)
         
         r$plugin_vocabulary_concepts_proxy %>%
-          DT::showCols(0:10) %>%
-          DT::hideCols(setdiff(0:10, input$vocabulary_concepts_table_cols))
+          DT::showCols(0:9) %>%
+          DT::hideCols(setdiff(0:9, input$vocabulary_concepts_table_cols))
       })
       
       observeEvent(input$vocabulary_mapped_concepts_table_cols, {
@@ -1854,8 +1848,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         req(length(r$plugin_vocabulary_mapped_concepts_proxy) > 0)
         
         r$plugin_vocabulary_mapped_concepts_proxy %>%
-          DT::showCols(1:10) %>%
-          DT::hideCols(setdiff(1:10, input$vocabulary_mapped_concepts_table_cols))
+          DT::showCols(1:9) %>%
+          DT::hideCols(setdiff(1:9, input$vocabulary_mapped_concepts_table_cols))
       })
       
       # Hide datatables
@@ -1904,7 +1898,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             count_persons_rows, count_concepts_rows) %>%
           dplyr::left_join(
             d$dataset_all_concepts %>%
-              dplyr::select(concept_id_2 = concept_id_1, concept_display_name_2 = concept_display_name_1, domain_id, colours_input, add_concept_input),
+              dplyr::select(concept_id_2 = concept_id_1, concept_display_name_2 = concept_display_name_1, domain_id, add_concept_input),
             by = "concept_id_2"
           ) %>% 
           dplyr::relocate(concept_display_name_2, .after = "concept_name_2") %>%
@@ -1914,29 +1908,25 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (nrow(r$plugin_vocabulary_mapped_concepts) > 0) r$plugin_vocabulary_mapped_concepts <-
           r$plugin_vocabulary_mapped_concepts %>%
           dplyr::group_by_all() %>% dplyr::slice(1) %>% dplyr::ungroup() %>%
-          dplyr::mutate_at(c("colours_input", "add_concept_input"), stringr::str_replace_all, "%ns%", id) %>%
-          dplyr::mutate_at("colours_input", stringr::str_replace_all, "%input_prefix%", "add_colour") %>%
+          dplyr::mutate_at(c("add_concept_input"), stringr::str_replace_all, "%ns%", id) %>%
           dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix%", "add_mapped_concept") %>%
           dplyr::mutate_at("add_concept_input", stringr::str_replace_all, "%input_prefix_2%", "") %>%
           dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.character) %>%
           # Add a unique id (rows are not unique with only concept_id_2, cause there can be multiple concept_relationship)
           dplyr::mutate(id = 1:dplyr::n()) %>%
-          dplyr::mutate(
-            colours_input = stringr::str_replace_all(colours_input, "%concept_id_1%", as.character(id)),
-            add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", as.character(id))
-          )
+          dplyr::mutate(add_concept_input = stringr::str_replace_all(add_concept_input, "%concept_id_1%", as.character(id)))
         
         if (length(r$plugin_vocabulary_mapped_concepts_proxy) == 0){
           editable_cols <- c("concept_display_name_2")
           searchable_cols <- c("relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_2")
           column_widths <- c("concept_id_1" = "120px", "concept_id_2" = "120px", "count_persons_rows" = "80px", "count_concepts_rows" = "80px", 
-            "add_concept_input" = "80px", "colours_input" = "200px")
+            "add_concept_input" = "80px")
           sortable_cols <- c("relationship_id", "concept_id_2", "concept_name_2", "concept_display_name_2", "count_persons_rows", "count_concepts_rows")
-          centered_cols <- c("concept_id_1", "concept_id_2", "count_persons_rows", "count_concepts_rows", "colours_input", "add_concept_input")
+          centered_cols <- c("concept_id_1", "concept_id_2", "count_persons_rows", "count_concepts_rows", "add_concept_input")
           col_names <- get_col_names(table_name = "plugins_vocabulary_mapped_concepts_with_counts", i18n = i18n)
           hidden_cols <- c("id", "concept_id_1", "domain_id")
           column_widths <- c("concept_id" = "100px", "count_persons_rows" = "80px", "count_concepts_rows" = "80px", 
-            "add_concept_input" = "80px", "colours_input" = "200px")
+            "add_concept_input" = "80px")
           
           # Render datatable
           render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$plugin_vocabulary_mapped_concepts,
@@ -1963,7 +1953,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         # Initiate r variable if doesn't exist
         if (length(r$plugin_vocabulary_selected_concepts) == 0) r$plugin_vocabulary_selected_concepts <- tibble::tibble( 
             concept_id = integer(), concept_name = character(), concept_display_name = character(), domain_id = character(),
-            concept_colour = character(), mapped_to_concept_id = integer(), merge_mapped_concepts = logical())
+            mapped_to_concept_id = integer(), merge_mapped_concepts = logical())
 
         if (grepl("mapped", input$concept_selected)) type <- "mapped_concept"
         else type <- "concept"
@@ -1980,8 +1970,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           if (type == "concept") new_data <- r$plugin_vocabulary_concepts %>%
             dplyr::mutate_at("concept_id", as.integer) %>%
             dplyr::filter(concept_id == link_id) %>%
-            dplyr::transmute(concept_id, concept_name, concept_display_name, domain_id,
-              concept_colour = input[[paste0("add_colour_", link_id)]], mapped_to_concept_id = NA_integer_, merge_mapped_concepts = FALSE)
+            dplyr::transmute(concept_id, concept_name, concept_display_name, domain_id, mapped_to_concept_id = NA_integer_, merge_mapped_concepts = FALSE)
           
           if (type == "mapped_concept"){
             
@@ -1992,12 +1981,12 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             new_data <- r$plugin_vocabulary_concepts %>%
               dplyr::mutate_at("concept_id", as.integer) %>%
               dplyr::filter(concept_id == selected_concept$concept_id_1) %>%
-              dplyr::transmute(concept_id, concept_name, concept_display_name, domain_id, concept_colour = input[[paste0("add_colour_", concept_id)]], 
+              dplyr::transmute(concept_id, concept_name, concept_display_name, domain_id,
                 mapped_to_concept_id = NA_integer_, merge_mapped_concepts = input$merge_mapped_concepts) %>%
               dplyr::bind_rows(
                 selected_concept %>%
                 dplyr::transmute(concept_id = concept_id_2, concept_name = concept_name_2, concept_display_name = concept_display_name_2, domain_id,
-                  concept_colour = input[[paste0("add_colour_", link_id)]], mapped_to_concept_id = concept_id_1, merge_mapped_concepts = input$merge_mapped_concepts)
+                  mapped_to_concept_id = concept_id_1, merge_mapped_concepts = input$merge_mapped_concepts)
               ) %>%
               dplyr::bind_rows(
                 r$plugin_vocabulary_selected_concepts %>% dplyr::filter(mapped_to_concept_id == selected_concept$concept_id_1) %>%
