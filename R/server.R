@@ -136,7 +136,7 @@ app_server <- function(router, language = "en", app_folder = character(),
     r$activated_toggles <- ""
     
     # Connection to database
-    # If connection informations have been given in cdwtools() function, use these informations
+    # If connection informations have been given in linkr() function, use these informations
     if (debug) print(paste0(Sys.time(), " - server - app_db"))
     r$local_db <- DBI::dbConnect(RSQLite::SQLite(), paste0(app_db_folder, "/linkr_main"))
     m$local_db <- DBI::dbConnect(RSQLite::SQLite(), paste0(app_db_folder, "/linkr_public"))
