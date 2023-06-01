@@ -152,7 +152,7 @@ data_sources_management,Gestion des sources de données
 concepts_mapping,Alignement de concepts
 mapping,Alignement de concepts
 vocabularies_management,Gestion des terminologies
-show_only_used_concepts,N'afficher que les concepts utilisés dans ce set de données
+show_only_used_concepts,N'afficher que les concepts utilisés
 create_dataset,Créer un set de données
 datasets_management,Gestion des sets de données
 messages,Messages
@@ -800,8 +800,8 @@ texts,Textes
 proportion,Proportion
 no_data_to_show,Pas de donneés à afficher
 too_many_x_axis_values,Trop de données dans l'axe des x
-maps_to,Correspond à
-mapped_from,Provient de
+maps_to,Correspond à (non-std vers std)
+mapped_from,Correspond à (std vers non-std)
 is_a,Est inclus dans
 subsumes,Inclut
 error_calculating_num_rows_concepts_dataset,Erreur lors du calcul du nombre de lignes par concept dans le set de données

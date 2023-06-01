@@ -152,7 +152,7 @@ data_sources_management,Data sources management
 concepts_mapping,Concepts mapping
 mapping,Mapping
 vocabularies_management,Vocabularies management
-show_only_used_concepts,Show only concepts used in this dataset
+show_only_used_concepts,Show only used concepts
 create_dataset,Create a dataset
 datasets_management,Datasets management
 messages,Messages
@@ -800,8 +800,8 @@ texts,Texts
 proportion,Proportion
 no_data_to_show,No data to show
 too_many_x_axis_values,Too many values in x axis
-maps_to,Maps to
-mapped_from,Mapped from
+maps_to,Maps to (non-std to std)
+mapped_from,Mapped from (std to non-std)
 is_a,Is a
 subsumes,Subsumes
 error_calculating_num_rows_concepts_dataset,Error calculating the number of rows per concept in the dataset

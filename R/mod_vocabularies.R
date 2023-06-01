@@ -145,7 +145,12 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
                     DT::DTOutput(ns("vocabulary_mapping_1_dt"))
                   ),
                   div(
-                    make_combobox(i18n = i18n, ns = ns, label = "vocabulary_2", id = "vocabulary_mapping_2", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+                    shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                      make_combobox(i18n = i18n, ns = ns, label = "vocabulary_2", id = "vocabulary_mapping_2", width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+                      div(style = "width:10px;"),
+                      div(shiny.fluent::Toggle.shinyInput(ns("vocabulary_show_only_used_concepts"), value = TRUE), style = "margin-top:45px;"),
+                      div(i18n$t("show_only_used_concepts"), style = "font-weight:bold; margin-top:45px; margin-right:30px;")
+                    ),
                     DT::DTOutput(ns("vocabulary_mapping_2_dt"))
                   ),
                   style = "width:100%; display:grid; grid-template-columns:1fr 1fr; grid-gap:20px;"
@@ -158,6 +163,7 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
                       make_dropdown(i18n = i18n, ns = ns, label = "concept_1_is_to_concept_2", id = "relationship_id", width = "300px", multiSelect = FALSE,
                         options = list(
                           list(key = "Maps to", text = i18n$t("maps_to")),
+                          list(key = "Mapped from", text = i18n$t("mapped_from")),
                           list(key = "Is a", text = i18n$t("is_a")),
                           list(key = "Subsumes", text = i18n$t("subsumes"))
                         ),
@@ -388,6 +394,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         for(table in tables){
           if (nrow(d[[table]]) > 0){
             if (table %in% names(main_cols)){
+              
+              # Group by concept_id cols & source_concept_id cols (except for specimen & era tables)
               if (paste0(main_cols[[table]], "_concept_id") %in% colnames(d[[table]])){
                 count_rows <- 
                   count_rows %>% 
@@ -397,6 +405,16 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                       dplyr::summarize(count_persons_rows = dplyr::n_distinct(person_id), count_concepts_rows = dplyr::n(), count_secondary_concepts_rows = 0L) %>% 
                       dplyr::ungroup() %>% 
                       dplyr::rename(concept_id = paste0(main_cols[[table]], "_concept_id"))
+                  )
+                
+                if (table %not_in% c("specimen", "drug_era", "dose_era", "condition_era")) count_rows <- 
+                  count_rows %>% 
+                  dplyr::bind_rows(
+                    d[[table]] %>% 
+                      dplyr::group_by_at(paste0(main_cols[[table]], "_source_concept_id")) %>%
+                      dplyr::summarize(count_persons_rows = dplyr::n_distinct(person_id), count_concepts_rows = dplyr::n(), count_secondary_concepts_rows = 0L) %>% 
+                      dplyr::ungroup() %>% 
+                      dplyr::rename(concept_id = paste0(main_cols[[table]], "_source_concept_id"))
                   )
               }
               else report_bug(r = r, output = output, error_message = "error_calculating_num_rows_concepts_dataset", 
@@ -713,6 +731,11 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         
         if (omop_version %in% c("5.3", "5.0")) cols <- rlist::list.append(cols, "death" = c("death_type", "cause"))
         
+        dataset_all_concepts <- d$dataset_all_concepts %>% 
+          dplyr::group_by(concept_id_1, concept_name_1, concept_code) %>%
+          dplyr::slice(1) %>%
+          dplyr::ungroup()
+        
         for (table in names(cols)){
           table_cols <- cols[[table]]
           for (col in table_cols){
@@ -722,7 +745,9 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                 
                 d[[table]] <- d[[table]] %>%
                   dplyr::left_join(
-                    d$dataset_all_concepts %>% dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_", merge_col[1]) := !!merge_col[2]), by = paste0(col, "_concept_id")
+                    dataset_all_concepts %>%
+                      dplyr::select(!!paste0(col, "_concept_id") := concept_id_1, !!paste0(col, "_", merge_col[1]) := !!merge_col[2]),
+                    by = paste0(col, "_concept_id")
                   ) %>%
                   dplyr::relocate(!!paste0(col, "_", merge_col[1]), .after = !!paste0(col, "_concept_id"))
               }
@@ -981,6 +1006,12 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           else concept_id <- selected_concept$concept_id_1
           
           values <- d[[row$table]] %>% dplyr::filter(get(row$concept_id) == !!concept_id)
+          
+          # Add values for source_concept_id cols (except for Specimen domain)
+          if (row$domain_id != "Specimen") values <- values %>% dplyr::bind_rows(
+            d[[row$table]] %>% dplyr::filter(get(row$concept_id %>% stringr::str_replace("concept_id", "source_concept_id")) == !!concept_id)
+          )
+          
           r$vocabulary_selected_concept_values <- values
           
           if (nrow(values) > 0){
@@ -1215,6 +1246,11 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       req(length(r$vocabulary_mapping_reload) > 0)
       r$vocabulary_mapping_reload <- paste0(Sys.time(), "_mapping_1")
     })
+    observeEvent(input$vocabulary_show_only_used_concepts, {
+      if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$vocabulary_show_only_used_concepts"))
+      req(length(r$vocabulary_mapping_reload) > 0)
+      r$vocabulary_mapping_reload <- paste0(Sys.time(), "_mapping_2")
+    })
     
     observeEvent(r$vocabulary_mapping_reload, {
       
@@ -1250,7 +1286,6 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         dplyr::left_join(
           d$dataset_all_concepts %>% 
             dplyr::filter(is.na(relationship_id)) %>%
-            # dplyr::mutate(count_concepts_rows = ifelse(count_secondary_concepts_rows > 0, count_secondary_concepts_rows, count_concepts_rows)) %>%
             dplyr::select(concept_id = concept_id_1, count_concepts_rows),
           by = "concept_id"
         )
@@ -1259,7 +1294,6 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         # In that case, we sum all count_concepts_rows from various datasets
         
         sql <- glue::glue_sql(paste0("SELECT concept_id, COUNT(DISTINCT(dataset_id)) AS count_datasets, ",
-        # "SUM(count_concepts_rows) + SUM(count_secondary_concepts_rows) AS count_concepts_rows ",
         "SUM(count_concepts_rows) AS count_concepts_rows ",
         "FROM concept_dataset ",
         "WHERE vocabulary_id = {input[[paste0('vocabulary_', mapping)]]$key}",
@@ -1273,6 +1307,10 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
             by = "concept_id"
           ) %>%
           dplyr::mutate(count_datasets = ifelse(is.na(count_datasets), 0L, count_datasets))
+        
+        # Show only used concepts ?
+        
+        if (input$vocabulary_show_only_used_concepts) r$dataset_vocabulary_concepts_mapping_2 <- r$dataset_vocabulary_concepts_mapping_2 %>% dplyr::filter(count_concepts_rows > 0)
       }
       
       # Convert concept_id to character to be sortable

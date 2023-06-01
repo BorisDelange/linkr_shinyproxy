@@ -49,7 +49,8 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
   
   public_db_tables <- list(
     list(key = "persons_options", text = "persons_options"),
-    list(key = "widgets_options", text = "widgets_options"),
+    list(key = "patient_lvl_widgets_options", text = "patient_lvl_widgets_options"),
+    list(key = "aggregated_widgets_options", text = "aggregated_widgets_options"),
     list(key = "subsets", text = "subsets"),
     list(key = "subset_persons", text = "subset_persons"),
     list(key = "concept", text = "concept"),
@@ -69,7 +70,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
     list(key = "aggregated_widgets_concepts", text = "aggregated_widgets_concepts")
   )
   
-  public_db_values <- c("persons_options", "widgets_options", "subsets", "subset_persons", "concept", "concept_dataset",
+  public_db_values <- c("persons_options", "patient_lvl_widgets_options", "aggregated_widgets_options", "subsets", "subset_persons", "concept", "concept_dataset",
     "concept_user", "vocabulary", "domain", "concept_class", "concept_relationship", "concept_relationship_user", "concept_relationship_evals",
     "relationship", "concept_synonym", "concept_ancestor", "drug_strength", "patient_lvl_widgets_concepts", "aggregated_widgets_concepts")
   

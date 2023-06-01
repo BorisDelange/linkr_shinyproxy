@@ -59,13 +59,15 @@ insert_default_data <- function(output, r = shiny::reactiveValues(), m = shiny::
     if (!r$has_internet | error_loading_database){
       
       # Add default users
-      DBI::dbAppendTable(r$db, "users", tibble::tribble(
-        ~id, ~username, ~firstname, ~lastname, ~password, ~user_access_id, ~user_status_id, ~datetime, ~deleted,
-        1, "admin", "Alan", "Turing", rlang::hash("admin"), 1, 1, as.character(Sys.time()), FALSE,
-        2, "test1", "Ada", "Lovelace", rlang::hash("test1"), 2, 1, as.character(Sys.time()), FALSE,
-        3, "test2", "Yann", "LeCun", rlang::hash("test2"), 2, 1, as.character(Sys.time()), FALSE,
-        4, "test3", "Andrew", "Ng", rlang::hash("test3"), 2, 1, as.character(Sys.time()), FALSE,
-        5, "test4", "Hadley", "Wickham", rlang::hash("test4"), 2, 1, as.character(Sys.time()), FALSE))
+      if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM users")) == 0){
+        DBI::dbAppendTable(r$db, "users", tibble::tribble(
+          ~id, ~username, ~firstname, ~lastname, ~password, ~user_access_id, ~user_status_id, ~datetime, ~deleted,
+          1, "admin", "Alan", "Turing", rlang::hash("admin"), 1, 1, as.character(Sys.time()), FALSE,
+          2, "test1", "Ada", "Lovelace", rlang::hash("test1"), 2, 1, as.character(Sys.time()), FALSE,
+          3, "test2", "Yann", "LeCun", rlang::hash("test2"), 2, 1, as.character(Sys.time()), FALSE,
+          4, "test3", "Andrew", "Ng", rlang::hash("test3"), 2, 1, as.character(Sys.time()), FALSE,
+          5, "test4", "Hadley", "Wickham", rlang::hash("test4"), 2, 1, as.character(Sys.time()), FALSE))
+      }
       
       # Add default user access
       if (nrow(DBI::dbGetQuery(r$db, "SELECT * FROM users_accesses")) == 0){
