@@ -649,8 +649,10 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # Subsets depending on the selected study
       update_r(r = r, m = m, table = "subsets")
 
-      # Reset selected_subset
+      # Reset selected_subset, selected_person & selected_visit_detail
       m$selected_subset <- NA_integer_
+      m$selected_person <- NA_integer_
+      m$selected_visit_detail <- NA_integer_
       
       # Select patients belonging to subsets of this study
       update_r(r = r, m = m, table = "subsets_persons")
@@ -693,35 +695,38 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- --- --- --- --
     
     observeEvent(m$selected_subset, {
-      if (!is.na(m$selected_subset)){
-        
-        # Reset d variables
+      req(!is.na(m$selected_subset))
+      
+      # Reset d variables
 
-        visit_detail_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
-          "observation", "note", "note_nlp", "fact_relationship", "payer_plan_period", "cost")
-        person_tables <- c(visit_detail_tables, "specimen", "death", "drug_era", "dose_era", "condition_era")
+      visit_detail_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+        "observation", "note", "note_nlp", "fact_relationship", "payer_plan_period", "cost")
+      person_tables <- c(visit_detail_tables, "specimen", "death", "drug_era", "dose_era", "condition_era")
 
-        sapply(person_tables, function(table) d$data_person[[table]] <- tibble::tibble())
-        sapply(visit_detail_tables, function(table) d$data_visit_detail[[table]] <- tibble::tibble())
+      sapply(person_tables, function(table) d$data_person[[table]] <- tibble::tibble())
+      sapply(visit_detail_tables, function(table) d$data_visit_detail[[table]] <- tibble::tibble())
+      
+      # Select patients who belong to this subset
+      update_r(r = r, m = m, table = "subset_persons")
+      
+      # If this subset contains no patient, maybe the code has not been run yet
+      if (nrow(m$subset_persons) == 0){
+        subset_code <- r$code %>% dplyr::filter(category == "subset" & link_id == m$selected_subset) %>% dplyr::pull(code) %>%
+          stringr::str_replace_all("%dataset_id%", as.character(r$selected_dataset)) %>%
+          stringr::str_replace_all("%subset_id%", as.character(m$selected_subset)) %>%
+          stringr::str_replace_all("\r", "\n")
         
-        # Select patients who belong to this subset
+        tryCatch(eval(parse(text = subset_code)),
+          error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_execute_subset_code", 
+            error_name = paste0("sidenav - execute_subset_code  - id = ", m$selected_subset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
+        )
+        
         update_r(r = r, m = m, table = "subset_persons")
-        
-        # If this subset contains no patient, maybe the code has not been run yet
-        if (nrow(m$subset_persons) == 0){
-          subset_code <- r$code %>% dplyr::filter(category == "subset" & link_id == m$selected_subset) %>% dplyr::pull(code) %>%
-            stringr::str_replace_all("%dataset_id%", as.character(r$selected_dataset)) %>%
-            stringr::str_replace_all("%subset_id%", as.character(m$selected_subset)) %>%
-            stringr::str_replace_all("\r", "\n")
-          
-          tryCatch(eval(parse(text = subset_code)),
-            error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_execute_subset_code", 
-              error_name = paste0("sidenav - execute_subset_code  - id = ", m$selected_subset), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
-          )
-          
-          update_r(r = r, m = m, table = "subset_persons")
-        }
       }
+      
+      # Reset selected_person & selected_visit_detail
+      m$selected_person <- NA_integer_
+      m$selected_visit_detail <- NA_integer_
     })
     
     # --- --- --- -

@@ -354,6 +354,9 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (length(m$selected_person) > 0) for(table in person_tables) if (nrow(d$data_subset[[table]]) > 0) d$data_person[[table]] <- 
           d$data_subset[[table]] %>% dplyr::filter(person_id == m$selected_person)
         
+        # Reset selected_visit_detail
+        m$selected_visit_detail <- NA_integer_
+        
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_data - ", id, " - observer m$selected_person"))
       })
       
@@ -1066,6 +1069,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                 dplyr::pull(code) %>%
                 stringr::str_replace_all("%tab_id%", as.character(ids$tab_id)) %>%
                 stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
+                stringr::str_replace_all("%req%", "req(m[[session_code]] == session_num)\nreq(m$selected_study == %study_id%)") %>%
+                stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
                 stringr::str_replace_all("\r", "\n")
               
               # If it is an aggregated plugin, change %study_id% with current selected study
@@ -1308,6 +1313,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         dplyr::pull(code) %>%
         stringr::str_replace_all("%tab_id%", as.character(ids$tab_id)) %>%
         stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
+        stringr::str_replace_all("%req%", "req(m[[session_code]] == session_num)\nreq(m$selected_study == %study_id%)") %>%
+        stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
         stringr::str_replace_all("\r", "\n")
       
       # If it is an aggregated plugin, change %study_id% with current selected study
@@ -2407,11 +2414,15 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         check_deleted_plugin <- DBI::dbGetQuery(r$db, paste0("SELECT * FROM plugins WHERE id = ", input$widget_creation_plugin$key)) %>% dplyr::pull(deleted)
         if (!check_deleted_plugin){
           
+          # NB : req(m[[session_code]] == session_num) & req(m$selected_study == %study_id%) must be put at the beginning of each observeEvent in plugins code
+          
           code_server_card <- r$code %>%
             dplyr::filter(link_id == input$widget_creation_plugin$key, category == "plugin_server") %>%
             dplyr::pull(code) %>%
             stringr::str_replace_all("%tab_id%", as.character(r[[paste0(prefix, "_selected_tab")]])) %>%
             stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
+            stringr::str_replace_all("%req%", "req(m[[session_code]] == session_num)\nreq(m$selected_study == %study_id%)") %>%
+            stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
             stringr::str_replace_all("\r", "\n")
           
           # If it is an aggregated plugin, change %study_id% with current selected study
@@ -2426,8 +2437,6 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         if (length(m[[session_code]]) == 0) session_num <- 1L
         if (length(m[[session_code]]) > 0) session_num <- m[[session_code]] + 1
         m[[session_code]] <- session_num
-        
-        # NB : req(m[[session_code]] == session_num) must be put at the beginning of each observeEvent in plugins code
         
         # Variables to hide
         new_env_vars <- list("r" = NA)

@@ -535,7 +535,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
         if (is.na(birth_datetime)) age <- as.numeric(format(visit_detail_start_datetime, "%Y")) - year_of_birth
 
         age_div <- tagList(age, " ", i18n$t("years"))
-        if (age <= 2) age_div <- tagList(round(age * 12, 0), " ", i18n$t("months"))
+        if (!is.na(age) & age <= 2) age_div <- tagList(round(age * 12, 0), " ", i18n$t("months"))
 
         visit_detail <- d$visit_detail %>% dplyr::filter(visit_detail_id == m$selected_visit_detail)
         visit_detail_start_datetime <- visit_detail %>% dplyr::pull(visit_detail_start_datetime) %>% format_datetime(language)

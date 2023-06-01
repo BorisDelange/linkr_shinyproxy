@@ -2131,7 +2131,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (length(m[[session_code]]) > 0) session_num <- m[[session_code]] + 1
       m[[session_code]] <- session_num
       
-      # NB : req(m[[session_code]] == session_num) must be put at the beginning of each observeEvent in plugins code
+      # NB : req(m[[session_code]] == session_num) & req(m$selected_study == %study_id%) must be put at the beginning of each observeEvent in plugins code
       
       ui_code <- ui_code %>% 
         stringr::str_replace_all("%tab_id%", "1") %>%
@@ -2144,6 +2144,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       server_code <- server_code %>% 
         stringr::str_replace_all("%tab_id%", "1") %>%
         stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
+        stringr::str_replace_all("%req%", "req(m[[session_code]] == session_num)\nreq(m$selected_study == %study_id%)") %>%
         stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
         stringr::str_replace_all("\r", "\n")
       
