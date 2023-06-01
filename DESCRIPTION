@@ -29,7 +29,7 @@ Imports:
     shiny.i18n (>= 0.2.0),
     shinymanager (>= 1.0.400),
     shiny.react (>= 0.2.3),
-    shiny.router (>= 0.2.2),
+    shiny.router (>= 0.3.1),
     shinyAce (>= 0.4.1),
     shinybusy (>= 0.2.2),
     shinyjs (>= 2.0.0),

@@ -36,7 +36,7 @@ golem_add_external_resources <- function(css){
   add_resource_path('www', app_sys('app/www'))
   
   # Marker is used to highlight some text
-  if (require(marker)) marker_div <-marker::useMarker() else marker_div <- ""
+  # if (require("marker")) marker_div <- marker::useMarker() else marker_div <- ""
  
   tags$head(
     favicon(ext = "png"),
@@ -62,7 +62,7 @@ golem_add_external_resources <- function(css){
     # Shinyjs is used to show and hide message bars
     shinyjs::useShinyjs(),
     
-    marker_div,
+    # marker_div,
     
     # Shinybusy is used to add a busy bar on top of the page, when there are loading times
     shinybusy::add_busy_bar(timeout = 1000, color = "#0D98FF", height = "3px"),

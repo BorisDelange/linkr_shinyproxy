@@ -78,7 +78,7 @@ linkr <- function(
 
   css <- "fluent_style.css"
   
-  if (debug) print(paste0(Sys.time(), " - linkr - make_router"))
+  if (debug) print(paste0(Sys.time(), " - linkr - router_ui"))
   pages <- c(
     "home", 
       "home/get_started", 
@@ -173,9 +173,9 @@ linkr <- function(
       "only_me")
   )
   
-  do.call(shiny.router::make_router, 
+  do.call(shiny.router::router_ui, 
     lapply(pages, function(page){
-      if (debug) print(paste0(Sys.time(), " - linkr - make_router - ", page))
+      if (debug) print(paste0(Sys.time(), " - linkr - router_ui - ", page))
       shiny.router::route(page, make_layout(language = language, page = page, i18n = i18n, users_accesses_toggles_options = users_accesses_toggles_options))
     })
   ) -> page
