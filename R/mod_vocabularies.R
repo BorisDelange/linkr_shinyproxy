@@ -452,10 +452,10 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
           
           # Merge count_rows, transform count_rows cols to integer, to be sortable
           dataset_all_concepts <- dataset_all_concepts %>% 
-          dplyr::left_join(count_rows, by = "concept_id") %>%
-          dplyr::mutate_at(c("count_concepts_rows", "count_persons_rows", "count_secondary_concepts_rows"), as.integer) %>%
-          # dplyr::filter(count_concepts_rows > 0 | count_secondary_concepts_rows > 0)
-          dplyr::filter(count_concepts_rows > 0)
+            dplyr::left_join(count_rows, by = "concept_id") %>%
+            dplyr::mutate_at(c("count_persons_rows", "count_concepts_rows", "count_secondary_concepts_rows"), as.integer) %>%
+            # dplyr::filter(count_concepts_rows > 0 | count_secondary_concepts_rows > 0)
+            dplyr::filter(count_concepts_rows > 0)
         }
         
         if (nrow(count_rows) == 0) dataset_all_concepts <- dataset_all_concepts %>% dplyr::slice(0)
@@ -528,15 +528,6 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                 dplyr::mutate(concept_display_name_1 = NA_character_, .after = "concept_name_1")
             )
           
-          # Add plus col
-          
-          dataset_all_concepts <- dataset_all_concepts %>%
-            dplyr::filter(count_concepts_rows > 0) %>%
-            dplyr::mutate(
-              add_concept_input = as.character(shiny::actionButton(NS("%ns%")("%input_prefix%_%concept_id_1%"), "", icon = icon("plus"),
-                onclick = paste0("Shiny.setInputValue('%ns%-%input_prefix_2%concept_selected', this.id, {priority: 'event'})")))
-            )
-          
           # Delete old rows
           sql <- glue::glue_sql("DELETE FROM concept_dataset WHERE dataset_id = {r$selected_dataset}", .con = m$db)
           query <- DBI::dbSendStatement(m$db, sql)
@@ -548,9 +539,18 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
               count_persons_rows, count_concepts_rows, count_secondary_concepts_rows))
         }
         
-        else if (nrow(dataset_all_concepts) == 0){
+        if (nrow(dataset_all_concepts) == 0){
           dataset_all_concepts <- dataset_all_concepts %>% dplyr::mutate(
             count_persons_rows = integer(), count_concepts_rows = integer(), count_secondary_concepts_rows = integer(), add_concept_input = character())
+        }
+        
+        else {
+          # Add plus col
+          dataset_all_concepts <- dataset_all_concepts %>%
+            dplyr::mutate(
+              add_concept_input = as.character(shiny::actionButton(NS("%ns%")("%input_prefix%_%concept_id_1%"), "", icon = icon("plus"),
+                onclick = paste0("Shiny.setInputValue('%ns%-%input_prefix_2%concept_selected', this.id, {priority: 'event'})")))
+            )
         }
         
         # Save data as csv
