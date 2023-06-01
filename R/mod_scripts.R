@@ -896,7 +896,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (debug) print(paste0(Sys.time(), " - mod_scripts - observer input$add_remote_git_script"))
       
       unique_id <- substr(input$add_remote_git_script, nchar("add_remote_git_script_") + 1, nchar(input$add_remote_git_script))
-      print("1")
+
       print(unique_id)
       
       script_updated <- FALSE

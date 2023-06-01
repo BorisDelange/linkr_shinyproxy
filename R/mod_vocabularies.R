@@ -348,8 +348,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         
         omop_version <- r$options %>% dplyr::filter(category == "dataset" & link_id == r$selected_dataset & name == "omop_version") %>% dplyr::pull(value)
         
-        count_rows <- tibble::tibble()
-        secondary_concepts_count_rows <- tibble::tibble()
+        count_rows <- tibble::tibble(concept_id = integer(), count_persons_rows = integer(), count_concepts_rows = integer(), count_secondary_concepts_rows = integer())
         
         tables <- c("person", "condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure",
           "measurement", "observation", "specimen", "drug_era", "dose_era", "condition_era", "note", "specimen")
@@ -388,7 +387,6 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         
         for(table in tables){
           if (nrow(d[[table]]) > 0){
-            
             if (table %in% names(main_cols)){
               if (paste0(main_cols[[table]], "_concept_id") %in% colnames(d[[table]])){
                 count_rows <- 
@@ -405,7 +403,6 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                 error_name = paste0("mod_vocabularies - observer r$merge_concepts_and_d_vars - dataset_id = ", r$selected_dataset), 
                 category = "Error", error_report = paste0("table = ", table, " / col = ", main_cols[[table]], "_concept_id"), i18n = i18n, ns = ns)
             }
-            
             if (table %in% names(secondary_cols)){
               for (col in secondary_cols[[table]]){
                 if (paste0(col, "_concept_id") %in% colnames(d[[table]])){
@@ -513,23 +510,11 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                 dplyr::mutate(concept_display_name_1 = NA_character_, .after = "concept_name_1")
             )
           
-          # Add colours & plus cols
-          
-          colorCells <- list(
-            list(id = "#EF3B2C", color = "#EF3B2C"),
-            list(id = "#CB181D", color = "#CB181D"),
-            list(id = "#7BCCC4", color = "#7BCCC4"),
-            list(id = "#2B8CBE", color = "#2B8CBE"),
-            list(id = "#5AAE61", color = "#5AAE61"),
-            list(id = "#FFD92F", color = "#FFD92F"),
-            list(id = "#000000", color = "#000000"))
+          # Add plus col
           
           dataset_all_concepts <- dataset_all_concepts %>%
             dplyr::filter(count_concepts_rows > 0) %>%
             dplyr::mutate(
-              colours_input = as.character(
-                div(shiny.fluent::SwatchColorPicker.shinyInput(NS("%ns%")("%input_prefix%_%concept_id_1%"), value = "#EF3B2C", colorCells = colorCells, columnCount = length(colorCells),
-                  cellHeight = 15, cellWidth = 15))),
               add_concept_input = as.character(shiny::actionButton(NS("%ns%")("%input_prefix%_%concept_id_1%"), "", icon = icon("plus"),
                 onclick = paste0("Shiny.setInputValue('%ns%-%input_prefix_2%concept_selected', this.id, {priority: 'event'})")))
             )
@@ -547,8 +532,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         
         else if (nrow(dataset_all_concepts) == 0){
           dataset_all_concepts <- dataset_all_concepts %>% dplyr::mutate(
-            count_persons_rows = integer(), count_concepts_rows = integer(), count_secondary_concepts_rows = integer(),
-            colours_input = character(), add_concept_input = character())
+            count_persons_rows = integer(), count_concepts_rows = integer(), count_secondary_concepts_rows = integer(), add_concept_input = character())
         }
         
         # Save data as csv
@@ -802,7 +786,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       r$dataset_vocabulary_concepts <- d$dataset_all_concepts %>%
         # dplyr::filter(count_concepts_rows > 0 | count_secondary_concepts_rows > 0)
         dplyr::filter(count_concepts_rows > 0) %>%
-        dplyr::select(-count_secondary_concepts_rows, -colours_input, -add_concept_input) %>%
+        dplyr::select(-count_secondary_concepts_rows, -add_concept_input) %>%
         dplyr::arrange(dplyr::desc(count_concepts_rows)) %>%
         dplyr::filter(vocabulary_id_1 == !!vocabulary_id)
 
@@ -1003,7 +987,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
             
             unit <- character()
             if (selected_concept$domain_id %in% c("Measurement", "Observation")) unit <- values %>% 
-                dplyr::filter(!is.na(unit_concept_code)) %>% dplyr::distinct(unit_concept_code) %>% dplyr::pull()
+              dplyr::filter(!is.na(unit_concept_code)) %>% dplyr::distinct(unit_concept_code) %>% dplyr::pull()
             r$vocabulary_selected_concept_unit <- unit
             
             values <- values %>% dplyr::slice_sample(n = 5, replace = TRUE)

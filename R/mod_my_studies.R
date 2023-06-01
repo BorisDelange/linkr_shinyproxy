@@ -460,35 +460,53 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           dplyr::inner_join(r$code %>% dplyr::filter(category == "script") %>% dplyr::select(id = link_id, code), by = "id")
         
         if (nrow(scripts) > 0){
-          for (i in 1:nrow(scripts)){
-            
-            script <- scripts[i, ]
-            
-            r$dataset_loaded_scripts <- r$dataset_loaded_scripts %>% dplyr::bind_rows(
-              tibble::tibble(id = script$id, status = "failure", datetime = as.character(Sys.time())))
-            
-            # Execute script code
-            captured_output <- capture.output(
-              tryCatch({
-                eval(parse(text = script$code %>% stringr::str_replace_all("\r", "\n")))
-                r$dataset_loaded_scripts <- r$dataset_loaded_scripts %>% dplyr::mutate(status = dplyr::case_when(
-                  id == script$id ~ "success", TRUE ~ status
-                ))
-              },
-                error = function(e){
-                  r$show_message_bar <- tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
-                  report_bug(r = r, output = output, error_message = "fail_load_scripts",
-                    error_name = paste0(id, " - run server code"), category = "Error", error_report = toString(e), i18n = i18n)})
-            )
+          
+          cache_activated <- r$options %>% dplyr::filter(category == "dataset", name == "activate_scripts_cache", link_id == r$selected_dataset) %>% dplyr::pull(value_num) == 1
+          
+          execute_scripts_files <- FALSE
+          
+          # If cache activated, load cache
+          if(cache_activated){
+            loaded_scripts_file_path <- paste0(r$app_folder, "/datasets/", r$selected_dataset, "/loaded_scripts.csv")
+            if (!file.exists(loaded_scripts_file_path) | r$force_reload_scripts_cache) execute_scripts_files <- TRUE
           }
+          
+          # Else, run scripts
+          else execute_scripts_files <- TRUE
+          
+          # Run scripts
+          
+          if (execute_scripts_files){
+            for (i in 1:nrow(scripts)){
+              
+              script <- scripts[i, ]
+              
+              r$dataset_loaded_scripts <- r$dataset_loaded_scripts %>% dplyr::bind_rows(
+                tibble::tibble(id = script$id, status = "failure", datetime = as.character(Sys.time())))
+              
+              # Execute script code
+              captured_output <- capture.output(
+                tryCatch({
+                  eval(parse(text = script$code %>% stringr::str_replace_all("\r", "\n")))
+                  r$dataset_loaded_scripts <- r$dataset_loaded_scripts %>% dplyr::mutate(status = dplyr::case_when(
+                    id == script$id ~ "success", TRUE ~ status
+                  ))
+                },
+                  error = function(e){
+                    # r$show_message_bar <- tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
+                    report_bug(r = r, output = output, error_message = "fail_load_scripts",
+                      error_name = paste0(id, " - run server code"), category = "Error", error_report = toString(e), i18n = i18n)})
+              )
+            }
+          }
+          
+          if (cache_activated) r$reload_scripts_cache <- Sys.time()
+          
+          if (nrow(r$dataset_loaded_scripts %>% dplyr::filter(status == "failure")) > 0) r$show_message_bar <- 
+            tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
+          else r$show_message_bar <- tibble::tibble(message = "run_scripts_success", type = "success", trigger = Sys.time())
         }
-        
-        if (nrow(r$dataset_loaded_scripts) > 0) r$reload_scripts_cache <- Sys.time()
       }
-      
-      # Join d$person, d$visit_occurrence & d$visit_detail with d$dataset_all_concepts
-      
-      # r$merge_concepts_and_d_vars <- Sys.time()
       
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_my_studies - observer r$load_scripts"))
     })
@@ -522,7 +540,9 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
           # Save data as CSV files
           for (table in tables){
             if (nrow(d[[table]]) > 0){
-              readr::write_csv(d[[table]], paste0(r$app_folder, "/datasets/", r$selected_dataset, "/", table, "_with_scripts.csv"))
+              # Select cols without merged cols
+              readr::write_csv(d[[table]] %>% dplyr::select(-dplyr::contains("concept_name"), -dplyr::contains("unit_concept_code")),
+                paste0(r$app_folder, "/datasets/", r$selected_dataset, "/", table, "_with_scripts.csv"))
             }
           }
           
@@ -581,13 +601,13 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       }
       
       if (nrow(r$dataset_loaded_scripts %>% dplyr::filter(status == "failure")) > 0) r$show_message_bar <- 
-          tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
+        tibble::tibble(message = "fail_load_scripts", type = "severeWarning", trigger = Sys.time())
       else r$show_message_bar <- tibble::tibble(message = "run_scripts_success", type = "success", trigger = Sys.time())
       
       r$force_reload_scripts_cache <- FALSE
       r$update_scripts_cache_card <- Sys.time()
       
-      # Join d$person, d$visit_occurrence & d$visit_detail with d$dataset_all_concepts
+      # Join d tables with d$dataset_all_concepts
       
       r$merge_concepts_and_d_vars <- Sys.time()
       

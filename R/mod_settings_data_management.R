@@ -972,16 +972,16 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
               "drug_era", "dose_era", "condition_era",
               "person", "observation_period", "visit_occurrence", "visit_detail", "location", "care_site", "provider")
             sapply(main_tables, function(table) d[[table]] <- tibble::tibble())
+            
+            r[[paste0(id, "_code_datatable_trigger")]] <- Sys.time()
           }
           
           edited_code <- r[[paste0(id, "_code")]] %>% stringr::str_replace_all("\r", "\n")
           
           output$datetime_code_execution <- renderText(format_datetime(Sys.time(), language))
           output$code_result <- renderText(
-            execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
-              i18n = i18n, r = r, d = d, m = m, edited_code = edited_code))
-          
-          r[[paste0(id, "_code_datatable_trigger")]] <- Sys.time()
+            isolate(execute_settings_code(input = input, output = output, session = session, id = id, ns = ns, 
+              i18n = i18n, r = r, d = d, m = m, edited_code = edited_code)))
           
           if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer r$..code"))
         })
