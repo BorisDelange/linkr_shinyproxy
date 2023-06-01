@@ -1640,7 +1640,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       centered_cols <- c("datetime", "action", "vocabulary_id_1", "concept_id_1", "vocabulary_id_2", "concept_id_2", "relationship_id", "creator_name", "positive_evals", "negative_evals")
       col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_mapping_evals", i18n = i18n)
       hidden_cols <- c("concept_relationship_id", "modified", "user_evaluation_id", "creator_name", "vocabulary_id_1", "vocabulary_id_2")
-      column_widths <- c("action" = "100px", "datetime" = "130px", "positive_evals" = "80px", "negative_evals" = "80px")
+      column_widths <- c("action" = "120px", "datetime" = "130px", "positive_evals" = "80px", "negative_evals" = "80px")
 
       selection <- "multiple"
       if (input$vocabulary_show_mapping_details) selection <- "single"
