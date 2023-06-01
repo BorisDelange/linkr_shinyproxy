@@ -6,7 +6,6 @@
 \usage{
 add_vocabulary_concept(
   output,
-  r = shiny::reactiveValues(),
   m = shiny::reactiveValues(),
   vocabulary_id = character(),
   concept_name = character(),
@@ -19,8 +18,6 @@ add_vocabulary_concept(
 }
 \arguments{
 \item{output}{Shiny output variable}
-
-\item{r}{A shiny::reactiveValues object, used to communicate between modules}
 
 \item{m}{A shiny::reactiveValues object, used to communicate between modules}
 
@@ -49,6 +46,7 @@ The value you provide for domain_id & concept_class_id must be present in the da
 }
 \examples{
 \dontrun{
-
+add_vocabulary_concept(output = output, m = m, i18n = i18n, ns = ns, vocabulary_id = "MIMIC-IV", 
+  concept_name = "Diuresis", domain_id = "Measurement", concept_class_id = "Clinical Observation", concept_code = "Diuresis")
 }
 }

@@ -7,10 +7,10 @@
 linkr(
   language = "en",
   app_folder = character(),
-  perf_monitoring = FALSE,
-  debug = FALSE,
   local = FALSE,
-  show_home_page = TRUE
+  show_home_page = TRUE,
+  perf_monitoring = FALSE,
+  debug = FALSE
 )
 }
 \arguments{
@@ -18,13 +18,13 @@ linkr(
 
 \item{app_folder}{Location of the application folder (character).}
 
-\item{perf_monitoring}{Monitor app performances (logical)}
-
-\item{debug}{Debug mode : steps and errors will by displayed in the console (logical)}
-
 \item{local}{Run the app in local mode, do not load files on the internet (logical)}
 
 \item{show_home_page}{Should the home page be loaded ? (logical)}
+
+\item{perf_monitoring}{Monitor app performances (logical)}
+
+\item{debug}{Debug mode : steps and errors will by displayed in the console (logical)}
 }
 \description{
 Runs the LinkR Shiny Application.\cr

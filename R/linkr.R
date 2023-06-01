@@ -7,10 +7,10 @@
 #' a 'linkr' folder will be created in the folder returned by path.expand("~").\cr
 #' @param language Default language to use in the App (character)
 #' @param app_folder Location of the application folder (character).
-#' @param perf_monitoring Monitor app performances (logical)
-#' @param debug Debug mode : steps and errors will by displayed in the console (logical)
 #' @param local Run the app in local mode, do not load files on the internet (logical)
 #' @param show_home_page Should the home page be loaded ? (logical)
+#' @param perf_monitoring Monitor app performances (logical)
+#' @param debug Debug mode : steps and errors will by displayed in the console (logical)
 #' @examples 
 #' \dontrun{
 #' linkr(language = "en", perf_monitoring = FALSE, debug = FALSE, local = FALSE)
@@ -23,10 +23,10 @@
 linkr <- function(
   language = "en",
   app_folder = character(),
-  perf_monitoring = FALSE,
-  debug = FALSE,
   local = FALSE,
-  show_home_page = TRUE
+  show_home_page = TRUE,
+  perf_monitoring = FALSE,
+  debug = FALSE
 ) {
   
   # Maximum size for uploaded data (4096 MB)
@@ -67,9 +67,9 @@ linkr <- function(
   # Load translations
   if (debug) print(paste0(Sys.time(), " - linkr - translation"))
   
-  translations_path <- "translations"
-  if (!dir.exists("translations")) translations_path <- paste0(find.package("linkr"), "/translations")
-  if (!dir.exists(translations_path)) print("Translations path not found")
+  translations_path <- system.file("translations", package = "linkr")
+  if (!dir.exists(translations_path)) translations_path <- "inst/translations"
+  else if (!dir.exists(translations_path)) stop("Translations path not found")
   
   i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = translations_path))
   i18n$set_translation_language(language)

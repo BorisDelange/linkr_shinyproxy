@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# LinkR <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex-cdwtools.png" align="right" height="90" /></a>
+# LinkR <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex-linkr.png" align="right" height="90" /></a>
 
 <!-- badges: start -->
 
@@ -9,19 +9,97 @@
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-## Overview
+## Introduction
+
+**LinkR** is a web application that allows for visualization and
+analysis of health data.
+
+The application is coded in R using the Shiny library. It uses the
+common data model
+<a href = "https://ohdsi.github.io/CommonDataModel/" target = "_blank">OMOP</a>.
+
+### Who is the application for?
+
+The application is for:
+
+- **clinicians**, an intuitive interface allows clinicians to analyze
+  data and conduct studies without advanced programming knowledge
+- **data scientists and statisticians**, LinkR provides access to a full
+  R environment, allowing data scientists and statisticians to exploit
+  all the features of advanced data analysis
+- **healthcare students**, integrated tutorials in the application
+  provide healthcare students with an opportunity to learn and practice
+  data analysis in the healthcare field
+
+Thus, LinkR facilitates **collaborative work**.
+
+### Sharing and Open Science
+
+LinkR is an **open source** application.
+
+It contributes to **open science** by allowing the sharing of:
+
+- *studies*: import and export your studies in one click, reproduce
+  studies with your own data
+- *scripts*: share interoperable scripts, thanks to the use of the
+  common OMOP data model
+- *plugins*: help improve the application by creating plugins and
+  sharing them
 
 ## Installation
 
-<!--You can install the released version of cdwtools from [CRAN](https://CRAN.R-project.org) with:
-
-``` r
-install.packages("cdwtools")
-```
--->
-
-You can install the development version from Github, with :
+You can install the development version from Github, with:
 
 ``` r
 remotes::install_github("BorisDelange/linkr")
 ```
+
+The `remotes` library must be installed, you can install it with:
+
+``` r
+install.packages("remotes")
+```
+
+## Launch the app
+
+To launch the Shiny app, run:
+
+``` r
+linkr::linkr(language = "en", app_folder = "My/App/Folder")
+```
+
+You can use the following arguments in the linkr function :
+
+- **language**: choose in which the application will be launched ; “en”
+  and “fr” are available
+- **app_folder**: by default, application files are saved in the current
+  R session folder (`getwd()` to know which folder it is). You can
+  change this folder by specifying the target folder in this argument.
+- **local**: TRUE or FALSE to allow the app to access the internet
+- **show_home_page**: TRUE or FALSE to show home pages (Overview, News,
+  Tutorials… pages)
+
+See `?linkr` for more informations.
+
+### Contributions
+
+LinkR **needs you** to evolve! You can contribute by creating plugins,
+or by helping to improve the application’s code.
+
+### Report a bug
+
+<a href = "https://github.com/BorisDelange/LinkR/issues" target = "_blank">Go
+here</a> to report a bug.
+
+### Support us
+
+LinkR is supported by the **Interhop** association, promoting
+open-source and interoperability in healthcare. You can
+<a href = "https://interhop.org/dons/" target = "_blank">make a donation
+here</a>.
+
+### Contact
+
+Email: <linkr-app@pm.me>;
+<a href = "https://github.com/BorisDelange/LinkR/discussions" target = "_blank">Discussions
+on GitHub</a>.
