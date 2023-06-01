@@ -504,7 +504,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         
         # Merge mapped concepts
         
-        if (nrow(d$concept_relationship) > 0 & nrow(d$concept) > 0 & nrow(dataset_all_concepts) > 0){
+        if (nrow(d$concept) > 0 & nrow(dataset_all_concepts) > 0){
           dataset_all_concepts <- dataset_all_concepts %>%
             dplyr::bind_rows(
               dataset_all_concepts %>%
@@ -527,16 +527,6 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                 dplyr::arrange(dplyr::desc(count_concepts_rows)) %>%
                 dplyr::mutate(concept_display_name_1 = NA_character_, .after = "concept_name_1")
             )
-          
-          # Delete old rows
-          sql <- glue::glue_sql("DELETE FROM concept_dataset WHERE dataset_id = {r$selected_dataset}", .con = m$db)
-          query <- DBI::dbSendStatement(m$db, sql)
-          DBI::dbClearResult(query)
-          
-          # Add new rows to database
-          DBI::dbAppendTable(m$db, "concept_dataset", dataset_all_concepts %>% 
-            dplyr::transmute(id = get_last_row(m$db, "concept_dataset") + 1:dplyr::n(), concept_id = concept_id_1, dataset_id = r$selected_dataset, vocabulary_id = vocabulary_id_1,
-              count_persons_rows, count_concepts_rows, count_secondary_concepts_rows))
         }
         
         if (nrow(dataset_all_concepts) == 0){
@@ -552,6 +542,16 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                 onclick = paste0("Shiny.setInputValue('%ns%-%input_prefix_2%concept_selected', this.id, {priority: 'event'})")))
             )
         }
+        
+        # Delete old rows
+        sql <- glue::glue_sql("DELETE FROM concept_dataset WHERE dataset_id = {r$selected_dataset}", .con = m$db)
+        query <- DBI::dbSendStatement(m$db, sql)
+        DBI::dbClearResult(query)
+        
+        # Add new rows to database
+        DBI::dbAppendTable(m$db, "concept_dataset", dataset_all_concepts %>% 
+          dplyr::transmute(id = get_last_row(m$db, "concept_dataset") + 1:dplyr::n(), concept_id = concept_id_1, dataset_id = r$selected_dataset, vocabulary_id = vocabulary_id_1,
+            count_persons_rows, count_concepts_rows, count_secondary_concepts_rows))
         
         # Save data as csv
         readr::write_csv(dataset_all_concepts, dataset_all_concepts_filename, progress = FALSE)
@@ -1640,7 +1640,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       centered_cols <- c("datetime", "action", "vocabulary_id_1", "concept_id_1", "vocabulary_id_2", "concept_id_2", "relationship_id", "creator_name", "positive_evals", "negative_evals")
       col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_mapping_evals", i18n = i18n)
       hidden_cols <- c("concept_relationship_id", "modified", "user_evaluation_id", "creator_name", "vocabulary_id_1", "vocabulary_id_2")
-      column_widths <- c("action" = "80px", "datetime" = "130px", "positive_evals" = "80px", "negative_evals" = "80px")
+      column_widths <- c("action" = "100px", "datetime" = "130px", "positive_evals" = "80px", "negative_evals" = "80px")
 
       selection <- "multiple"
       if (input$vocabulary_show_mapping_details) selection <- "single"

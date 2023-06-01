@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 
 The application is coded in R using the Shiny library. It uses the common data model <a href = "https://ohdsi.github.io/CommonDataModel/" target = "_blank">OMOP</a>.
 
-### Who is the application for?
+## Who is the application for?
 
 The application is for:
 
@@ -35,7 +35,7 @@ The application is for:
 
 Thus, LinkR facilitates **collaborative work**.
 
-### Sharing and Open Science
+## Sharing and Open Science
 
 LinkR is an **open source** application.
 
@@ -74,18 +74,18 @@ You can use the following arguments in the linkr function :
 
 See `?linkr` for more informations.
 
-### Contributions
+## Contributions
 
 LinkR **needs you** to evolve! You can contribute by creating plugins, or by helping to improve the application's code.
 
-### Report a bug
+## Report a bug
 
 <a href = "https://github.com/BorisDelange/LinkR/issues" target = "_blank">Go here</a> to report a bug.
 
-### Support us
+## Support us
 
 LinkR is supported by the **Interhop** association, promoting open-source and interoperability in healthcare. You can <a href = "https://interhop.org/dons/" target = "_blank">make a donation here</a>.
 
-### Contact
+## Contact
 
 Email: linkr-app@pm.me; <a href = "https://github.com/BorisDelange/LinkR/discussions" target = "_blank">Discussions on GitHub</a>.
