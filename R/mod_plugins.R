@@ -1072,7 +1072,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     editable_cols <- ""
     sortable_cols <- c("id", "name", "creation_datetime", "update_datetime")
-    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "100px")
+    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "80px")
     centered_cols <- c("id", "creation_datetime", "update_datetime", "action")
     searchable_cols <- c("name")
     hidden_cols <- c("id", "description", "tab_type_id", "deleted", "modified")
@@ -1806,7 +1806,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         if (length(r$plugin_vocabulary_concepts_proxy) == 0){
           editable_cols <- c("concept_display_name")
           searchable_cols <- c("concept_id", "concept_name", "concept_display_name")
-          column_widths <- c("concept_id" = "80px", "action" = "100px")
+          column_widths <- c("concept_id" = "80px", "action" = "80px")
           sortable_cols <- c("concept_id", "concept_name", "concept_display_name", "count_persons_rows", "count_concepts_rows")
           centered_cols <- c("concept_id", "count_persons_rows", "count_concepts_rows", "add_concept_input")
           col_names <- get_col_names(table_name = "plugins_vocabulary_concepts_with_counts", i18n = i18n)

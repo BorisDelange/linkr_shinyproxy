@@ -330,7 +330,7 @@ show_message_bar <- function(output, message = character(), type = "severeWarnin
 #' \dontrun{
 #' editable_cols <- c("name", "description", "url_address")
 #' sortable_cols <- c("name", "creator_id", "datetime")
-#' column_widths <- c("id" = "80px", "datetime" = "130px", "creator_id" = "200px", "action" = "100px", "category" = "130px")
+#' column_widths <- c("id" = "80px", "datetime" = "130px", "creator_id" = "200px", "action" = "80px", "category" = "130px")
 #' centered_cols <- c("creator_id", "datetime", "action", "category")
 #' searchable_cols <- c("name", "creator_id", "category")
 #' factorize_cols <- c("creator_id", "category")

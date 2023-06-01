@@ -1924,7 +1924,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       if (length(r[[paste0("widget_", type, "_vocabulary_concepts_proxy")]]) == 0){
         editable_cols <- c("concept_display_name")
         searchable_cols <- c("concept_id", "concept_name", "concept_display_name")
-        column_widths <- c("concept_id" = "80px", "action" = "100px")
+        column_widths <- c("concept_id" = "80px", "action" = "80px")
         sortable_cols <- c("concept_id", "concept_name", "concept_display_name", "count_persons_rows", "count_concepts_rows")
         centered_cols <- c("concept_id", "count_persons_rows", "count_concepts_rows", "add_concept_input")
         col_names <- get_col_names("plugins_vocabulary_concepts_with_counts", i18n)

@@ -871,7 +871,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       if (length(r$remote_scripts_datatable_proxy) == 0){
 
         sortable_cols <- c("name", "creation_datetime", "update_datetime", "category")
-        column_widths <- c("creation_datetime" = "130px", "update_datetime" = "130px", "author" = "100px", "action" = "100px", "version" = "80px")
+        column_widths <- c("creation_datetime" = "130px", "update_datetime" = "130px", "author" = "100px", "action" = "80px", "version" = "80px")
         centered_cols <- c("author", "creation_datetime", "update_datetime", "version", "category", "action")
         searchable_cols <- c("name", "category", "author")
         factorize_cols <- c("category", "author")
@@ -997,7 +997,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     action_buttons <- c("delete", "edit_code", "options")
     sortable_cols <- c("id", "name", "creation_datetime", "update_datetime")
-    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "100px")
+    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "80px")
     centered_cols <- c("id", "creator", "creation_datetime", "update_datetime", "action")
     searchable_cols <- c("name")
     hidden_cols <- c("id", "description", "deleted", "modified")

@@ -309,7 +309,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
       # Action buttons for each tab / page
       action_buttons = switch(table, "users" = "delete", "users_accesses" = c("options", "delete"), "users_statuses" = "delete")
       sortable_cols <- c("id", "name", "description", "username", "firstname", "lastname", "datetime")
-      column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "100px")
+      column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px")
       editable_cols <- switch(table, "users" = c("username", "firstname", "lastname"),
         "users_accesses" = c("name", "description"), "users_statuses" = c("name", "description"))
       centered_cols <- c("id", "user_access_id", "user_status_id", "datetime", "action")

@@ -519,7 +519,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     else sortable_cols <- c("id", "name", "description", "dataset_id", "data_source_id", "study_id", "creator_id", "datetime")
     
     # Column widths
-    column_widths <- c("datetime" = "130px", "creator_id" = "200px", "action" = "100px")
+    column_widths <- c("datetime" = "130px", "creator_id" = "200px", "action" = "80px")
     
     # Centered columns
     centered_cols <- c("creator_id", "datetime", "action")

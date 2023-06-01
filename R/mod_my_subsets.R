@@ -307,7 +307,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     
     subsets_management_editable_cols <- c("name")
     subsets_management_sortable_cols <- c("id", "name", "description", "study_id", "creator_id", "datetime")
-    subsets_management_column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "100px", "creator_id" = "200px")
+    subsets_management_column_widths <- c("id" = "80px", "datetime" = "130px", "action" = "80px", "creator_id" = "200px")
     subsets_management_centered_cols <- c("id", "creator", "datetime", "action")
     subsets_management_searchable_cols <- c("name", "description", "creator_id")
     subsets_management_factorize_cols <- c("study_id", "creator_id")

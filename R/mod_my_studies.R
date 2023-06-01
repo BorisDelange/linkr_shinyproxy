@@ -809,7 +809,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
       conv_searchable_cols <- c("conversation_name", "unread_messages")
       conv_factorize_cols <- c("unread_messages")
-      conv_column_widths <- c("datetime" = "150px", "unread_messages" = "150px", "action" = "100px")
+      conv_column_widths <- c("datetime" = "150px", "unread_messages" = "150px", "action" = "80px")
       conv_sortable_cols <- c("id", "conversation_name", "datetime", "unread_messages")
       conv_centered_cols <- c("id", "datetime", "unread_messages", "action")
       conv_col_names <- get_col_names(table_name = "study_conversations", i18n = i18n)
@@ -1519,7 +1519,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     
     studies_management_editable_cols <- c("name")
     studies_management_sortable_cols <- c("id", "name", "dataset_id", "data_source_id", "study_id", "creator_id", "datetime")
-    studies_management_column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "100px", "creator_id" = "200px")
+    studies_management_column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "80px", "creator_id" = "200px")
     studies_management_centered_cols <- c("id", "creator", "creation_datetime", "update_datetime", "action")
     studies_management_searchable_cols <- c("name", "data_source_id", "dataset_id", "study_id", "creator_id")
     studies_management_factorize_cols <- c("dataset_id", "creator_id")
