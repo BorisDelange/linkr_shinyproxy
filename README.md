@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# LinkR <img src="inst/app/www/hex.png" align="right" height="140" /></a>
+# LinkR <img src="inst/app/www/hex.png" align="right" height="140" />
 
 <!-- badges: start -->
 
