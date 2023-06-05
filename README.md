@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# LinkR <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex.png" align="right" height="140" /></a>
+# LinkR <img src="inst/app/www/hex.png" align="right" height="140" /></a>
 
 <!-- badges: start -->
 
@@ -72,8 +72,8 @@ You can use the following arguments in the linkr function :
 
 - *language*: choose in which the application will be launched ; “en”
   and “fr” are available
-- *app_folder*: by default, application files are saved in the current R
-  session folder (`getwd()` to know which folder it is). You can change
+- *app_folder*: by default, application files are saved in the home
+  folder (`path.expand("~")` to know which folder it is). You can change
   this folder by specifying the target folder in this argument.
 - *local*: TRUE or FALSE to allow the app to access the internet
 - *show_home_page*: TRUE or FALSE to show home pages (Overview, News,
