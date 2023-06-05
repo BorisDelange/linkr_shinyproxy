@@ -1736,7 +1736,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
                     "concept_ancestor", "drug_strength")){
                     
                     # Load CSV file
-                    data <- vroom::vroom(paste0(temp_dir, "/", file_name), col_types = col_types[[table_name]], progress = FALSE)
+                    data <- readr::read_csv(paste0(temp_dir, "/", file_name), col_types = col_types[[table_name]], progress = FALSE)
                     
                     if ("valid_start_date" %in% names(data)) data <- data %>% dplyr::mutate_at(c("valid_start_date", "valid_end_date"), lubridate::ymd)
                     
@@ -1778,7 +1778,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
                   if (table_name %in% tables_names){
                     
                     # Load CSV file
-                    data <- vroom::vroom(row$datapath, col_types = col_types[[table_name]], progress = FALSE)
+                    data <- readr::read_csv(row$datapath, col_types = col_types[[table_name]], progress = FALSE)
                     
                     if ("valid_start_date" %in% names(data)) data <- data %>% dplyr::mutate_at(c("valid_start_date", "valid_end_date"), lubridate::ymd)
                     

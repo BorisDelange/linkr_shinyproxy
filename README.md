@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# LinkR <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex-linkr.png" align="right" height="90" /></a>
+# LinkR <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex.png" align="right" height="140" /></a>
 
 <!-- badges: start -->
 
@@ -18,7 +18,7 @@ The application is coded in R using the Shiny library. It uses the
 common data model
 <a href = "https://ohdsi.github.io/CommonDataModel/" target = "_blank">OMOP</a>.
 
-### Who is the application for?
+## Who is the application for?
 
 The application is for:
 
@@ -33,7 +33,7 @@ The application is for:
 
 Thus, LinkR facilitates **collaborative work**.
 
-### Sharing and Open Science
+## Sharing and Open Science
 
 LinkR is an **open source** application.
 
@@ -70,36 +70,41 @@ linkr::linkr(language = "en", app_folder = "My/App/Folder")
 
 You can use the following arguments in the linkr function :
 
-- **language**: choose in which the application will be launched ; “en”
+- *language*: choose in which the application will be launched ; “en”
   and “fr” are available
-- **app_folder**: by default, application files are saved in the current
-  R session folder (`getwd()` to know which folder it is). You can
-  change this folder by specifying the target folder in this argument.
-- **local**: TRUE or FALSE to allow the app to access the internet
-- **show_home_page**: TRUE or FALSE to show home pages (Overview, News,
+- *app_folder*: by default, application files are saved in the current R
+  session folder (`getwd()` to know which folder it is). You can change
+  this folder by specifying the target folder in this argument.
+- *local*: TRUE or FALSE to allow the app to access the internet
+- *show_home_page*: TRUE or FALSE to show home pages (Overview, News,
   Tutorials… pages)
 
 See `?linkr` for more informations.
 
-### Contributions
+The first load may take a few minutes to create the application database
+and download the default data.
+
+## Contributions
 
 LinkR **needs you** to evolve! You can contribute by creating plugins,
 or by helping to improve the application’s code.
 
-### Report a bug
+## Report a bug
 
 <a href = "https://github.com/BorisDelange/LinkR/issues" target = "_blank">Go
 here</a> to report a bug.
 
-### Support us
+## Support us
 
 LinkR is supported by the **Interhop** association, promoting
-open-source and interoperability in healthcare. You can
-<a href = "https://interhop.org/dons/" target = "_blank">make a donation
-here</a>.
+open-source and interoperability in healthcare.
 
-### Contact
+You can **<a href = "https://interhop.org/dons/" target = "_blank">make
+a donation here</a>**.
 
-Email: <linkr-app@pm.me>;
+## Contact
+
+Email: <linkr-app@pm.me>.
+
 <a href = "https://github.com/BorisDelange/LinkR/discussions" target = "_blank">Discussions
 on GitHub</a>.

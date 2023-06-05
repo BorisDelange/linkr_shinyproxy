@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# LinkR <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex-linkr.png" align="right" height="90" /></a>
+# LinkR <a href="https://borisdelange.github.io/cdwtools/index.html"><img src="inst/app/www/hex.png" align="right" height="140" /></a>
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
@@ -74,6 +74,8 @@ You can use the following arguments in the linkr function :
 
 See `?linkr` for more informations.
 
+The first load may take a few minutes to create the application database and download the default data.
+
 ## Contributions
 
 LinkR **needs you** to evolve! You can contribute by creating plugins, or by helping to improve the application's code.
@@ -84,8 +86,12 @@ LinkR **needs you** to evolve! You can contribute by creating plugins, or by hel
 
 ## Support us
 
-LinkR is supported by the **Interhop** association, promoting open-source and interoperability in healthcare. You can <a href = "https://interhop.org/dons/" target = "_blank">make a donation here</a>.
+LinkR is supported by the **Interhop** association, promoting open-source and interoperability in healthcare. 
+
+You can **<a href = "https://interhop.org/dons/" target = "_blank">make a donation here</a>**.
 
 ## Contact
 
-Email: linkr-app@pm.me; <a href = "https://github.com/BorisDelange/LinkR/discussions" target = "_blank">Discussions on GitHub</a>.
+Email: linkr-app@pm.me.
+
+<a href = "https://github.com/BorisDelange/LinkR/discussions" target = "_blank">Discussions on GitHub</a>.

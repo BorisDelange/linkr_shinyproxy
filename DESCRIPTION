@@ -36,7 +36,6 @@ Imports:
     sortable(>= 0.4.5),
     stringr (>= 1.4.0),
     tidyr (>= 1.1.4),
-    vroom (>= 1.6.1),
     XML (>= 3.99-0.13),
     zip (>= 2.2.0)
 Encoding: UTF-8

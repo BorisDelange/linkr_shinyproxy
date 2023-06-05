@@ -337,7 +337,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       dataset_all_concepts_filename <- paste0(dataset_folder, "/dataset_all_concepts.csv")
       
-      if (file.exists(dataset_all_concepts_filename)) d$dataset_all_concepts <- vroom::vroom(dataset_all_concepts_filename, col_types = "icicccciccccccccii", progress = FALSE)
+      if (file.exists(dataset_all_concepts_filename)) d$dataset_all_concepts <- readr::read_csv(dataset_all_concepts_filename, col_types = "icicccciccccccccii", progress = FALSE)
      
       if (!file.exists(dataset_all_concepts_filename)){
         
@@ -611,7 +611,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       dataset_drug_strength_filename <- paste0(r$app_folder, "/datasets/", r$selected_dataset, "/dataset_drug_strength.csv")
       
-      if (file.exists(dataset_drug_strength_filename)) d$dataset_drug_strength <- vroom::vroom(dataset_drug_strength_filename, col_types = "iicicncncnciccc", progress = FALSE)
+      if (file.exists(dataset_drug_strength_filename)) d$dataset_drug_strength <- readr::read_csv(dataset_drug_strength_filename, col_types = "iicicncncnciccc", progress = FALSE)
       
       if (!file.exists(dataset_drug_strength_filename)){
         
@@ -1390,7 +1390,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       # Add also the reverse of this mapping
       
       last_row_concept_relationship <- get_last_row(m$db, "concept_relationship")
-      reverse_relationship_id <- switch(input$relationship_id, "Maps to" = "Mapped from", "Is a" = "Subsumes", "Subsumes" = "Is a")
+      reverse_relationship_id <- switch(input$relationship_id, 
+        "Maps to" = "Mapped from", "Mapped from" = "Maps to", "Is a" = "Subsumes", "Subsumes" = "Is a")
       
       new_row_db <- tibble::tribble(
         ~id, ~concept_id_1, ~concept_id_2, ~relationship_id, ~valid_start_date, ~valid_end_date, ~invalid_reason,
@@ -1640,7 +1641,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       centered_cols <- c("datetime", "action", "vocabulary_id_1", "concept_id_1", "vocabulary_id_2", "concept_id_2", "relationship_id", "creator_name", "positive_evals", "negative_evals")
       col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_mapping_evals", i18n = i18n)
       hidden_cols <- c("concept_relationship_id", "modified", "user_evaluation_id", "creator_name", "vocabulary_id_1", "vocabulary_id_2")
-      column_widths <- c("action" = "120px", "datetime" = "130px", "positive_evals" = "80px", "negative_evals" = "80px")
+      column_widths <- c("action" = "100px", "datetime" = "130px", "positive_evals" = "80px", "negative_evals" = "80px")
 
       selection <- "multiple"
       if (input$vocabulary_show_mapping_details) selection <- "single"
