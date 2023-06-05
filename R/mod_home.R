@@ -225,9 +225,8 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
               # Check if file exists. If not, copy file.
 
               if (!file.exists(filename)){
-                filename_local <- filename
-                filename <- paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/", language, "/", row$page, "/", row$markdown_file)
-                download.file(filename, filename_local, quiet = TRUE)
+                filename_remote <- paste0("https://raw.githubusercontent.com/BorisDelange/linkr-content/main/home/", language, "/", row$page, "/", row$markdown_file)
+                download.file(filename_remote, filename, quiet = TRUE)
               }
 
               con <- textConnection(filename)
@@ -260,10 +259,10 @@ mod_home_server <- function(id = character(), r, language = "en", i18n = charact
         div(ui_result)
       })
       
-      if (length(markdown_list) > 0) for (key in names(markdown_list)){
+      if (length(markdown_list) > 0) sapply(names(markdown_list), function(key){
         if (key == "overview") output[[paste0(key, "_markdown")]] <- renderUI(div(markdown_list[[key]], style = "margin-top:-15px;"))
         else output[[paste0(key, "_markdown")]] <- renderUI(markdown_list[[key]])
-      }
+      })
       
       # Show or hide cards
       
