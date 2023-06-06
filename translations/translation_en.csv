@@ -538,9 +538,9 @@ patient_id,Patient ID
 person_id,Person ID
 stay_id,Stay ID
 visit_detail_id,Visit detail ID
-add_concept_mapping,Add a vocabulary concept mapping
 evaluate_concept_mapping,Evaluate a vocabulary concept mapping
-add_and_evaluate_concept_mapping,Add and evaluate a vocabulary concept mapping
+add_concept_mapping,Add a concept mapping
+evaluate_and_delete_concepts_mappings,Evaluate and delete concepts mappings
 vocabularies_and_concepts,Vocabularies & concepts
 whats_a_vocabulary,What's a vocabulary ?
 whats_a_concept_mapping,What's a concept mapping ?
@@ -769,7 +769,7 @@ concept_name,Concept name
 concept_name_1,Concept 1 name
 concept_name_2,Concept 2 name
 mapped_concept_name,Mapped concept name
-concept_display_name,Concept 1 display name
+concept_display_name,Concept display name
 concept_display_name_1,Concept 1 display name
 concept_display_name_2,Concept 2 display name
 mapped_concept_display_name,Mapped concept display name

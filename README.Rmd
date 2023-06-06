@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# LinkR <img src="inst/app/www/hex.png" align="right" height="140" />
+# LinkR <a href="https://github.com/BorisDelange/LinkR"><img src="inst/app/www/hex.png" align="right" height="140" /></a>
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
@@ -78,7 +78,7 @@ The first load may take a few minutes to create the application database and dow
 
 ## Contributions
 
-LinkR **needs you** to evolve! You can contribute by creating plugins, or by helping to improve the application's code.
+LinkR **needs help** to evolve! You can contribute by creating plugins, or by helping to improve the application's code.
 
 ## Report a bug
 

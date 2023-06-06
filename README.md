@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# LinkR <img src="inst/app/www/hex.png" align="right" height="140" />
+# LinkR <a href="https://github.com/BorisDelange/LinkR"><img src="inst/app/www/hex.png" align="right" height="140" /></a>
 
 <!-- badges: start -->
 
@@ -86,7 +86,7 @@ and download the default data.
 
 ## Contributions
 
-LinkR **needs you** to evolve! You can contribute by creating plugins,
+LinkR **needs help** to evolve! You can contribute by creating plugins,
 or by helping to improve the application’s code.
 
 ## Report a bug

@@ -538,9 +538,9 @@ patient_id,ID du patient
 person_id,ID du patient
 stay_id,ID du séjour
 visit_detail_id,ID du séjour
-add_concept_mapping,Ajouter un alignement de concepts
 evaluate_concept_mapping,Evaluer un alignement de concepts
-add_and_evaluate_concept_mapping,Ajouter et évaluer un alignement de concepts
+add_concept_mapping,Ajouter un alignement de concepts
+evaluate_and_delete_concepts_mappings,Evaluer et supprimer des alignements de concepts
 vocabularies_and_concepts,Terminologies & concepts
 whats_a_vocabulary,Qu'est-ce qu'une terminologie ?
 whats_a_concept_mapping,Qu'est ce qu'un alignement de concepts ?
