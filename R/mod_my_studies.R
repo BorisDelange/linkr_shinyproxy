@@ -39,7 +39,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
           id = ns("studies_pivot"),
           onLinkClick = htmlwidgets::JS(paste0("item => Shiny.setInputValue('", id, "-current_tab', item.props.id)")),
           shiny.fluent::PivotItem(id = "studies_messages_card", itemKey = "studies_messages_card", headerText = i18n$t("messages")),
-          shiny.fluent::PivotItem(id = "studies_description_card", itemKey = "studies_description_card", headerText = i18n$t("study_description")),
+          # shiny.fluent::PivotItem(id = "studies_description_card", itemKey = "studies_description_card", headerText = i18n$t("study_description")),
           shiny.fluent::PivotItem(id = "studies_datatable_card", itemKey = "studies_datatable_card", headerText = i18n$t("studies_management")),
           shiny.fluent::PivotItem(id = "studies_options_card", itemKey = "studies_options_card", headerText = i18n$t("study_options"))
         )
@@ -135,7 +135,7 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
         id = ns("studies_description_card"),
         div(id = ns("studies_description_content"),
           make_card(i18n$t("studies_description_card"),
-            uiOutput(ns("studies_description_markdown_result"))
+            # uiOutput(ns("studies_description_markdown_result"))
           ), br()
         ),
         div(
@@ -355,6 +355,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     })
     
     help_my_studies(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
+    
+    observeEvent(input$copy_code_1, r$help_my_studies_copy_code_1 <- Sys.time())
     
     # --- --- --- --- --- --- --- --
     # When a dataset is selected ----
@@ -684,30 +686,30 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       # Load study description
       
       # Get description from database
-      study_description <- r$options %>% dplyr::filter(category == "study" & name == "markdown_description" & link_id == m$selected_study) %>% 
-        dplyr::pull(value) %>% stringr::str_replace_all("\r", "\n")
-      
-      tryCatch({
-        
-        # Clear temp dir
-        unlink(paste0(r$app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
-        
-        markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
-          r$app_folder, "/temp_files')\n",
-          "knitr::opts_chunk$set(root.dir = '", r$app_folder, "/temp_files/', fig.path = '", r$app_folder, "/temp_files/')\n```\n")
-        
-        markdown_file <- paste0(markdown_settings, study_description)
-        
-        # Create temp dir
-        dir <- paste0(r$app_folder, "/temp_files")
-        file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
-        if (!dir.exists(dir)) dir.create(dir)
-        
-        # Create the markdown file
-        knitr::knit(text = markdown_file, output = file, quiet = TRUE)
-        
-        output$studies_description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
-      }, error = function(e) "")
+      # study_description <- r$options %>% dplyr::filter(category == "study" & name == "markdown_description" & link_id == m$selected_study) %>% 
+      #   dplyr::pull(value) %>% stringr::str_replace_all("\r", "\n")
+      # 
+      # tryCatch({
+      #   
+      #   # Clear temp dir
+      #   unlink(paste0(r$app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
+      #   
+      #   markdown_settings <- paste0("```{r setup, include=FALSE}\nknitr::opts_knit$set(root.dir = '", 
+      #     r$app_folder, "/temp_files')\n",
+      #     "knitr::opts_chunk$set(root.dir = '", r$app_folder, "/temp_files/', fig.path = '", r$app_folder, "/temp_files/')\n```\n")
+      #   
+      #   markdown_file <- paste0(markdown_settings, study_description)
+      #   
+      #   # Create temp dir
+      #   dir <- paste0(r$app_folder, "/temp_files")
+      #   file <- paste0(dir, "/", as.character(Sys.time()) %>% stringr::str_replace_all(":", "_"), ".Md")
+      #   if (!dir.exists(dir)) dir.create(dir)
+      #   
+      #   # Create the markdown file
+      #   knitr::knit(text = markdown_file, output = file, quiet = TRUE)
+      #   
+      #   output$studies_description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
+      # }, error = function(e) "")
     })
     
     # --- --- --- --- --- --- --- --
