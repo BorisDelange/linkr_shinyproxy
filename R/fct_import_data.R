@@ -35,7 +35,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
   # Check omop_version
   if (omop_version %not_in% c("5.3", "5.4", "6.0")){
     report_bug(r = r, output = output, error_message = "invalid_omop_version", 
-      error_name = paste0("import_dataset - invalid_omop_version - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
+      error_name = paste0("import_dataset - invalid_omop_version - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
     stop(i18n$t("invalid_omop_version"))
   }
   
@@ -43,7 +43,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
   tryCatch(as.integer(dataset_id),
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_dataset_id_value", 
-        error_name = paste0("import_dataset - invalid_dataset_id_value - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
+        error_name = paste0("import_dataset - invalid_dataset_id_value - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
       stop(i18n$t("invalid_dataset_id_value"))}
   )
   
@@ -116,11 +116,11 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
       
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_csv", 
-          error_name = paste0("import_dataset - error_loading_csv - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = paste0("import_dataset - error_loading_csv - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
         stop(i18n$t("error_loading_csv"))},
       warning = function(w){
         if (nchar(w[1]) > 0) report_bug(r = r, output = output, error_message = "error_loading_csv", 
-          error_name = paste0("import_dataset - error_loading_csv - id = ", dataset_id), category = "Error", error_report = toString(w), i18n = i18n)
+          error_name = paste0("import_dataset - error_loading_csv - id = ", dataset_id), category = "Error", error_report = toString(w), i18n = i18n, ns = ns)
         stop(i18n$t("error_loading_csv"))}
     )
   }
@@ -129,7 +129,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
   tryCatch(tibble::as_tibble(data), 
     error = function(e){
       if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = paste0("import_dataset - error_transforming_tibble - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
+        error_name = paste0("import_dataset - error_transforming_tibble - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
       stop(i18n$t("error_transforming_tibble"))}
   )
   
@@ -199,6 +199,85 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
         "condition_concept_id", "integer",
         "condition_era_start_date", "date",
         "condition_era_end_date", "date",
+        "condition_occurrence_count", "integer"
+      )
+    )
+  }
+  
+  if (omop_version == "6.0"){
+    data_cols <- tibble::tribble(
+      ~var, ~cols,
+      "person", tibble::tribble(
+        ~name, ~type,
+        "person_id", "integer",
+        "gender_concept_id", "integer",
+        "year_of_birth", "integer",
+        "month_of_birth", "integer",
+        "day_of_birth", "integer",
+        "birth_datetime", "datetime",
+        "death_datetime", "datetime",
+        "race_concept_id", "integer",
+        "ethnicity_concept_id", "integer",
+        "location_id", "integer",
+        "provider_id", "integer",
+        "care_site_id", "integer",
+        "person_source_value", "character",
+        "gender_source_value", "character",
+        "gender_source_concept_id", "integer",
+        "race_source_value", "character",
+        "race_source_concept_id", "integer",
+        "ethnicity_source_value", "character",
+        "ethnicity_source_concept_id", "integer"
+      ),
+      "visit_detail", tibble::tribble(
+        ~name, ~type,
+        "visit_detail_id", "integer",
+        "person_id", "integer",
+        "visit_detail_concept_id", "integer",
+        "visit_detail_start_date", "date",
+        "visit_detail_start_datetime", "datetime",
+        "visit_detail_end_date", "date",
+        "visit_detail_end_datetime", "datetime",
+        "visit_detail_type_concept_id", "integer",
+        "provider_id", "integer",
+        "care_site_id", "integer",
+        "visit_detail_source_value", "character",
+        "visit_detail_source_concept_id", "integer",
+        "admitted_from_concept_id", "integer",
+        "admitted_from_source_value", "character",
+        "discharge_to_source_value", "character",
+        "discharge_to_concept_id", "integer",
+        "preceding_visit_detail_id", "integer",
+        "visit_detail_parent_id", "integer",
+        "visit_occurrence_id", "integer"
+      ),
+      "drug_era", tibble::tribble(
+        ~name, ~type,
+        "drug_era_id", "integer",
+        "person_id", "integer",
+        "drug_concept_id", "integer",
+        "drug_era_start_datetime", "datetime",
+        "drug_era_end_datetime", "datetime",
+        "drug_exposure_count", "integer",
+        "gap_days", "integer"
+      ),
+      "dose_era", tibble::tribble(
+        ~name, ~type,
+        "dose_era_id", "integer",
+        "person_id", "integer",
+        "drug_concept_id", "integer",
+        "unit_concept_id", "integer",
+        "dose_value", "numeric",
+        "dose_era_start_datetime", "datetime",
+        "dose_era_end_datetime", "datetime"
+      ),
+      "condition_era", tibble::tribble(
+        ~name, ~type,
+        "condition_era_id", "integer",
+        "person_id", "integer",
+        "condition_concept_id", "integer",
+        "condition_era_start_datetime", "datetime",
+        "condition_era_end_datetime", "datetime",
         "condition_occurrence_count", "integer"
       )
     )
@@ -377,85 +456,6 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
           "latitude", "numeric",
           "longitude", "numeric"
         )
-      )
-    )
-  }
-  
-  if (omop_version == "6.0"){
-    data_cols <- tibble::tribble(
-      ~var, ~cols,
-      "person", tibble::tribble(
-        ~name, ~type,
-        "person_id", "integer",
-        "gender_concept_id", "integer",
-        "year_of_birth", "integer",
-        "month_of_birth", "integer",
-        "day_of_birth", "integer",
-        "birth_datetime", "datetime",
-        "death_datetime", "datetime",
-        "race_concept_id", "integer",
-        "ethnicity_concept_id", "integer",
-        "location_id", "integer",
-        "provider_Id", "integer",
-        "care_site_id", "integer",
-        "person_source_value", "character",
-        "gender_source_value", "character",
-        "gender_source_concept_id", "integer",
-        "race_source_value", "character",
-        "race_source_concept_id", "integer",
-        "ethnicity_source_value", "character",
-        "ethnicity_source_concept_id", "integer"
-      ),
-      "visit_detail", tibble::tribble(
-        ~name, ~type,
-        "visit_detail_id", "integer",
-        "person_id", "integer",
-        "visit_detail_concept_id", "integer",
-        "visit_detail_start_date", "date",
-        "visit_detail_start_datetime", "datetime",
-        "visit_detail_end_date", "date",
-        "visit_detail_end_datetime", "datetime",
-        "visit_detail_type_concept_id", "integer",
-        "provider_id", "integer",
-        "care_site_id", "integer",
-        "visit_detail_source_value", "character",
-        "visit_detail_source_concept_id", "integer",
-        "admitted_from_concept_id", "integer",
-        "admitted_from_source_value", "character",
-        "discharge_to_source_value", "character",
-        "discharge_to_concept_id", "integer",
-        "preceding_visit_detail_id", "integer",
-        "visit_detail_parent_id", "integer",
-        "visit_occurrence_id", "integer"
-      ),
-      "drug_era", tibble::tribble(
-        ~name, ~type,
-        "drug_era_id", "integer",
-        "person_id", "integer",
-        "drug_concept_id", "integer",
-        "drug_era_start_datetime", "datetime",
-        "drug_era_end_datetime", "datetime",
-        "drug_exposure_count", "integer",
-        "gap_days", "integer"
-      ),
-      "dose_era", tibble::tribble(
-        ~name, ~type,
-        "dose_era_id", "integer",
-        "person_id", "integer",
-        "drug_concept_id", "integer",
-        "unit_concept_id", "integer",
-        "dose_value", "numeric",
-        "dose_era_start_datetime", "datetime",
-        "dose_era_end_datetime", "datetime"
-      ),
-      "condition_era", tibble::tribble(
-        ~name, ~type,
-        "condition_era_id", "integer",
-        "person_id", "integer",
-        "condition_concept_id", "integer",
-        "condition_era_start_datetime", "datetime",
-        "condition_era_end_datetime", "datetime",
-        "condition_occurrence_count", "integer"
       )
     )
   }
@@ -818,7 +818,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
     if (!file.exists(path)) tryCatch(readr::write_csv(data, path, progress = FALSE),
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
-          error_name = paste0("import_dataset - error_saving_csv - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = paste0("import_dataset - error_saving_csv - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
         stop(i18n$t("error_saving_csv"))}
     )
     if (file.exists(path) & rewrite) tryCatch({
@@ -826,7 +826,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
       readr::write_csv(data, path, progress = FALSE)}, 
       error = function(e){
         if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_saving_csv", 
-          error_name = paste0("import_dataset - error_saving_csv - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = paste0("import_dataset - error_saving_csv - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
         stop(i18n$t("error_saving_csv"))}
     )
   }
@@ -982,7 +982,7 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
   tryCatch(data <- tibble::as_tibble(data), 
     error = function(e){
       if (nchar(e[1]) > 0 & messages_bars) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = "import_vocabulary_table - error_transforming_tibble", category = "Error", error_report = toString(e), i18n = i18n)
+        error_name = "import_vocabulary_table - error_transforming_tibble", category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
       return(i18n$t("error_transforming_tibble"))}
   )
   
@@ -1011,7 +1011,7 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
     },
       error = function(e){
         if (nchar(e[1]) > 0 & messages_bars) report_bug(r = r, output = output, error_message = "error_get_actual_primary_keys",
-          error_name = "import_vocabulary_concepts - error_get_actual_primary_keys", category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = "import_vocabulary_concepts - error_get_actual_primary_keys", category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
         return(i18n$t("error_get_actual_primary_keys"))}
     )
 
@@ -1044,7 +1044,7 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
     },
       error = function(e){
         if (nchar(e[1]) > 0 & messages_bars) report_bug(r = r, output = output, error_message = "error_get_actual_primary_keys",
-          error_name = "import_vocabulary_concepts - error_get_actual_primary_keys - id = ", category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = "import_vocabulary_concepts - error_get_actual_primary_keys - id = ", category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
         return(i18n$t("error_get_actual_primary_keys"))}
     )
     
@@ -1068,7 +1068,7 @@ import_vocabulary_table <- function(output, ns = character(), i18n = character()
     tryCatch(DBI::dbAppendTable(m$db, table_name, data_to_insert),
       error = function(e){
         if (nchar(e[1]) > 0 & messages_bars) report_bug(r = r, output = output, error_message = "vocabulary_error_append_table",
-          error_name = "import_vocabulary_table - vocabulary_error_append_table - id = ", category = "Error", error_report = toString(e), i18n = i18n)
+          error_name = "import_vocabulary_table - vocabulary_error_append_table - id = ", category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
         return(i18n$t("vocabulary_error_append_table"))}
     )
   }

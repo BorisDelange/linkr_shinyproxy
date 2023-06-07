@@ -399,7 +399,7 @@ help_settings_app_database <- function(input, output, r = shiny::reactiveValues(
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
           "Utilisez les raccourcis :",
           tags$ul(
-            tags$li("CMD/CTRL + SHIFT + ENTER : exécuté l'ensemble du code"),
+            tags$li("CMD/CTRL + SHIFT + ENTER : exécute l'ensemble du code"),
             tags$li("CMD/CTRL + ENTER : exécute le code sélectionné")
           )  
         ),

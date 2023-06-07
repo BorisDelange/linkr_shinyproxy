@@ -12,12 +12,13 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
       shiny.fluent::Link(i18n$t("datasets_datatable_card"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_2', Math.random()); }"))), br(), br(),
       shiny.fluent::Link(i18n$t("edit_dataset_code"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_3', Math.random()); }"))), br(), br(),
       shiny.fluent::Link(i18n$t("dataset_options"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_4', Math.random()); }"))), br(), br(),
-      strong(i18n$t("thesaurus")), br(), br(),
-      shiny.fluent::Link(i18n$t("thesaurus_datatable_card"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_5', Math.random()); }"))), br(), br(),
-      shiny.fluent::Link(i18n$t("edit_thesaurus_code"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_6', Math.random()); }"))), br(), br(),
-      shiny.fluent::Link(i18n$t("thesaurus_items"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_7', Math.random()); }"))), br(), br(),
+      strong(i18n$t("vocabulary")), br(), br(),
+      shiny.fluent::Link(i18n$t("vocabularies_management"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_5', Math.random()); }"))), br(), br(),
+      shiny.fluent::Link(i18n$t("edit_vocabulary_code"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_6', Math.random()); }"))), br(), br(),
+      shiny.fluent::Link(i18n$t("vocabularies_tables"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_7', Math.random()); }"))), br(), br(),
+      shiny.fluent::Link(i18n$t("import_vocabulary"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_8', Math.random()); }"))), br(), br(),
       strong(i18n$t("data_model")), br(), br(),
-      shiny.fluent::Link(i18n$t("data_model"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_8', Math.random()); }"))), br(), br(),
+      shiny.fluent::Link(i18n$t("data_model"), onClick = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-help_page_9', Math.random()); }"))), br(), br(),
       isLightDismiss = r[[paste0("help_settings_data_management_", prefix, "_open_panel_light_dismiss")]],
       isBlocking = r[[paste0("help_settings_data_management_", prefix, "_open_panel_light_dismiss")]],
       onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('", id, "-hide_panel', Math.random()); }")),
@@ -49,6 +50,67 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     r[[paste0("help_settings_data_management_", prefix, "_open_panel_light_dismiss")]] <- FALSE
   }
   
+  # Code divs
+  
+  code_1 <- paste0(
+    "person <- function(){\n",
+    "  tibble::tibble(\n",
+    "    person_id = c(1L, 2L),\n",
+    "    gender_concept_id = c(8507L, 8507L),\n",
+    "    year_of_birth = c(1990L, 1992L),\n",
+    "    month_of_birth = c(NA_integer_, NA_integer_),\n",
+    "    day_of_birth = c(NA_integer_, NA_integer_),\n",
+    "    birth_datetime = c(as.POSIXct(NA_integer_), as.POSIXct(NA_integer_)),\n",
+    "    death_datetime = c(as.POSIXct(NA_integer_), as.POSIXct(NA_integer_)),\n",
+    "    race_concept_id = c(NA_integer_, NA_integer_),\n",
+    "    ethnicity_concept_id = c(NA_integer_, NA_integer_),\n",
+    "    location_id = c(NA_integer_, NA_integer_),\n",
+    "    provider_id = c(NA_integer_, NA_integer_),\n",
+    "    care_site_id = c(NA_integer_, NA_integer_),\n",
+    "    person_source_value = c(\"27783\", \"18939\"),\n",
+    "    gender_source_value = c(\"M\", \"M\"),\n",
+    "    gender_source_concept_id = c(NA_integer_, NA_integer_),\n",
+    "    race_source_value = c(NA_character_, NA_character_),\n",
+    "    race_source_concept_id = c(NA_integer_, NA_integer_),\n",
+    "    ethnicity_source_value = c(NA_character_, NA_character_),\n",
+    "    ethnicity_source_concept_id = c(NA_integer_, NA_integer_)\n",
+    " )\n",
+    "}\n",
+    "\n",
+    "import_dataset(output = output, ns = ns, i18n = i18n, r = r, d = d, dataset_id = %dataset_id%, data = person(),\n",
+    "  type = \"person\", omop_version = \"6.0\", save_as_csv = TRUE, rewrite = FALSE)"
+  )
+  
+  div_code_1 <- div(
+    "person <- function(){", br(),
+    span("tibble::tibble(", style = "padding-left:20px;"), br(),
+    span("person_id = c(1L, 2L),", style = "padding-left:40px;"), br(),
+    span("gender_concept_id = c(8507L, 8507L),", style = "padding-left:40px;"), br(),
+    span("year_of_birth = c(1990L, 1992L),", style = "padding-left:40px;"), br(),
+    span("month_of_birth = c(NA_integer_, NA_integer_),", style = "padding-left:40px;"), br(),
+    span("day_of_birth = c(NA_integer_, NA_integer_),", style = "padding-left:40px;"), br(),
+    span("birth_datetime = c(as.POSIXct(NA_integer_), as.POSIXct(NA_integer_)),", style = "padding-left:40px;"), br(),
+    span("death_datetime = c(as.POSIXct(NA_integer_), as.POSIXct(NA_integer_)),", style = "padding-left:40px;"), br(),
+    span("race_concept_id = c(NA_integer_, NA_integer_),", style = "padding-left:40px;"), br(),
+    span("ethnicity_concept_id = c(NA_integer_, NA_integer_),", style = "padding-left:40px;"), br(),
+    span("location_id = c(NA_integer_, NA_integer_),", style = "padding-left:40px;"), br(),
+    span("provider_id = c(NA_integer_, NA_integer_),", style = "padding-left:40px;"), br(),
+    span("care_site_id = c(NA_integer_, NA_integer_),", style = "padding-left:40px;"), br(),
+    span("person_source_value = c(\"27783\", \"18939\"),", style = "padding-left:40px;"), br(),
+    span("gender_source_value = c(\"M\", \"M\"),", style = "padding-left:40px;"), br(),
+    span("gender_source_concept_id = c(NA_integer_, NA_integer_),", style = "padding-left:40px;"), br(),
+    span("race_source_value = c(NA_character_, NA_character_),", style = "padding-left:40px;"), br(),
+    span("race_source_concept_id = c(NA_integer_, NA_integer_),", style = "padding-left:40px;"), br(),
+    span("ethnicity_source_value = c(NA_character_, NA_character_),", style = "padding-left:40px;"), br(),
+    span("ethnicity_source_concept_id = c(NA_integer_, NA_integer_)", style = "padding-left:40px;"), br(),
+    span(")", style = "padding-left:20px;"), br(),
+    "}", br(),
+    "import_dataset(output = output, ns = ns, i18n = i18n, r = r, d = d, dataset_id = %dataset_id%, data = person(),", br(),
+    span("type = \"person\", omop_version = \"6.0\", save_as_csv = TRUE, rewrite = FALSE)", style = "padding-left:20px;"),
+    shiny.fluent::IconButton.shinyInput(ns("copy_code_1"), iconProps = list(iconName = "Copy"), style = "position:absolute; top:5px; right:5px;"),
+    style = r$code_style
+  )
+  
   # Data sources management
   
   observeEvent(r[[paste0("help_settings_data_management_", prefix, "_page_1")]], {
@@ -59,40 +121,54 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Ajouter une source de données")),
-        p("Pour créer une source de données, entrez un nom et cliquez sur ", tags$em("Ajouter"), "."),
-        p("Une source de données comprend ", strong("plusieurs sets de données"), "."),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
+          strong("Ajouter une source de données")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Pour créer une source de données, entrez un nom et cliquez sur ", tags$em("Ajouter"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Une source de données comprend ", strong("plusieurs sets de données"), "."),
         p("Par exemple, vous créez une source de données nommée ", tags$em("MIMIC-IV"), ", qui comprendra les sets de données créés à partir de la base de données MIMIC-IV."),
-        p("Différents sets de données seront créés à partir de cette source, par exemple "),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Différents sets de données seront créés à partir de cette source, par exemple : "),
         tags$ul(
           tags$li("un set ", tags$em("Infections nosocomiales"), " qui comprendra les patients ayant eu une infection nosocomiale au cours de leur séjour hospitalier"),
           tags$li("un set ", tags$em("Hépatites"), " qui comprendra les patients ayant été diagnostiqué d'une hépatite")
         ),
-        p(strong("2) Gérer les sources de données")),
-        p("Vous pouvez modifier le nom des sources de données en double-cliquant sur la ligne et la colonne correspondants dans le tableau."),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ",
+          strong("Gérer les sources de données")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Vous pouvez modifier le nom des sources de données en double-cliquant sur la ligne et la colonne correspondants dans le tableau."),
         p("Une fois les informations modifiées, cliquez sur ", tags$em("Sauvegarder"), "."),
-        p("Pour supprimer une ou plusieurs sources de données, sélectionnez-les en cliquant dessus dans le tableau puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
-        p("Vous pouvez également supprimer une source de données en cliquant sur l'icône ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Pour supprimer une ou plusieurs sources de données, sélectionnez-les en cliquant dessus dans le tableau puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
+        p("Vous pouvez également supprimer une source de données en cliquant sur l'icône  ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " ."),
         br()
       )
     }
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Add a data source")),
-        p("To create a data source, enter a name and click on ", tags$em("Add"), "."),
-        p("A data source includes ", strong("several datasets"), "."),
-        p("For example, you create a data source named ", tags$em("MIMIC-IV"), ", which will include datasets created from the MIMIC-IV database."),
-        p("Different datasets will be created from this source, for example "),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
+          strong("Add a data source")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "To create a data source, enter a name and click on ", tags$em("Add"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "A data source comprises ", strong("several datasets"), "."),
+        p("For instance, you create a data source named ", tags$em("MIMIC-IV"), ", which will comprise datasets created from the MIMIC-IV database."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Different datasets will be created from this source, for example: "),
         tags$ul(
-          tags$li("a dataset called ", tags$em("Nosocomial Infections"), " which will include patients who had a nosocomial infection during their hospital stay"),
-          tags$li("a dataset called ", tags$em("Hepatitis"), " which will include patients diagnosed with hepatitis")
+          tags$li("a set ", tags$em("Hospital-Acquired Infections"), " that will comprise patients who had a hospital-acquired infection during their hospital stay"),
+          tags$li("a set ", tags$em("Hepatitis"), " that will comprise patients who have been diagnosed with hepatitis")
         ),
-        p(strong("2) Manage data sources")),
-        p("You can modify the names of data sources by double-clicking on the corresponding row and column in the table."),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ",
+          strong("Manage data sources")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "You can modify the name of the data sources by double-clicking on the corresponding row and column in the table."),
         p("Once the information is modified, click on ", tags$em("Save"), "."),
-        p("To delete one or more data sources, select them by clicking on them in the table and then click on ", tags$em("Delete selection"), "."),
-        p("You can also delete a data source by clicking on the ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " icon."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "To delete one or more data sources, select them by clicking on them in the table and then click on ", tags$em("Delete selection"), "."),
+        p("You can also delete a data source by clicking on the icon  ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " ."),
         br()
       )
     }
@@ -108,42 +184,56 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Ajouter un set de données")),
-        p("Pour créer un set de données, entrez un nom, choisissez de ", strong("quelle source de données"), " va dépendre le set puis cliquez sur ", tags$em("Ajouter"), "."),
-        p("Un set de données comprend ", strong("plusieurs études"), "."),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
+          strong("Ajouter un set de données")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Pour créer un set de données, entrez un nom, choisissez de ", strong("quelle source de données"), " va dépendre le set puis cliquez sur ", tags$em("Ajouter"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Un set de données comprend ", strong("plusieurs études"), "."),
         p("Par exemple, vous créez un set de données nommé ", tags$em("Infections nosocomiales"), " à partir de la source de données ", tags$em("MIMIC-IV"), 
           ", qui comprendra tous les patients ayant développé une infection nosocomiale au cours d'une période définie."),
-        p("Plusieurs études seront créées à partir de ce set, par exemple "),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Plusieurs études seront créées à partir de ce set, par exemple "),
         tags$ul(
-          tags$li("une étude ", tags$em("Mortalité et infections nosocomiales")),
-          tags$li("une étude ", tags$em("Epidémiologie des infections nosocomiales"))
+          tags$li("une étude ", tags$em("Epidémiologie des infections nosocomiales")),
+          tags$li("une étude ", tags$em("Incidence des infections nosocomiales à BMR"))
         ),
-        p(strong("2) Gérer les sets de données")),
-        p("Vous pouvez modifier le nom des sets de données en double-cliquant sur la ligne et la colonne correspondants dans le tableau."),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ",
+          strong("Gérer les sets de données")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Vous pouvez modifier le nom des sets de données en double-cliquant sur la ligne et la colonne correspondants dans le tableau."),
         p("Une fois les informations modifiées, cliquez sur ", tags$em("Sauvegarder"), "."),
-        p("Pour supprimer un ou plusieurs sets de données, sélectionnez-les en cliquant dessus dans le tableau puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
-        p("Vous pouvez également supprimer un set de données en cliquant sur l'icône ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Pour supprimer un ou plusieurs sets de données, sélectionnez-les en cliquant dessus dans le tableau puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
+        p("Vous pouvez également supprimer un set de données en cliquant sur l'icône  ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " ."),
         br()
       )
     }
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Add a dataset")),
-        p("To create a dataset, enter a name, choose ", strong("which data source"), " the dataset will depend on, and click ", tags$em("Add"), "."),
-        p("A dataset comprises ", strong("multiple studies"), "."),
-        p("For example, you create a dataset named ", tags$em("Nosocomial infections"), " from the data source ", tags$em("MIMIC-IV"),
-          ", which will include all patients who developed a nosocomial infection during a defined period."),
-        p("Multiple studies will be created from this dataset, such as "),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", 
+          strong("Add a data set")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "To create a data set, enter a name, choose from which ", strong("data source"), " the set will depend and then click on ", tags$em("Add"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "A data set includes ", strong("several studies"), "."),
+        p("For example, you create a data set named ", tags$em("Nosocomial Infections"), " from the data source ", tags$em("MIMIC-IV"), 
+          ", which will include all patients who developed a nosocomial infection over a defined period."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Several studies will be created from this set, for example "),
         tags$ul(
-          tags$li("a study on ", tags$em("Mortality and nosocomial infections")),
-          tags$li("a study on ", tags$em("Epidemiology of nosocomial infections"))
+          tags$li("a study ", tags$em("Epidemiology of Nosocomial Infections")),
+          tags$li("a study ", tags$em("Incidence of MDR Nosocomial Infections"))
         ),
-        p(strong("2) Manage datasets")),
-        p("You can modify the name of the datasets by double-clicking on the corresponding row and column in the table."),
-        p("Once the information is modified, click ", tags$em("Save"), "."),
-        p("To delete one or more datasets, select them by clicking on them in the table, then click on ", tags$em("Delete selection"), "."),
-        p("You can also delete a dataset by clicking on the ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " icon."),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", 
+          strong("Manage data sets")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "You can modify the name of the data sets by double-clicking on the corresponding row and column in the table."),
+        p("Once the information is modified, click on ", tags$em("Save"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "To delete one or more data sets, select them by clicking on them in the table and then click on ", tags$em("Delete Selection"), "."),
+        p("You can also delete a data set by clicking on the icon ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), "."),
         br()
       )
     }
@@ -157,67 +247,90 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("edit_dataset_code")
     
-    div_code_1 <- div(
-      "## Code ##",
-      style = r$code_style
-    )
-    
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p("Dans cette rubrique, vous pouvez ", strong("écrire le code"), " qui permettra d'obtenir les données du set de données."),
-        p("Pour vous aider, référez-vous à la section ", tags$em("Modèle de données"), ", qui détaille le ", strong("modèle de données"), " utilisé par l'application."),
-        p("Pour charger un set de données, deux étapes sont nécessaires :"),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Dans cette rubrique, vous pouvez ", strong("écrire le code"), " qui permettra d'obtenir les données du set de données."),
+        p(tags$i(class = "fa fa-circle-info", style = "color: steelblue;"), " ", 
+          "Pour vous aider, référez-vous à la section ", tags$em("Modèle de données"), ", qui détaille le ", strong("modèle de données"), " utilisé par l'application."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Pour charger un set de données, deux étapes sont nécessaires :"),
         tags$ul(
           tags$li(strong("Créez une fonction"), " qui chargera les données une fois éxécutée, variable par variable (", tags$em("person, measurement"), "...)"),
           tags$li(strong("Importez les données"), " avec la fonction ", tags$em("import_dataset"))
         ),
-        p("La fonction ", tags$em("import_dataset"), " comprend les arguments suivants :"),
+        p(tags$i(class = "fa fa-code", style = "color: steelblue;"), " ", 
+          "La fonction ", tags$em("import_dataset"), " comprend les arguments suivants :"),
         tags$ul(
-          tags$li(tags$em("output, ns, r, d, i18n"), " : qui sont les variables permettant le fonctionnement de l'application"),
+          tags$li(tags$em("output, ns, i18n, r, d"), " : qui sont les variables permettant le fonctionnement de l'application"),
           tags$li(tags$em("dataset_id"), " : où vous indiquez ", strong("l'ID du dataset"), " actuel, via la balise ", tags$em("%dataset_id%")),
           tags$li(tags$em("data"), " : où vous indiquez la ", strong("fonction qui chargera les données"), " pour une variable (exemple : ", tags$em("person"), ")"),
           tags$li(tags$em("type"), " : où vous indiquez la ", strong("variable que vous souhaitez importer"), " (", tags$em("person, measurement"), "...)"),
           tags$li(tags$em("save_as_csv"), " : indiquant si vous souhaitez ", strong("sauvegarder l'import"), " dans un fichier CSV (logical)"),
-          tags$li(tags$em("rewrite"), " : indiquant si vous souhaitez écraser l'ancien fichier CSV pour le remplacer par le nouveau (logical)")
+          tags$li(tags$em("rewrite"), " : indiquant si vous souhaitez écraser l'ancien fichier CSV pour le remplacer par le nouveau (logical)"),
+          tags$li(tags$em("quiet"), " : indique si des messages sont affichés lors de l'éxécution du code (logical)")
         ),
         p("L'argument ", tags$em("rewrite"), " n'est utile que lorsque vous travaillez sur le code permettant d'importer le dataset. ",
           "En effet, inutile d'enregistrer une copie au format CSV de votre import s'il est écrasé et recréé à chaque fois que vous chargez le set de données."),
-        p("Le code que vous créez ici ", strong("s'éxécutera à chaque fois"), " que quelqu'un chargera le set de données,",
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Le code que vous créez ici ", strong("s'éxécutera à chaque fois"), " que quelqu'un chargera le set de données,",
           " d'où le fait d'utiliser l'argument ", tags$em("save_as_csv"), " qui permettra d'économiser des ressources."),
         p("Voici un exemple de code :"),
         div_code_1,
-        p("Cliquez sur ", tags$em("Sauvegarder"), " pour sauvegarder le code, sur ", tags$em("Exécuter"), " pour tester le code."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Cliquez sur ", tags$em("Sauvegarder"), " pour sauvegarder le code, sur ", tags$em("Exécuter"), " pour tester le code."),
         p("Un ", strong("tableau"), " en bas de la page vous indiquera le nombre de lignes chargées par variable."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Utilisez les raccourcis :",
+          tags$ul(
+            tags$li("CMD/CTRL + SHIFT + ENTER : exécute l'ensemble du code"),
+            tags$li("CMD/CTRL + ENTER : exécute le code sélectionné")
+          )  
+        ),
         br()
       )
     }
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p("In this section, you can ", strong("write the code"), " that will retrieve the data from the dataset."),
-        p("To help you, refer to the section ", tags$em("Data Model"), ", which details the ", strong("data model"), " used by the application."),
-        p("To load a dataset, two steps are required:"),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "In this section, you can ", strong("write the code"), " that will allow you to obtain the data from the data set."),
+        p(tags$i(class = "fa fa-circle-info", style = "color: steelblue;"), " ", 
+          "For help, refer to the ", tags$em("Data Model"), " section, which details the ", strong("data model"), " used by the application."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "To load a data set, two steps are necessary:"),
         tags$ul(
-          tags$li(strong("Create a function"), " that will load the data, variable by variable (", tags$em("person, measurement"), "...), when executed."),
+          tags$li(strong("Create a function"), " that will load the data once executed, variable by variable (", tags$em("person, measurement"), "...)."),
           tags$li(strong("Import the data"), " with the function ", tags$em("import_dataset"))
         ),
-        p("The function ", tags$em("import_dataset"), " includes the following arguments:"),
+        p(tags$i(class = "fa fa-code", style = "color: steelblue;"), " ", 
+          "The function ", tags$em("import_dataset"), " includes the following arguments:"),
         tags$ul(
-          tags$li(tags$em("output, ns, r, d, i18n"), " : which are the variables allowing the application to function"),
-          tags$li(tags$em("dataset_id"), " : where you indicate the ", strong("current dataset ID"), ", using the tag ", tags$em("%dataset_id%")),
-          tags$li(tags$em("data"), " : where you specify the ", strong("function that will load the data"), " for a variable (e.g. ", tags$em("person"), ")"),
-          tags$li(tags$em("type"), " : where you indicate the ", strong("variable you wish to import"), " (", tags$em("person, measurement"), "...)"),
-          tags$li(tags$em("save_as_csv"), " : indicating whether you want to ", strong("save the import"), " to a CSV file (logical)"),
-          tags$li(tags$em("rewrite"), " : indicating whether you want to overwrite the old CSV file to replace it with the new one (logical)")
+          tags$li(tags$em("output, ns, i18n, r, d"), ": which are the variables allowing the application to function"),
+          tags$li(tags$em("dataset_id"), ": where you indicate the current ", strong("dataset ID"), ", via the tag ", tags$em("%dataset_id%")),
+          tags$li(tags$em("data"), ": where you indicate the ", strong("function that will load the data"), " for a variable (example: ", tags$em("person"), ")"),
+          tags$li(tags$em("type"), ": where you indicate the ", strong("variable you wish to import"), " (", tags$em("person, measurement"), "...)."),
+          tags$li(tags$em("save_as_csv"), ": indicating whether you want to ", strong("save the import"), " in a CSV file (logical)"),
+          tags$li(tags$em("rewrite"), ": indicating whether you want to overwrite the old CSV file to replace it with the new one (logical)"),
+          tags$li(tags$em("quiet"), ": indicates whether messages are displayed when the code is executed (logical)")
         ),
-        p("The ", tags$em("rewrite"), " argument is only useful when working on the code that imports the dataset. ",
-          "Indeed, there's no need to save a copy in CSV format of your import if it's overwritten and recreated every time you load the dataset."),
-        p("The code you create here will be ", strong("executed every time"), " someone loads the dataset,",
-          " which is why you should use the ", tags$em("save_as_csv"), " argument to save resources."),
-        p("Here's an example of code:"),
+        p("The argument ", tags$em("rewrite"), " is only useful when you are working on the code to import the dataset. ",
+          "Indeed, there's no point in saving a CSV copy of your import if it's overwritten and recreated every time you load the data set."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "The code you create here ", strong("will run each time"), " someone loads the data set,",
+          " hence the use of the argument ", tags$em("save_as_csv"), " which will save resources."),
+        p("Here is an example of code:"),
         div_code_1,
-        p("Click on ", tags$em("Save"), " to save the code, and on ", tags$em("Run"), " to test the code."),
-        p("A ", strong("table"), " at the bottom of the page will indicate the number of rows loaded per variable."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Click on ", tags$em("Save"), " to save the code, on ", tags$em("Execute"), " to test the code."),
+        p("A ", strong("table"), " at the bottom of the page will indicate the number of lines loaded per variable."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Use the shortcuts:",
+          tags$ul(
+            tags$li("CMD/CTRL + SHIFT + ENTER: executes the entire code"),
+            tags$li("CMD/CTRL + ENTER: executes the selected code")
+          )
+        ),
         br()
       )
     }
@@ -233,10 +346,17 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Accès aux données agrégées uniquement")),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          strong("Accès aux données agrégées uniquement")),
         p("Vous pouvez choisir de ne donner accès qu'aux ", strong("Données agrégées"), " d'un set de données."),
         p("Ainsi, les utilisateurs n'auront ", strong("pas accès aux données individuelles"), " de cet set, depuis la page ", tags$em("Données"), "."),
-        p(strong("2) Accès aux données")),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          strong("Version d'OMOP")),
+        p("Sélectionnez la version d'OMOP dont est issu le set de données."),
+        p("Voir la ", tags$a(href = "https://ohdsi.github.io/CommonDataModel/cdm60.html", "documentation OMOP", target = "_blank"),
+          " pour plus d'informations."),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          strong("Accès aux données")),
         p("Choisissez qui a accès à ce set de données."),
         br()
       )
@@ -244,66 +364,76 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Access to aggregated data only")),
-        p("You can choose to give access only to the ", strong("Aggregated data"), " of a dataset."),
-        p("This way, users will ", strong("not have access to individual data"), " of this dataset, from the ", tags$em("Data"), " page."),
-        p(strong("2) Access to data")),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          strong("Access to aggregated data only")),
+        p("You can choose to provide access to the ", strong("Aggregated Data"), " of a dataset only."),
+        p("Thus, users will ", strong("not have access to individual data"), " from this dataset, from the ", tags$em("Data"), " page."),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          strong("OMOP Version")),
+        p("Select the version of OMOP from which the dataset is derived."),
+        p("See the ", tags$a(href = "https://ohdsi.github.io/CommonDataModel/cdm60.html", "OMOP documentation", target = "_blank"),
+          " for more information."),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          strong("Data Access")),
         p("Choose who has access to this dataset."),
         br()
       )
+      
     }
   })
   
-  # Thesaurus management
+  # Vocabularies management
   
   observeEvent(r[[paste0("help_settings_data_management_", prefix, "_page_5")]], {
     
     load_help_page(r)
     
-    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("thesaurus_datatable_card")
+    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("vocabularies_management")
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Ajouter un thésaurus")),
-        p("Pour créer un thésaurus, entrez un nom, choisissez de ", strong("quelle source de données"), " va dépendre le thésaurus puis cliquez sur ", tags$em("Ajouter"), "."),
-        p("Lors que vous accéderez aux sets de données, vous n'aurez accès qu'aux ", strong("thésaurus appartenant à la même source de données"), "que le set de données."),
-        p(strong("2) Gérer les thésaurus")),
-        p("Vous pouvez modifier le nom des thésaurus en double-cliquant sur la ligne et la colonne correspondants dans le tableau."),
-        p("Vous pouvez changer les ", strong("sources de données associées au thésaurus"), " en cliquant sur les menus déroulants dans la colonne ", tags$em("Sources de données"), "."),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", 
+          strong("Ajouter une terminologie")),
+        p("Pour créer une terminologie, entrez un nom, choisissez depuis ", strong("quelles sources de données"), " ces terminologies serront accessibles puis cliquez sur ", tags$em("Ajouter"), "."),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", 
+          strong("Gérer les terminologies")),
+        p("Vous pouvez modifier le nom des terminologies en double-cliquant sur la ligne et la colonne correspondants dans le tableau."),
+        p("Vous pouvez changer les ", strong("sources de données associées à la terminologie"), " en cliquant sur les menus déroulants dans la colonne ", tags$em("Sources de données"), "."),
         p("Une fois les informations modifiées, cliquez sur ", tags$em("Sauvegarder"), "."),
-        p("Pour supprimer un ou plusieurs thésaurus, sélectionnez-les en cliquant dessus dans le tableau puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
-        p("Vous pouvez également supprimer un thésaurus en cliquant sur l'icône ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), "."),
+        p("Pour supprimer une ou plusieurs terminologies, sélectionnez-les en cliquant dessus dans le tableau puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
+        p("Vous pouvez également supprimer une terminologie en cliquant sur l'icône  ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " ."),
         br()
       )
     }
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Add a thesaurus")),
-        p("To create a thesaurus, enter a name, choose which ", strong("data source"), " the thesaurus will depend on, then click ", tags$em("Add"), "."),
-        p("When you access the datasets, you will only have access to the ", strong("thesauri belonging to the same data source"), " as the dataset."),
-        p(strong("2) Manage thesauri")),
-        p("You can edit the name of thesauri by double-clicking on the corresponding row and column in the table."),
-        p("You can change the ", strong("data sources associated with thesauri"), " by clicking on the dropdown menus in the ", tags$em("Data sources"), " column."),
-        p("Once you have made changes, click ", tags$em("Save"), "."),
-        p("To delete one or more thesauri, select them by clicking on them in the table, then click ", tags$em("Delete selected"), "."),
-        p("You can also delete a thesaurus by clicking on the ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " icon."),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", 
+          strong("Add a vocabulary")),
+        p("To create a vocabulary, enter a name, choose from which ", strong("data sources"), " these vocabularies will be accessible and then click on ", tags$em("Add"), "."),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", 
+          strong("Manage vocabularies")),
+        p("You can modify the name of vocabularies by double-clicking on the corresponding row and column in the table."),
+        p("You can change the ", strong("data sources associated with the vocabulary"), " by clicking on the dropdown menus in the ", tags$em("Data sources"), " column."),
+        p("Once the information is modified, click on ", tags$em("Save"), "."),
+        p("To delete one or more vocabularies, select them by clicking on them in the table and then click on ", tags$em("Delete selection"), "."),
+        p("You can also delete a vocabulary by clicking on the icon  ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " ."),
         br()
       )
     }
   })
   
-  # Edit thesaurus code
+  # Edit vocabulary code
   
   observeEvent(r[[paste0("help_settings_data_management_", prefix, "_page_6")]], {
     
     load_help_page(r)
     
-    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("edit_thesaurus_code")
+    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("edit_vocabulary_code")
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        p("Dans cette rubrique, vous pouvez ", strong("écrire le code"), " qui permettra de charger le thésaurus."),
+        
       )
     }
     
@@ -314,13 +444,34 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     }
   })
   
-  # Thesaurus items
+  # Vocabularies tables
   
   observeEvent(r[[paste0("help_settings_data_management_", prefix, "_page_7")]], {
     
     load_help_page(r)
     
-    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("thesaurus_items")
+    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("vocabularies_tables")
+    
+    if (language == "fr"){
+      r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
+        
+      )
+    }
+    
+    if (language == "en"){
+      r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
+        
+      )
+    }
+  })
+  
+  # Import a vocabulary
+  
+  observeEvent(r[[paste0("help_settings_data_management_", prefix, "_page_8")]], {
+    
+    load_help_page(r)
+    
+    r[[paste0("help_settings_data_management_", prefix, "_modal_title")]] <- i18n$t("vocabularies_tables")
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
@@ -337,7 +488,7 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
   
   # Data model
   
-  observeEvent(r[[paste0("help_settings_data_management_", prefix, "_page_8")]], {
+  observeEvent(r[[paste0("help_settings_data_management_", prefix, "_page_9")]], {
     
     load_help_page(r)
     
@@ -345,14 +496,26 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Le modèle de données utilisé par l'application est le ", strong("modèle standard OMOP"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Vous pouvez accéder aux ",
+          tags$a(href = "https://ohdsi.github.io/CommonDataModel/cdm60.html", "détails du modèle de données ici", target = "_blank"), ".")
       )
     }
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "The data model used by the application is the ", strong("OMOP standard model"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "You can access the ",
+          tags$a(href = "https://ohdsi.github.io/CommonDataModel/cdm60.html", "details of the data model here", target = "_blank"), ".")
       )
     }
   })
+  
+  # Copy code divs
+  
+  observeEvent(r$help_settings_data_management_copy_code_1, clipr::write_clip(code_1))
 }

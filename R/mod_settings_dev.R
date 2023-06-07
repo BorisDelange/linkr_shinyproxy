@@ -163,6 +163,9 @@ mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(
     })
 
     help_settings_dev(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
+    
+    observeEvent(input$copy_code_1, r$help_settings_dev_copy_code_1 <- Sys.time())
+    observeEvent(input$copy_code_2, r$help_settings_dev_copy_code_2 <- Sys.time())
   
     # --- --- --- --- -
     # Execute code ----

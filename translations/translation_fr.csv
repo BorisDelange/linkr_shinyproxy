@@ -635,7 +635,7 @@ subsets_management,Gestion des subsets
 edit_subset_code,Editer le code du subset
 sql_lib,Librairie SQL
 deleted_data_source,Source de données supprimée
-perf_monitoring,Mesures des performances
+perf_monitoring,Mesure des performances
 to_do_list,To do list
 elapsed_time,Temps écoulé (sec)
 task,Tâche

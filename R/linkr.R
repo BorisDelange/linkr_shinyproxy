@@ -173,12 +173,12 @@ linkr <- function(
       "only_me")
   )
   
-  do.call(shiny.router::make_router, 
+  suppressWarnings(do.call(shiny.router::make_router, 
     lapply(pages, function(page){
       if (debug) print(paste0(Sys.time(), " - linkr - make_router - ", page))
       shiny.router::route(page, make_layout(language = language, page = page, i18n = i18n, users_accesses_toggles_options = users_accesses_toggles_options))
     })
-  ) -> page
+  ) -> page)
   
   # Load UI & server
   
