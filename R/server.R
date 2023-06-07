@@ -212,7 +212,8 @@ app_server <- function(router, language = "en", app_folder = character(),
     
     # Code style for help pages
     r$code_style <- paste0("display:block; padding: 9.5px; margin: 0 10px 10px 0px; font-size:13px; line-height:1.42857143; color: #333; ",
-      "word-break: break-all; word-wrap: break-word; background-color:#f5f5f5; border: 1px solid #ccc; border-radius: 4px;")
+      "word-break: break-all; word-wrap: break-word; background-color:#f5f5f5; border: 1px solid #ccc; border-radius: 4px;",
+      "position:relative;")
 
     # Route pages
     if (debug) print(paste0(Sys.time(), " - server - shiny.router"))

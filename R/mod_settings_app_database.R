@@ -117,7 +117,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
             shiny::conditionalPanel(
               condition = "input.connection_type == 'remote'", ns = ns,
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
-                make_dropdown(i18n, ns, "sql_lib", options = list(
+                make_dropdown(i18n = i18n, ns = ns, label = "sql_lib", options = list(
                   list(key = "postgres", text = "PostgreSQL"),
                   list(key = "sqlite", text = "SQLite")
                 ), value = "postgres", width = "300px"),
@@ -214,8 +214,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
               code_hotkeys = list(
                 "r", list(
                   run_selection = list(win = "CTRL-ENTER", mac = "CTRL-ENTER|CMD-ENTER"),
-                  run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"),
-                  save = list(win = "CTRL-S", mac = "CTRL-S|CMD-S")
+                  run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER")
                 )
               ),
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
@@ -336,6 +335,11 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     })
     
     help_settings_app_database(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
+    
+    observeEvent(input$copy_code_1, r$help_settings_app_database_copy_code_1 <- Sys.time())
+    observeEvent(input$copy_code_2, r$help_settings_app_database_copy_code_2 <- Sys.time())
+    observeEvent(input$copy_code_3, r$help_settings_app_database_copy_code_3 <- Sys.time())
+    observeEvent(input$copy_code_4, r$help_settings_app_database_copy_code_4 <- Sys.time())
     
     # --- --- --- --- --- -- -
     # Update choiceGroups ----
