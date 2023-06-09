@@ -166,7 +166,7 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- --- ---
     
     cards <- c("subsets_datatable_card", "subsets_persons_card", "subsets_edit_code_card")
-    show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
+    show_or_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     # --- --- --- --- --- -
     # Show message bar ----
@@ -203,6 +203,8 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
     })
     
     help_my_subsets(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
+    
+    observeEvent(input$copy_code_1, r$help_my_subsets_copy_code_1 <- Sys.time())
     
     # --- --- --- --- --- --- --- --
     # When a dataset is selected ----
@@ -722,7 +724,6 @@ mod_my_subsets_server <- function(id = character(), r = shiny::reactiveValues(),
         
         # Render datatable
         
-        print(r$subset_add_persons)
         render_datatable(output = output, r = r, ns = ns, i18n = i18n, data = r$subset_add_persons,
           output_name = "subset_add_persons_datatable", col_names = get_col_names("subset_add_persons", i18n),
           filter = TRUE, sortable_cols = "person_id", searchable_cols = "person_id", selection = "multiple")

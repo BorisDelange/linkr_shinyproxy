@@ -205,7 +205,7 @@ mod_settings_users_server <- function(id = character(), r = shiny::reactiveValue
 
       # Depending on cards activated
       
-      show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
+      show_or_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     }
     
     # --- --- --- --- --- ---

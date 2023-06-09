@@ -1,49 +1,3 @@
-#' Run dataset code 
-#'
-#' @description Runs the code of a dataset
-#' @param output Shiny output variable
-#' @param r A shiny::reactiveValues object, used to communicate between modules
-#' @param d A shiny::reactiveValues object, used to communicate between modules. Contains data loaded from dataset code (d$patients, d$labs_vitals...).
-#' @param dataset_id ID of the dataset we want to load (integer)
-#' @param i18n Translator object from shiny.i18n library
-#' @examples 
-#' \dontrun{
-#' run_dataset_code(output = output, r = r, d = d, dataset_id = 3, i18n = i18n)
-#' }
-run_dataset_code <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), dataset_id = integer(), i18n = character()){
-  
-  # Get code from dataset
-  tryCatch(r$code %>% dplyr::filter(category == "dataset" & link_id == dataset_id) %>% dplyr::pull(code),
-    error = function(e){
-      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_code", 
-        error_name = paste0("run_dataset_code - load_code - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
-      stop(i18n$t("fail_load_code"))}
-  )
-  code <- r$code %>% dplyr::filter(category == "dataset" & link_id == dataset_id) %>% dplyr::pull(code)
-  
-  # Replace %dataset_id% with real dataset_id
-  code <- code %>% 
-    stringr::str_replace_all("%dataset_id%", as.character(dataset_id)) %>%
-    stringr::str_replace_all("\r", "\n")
-  
-  # Reset d variables
-  main_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
-    "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
-    "drug_era", "dose_era", "condition_era", 
-    "person", "observation_period", "visit_occurrence", "visit_detail",
-    "location", "care_site", "provider")
-  sapply(main_tables, function(table) d[[table]] <- tibble::tibble())
-  
-  # Run code
-
-  tryCatch(eval(parse(text = code)),
-    error = function(e){
-      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_execute_code", 
-        error_name = paste0("run_dataset_code - execute_code - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
-      stop(i18n$t("fail_execute_code"))}
-  )
-}
-
 #' Add patients to a subset
 #'
 #' @description Add patients to a subset
@@ -126,184 +80,14 @@ add_persons_to_subset <- function(output, r = shiny::reactiveValues(), m = shiny
       persons <- persons %>% dplyr::bind_cols(other_cols) %>% dplyr::relocate(person_id, .after = "subset_id")
       DBI::dbAppendTable(m$db, "subset_persons", persons)
     },
-    error = function(e){
-      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_inserting_data", 
-        error_name = paste0("add_persons_to_subset - error_inserting_data - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
-      stop(i18n$t("error_inserting_data"))}
+      error = function(e){
+        if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_inserting_data", 
+          error_name = paste0("add_persons_to_subset - error_inserting_data - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
+        stop(i18n$t("error_inserting_data"))}
     )
   }
   
   show_message_bar(output, "add_persons_subset_success", "success", i18n = i18n, ns = ns)
-}
-
-#' Remove patients from a subset
-#'
-#' @description Remove patients from a subset
-#' @param output Shiny output variable
-#' @param r A shiny::reactiveValues object, used to communicate between modules
-#' @param m A shiny::reactiveValues object, used to communicate between modules
-#' @param persons data variable containing patients / persons (data.frame / tibble)
-#' @param subset_id ID of subset (integer)
-#' @param i18n Translator object from shiny.i18n library
-#' @param ns Shiny namespace
-#' @examples 
-#' \dontrun{
-#' persons <- tibble::tribble(~patient_id, 123L, 456L, 789L)
-#' remove_persons_from_subset(output = output, r = r, m = m, persons = persons, subset_id = 3, i18n = i18n, ns = ns)
-#' }
-remove_persons_from_subset <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), persons = tibble::tibble(), 
-  subset_id = integer(), i18n = character(), ns = character()){
-  
-  # Check subset_id
-  
-  if (length(subset_id) == 0){
-    show_message_bar(output, "invalid_subset_id_value", "severeWarning", i18n = i18n, ns = ns)
-    stop(i18n$t("invalid_subset_id_value"))
-  }
-  
-  tryCatch(subset_id <- as.integer(subset_id), 
-    error = function(e){
-      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_subset_id_value", 
-        error_name = paste0("remove_persons_from_subset - invalid_subset_id_value - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
-      stop(i18n$t("invalid_subset_id_value"))},
-    warning = function(w) if (nchar(w[1]) > 0){
-      report_bug(r = r, output = output, error_message = "invalid_subset_id_value", 
-        error_name = paste0("remove_persons_from_subset - invalid_subset_id_value - id = ", subset_id), category = "Warning", error_report = toString(w), i18n = i18n, ns = ns)
-      stop(i18n$t("invalid_subset_id_value"))}
-  )
-  
-  if (is.na(subset_id)){
-    show_message_bar(output, "invalid_subset_id_value", "severeWarning", i18n = i18n, ns = ns)
-    stop(i18n$t("invalid_subset_id_value"))
-  }
-  
-  var_cols <- tibble::tribble(
-    ~name, ~type,
-    "person_id", "integer")
-  
-  # Check col names
-  if (!identical(names(persons), "person_id")){
-    show_message_bar(output, "invalid_col_names", "severeWarning", i18n = i18n, ns = ns)
-    stop(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
-  }
-  
-  # Check col types
-  sapply(1:nrow(var_cols), function(i){
-    var_name <- var_cols[[i, "name"]]
-    if (var_cols[[i, "type"]] == "integer" & !is.integer(persons[[var_name]])){
-      show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
-      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
-    }
-  })
-  
-  # Transform as tibble
-  tryCatch(persons <- tibble::as_tibble(persons), 
-    error = function(e){
-      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = paste0("remove_persons_from_subset - error_transforming_tibble - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
-      stop(i18n$t("error_transforming_tibble"))},
-    warning = function(w) if (nchar(w[1]) > 0){
-      report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
-        error_name = paste0("remove_persons_from_subset - error_transforming_tibble - id = ", subset_id), category = "Warning", error_report = toString(w), i18n = i18n, ns = ns)
-      stop(i18n$t("error_transforming_tibble"))}
-  )
-  
-  tryCatch({ 
-    sql <- glue::glue_sql(paste0("DELETE FROM subset_persons WHERE subset_id = {subset_id} AND ",
-      "person_id IN ({persons %>% dplyr::pull(person_id)*})"), .con = m$db)
-    query <- DBI::dbSendStatement(m$db, sql)
-    DBI::dbClearResult(query)
-  }, 
-  error = function(e){
-    if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_removing_persons_from_subset", 
-      error_name = paste0("remove_persons_from_subset - error_removing_persons_from_subset - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
-    stop(i18n$t("error_removing_persons_from_subset"))},
-  warning = function(w) if (nchar(w[1]) > 0){
-    report_bug(r = r, output = output, error_message = "error_removing_persons_from_subset", 
-      error_name = paste0("remove_persons_from_subset - error_removing_persons_from_subset - id = ", subset_id), category = "Warning", error_report = toString(w), i18n = i18n, ns = ns)
-    stop(i18n$t("error_removing_persons_from_subset"))}
-  )
-  
-  show_message_bar(output, "remove_persons_subset_success", "success", i18n = i18n, ns = ns)
-}
-
-#' Get vocabulary concept
-#'
-#' @description Get a vocabulary concept, from the vocabulary_id and the concept_id or the concept_name
-#' @param output Shiny output variable
-#' @param m A shiny::reactiveValues object, used to communicate between modules
-#' @param vocabulary_id Value of vocabulary_id where the concept will be added (character)
-#' @param concept_name Value of concept_name (character)
-#' @param concept_id Valud of concept_id (integer)
-#' @param method Method used to get the vocabulary concept. Could be "concept_name" or "concept_id" (character)
-#' @param i18n Translator object from shiny.i18n library
-#' @param ns Shiny namespace
-#' @examples 
-#' \dontrun{
-#' get_vocabulary_concept(output = output, m = m, vocabulary_id = "MIMIC-IV", concept_name = "Diuresis", 
-#'   method = "concept_name", i18n = i18n, ns = ns)
-#' }
-get_vocabulary_concept <- function(output, m = shiny::reactiveValues(), vocabulary_id = character(), 
-  concept_name = character(), concept_id = integer(), method = character(), i18n = character(), ns = character()){
-  
-  stop_fct <- FALSE
-  result <- tibble::tibble()
-  
-  # Check vocabulary_id
-  
-  if (length(vocabulary_id) == 0) stop_fct <- TRUE
-  else if (is.na(vocabulary_id) | vocabulary_id == "") stop_fct <- TRUE
-  
-  if (stop_fct){
-    show_message_bar(output, "invalid_vocabulary_id_value", "severeWarning", i18n = i18n, ns = ns)
-    stop(i18n$t("invalid_vocabulary_id_value"))
-  }
-  
-  # Check method
-  
-  if (length(method) == 0) stop_fct <- TRUE
-  else if (method %not_in% c("concept_id", "concept_name")) stop_fct <- TRUE
-  if (stop_fct){
-    show_message_bar(output, "invalid_method_value", "severeWarning", i18n = i18n, ns = ns)
-    stop(i18n$t("invalid_method_value"))
-  }
-  
-  # Search by concept name
-  
-  if (method == "concept_name"){
-    
-    if (length(concept_name) == 0) stop_fct <- TRUE
-    else if (is.na(concept_name) | concept_name == "") stop_fct <- TRUE
-    if (stop_fct){
-      show_message_bar(output, "invalid_concept_name_value", "severeWarning", i18n = i18n, ns = ns)
-      stop(i18n$t("invalid_concept_name_value"))
-    }
-    
-    sql <- glue::glue_sql("SELECT * FROM concept WHERE vocabulary_id = {vocabulary_id} AND concept_name = {concept_name}", .con = m$db)
-    result <- DBI::dbGetQuery(m$db, sql)
-  }
-  
-  # Search by concept id
-  
-  else if (method == "concept_id"){
-    
-    if (length(concept_id) == 0) stop_fct <- TRUE
-    else if (is.na(concept_id)) stop_fct <- TRUE
-    if (stop_fct){
-      show_message_bar(output, "invalid_concept_id_value", "severeWarning", i18n = i18n, ns = ns)
-      stop(i18n$t("invalid_concept_id_value"))
-    }
-    
-    sql <- glue::glue_sql("SELECT * FROM concept WHERE vocabulary_id = {vocabulary_id} AND concept_id = {concept_id}", .con = m$db)
-    result <- DBI::dbGetQuery(m$db, sql)
-  }
-  
-  if (nrow(result) == 0){
-    show_message_bar(output, "concept_not_found", "severeWarning", i18n = i18n, ns = ns)
-    stop(i18n$t("concept_not_found"))
-  }
-  
-  else result
 }
 
 #' Add vocabulary concept
@@ -424,4 +208,220 @@ add_vocabulary_concept <- function(output, m = shiny::reactiveValues(), vocabula
   }
   
   show_message_bar(output, "vocabulary_concept_added", "success", i18n = i18n, ns = ns)
+}
+
+#' Get vocabulary concept
+#'
+#' @description Get a vocabulary concept, from the vocabulary_id and the concept_id or the concept_name
+#' @param output Shiny output variable
+#' @param m A shiny::reactiveValues object, used to communicate between modules
+#' @param vocabulary_id Value of vocabulary_id where the concept will be added (character)
+#' @param concept_name Value of concept_name (character)
+#' @param concept_id Valud of concept_id (integer)
+#' @param method Method used to get the vocabulary concept. Could be "concept_name" or "concept_id" (character)
+#' @param i18n Translator object from shiny.i18n library
+#' @param ns Shiny namespace
+#' @examples 
+#' \dontrun{
+#' get_vocabulary_concept(output = output, m = m, vocabulary_id = "MIMIC-IV", concept_name = "Diuresis", 
+#'   method = "concept_name", i18n = i18n, ns = ns)
+#' }
+get_vocabulary_concept <- function(output, m = shiny::reactiveValues(), vocabulary_id = character(), 
+  concept_name = character(), concept_id = integer(), method = character(), i18n = character(), ns = character()){
+  
+  stop_fct <- FALSE
+  result <- tibble::tibble()
+  
+  # Check vocabulary_id
+  
+  if (length(vocabulary_id) == 0) stop_fct <- TRUE
+  else if (is.na(vocabulary_id) | vocabulary_id == "") stop_fct <- TRUE
+  
+  if (stop_fct){
+    show_message_bar(output, "invalid_vocabulary_id_value", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_vocabulary_id_value"))
+  }
+  
+  # Check method
+  
+  if (length(method) == 0) stop_fct <- TRUE
+  else if (method %not_in% c("concept_id", "concept_name")) stop_fct <- TRUE
+  if (stop_fct){
+    show_message_bar(output, "invalid_method_value", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_method_value"))
+  }
+  
+  # Search by concept name
+  
+  if (method == "concept_name"){
+    
+    if (length(concept_name) == 0) stop_fct <- TRUE
+    else if (is.na(concept_name) | concept_name == "") stop_fct <- TRUE
+    if (stop_fct){
+      show_message_bar(output, "invalid_concept_name_value", "severeWarning", i18n = i18n, ns = ns)
+      stop(i18n$t("invalid_concept_name_value"))
+    }
+    
+    sql <- glue::glue_sql("SELECT * FROM concept WHERE vocabulary_id = {vocabulary_id} AND concept_name = {concept_name}", .con = m$db)
+    result <- DBI::dbGetQuery(m$db, sql)
+  }
+  
+  # Search by concept id
+  
+  else if (method == "concept_id"){
+    
+    if (length(concept_id) == 0) stop_fct <- TRUE
+    else if (is.na(concept_id)) stop_fct <- TRUE
+    if (stop_fct){
+      show_message_bar(output, "invalid_concept_id_value", "severeWarning", i18n = i18n, ns = ns)
+      stop(i18n$t("invalid_concept_id_value"))
+    }
+    
+    sql <- glue::glue_sql("SELECT * FROM concept WHERE vocabulary_id = {vocabulary_id} AND concept_id = {concept_id}", .con = m$db)
+    result <- DBI::dbGetQuery(m$db, sql)
+  }
+  
+  if (nrow(result) == 0){
+    show_message_bar(output, "concept_not_found", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("concept_not_found"))
+  }
+  
+  else result
+}
+
+#' Remove patients from a subset
+#'
+#' @description Remove patients from a subset
+#' @param output Shiny output variable
+#' @param r A shiny::reactiveValues object, used to communicate between modules
+#' @param m A shiny::reactiveValues object, used to communicate between modules
+#' @param persons data variable containing patients / persons (data.frame / tibble)
+#' @param subset_id ID of subset (integer)
+#' @param i18n Translator object from shiny.i18n library
+#' @param ns Shiny namespace
+#' @examples 
+#' \dontrun{
+#' persons <- tibble::tribble(~patient_id, 123L, 456L, 789L)
+#' remove_persons_from_subset(output = output, r = r, m = m, persons = persons, subset_id = 3, i18n = i18n, ns = ns)
+#' }
+remove_persons_from_subset <- function(output, r = shiny::reactiveValues(), m = shiny::reactiveValues(), persons = tibble::tibble(), 
+  subset_id = integer(), i18n = character(), ns = character()){
+  
+  # Check subset_id
+  
+  if (length(subset_id) == 0){
+    show_message_bar(output, "invalid_subset_id_value", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_subset_id_value"))
+  }
+  
+  tryCatch(subset_id <- as.integer(subset_id), 
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "invalid_subset_id_value", 
+        error_name = paste0("remove_persons_from_subset - invalid_subset_id_value - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
+      stop(i18n$t("invalid_subset_id_value"))},
+    warning = function(w) if (nchar(w[1]) > 0){
+      report_bug(r = r, output = output, error_message = "invalid_subset_id_value", 
+        error_name = paste0("remove_persons_from_subset - invalid_subset_id_value - id = ", subset_id), category = "Warning", error_report = toString(w), i18n = i18n, ns = ns)
+      stop(i18n$t("invalid_subset_id_value"))}
+  )
+  
+  if (is.na(subset_id)){
+    show_message_bar(output, "invalid_subset_id_value", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("invalid_subset_id_value"))
+  }
+  
+  var_cols <- tibble::tribble(
+    ~name, ~type,
+    "person_id", "integer")
+  
+  # Check col names
+  if (!identical(names(persons), "person_id")){
+    show_message_bar(output, "invalid_col_names", "severeWarning", i18n = i18n, ns = ns)
+    stop(i18n$t("valid_col_names_are"), toString(var_cols %>% dplyr::pull(name)))
+  }
+  
+  # Check col types
+  sapply(1:nrow(var_cols), function(i){
+    var_name <- var_cols[[i, "name"]]
+    if (var_cols[[i, "type"]] == "integer" & !is.integer(persons[[var_name]])){
+      show_message_bar(output, "invalid_col_types", "severeWarning", i18n = i18n, ns = ns)
+      stop(paste0(i18n$t("column"), " ", var_name, " ", i18n$t("type_must_be_integer")))
+    }
+  })
+  
+  # Transform as tibble
+  tryCatch(persons <- tibble::as_tibble(persons), 
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
+        error_name = paste0("remove_persons_from_subset - error_transforming_tibble - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
+      stop(i18n$t("error_transforming_tibble"))},
+    warning = function(w) if (nchar(w[1]) > 0){
+      report_bug(r = r, output = output, error_message = "error_transforming_tibble", 
+        error_name = paste0("remove_persons_from_subset - error_transforming_tibble - id = ", subset_id), category = "Warning", error_report = toString(w), i18n = i18n, ns = ns)
+      stop(i18n$t("error_transforming_tibble"))}
+  )
+  
+  tryCatch({ 
+    sql <- glue::glue_sql(paste0("DELETE FROM subset_persons WHERE subset_id = {subset_id} AND ",
+      "person_id IN ({persons %>% dplyr::pull(person_id)*})"), .con = m$db)
+    query <- DBI::dbSendStatement(m$db, sql)
+    DBI::dbClearResult(query)
+  }, 
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "error_removing_persons_from_subset", 
+        error_name = paste0("remove_persons_from_subset - error_removing_persons_from_subset - id = ", subset_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
+      stop(i18n$t("error_removing_persons_from_subset"))},
+    warning = function(w) if (nchar(w[1]) > 0){
+      report_bug(r = r, output = output, error_message = "error_removing_persons_from_subset", 
+        error_name = paste0("remove_persons_from_subset - error_removing_persons_from_subset - id = ", subset_id), category = "Warning", error_report = toString(w), i18n = i18n, ns = ns)
+      stop(i18n$t("error_removing_persons_from_subset"))}
+  )
+  
+  show_message_bar(output, "remove_persons_subset_success", "success", i18n = i18n, ns = ns)
+}
+
+#' Run dataset code 
+#'
+#' @description Runs the code of a dataset
+#' @param output Shiny output variable
+#' @param r A shiny::reactiveValues object, used to communicate between modules
+#' @param d A shiny::reactiveValues object, used to communicate between modules. Contains data loaded from dataset code (d$patients, d$labs_vitals...).
+#' @param dataset_id ID of the dataset we want to load (integer)
+#' @param i18n Translator object from shiny.i18n library
+#' @examples 
+#' \dontrun{
+#' run_dataset_code(output = output, r = r, d = d, dataset_id = 3, i18n = i18n)
+#' }
+run_dataset_code <- function(output, r = shiny::reactiveValues(), d = shiny::reactiveValues(), dataset_id = integer(), i18n = character()){
+  
+  # Get code from dataset
+  tryCatch(r$code %>% dplyr::filter(category == "dataset" & link_id == dataset_id) %>% dplyr::pull(code),
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_load_code", 
+        error_name = paste0("run_dataset_code - load_code - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("fail_load_code"))}
+  )
+  code <- r$code %>% dplyr::filter(category == "dataset" & link_id == dataset_id) %>% dplyr::pull(code)
+  
+  # Replace %dataset_id% with real dataset_id
+  code <- code %>% 
+    stringr::str_replace_all("%dataset_id%", as.character(dataset_id)) %>%
+    stringr::str_replace_all("\r", "\n")
+  
+  # Reset d variables
+  main_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",
+    "observation", "death", "note", "note_nlp", "specimen", "fact_relationship", "payer_plan_period", "cost", 
+    "drug_era", "dose_era", "condition_era", 
+    "person", "observation_period", "visit_occurrence", "visit_detail",
+    "location", "care_site", "provider")
+  sapply(main_tables, function(table) d[[table]] <- tibble::tibble())
+  
+  # Run code
+
+  tryCatch(eval(parse(text = code)),
+    error = function(e){
+      if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_execute_code", 
+        error_name = paste0("run_dataset_code - execute_code - id = ", dataset_id), category = "Error", error_report = toString(e), i18n = i18n)
+      stop(i18n$t("fail_execute_code"))}
+  )
 }

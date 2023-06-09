@@ -119,7 +119,7 @@ mod_settings_dev_server <- function(id = character(), r = shiny::reactiveValues(
     # --- --- --- --- --- ---
     
     cards <- c("dev_edit_code_card", "dev_perf_monitoring_card", "dev_to_do_list_card")
-    show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
+    show_or_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     if ("dev_edit_code_card" %in% r$user_accesses) shinyjs::show("dev_edit_code_card")
     else shinyjs::show("dev_edit_code_card_forbidden")
     

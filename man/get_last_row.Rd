@@ -9,12 +9,13 @@ get_last_row(con, table)
 \arguments{
 \item{con}{DBI connection object to the database}
 
-\item{table}{Name of the table (character)
-#' @examples
-\dontrun{
-get_last_row(con = r$db, table = "plugins")
-}}
+\item{table}{Name of the table (character)}
 }
 \description{
 Get the last row ID of a table
+}
+\examples{
+\dontrun{
+get_last_row(con = r$db, table = "plugins")
+}
 }

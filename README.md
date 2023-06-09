@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# LinkR <a href="https://github.com/BorisDelange/LinkR"><img src="inst/app/www/hex.png" align="right" height="140" /></a>
+# LinkR <a href="https://github.com/BorisDelange/LinkR"><img src="man/figures/hex.png" align="right" width = "123" height="140" /></a>
 
 <!-- badges: start -->
 
@@ -84,6 +84,8 @@ See `?linkr` for more informations.
 The first load may take a few minutes to create the application database
 and download the default data.
 
+Use “admin” as **ID & password** for your first connection.
+
 ## Contributions
 
 LinkR **needs help** to evolve! You can contribute by creating plugins,
@@ -99,8 +101,9 @@ here</a> to report a bug.
 LinkR is supported by the **Interhop** association, promoting
 open-source and interoperability in healthcare.
 
-You can **<a href = "https://interhop.org/dons/" target = "_blank">make
-a donation here</a>**.
+You can
+**<a href = "https://interhop.org/en/dons/" target = "_blank">make a
+donation here</a>**.
 
 ## Contact
 

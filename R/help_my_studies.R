@@ -42,15 +42,32 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
   
   # Code divs
   
-  code_1 <- paste0("Bonjour à tous.\n\n",
+  code_1 <- list()
+  div_code_1 <- list()
+  
+  code_1$fr <- paste0("Bonjour à tous.\n\n",
     "Voici les données que j'obtiens lorsque je charge la variable *d$person*.\n\n",
     "```{r}\n",
     "d$person\n",
     "```")
-  
-  div_code_1 <- div(
+  div_code_1$fr <- div(
     span("Bonjour à tous."), br(), br(),
     span("Voici les données que j'obtiens lorsque je charge la variable *d$person*."), br(), br(),
+    span("```{r}"), br(),
+    span("d$person"), br(),
+    span("```"), br(),
+    shiny.fluent::IconButton.shinyInput(ns("copy_code_1"), iconProps = list(iconName = "Copy"), style = "position:absolute; top:5px; right:5px;"),
+    style = r$code_style
+  )
+  
+  code_1$en <- paste0("Hello everyonde.\n\n",
+    "Here are the data I get when I load the *d$person* variable *d$person*.\n\n",
+    "```{r}\n",
+    "d$person\n",
+    "```")
+  div_code_1$en <- div(
+    span("Hello everyone."), br(), br(),
+    span("Here are the data I get when I load the *d$person* variable."), br(), br(),
     span("```{r}"), br(),
     span("d$person"), br(),
     span("```"), br(),
@@ -79,7 +96,7 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
           "Vous pouvez ", strong("utiliser les données de l'étude actuellement chargée"), "."),
         p("Voici un exemple de code en RMarkdown."),
-        div_code_1,
+        div_code_1$fr,
         p("Cliquez sur ", tags$em("Aperçu"), " pour afficher un aperçu du message, avec le code exécuté."),
         tags$h3(tags$i(class = "fa fa-message", style = "color: steelblue;"), " ",
           strong("Tous les messages")),
@@ -103,7 +120,7 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
           "You can ", strong("use the data from the currently loaded study"), "."),
         p("Here is an example of code in RMarkdown."),
-        div_code_1,
+        div_code_1$en,
         p("Click on ", tags$em("Preview"), " to display a preview of the message, with the code executed."),
         tags$h3(tags$i(class = "fa fa-message", style = "color: steelblue;"), " ",
           strong("All messages")),
@@ -186,5 +203,5 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
   
   # Copy code divs
   
-  observeEvent(r$help_my_studies_copy_code_1, clipr::write_clip(code_1))
+  observeEvent(r$help_my_studies_copy_code_1, clipr::write_clip(code_1[[language]]))
 }

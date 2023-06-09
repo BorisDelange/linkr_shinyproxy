@@ -318,7 +318,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- --- ---
     
     cards <- c("studies_messages_card", "studies_description_card", "studies_datatable_card", "studies_options_card")
-    show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
+    show_or_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
 
     # --- --- --- --- --- -
     # Show message bar ----

@@ -403,7 +403,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     cards <- c("creation_card", "datatable_card", "edit_code_card", "options_card", "vocabularies_tables_datatable_card", "import_vocabulary_card")
     sapply(cards, shinyjs::hide)
     
-    show_hide_cards(r = r, input = input, session = session, table = table, id = id, cards = cards)
+    show_or_hide_cards(r = r, input = input, session = session, table = table, id = id, cards = cards)
     
     # Show first card
     

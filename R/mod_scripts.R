@@ -334,7 +334,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     cards <- c("all_scripts_card", "dataset_scripts_card", "scripts_datatable_card",
       "scripts_creation_card", "scripts_edit_code_card", "scripts_options_card", "import_script_card", "export_script_card")
-    # show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
+    # show_or_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     observeEvent(input$current_tab, {
       

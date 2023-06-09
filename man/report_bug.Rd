@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_settings_log.R
 \name{report_bug}
 \alias{report_bug}
-\title{Add log entry - report bug}
+\title{Report bug}
 \usage{
 report_bug(
   r = shiny::reactiveValues(),
@@ -28,12 +28,14 @@ report_bug(
 
 \item{error_report}{Report of the error (character)}
 
-\item{i18n}{Translator object from shiny.i18n library
-#' \dontrun{
-report_bug(r = r, output = output, error_message = "failed_execute_code", 
-  error_name = "failed_execute_code", category = "Error", error_report = toString(e)rror_report, i18n = i18n)
-}}
+\item{i18n}{Translator object from shiny.i18n library}
 }
 \description{
-Add log entry - report bug
+Report bug
+}
+\examples{
+\dontrun{
+report_bug(r = r, output = output, error_message = "failed_execute_code", 
+  error_name = "failed_execute_code", category = "Error", error_report = toString(e)rror_report, i18n = i18n)
+}
 }

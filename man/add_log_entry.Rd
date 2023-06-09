@@ -18,11 +18,13 @@ add_log_entry(
 
 \item{name}{Name of the log entry, eg : "Add a new dataset" (character)}
 
-\item{value}{Value of the log entry, eg : "INSERT INTO ..."
-\dontrun{
-add_log_entry(r = r, category = "delete_data", name = "SQL query", value = "DELETE FROM datasets WHERE id = 5")
-}}
+\item{value}{Value of the log entry, eg : "INSERT INTO ..."}
 }
 \description{
 Add a log entry
+}
+\examples{
+\dontrun{
+add_log_entry(r = r, category = "delete_data", name = "SQL query", value = "DELETE FROM datasets WHERE id = 5")
+}
 }

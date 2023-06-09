@@ -85,7 +85,7 @@ mod_settings_git_server <- function(id = character(), r = shiny::reactiveValues(
     # --- --- --- --- --- ---
     
     cards <- c("git_add_repo_card", "git_repos_management_card")
-    show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
+    show_or_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     if ("git_add_repo_card" %in% r$user_accesses) shinyjs::show("git_add_repo_card")
     else shinyjs::show("git_add_repo_card_forbidden")
     

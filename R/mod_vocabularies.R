@@ -241,7 +241,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
     # --- --- --- --- --- ---
     
     cards <- c("vocabularies_concepts_card", "vocabularies_mapping_card")
-    show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
+    show_or_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     # --- --- --- --- --- -
     # Show message bar ----

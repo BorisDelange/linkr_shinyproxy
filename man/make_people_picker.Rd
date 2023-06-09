@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_layout_functions.R
 \name{make_people_picker}
 \alias{make_people_picker}
-\title{Make peopel picker}
+\title{Make people picker}
 \usage{
 make_people_picker(
   i18n = character(),

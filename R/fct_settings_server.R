@@ -1173,7 +1173,21 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   if (r_message_bar) r[[paste0(table, "_show_message_bar")]] <- tibble::tibble(message = "modif_saved", type = "success", trigger = Sys.time())
 }
 
-show_hide_cards <- function(r = shiny::reactiveValues(), session, input, table = character(), id = character(), cards = character()){
+#' Show or hide cards
+#' 
+#' @description Show or hide cards depending of selected shiny.fluent::PivotItem
+#' @param r Shiny reactive value, used to communicate between modules (reactiveValue)
+#' @param session Shiny session variable
+#' @param input Shiny input variable
+#' @param table Name of the database table (character)
+#' @param id Name of the ID of the page (character)
+#' @param cards Character vector containing names of current page cards (character)
+#' @examples 
+#' \dontrun{
+#' cards <- c("subsets_datatable_card", "subsets_persons_card", "subsets_edit_code_card")
+#' show_or_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
+#' }
+show_or_hide_cards <- function(r = shiny::reactiveValues(), session, input, table = character(), id = character(), cards = character()){
     
   # If user has access, show or hide card when Pivot is clicked
   observeEvent(input$current_tab, {

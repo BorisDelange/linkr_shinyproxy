@@ -4,6 +4,7 @@
 #' @param category Category of the log entry, eg : "SQL query" (character)
 #' @param name Name of the log entry, eg : "Add a new dataset" (character)
 #' @param value Value of the log entry, eg : "INSERT INTO ..."
+#' @examples
 #' \dontrun{
 #' add_log_entry(r = r, category = "delete_data", name = "SQL query", value = "DELETE FROM datasets WHERE id = 5")
 #' }
@@ -22,7 +23,7 @@ add_log_entry <- function(r, category = character(), name = character(), value =
   DBI::dbClearResult(query)
 }
 
-#' Add log entry - report bug
+#' Report bug
 #' 
 #' @param r Shiny reactive value, used to communicate between modules
 #' @param output Shiny output variable
@@ -31,9 +32,10 @@ add_log_entry <- function(r, category = character(), name = character(), value =
 #' @param category Category : error or warning ? (character)
 #' @param error_report Report of the error (character)
 #' @param i18n Translator object from shiny.i18n library
-#' #' \dontrun{
+#' @examples
+#' \dontrun{
 #' report_bug(r = r, output = output, error_message = "failed_execute_code", 
-#'   error_name = "failed_execute_code", category = "Error", error_report = toString(e)rror_report, i18n = i18n)
+#'   error_name = "failed_execute_code", category = "Error", error_report = toString(error_report, i18n = i18n))
 #' }
 report_bug <- function(r = shiny::reactiveValues(), output, error_message = character(), 
   error_name = character(), category = character(), error_report = character(), i18n = character(), ns = character()){

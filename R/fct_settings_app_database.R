@@ -404,7 +404,7 @@ get_db <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), app
 #' @description Get the last row ID of a table
 #' @param con DBI connection object to the database
 #' @param table Name of the table (character)
-#' #' @examples
+#' @examples
 #' \dontrun{
 #' get_last_row(con = r$db, table = "plugins")
 #' }

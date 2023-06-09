@@ -302,7 +302,7 @@ mod_settings_app_database_server <- function(id = character(), r = shiny::reacti
     # --- --- --- --- --- ---
     
     cards <- c("db_connection_infos_card", "db_datatable_card", "db_request_card", "db_save_card", "db_restore_card")
-    show_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
+    show_or_hide_cards(r = r, input = input, session = session, id = id, cards = cards)
     
     # Show first card
     if ("db_connection_infos_card" %in% r$user_accesses) shinyjs::show("db_connection_infos_card")
