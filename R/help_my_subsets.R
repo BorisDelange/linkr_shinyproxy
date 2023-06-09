@@ -93,19 +93,15 @@ help_my_subsets <- function(output, r = shiny::reactiveValues(), id = character(
     
     if (language == "fr"){
       r$help_my_subsets_modal_text <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
-          strong("Créer un subset")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Créer un subset")),
         p("Pour créer un subset, allez dans l'onglet ", tags$em("Gestion des subsets"), "."), 
         p("Choisissez un nom, faites-en sorte qu'il ne soit pas déjà utilisé, puis cliquez sur ", tags$em("Ajouter"), "."),
-        tags$h3(tags$i(class = "fa fa-pen-to-square", style = "color: steelblue;"), " ",
-          strong("Changer le nom d'un subset")),
+        tags$h3(tags$i(class = "fa fa-pen-to-square", style = "color: steelblue;"), " ", strong("Changer le nom d'un subset")),
         p("Pour changer le nom d'un subset, double-cliquez sur le nom, changez-le, faites-en sorte qu'il ne soit pas déjà utilisé, puis cliquez sur ", tags$em("Sauvegarder"), "."),
-        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ",
-          strong("Supprimer un ou des subsets")),
+        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ", strong("Supprimer un ou des subsets")),
         p("Pour supprimer un ou plusieurs subsets, sélectionnez-les en cliquant dessus dans le tableau puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
         p("Vous pouvez également supprimer un subset en cliquant sur l'icône  ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " ."),
-        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ",
-          strong("Editer le code d'un subset")),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Editer le code d'un subset")),
         p("Cliquez sur :"),
         p(shiny::actionButton("edit_code_button_help", "", icon = icon("file-code")), "  pour ", strong("éditer le code"), " du subset,"),
         p(shiny::actionButton("subset_persons_button_help", "", icon = icon("table")), "  pour ", strong("gérer les patients"), " du subset."),
@@ -115,19 +111,15 @@ help_my_subsets <- function(output, r = shiny::reactiveValues(), id = character(
     
     if (language == "en"){
       r$help_my_subsets_modal_text <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
-          strong("Create a subset")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Create a subset")),
         p("To create a subset, go to the ", tags$em("Subset management"), " tab."),
         p("Choose a name that is not already used, then click on ", tags$em("Add"), "."),
-        tags$h3(tags$i(class = "fa fa-pen-to-square", style = "color: steelblue;"), " ",
-          strong("Rename a subset")),
+        tags$h3(tags$i(class = "fa fa-pen-to-square", style = "color: steelblue;"), " ", strong("Rename a subset")),
         p("To rename a subset, double-click on its name, change it to a new name that is not already used, then click on ", tags$em("Save"), "."),
-        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ",
-          strong("Delete one or more subsets")),
+        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ", strong("Delete one or more subsets")),
         p("To delete one or more subsets, select them in the table by clicking on them, then click on ", tags$em("Delete selection"), "."),
         p("You can also delete a subset by clicking on the  ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), "  icon."),
-        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ",
-          strong("Edit the code of a subset")),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Edit the code of a subset")),
         p("Click on"),
         p(shiny::actionButton("edit_code_button_help", "", icon = icon("file-code")), "  to ", strong("edit the code"), " of the subset,"),
         p(shiny::actionButton("subset_persons_button_help", "", icon = icon("table")), "  to ", strong("manage the patients"), " of the subset."),
@@ -149,8 +141,10 @@ help_my_subsets <- function(output, r = shiny::reactiveValues(), id = character(
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
           "Vous pouvez ici ajouter ou supprimer des patients d'un subset en utilisant les fonctions :"),
         tags$ul(
-          tags$li(strong("add_persons_to_subset"), " pour ajouter des patients à un subset"),
-          tags$li(strong("remove_persons_from_subset"), " pour retirer des patients d'un subset")
+          tags$li(strong(tags$a(href = "https://borisdelange.github.io/LinkR/reference/add_persons_to_subset.html", "add_persons_to_subset", target = "_blank")),
+            " pour ajouter des patients à un subset"),
+          tags$li(strong(tags$a(href = "https://borisdelange.github.io/LinkR/reference/remove_persons_from_subset.html", "remove_persons_from_subset", target = "_blank")),
+            " pour retirer des patients d'un subset")
         ),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
           "Ceci permet de sélectionner les patients de ", strong("façon plus ciblée"), " qu'avec le tableau listant tous les patients dans l'onglet ", tags$em("Patients du subset"), "."),
@@ -167,8 +161,9 @@ help_my_subsets <- function(output, r = shiny::reactiveValues(), id = character(
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
           "Here you can add or remove patients from a subset using the following functions:"),
         tags$ul(
-          tags$li(strong("add_persons_to_subset"), " to add patients to a subset"),
-          tags$li(strong("remove_persons_from_subset"), " to remove patients from a subset")
+          tags$li(strong(tags$a(href = "https://borisdelange.github.io/LinkR/reference/add_persons_to_subset.html", "add_persons_to_subset", target = "_blank")), 
+            " to add patients to a subset"),
+          tags$li(strong(tags$a(href = "https://borisdelange.github.io/LinkR/reference/remove_persons_from_subset.html", "remove_persons_from_subset", target = "_blank")), " to remove patients from a subset")
         ),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
           "This allows you to select patients in a ", strong("more targeted way"), " than with the table listing all patients in the ", tags$em("Subset patients"), " tab."),
@@ -191,12 +186,10 @@ help_my_subsets <- function(output, r = shiny::reactiveValues(), id = character(
     
     if (language == "fr"){
       r$help_my_subsets_modal_text <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
-          strong("Ajouter des patients au subset")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Ajouter des patients au subset")),
         p("Pour ajouter des patients au subset sélectionné dans le menu déroulant, ", strong("sélectionnez les patients dans le tableau du bas"),
           " puis cliquez sur ", tags$em("Ajouter"), "."),
-        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ",
-          strong("Supprimer des patients du subset")),
+        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ", strong("Supprimer des patients du subset")),
         p("De la même façon, ", strong("sélectionnez les patients dans le tableau du haut"), 
           " puis cliquez sur ", tags$em("Supprimer la sélection"), " pour retirer les patients du subset."),
         br()
@@ -205,12 +198,10 @@ help_my_subsets <- function(output, r = shiny::reactiveValues(), id = character(
     
     if (language == "en"){
       r$help_my_subsets_modal_text <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
-          strong("Add patients to subset")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Add patients to subset")),
         p("To add patients to the selected subset in the dropdown menu, ", strong("select the patients in the bottom table"),
           " and then click on ", tags$em("Add"), "."),
-        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ",
-          strong("Remove patients from subset")),
+        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ", strong("Remove patients from subset")),
         p("Similarly, ", strong("select the patients in the top table"),
           " and then click on ", tags$em("Delete selection"), " to remove the patients from the subset."),
         br()

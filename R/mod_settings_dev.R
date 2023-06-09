@@ -34,7 +34,7 @@ mod_settings_dev_ui <- function(id = character(), i18n = character()){
     
     shinyjs::hidden(
       div(id = ns("dev_edit_code_card"),
-        make_card_shiny_ace(i18n$t("r_console"),
+        make_shiny_ace_card(i18n$t("r_console"),
           div(
             div(
               shinyAce::aceEditor(

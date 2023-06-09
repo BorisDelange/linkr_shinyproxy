@@ -438,14 +438,14 @@ help_settings_app_database <- function(input, output, r = shiny::reactiveValues(
     
     if (language == "fr"){
       r$help_settings_app_database_modal_text <- div(
-        tags$h3(tags$i(class = "fa fa-download", style = "color: steelblue;"), " ", strong("Exporter la base de données")),
+        tags$h3(tags$i(class = "fa fa-upload", style = "color: steelblue;"), " ", strong("Exporter la base de données")),
         p("Vous pouvez faire des sauvegardes de la base de données depuis l'onglet ", tags$em("Exporter la BDD")),
         p("Vous pouvez choisir quelles tables exporter via les menus déroulants."),
         p("Cliquez ensuite sur ", tags$em("Exporter la base de données"), "."),
         p("La base de données sera alors ", strong("téléchargée au format ZIP"), "."),
         p("Le fichier comprend ", strong("toutes les tables au format CSV"), ", ainsi qu'un fichier ", tags$em("db_info.xml"), 
           " qui renseigne notamment la version de l'application."),
-        tags$h3(tags$i(class = "fa fa-upload", style = "color: steelblue;"), " ", strong("Restaurer la base de données")),
+        tags$h3(tags$i(class = "fa fa-download", style = "color: steelblue;"), " ", strong("Restaurer la base de données")),
         p("Pour restaurer la base de données, il vous suffit se sélectionner un fichier de sauvegarde en cliquant sur ", tags$em("Choisir un fichier ZIP"), "."),
         p("De la même façon que pour l'export, choisissez quelles tables importer via les menus déroulants."),
         p("Cliquez ensuite sur ", tags$em("Restaurer la base de données"), "."),
@@ -455,14 +455,14 @@ help_settings_app_database <- function(input, output, r = shiny::reactiveValues(
     
     if (language == "en"){
       r$help_settings_app_database_modal_text <- div(
-        tags$h3(tags$i(class = "fa fa-download", style = "color: steelblue;"), " ", strong("Export the database")),
+        tags$h3(tags$i(class = "fa fa-upload", style = "color: steelblue;"), " ", strong("Export the database")),
         p("You can back up the database from the ", tags$em("Export the DB"), " tab."),
         p("You can choose which tables to export via the dropdown menus."),
         p("Then click on ", tags$em("Export the database"), "."),
         p("The database will then be ", strong("downloaded as a ZIP file"), "."),
         p("The file includes ", strong("all tables in CSV format"), ", as well as an ", tags$em("db_info.xml"), 
           " file which provides information such as the version of the application."),
-        tags$h3(tags$i(class = "fa fa-upload", style = "color: steelblue;"), " ", strong("Restore the database")),
+        tags$h3(tags$i(class = "fa fa-download", style = "color: steelblue;"), " ", strong("Restore the database")),
         p("To restore the database, simply select a backup file by clicking on ", tags$em("Choose a ZIP file"), "."),
         p("In the same way as for the export, choose which tables to import via the dropdown menus."),
         p("Then click on ", tags$em("Restore the database"), "."),

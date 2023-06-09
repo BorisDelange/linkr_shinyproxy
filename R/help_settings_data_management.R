@@ -121,8 +121,7 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
-          strong("Ajouter une source de données")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Ajouter une source de données")),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
           "Pour créer une source de données, entrez un nom et cliquez sur ", tags$em("Ajouter"), "."),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
@@ -134,8 +133,7 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
           tags$li("un set ", tags$em("Infections nosocomiales"), " qui comprendra les patients ayant eu une infection nosocomiale au cours de leur séjour hospitalier"),
           tags$li("un set ", tags$em("Hépatites"), " qui comprendra les patients ayant été diagnostiqué d'une hépatite")
         ),
-        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ",
-          strong("Gérer les sources de données")),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Gérer les sources de données")),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
           "Vous pouvez modifier le nom des sources de données en double-cliquant sur la ligne et la colonne correspondants dans le tableau."),
         p("Une fois les informations modifiées, cliquez sur ", tags$em("Sauvegarder"), "."),
@@ -148,8 +146,7 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
-          strong("Add a data source")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Add a data source")),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
           "To create a data source, enter a name and click on ", tags$em("Add"), "."),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
@@ -161,8 +158,7 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
           tags$li("a set ", tags$em("Hospital-Acquired Infections"), " that will comprise patients who had a hospital-acquired infection during their hospital stay"),
           tags$li("a set ", tags$em("Hepatitis"), " that will comprise patients who have been diagnosed with hepatitis")
         ),
-        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ",
-          strong("Manage data sources")),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Manage data sources")),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
           "You can modify the name of the data sources by double-clicking on the corresponding row and column in the table."),
         p("Once the information is modified, click on ", tags$em("Save"), "."),
@@ -184,8 +180,7 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
-          strong("Ajouter un set de données")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Ajouter un set de données")),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
           "Pour créer un set de données, entrez un nom, choisissez de ", strong("quelle source de données"), " va dépendre le set puis cliquez sur ", tags$em("Ajouter"), "."),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
@@ -198,8 +193,7 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
           tags$li("une étude ", tags$em("Epidémiologie des infections nosocomiales")),
           tags$li("une étude ", tags$em("Incidence des infections nosocomiales à BMR"))
         ),
-        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ",
-          strong("Gérer les sets de données")),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Gérer les sets de données")),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
           "Vous pouvez modifier le nom des sets de données en double-cliquant sur la ligne et la colonne correspondants dans le tableau."),
         p("Une fois les informations modifiées, cliquez sur ", tags$em("Sauvegarder"), "."),
@@ -212,8 +206,7 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", 
-          strong("Add a data set")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Add a data set")),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
           "To create a data set, enter a name, choose from which ", strong("data source"), " the set will depend and then click on ", tags$em("Add"), "."),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
@@ -226,8 +219,7 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
           tags$li("a study ", tags$em("Epidemiology of Nosocomial Infections")),
           tags$li("a study ", tags$em("Incidence of MDR Nosocomial Infections"))
         ),
-        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", 
-          strong("Manage data sets")),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Manage data sets")),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
           "You can modify the name of the data sets by double-clicking on the corresponding row and column in the table."),
         p("Once the information is modified, click on ", tags$em("Save"), "."),
@@ -257,10 +249,12 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
           "Pour charger un set de données, deux étapes sont nécessaires :"),
         tags$ul(
           tags$li(strong("Créez une fonction"), " qui chargera les données une fois éxécutée, variable par variable (", tags$em("person, measurement"), "...)"),
-          tags$li(strong("Importez les données"), " avec la fonction ", tags$em("import_dataset"))
+          tags$li(strong("Importez les données"), " avec la fonction ", 
+            strong(tags$a(href = "https://borisdelange.github.io/LinkR/reference/import_dataset.html", "import_dataset", target = "_blank")))
         ),
         p(tags$i(class = "fa fa-code", style = "color: steelblue;"), " ", 
-          "La fonction ", tags$em("import_dataset"), " comprend les arguments suivants :"),
+          "La fonction ", tags$em(tags$a(href = "https://borisdelange.github.io/LinkR/reference/import_dataset.html", "import_dataset", target = "_blank")), 
+          " comprend les arguments suivants :"),
         tags$ul(
           tags$li(tags$em("output, ns, i18n, r, d"), " : qui sont les variables permettant le fonctionnement de l'application"),
           tags$li(tags$em("dataset_id"), " : où vous indiquez ", strong("l'ID du dataset"), " actuel, via la balise ", tags$em("%dataset_id%")),
@@ -281,10 +275,11 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
           "Cliquez sur ", tags$em("Sauvegarder"), " pour sauvegarder le code, sur ", tags$em("Exécuter"), " pour tester le code."),
         p("Un ", strong("tableau"), " en bas de la page vous indiquera le nombre de lignes chargées par variable."),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
-          "Utilisez les raccourcis :",
+          "Utilisez les ", strong("raccourcis"), " :",
           tags$ul(
             tags$li("CMD/CTRL + SHIFT + ENTER : exécute l'ensemble du code"),
-            tags$li("CMD/CTRL + ENTER : exécute le code sélectionné")
+            tags$li("CMD/CTRL + ENTER : exécute le code sélectionné"),
+            tags$li("CMD/CTRL + S : sauvegarde le code")
           )  
         ),
         br()
@@ -301,10 +296,12 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
           "To load a data set, two steps are necessary:"),
         tags$ul(
           tags$li(strong("Create a function"), " that will load the data once executed, variable by variable (", tags$em("person, measurement"), "...)."),
-          tags$li(strong("Import the data"), " with the function ", tags$em("import_dataset"))
+          tags$li(strong("Import the data"), " with the function ",
+            tags$em(tags$a(href = "https://borisdelange.github.io/LinkR/reference/import_dataset.html", "import_dataset", target = "_blank")))
         ),
         p(tags$i(class = "fa fa-code", style = "color: steelblue;"), " ", 
-          "The function ", tags$em("import_dataset"), " includes the following arguments:"),
+          "The function ", strong(tags$a(href = "https://borisdelange.github.io/LinkR/reference/import_dataset.html", "import_dataset", target = "_blank")), 
+          " includes the following arguments:"),
         tags$ul(
           tags$li(tags$em("output, ns, i18n, r, d"), ": which are the variables allowing the application to function"),
           tags$li(tags$em("dataset_id"), ": where you indicate the current ", strong("dataset ID"), ", via the tag ", tags$em("%dataset_id%")),
@@ -325,10 +322,11 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
           "Click on ", tags$em("Save"), " to save the code, on ", tags$em("Execute"), " to test the code."),
         p("A ", strong("table"), " at the bottom of the page will indicate the number of lines loaded per variable."),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
-          "Use the shortcuts:",
+          "Use the ", strong("shortcuts"), ":",
           tags$ul(
             tags$li("CMD/CTRL + SHIFT + ENTER: executes the entire code"),
-            tags$li("CMD/CTRL + ENTER: executes the selected code")
+            tags$li("CMD/CTRL + ENTER: executes the selected code"),
+            tags$li("CMD/CTRL + S: saves the code")
           )
         ),
         br()
@@ -346,17 +344,14 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
-          strong("Accès aux données agrégées uniquement")),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Accès aux données agrégées uniquement")),
         p("Vous pouvez choisir de ne donner accès qu'aux ", strong("Données agrégées"), " d'un set de données."),
         p("Ainsi, les utilisateurs n'auront ", strong("pas accès aux données individuelles"), " de cet set, depuis la page ", tags$em("Données"), "."),
-        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
-          strong("Version d'OMOP")),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Version d'OMOP")),
         p("Sélectionnez la version d'OMOP dont est issu le set de données."),
         p("Voir la ", tags$a(href = "https://ohdsi.github.io/CommonDataModel/cdm60.html", "documentation OMOP", target = "_blank"),
           " pour plus d'informations."),
-        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
-          strong("Accès aux données")),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Accès aux données")),
         p("Choisissez qui a accès à ce set de données."),
         br()
       )
@@ -364,17 +359,14 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
-          strong("Access to aggregated data only")),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Access to aggregated data only")),
         p("You can choose to provide access to the ", strong("Aggregated Data"), " of a dataset only."),
         p("Thus, users will ", strong("not have access to individual data"), " from this dataset, from the ", tags$em("Data"), " page."),
-        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
-          strong("OMOP Version")),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("OMOP Version")),
         p("Select the version of OMOP from which the dataset is derived."),
         p("See the ", tags$a(href = "https://ohdsi.github.io/CommonDataModel/cdm60.html", "OMOP documentation", target = "_blank"),
           " for more information."),
-        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
-          strong("Data Access")),
+        tags$h3(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Data Access")),
         p("Choose who has access to this dataset."),
         br()
       )
@@ -392,11 +384,9 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", 
-          strong("Ajouter une terminologie")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Ajouter une terminologie")),
         p("Pour créer une terminologie, entrez un nom, choisissez depuis ", strong("quelles sources de données"), " ces terminologies serront accessibles puis cliquez sur ", tags$em("Ajouter"), "."),
-        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", 
-          strong("Gérer les terminologies")),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Gérer les terminologies")),
         p("Vous pouvez modifier le nom des terminologies en double-cliquant sur la ligne et la colonne correspondants dans le tableau."),
         p("Vous pouvez changer les ", strong("sources de données associées à la terminologie"), " en cliquant sur les menus déroulants dans la colonne ", tags$em("Sources de données"), "."),
         p("Une fois les informations modifiées, cliquez sur ", tags$em("Sauvegarder"), "."),
@@ -408,11 +398,9 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", 
-          strong("Add a vocabulary")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Add a vocabulary")),
         p("To create a vocabulary, enter a name, choose from which ", strong("data sources"), " these vocabularies will be accessible and then click on ", tags$em("Add"), "."),
-        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", 
-          strong("Manage vocabularies")),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Manage vocabularies")),
         p("You can modify the name of vocabularies by double-clicking on the corresponding row and column in the table."),
         p("You can change the ", strong("data sources associated with the vocabulary"), " by clicking on the dropdown menus in the ", tags$em("Data sources"), " column."),
         p("Once the information is modified, click on ", tags$em("Save"), "."),

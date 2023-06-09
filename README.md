@@ -12,7 +12,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 ## Introduction
 
 **LinkR** is a web application that allows for visualization and
-analysis of health data.
+analysis of healthcare data.
 
 The application is coded in R using the Shiny library. It uses the
 common data model
@@ -65,7 +65,7 @@ install.packages("remotes")
 To launch the Shiny app, run:
 
 ``` r
-linkr::linkr(language = "en", app_folder = "My/App/Folder")
+linkr::linkr(language = "en")
 ```
 
 You can use the following arguments in the linkr function :

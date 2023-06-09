@@ -85,8 +85,7 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
     
     if (language == "fr"){
       r$help_my_studies_modal_text <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
-          strong("Nouvelle conversation")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Nouvelle conversation")),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
           "Créez une nouvelle conversation en renseignant ", strong("l'objet"), " et le ", strong("premier message"), " de la conversation."),
         p("Tous les utilisateurs ayant accès à l'étude verront cette conversation."),
@@ -98,8 +97,7 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
         p("Voici un exemple de code en RMarkdown."),
         div_code_1$fr,
         p("Cliquez sur ", tags$em("Aperçu"), " pour afficher un aperçu du message, avec le code exécuté."),
-        tags$h3(tags$i(class = "fa fa-message", style = "color: steelblue;"), " ",
-          strong("Tous les messages")),
+        tags$h3(tags$i(class = "fa fa-message", style = "color: steelblue;"), " ", strong("Tous les messages")),
         p("Toutes les conversations s'affichent ici."),
         p("Une conversation non lue s'affichera en gras."),
         p("Répondez à une conversation en cliquant sur ", tags$em("Nouveau message"), "."),
@@ -109,8 +107,7 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
     
     if (language == "en"){
       r$help_my_studies_modal_text <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
-          strong("New conversation")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("New conversation")),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
           "Create a new conversation by filling in ", strong("the subject"), " and the ", strong("first message"), " of the conversation."),
         p("All users with access to the study will see this conversation."),
@@ -122,8 +119,7 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
         p("Here is an example of code in RMarkdown."),
         div_code_1$en,
         p("Click on ", tags$em("Preview"), " to display a preview of the message, with the code executed."),
-        tags$h3(tags$i(class = "fa fa-message", style = "color: steelblue;"), " ",
-          strong("All messages")),
+        tags$h3(tags$i(class = "fa fa-message", style = "color: steelblue;"), " ", strong("All messages")),
         p("All conversations are displayed here."),
         p("An unread conversation will be displayed in bold."),
         p("Reply to a conversation by clicking on ", tags$em("New message"), "."),
@@ -142,19 +138,15 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
     
     if (language == "fr"){
       r$help_my_studies_modal_text <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
-          strong("Créer une étude")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Créer une étude")),
         p("Pour créer une étude, allez dans l'onglet ", tags$em("Gestion des études"), "."), 
         p("Choisissez un nom, faites-en sorte qu'il ne soit pas déjà utilisé, puis cliquez sur ", tags$em("Ajouter"), "."),
-        tags$h3(tags$i(class = "fa fa-pen-to-square", style = "color: steelblue;"), " ",
-          strong("Changer le nom d'une étude")),
+        tags$h3(tags$i(class = "fa fa-pen-to-square", style = "color: steelblue;"), " ", strong("Changer le nom d'une étude")),
         p("Pour changer le nom d'une étude, double-cliquez sur le nom, changez-le, faites-en sorte qu'il ne soit pas déjà utilisé, puis cliquez sur ", tags$em("Sauvegarder"), "."),
-        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ",
-          strong("Supprimer une ou des études")),
+        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ", strong("Supprimer une ou des études")),
         p("Pour supprimer une ou plusieurs études, sélectionnez-les en cliquant dessus dans le tableau puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
         p("Vous pouvez également supprimer une étude en cliquant sur l'icône  ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), " ."),
-        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ",
-          strong("4) Editer les options d'une étude")),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Editer les options d'une étude")),
         p("Cliquez sur  ", shiny::actionButton("study_options_button_help", "", icon = icon("cog")), "  pour ", strong("éditer les options"), " de l'étude."),
         br()
       )
@@ -162,19 +154,15 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
     
     if (language == "en"){
       r$help_my_studies_modal_text <- div(
-        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ",
-          strong("Create a study")),
+        tags$h3(tags$i(class = "fa fa-plus", style = "color: steelblue;"), " ", strong("Create a study")),
         p("To create a study, go to the ", tags$em("Study Management"), " tab."),
         p("Choose a name, make sure it's not already in use, then click on ", tags$em("Add"), "."),
-        tags$h3(tags$i(class = "fa fa-pen-to-square", style = "color: steelblue;"), " ",
-          strong("Rename a study")),
+        tags$h3(tags$i(class = "fa fa-pen-to-square", style = "color: steelblue;"), " ", strong("Rename a study")),
         p("To rename a study, double-click on the name, change it, make sure it's not already in use, then click on ", tags$em("Save"), "."),
-        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ",
-          strong("Delete one or more studies")),
+        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ", strong("Delete one or more studies")),
         p("To delete one or more studies, select them by clicking on them in the table, then click on ", tags$em("Delete selection"), "."),
         p("You can also delete a study by clicking on the  ", shiny::actionButton("delete_button_help", "", icon = icon("trash-alt")), "  icon."),
-        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ",
-          strong("Edit study options")),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Edit study options")),
         p("Click on  ", shiny::actionButton("study_options_button_help", "", icon = icon("cog")), "  to ", strong("edit the options"), " of the study."),
         br()
       )

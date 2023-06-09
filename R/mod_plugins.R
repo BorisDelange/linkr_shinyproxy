@@ -518,6 +518,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     help_plugins(output = output, r = r, id = id, prefix = prefix, language = language, i18n = i18n, ns = ns)
     
+    observeEvent(input$copy_code_1, r$help_plugins_copy_code_1 <- Sys.time())
+    observeEvent(input$copy_code_2, r$help_plugins_copy_code_2 <- Sys.time())
+    observeEvent(input$copy_code_3, r$help_plugins_copy_code_3 <- Sys.time())
+    observeEvent(input$copy_code_4, r$help_plugins_copy_code_4 <- Sys.time())
+    
     # --- --- --- --- -- -
     # Plugins catalog ----
     # --- --- --- --- -- -
