@@ -36,6 +36,6 @@ Report bug
 \examples{
 \dontrun{
 report_bug(r = r, output = output, error_message = "failed_execute_code", 
-  error_name = "failed_execute_code", category = "Error", error_report = toString(e)rror_report, i18n = i18n)
+  error_name = "failed_execute_code", category = "Error", error_report = toString(error_report, i18n = i18n))
 }
 }

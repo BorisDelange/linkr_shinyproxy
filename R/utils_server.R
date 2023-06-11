@@ -11,7 +11,7 @@
 #' }
 update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), table = character(), i18n = character()){
   tables <- c("users", "users_accesses", "users_statuses",
-    "data_sources", "datasets", "studies", "subsets", "subset_persons", "subsets_persons", "vocabulary", "thesaurus", "thesaurus_items",
+    "data_sources", "datasets", "studies", "subsets", "subset_persons", "subsets_persons", "vocabulary",
     "plugins", "scripts",
     "patient_lvl_tabs_groups", "patient_lvl_tabs", "patient_lvl_widgets", "patient_lvl_widgets_concepts", "aggregated_widgets_concepts",
     "aggregated_tabs_groups", "aggregated_tabs", "aggregated_widgets",
@@ -66,7 +66,7 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
   else {
     db <- r$db
     
-    if (table %in% c("datasets", "plugins", "data_sources", "thesaurus")){
+    if (table %in% c("datasets", "plugins", "data_sources")){
       
       r[[table]] <- DBI::dbGetQuery(db, paste0("SELECT * FROM ", table, " WHERE deleted IS FALSE ORDER BY id"))
       
@@ -171,8 +171,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
     result <- c(i18n$t("id"), i18n$t("name"), i18n$t("description"))
     c(result, switch(table_name,
       "datasets" = i18n$t("data_source"),
-      "subsets" = i18n$t("study"),
-      "thesaurus" = i18n$t("data_sources"))) -> result
+      "subsets" = i18n$t("study"))) -> result
     result <- c(result, i18n$t("creator"), i18n$t("datetime"),
       i18n$t("deleted"), i18n$t("modified"), i18n$t("action"))
   }

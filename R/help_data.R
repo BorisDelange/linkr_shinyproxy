@@ -57,18 +57,18 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     
     if (language == "fr"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Choisir un set de données")),
+        tags$h3(tags$i(class = "fa fa-database", style = "color: steelblue;"), " ", strong("Choisir un set de données")),
         p("Un set de données contient les données d'un ", strong("groupe de patients"), "."),
         p("Un même set de données peut contenir ", strong("plusieurs études"), "."),
         p("Choisissez le set de données dans le menu déroulant sur la gauche de l'écran."),
-        p(strong("2) Chosir une étude")),
+        tags$h3(tags$i(class = "fa fa-rectangle-list", style = "color: steelblue;"), " ", strong("Chosir une étude")),
         p("Choisissez ensuite une étude, dans le menu déroulant."),
         p("Vous pouvez créer des études depuis l'onglet ", tags$em("Mes études"), " en haut de l'écran."),
         p("Une même étude peut contenir ", strong("plusieurs subsets"), "."),
-        p(strong("3) Chosir un subset")),
+        tags$h3(tags$i(class = "fa fa-users", style = "color: steelblue;"), " ", strong("Chosir un subset")),
         p("Un subset est un sous-ensemble du set de données, sur des patients sélectionnés."),
         p("Il est possible de ", strong("créer d'autres subsets"), " depuis l'onglet ", tags$em("Mes subsets"), "."),
-        p(strong("4) Choisir un patient & un séjour")),
+        tags$h3(tags$i(class = "fa fa-user", style = "color: steelblue;"), " ", strong("Choisir un patient & un séjour")),
         p("En chargeant un subset, la liste des patients appartenant à ce subset est chargée dans le menu déroulant ", tags$em("Patient"),
           ", seulement si l'on se trouve dans les ", tags$em("Données individuelles"), "."),
         p("Les ", strong("widgets se mettent à jour"), " à chaque changement de patient & de séjour."), 
@@ -78,18 +78,18 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     
     if (language == "en"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
-        p(strong("1) Choose a dataset")),
+        tags$h3(tags$i(class = "fa fa-database", style = "color: steelblue;"), " ", strong("Choose a dataset")),
         p("A dataset contains the data of a ", strong("group of patients"), "."),
         p("The same dataset can contain ", strong("multiple studies"), "."),
         p("Choose the dataset from the dropdown menu on the left of the screen."),
-        p(strong("2) Choose a study")),
+        tags$h3(tags$i(class = "fa fa-rectangle-list", style = "color: steelblue;"), " ", strong("Choose a study")),
         p("Next, choose a study from the dropdown menu."),
         p("You can create studies from the ", tags$em("My studies"), " tab at the top of the screen."),
         p("The same study can contain ", strong("multiple subsets"), "."),
-        p(strong("3) Choose a subset")),
+        tags$h3(tags$i(class = "fa fa-users", style = "color: steelblue;"), " ", strong("Choose a subset")),
         p("A subset is a subset of the dataset, containing selected patients."),
         p("It is possible to ", strong("create other subsets"), " from the ", tags$em("My subsets"), " tab."),
-        p(strong("4) Choose a patient & a stay")),
+        tags$h3(tags$i(class = "fa fa-user", style = "color: steelblue;"), " ", strong("Choose a patient & a stay")),
         p("When loading a subset, the list of patients belonging to that subset is loaded into the ", tags$em("Patient"),
           " dropdown menu, only if you are in the ", tags$em("Individual data"), " section."),
         p("The ", strong("widgets update"), " every time the patient & stay are changed."), 
@@ -108,84 +108,99 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     
     if (language == "fr"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
-        p("Au chargement d'un set de données, les variables suivantes se chargent."),
-          p("Les colonnes de chaque variable sont détaillées, avec les noms, les descriptions des colonnes et le type de colonne (integer, character etc)."),
-          p(strong("1) d$patients")),
-          p("Variable contenant les informations sur les patients du set de données."),
-          tags$ul(
-            tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
-            tags$li(strong("gender"), " : Sexe (M / F) (character)"),
-            tags$li(strong("dod"), " : Date de décès (dod pour date of death) (datetime)")
-          ),
-          p(strong("2) d$stays")),
-          p("Contient les informations sur les séjours hospitaliers des patients."),
-          tags$ul(
-            tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
-            tags$li(strong("stay_id"), " : Identifiant unique du séjour hospitalier (integer)"),
-            tags$li(strong("age"), " : Age du patient au moment de l'admission (numeric)"),
-            tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
-            tags$li(strong("item_id"), " : Identifiant unique du concept de l'unité / du service hospitalier (integer)"),
-            tags$li(strong("admission_datetime"), " : Date & heure d'admission dans l'unité / le service (datetime)"),
-            tags$li(strong("discharge_datetime"), " : Date & heure de sortie de l'unité / du service (datetime)")
-          ),
-          p(strong("3) d$labs_vitals")),
-          p("Contient les valeurs de la majorité des données structurées, hormis les données de prescription."),
-          tags$ul(
-            tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
-            tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
-            tags$li(strong("item_id"), " : Identifiant unique du concept (integer)"),
-            tags$li(strong("datetime_start"), " : Date & heure de début de valeur (datetime)"),
-            tags$li(strong("datetime_stop"), " : Date & heure de fin de la valeur, optionnel (datetime)"),
-            tags$li(strong("value"), " : Valeur textuelle (character)"),
-            tags$li(strong("value_num"), " : Valeur numérique (numeric)"),
-            tags$li(strong("unit"), " : Unité de la valeur (character)"),
-            tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
-          ),
-          p(strong("4) d$orders")),
-          p("Contient les données de prescriptions médicamenteuses."),
-          tags$ul(
-            tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
-            tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
-            tags$li(strong("item_id"), " : Identifiant unique du concept (integer)"),
-            tags$li(strong("datetime_start"), " : Date & heure de début de valeur (datetime)"),
-            tags$li(strong("datetime_stop"), " : Date & heure de fin de la valeur (datetime)"),
-            tags$li(strong("route"), " : Voie d'administration du médicament (character)"),
-            tags$li(strong("continuous"), " : Administration continue ou non (logical)"),
-            tags$li(strong("amount"), " : Quantité du médicament / de la prescription non médicamenteuse (numeric)"),
-            tags$li(strong("amount_unit"), " : Unité de la quantité (character)"),
-            tags$li(strong("rate"), " : Débit du médicament (numeric)"),
-            tags$li(strong("rate_unit"), " : Unité du débit (character)"),
-            tags$li(strong("concentration"), " : Concentration du médicament (numeric)"),
-            tags$li(strong("concentration_unit"), " : Unité de la concentration(character)"),
-            tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
-          ),
-          p(strong("5) d$text")),
-          p("Contient les données non structurées de type texte."),
-          tags$ul(
-            tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
-            tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
-            tags$li(strong("item_id"), " : identifiant unique du concept (integer)"),
-            tags$li(strong("datetime_start"), " : Date & heure de début de valeur (datetime)"),
-            tags$li(strong("datetime_stop"), " : Date & heure de fin de la valeur, optionnel (datetime)"),
-            tags$li(strong("value"), " : Valeur textuelle (character)"),
-            tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
-          ),
-          p(strong("6) d$diagnoses")),
-          p("Contient les données de diagnostic."),
-          tags$ul(
-            tags$li(strong("patient_id"), " : Identifiant unique du patient (integer)"),
-            tags$li(strong("thesaurus_name"), " : Nom du thésaurus comprenant le concept (character)"),
-            tags$li(strong("item_id"), " : identifiant unique du concept (integer)"),
-            tags$li(strong("datetime_start"), " : Date & heure de début de valeur (datetime)"),
-            tags$li(strong("datetime_stop"), " : Date & heure de fin de la valeur, optionnel (datetime)"),
-            tags$li(strong("comments"), " : Commentaires sur la valeur (character)")
-          ), br()
-      ) 
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Le modèle de données utilisé par l'application est le ", strong("modèle standard OMOP"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Vous pouvez accéder aux ",
+          tags$a(href = "https://ohdsi.github.io/CommonDataModel/cdm60.html", "détails du modèle de données ici", target = "_blank"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Au chargement d'un set de données, les variables suivantes se chargent."),
+        strong("Variables des établissements et des praticiens"), " :",
+        tags$ul(
+          tags$li("d$location"),
+          tags$li("d$care_site"),
+          tags$li("d$provider")
+        ),
+        strong("Variables des patients et séjours"), " :",
+        tags$ul(
+          tags$li("d$person"),
+          tags$li("d$death"),
+          tags$li("d$observation_period"),
+          tags$li("d$visit_occurrence"),
+          tags$li("d$visit_detail"),
+          tags$li("d$payer_plan_period"),
+          tags$li("d$cost")
+        ),
+        strong("Variables de données cliniques"), " :",
+        tags$ul(
+          tags$li("d$condition_occurrence"),
+          tags$li("d$drug_exposure"),
+          tags$li("d$procedure_occurrence"),
+          tags$li("d$device_exposure"),
+          tags$li("d$measurement"),
+          tags$li("d$observation"),
+          tags$li("d$note"),
+          tags$li("d$note_nlp"),
+          tags$li("d$specimen"),
+          tags$li("d$fact_relationship"),
+          tags$li("d$drug_era"),
+          tags$li("d$dose_era"),
+          tags$li("d$condition_era")
+        ),
+        strong("Variables contenant les concepts"), " :",
+        tags$ul(
+          tags$li("d$dataset_all_concepts", " : rassemble tous les concepts utilisés par le set de données chargé"),
+          tags$li("d$dataset_drug_strength", " : contient les informations sur les médicaments, issues de la table OMOP drug_strength")
+        )
+      )
     }
     
     if (language == "en"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
-        
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "The data model used by the application is the ", strong("OMOP standard model"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "You can access the ",
+          tags$a(href = "https://ohdsi.github.io/CommonDataModel/cdm60.html", "details of the data model here", target = "_blank"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Upon loading a data set, the following variables are loaded."),
+        strong("Institution and practitioner variables"), " :",
+        tags$ul(
+          tags$li("d$location"),
+          tags$li("d$care_site"),
+          tags$li("d$provider")
+        ),
+        strong("Patient and stay variables"), " :",
+        tags$ul(
+          tags$li("d$person"),
+          tags$li("d$death"),
+          tags$li("d$observation_period"),
+          tags$li("d$visit_occurrence"),
+          tags$li("d$visit_detail"),
+          tags$li("d$payer_plan_period"),
+          tags$li("d$cost")
+        ),
+        strong("Clinical data variables"), " :",
+        tags$ul(
+          tags$li("d$condition_occurrence"),
+          tags$li("d$drug_exposure"),
+          tags$li("d$procedure_occurrence"),
+          tags$li("d$device_exposure"),
+          tags$li("d$measurement"),
+          tags$li("d$observation"),
+          tags$li("d$note"),
+          tags$li("d$note_nlp"),
+          tags$li("d$specimen"),
+          tags$li("d$fact_relationship"),
+          tags$li("d$drug_era"),
+          tags$li("d$dose_era"),
+          tags$li("d$condition_era")
+        ),
+        strong("Concepts variables"), " :",
+        tags$ul(
+          tags$li("d$dataset_all_concepts", " : gathers all the concepts used by the loaded dataset"),
+          tags$li("d$dataset_drug_strength", " : contains information about drugs, from the OMOP drug_strength table")
+        )
       )
     }
   })
@@ -201,48 +216,150 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     if (language == "fr"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
         p("Vous pouvez choisir dans le menu à gauche de charger les données individuelles ou agrégées."),
-        p(strong("1) Modules & plugins différents")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Modules & plugins différents")),
         p("Selon que vous choisissez les données individuelles ou agrégées, les tabs & widgets chargés diffèrent."),
         p("Lorsque vous chargez une étude, vous chargez :"),
         tags$ul(
           tags$li("D'un côté les onglets & widgets de données individuelles, permettant de ", strong("visualiser les données patient par patient"), "."),
-          tags$li("De l'autre côté les onglets & widgets de données agrégées, permettant de ", strong("visualiser les données sur l'ensemble des patients ou sur le subset sélectionné."))
+          tags$li("De l'autre côté les onglets & widgets de données agrégées, permettant de ", strong("visualiser les données sur l'ensemble des patients ou sur un subset sélectionné."))
         ),
         p("En pratique, cela crée de ", strong("nouvelles variables"), " filtrant les variables générales sur ",
           strong("le subset, le patient ou sur le séjour sélectionné"), "."),
-        p(strong("2) Données agrégées - Variables du subset sélectionné")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Données agrégées - Variables du subset sélectionné")),
         p("Lorsque vous sélectionnez un subset, les variables suivantes sont créées, avec la même structure que détaillée dans ", tags$em("Modèle de données"), " :"),
         tags$ul(
-          tags$li(strong("d$data_subset$patients")),
-          tags$li(strong("d$data_subset$stays")),
-          tags$li(strong("d$data_subset$labs_vitals")),
-          tags$li(strong("d$data_subset$orders")),
-          tags$li(strong("d$data_subset$text")),
-          tags$li(strong("d$data_subset$diagnoses"))
+          tags$li("d$data_subset$persons"),
+          tags$li("d$data_subset$condition_occurrence"),
+          tags$li("d$data_subset$drug_exposure"),
+          tags$li("d$data_subset$procedure_occurrence"),
+          tags$li("d$data_subset$device_exposure"),
+          tags$li("d$data_subset$measurement"),
+          tags$li("d$data_subset$observation"),
+          tags$li("d$data_subset$death"),
+          tags$li("d$data_subset$note"),
+          tags$li("d$data_subset$note_nlp"),
+          tags$li("d$data_subset$specimen"),
+          tags$li("d$data_subset$fact_relationship"),
+          tags$li("d$data_subset$payer_plan_period"),
+          tags$li("d$data_subset$cost"),
+          tags$li("d$data_subset$drug_era"),
+          tags$li("d$data_subset$dose_era"),
+          tags$li("d$data_subset$condition_era"),
+          tags$li("d$data_subset$person"),
+          tags$li("d$data_subset$observation_period"),
+          tags$li("d$data_subset$visit_occurrence"),
+          tags$li("d$data_subset$visit_detail")
         ),
-        p(strong("3) Données individuelles - Variables du patient sélectionné")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Données individuelles - Variables du patient sélectionné")),
         p("Lorsque vous sélectionnez un patient, les variables suivantes sont créées :"),
         tags$ul(
-          tags$li(strong("d$data_patient$stays")),
-          tags$li(strong("d$data_patient$labs_vitals")),
-          tags$li(strong("d$data_patient$orders")),
-          tags$li(strong("d$data_patient$text")),
-          tags$li(strong("d$data_patient$diagnoses"))
+          tags$li("d$data_person$condition_occurrence"),
+          tags$li("d$data_person$drug_exposure"),
+          tags$li("d$data_person$procedure_occurrence"),
+          tags$li("d$data_person$device_exposure"),
+          tags$li("d$data_person$measurement"),
+          tags$li("d$data_person$observation"),
+          tags$li("d$data_person$note"),
+          tags$li("d$data_person$note_nlp"),
+          tags$li("d$data_person$fact_relationship"),
+          tags$li("d$data_person$payer_plan_period"),
+          tags$li("d$data_person$cost"),
+          tags$li("d$data_person$specimen"),
+          tags$li("d$data_person$death"),
+          tags$li("d$data_person$drug_era"),
+          tags$li("d$data_person$dose_era"),
+          tags$li("d$data_person$condition_era")
         ),
-        p(strong("4) Données individuelles - Variables du séjour sélectionné")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Données individuelles - Variables du séjour sélectionné")),
         p("De la même façon, lorsque vous sélectionnez un séjour, les variables suivantes sont créées :"),
         tags$ul(
-          tags$li(strong("d$data_stay$labs_vitals")),
-          tags$li(strong("d$data_stay$orders")),
-          tags$li(strong("d$data_stay$text")),
-          tags$li(strong("d$data_stay$diagnoses"))
+          tags$li("d$data_visit_detail$condition_occurrence"),
+          tags$li("d$data_visit_detail$drug_exposure"),
+          tags$li("d$data_visit_detail$procedure_occurrence"),
+          tags$li("d$data_visit_detail$device_exposure"),
+          tags$li("d$data_visit_detail$measurement"),
+          tags$li("d$data_visit_detail$observation"),
+          tags$li("d$data_visit_detail$note"),
+          tags$li("d$data_visit_detail$note_nlp"),
+          tags$li("d$data_visit_detail$fact_relationship"),
+          tags$li("d$data_visit_detail$payer_plan_period"),
+          tags$li("d$data_visit_detail$cost")
         ), br()
-      ) 
+      )
     }
     
     if (language == "en"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
-        
+        p("You can choose in the left menu to load patient-level or aggregated data."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Different modules & plugins")),
+        p("Depending on whether you choose patient-level or aggregated data, the tabs & widgets loaded differ."),
+        p("When you load a study, you load:"),
+        tags$ul(
+          tags$li("On one hand, the patient-level data tabs & widgets, allowing to ", strong("visualize data patient by patient"), "."),
+          tags$li("On the other hand, the aggregated data tabs & widgets, allowing to ", strong("visualize data on all patients or on a selected subset."))
+        ),
+        p("In practice, this creates ", strong("new variables"), " filtering the general variables on ",
+          strong("the selected subset, patient or stay"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Aggregated Data - selected subset variables")),
+        p("When you select a subset, the following variables are created, with the same structure as detailed in ", tags$em("Data model"), " :"),
+        tags$ul(
+          tags$li("d$data_subset$persons"),
+          tags$li("d$data_subset$condition_occurrence"),
+          tags$li("d$data_subset$drug_exposure"),
+          tags$li("d$data_subset$procedure_occurrence"),
+          tags$li("d$data_subset$device_exposure"),
+          tags$li("d$data_subset$measurement"),
+          tags$li("d$data_subset$observation"),
+          tags$li("d$data_subset$death"),
+          tags$li("d$data_subset$note"),
+          tags$li("d$data_subset$note_nlp"),
+          tags$li("d$data_subset$specimen"),
+          tags$li("d$data_subset$fact_relationship"),
+          tags$li("d$data_subset$payer_plan_period"),
+          tags$li("d$data_subset$cost"),
+          tags$li("d$data_subset$drug_era"),
+          tags$li("d$data_subset$dose_era"),
+          tags$li("d$data_subset$condition_era"),
+          tags$li("d$data_subset$person"),
+          tags$li("d$data_subset$observation_period"),
+          tags$li("d$data_subset$visit_occurrence"),
+          tags$li("d$data_subset$visit_detail")
+        ),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Patient-level data - selected patient variables")),
+        p("When you select a patient, the following variables are created :"),
+        tags$ul(
+          tags$li("d$data_person$condition_occurrence"),
+          tags$li("d$data_person$drug_exposure"),
+          tags$li("d$data_person$procedure_occurrence"),
+          tags$li("d$data_person$device_exposure"),
+          tags$li("d$data_person$measurement"),
+          tags$li("d$data_person$observation"),
+          tags$li("d$data_person$note"),
+          tags$li("d$data_person$note_nlp"),
+          tags$li("d$data_person$fact_relationship"),
+          tags$li("d$data_person$payer_plan_period"),
+          tags$li("d$data_person$cost"),
+          tags$li("d$data_person$specimen"),
+          tags$li("d$data_person$death"),
+          tags$li("d$data_person$drug_era"),
+          tags$li("d$data_person$dose_era"),
+          tags$li("d$data_person$condition_era")
+        ),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Patient-level data - selected stay variables")),
+        p("In the same way, when you select a stay, the following variables are created :"),
+        tags$ul(
+          tags$li("d$data_visit_detail$condition_occurrence"),
+          tags$li("d$data_visit_detail$drug_exposure"),
+          tags$li("d$data_visit_detail$procedure_occurrence"),
+          tags$li("d$data_visit_detail$device_exposure"),
+          tags$li("d$data_visit_detail$measurement"),
+          tags$li("d$data_visit_detail$observation"),
+          tags$li("d$data_visit_detail$note"),
+          tags$li("d$data_visit_detail$note_nlp"),
+          tags$li("d$data_visit_detail$fact_relationship"),
+          tags$li("d$data_visit_detail$payer_plan_period"),
+          tags$li("d$data_visit_detail$cost")
+        ), br()
       )
     }
   })
@@ -259,12 +376,12 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
         p("Une étude est ", strong("structurée autour d'onglets"), ", qui sont des ", strong("pages personnalisées"),
           " sur lesquelles je choisis ", strong("quelles données afficher et sous quelle forme"), "."),
-        p(strong("1) Onglets de données individuelles")),
+        tags$h3(tags$i(class = "fa fa-user", style = "color: steelblue;"), " ", strong("Onglets de données individuelles")),
         p("Les onglets de données individuelles ", strong("reproduisent un dossier clinique"), "."),
         p("Par exemple, si je fais une étude sur le choc septique, je crée un onglet ", tags$em("Hémodynamique"),
             " où j'affiche la FC, la PAs, la PAd, la PAm & les doses reçues de Noradrénaline."),
-        p(strong("2) Onglets de données agrégées")),
-        p("Les onglets de données agrégées ", strong("permettent de conduire une étude"), " sur mes données."),
+        tags$h3(tags$i(class = "fa fa-users", style = "color: steelblue;"), " ", strong("Onglets de données agrégées")),
+        p("Les onglets de données agrégées ", strong("permettent de réaliser une étude"), " sur mes données."),
         p("Par exemple, je peux créer un onglet ", tags$em("Critères d'exclusion"), " où je vais créer mes critères ",
           "d'exclusion et les appliquer à mes patients."),
         p("Je peux également créer un onglet ", tags$em("Flowchart"), " pour afficher le flowchart de mon étude."), br()
@@ -275,11 +392,11 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
         p("An study is ", strong("structured around tabs"), ", which are ", strong("custom pages"),
           " where I choose ", strong("which data to display and in what form"), "."),
-        p(strong("1) Individual data tabs")),
+        tags$h3(tags$i(class = "fa fa-user", style = "color: steelblue;"), " ", strong("Individual data tabs")),
         p("Individual data tabs ", strong("reproduce a clinical folder"), "."),
         p("For example, if I am conducting a study on septic shock, I can create a ", tags$em("Hemodynamics"),
           " tab where I display HR, SBP, DBP, MAP & the received doses of Norepinephrine."),
-        p(strong("2) Aggregate data tabs")),
+        tags$h3(tags$i(class = "fa fa-users", style = "color: steelblue;"), " ", strong("Aggregate data tabs")),
         p("Aggregate data tabs ", strong("allow to conduct a study"), " on my data."),
         p("For example, I can create an ", tags$em("Exclusion criteria"), " tab where I will create my exclusion criteria ",
           "and apply them to my patients."),
@@ -340,7 +457,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     if (language == "fr"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
         p("Un onglet est ", strong("composé de widgets"), ", qui sont des plugins appliqués à des données."),
-        p(strong("1) Plugins")),
+        tags$h3(tags$i(class = "fa fa-code", style = "color: steelblue;"), " ", strong("Plugins")),
         p("Les plugins sont des scripts écrits en R - Shiny permettant ", strong("d'ajouter des fonctionnalités à l'application"), "."),
         p("Quelques exemples :"),
         tags$ul(
@@ -350,7 +467,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
         ),
         p("L'application a vocation à s'enrichir au fur et à mesure par la ", strong("création de nouveaux plugins"), "."),
         p("Les plugins des données individuelles ou agrégées ne sont pas les mêmes."),
-        p(strong("2) Widgets")),
+        tags$h3(tags$i(class = "fa fa-table", style = "color: steelblue;"), " ", strong("Widgets")),
         p("Un widget est donc un plugin appliqué à des données."),
         p("Je choisis un plugin, quelles données vont être utilisées par ce plugin, puis le ",
         strong("plugin affiche ces données sous la forme désirée"), " (timeline pour le plugin timeline etc)."), br()
@@ -360,7 +477,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     if (language == "en"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
         p("A tab is ", strong("composed of widgets"), ", which are plugins applied to data."),
-        p(strong("1) Plugins")),
+        tags$h3(tags$i(class = "fa fa-code", style = "color: steelblue;"), " ", strong("Plugins")),
         p("Plugins are R scripts - Shiny allowing ", strong("to add features to the application"), "."),
         p("Some examples:"),
         tags$ul(
@@ -370,7 +487,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
         ),
         p("The application is intended to become richer over time by ", strong("creating new plugins"), "."),
         p("The plugins for individual or aggregated data are not the same."),
-        p(strong("2) Widgets")),
+        tags$h3(tags$i(class = "fa fa-table", style = "color: steelblue;"), " ", strong("Widgets")),
         p("A widget is therefore a plugin applied to data."),
         p("I choose a plugin, which data will be used by this plugin, and then the ",
           strong("plugin displays this data in the desired form"), " (timeline for the timeline plugin, etc.)."), br()
@@ -388,7 +505,7 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
     
     if (language == "fr"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
-        p("Pour ajouter un widget, il faut ", strong("avoir chargé une étude "), " dans le menu déroulant à gauche de l'écran puis ",
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", "Pour ajouter un widget, il faut ", strong("avoir chargé une étude "), " dans le menu déroulant à gauche de l'écran puis ",
         strong("avoir sélectionné un onglet"), "."),
         p("Il faut ensuite cliquer sur :"),
           div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_widget_help")),
@@ -398,67 +515,74 @@ help_data <- function(output, r = shiny::reactiveValues(), id = character(), pre
           tags$li(strong("Choisissez un nom"), " pour ce widget."),
           tags$li(strong("Choisissez le plugin "), " que vous souhaitez utiliser pour ce widget")
         ),
-        p("S'il s'agit d'un widget de données agrégées, cliquez sur Ajouter et c'est terminé."),
-        p("S'il s'agit d'un widget de données individuelles, vous devez :"),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", "Ajoutez ensuite des concepts."),
         tags$ul(
-          tags$li(strong("Sélectionner un thésaurus"), " : un thésaurus est un dictionnaire de concepts utilisés par un dataset."),
-          tags$li(strong("Sélectionner les items "), " que vous souhaitez utiliser pour ce widget, avec le plugin sélectionné."),
-          tags$li("Vous pouvez choisir des items liés à l'item sélectionné via le menu déroulant ", tags$em("Alignement de concepts"), ".")
+          tags$li(strong("Sélectionner une terminologie")),
+          tags$li(strong("Sélectionner les concepts "), " que vous souhaitez utiliser pour ce widget, avec le plugin sélectionné.")
         ),
-        p("Lorsque le tableau des ", strong("items du thésaurus"), " est chargé, vous pouvez filtrer les données pour trouver les items qui vous intéresent :"),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", "Lorsque le tableau des ", strong("concepts"), " est chargé, vous pouvez filtrer les données pour trouver les concepts qui vous intéresent :"),
         tags$ul(
-          tags$li(strong("Nom / abréviation"), " : cherchez dans la barre de texte les items. En double-cliquant sur un nom, vous pouvez le changer : il sera affiché avec ce nouveau nom."),
-          tags$li(strong("Unité"), " : utile essentiellement pour changer l'affichage de l'unité."),
-          tags$li(strong("Couleur de l'item"), " : utile pour différencier les items sur un graphique par ex."),
-          tags$li(strong("Patients"), " : affiche le nombre total de patients ayant au moins une fois l'item."),
-          tags$li(strong("Lignes"), " : nombre d'occurences de l'item dans le set de données, tous patients confondus.")
+          tags$li(strong("Nom / nom d'affichage"), " : cherchez dans la barre de texte les items. En double-cliquant sur un nom, vous pouvez le changer : il sera affiché avec ce nouveau nom."),
+          tags$li(strong("Domaine"), " : filtrez les concepts selon leur domaine."),
+          tags$li(strong("Patients"), " : affiche le nombre total de patients ayant au moins une fois le concept"),
+          tags$li(strong("Lignes"), " : nombre d'occurences du concept dans le set de données, tous patients confondus.")
         ),
-        p("Ajouter ensuite les items en cliquant sur l'icône ", actionButton(ns(paste0(prefix, "_add_thesaurus_item_help")), "", icon = icon("plus")),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", "Vous pouvez afficher les ", strong("concepts alignés"), " en cochant ", tags$em("Afficher les concepts alignés"), "."),
+        p("Un deuxième tableau s'affiche, ", strong("listant les concepts alignés"), " avec le concept sélectionné dans le tableau du haut."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Ajoutez ensuite les concepts en cliquant sur l'icône ", actionButton(ns(paste0(prefix, "_add_concept_help")), "", icon = icon("plus")),
         " dans la dernière colonne du tableau."),
-        p("Lorsque j'ajoute un item et que le menu ", tags$em("Alignement de concepts"), " contient une valeur, les items / concepts liés à l'item ajouté seront également ajoutés."),
-        p("Si le bouton ", tags$em("Fusionner les concepts alignés"), " est activé, les différents items liés seront fusionnés dans le widget."),
-        p("Par exemple, si j'ajoute le concept ", tags$em("Fréquence cardiaque"), " et que les items ", tags$em("FC"), " et ", tags$em("Fréq card"), " sont également ajoutés, ",
-        "si je sélectionne la fusion, les différents items apparaîtront sous le nom ", tags$em("Fréquence cardiaque"), "."),
-        p("Lorsque le menu ", tags$em("Nouveau widget"), " est ouvert, cliquez sur la croix à droite du menu pour retourner à l'onglet actuel."), br()
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Si le bouton ", tags$em("Fusionner les concepts alignés"), " est activé, les différents concepts liés seront fusionnés dans le widget."),
+        p("Par exemple, si j'ajoute le concept ", tags$em("Fréquence cardiaque"), " et que les concepts ", tags$em("FC"), " et ", tags$em("Fréq card"), " sont également ajoutés, ",
+        "si je sélectionne la fusion, les différents concepts apparaîtront sous le nom ", tags$em("Fréquence cardiaque"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Lorsque le menu ", tags$em("Nouveau widget"), " est ouvert, cliquez sur la croix à droite du menu pour retourner à l'onglet actuel."), 
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", "Lorsque tout cela est fait, cliquez sur ", tags$em("Ajouter"), " pour ajouter le widget paramétré."),
+        p("Vous pouvez ajouter plusieurs widgets par onglet."),
+        br()
       )
     }
     
     if (language == "en"){
       r[[paste0("help_data_", prefix, "_modal_text")]] <- div(
-        p("To add a widget, you need to ", strong("load a study "), "from the dropdown menu on the left side of the screen, and then ",
-          strong("select a tab"), "."),
-        p("Then, click on:"),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", "To add a widget, you must ", strong("have loaded a study "), " in the dropdown menu on the left of the screen then ",
+          strong("have selected a tab"), "."),
+        p("Then you need to click on:"),
         div(shiny.fluent::ActionButton.shinyInput(ns(paste0(prefix, "_add_widget_help")),
           i18n$t("add_a_widget"), iconProps = list(iconName = "Add"))),
-        p("Next, you need to:"),
+        p("Next, :"),
         tags$ul(
-          tags$li("Choose a name for this widget."),
-          tags$li("Choose the plugin you want to use for this widget.")
+          tags$li(strong("Choose a name"), " for this widget."),
+          tags$li(strong("Choose the plugin "), " that you wish to use for this widget")
         ),
-        p("If it is an aggregate data widget, just click on Add and it's done."),
-        p("If it is an individual data widget, you need to:"),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", "Then add concepts."),
         tags$ul(
-          tags$li("Select a thesaurus : a thesaurus is a dictionary of concepts used by a dataset."),
-          tags$li("Select the items / concepts you want to use for this widget, with the selected plugin."),
-          tags$li("You can choose items related to the selected item via the ", tags$em("Concept Alignment"), " dropdown menu.")
+          tags$li(strong("Select a vocabulary")),
+          tags$li(strong("Select the concepts "), " that you wish to use for this widget, with the selected plugin.")
         ),
-        p("When the table of ", strong("thesaurus items"), " is loaded, you can filter the data to find the items you are interested in:"),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", "When the ", strong("concepts"), " table is loaded, you can filter the data to find the concepts that interest you:"),
         tags$ul(
-          tags$li(strong("Name / abbreviation"), " : search for items in the text box. By double-clicking on a name, you can change it: it will be displayed with this new name."),
-          tags$li(strong("Unit"), " : mainly useful for changing the display of the unit."),
-          tags$li(strong("Item color"), " : useful for differentiating items on a graph, for example."),
-          tags$li(strong("Patients"), " : displays the total number of patients who have had the item at least once."),
-          tags$li(strong("Rows"), " : number of occurrences of the item in the dataset, for all patients.")
+          tags$li(strong("Name / display name"), " : search in the text bar for items. By double-clicking on a name, you can change it: it will be displayed with this new name."),
+          tags$li(strong("Domain"), " : filter the concepts according to their domain."),
+          tags$li(strong("Patients"), " : displays the total number of patients having at least once the concept"),
+          tags$li(strong("Lines"), " : number of occurrences of the concept in the data set, all patients combined.")
         ),
-        p("Then, add the items by clicking on the ", tags$em("Add item"), " icon ", actionButton(ns(paste0(prefix, "_add_thesaurus_item_help")), "", icon = icon("plus")),
-        " in the last column of the table."),
-        p("When I add an item and the ", tags$em("Concept Alignment"), " menu contains a value, the items / concepts linked to the added item will also be added."),
-        p("If the ", tags$em("Merge aligned concepts"), " button is enabled, the different linked items will be merged in the widget."),
-        p("For example, if I add the concept ", tags$em("Heart rate"), " and the items ", tags$em("HR"), " and ", tags$em("H. rate"), " are also added, ",
-          "if I select the merge, the different items will appear under the name ", tags$em("Heart rate"), "."),
-        p("When the ", tags$em("New widget"), " menu is open, click on the cross on the right side of the menu to return to the current tab."), br()
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", "You can display the ", strong("aligned concepts"), " by checking ", tags$em("Show aligned concepts"), "."),
+        p("A second table is displayed, ", strong("listing the mapped concepts"), " with the concept selected in the top table."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Then add the concepts by clicking on the icon ", actionButton(ns(paste0(prefix, "_add_concept_help")), "", icon = icon("plus")),
+          " in the last column of the table."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "If the ", tags$em("Merge mapped concepts"), " button is activated, the different linked concepts will be merged in the widget."),
+        p("For example, if I add the concept ", tags$em("Heart Rate"), " and the concepts ", tags$em("HR"), " and ", tags$em("Heart Freq"), " are also added, ",
+          "if I select the merge, the different concepts will appear under the name ", tags$em("Heart Rate"), "."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "When the ", tags$em("New widget"), " menu is open, click on the cross on the right of the menu to return to the current tab."), 
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", "When all of this is done, click on ", tags$em("Add"), " to add the configured widget."),
+        p("You can add multiple widgets per tab."),
+        br()
       )
-      
     }
   })
 }

@@ -7,18 +7,22 @@
 get_vocabulary_concept(
   output,
   m = shiny::reactiveValues(),
+  i18n = character(),
+  ns = character(),
   vocabulary_id = character(),
   concept_name = character(),
   concept_id = integer(),
-  method = character(),
-  i18n = character(),
-  ns = character()
+  method = character()
 )
 }
 \arguments{
 \item{output}{Shiny output variable}
 
 \item{m}{A shiny::reactiveValues object, used to communicate between modules}
+
+\item{i18n}{Translator object from shiny.i18n library}
+
+\item{ns}{Shiny namespace}
 
 \item{vocabulary_id}{Value of vocabulary_id where the concept will be added (character)}
 
@@ -27,17 +31,13 @@ get_vocabulary_concept(
 \item{concept_id}{Valud of concept_id (integer)}
 
 \item{method}{Method used to get the vocabulary concept. Could be "concept_name" or "concept_id" (character)}
-
-\item{i18n}{Translator object from shiny.i18n library}
-
-\item{ns}{Shiny namespace}
 }
 \description{
 Get a vocabulary concept, from the vocabulary_id and the concept_id or the concept_name
 }
 \examples{
 \dontrun{
-get_vocabulary_concept(output = output, m = m, vocabulary_id = "MIMIC-IV", concept_name = "Diuresis", 
-  method = "concept_name", i18n = i18n, ns = ns)
+get_vocabulary_concept(output = output, m = m,  i18n = i18n, ns = ns,
+  vocabulary_id = "MIMIC-IV", concept_name = "Diuresis", method = "concept_name")
 }
 }

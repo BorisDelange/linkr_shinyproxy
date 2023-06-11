@@ -1719,11 +1719,6 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
       shinyAce::updateAceEditor(session, "ace_edit_code_server", value = code$server)
       shinyAce::updateAceEditor(session, "ace_edit_code_translations", value = code$translations)
       
-      # Render UI of this edit_code card
-      output$edit_code_card <- renderUI({
-        render_settings_code_card(ns = ns, r = r, id = id, title = paste0("edit_plugins_code"), code = code, link_id = link_id, i18n = i18n)
-      })
-      
       # Reset code_result textOutput
       output$datetime_code_execution <- renderText("")
       output$code_result_ui <- renderUI("")

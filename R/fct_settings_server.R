@@ -213,7 +213,7 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
   
   username <- r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::mutate(fullname = paste0(firstname, " ", lastname)) %>% dplyr::pull(fullname)
   
-  # Add a row in code if table is datasets, thesaurus
+  # Add a row in code if table is datasets, vocabulary
   if (table %in% c("datasets", "vocabulary")){
     new_data$code <- tibble::tribble(~id, ~category, ~link_id, ~code, ~creator_id, ~datetime, ~deleted,
       last_row$code + 1, get_singular(word = table), last_row$data + 1, "", r$user_id, as.character(Sys.time()), FALSE)
@@ -1154,7 +1154,7 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
   DBI::dbSendStatement(db, sql) -> query
   DBI::dbClearResult(query)
 
-  # If action in columns, remove before insert into database (for thesaurus_items with cache system)
+  # If action in columns, remove before insert into database
   # Same with count_concepts_rows (and count_persons_rows, always with count_concepts_rows)
   if (table %not_in% m_tables | table %in% c("vocabulary", "concept_user")) data <- r[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)
   else data <- m[[paste0(r_table, "_temp")]] %>% dplyr::filter(modified) %>% dplyr::select(-modified)

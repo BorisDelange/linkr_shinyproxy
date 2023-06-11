@@ -18,133 +18,6 @@ forbidden_card <- function(ns = character(), name = character(), i18n = characte
   )
 }
 
-#' Render UI of edit_code card
-#' 
-#' @param ns Shiny namespace
-#' @param r r Shiny reactive value to communicate between modules
-#' @param id ID of the current page, format = "settings_[PAGE]" (character)
-#' @param title Title of the card (character)
-#' @param code Code to show in ShinyAce editor (list)
-#' @param link_id ID allows to link with code table (integer)
-#' @param i18n Translator object from shiny.i18n library
-#' @examples 
-#' \dontrun{
-#' render_settings_code_card(ns = NS("settings_datasets"), r = r, id = "settings_datasets", title = "edit_dataset_code",
-#'   code = "Enter your code here", link_id = 3, i18n = i18n)
-#' }
-render_settings_code_card <- function(ns = character(), r = shiny::reactiveValues(), id = character(), title = character(), code = list(), 
-  link_id = integer(), i18n = character()){
-  
-  choice_ui_server <- tagList()
-  choice_data <- tagList()
-  
-  # Default output : text output
-  # For plugins, this output is UI, to test plugin's code
-  output_div <- div(shiny::verbatimTextOutput(ns("code_result")), 
-    style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
-  
-  # Default ace editor
-  div(shinyAce::aceEditor(ns("ace_edit_code"), code$server, mode = "r", 
-    autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;") -> ace_editor
-  
-  # For plugin page : 
-  # - choose between UI code or Server code
-  # - choose a dataset, a study & a subset (for aggregated data plugin) & a patient / a stay (for patient-lvl data)
-  # - two ace editors, one for UI & one for server
-  
-  if (id == "settings_plugins"){
-    
-    # Get tab_type_id of current plugin
-    tab_type_id <- r$plugins %>% dplyr::filter(id == link_id) %>% dplyr::pull(tab_type_id)
-    
-    # Colours choices
-    colorCells <- list(
-      list(id = "#EF3B2C", color = "#EF3B2C"),
-      list(id = "#CB181D", color = "#CB181D"),
-      list(id = "#7BCCC4", color = "#7BCCC4"),
-      list(id = "#2B8CBE", color = "#2B8CBE"),
-      list(id = "#5AAE61", color = "#5AAE61"),
-      list(id = "#FFD92F", color = "#FFD92F"),
-      list(id = "#000000", color = "#000000"))
-    
-    # Dropdowns for choice of dataset etc
-    # Depending if tab_type is patient_lvl_data or aggregated_data
-    if (tab_type_id == 1){
-      tagList(
-        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
-          make_dropdown(i18 = i18, ns = ns, label = "dataset", width = "300px",
-            options = convert_tibble_to_list(data = r$datasets, key_col = "id", text_col = "name")),
-          make_dropdown(i18 = i18, ns = ns, label = "study", width = "300px"),
-          make_dropdown(i18 = i18, ns = ns, label = "patient", width = "300px"),
-          make_dropdown(i18 = i18, ns = ns, label = "stay", width = "300px")),
-        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
-          make_dropdown(i18 = i18, ns = ns, label = "thesaurus", width = "300px"),
-          div(strong(i18$t("show_only_used_items_patient"), style = "display:block; padding-bottom:12px;"),
-            shiny.fluent::Toggle.shinyInput(ns("show_only_used_items"), value = TRUE), style = "margin-top:15px;")),
-        shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 30),
-          make_combobox(i18 = i18, ns = ns, label = "thesaurus_items", multiSelect = TRUE, allowFreeform = TRUE, width = "300px"),
-          div(
-            div(class = "input_title", i18$t("item_colour")),
-            div(shiny.fluent::SwatchColorPicker.shinyInput(ns("colour"), value = "#000000", colorCells = colorCells, columnCount = length(colorCells))),
-            style = "margin-top:5px;"),
-          div(shiny.fluent::PrimaryButton.shinyInput(ns("add_thesaurus_item"), i18$t("add")), style = "margin-top:38px;"),
-          div(shiny.fluent::PrimaryButton.shinyInput(ns("remove_thesaurus_item"), i18$t("remove")), style = "margin-top:38px;"),
-          div(shiny.fluent::PrimaryButton.shinyInput(ns("reset_thesaurus_items"), i18$t("reset")), style = "margin-top:38px;")), br(),
-        uiOutput(ns("thesaurus_selected_items"))) -> choice_data
-    }
-    if (tab_type_id == 2){
-      tagList(shiny.fluent::Stack(
-        horizontal = TRUE, tokens = list(childrenGap = 50),
-        make_dropdown(i18 = i18, ns = ns, label = "dataset", width = "300px",
-          options = convert_tibble_to_list(data = r$datasets, key_col = "id", text_col = "name")),
-        make_dropdown(i18 = i18, ns = ns, label = "study", width = "300px"),
-        make_dropdown(i18 = i18, ns = ns, label = "subset", width = "300px")
-      )) -> choice_data
-    }
-    
-    # Toggle for choice of UI or server code
-    shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-      shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
-        list(key = "ui", text = i18$t("ui")),
-        list(key = "server", text = i18$t("server"))
-      ), className = "inline_choicegroup"),
-      div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
-      div(i18$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
-    ) -> choice_ui_server
-    
-    # Ace editors
-    tagList(
-      conditionalPanel(condition = "input.edit_code_ui_server == 'ui'", ns = ns,
-        div(shinyAce::aceEditor(ns("ace_edit_code_ui"), code$ui, mode = "r", 
-          autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
-      conditionalPanel(condition = "input.edit_code_ui_server == 'server'", ns = ns,
-        div(shinyAce::aceEditor(ns("ace_edit_code_server"), code$server, mode = "r", 
-          autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"))
-    ) -> ace_editor
-    
-    # UI output to render UI code of the plugin and text output to render server error messages
-    output_div <- tagList(
-      shiny::uiOutput(ns("code_result_ui")), br(),
-      div(verbatimTextOutput(ns("code_result_server")), 
-        style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"))
-  }
-  
-  div(id = ns("edit_code_card"),
-    # Show current ID in the title
-    make_card(tagList(i18$t(title), span(paste0(" (ID = ", link_id, ")"), style = "font-size: 15px;")),
-      div(
-        choice_data, br(),
-        choice_ui_server,
-        ace_editor,
-        shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18$t("save")), " ",
-        shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18$t("execute_code")), 
-        br(), br(),
-        output_div
-      )
-    )
-  )
-}
-
 #' Render UI of settings creation card
 #' 
 #' @param i18n Translator object from shiny.i18n library
@@ -180,10 +53,7 @@ render_settings_creation_card <- function(i18n = character(), ns = character(), 
         shiny.fluent::Stack(
           horizontal = TRUE, tokens = list(childrenGap = 50),
           lapply(dropdowns, function(label){
-            # Allow multiSelect for thesaurus, column data source
-            multiSelect <- FALSE
-            if (id == "settings_thesaurus") multiSelect <- TRUE
-            make_dropdown(i18n = i18n, ns = ns, label = label, id = label, multiSelect = multiSelect, width = dropdowns_width)
+            make_dropdown(i18n = i18n, ns = ns, label = label, id = label, width = dropdowns_width)
           })
         ), br(),
         shiny.fluent::PrimaryButton.shinyInput(ns("add"), i18n$t("add"))

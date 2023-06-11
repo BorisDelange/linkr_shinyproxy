@@ -623,15 +623,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         r[[paste0(table, "_temp")]][[edit_info$row, "modified"]] <- TRUE
       })
   
-      # observeEvent(input$vocabularies_tables_datatable_cell_edit, {
-      #   
-      #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_tables_datatable_cell_edit"))
-      #   
-      #   edit_info <- input$vocabularies_tables_datatable_cell_edit
-      #   r$thesaurus_items_temp <- DT::editData(r$thesaurus_items_temp, edit_info, rownames = FALSE)
-      #   r$thesaurus_items_temp[[edit_info$row, "modified"]] <- TRUE
-      # })
-    
       # Each time a dropdown is updated, modify temp variable
       observeEvent(r[[table]], {
         
@@ -657,18 +648,6 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$management_save"))
       })
-      
-      # observeEvent(input$vocabularies_tables_datatable_save, {
-      #   
-      #   if (perf_monitoring) monitor_perf(r = r, action = "start")
-      #   if (debug) print(paste0(Sys.time(), " - mod_settings_data_management - observer input$vocabularies_tables_datatable_save"))
-      #   
-      #   req(input$vocabulary_tables_selected_vocabulary)
-      #   save_settings_datatable_updates(output = output, r = r, ns = ns, table = "thesaurus_items", 
-      #     r_table = "thesaurus_items", duplicates_allowed = TRUE, i18n = i18n)
-      #   
-      #   if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_settings_data_management - observer input$vocabularies_tables_datatable_save"))
-      # })
       
       # --- --- --- --- --- --- --- --
       # Delete a row in datatable ----

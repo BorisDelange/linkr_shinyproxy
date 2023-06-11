@@ -97,6 +97,7 @@ export_selected_scripts,Export scripts
 export_scripts,Export scripts
 export_plugins_remote_git,Export on remote git
 import_and_export_plugins,Import and export plugins
+import_and_export_scripts,Import and export scripts
 git_remote_plugins,On remote git repository
 git_remote_scripts,On remote git repository
 remote_git_repo,Remote git repository
@@ -671,9 +672,12 @@ error_removing_patients_from_subset,Error removing patients from subset
 help,Help
 no_help_for_this_page,No help for this page
 create_and_test_a_plugin,Create and test a plugin
+create_and_test_a_script,Create and test a script
 create_a_plugin,Create a plugin
-whats_a_plugin,What is a plugin ?
+whats_a_plugin,What is a plugin?
+whats_a_script,What is a script?
 local_and_remote_plugins,Local & remote plugins
+local_and_remote_scripts,Local & remote scripts
 access_log,Access the log
 change_password_card_user_access_description,Change password of current account
 db_connection_infos_card_user_access_description,Configure app database connections

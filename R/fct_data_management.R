@@ -215,19 +215,19 @@ add_vocabulary_concept <- function(output, m = shiny::reactiveValues(), vocabula
 #' @description Get a vocabulary concept, from the vocabulary_id and the concept_id or the concept_name
 #' @param output Shiny output variable
 #' @param m A shiny::reactiveValues object, used to communicate between modules
+#' @param i18n Translator object from shiny.i18n library
+#' @param ns Shiny namespace
 #' @param vocabulary_id Value of vocabulary_id where the concept will be added (character)
 #' @param concept_name Value of concept_name (character)
 #' @param concept_id Valud of concept_id (integer)
 #' @param method Method used to get the vocabulary concept. Could be "concept_name" or "concept_id" (character)
-#' @param i18n Translator object from shiny.i18n library
-#' @param ns Shiny namespace
 #' @examples 
 #' \dontrun{
-#' get_vocabulary_concept(output = output, m = m, vocabulary_id = "MIMIC-IV", concept_name = "Diuresis", 
-#'   method = "concept_name", i18n = i18n, ns = ns)
+#' get_vocabulary_concept(output = output, m = m,  i18n = i18n, ns = ns,
+#'   vocabulary_id = "MIMIC-IV", concept_name = "Diuresis", method = "concept_name")
 #' }
-get_vocabulary_concept <- function(output, m = shiny::reactiveValues(), vocabulary_id = character(), 
-  concept_name = character(), concept_id = integer(), method = character(), i18n = character(), ns = character()){
+get_vocabulary_concept <- function(output, m = shiny::reactiveValues(), i18n = character(), ns = character(),
+  vocabulary_id = character(), concept_name = character(), concept_id = integer(), method = character()){
   
   stop_fct <- FALSE
   result <- tibble::tibble()
@@ -281,12 +281,11 @@ get_vocabulary_concept <- function(output, m = shiny::reactiveValues(), vocabula
     result <- DBI::dbGetQuery(m$db, sql)
   }
   
-  if (nrow(result) == 0){
-    show_message_bar(output, "concept_not_found", "severeWarning", i18n = i18n, ns = ns)
-    stop(i18n$t("concept_not_found"))
-  }
+  if (nrow(result) == 0) result <- tibble::tibble(id = integer(), concept_id = integer(), concept_name = character(),
+    domain_id = character(), vocabulary_id = character(), concept_class_id = character(), standard_concept = character(),
+    concept_code = character(), valid_start_date = character(), valid_end_date = character(), invalid_reason = character())
   
-  else result
+  result
 }
 
 #' Remove patients from a subset

@@ -61,7 +61,6 @@ reference:
   - make_textfield
   - make_toggle
   - render_datatable
-  - render_settings_code_card
   - render_settings_creation_card
   - render_settings_datatable_card
   - render_settings_default_elements

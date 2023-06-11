@@ -1,4 +1,4 @@
-#' thesaurus UI Function
+#' vocabularies UI Function
 #'
 #' @description A shiny Module.
 #'
@@ -222,7 +222,7 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
   )
 }
 
-#' thesaurus Server Functions
+#' vocabularies Server Functions
 #'
 #' @noRd 
 mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(), d = shiny::reactiveValues(), m = shiny::reactiveValues(),
@@ -862,17 +862,17 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$reload_vocabulary_concepts_cache"))
       
-      d$dataset_all_concepts_reload_cache_open_dialog <- TRUE
+      r$dataset_all_concepts_reload_cache_open_dialog <- TRUE
     })
     
-    d$dataset_all_concepts_reload_cache_open_dialog <- FALSE
+    r$dataset_all_concepts_reload_cache_open_dialog <- FALSE
     
     output$dataset_all_concepts_reload_cache <- shiny.fluent::renderReact({
       
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - output$dataset_all_concepts_reload_cache"))
       
       shiny.fluent::Dialog(
-        hidden = !d$dataset_all_concepts_reload_cache_open_dialog,
+        hidden = !r$dataset_all_concepts_reload_cache_open_dialog,
         onDismiss = htmlwidgets::JS(paste0("function() { Shiny.setInputValue('vdataset_all_concepts_reload_cache_hide_dialog', Math.random()); }")),
         dialogContentProps = list(
           type = 0,
@@ -887,14 +887,14 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       )
     })
     
-    observeEvent(input$dataset_all_concepts_reload_cache_canceled, d$dataset_all_concepts_reload_cache_open_dialog <- FALSE)
+    observeEvent(input$dataset_all_concepts_reload_cache_canceled, r$dataset_all_concepts_reload_cache_open_dialog <- FALSE)
     
     observeEvent(input$dataset_all_concepts_reload_cache_confirmed, {
       
       if (debug) print(paste0(Sys.time(), " - mod_vocabularies - observer input$dataset_all_concepts_reload_cache_confirmed"))
       
       # Close dialog box
-      d$dataset_all_concepts_reload_cache_open_dialog <- FALSE
+      r$dataset_all_concepts_reload_cache_open_dialog <- FALSE
       
       file.remove(paste0(r$app_folder, "/datasets/", r$selected_dataset, "/dataset_all_concepts.csv"))
       

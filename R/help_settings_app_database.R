@@ -332,7 +332,7 @@ help_settings_app_database <- function(input, output, r = shiny::reactiveValues(
         ),
         p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", strong("Others")),
         tags$ul(
-          tags$li(tags$em("code"), " : codes of different tables (datasets, thesaurus etc) are stored here"),
+          tags$li(tags$em("code"), " : codes of different tables (datasets, scripts etc) are stored here"),
           tags$li(tags$em("options"), " : options of different tables (data_sources, datasets etc) are stored here"),
           tags$li(tags$em("conversations"), " : conversations created within studies are stored here"),
           tags$li(tags$em("user_deleted_conversations"), " : list of deleted conversations for each user"),

@@ -935,7 +935,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               output[[paste0(prefix, "_widget_", widget_id)]] <- renderUI(element_code)
             },
               error = function(e){
-                report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
+                report_bug(r = r, output = output, error_message = "error_run_plugin_ui_code",
                   error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
               })
           })
@@ -2508,7 +2508,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         )
       },
         error = function(e){
-          report_bug(r = r, output = output, error_message = i18n$t("error_run_plugin_ui_code"),
+          report_bug(r = r, output = output, error_message = "error_run_plugin_ui_code",
             error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)}
       )
       # Remove toggles UI for this tab

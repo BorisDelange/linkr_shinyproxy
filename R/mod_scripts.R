@@ -399,6 +399,10 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     help_scripts(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
     
+    observeEvent(input$copy_code_1, r$help_scripts_copy_code_1 <- Sys.time())
+    # observeEvent(input$copy_code_2, r$help_scripts_copy_code_2 <- Sys.time())
+    observeEvent(input$copy_code_3, r$help_scripts_copy_code_3 <- Sys.time())
+    
     # --- --- --- --- --- -
     # Update dropdowns ----
     # --- --- --- --- --- -
@@ -853,10 +857,10 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
           dplyr::ungroup() %>%
           dplyr::mutate(action = dplyr::case_when(
             is.na(local_script_version) ~ as.character(tagList(
-              shiny::actionButton("add_remote_git_script_%unique_id%", "", icon = icon("plus"),
+              actionButton("add_remote_git_script_%unique_id%", "", icon = icon("plus"),
                 onclick = paste0("Shiny.setInputValue('", id, "-add_remote_git_script', this.id, {priority: 'event'})")))),
             !is.na(local_script_version) & compare_versions == -1 ~ as.character(tagList(
-              shiny::actionButton("add_remote_git_script_%unique_id%", "", icon = icon("refresh"),
+              actionButton("add_remote_git_script_%unique_id%", "", icon = icon("refresh"),
                 onclick = paste0("Shiny.setInputValue('", id, "-add_remote_git_script', this.id, {priority: 'event'})")))),
             TRUE ~ ""
           )) %>%

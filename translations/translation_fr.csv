@@ -97,6 +97,7 @@ export_scripts,Exporter des scripts
 export_selected_scripts,Exporter les scripts
 export_plugins_remote_git,Exporter sur dépôt git distant
 import_and_export_plugins,Importer et exporter des plugins
+import_and_export_scripts,Importer et exporter des scripts
 git_remote_plugins,Sur dépôt git distant
 git_remote_scripts,Sur dépôt git distant
 remote_git_repo,Dépôt git distant
@@ -671,9 +672,12 @@ error_removing_patients_from_subset,Erreur lors de la tentative de suppression d
 help,Aide
 no_help_for_this_page,Pas d'aide pour cette page
 create_and_test_a_plugin,Créer et tester un plugin
+create_and_test_a_script,Créer et tester un script
 create_a_plugin,Créer un plugin
 whats_a_plugin,Qu'est ce qu'un plugin ?
+whats_a_script,Qu'est ce qu'un script ?
 local_and_remote_plugins,Plugins locaux et distants
+local_and_remote_scripts,Scripts locaux et distants
 access_log,Accéder au log
 change_password_card_user_access_description,Changer le mot de passe du compte actuel
 db_connection_infos_card_user_access_description,Configurer les connexions à la base de données de l'application
