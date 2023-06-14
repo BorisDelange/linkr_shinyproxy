@@ -765,7 +765,9 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       type <- r$datatable_script_selected_type
       
       script_description <- r[[paste0(type, "_scripts")]][input[[paste0(type, "_scripts_datatable_rows_selected")]], ] %>% 
-        dplyr::pull(description) %>% stringr::str_replace_all("''", "'")
+        dplyr::pull(description)
+      
+      if (type == "local") script_description <- script_description %>% stringr::str_replace_all("''", "'")
       
       tryCatch({
 
@@ -902,8 +904,6 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       unique_id <- substr(input$add_remote_git_script, nchar("add_remote_git_script_") + 1, nchar(input$add_remote_git_script))
 
-      print(unique_id)
-      
       script_updated <- FALSE
       link_id <- integer(0)
       
@@ -943,6 +943,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       new_data$scripts <- tibble::tibble(id = last_row$scripts + 1, name = script[[paste0("name_", language)]], 
         creation_datetime = script$creation_datetime, update_datetime = script$update_datetime, deleted = FALSE)
+      
+      for (name in c("description_fr", "description_en", "code")) script[[name]] <- script[[name]] %>% stringr::str_replace_all("'", "''")
       
       new_data$options <- tibble::tribble(
         ~id, ~category, ~link_id, ~name, ~value, ~value_num, ~creator_id, ~datetime, ~deleted,
@@ -1372,7 +1374,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
         paste0("script_", field), value = options %>% dplyr::filter(name == field) %>% dplyr::pull(value))
       
       for (field in c("description_fr", "description_en")) shinyAce::updateAceEditor(session,
-        paste0("script_", field), value = options %>% dplyr::filter(name == field) %>% dplyr::pull(value))
+        paste0("script_", field), value = options %>% dplyr::filter(name == field) %>% dplyr::pull(value) %>% stringr::str_replace_all("''", "'"))
       
     })
     
@@ -1574,6 +1576,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
               r$code <- r$code %>% dplyr::filter(link_id != script$id | (link_id == script$id & category == "script"))
             }
             
+            for (name in c("description_fr", "description_en", "code")) script[[name]] <- script[[name]] %>% stringr::str_replace_all("'", "''")
+            
             # Scripts table
             
             new_row <- get_last_row(r$db, "scripts") + 1
@@ -1744,7 +1748,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
           
           script <- r$scripts %>% dplyr::filter(id == script_id)
           options <- r$options %>% dplyr::filter(category == "script", link_id == script_id)
-          code <- r$code %>% dplyr::filter(link_id == script_id, category == "script")
+          code <- r$code %>% dplyr::filter(link_id == script_id, category == "script") %>% dplyr::pull(code) %>% stringr::str_replace_all("''", "'")
           
           # Create folder if doesn't exist
           script_dir <- paste0(r$app_folder, "/scripts/", options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
@@ -1758,10 +1762,12 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
           scripts_node <- XML::newXMLNode("scripts", doc = xml)
           script_node <- XML::newXMLNode("script", parent = scripts_node, doc = xml)
           XML::newXMLNode("app_version", r$app_version, parent = script_node)
-          for(name in c("unique_id", "version", "author",  "name_fr", "name_en", "category_fr", "category_en", "description_fr", "description_en")) XML::newXMLNode(name, 
+          for(name in c("unique_id", "version", "author",  "name_fr", "name_en", "category_fr", "category_en")) XML::newXMLNode(name, 
             options %>% dplyr::filter(name == !!name) %>% dplyr::pull(value), parent = script_node)
+          for(name in c("description_fr", "description_en")) XML::newXMLNode(name,
+            options %>% dplyr::filter(name == !!name) %>% dplyr::pull(value) %>% stringr::str_replace_all("''", "'"), parent = script_node)
           for (name in c("creation_datetime", "update_datetime")) XML::newXMLNode(name, script %>% dplyr::pull(get(!!name)), parent = script_node)
-          XML::newXMLNode("code", code %>% dplyr::pull(code), parent = script_node)
+          XML::newXMLNode("code", code, parent = script_node)
           XML::saveXML(xml, file = paste0(script_dir, "/script.xml"))
           
           list_of_files <- list.files(script_dir)

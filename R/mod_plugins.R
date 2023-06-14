@@ -820,7 +820,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         plugin_description <- paste0(
           "**Auteur** : ", plugin$name, "<br />",
           "**Version** : ", plugin$version, "\n\n",
-          plugin %>% dplyr::pull(paste0("description_", tolower(language))) %>% stringr::str_replace_all("''", "'")
+          plugin %>% dplyr::pull(paste0("description_", tolower(language)))
         )
         
         plugin_folder <- paste0(r$url_address, prefix, "/", plugin$unique_id)
@@ -961,6 +961,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
               (category %in% c("plugin_ui", "plugin_server", "plugin_translations") & link_id != new_row))
         }
         
+        for (name in c("description_fr", "description_en")) plugin[[name]] <- plugin[[name]] %>% stringr::str_replace_all("'", "''")
+        
         # Plugin table
         
         new_data <- tibble::tribble(
@@ -998,15 +1000,18 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         
         plugin_ui_code <- 
           paste0(r$url_address, prefix, "/", plugin$unique_id, "/ui.R") %>%
-          readLines(warn = FALSE) %>% paste(collapse = "\n")
+          readLines(warn = FALSE) %>% paste(collapse = "\n") %>%
+          stringr::str_replace_all("'", "''")
         
         plugin_server_code <-
           paste0(r$url_address, prefix, "/", plugin$unique_id, "/server.R") %>%
-          readLines(warn = FALSE) %>% paste(collapse = "\n")
+          readLines(warn = FALSE) %>% paste(collapse = "\n") %>%
+          stringr::str_replace_all("'", "''")
         
         plugin_translations_code <-
           paste0(r$url_address, prefix, "/", plugin$unique_id, "/translations.csv") %>%
-          readLines(warn = FALSE) %>% paste(collapse = "\n")
+          readLines(warn = FALSE) %>% paste(collapse = "\n") %>%
+          stringr::str_replace_all("'", "''")
         
         last_row_code <- get_last_row(r$db, "code")
         
@@ -1651,16 +1656,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     observeEvent(r[[paste0(prefix, "_plugin_options_description_trigger")]], {
       
       if (perf_monitoring) monitor_perf(r = r, action = "start")
-      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer input$execute_options_description"))
+      if (debug) print(paste0(Sys.time(), " - mod_plugins - observer r$.._plugin_options_description_trigger"))
       
-      plugin <- r$plugins %>% dplyr::filter(id == input$plugin_id)
-      plugin_options <- r$options %>% dplyr::filter(category == "plugin", link_id == input$plugin_id)
-      plugin_folder <- paste0(r$app_folder, "/plugins/", prefix, "/", plugin_options %>% dplyr::filter(name == "unique_id") %>% dplyr::pull(value))
-      
-      options_description <- isolate(input[[paste0("plugin_description_", input$plugin_description_language)]] %>% 
-        stringr::str_replace_all("\r", "\n")) %>%
-        stringr::str_replace_all("''", "'") %>%
-        stringr::str_replace_all("%plugin_folder%", plugin_folder)
+      options_description <- isolate(input[[paste0("plugin_description_", input$plugin_description_language)]] %>% stringr::str_replace_all("\r", "\n"))
       
       tryCatch({
         
@@ -1684,7 +1682,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         output$description_markdown_result <- renderUI(div(class = "markdown", withMathJax(includeMarkdown(file))))
       }, error = function(e) "")
       
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer input$execute_options_description"))
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_plugins - observer r$.._plugin_options_description_trigger"))
     })
     
     # --- --- --- --- --- -
@@ -2145,8 +2143,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         stringr::str_replace_all("%tab_id%", "1") %>%
         stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
         stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
-        stringr::str_replace_all("\r", "\n") %>%
-        stringr::str_replace_all("''", "'")
+        stringr::str_replace_all("\r", "\n")
       
       if (prefix == "patient_lvl") ui_code <- ui_code %>% stringr::str_replace_all("%patient_id%", as.character(m$selected_person))
       
@@ -2155,8 +2152,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
         stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
         stringr::str_replace_all("%req%", "req(m[[session_code]] == session_num)\nreq(m$selected_study == %study_id%)") %>%
         stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
-        stringr::str_replace_all("\r", "\n") %>%
-        stringr::str_replace_all("''", "'")
+        stringr::str_replace_all("\r", "\n")
       
       if (prefix == "patient_lvl") server_code <- server_code %>% stringr::str_replace_all("%patient_id%", as.character(m$selected_person))
       
@@ -2367,6 +2363,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
               r$code <- r$code %>% dplyr::filter(link_id != plugin$id | (link_id == plugin$id & category %not_in% c("plugin_ui", "plugin_server", "plugin_translations")))
             }
             
+            for (name in c("description_fr", "description_en")) plugin[[name]] <- plugin[[name]] %>% stringr::str_replace_all("'", "''")
+            
             # Plugins table
             
             new_row <- get_last_row(r$db, "plugins") + 1
@@ -2404,9 +2402,9 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
             
             # Code table
             
-            plugin_ui_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/ui.R") %>% readLines(warn = FALSE) %>% paste(collapse = "\n")
-            plugin_server_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/server.R") %>% readLines(warn = FALSE) %>% paste(collapse = "\n")
-            plugin_translations_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/translations.csv") %>% readLines(warn = FALSE) %>% paste(collapse = "\n")
+            plugin_ui_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/ui.R") %>% readLines(warn = FALSE) %>% paste(collapse = "\n") %>% stringr::str_replace_all("'", "''")
+            plugin_server_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/server.R") %>% readLines(warn = FALSE) %>% paste(collapse = "\n") %>% stringr::str_replace_all("'", "''")
+            plugin_translations_code <- paste0(temp_dir, "/plugins/", prefix, "/", plugin$unique_id, "/translations.csv") %>% readLines(warn = FALSE) %>% paste(collapse = "\n") %>% stringr::str_replace_all("'", "''")
             
             last_row_code <- get_last_row(r$db, "code")
             
@@ -2552,8 +2550,8 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           
           # Create ui.R & server.R
           sapply(c("ui", "server"), function(name) writeLines(code %>% dplyr::filter(category == paste0("plugin_", name)) %>% 
-              dplyr::pull(code), paste0(plugin_dir, "/", name, ".R")))
-          writeLines(code %>% dplyr::filter(category == "plugin_translations") %>% dplyr::pull(code), paste0(plugin_dir, "/translations.csv"))
+              dplyr::pull(code) %>% stringr::str_replace_all("''", "'"), paste0(plugin_dir, "/", name, ".R")))
+          writeLines(code %>% dplyr::filter(category == "plugin_translations") %>% dplyr::pull(code) %>% stringr::str_replace_all("''", "'"), paste0(plugin_dir, "/translations.csv"))
           
           # Create XML file
           xml <- XML::newXMLDoc()
@@ -2561,9 +2559,11 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
           plugin_node <- XML::newXMLNode("plugin", parent = plugins_node, doc = xml)
           XML::newXMLNode("app_version", r$app_version, parent = plugin_node)
           XML::newXMLNode("type", tab_type_id, parent = plugin_node)
-          for(name in c("unique_id", "version", "author", "image", "name_fr", "name_en", "category_fr", "category_en", "description_fr", "description_en")){
+          for(name in c("unique_id", "version", "author", "image", "name_fr", "name_en", "category_fr", "category_en")){
             XML::newXMLNode(name, options %>% dplyr::filter(name == !!name) %>% dplyr::pull(value), parent = plugin_node)
           }
+          for(name in c("description_fr", "description_en")) XML::newXMLNode(name, options %>% dplyr::filter(name == !!name) %>% 
+              dplyr::pull(value) %>% stringr::str_replace_all("''", "'"), parent = plugin_node)
           for (name in c("creation_datetime", "update_datetime")) XML::newXMLNode(name, plugin %>% dplyr::pull(get(!!name)), parent = plugin_node)
           XML::saveXML(xml, file = paste0(plugin_dir, "/plugin.xml"))
           
