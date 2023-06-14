@@ -1092,6 +1092,9 @@ save_settings_datatable_updates <- function(output, r = shiny::reactiveValues(),
     else if (table == "vocabulary") duplicates_name <- r[[paste0(r_table, "_temp")]] %>%
       dplyr::group_by(vocabulary_id) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
     
+    else if (table == "git_repos") duplicates_name <- r$git_repos_temp %>% dplyr::mutate_at("name", tolower) %>%
+      dplyr::group_by(category, name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow()
+    
     else {
       if (table %in% m_tables) duplicates_name <- m[[paste0(r_table, "_temp")]] %>% dplyr::mutate_at("name", tolower) %>%
           dplyr::group_by(name) %>% dplyr::summarize(n = dplyr::n()) %>% dplyr::filter(n > 1) %>% nrow() 

@@ -399,7 +399,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
               # Execute script code
               captured_output <- capture.output(
                 tryCatch({
-                  eval(parse(text = script$code %>% stringr::str_replace_all("\r", "\n")))
+                  eval(parse(text = script$code %>% stringr::str_replace_all("\r", "\n") %>% stringr::str_replace_all("''", "'")))
                   r$dataset_loaded_scripts <- r$dataset_loaded_scripts %>% dplyr::mutate(status = dplyr::case_when(
                     id == script$id ~ "success", TRUE ~ status
                   ))
@@ -588,7 +588,7 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
       
       # Get description from database
       # study_description <- r$options %>% dplyr::filter(category == "study" & name == "markdown_description" & link_id == m$selected_study) %>% 
-      #   dplyr::pull(value) %>% stringr::str_replace_all("\r", "\n")
+      #   dplyr::pull(value) %>% stringr::str_replace_all("\r", "\n") %>% stringr::str_replace_all("''", "'")
       # 
       # tryCatch({
       #   
@@ -637,7 +637,8 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
         subset_code <- r$code %>% dplyr::filter(category == "subset" & link_id == m$selected_subset) %>% dplyr::pull(code) %>%
           stringr::str_replace_all("%dataset_id%", as.character(r$selected_dataset)) %>%
           stringr::str_replace_all("%subset_id%", as.character(m$selected_subset)) %>%
-          stringr::str_replace_all("\r", "\n")
+          stringr::str_replace_all("\r", "\n") %>%
+          stringr::str_replace_all("''", "'")
         
         tryCatch(eval(parse(text = subset_code)),
           error = function(e) if (nchar(e[1]) > 0) report_bug(r = r, output = output, error_message = "fail_execute_subset_code", 
@@ -1086,32 +1087,6 @@ mod_my_studies_server <- function(id = character(), r = shiny::reactiveValues(),
     # --- --- --- --- ---
     # Export a study ----
     # --- --- --- --- ---
-    
-    # --- --- --- --- --- --- --
-    ## Debug - Execute code ----
-    # --- --- --- --- --- --- --
-    
-    # observeEvent(input$execute_code, {
-    #   
-    #   if (debug) print(paste0(Sys.time(), " - mod_my_studies - observer input$execute_code"))
-    #   
-    #   code <- input$ace_edit_code %>% stringr::str_replace_all("\r", "\n")
-    #   
-    #   output$code_result <- renderText({
-    #     
-    #     options('cli.num_colors' = 1)
-    #     
-    #     # Capture console output of our code
-    #     captured_output <- capture.output(
-    #       tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
-    #     
-    #     # Restore normal value
-    #     options('cli.num_colors' = NULL)
-    #     
-    #     # Display result
-    #     paste(strwrap(captured_output), collapse = "\n")
-    #   })
-    # })
     
   })
 }

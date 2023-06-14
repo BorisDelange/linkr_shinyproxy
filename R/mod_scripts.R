@@ -764,7 +764,8 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       
       type <- r$datatable_script_selected_type
       
-      script_description <- r[[paste0(type, "_scripts")]][input[[paste0(type, "_scripts_datatable_rows_selected")]], ] %>% dplyr::pull(description)
+      script_description <- r[[paste0(type, "_scripts")]][input[[paste0(type, "_scripts_datatable_rows_selected")]], ] %>% 
+        dplyr::pull(description) %>% stringr::str_replace_all("''", "'")
       
       tryCatch({
 
@@ -1231,7 +1232,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
       }
       
       # Get code from database
-      code <- r$code %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(code)
+      code <- r$code %>% dplyr::filter(category == "script" & link_id == !!link_id) %>% dplyr::pull(code) %>% stringr::str_replace_all("''", "'")
       
       shinyAce::updateAceEditor(session, "ace_edit_code", value = code)
       

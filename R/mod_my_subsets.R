@@ -90,20 +90,23 @@ mod_my_subsets_ui <- function(id = character(), i18n = character()){
                 shiny.fluent::DefaultButton.shinyInput(ns("delete_selected_persons"), i18n$t("delete_selection")),
                 style = "position:relative; z-index:1; margin-top:-30px; width:500px;"
               )
-            ), br()
+            ), br(),
+            conditionalPanel(condition = "input.persons_selected_subset == null | input.persons_selected_subset == ''", ns = ns, br())
           )
         ),
-        make_card(i18n$t("add_persons_to_subset"),
-          div(
-            div(DT::DTOutput(ns("subset_add_persons_datatable")), style = "margin-top:-30px; z-index:2"),
-            shinyjs::hidden(
-              div(
-                id = ns("subset_add_persons_buttons"),
-                shiny.fluent::PrimaryButton.shinyInput(ns("subset_add_persons"), i18n$t("add")),
-                style = "position:relative; z-index:1; margin-top:-30px; width:500px;"
-              )
-            ), br()
-          )  
+        conditionalPanel(condition = "input.persons_selected_subset != null & input.persons_selected_subset != ''", ns = ns,
+          make_card(i18n$t("add_persons_to_subset"),
+            div(
+              div(DT::DTOutput(ns("subset_add_persons_datatable")), style = "margin-top:-30px; z-index:2"),
+              shinyjs::hidden(
+                div(
+                  id = ns("subset_add_persons_buttons"),
+                  shiny.fluent::PrimaryButton.shinyInput(ns("subset_add_persons"), i18n$t("add")),
+                  style = "position:relative; z-index:1; margin-top:-30px; width:500px;"
+                )
+              ), br()
+            )  
+          )
         )
       )
     ),

@@ -899,45 +899,51 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             
             # Try to run plugin UI code
             # ID of UI element is in the following format : "group_[ID]"
-            tryCatch({
-              code_ui_card <- code_ui_card %>%
-                stringr::str_replace_all("%tab_id%", as.character(tab_id)) %>%
-                stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
-                stringr::str_replace_all("\r", "\n")
-              
-              if (length(m$selected_study) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
-              
-              # Widget card
-              
-              element_code <- div(
-                make_card("",
+            # tryCatch({
+            code_ui_card <- code_ui_card %>%
+              stringr::str_replace_all("%tab_id%", as.character(tab_id)) %>%
+              stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
+              stringr::str_replace_all("\r", "\n") %>%
+              stringr::str_replace_all("''", "'")
+            
+            if (length(m$selected_study) > 0) code_ui_card <- code_ui_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
+            
+            # Widget card
+            
+            code_ui <- tryCatch(eval(parse(text = code_ui_card)), error = function(e){
+              report_bug(r = r, output = output, error_message = "error_run_plugin_ui_code",
+                error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
+              p(toString(e))
+            }, warning = function(w){
+              report_bug(r = r, output = output, error_message = "error_run_plugin_ui_code",
+                error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = toString(w), i18n = i18n, ns = ns)
+              p(toString(w))
+            })
+            
+            element_code <- div(
+              make_card("",
+                div(
+                  div(id = ns(paste0(prefix, "_widget_plugin_ui_", widget_id)), code_ui),
                   div(
-                    div(id = ns(paste0(prefix, "_widget_plugin_ui_", widget_id)), eval(parse(text = code_ui_card))),
-                    div(
-                      id = ns(paste0(prefix, "_widget_settings_remove_buttons_", widget_id)),
-                      shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 2),
-                        settings_widget_button,
-                        actionButton(ns(paste0(prefix, "_remove_widget_", widget_id)), "", icon = icon("trash-alt"))
-                      ),
-                      style = "position:absolute; top:8px; right: 10px;"
-                    )
-                  ),
-                  style = "position:relative;"
-                )
+                    id = ns(paste0(prefix, "_widget_settings_remove_buttons_", widget_id)),
+                    shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 2),
+                      settings_widget_button,
+                      actionButton(ns(paste0(prefix, "_remove_widget_", widget_id)), "", icon = icon("trash-alt"))
+                    ),
+                    style = "position:absolute; top:8px; right: 10px;"
+                  )
+                ),
+                style = "position:relative;"
               )
-              
-              ui_output <- uiOutput(ns(paste0(prefix, "_widget_", widget_id)))
-              hide_div <- TRUE
-              if (!is.na(selected_tab)) if (tab_id == selected_tab) hide_div <- FALSE
-              if (hide_div) ui_output <- shinyjs::hidden(ui_output)
-              
-              insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = ui_output)
-              output[[paste0(prefix, "_widget_", widget_id)]] <- renderUI(element_code)
-            },
-              error = function(e){
-                report_bug(r = r, output = output, error_message = "error_run_plugin_ui_code",
-                  error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
-              })
+            )
+            
+            ui_output <- uiOutput(ns(paste0(prefix, "_widget_", widget_id)))
+            hide_div <- TRUE
+            if (!is.na(selected_tab)) if (tab_id == selected_tab) hide_div <- FALSE
+            if (hide_div) ui_output <- shinyjs::hidden(ui_output)
+            
+            insertUI(selector = paste0("#", ns("study_cards")), where = "beforeEnd", ui = ui_output)
+            output[[paste0(prefix, "_widget_", widget_id)]] <- renderUI(element_code)
           })
         }
         
@@ -1052,7 +1058,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
               if (input[[paste0(toggle, "_toggle")]]) shinyjs::show(toggle) else shinyjs::hide(toggle)
             })
             
-            vocabulary_selected_concepts <- widgets_concepts %>% dplyr::filter(widget_id == !!widget_id) %>%
+            selected_concepts <- widgets_concepts %>% dplyr::filter(widget_id == !!widget_id) %>%
               dplyr::select(concept_id, concept_name, concept_display_name, domain_id,
                 mapped_to_concept_id, merge_mapped_concepts)
             
@@ -1071,7 +1077,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
                 stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
                 stringr::str_replace_all("%req%", "req(m[[session_code]] == session_num)\nreq(m$selected_study == %study_id%)") %>%
                 stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
-                stringr::str_replace_all("\r", "\n")
+                stringr::str_replace_all("\r", "\n") %>%
+                stringr::str_replace_all("''", "'")
               
               # If it is an aggregated plugin, change %study_id% with current selected study
               if (length(m$selected_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
@@ -1123,7 +1130,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             new_env_vars <- list("r" = NA)
             
             # Variables to keep
-            variables_to_keep <- c("d", "m", "session_code", "session_num", "i18n", "vocabulary_selected_concepts")
+            variables_to_keep <- c("d", "m", "session_code", "session_num", "i18n", "selected_concepts")
             if (exists("i18np")) variables_to_keep <- c(variables_to_keep, "i18np")
             
             for (var in variables_to_keep) new_env_vars[[var]] <- eval(parse(text = var))
@@ -1249,7 +1256,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       last_row_widgets_concepts <- get_last_row(m$db, paste0(prefix, "_widgets_concepts"))
       
       has_vocabulary_concepts <- TRUE
-      vocabulary_selected_concepts <- tibble::tibble()
+      selected_concepts <- tibble::tibble()
       
       if (length(r[[paste0(prefix, "_widget_settings_vocabulary_selected_concepts")]]) == 0) has_vocabulary_concepts <- FALSE
       if (length(r[[paste0(prefix, "_widget_settings_vocabulary_selected_concepts")]]) > 0) if (nrow(r[[paste0(prefix, "_widget_settings_vocabulary_selected_concepts")]]) == 0) has_vocabulary_concepts <- FALSE
@@ -1274,7 +1281,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         DBI::dbAppendTable(m$db, paste0(prefix, "_widgets_concepts"), new_data)
         r[[paste0(prefix, "_widgets_concepts")]] <- r[[paste0(prefix, "_widgets_concepts")]] %>% dplyr::bind_rows(new_data)
         
-        vocabulary_selected_concepts <- r[[paste0(prefix, "_widget_settings_vocabulary_selected_concepts")]]
+        selected_concepts <- r[[paste0(prefix, "_widget_settings_vocabulary_selected_concepts")]]
       }
       
       show_message_bar(output, message = "modif_saved", type = "success", i18n = i18n, ns = ns)
@@ -1315,7 +1322,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
         stringr::str_replace_all("%req%", "req(m[[session_code]] == session_num)\nreq(m$selected_study == %study_id%)") %>%
         stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
-        stringr::str_replace_all("\r", "\n")
+        stringr::str_replace_all("\r", "\n") %>%
+        stringr::str_replace_all("''", "'")
       
       # If it is an aggregated plugin, change %study_id% with current selected study
       if (length(m$selected_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
@@ -1329,7 +1337,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       new_env_vars <- list("r" = NA)
       
       # Variables to keep
-      variables_to_keep <- c("d", "m", "session_code", "session_num", "i18n", "vocabulary_selected_concepts")
+      variables_to_keep <- c("d", "m", "session_code", "session_num", "i18n", "selected_concepts")
       if (exists("i18np")) variables_to_keep <- c(variables_to_keep, "i18np")
       
       for (var in variables_to_keep) new_env_vars[[var]] <- eval(parse(text = var))
@@ -2335,7 +2343,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       last_row_widgets_concepts <- get_last_row(m$db, paste0(prefix, "_widgets_concepts"))
       
       has_vocabulary_concepts <- TRUE
-      vocabulary_selected_concepts <- tibble::tibble()
+      selected_concepts <- tibble::tibble()
       
       if (length(r[[paste0(prefix, "_widget_creation_vocabulary_selected_concepts")]]) == 0) has_vocabulary_concepts <- FALSE
       if (length(r[[paste0(prefix, "_widget_creation_vocabulary_selected_concepts")]]) > 0) if (nrow(r[[paste0(prefix, "_widget_creation_vocabulary_selected_concepts")]]) == 0) has_vocabulary_concepts <- FALSE
@@ -2355,7 +2363,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         r[[paste0(prefix, "_widgets_concepts")]] <- r[[paste0(prefix, "_widgets_concepts")]] %>% dplyr::bind_rows(new_data)
         
         # Vocabulary concepts for server code
-        vocabulary_selected_concepts <- r[[paste0(prefix, "_widget_creation_vocabulary_selected_concepts")]]
+        selected_concepts <- r[[paste0(prefix, "_widget_creation_vocabulary_selected_concepts")]]
         
         # Reset r$..widget_vocabulary_selected_concepts & dropdown
         r[[paste0(prefix, "_widget_creation_vocabulary_selected_concepts")]] <- tibble::tibble(
@@ -2423,7 +2431,8 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
             stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
             stringr::str_replace_all("%req%", "req(m[[session_code]] == session_num)\nreq(m$selected_study == %study_id%)") %>%
             stringr::str_replace_all("%study_id%", as.character(m$selected_study)) %>%
-            stringr::str_replace_all("\r", "\n")
+            stringr::str_replace_all("\r", "\n") %>%
+            stringr::str_replace_all("''", "'")
           
           # If it is an aggregated plugin, change %study_id% with current selected study
           if (length(m$selected_study) > 0) code_server_card <- code_server_card %>% stringr::str_replace_all("%study_id%", as.character(m$selected_study))
@@ -2442,7 +2451,7 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
         new_env_vars <- list("r" = NA)
         
         # Variables to keep
-        variables_to_keep <- c("d", "m", "session_code", "session_num", "i18n", "vocabulary_selected_concepts")
+        variables_to_keep <- c("d", "m", "session_code", "session_num", "i18n", "selected_concepts")
         if (exists("i18np")) variables_to_keep <- c(variables_to_keep, "i18np")
         
         for (var in variables_to_keep) new_env_vars[[var]] <- eval(parse(text = var))
@@ -2483,34 +2492,40 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       element_code <- div()
       widget_name <- r[[paste0(prefix, "_widgets")]] %>% dplyr::filter(widget_id == !!widget_id) %>% dplyr::slice(1) %>% dplyr::pull(name)
       
-      tryCatch({
-        code_ui_card <- code_ui_card %>%
-          stringr::str_replace_all("%tab_id%", as.character(tab_id)) %>%
-          stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
-          stringr::str_replace_all("\r", "\n") %>%
-          stringr::str_replace_all("%study_id%", as.character(isolate(m$selected_study)))
-        
-        element_code <- div(
-          make_card("",
+      code_ui_card <- code_ui_card %>%
+        stringr::str_replace_all("%tab_id%", as.character(tab_id)) %>%
+        stringr::str_replace_all("%widget_id%", as.character(widget_id)) %>%
+        stringr::str_replace_all("\r", "\n") %>%
+        stringr::str_replace_all("''", "'") %>%
+        stringr::str_replace_all("%study_id%", as.character(isolate(m$selected_study)))
+      
+      code_ui <- tryCatch(eval(parse(text = code_ui_card)), error = function(e){
+        report_bug(r = r, output = output, error_message = "error_run_plugin_ui_code",
+          error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)
+        p(toString(e))
+      }, warning = function(w){
+        report_bug(r = r, output = output, error_message = "error_run_plugin_ui_code",
+          error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = toString(w), i18n = i18n, ns = ns)
+        p(toString(w))
+      })
+      
+      element_code <- div(
+        make_card("",
+          div(
+            div(id = ns(paste0(prefix, "_widget_plugin_ui_", widget_id)), code_ui),
             div(
-              div(id = ns(paste0(prefix, "_widget_plugin_ui_", widget_id)), eval(parse(text = code_ui_card))),
-              div(
-                id = ns(paste0(prefix, "_widget_settings_remove_buttons_", widget_id)),
-                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 2),
-                  actionButton(ns(paste0(prefix, "_widget_settings_", widget_id)), "", icon = icon("cog")),
-                  actionButton(ns(paste0(prefix, "_remove_widget_", widget_id)), "", icon = icon("trash-alt"))
-                ),
-                style = "position:absolute; top:8px; right: 10px;"
-              )
-            ),
-            style = "position:relative;"
-          )
+              id = ns(paste0(prefix, "_widget_settings_remove_buttons_", widget_id)),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 2),
+                actionButton(ns(paste0(prefix, "_widget_settings_", widget_id)), "", icon = icon("cog")),
+                actionButton(ns(paste0(prefix, "_remove_widget_", widget_id)), "", icon = icon("trash-alt"))
+              ),
+              style = "position:absolute; top:8px; right: 10px;"
+            )
+          ),
+          style = "position:relative;"
         )
-      },
-        error = function(e){
-          report_bug(r = r, output = output, error_message = "error_run_plugin_ui_code",
-            error_name = paste0(id, " - run ui code - ", widget_id), category = "Error", error_report = toString(e), i18n = i18n, ns = ns)}
       )
+      
       # Remove toggles UI for this tab
       # removeUI(selector = paste0("#", ns(paste0(prefix, "_toggles_", tab_id))))
       shinyjs::hide(paste0(prefix, "_toggles_", tab_id))
@@ -2692,45 +2707,5 @@ mod_data_server <- function(id = character(), r = shiny::reactiveValues(), d = s
       # Add tab toggles UI
       output[[paste0(prefix, "_toggles_", tab_id)]] <- renderUI(toggles_div)
     })
-    
-    # --- --- --- --- --- --- --
-    ## Debug - Execute code ----
-    # --- --- --- --- --- --- --
-    
-    # observeEvent(input$execute_code, {
-    #   
-    #   if (debug) print(paste0(Sys.time(), " - mod_data - ", id, " - observer input$execute_code"))
-    #   
-    #   print("cards = ")
-    #   print(r[[paste0(prefix, "_cards")]])
-    #   print(paste0("opened cards = ", r[[paste0(prefix, "_opened_cards")]]))
-    #   print(paste0("selected tab = ", r[[paste0(prefix, "_selected_tab")]]))
-    #   print(paste0("load_display_tabs = ", r[[paste0(prefix, "_load_display_tabs")]]))
-    #   print(paste0("first tab shown = ", r[[paste0(prefix, "_first_tab_shown")]] %>% dplyr::pull(id)))
-    #   print("display tabs")
-    #   print("")
-    #   print(r[[paste0(prefix, "_display_tabs")]])
-    #   print(paste0("load ui cards = ", r[[paste0(prefix, "_load_ui_cards")]]))
-    #   print(paste0("stage = ", r[[paste0(prefix, "_load_ui_stage")]]))
-    #   print("loaded studies")
-    #   print(r[[paste0(prefix, "_loaded_studies")]])
-    #   
-    #   code <- input$ace_edit_code %>% stringr::str_replace_all("\r", "\n")
-    #   
-    #   output$code_result <- renderText({
-    #     
-    #     options('cli.num_colors' = 1)
-    #     
-    #     # Capture console output of our code
-    #     captured_output <- capture.output(
-    #       tryCatch(eval(parse(text = code)), error = function(e) print(e), warning = function(w) print(w)))
-    #     
-    #     # Restore normal value
-    #     options('cli.num_colors' = NULL)
-    #     
-    #     # Display result
-    #     paste(strwrap(captured_output), collapse = "\n")
-    #   })
-    # })
   })
 }

@@ -80,7 +80,6 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     "import_dataset(output = output, ns = ns, i18n = i18n, r = r, d = d, dataset_id = %dataset_id%, data = person(),\n",
     "  type = \"person\", omop_version = \"6.0\", save_as_csv = TRUE, rewrite = FALSE)"
   )
-  
   div_code_1 <- div(
     "person <- function(){", br(),
     span("tibble::tibble(", style = "padding-left:20px;"), br(),
@@ -108,6 +107,37 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     "import_dataset(output = output, ns = ns, i18n = i18n, r = r, d = d, dataset_id = %dataset_id%, data = person(),", br(),
     span("type = \"person\", omop_version = \"6.0\", save_as_csv = TRUE, rewrite = FALSE)", style = "padding-left:20px;"),
     shiny.fluent::IconButton.shinyInput(ns("copy_code_1"), iconProps = list(iconName = "Copy"), style = "position:absolute; top:5px; right:5px;"),
+    style = r$code_style
+  )
+  
+  code_2 <- paste0(
+    "folder <- \"https://www.physionet.org/files/mimic-iv-demo-omop/0.9/1_omop_data_csv/\"\n\n",
+    "col_types <- list()\n",
+    "col_types$concept <- \"iccccccDDc\"\n",
+    "col_types$concept_relationship <- \"iicDDc\"\n\n",
+    "for (table_name in c(\"concept\", \"concept_relationship\")){\n\n",
+    "  cat(paste0(toupper(table_name), \"\\n\\n\"))\n\n",
+    "  data <-\n",
+    "    vroom::vroom(paste0(folder, \"2b_\", table_name, \".csv\"), col_types = col_types[[table_name]], progress = FALSE) %>%\n",
+    "    dplyr::rename(valid_start_date = valid_start_DATE, valid_end_date = valid_end_DATE)\n\n",
+    "  import_vocabulary_table(output = output, ns = ns, i18n = i18n, r = r, m = m, table_name = table_name, data = data, vocabulary_id = \"%vocabulary_id%\") %>% print()\n",
+    "  cat(\"\\n\\n\")\n", 
+    "}"
+  )
+  div_code_2 <- div(
+    "folder <- \"https://www.physionet.org/files/mimic-iv-demo-omop/0.9/1_omop_data_csv/\"", br(), br(),
+    "col_types <- list()", br(),
+    "col_types$concept <- \"iccccccDDc\"", br(),
+    "col_types$concept_relationship <- \"iicDDc\"", br(), br(),
+    "for (table_name in c(\"concept\", \"concept_relationship\")){", br(), br(),
+    span("cat(paste0(toupper(table_name), \"\\n\\n\"))", style = "padding-left:20px;"), br(), br(),
+    span("data <-", style = "padding-left:20px;"), br(),
+    span("vroom::vroom(paste0(folder, \"2b_\", table_name, \".csv\"), col_types = col_types[[table_name]], progress = FALSE) %>%", style = "padding-left:40px;"), br(),
+    span("dplyr::rename(valid_start_date = valid_start_DATE, valid_end_date = valid_end_DATE)", style = "padding-left:40px;"), br(), br(),
+    span("import_vocabulary_table(output = output, ns = ns, i18n = i18n, r = r, m = m, table_name = table_name, data = data, vocabulary_id = \"%vocabulary_id%\") %>% print()", style = "padding-left:20px;"), br(),
+    span("cat(\"\\n\\n\")", style = "padding-left:20px;"), br(),
+    "}",
+    shiny.fluent::IconButton.shinyInput(ns("copy_code_2"), iconProps = list(iconName = "Copy"), style = "position:absolute; top:5px; right:5px;"),
     style = r$code_style
   )
   
@@ -421,13 +451,65 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Dans cette rubrique, vous pouvez ", strong("écrire le code"), " qui permettra de charger les données d'une terminologie."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Pour charger une terminologie, ", strong("importez les données"), " avec la fonction ", 
+          strong(tags$a(href = "https://borisdelange.github.io/LinkR/reference/import_vocabulary_table.html", "import_vocabulary_table", target = "_blank"))),
+        p(tags$i(class = "fa fa-code", style = "color: steelblue;"), " ", 
+          "La fonction comprend les arguments suivants :"),
+        tags$ul(
+          tags$li(tags$em("output, ns, i18n, r, m"), " : qui sont les variables permettant le fonctionnement de l'application"),
+          tags$li(tags$em("table_name"), " : où vous indiquez le ", strong("nom de table"), " que vous souhaitez importer (concept, concept_relationship...)"),
+          tags$li(tags$em("data"), " : où vous indiquez la ", strong("variable contenant les données")),
+          tags$li(tags$em("vocabulary_id"), " : où vous indiquez ", strong("l'ID de la terminologie"), " actuelle, via la balise ", tags$em("%vocabulary_id%"))
+        ),
+        p("Voici un exemple de code :"),
+        div_code_2,
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Cliquez sur ", tags$em("Sauvegarder"), " pour sauvegarder le code, sur ", tags$em("Exécuter"), " pour tester le code."),
+        p("Un ", strong("message"), " vous indiquera le nombre de lignes chargées par table"),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Utilisez les ", strong("raccourcis"), " :",
+          tags$ul(
+            tags$li("CMD/CTRL + SHIFT + ENTER : exécute l'ensemble du code"),
+            tags$li("CMD/CTRL + ENTER : exécute le code sélectionné"),
+            tags$li("CMD/CTRL + S : sauvegarde le code")
+          )  
+        ),
+        br()
       )
     }
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "In this section, you can ", strong("write the code"), " that will allow loading the data of a vocabulary."),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "To load a vocabulary, ", strong("import the data"), " with the function ", 
+          strong(tags$a(href = "https://borisdelange.github.io/LinkR/reference/import_vocabulary_table.html", "import_vocabulary_table", target = "_blank"))),
+        p(tags$i(class = "fa fa-code", style = "color: steelblue;"), " ", 
+          "The function includes the following arguments:"),
+        tags$ul(
+          tags$li(tags$em("output, ns, i18n, r, m"), " : which are the variables allowing the application to operate"),
+          tags$li(tags$em("table_name"), " : where you indicate the ", strong("table name"), " you wish to import (concept, concept_relationship...)"),
+          tags$li(tags$em("data"), " : where you indicate the ", strong("variable containing the data")),
+          tags$li(tags$em("vocabulary_id"), " : where you indicate the ", strong("ID of the current vocabulary"), " via the tag ", tags$em("%vocabulary_id%"))
+        ),
+        p("Here is a code example:"),
+        div_code_2,
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ", 
+          "Click on ", tags$em("Save"), " to save the code, on ", tags$em("Run"), " to test the code."),
+        p("A ", strong("message"), " will indicate the number of lines loaded per table"),
+        p(tags$i(class = "fa fa-check", style = "color: steelblue;"), " ",
+          "Use the ", strong("shortcuts"), ":",
+          tags$ul(
+            tags$li("CMD/CTRL + SHIFT + ENTER : executes the entire code"),
+            tags$li("CMD/CTRL + ENTER : executes the selected code"),
+            tags$li("CMD/CTRL + S : saves the code")
+          )  
+        ),
+        br()
       )
     }
   })
@@ -442,13 +524,31 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        
+        tags$h3(tags$i(class = "fa fa-database", style = "color: steelblue;"), " ", strong("Tables de terminologie")),
+        p("Vous pouvez accéder aux différentes ", strong("tables de terminologie OMOP"), " chargées dans l'application."),
+        p("Retrouvez le détail de ces tables ",
+          tags$a(href = "https://ohdsi.github.io/CommonDataModel/cdm60.html#Vocabulary_Tables", "sur ce lien", target = "_blank"), "."),
+        p("Lorsque vous êtes dans la table ", tags$em("CONCEPT"), ", vous pouvez afficher les concepts alignés au concept sélectionné en cochant ", tags$em("Afficher les concepts alignés"), "."),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Modifier des données")),
+        p("Vous pouvez modifier les valeurs de certaines colonnes en double-cliquant dessus dans le tableau puis en cliquant sur ", tags$em("Sauvegarder"), "."),
+        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ", strong("Supprimer des données")),
+        p("Pour supprimer des données, sélectionnez-les en cliquant dessus dans le tableau puis cliquez sur ", tags$em("Supprimer la sélection"), "."),
+        br()
       )
     }
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        
+        tags$h3(tags$i(class = "fa fa-database", style = "color: steelblue;"), " ", strong("Vocabulary tables")),
+        p("You can access the different ", strong("OMOP vocabulary tables"), " loaded in the application."),
+        p("Find the details of these tables ",
+          tags$a(href = "https://ohdsi.github.io/CommonDataModel/cdm60.html#Vocabulary_Tables", "on this link", target = "_blank"), "."),
+        p("When you are in the ", tags$em("CONCEPT"), " table, you can display the concepts aligned with the selected concept by checking ", tags$em("Show mapped concepts"), "."),
+        tags$h3(tags$i(class = "fa fa-gear", style = "color: steelblue;"), " ", strong("Modify data")),
+        p("You can modify the values of certain columns by double-clicking on them in the table and then clicking on ", tags$em("Save"), "."),
+        tags$h3(tags$i(class = "fa fa-trash", style = "color: steelblue;"), " ", strong("Delete data")),
+        p("To delete data, select them by clicking on them in the table and then click on ", tags$em("Delete selection"), "."),
+        br()
       )
     }
   })
@@ -463,13 +563,25 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
     
     if (language == "fr"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        
+        p("Vous pouvez importer une terminologie à partir : "),
+        tags$ul(
+          tags$li("d'un ", strong("fichier ZIP"), " contenant les fichiers CSV d'une terminologie"),
+          tags$li("des ", strong("fichiers CSV"), " d'une terminologie (CONCEPT.csv, CONCEPT_RELATIONSHIP.csv etc)")
+        ),
+        p("Si les concepts sont déjà présents dans la base de données, il ne seront pas remplacés."),
+        br()
       )
     }
     
     if (language == "en"){
       r[[paste0("help_settings_data_management_", prefix, "_modal_text")]] <- div(
-        
+        p("You can import a vocabulary from: "),
+        tags$ul(
+          tags$li("a ", strong("ZIP file"), " containing the CSV files of a vocabulary"),
+          tags$li("the ", strong("CSV files"), " of a vocabulary (CONCEPT.csv, CONCEPT_RELATIONSHIP.csv etc)")
+        ),
+        p("If the concepts are already present in the database, they will not be replaced."),
+        br()
       )
     }
   })
@@ -506,4 +618,5 @@ help_settings_data_management <- function(output, r = shiny::reactiveValues(), i
   # Copy code divs
   
   observeEvent(r$help_settings_data_management_copy_code_1, clipr::write_clip(code_1))
+  observeEvent(r$help_settings_data_management_copy_code_2, clipr::write_clip(code_2))
 }

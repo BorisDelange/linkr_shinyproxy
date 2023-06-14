@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_import_data.R
 \name{import_vocabulary_table}
 \alias{import_vocabulary_table}
-\title{Import a vocabulary}
+\title{Import a vocabulary table}
 \usage{
 import_vocabulary_table(
   output,

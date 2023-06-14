@@ -25,6 +25,6 @@ Creates a complete layout with header, sidenav, main & footer
 }
 \examples{
 \dontrun{
-make_layout(langauge = "fr", page = "my_subsets", i18n = i18n, users_accesses_toggles_options = users_accesses_toggles_options)
+make_layout(language = "fr", page = "my_subsets", i18n = i18n, users_accesses_toggles_options = users_accesses_toggles_options)
 }
 }

@@ -439,6 +439,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
     help_settings_data_management(output = output, r = r, id = id, prefix = table, language = language, i18n = i18n, ns = ns)
     
     observeEvent(input$copy_code_1, r$help_settings_data_management_copy_code_1 <- Sys.time())
+    observeEvent(input$copy_code_2, r$help_settings_data_management_copy_code_2 <- Sys.time())
     
     # --- --- --- --- --- --
     # Add a new element ----
@@ -895,7 +896,7 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
           category <- get_singular(id)
 
           # Get code from database
-          code <- r$code %>% dplyr::filter(category == !!category & link_id == !!link_id) %>% dplyr::pull(code)
+          code <- r$code %>% dplyr::filter(category == !!category & link_id == !!link_id) %>% dplyr::pull(code) %>% stringr::str_replace_all("''", "'")
           shinyAce::updateAceEditor(session, "ace_edit_code", value = code)
 
           # Reset code_result textOutput
@@ -963,7 +964,8 @@ mod_settings_data_management_server <- function(id = character(), r = shiny::rea
             sapply(main_tables, function(table) d[[table]] <- tibble::tibble())
           }
           
-          edited_code <- r[[paste0(id, "_code")]] %>% stringr::str_replace_all("\r", "\n")
+          edited_code <- r[[paste0(id, "_code")]] %>% 
+            stringr::str_replace_all("\r", "\n")
           
           output$datetime_code_execution <- renderText(format_datetime(Sys.time(), language))
           output$code_result <- renderText(

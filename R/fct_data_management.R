@@ -405,7 +405,8 @@ run_dataset_code <- function(output, r = shiny::reactiveValues(), d = shiny::rea
   # Replace %dataset_id% with real dataset_id
   code <- code %>% 
     stringr::str_replace_all("%dataset_id%", as.character(dataset_id)) %>%
-    stringr::str_replace_all("\r", "\n")
+    stringr::str_replace_all("\r", "\n") %>%
+    stringr::str_replace_all("''", "'")
   
   # Reset d variables
   main_tables <- c("condition_occurrence", "drug_exposure", "procedure_occurrence", "device_exposure", "measurement",

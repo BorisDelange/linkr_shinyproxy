@@ -842,7 +842,7 @@ import_dataset <- function(output, ns = character(), i18n = character(), r = shi
 #   else return(FALSE)
 # }
 
-#' Import a vocabulary
+#' Import a vocabulary table
 #' 
 #' @description Import an OMOP vocabulary and save it in app database
 #' @param output variable from Shiny, used to render messages on the message bar

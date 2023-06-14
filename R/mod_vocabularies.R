@@ -549,7 +549,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         DBI::dbClearResult(query)
         
         # Add new rows to database
-        DBI::dbAppendTable(m$db, "concept_dataset", dataset_all_concepts %>% 
+        if (nrow(dataset_all_concepts) > 0) DBI::dbAppendTable(m$db, "concept_dataset", dataset_all_concepts %>% 
           dplyr::transmute(id = get_last_row(m$db, "concept_dataset") + 1:dplyr::n(), concept_id = concept_id_1, dataset_id = r$selected_dataset, vocabulary_id = vocabulary_id_1,
             count_persons_rows, count_concepts_rows, count_secondary_concepts_rows))
         

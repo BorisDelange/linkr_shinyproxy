@@ -744,7 +744,8 @@ mod_messages_server <- function(id = character(), r = shiny::reactiveValues(), d
  
           tryCatch({
 
-            new_text <- input[[paste0("new_", type, "_text")]] %>% stringr::str_replace_all("\r", "\n")
+            new_text <- input[[paste0("new_", type, "_text")]] %>% 
+              stringr::str_replace_all("\r", "\n")
 
             # Clear temp dir
             unlink(paste0(r$app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
@@ -845,7 +846,8 @@ mod_messages_server <- function(id = character(), r = shiny::reactiveValues(), d
 
           tryCatch({
 
-            new_text <- input[[paste0("new_", type, "_text")]] %>% stringr::str_replace_all("\r", "\n")
+            new_text <- input[[paste0("new_", type, "_text")]] %>% 
+              stringr::str_replace_all("\r", "\n")
 
             unique_id <- paste0(Sys.time() %>% stringr::str_replace_all(":| |-", "") , paste0(sample(c(0:9, letters[1:6]), 24, TRUE), collapse = ''))
             new_dir <- paste0(r$app_folder, "/messages/", unique_id)
