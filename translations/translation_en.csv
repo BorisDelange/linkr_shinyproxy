@@ -851,5 +851,4 @@ invalid_concept_id_value,Invalid concept_id value
 concept_not_found,Concept not found
 error_loading_script_description,Error loading script description
 access_to_data,Access to data
-scripts_and_plugins,"Scripts & plugins"
-test2,Test 2
+scripts_and_plugins,Scripts & plugins

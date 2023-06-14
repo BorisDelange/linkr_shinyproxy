@@ -166,16 +166,18 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
     shinyjs::hidden(
       div(
         id = ns("scripts_edit_code_card"),
-        make_card(i18n$t("edit_script_code"),
+        make_shiny_ace_card(i18n$t("edit_script_code"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "script", id = "code_selected_script",
-              width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              div(shiny.fluent::Toggle.shinyInput(ns("hide_code_editor"), value = FALSE), style = "margin-top:9px;"),
-              div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              make_combobox(i18n = i18n, ns = ns, label = "script", id = "code_selected_script",
+                width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                div(shiny.fluent::Toggle.shinyInput(ns("hide_code_editor"), value = FALSE), style = "margin-top:9px;"),
+                div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+              ),
+              shinyjs::hidden(div(id = ns("div_br"), br()))
             ),
-            shinyjs::hidden(div(id = ns("div_br"), br())),
-            
             div(shinyAce::aceEditor(ns("ace_edit_code"), "", mode = "r",
               code_hotkeys = list(
                 "r", list(
@@ -185,14 +187,16 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
                 )
               ),
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;"),
-            
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
-              shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
-            ), br(),
-            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
-            div(id = ns("console_output"), verbatimTextOutput(ns("console_result")),
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
+                shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
+              ), br(),
+              div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
+              div(id = ns("console_output"), verbatimTextOutput(ns("console_result")),
+                style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            )
           )
         ), br()
       )
@@ -205,28 +209,31 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
     shinyjs::hidden(
       div(
         id = ns("scripts_options_card"),
-        make_card(i18n$t("script_options"),
+        make_shiny_ace_card(i18n$t("script_options"),
           div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_combobox(i18n = i18n, ns = ns, label = "script", id = "options_selected_script",
-                width = "320px", allowFreeform = FALSE, multiSelect = FALSE),
-              make_textfield(i18n = i18n, ns = ns, label = "author", id = "script_author", width = "320px"),
-              make_textfield(i18n = i18n, ns = ns, label = "version", id = "script_version", width = "60px")
-            ), 
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_textfield(i18n = i18n, ns = ns, label = "name_fr", id = "script_name_fr", width = "320px"),
-              make_textfield(i18n = i18n, ns = ns, label = "name_en", id = "script_name_en", width = "320px")
-            ),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_textfield(i18n = i18n, ns = ns, label = "category_fr", id = "script_category_fr", width = "320px"),
-              make_textfield(i18n = i18n, ns = ns, label = "category_en", id = "script_category_en", width = "320px")
-            ), br(),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              div(paste0(i18n$t("description"), " :"), style = "font-weight:bold; margin-top:7px; margin-right:5px;"),
-              shiny.fluent::ChoiceGroup.shinyInput(ns("script_description_language"), value = "fr", options = list(
-                list(key = "fr", text = "FR"),
-                list(key = "en", text = "EN")
-              ), className = "inline_choicegroup")
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                make_combobox(i18n = i18n, ns = ns, label = "script", id = "options_selected_script",
+                  width = "320px", allowFreeform = FALSE, multiSelect = FALSE),
+                make_textfield(i18n = i18n, ns = ns, label = "author", id = "script_author", width = "320px"),
+                make_textfield(i18n = i18n, ns = ns, label = "version", id = "script_version", width = "60px")
+              ), 
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                make_textfield(i18n = i18n, ns = ns, label = "name_fr", id = "script_name_fr", width = "320px"),
+                make_textfield(i18n = i18n, ns = ns, label = "name_en", id = "script_name_en", width = "320px")
+              ),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                make_textfield(i18n = i18n, ns = ns, label = "category_fr", id = "script_category_fr", width = "320px"),
+                make_textfield(i18n = i18n, ns = ns, label = "category_en", id = "script_category_en", width = "320px")
+              ), br(),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                div(paste0(i18n$t("description"), " :"), style = "font-weight:bold; margin-top:7px; margin-right:5px;"),
+                shiny.fluent::ChoiceGroup.shinyInput(ns("script_description_language"), value = "fr", options = list(
+                  list(key = "fr", text = "FR"),
+                  list(key = "en", text = "EN")
+                ), className = "inline_choicegroup")
+              )
             ),
             conditionalPanel(condition = "input.script_description_language == 'fr'", ns = ns,
               div(shinyAce::aceEditor(ns("script_description_fr"), "", mode = "markdown", 
@@ -248,14 +255,17 @@ mod_scripts_ui <- function(id = character(), i18n = character()){
                   )
                 ),
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 21),
-              shiny.fluent::PrimaryButton.shinyInput(ns("save_options_description"), i18n$t("save")), " ",
-              shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("run_code"))
-            ),
-            br(), br(),
-            div(id = ns("description_markdown_output"),
-              uiOutput(ns("description_markdown_result")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px; padding-top: 10px;")
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 21),
+                shiny.fluent::PrimaryButton.shinyInput(ns("save_options_description"), i18n$t("save")), " ",
+                shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("run_code"))
+              ),
+              br(), br(),
+              div(id = ns("description_markdown_output"),
+                uiOutput(ns("description_markdown_result")), 
+                style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px; padding-top: 10px;")
+            )
           )
         ), br()
       )

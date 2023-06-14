@@ -11,9 +11,6 @@
 mod_settings_general_ui <- function(id = character(), i18n = character()){
   ns <- NS(id)
   div(class = "main",
-      
-    # Hidden aceEditor, allows the other to be displayed...
-    div(shinyAce::aceEditor("hidden"), style = "display: none;"),
     render_settings_default_elements(ns = ns),
     shiny.fluent::reactOutput(ns("help_panel")),
     shiny.fluent::reactOutput(ns("help_modal")),

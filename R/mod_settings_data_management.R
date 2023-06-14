@@ -94,16 +94,19 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       # --- --- --- --- -- -
       
       div(id = ns("edit_code_card"), 
-        make_card(i18n$t("edit_dataset_code"),
+        make_shiny_ace_card(i18n$t("edit_dataset_code"),
           div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_combobox(i18n = i18n, ns = ns, label = "dataset", id = "code_selected_dataset_or_vocabulary",
-                width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-              div(style = "width:20px;"),
-              div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
-              div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:45px; margin-right:30px;"), 
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                make_combobox(i18n = i18n, ns = ns, label = "dataset", id = "code_selected_dataset_or_vocabulary",
+                  width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+                div(style = "width:20px;"),
+                div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
+                div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:45px; margin-right:30px;"), 
+              ),
+              conditionalPanel(condition = "input.hide_editor == true", ns = ns, br())
             ),
-            conditionalPanel(condition = "input.hide_editor == true", ns = ns, br()),
             conditionalPanel(condition = "input.hide_editor == false", ns = ns,
               div(shinyAce::aceEditor(
                 ns("ace_edit_code"), "", mode = "r", 
@@ -116,12 +119,17 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
                 style = "width: 100%;"
               )
             ),
-            shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
-            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
-            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
-            div(shiny::verbatimTextOutput(ns("code_result")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"), br(),
-            DT::DTOutput(ns("code_datatable"))
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
+                shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
+              ), br(), br(),
+              div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
+              div(shiny::verbatimTextOutput(ns("code_result")), 
+                style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;"), br(),
+              DT::DTOutput(ns("code_datatable"))
+            )
           )
         ), br()
       ),
@@ -220,16 +228,19 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
       # --- --- --- --- -- -
       
       div(id = ns("edit_code_card"), 
-        make_card(i18n$t("edit_vocabulary_code"),
+        make_shiny_ace_card(i18n$t("edit_vocabulary_code"),
           div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "code_selected_dataset_or_vocabulary",
-                width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-              div(style = "width:20px;"),
-              div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
-              div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:45px; margin-right:30px;"), 
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                make_combobox(i18n = i18n, ns = ns, label = "vocabulary", id = "code_selected_dataset_or_vocabulary",
+                  width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
+                div(style = "width:20px;"),
+                div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:45px;"),
+                div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:45px; margin-right:30px;"), 
+              ),
+              conditionalPanel(condition = "input.hide_editor == true", ns = ns, br())
             ),
-            conditionalPanel(condition = "input.hide_editor == true", ns = ns, br()),
             conditionalPanel(condition = "input.hide_editor == false", ns = ns,
               div(shinyAce::aceEditor(
                 ns("ace_edit_code"), "", mode = "r", 
@@ -243,11 +254,16 @@ mod_settings_data_management_ui <- function(id = character(), i18n = character()
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), 
               style = "width: 100%;")
             ),
-            shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
-            shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code")), br(), br(),
-            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
-            div(shiny::verbatimTextOutput(ns("code_result")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::PrimaryButton.shinyInput(ns("edit_code_save"), i18n$t("save")), " ",
+                shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
+              ), br(), br(),
+              div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
+              div(shiny::verbatimTextOutput(ns("code_result")), 
+                style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            )
           )
         ), br()
       ),

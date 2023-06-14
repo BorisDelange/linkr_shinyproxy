@@ -190,23 +190,26 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
     shinyjs::hidden(
       div(
         id = ns("db_request_card"),
-        make_card(
+        make_shiny_ace_card(
           i18n$t("app_db_request_long"),
           div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              div(
-                div(class = "input_title", i18n$t("connection_type")),
-                shiny.fluent::ChoiceGroup.shinyInput(ns("app_db_request_connection_type"), options = list(
-                  list(key = "local", text = i18n$t("local")),
-                  list(key = "remote", text = i18n$t("remote"))
-                ), className = "inline_choicegroup")
-              ),
-              div(
-                div(class = "input_title", i18n$t("database")),
-                shiny.fluent::ChoiceGroup.shinyInput(ns("app_db_request_database"), options = list(
-                  list(key = "main_db", text = i18n$t("main_db")),
-                  list(key = "public_db", text = i18n$t("public_db"))
-                ), className = "inline_choicegroup", value = "main_db"),
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                div(
+                  div(class = "input_title", i18n$t("connection_type")),
+                  shiny.fluent::ChoiceGroup.shinyInput(ns("app_db_request_connection_type"), options = list(
+                    list(key = "local", text = i18n$t("local")),
+                    list(key = "remote", text = i18n$t("remote"))
+                  ), className = "inline_choicegroup")
+                ),
+                div(
+                  div(class = "input_title", i18n$t("database")),
+                  shiny.fluent::ChoiceGroup.shinyInput(ns("app_db_request_database"), options = list(
+                    list(key = "main_db", text = i18n$t("main_db")),
+                    list(key = "public_db", text = i18n$t("public_db"))
+                  ), className = "inline_choicegroup", value = "main_db"),
+                )
               )
             ),
             div(shinyAce::aceEditor(
@@ -219,10 +222,13 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
               ),
               autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
             ), style = "width: 100%;"),
-            shiny.fluent::PrimaryButton.shinyInput(ns("request"), i18n$t("request")), br(), br(),
-            div(textOutput(ns("datetime_request_execution")), style = "color:#878787;"), br(),
-            div(shiny::verbatimTextOutput(ns("request_result")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::PrimaryButton.shinyInput(ns("request"), i18n$t("request")), br(), br(),
+              div(textOutput(ns("datetime_request_execution")), style = "color:#878787;"), br(),
+              div(shiny::verbatimTextOutput(ns("request_result")), 
+                style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            )
           )
         )
       )

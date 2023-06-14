@@ -55,7 +55,7 @@ mod_messages_ui <- function(id = character(), i18n = character()){
       div(
         id = ns("study_messages_card"),
         div(id = ns("study_messages_content"),
-          make_card(i18n$t("messages"),
+          make_shiny_ace_card(i18n$t("messages"),
             div(
               shiny.fluent::Pivot(
                 id = ns("study_messages_pivot"),
@@ -64,38 +64,51 @@ mod_messages_ui <- function(id = character(), i18n = character()){
                 shiny.fluent::PivotItem(id = "new_conversation", itemKey = "new_conversation", headerText = i18n$t("new_conversation"))
               ),
               conditionalPanel(condition = "input.messages_current_tab == null || input.messages_current_tab == 'all_messages'", ns = ns,
-                DT::DTOutput(ns("study_conversations")),
-                uiOutput(ns("conversation_object")), br(),
+                shiny.fluent::Stack(
+                  tokens = list(childrenGap = 5),
+                  DT::DTOutput(ns("study_conversations")),
+                  uiOutput(ns("conversation_object")), br(),
+                  shinyjs::hidden(
+                    div(
+                      id = ns("conversation_new_message_title_div"),
+                      shiny.fluent::DefaultButton.shinyInput(ns("conversation_new_message"), i18n$t("new_message")),
+                      shinyjs::hidden(
+                        div(id = ns("conversation_hide_new_message_div"),
+                          shiny.fluent::DefaultButton.shinyInput(ns("conversation_hide_new_message"), i18n$t("hide_editor")))
+                      )
+                    )
+                  )
+                ),
                 shinyjs::hidden(
                   div(
-                    id = ns("conversation_new_message_div"),
-                    shiny.fluent::DefaultButton.shinyInput(ns("conversation_new_message"), i18n$t("new_message")),
-                    shinyjs::hidden(
-                      div(id = ns("conversation_hide_new_message_div"),
-                        shiny.fluent::DefaultButton.shinyInput(ns("conversation_hide_new_message"), i18n$t("hide_editor")))
-                    ),
-                    shinyjs::hidden(
-                      div(
-                        id = ns("new_message_text_div"),
-                        div(
-                          shinyAce::aceEditor(
-                            ns("new_message_text"), "", mode = "markdown",
-                            code_hotkeys = list("markdown", list(run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"))),
-                            autoScrollEditorIntoView = TRUE, minLines = 10, maxLines = 1000
-                          ), style = "width: 100%;"),
+                    id = ns("new_message_text_div_1"),
+                      shinyAce::aceEditor(
+                        ns("new_message_text"), "", mode = "markdown",
+                        code_hotkeys = list("markdown", list(run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"))),
+                        autoScrollEditorIntoView = TRUE, minLines = 10, maxLines = 1000
+                      ), 
+                    style = "width: 100%;")
+                ),
+                shiny.fluent::Stack(
+                  tokens = list(childrenGap = 5),
+                  shinyjs::hidden(
+                    div(
+                      id = ns("new_message_text_div_2"),
+                      shiny.fluent::Stack(
+                        tokens = list(childrenGap = 5),
                         shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
                           shiny.fluent::PrimaryButton.shinyInput(ns("send_new_message"), i18n$t("send")), " ",
                           shiny.fluent::DefaultButton.shinyInput(ns("preview_new_message"), i18n$t("preview")),
                           shiny.fluent::Toggle.shinyInput(ns("new_message_as_rmarkdown"), value = FALSE, style = "margin-top:6px;"),
                           div(class = "toggle_title", i18n$t("rmarkdown"), style = "padding-top:6px;")
                         ),
-                        uiOutput(ns("new_message_preview")),
-                        style = "float:left; width:100%;"
-                      )
-                    ), br(), br()
-                  )
-                ),
-                uiOutput(ns("selected_conversation"))
+                        uiOutput(ns("new_message_preview"))
+                      ),
+                      style = "float:left; width:100%;"
+                    )
+                  ), br(), br(),
+                  uiOutput(ns("selected_conversation"))
+                )
               ),
               conditionalPanel(condition = "input.messages_current_tab == 'new_conversation'", ns = ns,
                 make_textfield(i18n = i18n, ns = ns, label = "object", id = "new_conversation_name"),
@@ -104,13 +117,16 @@ mod_messages_ui <- function(id = character(), i18n = character()){
                   code_hotkeys = list("markdown", list(run_all = list(win = "CTRL-SHIFT-ENTER", mac = "CTRL-SHIFT-ENTER|CMD-SHIFT-ENTER"))),
                   autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
                 ), style = "width: 100%;"),
-                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                  shiny.fluent::PrimaryButton.shinyInput(ns("send_new_conversation"), i18n$t("send")), " ",
-                  shiny.fluent::DefaultButton.shinyInput(ns("preview_new_conversation"), i18n$t("preview")),
-                  shiny.fluent::Toggle.shinyInput(ns("new_conversation_as_rmarkdown"), value = FALSE, style = "margin-top:6px;"),
-                  div(class = "toggle_title", i18n$t("rmarkdown"), style = "padding-top:6px;")
-                ),
-                uiOutput(ns("new_conversation_preview"))
+                shiny.fluent::Stack(
+                  tokens = list(childrenGap = 5),
+                  shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                    shiny.fluent::PrimaryButton.shinyInput(ns("send_new_conversation"), i18n$t("send")), " ",
+                    shiny.fluent::DefaultButton.shinyInput(ns("preview_new_conversation"), i18n$t("preview")),
+                    shiny.fluent::Toggle.shinyInput(ns("new_conversation_as_rmarkdown"), value = FALSE, style = "margin-top:6px;"),
+                    div(class = "toggle_title", i18n$t("rmarkdown"), style = "padding-top:6px;")
+                  ),
+                  uiOutput(ns("new_conversation_preview"))
+                )
               )
             )
           )
@@ -207,7 +223,7 @@ mod_messages_server <- function(id = character(), r = shiny::reactiveValues(), d
       
       # Hide messages card & reset fields
       sapply(c("choose_a_study_card_messages", "choose_a_study_card_description"), shinyjs::show)
-      sapply(c("study_messages_content", "conversation_new_message_div", "studies_description_content"), shinyjs::hide)
+      sapply(c("study_messages_content", "conversation_new_message_title_div", "new_message_text_div_1", "new_message_text_div_2", "studies_description_content"), shinyjs::hide)
       shiny.fluent::updateTextField.shinyInput(session, "new_conversation_name", value = "")
       shinyAce::updateAceEditor(session, "new_conversation_text", value = "")
       shinyAce::updateAceEditor(session, "new_message_text", value = "")
@@ -238,7 +254,7 @@ mod_messages_server <- function(id = character(), r = shiny::reactiveValues(), d
       output$conversation_object <- renderUI("")
       output$new_conversation_preview <- renderUI("")
       output$selected_conversation <- renderUI("")
-      shinyjs::hide("conversation_new_message_div")
+      shinyjs::hide("conversation_new_message_title_div", "new_message_text_div_1", "new_message_text_div_2")
     })
     
     # --- --- --- -
@@ -447,7 +463,7 @@ mod_messages_server <- function(id = character(), r = shiny::reactiveValues(), d
         
         output$conversation_object <- renderUI("")
         output$selected_conversation <- renderUI("")
-        shinyjs::hide("conversation_new_message_div")
+        shinyjs::hide("conversation_new_message_title_div", "new_message_text_div_1", "new_message_text_div_2")
       })
       
       observeEvent(input$conversation_deletion, {
@@ -655,13 +671,13 @@ mod_messages_server <- function(id = character(), r = shiny::reactiveValues(), d
         }
 
         output$selected_conversation <- renderUI(conversation_messages_ui)
-        shinyjs::show("conversation_new_message_div")
+        shinyjs::show("conversation_new_message_title_div", "new_message_text_div_1", "new_message_text_div_2")
 
         if (r$study_reload_conversation_type != "refresh_conversation"){
           output$new_message_preview <- renderUI("")
           output$conversation_object <- renderUI(tagList(i18n$t("object"), " : ", strong(r$study_selected_conversation$conversation_name)))
           shinyAce::updateAceEditor(session, "new_message_text", value = "")
-          sapply(c("new_message_text_div", "conversation_hide_new_message_div"), function(name) shinyjs::hide(name))
+          sapply(c("new_message_text_div_1", "new_message_text_div_2", "conversation_hide_new_message_div"), function(name) shinyjs::hide(name))
           shinyjs::show("conversation_new_message")
         }
 
@@ -699,13 +715,13 @@ mod_messages_server <- function(id = character(), r = shiny::reactiveValues(), d
 
       observeEvent(input$conversation_new_message, {
         if (debug) print(paste0(Sys.time(), " - mod_messages - observer input$conversation_new_message"))
-        sapply(c("new_message_text_div", "conversation_hide_new_message_div"), function(name) shinyjs::show(name))
+        sapply(c("new_message_text_div_1", "new_message_text_div_2", "conversation_hide_new_message_div"), function(name) shinyjs::show(name))
         shinyjs::hide("conversation_new_message")
       })
 
       observeEvent(input$conversation_hide_new_message, {
         if (debug) print(paste0(Sys.time(), " - mod_messages - observer input$conversation_hide_new_message"))
-        sapply(c("new_message_text_div", "conversation_hide_new_message_div"), function(name) shinyjs::hide(name))
+        sapply(c("new_message_text_div_1", "new_message_text_div_2", "conversation_hide_new_message_div"), function(name) shinyjs::hide(name))
         shinyjs::show("conversation_new_message")
       })
 
@@ -735,6 +751,8 @@ mod_messages_server <- function(id = character(), r = shiny::reactiveValues(), d
         type <- r$study_preview_type
         if (type == "conversation") background_color <- "#E6F1F8"
         if (type == "message") background_color <- "#ECF8E7"
+        
+        print(input$new_message_text)
 
         if (input[[paste0("new_", type, "_text")]] == "") output[[paste0("new_", type, "_preview")]] <- renderUI("")
 
@@ -973,7 +991,7 @@ mod_messages_server <- function(id = character(), r = shiny::reactiveValues(), d
           show_message_bar(output, message = "new_conversation_added", type = "success", i18n = i18n, ns = ns)
           shinyjs::runjs(glue::glue("$('#{id}-study_messages_pivot button[name=\"{i18n$t('all_messages')}\"]').click();"))
           output$selected_conversation <- renderUI("")
-          shinyjs::hide("conversation_new_message_div")
+          shinyjs::hide("conversation_new_message_title_div", "new_message_text_div_1", "new_message_text_div_2")
         }
         
         if (perf_monitoring) monitor_perf(r = r, action = "stop", task = paste0("mod_messages - observer r$study_save_message_conversation_trigger"))

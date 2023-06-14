@@ -101,38 +101,41 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
     shinyjs::hidden(
       div(
         id = ns("studies_options_card"),
-        make_card(i18n$t("study_options"),
+        make_shiny_ace_card(i18n$t("study_options"),
           div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_combobox(i18n = i18n, ns = ns, label = "study", id = "options_selected_study",
-                width = "320px", allowFreeform = FALSE, multiSelect = FALSE),
-              make_textfield(i18n = i18n, ns = ns, label = "author", id = "study_author", width = "320px"),
-              make_textfield(i18n = i18n, ns = ns, label = "version", id = "study_version", width = "60px")
-            ), 
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_textfield(i18n = i18n, ns = ns, label = "name_fr", id = "study_name_fr", width = "320px"),
-              make_textfield(i18n = i18n, ns = ns, label = "name_en", id = "study_name_en", width = "320px")
-            ),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_textfield(i18n = i18n, ns = ns, label = "category_fr", id = "study_category_fr", width = "320px"),
-              make_textfield(i18n = i18n, ns = ns, label = "category_en", id = "study_category_en", width = "320px")
-            ), br(),
-            div(
-              div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
-              shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
-                list(key = "everybody", text = i18n$t("everybody_who_has_access_to_dataset")),
-                list(key = "people_picker", text = i18n$t("choose_users"))
-              ), className = "inline_choicegroup"),
-              conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
-                uiOutput(ns("users_allowed_read_div"))
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                make_combobox(i18n = i18n, ns = ns, label = "study", id = "options_selected_study",
+                  width = "320px", allowFreeform = FALSE, multiSelect = FALSE),
+                make_textfield(i18n = i18n, ns = ns, label = "author", id = "study_author", width = "320px"),
+                make_textfield(i18n = i18n, ns = ns, label = "version", id = "study_version", width = "60px")
+              ), 
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                make_textfield(i18n = i18n, ns = ns, label = "name_fr", id = "study_name_fr", width = "320px"),
+                make_textfield(i18n = i18n, ns = ns, label = "name_en", id = "study_name_en", width = "320px")
+              ),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                make_textfield(i18n = i18n, ns = ns, label = "category_fr", id = "study_category_fr", width = "320px"),
+                make_textfield(i18n = i18n, ns = ns, label = "category_en", id = "study_category_en", width = "320px")
+              ), br(),
+              div(
+                div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
+                shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
+                  list(key = "everybody", text = i18n$t("everybody_who_has_access_to_dataset")),
+                  list(key = "people_picker", text = i18n$t("choose_users"))
+                ), className = "inline_choicegroup"),
+                conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
+                  uiOutput(ns("users_allowed_read_div"))
+                )
+              ), br(),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                div(paste0(i18n$t("description"), " :"), style = "font-weight:bold; margin-top:7px; margin-right:5px;"),
+                shiny.fluent::ChoiceGroup.shinyInput(ns("study_description_language"), value = "fr", options = list(
+                  list(key = "fr", text = "FR"),
+                  list(key = "en", text = "EN")
+                ), className = "inline_choicegroup")
               )
-            ), br(),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              div(paste0(i18n$t("description"), " :"), style = "font-weight:bold; margin-top:7px; margin-right:5px;"),
-              shiny.fluent::ChoiceGroup.shinyInput(ns("study_description_language"), value = "fr", options = list(
-                list(key = "fr", text = "FR"),
-                list(key = "en", text = "EN")
-              ), className = "inline_choicegroup")
             ),
             conditionalPanel(condition = "input.study_description_language == 'fr'", ns = ns,
               div(shinyAce::aceEditor(ns("study_description_fr"), "", mode = "markdown", 
@@ -154,14 +157,17 @@ mod_my_studies_ui <- function(id = character(), i18n = character()){
                   )
                 ),
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("preview"))
-            ),
-            br(),
-            div(id = ns("description_markdown_output"),
-              uiOutput(ns("description_markdown_result")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::PrimaryButton.shinyInput(ns("options_save"), i18n$t("save")),
+                shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("preview"))
+              ),
+              br(),
+              div(id = ns("description_markdown_output"),
+                uiOutput(ns("description_markdown_result")), 
+                style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            )
           )
         )
       )

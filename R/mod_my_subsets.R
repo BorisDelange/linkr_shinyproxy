@@ -118,13 +118,16 @@ mod_my_subsets_ui <- function(id = character(), i18n = character()){
     shinyjs::hidden(
       div(
         id = ns("subsets_edit_code_card"),
-        make_card(i18n$t("edit_subset_code"),
+        make_shiny_ace_card(i18n$t("edit_subset_code"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "subset", id = "code_selected_subset",
-              width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
-              div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              make_combobox(i18n = i18n, ns = ns, label = "subset", id = "code_selected_subset",
+                width = "300px", allowFreeform = FALSE, multiSelect = FALSE), br(),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
+                div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+              )
             ),
             conditionalPanel(condition = "input.hide_editor == false", ns = ns,
               div(shinyAce::aceEditor(
@@ -138,14 +141,17 @@ mod_my_subsets_ui <- function(id = character(), i18n = character()){
                 ),
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000))
             ),
-            conditionalPanel(condition = "input.hide_editor == true", ns = ns, br()),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
-            ), br(),
-            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
-            div(verbatimTextOutput(ns("code_result")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              conditionalPanel(condition = "input.hide_editor == true", ns = ns, br()),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")),
+                shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
+              ), br(),
+              div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"), br(),
+              div(verbatimTextOutput(ns("code_result")), 
+                style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            )
           )
         )
       )

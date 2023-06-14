@@ -195,29 +195,30 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
     shinyjs::hidden(
       div(
         id = ns("plugins_edit_code_card"),
-        make_card(i18n$t("edit_plugin_code"),
+        make_shiny_ace_card(i18n$t("edit_plugin_code"),
           div(
-            make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "code_selected_plugin",
-              width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
-            
-            vocabulary_concepts_div, br(),
-            
-            div(
-              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-                shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
-                  list(key = "ui", text = i18n$t("ui")),
-                  list(key = "server", text = i18n$t("server")),
-                  list(key = "translations", text = i18n$t("translations"))
-                ), className = "inline_choicegroup"),
-                div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
-                div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
-              ),
-              style = "z-index:2"
-            ),
-            conditionalPanel(condition = "input.hide_editor == true", ns = ns, br()),
-            
-            conditionalPanel(condition = "input.hide_editor == false", ns = ns,
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "code_selected_plugin",
+                width = "300px", allowFreeform = FALSE, multiSelect = FALSE),
               
+              vocabulary_concepts_div, br(),
+              
+              div(
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                  shiny.fluent::ChoiceGroup.shinyInput(ns("edit_code_ui_server"), value = "ui", options = list(
+                    list(key = "ui", text = i18n$t("ui")),
+                    list(key = "server", text = i18n$t("server")),
+                    list(key = "translations", text = i18n$t("translations"))
+                  ), className = "inline_choicegroup"),
+                  div(shiny.fluent::Toggle.shinyInput(ns("hide_editor"), value = FALSE), style = "margin-top:9px;"),
+                  div(i18n$t("hide_editor"), style = "font-weight:bold; margin-top:9px; margin-right:30px;")
+                ),
+                style = "z-index:2"
+              ),
+              conditionalPanel(condition = "input.hide_editor == true", ns = ns, br())
+            ),
+            conditionalPanel(condition = "input.hide_editor == false", ns = ns,
               conditionalPanel(condition = "input.edit_code_ui_server == 'ui'", ns = ns,
                 div(shinyAce::aceEditor(
                   ns("ace_edit_code_ui"), "", mode = "r", 
@@ -249,15 +250,17 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
                   autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000
                 ), style = "width: 100%;"))
             ),
-            
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
-              shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
-            ), br(),
-            div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"),
-            shiny::uiOutput(ns("code_result_ui")), br(),
-            div(verbatimTextOutput(ns("code_result_server")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::PrimaryButton.shinyInput(ns("save_code"), i18n$t("save")), " ",
+                shiny.fluent::DefaultButton.shinyInput(ns("execute_code"), i18n$t("run_code"))
+              ), br(),
+              div(textOutput(ns("datetime_code_execution")), style = "color:#878787;"),
+              shiny::uiOutput(ns("code_result_ui")), br(),
+              div(verbatimTextOutput(ns("code_result_server")), 
+                style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
+            )
           )
         ), br()
       )
@@ -270,50 +273,53 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
     shinyjs::hidden(
       div(
         id = ns("plugins_options_card"),
-        make_card(i18n$t("plugin_options"),
+        make_shiny_ace_card(i18n$t("plugin_options"),
           div(
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "options_selected_plugin",
-                width = "320px", allowFreeform = FALSE, multiSelect = FALSE),
-              make_textfield(i18n = i18n, ns = ns, label = "author", id = "plugin_author", width = "320px"),
-              make_textfield(i18n = i18n, ns = ns, label = "version", id = "plugin_version", width = "60px")
-            ),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_textfield(i18n = i18n, ns = ns, label = "name_fr", id = "plugin_name_fr", width = "320px"),
-              make_textfield(i18n = i18n, ns = ns, label = "name_en", id = "plugin_name_en", width = "320px")
-            ),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-              make_textfield(i18n = i18n, ns = ns, label = "category_fr", id = "plugin_category_fr", width = "320px"),
-              make_textfield(i18n = i18n, ns = ns, label = "category_en", id = "plugin_category_en", width = "320px")
-            ),
-            br(),
-            div(
-              div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
-              shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
-                list(key = "everybody", text = i18n$t("everybody")),
-                list(key = "people_picker", text = i18n$t("choose_users"))
-              ), className = "inline_choicegroup"),
-              conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
-                uiOutput(ns("users_allowed_read_div"))
-              )
-            ), br(),
-            div(
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
               shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
-                make_dropdown(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "320px"),
-                div(shiny.fluent::DefaultButton.shinyInput(ns("delete_image"), i18n$t("delete_this_image")), style = "margin-top:39px;"),
-                div(shiny.fluent::DefaultButton.shinyInput(ns("import_image"), i18n$t("import_image")), style = "margin-top:39px;")
+                make_combobox(i18n = i18n, ns = ns, label = "plugin", id = "options_selected_plugin",
+                  width = "320px", allowFreeform = FALSE, multiSelect = FALSE),
+                make_textfield(i18n = i18n, ns = ns, label = "author", id = "plugin_author", width = "320px"),
+                make_textfield(i18n = i18n, ns = ns, label = "version", id = "plugin_version", width = "60px")
+              ),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                make_textfield(i18n = i18n, ns = ns, label = "name_fr", id = "plugin_name_fr", width = "320px"),
+                make_textfield(i18n = i18n, ns = ns, label = "name_en", id = "plugin_name_en", width = "320px")
+              ),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                make_textfield(i18n = i18n, ns = ns, label = "category_fr", id = "plugin_category_fr", width = "320px"),
+                make_textfield(i18n = i18n, ns = ns, label = "category_en", id = "plugin_category_en", width = "320px")
+              ),
+              br(),
+              div(
+                div(class = "input_title", paste0(i18n$t("grant_access_to"), " :")),
+                shiny.fluent::ChoiceGroup.shinyInput(ns("users_allowed_read_group"), options = list(
+                  list(key = "everybody", text = i18n$t("everybody")),
+                  list(key = "people_picker", text = i18n$t("choose_users"))
+                ), className = "inline_choicegroup"),
+                conditionalPanel(condition = "input.users_allowed_read_group == 'people_picker'", ns = ns,
+                  uiOutput(ns("users_allowed_read_div"))
+                )
+              ), br(),
+              div(
+                shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+                  make_dropdown(i18n = i18n, ns = ns, label = "image_url", id = "plugin_image", width = "320px"),
+                  div(shiny.fluent::DefaultButton.shinyInput(ns("delete_image"), i18n$t("delete_this_image")), style = "margin-top:39px;"),
+                  div(shiny.fluent::DefaultButton.shinyInput(ns("import_image"), i18n$t("import_image")), style = "margin-top:39px;")
+                )
+              ), 
+              br(),
+              conditionalPanel(condition = "input.plugin_image != null & input.plugin_image != ''", ns = ns,
+                div(imageOutput(ns("render_image")), style = "border:solid #ECEBE9 1px; width:318px; height:200px;"), br()
+              ),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                div(paste0(i18n$t("description"), " :"), style = "font-weight:bold; margin-top:7px; margin-right:5px;"),
+                shiny.fluent::ChoiceGroup.shinyInput(ns("plugin_description_language"), value = "fr", options = list(
+                  list(key = "fr", text = "FR"),
+                  list(key = "en", text = "EN")
+                ), className = "inline_choicegroup")
               )
-            ), 
-            br(),
-            conditionalPanel(condition = "input.plugin_image != null & input.plugin_image != ''", ns = ns,
-              div(imageOutput(ns("render_image")), style = "border:solid #ECEBE9 1px; width:318px; height:200px;"), br()
-            ),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              div(paste0(i18n$t("description"), " :"), style = "font-weight:bold; margin-top:7px; margin-right:5px;"),
-              shiny.fluent::ChoiceGroup.shinyInput(ns("plugin_description_language"), value = "fr", options = list(
-                list(key = "fr", text = "FR"),
-                list(key = "en", text = "EN")
-              ), className = "inline_choicegroup")
             ),
             conditionalPanel(condition = "input.plugin_description_language == 'fr'", ns = ns,
               div(shinyAce::aceEditor(ns("plugin_description_fr"), "", mode = "markdown", 
@@ -335,15 +341,18 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
                   )
                 ),
                 autoScrollEditorIntoView = TRUE, minLines = 30, maxLines = 1000), style = "width: 100%;")),
-            shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
-              shiny.fluent::PrimaryButton.shinyInput(ns("save_plugin_options"), i18n$t("save")),
-              shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("run_code"))
-            ),
-            br(), br(),
-            div(id = ns("description_markdown_output"),
-              uiOutput(ns("description_markdown_result")), 
-              style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px; padding-top: 10px;"),
-            div(style = "display:none;", fileInput(ns("import_image_file"), label = "", multiple = FALSE, accept = c(".jpg", ".jpeg", ".png")))
+            shiny.fluent::Stack(
+              tokens = list(childrenGap = 5),
+              shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 10),
+                shiny.fluent::PrimaryButton.shinyInput(ns("save_plugin_options"), i18n$t("save")),
+                shiny.fluent::DefaultButton.shinyInput(ns("execute_options_description"), i18n$t("run_code"))
+              ),
+              br(), br(),
+              div(id = ns("description_markdown_output"),
+                uiOutput(ns("description_markdown_result")), 
+                style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px; padding-top: 10px;"),
+              div(style = "display:none;", fileInput(ns("import_image_file"), label = "", multiple = FALSE, accept = c(".jpg", ".jpeg", ".png")))
+            )
           )
         ), br()
       )
