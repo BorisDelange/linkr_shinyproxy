@@ -33,10 +33,10 @@ mod_page_header_ui <- function(id = character(), i18n = character()){
           ))),
           shiny.fluent::CommandBarItem(i18n$t("vocabularies"), "AllApps", href = shiny.router::route_link("vocabularies")),
           shiny.fluent::CommandBarItem(i18n$t("messages"), "Chat", href = shiny.router::route_link("messages")),
-          shiny.fluent::CommandBarItem(text = i18n$t("scripts_and_plugins"), "OfflineStorage",
+          shiny.fluent::CommandBarItem(text = i18n$t("scripts_and_plugins"), "Code",
             subMenuProps = list(items = list(
-              list(text = i18n$t("scripts"), iconPropos = list(iconName = "CodeEdit"), href = shiny.router::route_link("scripts")),
-              list(text = i18n$t("plugins"), iconPropos = list(iconName = "Code"), href = shiny.router::route_link("plugins"))
+              list(text = i18n$t("scripts"), iconProps = list(iconName = "CodeEdit"), href = shiny.router::route_link("scripts")),
+              list(text = i18n$t("plugins"), iconProps = list(iconName = "Code"), href = shiny.router::route_link("plugins"))
           )))
         )
       )

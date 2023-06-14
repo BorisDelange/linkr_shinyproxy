@@ -484,11 +484,11 @@ delete_element <- function(r = shiny::reactiveValues(), m = shiny::reactiveValue
     DBI::dbSendStatement(db, sql) -> query
     DBI::dbClearResult(query)
     
-    sql <- glue::glue_sql("UPDATE options SET deleted = TRUE WHERE category = {get_singular('table')} AND link_id IN ({r[[id_var_r]]*})" , .con = r$db)
+    sql <- glue::glue_sql("UPDATE options SET deleted = TRUE WHERE category = {get_singular(table)} AND link_id IN ({r[[id_var_r]]*})" , .con = r$db)
     DBI::dbSendStatement(r$db, sql) -> query
     DBI::dbClearResult(query)
     
-    sql <- glue::glue_sql("UPDATE code SET deleted = TRUE WHERE category = {get_singular('table')} AND link_id IN ({r[[id_var_r]]*})" , .con = r$db)
+    sql <- glue::glue_sql("UPDATE code SET deleted = TRUE WHERE category = {get_singular(table)} AND link_id IN ({r[[id_var_r]]*})" , .con = r$db)
     DBI::dbSendStatement(r$db, sql) -> query
     DBI::dbClearResult(query)
     
