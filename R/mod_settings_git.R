@@ -95,29 +95,29 @@ mod_settings_git_server <- function(id = character(), r = shiny::reactiveValues(
     # Help for this page ----
     # --- --- --- --- --- ---
     
-    # observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r$help_settings_dev_open_panel <- TRUE)
-    # observeEvent(input$hide_panel, r$help_settings_dev_open_panel <- FALSE)
-
-    # r$help_settings_dev_open_panel_light_dismiss <- TRUE
-    # observeEvent(input$show_modal, r$help_settings_dev_open_modal <- TRUE)
-    # observeEvent(input$hide_modal, {
-    #   r$help_settings_dev_open_modal <- FALSE
-    #   r$help_settings_dev_open_panel_light_dismiss <- TRUE
-    # })
-
-    # observeEvent(shiny.router::get_page(), {
-    #   if (debug) print(paste0(Sys.time(), " - mod_settings_git - ", id, " - observer shiny_router::change_page"))
-    # 
-    #   # Close help pages when page changes
-    #   r$help_settings_dev_open_panel <- FALSE
-    #   r$help_settings_dev_open_modal <- FALSE
-    # })
-
-    # sapply(1:10, function(i){
-    #   observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_settings_dev_page_", i)]] <- Sys.time())
-    # })
-
-    # help_settings_dev(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
+    observeEvent(input$help, if (id == shiny.router::get_page() %>% stringr::str_replace_all("/", "_")) r$help_settings_git_open_panel <- TRUE)
+    observeEvent(input$hide_panel, r$help_settings_git_open_panel <- FALSE)
+    
+    r$help_settings_git_open_panel_light_dismiss <- TRUE
+    observeEvent(input$show_modal, r$help_settings_git_open_modal <- TRUE)
+    observeEvent(input$hide_modal, {
+      r$help_settings_git_open_modal <- FALSE
+      r$help_settings_git_open_panel_light_dismiss <- TRUE
+    })
+    
+    observeEvent(shiny.router::get_page(), {
+      if (debug) print(paste0(Sys.time(), " - mod_settings_git - ", id, " - observer shiny_router::change_page"))
+      
+      # Close help pages when page changes
+      r$help_settings_git_open_panel <- FALSE
+      r$help_settings_git_open_modal <- FALSE
+    })
+    
+    sapply(1:10, function(i){
+      observeEvent(input[[paste0("help_page_", i)]], r[[paste0("help_settings_git_page_", i)]] <- Sys.time())
+    })
+    
+    help_settings_git(output = output, r = r, id = id, language = language, i18n = i18n, ns = ns)
     
     # --- --- --- --- --- --
     # Create a git repo ----

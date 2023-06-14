@@ -29,6 +29,12 @@ mod_page_main_ui <- function(id = character(), language = "en", i18n = character
   if (id == "my_studies") mod_my_studies_ui(id = "my_studies", i18n = i18n) -> result
   if (id == "my_subsets") mod_my_subsets_ui(id = "my_subsets", i18n = i18n) -> result
   
+  # --- --- --- -
+  # Messages ----
+  # --- --- --- -
+  
+  if (id == "messages") mod_messages_ui(id = "messages", i18n = i18n) -> result
+  
   # --- --- --- --- -
   # Vocabularies ----
   # --- --- --- --- -

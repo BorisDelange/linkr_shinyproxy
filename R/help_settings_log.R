@@ -72,5 +72,4 @@ help_settings_log <- function(output, r = shiny::reactiveValues(), id = characte
       )
     }
   })
-  
 }

@@ -46,7 +46,7 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
   # Dropdowns ----
   # --- --- --- --
   
-  if (id %in% c("my_studies", "my_subsets", "vocabularies", "scripts", "patient_level_data", "aggregated_data")){
+  if (id %in% c("my_studies", "my_subsets", "messages", "vocabularies", "scripts", "patient_level_data", "aggregated_data")){
     
     dropdowns <- function(names){
       
@@ -79,6 +79,12 @@ mod_page_sidenav_ui <- function(id = character(), i18n = character()){
   # --- --- --- ---
   
   if (id == "my_subsets") div(class = "sidenav", dropdowns(c("dataset", "study"))) -> result
+  
+  # --- --- --- -
+  # Messages ----
+  # --- --- --- -
+  
+  if (id == "messages") div(class = "sidenav", dropdowns(c("dataset", "study"))) -> result
   
   # --- --- --- --- -
   # Vocabularies ----
@@ -238,7 +244,7 @@ mod_page_sidenav_server <- function(id = character(), r = shiny::reactiveValues(
       })
     }
     
-    if (id %in% c("my_studies", "my_subsets", "vocabularies", "scripts", "patient_level_data", "aggregated_data")){
+    if (id %in% c("my_studies", "my_subsets", "messages", "vocabularies", "scripts", "patient_level_data", "aggregated_data")){
       
       # --- --- --- --- --- --- --- --- -
       # Patient-lvl & agregated data ----

@@ -131,7 +131,7 @@ make_dropdown <- function(i18n = character(), ns = character(), id = NA_characte
 #' @param users_accesses_toggles_options A tibble containing users accesses, to add in database if no internet access (tibble)
 #' @examples
 #' \dontrun{
-#' make_layout(langauge = "fr", page = "my_subsets", i18n = i18n, users_accesses_toggles_options = users_accesses_toggles_options)
+#' make_layout(language = "fr", page = "my_subsets", i18n = i18n, users_accesses_toggles_options = users_accesses_toggles_options)
 #' }
 make_layout <- function(language = "en", page = character(), i18n = character(), users_accesses_toggles_options = tibble::tibble()){
   div(class = "grid-container",

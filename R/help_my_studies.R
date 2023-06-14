@@ -44,34 +44,32 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
   
   code_1 <- list()
   div_code_1 <- list()
-  
-  code_1$fr <- paste0("Bonjour à tous.\n\n",
-    "Voici les données que j'obtiens lorsque je charge la variable *d$person*.\n\n",
-    "```{r}\n",
-    "d$person\n",
-    "```")
+  code_1$fr <- paste0(
+    "## Description\n\n",
+    "Cette étude vise à développer un modèle de prédiction de la mortalité.\n\n",
+    "## Critères d'inclusion\n\n",
+    "Tout patient ayant une durée de séjour supérieure à 24 heures."
+  )
   div_code_1$fr <- div(
-    span("Bonjour à tous."), br(), br(),
-    span("Voici les données que j'obtiens lorsque je charge la variable *d$person*."), br(), br(),
-    span("```{r}"), br(),
-    span("d$person"), br(),
-    span("```"), br(),
-    shiny.fluent::IconButton.shinyInput(ns("copy_code_1"), iconProps = list(iconName = "Copy"), style = "position:absolute; top:5px; right:5px;"),
+    span("## Description"), br(), br(),
+    span("Cette étude vise à développer un modèle de prédiction de la mortalité."), br(), br(),
+    span("## Critères d'inclusion"), br(), br(),
+    span("Tout patient ayant une durée de séjour supérieure à 24 heures."),
+    shiny.fluent::IconButton.shinyInput(ns("copy_code_4"), iconProps = list(iconName = "Copy"), style = "position:absolute; top:5px; right:5px;"),
     style = r$code_style
   )
-  
-  code_1$en <- paste0("Hello everyonde.\n\n",
-    "Here are the data I get when I load the *d$person* variable *d$person*.\n\n",
-    "```{r}\n",
-    "d$person\n",
-    "```")
+  code_1$en <- paste0(
+    "## Description\n\n",
+    "This study aims to develop a mortality prediction model.\n\n",
+    "## Inclusion Criteria\n\n",
+    "Any patient with a length of stay exceeding 24 hours."
+  )
   div_code_1$en <- div(
-    span("Hello everyone."), br(), br(),
-    span("Here are the data I get when I load the *d$person* variable."), br(), br(),
-    span("```{r}"), br(),
-    span("d$person"), br(),
-    span("```"), br(),
-    shiny.fluent::IconButton.shinyInput(ns("copy_code_1"), iconProps = list(iconName = "Copy"), style = "position:absolute; top:5px; right:5px;"),
+    span("## Description"), br(), br(),
+    span("This study aims to develop a mortality prediction model."), br(), br(),
+    span("## Inclusion Criteria"), br(), br(),
+    span("Any patient with a length of stay exceeding 24 hours."),
+    shiny.fluent::IconButton.shinyInput(ns("copy_code_4"), iconProps = list(iconName = "Copy"), style = "position:absolute; top:5px; right:5px;"),
     style = r$code_style
   )
   
@@ -179,12 +177,48 @@ help_my_studies <- function(output, r = shiny::reactiveValues(), id = character(
     
     if (language == "fr"){
       r$help_my_studies_modal_text <- div(
-        
+        tags$h3(tags$i(class = "fa fa-user", style = "color: steelblue;"), " ", strong("Auteur & version")),
+        p("Le nom de l'auteur et la version de l'étude seront visibles depuis l'onglet ", tags$em("Toutes les études"), "."),
+        p("Pensez à ", strong("modifier la version de l'étude"), " lorsque des modifications sont réalisées, afin de partager celle-ci."),
+        tags$h3(tags$i(class = "fa fa-grip-lines", style = "color: steelblue;"), " ", strong("Nom et catégorie")),
+        p("Nom et catégorie s'affichant dans l'onglet ", tags$em("Toutes les études"), ", selon la langue choisie au démarrage de l'application."),
+        tags$h3(tags$i(class = "fa fa-lock", style = "color: steelblue;"), " ", strong("Accès")),
+        p("Choisissez ici qui peut avoir accès à cette étude."),
+        tags$h3(tags$i(class = "fa fa-file-lines", style = "color: steelblue;"), " ", strong("Description")),
+        p("La description s'affiche dans l'onglet ", tags$em("Toutes les études"), ", lorsque l'on clique sur une ligne du tableau."),
+        p("Le code ici est du ", strong("Markdown"), ", dont voici un exemple."),
+        div_code_1$fr,
+        p("Cliquez sur ", tags$em("Exécuter"), " pour visualiser le rendu de la description."),
+        p("Utilisez les ", strong("raccourcis"), " :"),
+        tags$ul(
+          tags$li("CMD/CTRL + SHIFT + ENTER : exécute l'ensemble du code"),
+          tags$li("CMD/CTRL + ENTER : exécute le code sélectionné"),
+          tags$li("CMD/CTRL + S : sauvegarde le code")
+        ),
+        br()
       )
     }
     if (language == "en"){
       r$help_my_studies_modal_text <- div(
-        
+        tags$h3(tags$i(class = "fa fa-user", style = "color: steelblue;"), " ", strong("Author & version")),
+        p("The name of the author and the version of the study will be visible from the tab ", tags$em("All Studies"), "."),
+        p("Remember to ", strong("modify the study version"), " when changes are made, in order to share it."),
+        tags$h3(tags$i(class = "fa fa-grip-lines", style = "color: steelblue;"), " ", strong("Name and Category")),
+        p("Name and category are displayed in the tab ", tags$em("All Studies"), ", according to the language chosen at the start of the application."),
+        tags$h3(tags$i(class = "fa fa-lock", style = "color: steelblue;"), " ", strong("Access")),
+        p("Choose here who can have access to this study."),
+        tags$h3(tags$i(class = "fa fa-file-lines", style = "color: steelblue;"), " ", strong("Description")),
+        p("The description is displayed in the tab ", tags$em("All Studies"), ", when one clicks on a line of the table."),
+        p("The code here is ", strong("Markdown"), ", here's an example."),
+        div_code_1$en,
+        p("Click on ", tags$em("Execute"), " to visualize the rendering of the description."),
+        p("Use the ", strong("shortcuts"), ":"),
+        tags$ul(
+          tags$li("CMD/CTRL + SHIFT + ENTER : execute the whole code"),
+          tags$li("CMD/CTRL + ENTER : execute the selected code"),
+          tags$li("CMD/CTRL + S : save the code")
+        ),
+        br()
       )
     }
   })

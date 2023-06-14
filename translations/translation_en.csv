@@ -272,6 +272,7 @@ studies,Studies
 studies_edit_data,Edit a study
 studies_see_all_data,Access to all data
 studies_delete_data,Delete a study
+study_messages,Study messages
 study_messages_card,Access to study messages
 studies_creation_card,Create a study
 study_options_card,Edit study options
@@ -698,7 +699,6 @@ datasets_datatable_card_user_access_description,"Manage datasets (add, edit and 
 datasets_options_card_user_access_description,Edit datasets options
 datasets_edit_code_card_user_access_description,Edit datasets code
 studies_see_all_data_user_access_description,"Access to all studies, even if current user is not in authorized users for a study"
-studies_messages_card_user_access_description,Access to studies conversations
 studies_description_card_user_access_description,Access to studies descriptions
 studies_datatable_card_user_access_description,"Manage studies (add, edit and delete)"
 studies_options_card_user_access_description,Edit studies options
@@ -711,6 +711,7 @@ vocabularies_edit_code_card_user_access_description,Edit vocabulary code
 vocabularies_import_vocabulary_card_user_access_description,Import a vocabulary
 vocabularies_concepts_card_user_access_description,Access to vocabulary concepts (from the tab at the top of the page)
 vocabularies_mapping_card_user_access_description,Access to vocabulary concepts mapping
+study_messages_card_user_access_description,Access to studies conversations
 plugins_see_all_data_user_access_description,"Access to all plugins, even if current user is not in authorized users for a plugin"
 all_plugins_card_user_access_description,Access to 'All plugins' tab
 plugins_datatable_card_user_access_description,"Manage plugins (add, edit and delete)"
@@ -849,3 +850,6 @@ invalid_method_value,Invalid method value
 invalid_concept_id_value,Invalid concept_id value
 concept_not_found,Concept not found
 error_loading_script_description,Error loading script description
+access_to_data,Access to data
+scripts_and_plugins,"Scripts & plugins"
+test2,Test 2

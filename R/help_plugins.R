@@ -101,7 +101,6 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
   
   code_4 <- list()
   div_code_4 <- list()
-  
   code_4$fr <- paste0(
     "## Description\n\n",
     "Ce plugin permet de créer un Flowchart à partir des données d'une étude.\n\n",
@@ -118,7 +117,6 @@ help_plugins <- function(output, r = shiny::reactiveValues(), id = character(), 
     shiny.fluent::IconButton.shinyInput(ns("copy_code_4"), iconProps = list(iconName = "Copy"), style = "position:absolute; top:5px; right:5px;"),
     style = r$code_style
   )
-  
   code_4$en <- paste0(
     "## Description\n\n",
     "This plugin allows you to create a Flowchart from study data.\n\n",

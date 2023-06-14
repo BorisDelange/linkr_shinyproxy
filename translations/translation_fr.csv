@@ -272,6 +272,7 @@ studies,Etudes
 studies_edit_data,Edit study data
 studies_see_all_data,Accès à toutes les données
 studies_delete_data,Supprimer une étude
+study_messages,Messages de l'étude
 study_messages_card,Accéder aux messages
 studies_creation_card,Créer une étude
 study_options_card,Gérer les options d'une étude
@@ -698,7 +699,6 @@ datasets_datatable_card_user_access_description,"Gérer les sets de données (aj
 datasets_options_card_user_access_description,Editer les options des sets de données
 datasets_edit_code_card_user_access_description,Editer le code des sets de données
 studies_see_all_data_user_access_description,"Accéder à toutes les études, même celles pour lesquelles l'utilisateur n'est pas dans les utilisateurs autorisés"
-studies_messages_card_user_access_description,Accéder aux conversations des études
 studies_description_card_user_access_description,Accéder aux descriptions des études
 studies_datatable_card_user_access_description,"Gérer les études (ajouter, éditer et supprimer)"
 studies_options_card_user_access_description,Editer les options des études
@@ -711,6 +711,7 @@ vocabularies_edit_code_card_user_access_description,Editer le code des terminolo
 vocabularies_import_vocabulary_card_user_access_description,Importer une terminologie
 vocabularies_concepts_card_user_access_description,Accéder aux concepts des terminologies (depuis l'onglet en haut de la page)
 vocabularies_mapping_card_user_access_description,Accéder aux alignements de concepts
+study_messages_card_user_access_description,Accéder aux conversations des études
 plugins_see_all_data_user_access_description,"Accéder à tous les plugins, même ceux pour lesquels l'utilisateur n'est pas dans les utilisateurs autorisés"
 all_plugins_card_user_access_description,Accéder à l'onglet 'Tous les plugins'
 plugins_datatable_card_user_access_description,"Gérer les plugins (ajouter, éditer et supprimer)"
@@ -849,3 +850,5 @@ invalid_method_value,Valeur de method non valide
 invalid_concept_id_value,Valeur de concept_id non valide
 concept_not_found,Concept non trouvé
 error_loading_script_description,Erreur lors du chargement de la description du script
+access_to_data,Accéder aux données
+scripts_and_plugins,"Scripts & plugins"

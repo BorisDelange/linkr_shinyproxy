@@ -256,7 +256,7 @@ app_server <- function(router, language = "en", app_folder = character(),
       })
 
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - home")
-      if (debug) print(paste0(Sys.time(), " - server - load server tabs - mod_data"))
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - data"))
 
       sapply(c("patient_level_data", "aggregated_data"), function(page){
         mod_data_server(page, r, d, m, language, i18n, perf_monitoring, debug)
@@ -264,7 +264,7 @@ app_server <- function(router, language = "en", app_folder = character(),
         mod_page_header_server(page, r, language, i18n)
       })
 
-      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - mod_data")
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - data")
       if (debug) print(paste0(Sys.time(), " - server - load server tabs - my_studies / my_subsets / vocabularies / scripts"))
 
       mod_my_studies_server("my_studies", r, d, m, i18n, language, perf_monitoring, debug)
@@ -282,6 +282,12 @@ app_server <- function(router, language = "en", app_folder = character(),
       })
 
       if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - my_studies / my_subsets / vocabularies / scripts - sidenav")
+      if (debug) print(paste0(Sys.time(), " - server - load server tabs - messages"))
+      
+      mod_messages_server("messages", r, d, m, i18n, language, perf_monitoring, debug)
+      mod_page_sidenav_server("messages", r, d, m, i18n, language, perf_monitoring, debug)
+      
+      if (perf_monitoring) monitor_perf(r = r, action = "stop", task = "server - load server tabs - messages")
       if (debug) print(paste0(Sys.time(), " - server - load server tabs - plugins"))
 
       sapply(c("plugins_patient_lvl", "plugins_aggregated"), function(page){
