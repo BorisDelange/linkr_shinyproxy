@@ -224,7 +224,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
             ), style = "width: 100%;"),
             shiny.fluent::Stack(
               tokens = list(childrenGap = 5),
-              shiny.fluent::PrimaryButton.shinyInput(ns("request"), i18n$t("request")), br(), br(),
+              div(shiny.fluent::PrimaryButton.shinyInput(ns("request"), i18n$t("request")), style = "width:300px;"), br(), br(),
               div(textOutput(ns("datetime_request_execution")), style = "color:#878787;"), br(),
               div(shiny::verbatimTextOutput(ns("request_result")), 
                 style = "width: 99%; border-style: dashed; border-width: 1px; padding: 0px 8px 0px 8px; margin-right: 5px;")
