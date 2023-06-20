@@ -62,4 +62,4 @@ mod_page_header_server <- function(id = character(), r = shiny::reactiveValues()
     
     output$username <- renderUI(r$username)
   })
-}
+} 
