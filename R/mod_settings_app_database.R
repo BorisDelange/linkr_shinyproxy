@@ -241,7 +241,7 @@ mod_settings_app_database_ui <- function(id = character(), i18n = character()){
     shinyjs::hidden(
       div(
         id = ns("db_save_card"),
-        make_card(
+        make_shiny_ace_card(
           i18n$t("db_save_long"),
           div(
             br(), uiOutput(ns("current_db_save")),

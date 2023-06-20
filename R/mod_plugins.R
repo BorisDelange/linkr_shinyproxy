@@ -393,7 +393,7 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
     shinyjs::hidden(
       div(
         id = ns("export_plugin_card"),
-        make_card(i18n$t("export_plugins"),
+        make_shiny_ace_card(i18n$t("export_plugins"),
           div(
             shiny.fluent::Stack(
               horizontal = TRUE, tokens = list(childrenGap = 10),
@@ -401,10 +401,10 @@ mod_plugins_ui <- function(id = character(), i18n = character()){
                 multiSelect = TRUE, width = "400px"),
               div(shiny.fluent::PrimaryButton.shinyInput(ns("export_selected_plugins"), 
                 i18n$t("export_plugins"), iconProps = list(iconName = "Upload")), style = "margin-top:38px;"),
-              div(style = "visibility:hidden;", downloadButton(ns("export_plugins_download"), label = "")),
               style = "position:relative; z-index:1; width:700px;"
             ),
-            div(DT::DTOutput(ns("plugins_to_export_datatable")), style = "margin-top:-30px; z-index:2")
+            div(DT::DTOutput(ns("plugins_to_export_datatable")), style = "margin-top:-30px; z-index:2"),
+            div(style = "visibility:hidden;", downloadButton(ns("export_plugins_download"), label = ""))
           )
         ), br()
       )

@@ -68,7 +68,7 @@ linkr <- function(
   if (debug) print(paste0(Sys.time(), " - linkr - translation"))
   
   translations_path <- "translations"
-  if (!dir.exists("translations")) translations_path <- paste0(find.package("linkr"), "/translations")
+  if (!dir.exists("translations")) translations_path <- paste0(find.package("linkr"), "/inst/translations")
   if (!dir.exists(translations_path)) print("Translations path not found")
   
   i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = translations_path))
