@@ -19,3 +19,4 @@ mod_page_footer_ui <- function(i18n = character()){
     )
   )
 }
+ 
