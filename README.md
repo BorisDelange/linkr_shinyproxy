@@ -7,8 +7,8 @@
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-![version](https://img.shields.io/badge/version-0.2.0.9003-blue)
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
+![version](https://img.shields.io/badge/version-0.2.0.9003-blue)
 <!-- badges: end -->
 
 ## Introduction
