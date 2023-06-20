@@ -124,9 +124,13 @@ app_server <- function(router, language = "en", app_folder = character(),
     
     if (debug) print(paste0(Sys.time(), " - server - translations"))
     
+    print("linkr")
     translations_path <- "inst/translations"
+    print(translations_path)
     if (!dir.exists(translations_path)) translations_path <- paste0(find.package("linkr"), "/translations")
+    print(translations_path)
     if (!dir.exists(translations_path)) print("Translations path not found")
+    print(translations_path)
   
     i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = translations_path))
     i18n$set_translation_language(language)
