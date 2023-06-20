@@ -1014,7 +1014,7 @@ mod_scripts_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     action_buttons <- c("delete", "edit_code", "options")
     sortable_cols <- c("id", "name", "creation_datetime", "update_datetime")
-    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "80px")
+    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "100px")
     centered_cols <- c("id", "creator", "creation_datetime", "update_datetime", "action")
     searchable_cols <- c("name")
     hidden_cols <- c("id", "description", "deleted", "modified")

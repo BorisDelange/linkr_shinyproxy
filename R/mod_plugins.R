@@ -1088,7 +1088,7 @@ mod_plugins_server <- function(id = character(), r = shiny::reactiveValues(), d 
     
     editable_cols <- ""
     sortable_cols <- c("id", "name", "creation_datetime", "update_datetime")
-    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "80px")
+    column_widths <- c("id" = "80px", "creation_datetime" = "130px", "update_datetime" = "130px", "action" = "100px")
     centered_cols <- c("id", "creation_datetime", "update_datetime", "action")
     searchable_cols <- c("name")
     hidden_cols <- c("id", "description", "tab_type_id", "deleted", "modified")
