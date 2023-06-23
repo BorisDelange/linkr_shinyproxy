@@ -484,7 +484,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
             if (table == "concept") sql <- glue::glue_sql("SELECT * FROM concept", .con = m$db)
             else if (table == "concept_relationship") sql <- glue::glue_sql(paste0(
               "SELECT cr.* FROM concept_relationship cr WHERE cr.id NOT IN ( ",
-                "WITH cr AS (",
+                "WITH cr2 AS (",
                   "SELECT cru.concept_relationship_id, ",
                   "SUM(CASE WHEN cre.evaluation_id = 1 THEN 1 ELSE 0 END) AS positive_evals, ",
                   "SUM(CASE WHEN cre.evaluation_id = 2 THEN 1 ELSE 0 END) AS negative_evals ",
@@ -493,13 +493,12 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
                   "GROUP BY cru.concept_relationship_id ",
                   "HAVING positive_evals = 0 OR (positive_evals > 0 AND positive_evals <= negative_evals) ",
                 ") ",
-              "SELECT cr.concept_relationship_id FROM cr ",
+              "SELECT concept_relationship_id FROM cr2 ",
               ")"), .con = m$db)
             
             d[[table]] <- DBI::dbGetQuery(m$db, sql) %>%
               dplyr::arrange(cols_order[[table]]) %>%
               dplyr::mutate_at(cols_to_char[[table]], as.character) %>%
-              dplyr::mutate_at(c("positive_evals", "negative_evals"), as.integer) %>%
               dplyr::mutate(modified = FALSE)
           }
         }
