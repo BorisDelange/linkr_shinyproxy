@@ -138,25 +138,6 @@ update_r <- function(r = shiny::reactiveValues(), m = shiny::reactiveValues(), t
   }
 }
 
-#' Get options of a page
-#' 
-#' @description Get the options of a setting page (as datasets, studies...)
-#' @param id ID of the page 
-#' @return A character vector with options
-#' @examples 
-#' get_page_options(id == "settings_datasets")
-get_page_options <- function(id = character()){
-  result <- ""
-  switch(id,
-    "settings_datasets" = c("show_only_aggregated_data", "users_allowed_read"),
-    "settings_studies" = "users_allowed_read",
-    "settings_plugins" = c("markdown_description", "users_allowed_read"),
-    "settings_users_accesses_options" = "users_accesses_options",
-    "settings_tabs_patient_lvl_tabs_groups_options" = "users_allowed_read",
-    "settings_tabs_aggregated_tabs_groups_options" = "users_allowed_read") -> result
-  result
-}
-
 #' Get column names
 #' 
 #' @description Get the columns names of a table
@@ -249,7 +230,7 @@ get_col_names <- function(table_name = character(), i18n = character()){
   
   else if (table_name == "dataset_vocabulary_concepts_mapping_evals"){
     result <- c(i18n$t("id"), i18n$t("vocabulary_id_1"), i18n$t("concept_id_1"), i18n$t("relationship_id"), i18n$t("vocabulary_id_2"), i18n$t("concept_id_2"),
-      i18n$t("creator"), i18n$t("datetime"), i18n$t("positive_evals_short"), i18n$t("negative_evals_short"), 
+      i18n$t("comment"), i18n$t("creator"), i18n$t("datetime"), i18n$t("positive_evals_short"), i18n$t("negative_evals_short"), 
       i18n$t("action"), i18n$t("user_evaluation_id"), i18n$t("modified"))
   }
   

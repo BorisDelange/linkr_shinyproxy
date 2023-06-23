@@ -276,7 +276,8 @@ add_settings_new_data <- function(session, output, r = shiny::reactiveValues(), 
       last_row$options + 3, "dataset", last_row$data + 1, "show_only_aggregated_data", "", 0, r$user_id, as.character(Sys.time()), FALSE,
       last_row$options + 4, "dataset", last_row$data + 1, "activate_scripts_cache", "", 1, r$user_id, as.character(Sys.time()), FALSE,
       last_row$options + 5, "dataset", last_row$data + 1, "unique_id", paste0(sample(c(0:9, letters[1:6]), 64, TRUE), collapse = ''), NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
-      last_row$options + 6, "dataset", last_row$data + 1, "omop_version", "6.0", NA_integer_, r$user_id, as.character(Sys.time()), FALSE)
+      last_row$options + 6, "dataset", last_row$data + 1, "omop_version", "6.0", NA_integer_, r$user_id, as.character(Sys.time()), FALSE,
+      last_row$options + 7, "dataset", last_row$data + 1, "description", "", NA_integer_, r$user_id, as.character(Sys.time()), FALSE)
   }
   
   # For studies, need to add one row in options and add rows of code for subsets, with default value
@@ -951,9 +952,6 @@ save_settings_options <- function(output, r = shiny::reactiveValues(), id = char
   
   if (nrow(options) == 0) show_message_bar(output,  "modif_saved", "success", i18n = i18n, ns = ns)
   req (nrow(options) > 0)
-  
-  # Get options with page ID
-  if (length(page_options) == 0) page_options <- get_page_options(id = id)
   
   if("show_only_aggregated_data" %in% page_options){
     option_id <- options %>% dplyr::filter(name == "show_only_aggregated_data") %>% dplyr::pull(id)

@@ -852,3 +852,4 @@ concept_not_found,Concept non trouvé
 error_loading_script_description,Erreur lors du chargement de la description du script
 access_to_data,Accéder aux données
 scripts_and_plugins,Scripts & plugins
+comment,Commentaire

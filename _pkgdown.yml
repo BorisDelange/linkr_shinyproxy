@@ -31,7 +31,6 @@ reference:
   - get_col_names
   - get_db
   - get_last_row
-  - get_page_options
   - get_remote_db
   - insert_default_data
   - load_database

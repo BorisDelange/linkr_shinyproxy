@@ -186,13 +186,14 @@ mod_vocabularies_ui <- function(id = character(), i18n = character()){
                     list(key = 3, text = i18n$t("relationship_id")),
                     list(key = 4, text = i18n$t("vocabulary_id_2")),
                     list(key = 5, text = i18n$t("concept_id_2")),
-                    list(key = 6, text = i18n$t("creator")),
-                    list(key = 7, text = i18n$t("datetime")),
-                    list(key = 8, text = i18n$t("positive_evals")),
-                    list(key = 9, text = i18n$t("negative_evals")),
-                    list(key = 10, text = i18n$t("action"))
+                    list(key = 6, text = i18n$t("comment")),
+                    list(key = 7, text = i18n$t("creator")),
+                    list(key = 8, text = i18n$t("datetime")),
+                    list(key = 9, text = i18n$t("positive_evals")),
+                    list(key = 10, text = i18n$t("negative_evals")),
+                    list(key = 11, text = i18n$t("action"))
                   ),
-                  value = c(2, 3, 5, 7, 8, 9, 10)
+                  value = c(2, 3, 5, 8, 9, 10, 11)
                 ), div(style = "width:10px;"),
                 div(shiny.fluent::Toggle.shinyInput(ns("vocabulary_show_only_not_evaluated_concepts"), value = FALSE), style = "margin-top:45px;"),
                 div(i18n$t("vocabulary_show_only_not_evaluated_concepts"), style = "font-weight:bold; margin-top:45px; margin-right:30px;"),
@@ -498,6 +499,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
             d[[table]] <- DBI::dbGetQuery(m$db, sql) %>%
               dplyr::arrange(cols_order[[table]]) %>%
               dplyr::mutate_at(cols_to_char[[table]], as.character) %>%
+              dplyr::mutate_at(c("positive_evals", "negative_evals"), as.integer) %>%
               dplyr::mutate(modified = FALSE)
           }
         }
@@ -1411,9 +1413,9 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       
       last_row_concept_relationship_user <- get_last_row(m$db, "concept_relationship_user")
       
-      new_row_db_user <- tibble::tribble(~id, ~concept_relationship_id, ~creator_id, ~datetime,
-        last_row_concept_relationship_user + 1, last_row_concept_relationship + 1, r$user_id, as.character(Sys.time()),
-        last_row_concept_relationship_user + 2, last_row_concept_relationship + 2, r$user_id, as.character(Sys.time()))
+      new_row_db_user <- tibble::tribble(~id, ~concept_relationship_id, ~comment, ~creator_id, ~datetime,
+        last_row_concept_relationship_user + 1, last_row_concept_relationship + 1, "", r$user_id, as.character(Sys.time()),
+        last_row_concept_relationship_user + 2, last_row_concept_relationship + 2, "", r$user_id, as.character(Sys.time()))
       
       # Add new mapping to database
 
@@ -1435,23 +1437,27 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
               vocabulary_id_2 = c(input$vocabulary_mapping_2$key, input$vocabulary_mapping_1$key), concept_id_2,
               creator_name = r$users %>% dplyr::filter(id == r$user_id) %>% dplyr::mutate(creator_name = paste0(firstname, " ", lastname)) %>% dplyr::pull(creator_name),
               datetime = as.character(Sys.time()), positive_evals = 0L, negative_evals = 0L) %>%
-            dplyr::rowwise() %>%
             dplyr::mutate(
               action = as.character(tagList(
-                shiny::actionButton(paste0("positive_eval_", concept_relationship_id), "", icon = icon("thumbs-up"),
+                shiny::actionButton("positive_eval_%concept_relationship_id%", "", icon = icon("thumbs-up"),
                   onclick = paste0("Shiny.setInputValue('", !!id, "-concept_mapping_evaluated_positive', this.id, {priority: 'event'})"),
                   style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
-                shiny::actionButton(paste0("negative_eval_", concept_relationship_id), "", icon = icon("thumbs-down"),
+                shiny::actionButton("negative_eval_%concept_relationship_id%", "", icon = icon("thumbs-down"),
                   onclick = paste0("Shiny.setInputValue('", !!id, "-concept_mapping_evaluated_negative', this.id, {priority: 'event'})"),
                   style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;"),
-                shiny::actionButton(paste0("remove_", concept_relationship_id), "", icon = icon("trash-alt"),
+                shiny::actionButton("remove_%concept_relationship_id%", "", icon = icon("trash-alt"),
                   onclick = paste0("Shiny.setInputValue('", !!id, "-concept_mapping_deleted_pressed', this.id, {priority: 'event'})"),
                   style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
               )),
               user_evaluation_id = NA_integer_,
               modified = FALSE
             ) %>%
-            dplyr::ungroup() %>%
+            dplyr::mutate(relationship_id = dplyr::case_when(
+              relationship_id == "Maps to" ~ i18n$t("maps_to"),
+              relationship_id == "Mapped from" ~ i18n$t("mapped_from"),
+              relationship_id == "Is a" ~ i18n$t("is_a"),
+              relationship_id == "Subsumes" ~ i18n$t("subsumes"))) %>%
+            dplyr::mutate(action = stringr::str_replace_all(action, "%concept_relationship_id%", as.character(concept_relationship_id))) %>%
             dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.character)
         ) %>%
         dplyr::arrange(dplyr::desc(concept_relationship_id))
@@ -1530,7 +1536,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
   
         sql <- glue::glue_sql(paste0("SELECT cr.id AS concept_relationship_id, ",
           "c1.vocabulary_id AS vocabulary_id_1, cr.concept_id_1, cr.relationship_id, ",
-          "c2.vocabulary_id AS vocabulary_id_2, cr.concept_id_2, cru.creator_id, cru.datetime ",
+          "c2.vocabulary_id AS vocabulary_id_2, cr.concept_id_2, cru.comment, cru.creator_id, cru.datetime ",
           "FROM concept_relationship_user cru ",
           "INNER JOIN concept_relationship cr ON cru.concept_relationship_id = cr.id ",
           "INNER JOIN concept c1 ON cr.concept_id_1 = c1.concept_id AND c1.vocabulary_id IN ({vocabulary_ids*}) ",
@@ -1550,15 +1556,15 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
             relationship_id == "Is a" ~ i18n$t("is_a"),
             relationship_id == "Subsumes" ~ i18n$t("subsumes"))) %>%
           dplyr::left_join(vocabulary_mapping_evals %>% dplyr::select(eval_id = id, concept_relationship_id, evaluation_id), by = "concept_relationship_id") %>%
-          dplyr::group_by(concept_relationship_id, vocabulary_id_1, concept_id_1, relationship_id, vocabulary_id_2, concept_id_2, creator_id, datetime) %>%
+          dplyr::group_by(concept_relationship_id, vocabulary_id_1, concept_id_1, relationship_id, vocabulary_id_2, concept_id_2, comment, creator_id, datetime) %>%
           dplyr::summarize(
             positive_evals = sum(evaluation_id == 1, na.rm = TRUE),
             negative_evals = sum(evaluation_id == 2, na.rm = TRUE)
           ) %>%
           dplyr::ungroup() %>%
           dplyr::mutate(
-            positive_evals = ifelse(positive_evals > 0, positive_evals, 0),
-            negative_evals = ifelse(negative_evals > 0, negative_evals, 0)
+            positive_evals = ifelse(positive_evals > 0, positive_evals, 0L),
+            negative_evals = ifelse(negative_evals > 0, negative_evals, 0L)
           ) %>%
           dplyr::mutate_at(c("concept_id_1", "concept_id_2"), as.character) %>%
           dplyr::left_join(r$users %>% dplyr::transmute(creator_id = id, creator_name = paste0(firstname, " ", lastname)), by = "creator_id") %>%
@@ -1582,8 +1588,11 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
               shiny::actionButton("remove_%concept_relationship_id%", "", icon = icon("trash-alt"),
                 onclick = paste0("Shiny.setInputValue('", id, "-concept_mapping_deleted_pressed', this.id, {priority: 'event'})"),
                 style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
-            )), .after = "negative_evals") %>%
-          dplyr::mutate(action = stringr::str_replace_all(action, "%concept_relationship_id%", as.character(concept_relationship_id)))
+            )), .after = "negative_evals")
+        
+        if (nrow(r$dataset_vocabulary_concepts_evaluate_mappings) > 0) r$dataset_vocabulary_concepts_evaluate_mappings <-
+          r$dataset_vocabulary_concepts_evaluate_mappings %>%
+            dplyr::mutate(action = stringr::str_replace_all(action, "%concept_relationship_id%", as.character(concept_relationship_id)))
   
         # Update action buttons with user evaluations
   
@@ -1606,23 +1615,25 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
               user_evaluation_id == 2 ~ "white"
             )
           ) %>%
-          dplyr::rowwise() %>%
           dplyr::mutate(action = dplyr::case_when(
             !is.na(user_evaluation_id) ~ as.character(tagList(
-              shiny::actionButton(paste0("positive_eval_", concept_relationship_id), "", icon = icon("thumbs-up"),
+              shiny::actionButton("positive_eval_%concept_relationship_id%", "", icon = icon("thumbs-up"),
                 onclick = paste0("Shiny.setInputValue('", id, "-concept_mapping_evaluated_positive', this.id, {priority: 'event'})"),
                 style = paste0("background-color:", positive_eval_button_background_color, "; color:", positive_eval_button_color, "; border-color:#8E8F9D; border-radius:3px; border-width:1px;")),
-              shiny::actionButton(paste0("negative_eval_", concept_relationship_id), "", icon = icon("thumbs-down"),
+              shiny::actionButton("negative_eval_%concept_relationship_id%", "", icon = icon("thumbs-down"),
                 onclick = paste0("Shiny.setInputValue('", id, "-concept_mapping_evaluated_negative', this.id, {priority: 'event'})"),
                 style = paste0("background-color:", negative_eval_button_background_color, "; color:", negative_eval_button_color, "; border-color:#8E8F9D; border-radius:3px; border-width:1px;")),
-              shiny::actionButton(paste0("remove_", concept_relationship_id), "", icon = icon("trash-alt"),
+              shiny::actionButton("remove_%concept_relationship_id%", "", icon = icon("trash-alt"),
                 onclick = paste0("Shiny.setInputValue('", id, "-concept_mapping_deleted_pressed', this.id, {priority: 'event'})"),
                 style = "background-color:#E8E9EC; color:black; border-color:#8E8F9D; border-radius:3px; border-width:1px;")
             )),
             TRUE ~ action
           )) %>%
-          dplyr::ungroup() %>%
           dplyr::select(-positive_eval_button_background_color, -positive_eval_button_color, -negative_eval_button_background_color, -negative_eval_button_color)
+        
+        if (nrow(r$dataset_vocabulary_concepts_evaluate_mappings) > 0) r$dataset_vocabulary_concepts_evaluate_mappings <-
+          r$dataset_vocabulary_concepts_evaluate_mappings %>%
+          dplyr::mutate(action = stringr::str_replace_all(action, "%concept_relationship_id%", as.character(concept_relationship_id)))
       }
         
       # Select only mappings without evaluation by current user
@@ -1640,7 +1651,7 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       sortable_cols <- c("concept_id_1", "concept_id_2", "relationship_id", "creator_name", "datetime", "positive_evals", "negative_evals", "vocabulary_id_1", "vocabulary_id_2")
       centered_cols <- c("datetime", "action", "vocabulary_id_1", "concept_id_1", "vocabulary_id_2", "concept_id_2", "relationship_id", "creator_name", "positive_evals", "negative_evals")
       col_names <- get_col_names(table_name = "dataset_vocabulary_concepts_mapping_evals", i18n = i18n)
-      hidden_cols <- c("concept_relationship_id", "modified", "user_evaluation_id", "creator_name", "vocabulary_id_1", "vocabulary_id_2")
+      hidden_cols <- c("concept_relationship_id", "modified", "user_evaluation_id", "comment", "creator_name", "vocabulary_id_1", "vocabulary_id_2")
       column_widths <- c("action" = "100px", "datetime" = "130px", "positive_evals" = "80px", "negative_evals" = "80px")
 
       selection <- "multiple"
@@ -1690,8 +1701,8 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
       req(length(r$dataset_vocabulary_concepts_evaluate_mappings_datatable_proxy) > 0)
       
       r$dataset_vocabulary_concepts_evaluate_mappings_datatable_proxy %>%
-        DT::showCols(1:12) %>%
-        DT::hideCols(setdiff(1:12, input$vocabulary_mapping_eval_cols))
+        DT::showCols(1:13) %>%
+        DT::hideCols(setdiff(1:13, input$vocabulary_mapping_eval_cols))
     })
     
     # When an evaluation button is clicked
@@ -1745,17 +1756,17 @@ mod_vocabularies_server <- function(id = character(), r = shiny::reactiveValues(
         )) %>%
         dplyr::mutate(
           positive_evals = dplyr::case_when(
-            concept_relationship_id == link_id & is.na(current_evaluation_id) & new_evaluation_id == 1 ~ positive_evals + 1,
-            concept_relationship_id == link_id & current_evaluation_id == 1 & is.na(new_evaluation_id) ~ positive_evals - 1,
-            concept_relationship_id == link_id & current_evaluation_id == 2 & new_evaluation_id == 1 ~ positive_evals + 1,
-            concept_relationship_id == link_id & current_evaluation_id == 1 & new_evaluation_id == 2 ~ positive_evals - 1,
+            concept_relationship_id == link_id & is.na(current_evaluation_id) & new_evaluation_id == 1 ~ positive_evals + 1L,
+            concept_relationship_id == link_id & current_evaluation_id == 1 & is.na(new_evaluation_id) ~ positive_evals - 1L,
+            concept_relationship_id == link_id & current_evaluation_id == 2 & new_evaluation_id == 1 ~ positive_evals + 1L,
+            concept_relationship_id == link_id & current_evaluation_id == 1 & new_evaluation_id == 2 ~ positive_evals - 1L,
             TRUE ~ positive_evals
           ),
           negative_evals = dplyr::case_when(
-            concept_relationship_id == link_id & is.na(current_evaluation_id) & new_evaluation_id == 2 ~ negative_evals + 1,
-            concept_relationship_id == link_id & current_evaluation_id == 2 & is.na(new_evaluation_id) ~ negative_evals - 1,
-            concept_relationship_id == link_id & current_evaluation_id == 1 & new_evaluation_id == 2 ~ negative_evals + 1,
-            concept_relationship_id == link_id & current_evaluation_id == 2 & new_evaluation_id == 1 ~ negative_evals - 1,
+            concept_relationship_id == link_id & is.na(current_evaluation_id) & new_evaluation_id == 2 ~ negative_evals + 1L,
+            concept_relationship_id == link_id & current_evaluation_id == 2 & is.na(new_evaluation_id) ~ negative_evals - 1L,
+            concept_relationship_id == link_id & current_evaluation_id == 1 & new_evaluation_id == 2 ~ negative_evals + 1L,
+            concept_relationship_id == link_id & current_evaluation_id == 2 & new_evaluation_id == 1 ~ negative_evals - 1L,
             TRUE ~ negative_evals
           )
         ) %>%
