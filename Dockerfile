@@ -28,4 +28,4 @@ COPY Rprofile.site /usr/lib/R/etc/
 
 EXPOSE 3838
 
-CMD ["R", "-e", "linkr::link(language = 'fr')"]
+CMD ["R", "-e", "linkr::link(language = 'fr', app_folder = '/root')"]
