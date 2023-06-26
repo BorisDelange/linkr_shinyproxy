@@ -28,4 +28,4 @@ COPY LinkR /root/LinkR
 
 EXPOSE 3838
 
-CMD ["R", "-e", "linkr::link(language = 'fr', app_folder = '/root')"]
+CMD ["R", "-e", "linkr::linkr(language = 'fr', app_folder = '/root')"]
