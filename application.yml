@@ -1,0 +1,30 @@
+proxy:
+  title: LinkR Shiny Proxy
+  logo-url: https://framagit.org/interhop/LinkR/-/raw/master/inst/app/www/logo.png
+  landing-page: /
+  heartbeat-rate: 10000
+  heartbeat-timeout: 60000
+  port: 8080
+  authentication: simple
+  admin-groups: admin
+  # Example: 'simple' authentication configuration
+  users:
+  - name: admin
+    password: admin
+    groups: admin
+    # Docker configuration
+  docker:
+    url: http://localhost:3838
+    port-range-start: 20000
+  specs:
+  - id: linkr
+    display-name: LinkR
+    description: A web app for visualization and analysis of healthcare data using OMOP CDM
+    container-cmd: ["R", "-e", "linkr::linkr(language = 'fr')"]
+    container-image: openanalytics/shinyproxy-demo
+    access-groups: [admin]
+    max-instances: 2
+
+logging:
+  file:
+    shinyproxy.log
