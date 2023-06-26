@@ -18,11 +18,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN R -e "install.packages(c('clipr', 'curl', 'DBI', 'dplyr', 'DT', 'ggplot2', 'golem', 'glue', 'knitr', 'magrittr', 'pkgload', 'plotly', 'pryr', 'readr', 'remotes', 'rlang', 'rlist', 'rmarkdown', 'RPostgres', 'RSQLite', 'shiny', 'shiny.fluent', 'shiny.i18n', 'shinymanager', 'shiny.react', 'shiny.router', 'shinyAce', 'shinybusy', 'shinyjs', 'sortable', 'stringr', 'tidyr', 'XML', 'zip'), repos='https://cloud.r-project.org/')"
 
 # Install LinkR from GitHub
-RUN R -e "remotes::install_github('BorisDelange/linkr')"
+RUN R -e "remotes::install_github('BorisDelange/LinkR')"
 
 # Copy the app to the image
-RUN mkdir /root/linkr
-COPY linkr /root/linkr
+RUN mkdir /root/LinkR
+COPY LinkR /root/LinkR
 
 #COPY Rprofile.site /usr/lib/R/etc/
 
