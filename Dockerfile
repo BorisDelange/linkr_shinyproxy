@@ -22,7 +22,7 @@ RUN R -e "remotes::install_github('BorisDelange/linkr')"
 
 # Copy the app to the image
 RUN mkdir /root/linkr
-COPY LinkR /root/linkr
+COPY linkr /root/linkr
 
 #COPY Rprofile.site /usr/lib/R/etc/
 
