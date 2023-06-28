@@ -1,31 +1,16 @@
-FROM openanalytics/r-ver:4.1.3
-
-LABEL maintainer="Boris Delange <linkr-app@pm.me>"
-
-# System libraries of general use
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    pandoc \
-    pandoc-citeproc \
-    libcurl4-gnutls-dev \
-    libcairo2-dev \
-    libxt-dev \
-    libssl-dev \
-    libssh2-1-dev \
-    libssl1.1 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install R packages required for the app
-RUN R -e "install.packages(c('clipr', 'curl', 'DBI', 'dplyr', 'DT', 'ggplot2', 'golem', 'glue', 'knitr', 'magrittr', 'pkgload', 'plotly', 'pryr', 'readr', 'remotes', 'rlang', 'rlist', 'rmarkdown', 'RPostgres', 'RSQLite', 'shiny', 'shiny.fluent', 'shiny.i18n', 'shinymanager', 'shiny.react', 'shiny.router', 'shinyAce', 'shinybusy', 'shinyjs', 'sortable', 'stringr', 'tidyr', 'XML', 'zip'), repos='https://cloud.r-project.org/')"
-
-# Install LinkR from GitHub
-RUN R -e "remotes::install_github('BorisDelange/LinkR')"
-
-# Copy the app to the image
-RUN mkdir /root/LinkR
-COPY LinkR /root/LinkR
-
-COPY Rprofile.site /usr/lib/R/etc/
-
+FROM rocker/verse:4.1.2
+RUN apt-get update && apt-get install -y  make zlib1g-dev && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /usr/local/lib/R/etc/ /usr/lib/R/etc/
+RUN echo "options(repos = c(CRAN = 'https://cran.rstudio.com/'), download.file.method = 'libcurl', Ncpus = 4)" | tee /usr/local/lib/R/etc/Rprofile.site | tee /usr/lib/R/etc/Rprofile.site
+RUN R -e 'install.packages("remotes")'
+RUN Rscript -e 'remotes::install_version("shiny",upgrade="never", version = "1.7.4")'
+RUN Rscript -e 'remotes::install_version("config",upgrade="never", version = "0.3.1")'
+RUN Rscript -e 'remotes::install_version("shiny.fluent",upgrade="never", version = "0.3.0")'
+RUN Rscript -e 'remotes::install_version("golem",upgrade="never", version = "0.4.1")'
+RUN mkdir /build_zone
+ADD . /build_zone
+WORKDIR /build_zone
+RUN R -e 'remotes::install_local(upgrade="never")'
+RUN rm -rf /build_zone
 EXPOSE 3838
-
-CMD ["R", "-e", "linkr::linkr(language = 'fr', app_folder = '/root')"]
+CMD ["R", "-e", "options('shiny.port'=3838,shiny.host='0.0.0.0');library(linkr);linkr::linkr()"]
