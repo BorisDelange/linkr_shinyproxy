@@ -24,7 +24,7 @@ RUN R -e "remotes::install_github('BorisDelange/LinkR')"
 RUN mkdir /root/LinkR
 COPY LinkR /root/LinkR
 
-#COPY Rprofile.site /usr/lib/R/etc/
+COPY Rprofile.site /usr/lib/R/etc/
 
 EXPOSE 3838
 

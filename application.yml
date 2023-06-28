@@ -20,9 +20,9 @@ proxy:
   - id: linkr
     display-name: LinkR
     description: A web app for visualization and analysis of healthcare data using OMOP CDM
-    container-cmd: ["R", "-e", "shinyproxy::run_linkr()"]
+    container-cmd: ["R", "-e", "linkr::linkr(language = 'fr', app_folder = '/root')"]
     container-image: linkr
-    access-groups: [admin]
+    access-groups: admin
     max-instances: 2
 
 logging:
