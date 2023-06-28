@@ -12,12 +12,20 @@
 app_ui <- function(request, css, page, users_accesses_toggles_options, language, debug = FALSE) {
   
   # Secure page with ShinyManager
-  shinymanager::secure_app(
-    tagList(
-      golem_add_external_resources(css),
-      shiny.fluent::fluentPage(page$ui)
+  # shinymanager::secure_app(
+  #   tagList(
+  #     golem_add_external_resources(css),
+      # shiny.fluent::fluentPage(page$ui)
+  #   ),
+  #   enable_admin = FALSE, language = tolower(language), fab_position = "none"
+  # )
+   
+  tagList(
+    shiny.fluent::Stack(horizontal = TRUE, tokens = list(childrenGap = 20),
+      shiny.fluent::TextField.shinyInput("text_input_1"),
+      shiny.fluent::PrimaryButton.shinyInput("submit_1", "Show")
     ),
-    enable_admin = FALSE, language = tolower(language), fab_position = "none"
+    div(verbatimTextOutput("text_output_1"), style = "border:dashed 1px; margin-top:10px;")
   )
 }
 
@@ -63,27 +71,27 @@ golem_add_external_resources <- function(css){
     # ),
     
     # Add fontawesome icons
-    htmltools::tags$link(
-      rel = "stylesheet",
-      href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css",
-      integrity = "sha384-cmES2APjF1Ar8dUWeaROssI2FTx2MFqjMq9u2p89A/QD5/dZqk3bxDi1y5w2AWiS",
-      crossorigin = "anonymous"),
+    # htmltools::tags$link(
+    #   rel = "stylesheet",
+    #   href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css",
+    #   integrity = "sha384-cmES2APjF1Ar8dUWeaROssI2FTx2MFqjMq9u2p89A/QD5/dZqk3bxDi1y5w2AWiS",
+    #   crossorigin = "anonymous"),
     
     # Shinyjs is used to show and hide message bars
-    shinyjs::useShinyjs(),
+    # shinyjs::useShinyjs(),
     
     # marker_div,
     
     # Shinybusy is used to add a busy bar on top of the page, when there are loading times
-    shinybusy::add_busy_bar(timeout = 1000, color = "#0D98FF", height = "3px"),
+    # shinybusy::add_busy_bar(timeout = 1000, color = "#0D98FF", height = "3px"),
     
     # A function to make info button works, on the header
-    tags$script(
-      "$(function() {
-          $('.ms-Button--commandBar').on('click', function() {
-            Shiny.setInputValue('header_active_page', $(this).attr('id'));
-          })
-        })"
-    )
+    # tags$script(
+    #   "$(function() {
+    #       $('.ms-Button--commandBar').on('click', function() {
+    #         Shiny.setInputValue('header_active_page', $(this).attr('id'));
+    #       })
+    #     })"
+    # )
   )
 }

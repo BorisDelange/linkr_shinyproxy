@@ -33,156 +33,156 @@ linkr <- function(
   # Used to restore database and import vocabularies
   # shiny.launch.browser to automatically open browser
   
-  if (debug) print(paste0(Sys.time(), " - linkr - init"))
-  options(shiny.maxRequestSize = 4096*1024^2, shiny.launch.browser = TRUE)
+  # if (debug) print(paste0(Sys.time(), " - linkr - init"))
+  # options(shiny.maxRequestSize = 4096*1024^2, shiny.launch.browser = TRUE)
   
   # suppressMessages(require(shinyTree))
   
-  if (!is.logical(perf_monitoring) | !is.logical(debug) | !is.logical(local)) stop("perf_monitoring, debug or local are not logical")
-  
-  # Create app folder if it doesn't exist
-  if (debug) print(paste0(Sys.time(), " - linkr - app_folder"))
-  if (length(app_folder) == 0) app_folder <- paste0(path.expand("~"), "/linkr")
-  
-  if (!dir.exists(app_folder)){
-    tryCatch(
-      dir.create(app_folder),
-      error = function(e) print(e)
-    )
-  }
-  
-  # Clear temp dir
-  if (debug) print(paste0(Sys.time(), " - linkr - temp dir"))
-  unlink(paste0(app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
-  
-  # Create app sub-dirs
-  if (debug) print(paste0(Sys.time(), " - linkr - app sub-dirs"))
-  sub_dirs <- c("app_database", "datasets", 
-    "home", "home/fr", "home/en", 
-    "home/fr/home", "home/fr/get_started", "home/fr/tutorials", "home/fr/resources",
-    "home/en/home", "home/en/get_started", "home/en/tutorials", "home/en/resources",
-    "messages", "plugins", "studies", "temp_files", "translations", "vocabularies")
-  for (sub_dir in sub_dirs) if (!dir.exists(paste0(app_folder, "/", sub_dir))) dir.create(paste0(app_folder, "/", sub_dir))
-  
-  # Load translations
-  if (debug) print(paste0(Sys.time(), " - linkr - translation"))
-  
-  translations_path <- "inst/translations"
-  if (!dir.exists(translations_path)) translations_path <- paste0(find.package("linkr"), "/translations")
-  if (!dir.exists(translations_path)) print("Translations path not found")
-  
-  i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = translations_path))
-  i18n$set_translation_language(language)
-  
-  options(digits.secs = 0)
+  # if (!is.logical(perf_monitoring) | !is.logical(debug) | !is.logical(local)) stop("perf_monitoring, debug or local are not logical")
+  # 
+  # # Create app folder if it doesn't exist
+  # if (debug) print(paste0(Sys.time(), " - linkr - app_folder"))
+  # if (length(app_folder) == 0) app_folder <- paste0(path.expand("~"), "/linkr")
+  # 
+  # if (!dir.exists(app_folder)){
+  #   tryCatch(
+  #     dir.create(app_folder),
+  #     error = function(e) print(e)
+  #   )
+  # }
+  # 
+  # # Clear temp dir
+  # if (debug) print(paste0(Sys.time(), " - linkr - temp dir"))
+  # unlink(paste0(app_folder, "/temp_files"), recursive = TRUE, force = TRUE)
+  # 
+  # # Create app sub-dirs
+  # if (debug) print(paste0(Sys.time(), " - linkr - app sub-dirs"))
+  # sub_dirs <- c("app_database", "datasets", 
+  #   "home", "home/fr", "home/en", 
+  #   "home/fr/home", "home/fr/get_started", "home/fr/tutorials", "home/fr/resources",
+  #   "home/en/home", "home/en/get_started", "home/en/tutorials", "home/en/resources",
+  #   "messages", "plugins", "studies", "temp_files", "translations", "vocabularies")
+  # for (sub_dir in sub_dirs) if (!dir.exists(paste0(app_folder, "/", sub_dir))) dir.create(paste0(app_folder, "/", sub_dir))
+  # 
+  # # Load translations
+  # if (debug) print(paste0(Sys.time(), " - linkr - translation"))
+  # 
+  # translations_path <- "inst/translations"
+  # if (!dir.exists(translations_path)) translations_path <- paste0(find.package("linkr"), "/translations")
+  # if (!dir.exists(translations_path)) print("Translations path not found")
+  # 
+  # i18n <- suppressWarnings(shiny.i18n::Translator$new(translation_csvs_path = translations_path))
+  # i18n$set_translation_language(language)
+  # 
+  # options(digits.secs = 0)
 
   css <- "fluent_style.css"
   
-  if (debug) print(paste0(Sys.time(), " - linkr - router_ui"))
-  pages <- c(
-    "home", 
-      "home/get_started", 
-      "home/tutorials", 
-      "home/resources",
-    "my_studies", 
-    "my_subsets",
-    "messages",
-    "vocabularies", 
-    "data", 
-    "scripts", 
-    "patient_level_data", 
-    "aggregated_data",
-    "plugins",
-    "plugins_patient_lvl",
-    "plugins_aggregated",
-    "settings/general_settings",
-    "settings/app_db",
-    "settings/git",
-    "settings/users", 
-    "settings/dev", 
-    "settings/data_sources",
-    "settings/datasets", 
-    "settings/vocabularies",
-    "settings/log")
+  # if (debug) print(paste0(Sys.time(), " - linkr - router_ui"))
+  # pages <- c(
+  #   "home", 
+  #     "home/get_started", 
+  #     "home/tutorials", 
+  #     "home/resources",
+  #   "my_studies", 
+  #   "my_subsets",
+  #   "messages",
+  #   "vocabularies", 
+  #   "data", 
+  #   "scripts", 
+  #   "patient_level_data", 
+  #   "aggregated_data",
+  #   "plugins",
+  #   "plugins_patient_lvl",
+  #   "plugins_aggregated",
+  #   "settings/general_settings",
+  #   "settings/app_db",
+  #   "settings/git",
+  #   "settings/users", 
+  #   "settings/dev", 
+  #   "settings/data_sources",
+  #   "settings/datasets", 
+  #   "settings/vocabularies",
+  #   "settings/log")
+  # 
+  # # Toggles for users accesses
+  # 
+  # users_accesses_toggles_options <- tibble::tribble(
+  #   ~name, ~toggles,
+  #   "general_settings", "change_password_card",
+  #   "app_db", c(
+  #     "db_connection_infos_card",
+  #     "db_datatable_card",
+  #     "db_request_card",
+  #     "db_save_card",
+  #     "db_restore_card"),
+  #   "remote_git_repos", c(
+  #     "git_add_repo_card", 
+  #     "git_repos_management_card"),
+  #   "users", c(
+  #     "users_creation_card",
+  #     "users_management_card",
+  #     "users_accesses_management_card",
+  #     "users_accesses_options_card",
+  #     "users_statuses_management_card"),
+  #   "dev", c(
+  #     "dev_edit_code_card",
+  #     "dev_perf_monitoring_card"),
+  #   "data_sources", c(
+  #     "data_sources_datatable_card"),
+  #   "datasets", c(
+  #     "datasets_see_all_data",
+  #     "datasets_datatable_card",
+  #     "datasets_options_card",
+  #     "datasets_edit_code_card"),
+  #   "studies", c(
+  #     "studies_see_all_data",
+  #     # "studies_messages_card",
+  #     # "studies_description_card",
+  #     "studies_datatable_card",
+  #     "studies_options_card"),
+  #   "subsets", c(
+  #     "subsets_datatable_card",
+  #     "subsets_edit_code_card",
+  #     "subsets_persons_card"),
+  #   "vocabularies", c(
+  #     "vocabularies_concepts_card",
+  #     "vocabularies_mapping_card",
+  #     "vocabularies_datatable_card",
+  #     "vocabularies_vocabularies_tables_datatable_card",
+  #     "vocabularies_edit_code_card",
+  #     "vocabularies_import_vocabulary_card"),
+  #   "messages", c(
+  #     "study_messages_card"
+  #   ),
+  #   "plugins", c(
+  #     "plugins_see_all_data",
+  #     "all_plugins_card",
+  #     "plugins_datatable_card",
+  #     "plugins_options_card",
+  #     "plugins_edit_code_card",
+  #     "import_plugin_card",
+  #     "export_plugin_card"),
+  #   "scripts", c(
+  #     "dataset_scripts_card",
+  #     "all_scripts_card",
+  #     "scripts_datatable_card",
+  #     "scripts_edit_code_card",
+  #     "scripts_options_card",
+  #     "import_script_card",
+  #     "export_script_card"
+  #   ),
+  #   "log", c(
+  #     "all_users",
+  #     "only_me")
+  # )
   
-  # Toggles for users accesses
-  
-  users_accesses_toggles_options <- tibble::tribble(
-    ~name, ~toggles,
-    "general_settings", "change_password_card",
-    "app_db", c(
-      "db_connection_infos_card",
-      "db_datatable_card",
-      "db_request_card",
-      "db_save_card",
-      "db_restore_card"),
-    "remote_git_repos", c(
-      "git_add_repo_card", 
-      "git_repos_management_card"),
-    "users", c(
-      "users_creation_card",
-      "users_management_card",
-      "users_accesses_management_card",
-      "users_accesses_options_card",
-      "users_statuses_management_card"),
-    "dev", c(
-      "dev_edit_code_card",
-      "dev_perf_monitoring_card"),
-    "data_sources", c(
-      "data_sources_datatable_card"),
-    "datasets", c(
-      "datasets_see_all_data",
-      "datasets_datatable_card",
-      "datasets_options_card",
-      "datasets_edit_code_card"),
-    "studies", c(
-      "studies_see_all_data",
-      # "studies_messages_card",
-      # "studies_description_card",
-      "studies_datatable_card",
-      "studies_options_card"),
-    "subsets", c(
-      "subsets_datatable_card",
-      "subsets_edit_code_card",
-      "subsets_persons_card"),
-    "vocabularies", c(
-      "vocabularies_concepts_card",
-      "vocabularies_mapping_card",
-      "vocabularies_datatable_card",
-      "vocabularies_vocabularies_tables_datatable_card",
-      "vocabularies_edit_code_card",
-      "vocabularies_import_vocabulary_card"),
-    "messages", c(
-      "study_messages_card"
-    ),
-    "plugins", c(
-      "plugins_see_all_data",
-      "all_plugins_card",
-      "plugins_datatable_card",
-      "plugins_options_card",
-      "plugins_edit_code_card",
-      "import_plugin_card",
-      "export_plugin_card"),
-    "scripts", c(
-      "dataset_scripts_card",
-      "all_scripts_card",
-      "scripts_datatable_card",
-      "scripts_edit_code_card",
-      "scripts_options_card",
-      "import_script_card",
-      "export_script_card"
-    ),
-    "log", c(
-      "all_users",
-      "only_me")
-  )
-  
-  suppressWarnings(do.call(shiny.router::make_router, 
-    lapply(pages, function(page){
-      if (debug) print(paste0(Sys.time(), " - linkr - make_router - ", page))
-      shiny.router::route(page, make_layout(language = language, page = page, i18n = i18n, users_accesses_toggles_options = users_accesses_toggles_options))
-    })
-  ) -> page)
+  # suppressWarnings(do.call(shiny.router::make_router, 
+  #   lapply(pages, function(page){
+  #     if (debug) print(paste0(Sys.time(), " - linkr - make_router - ", page))
+  #     shiny.router::route(page, make_layout(language = language, page = page, i18n = i18n, users_accesses_toggles_options = users_accesses_toggles_options))
+  #   })
+  # ) -> page)
   
   # Load UI & server
   
