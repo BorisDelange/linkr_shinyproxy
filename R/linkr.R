@@ -186,7 +186,9 @@ linkr <- function(
   
   # Load UI & server
   
-  if (debug) print(paste0(Sys.time(), " - linkr - load UI & server"))
+  print("Running LinkR - ShinyProxy")
+  
+  # if (debug) print(paste0(Sys.time(), " - linkr - load UI & server"))
   with_golem_options(
     app = shinyApp(
       ui = app_ui(css = css, page = page, language = language, debug = debug),
